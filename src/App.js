@@ -1,5 +1,8 @@
 import logo from './logo.svg';
 import './App.css';
+import Signup from './components/Signup';
+import Login from './components/Login';
+import RequestForm from './components/RequestForm';
 
 function App() {
   return (
@@ -17,7 +20,15 @@ function App() {
         >
           Learn React
         </a>
+        <h1>
+        Welcome to Bidi</h1>
+      
       </header>
+      <div>
+      <Signup/>
+      <Login/>
+      <RequestForm/>
+      </div>
     </div>
   );
 }
