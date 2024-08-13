@@ -11203,7 +11203,7 @@ footer a:hover, footer a:active, footer a:focus {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 20px;
+  margin-top: 20px;
 }
 
 .BusinessPageDashboard {
