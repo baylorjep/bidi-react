@@ -212,7 +212,7 @@ function RequestForm() {
                         <label htmlFor="additionalComments">Additional Comments</label>
                     </div>
                     <div className="d-grid">
-                        <button type="submit" className="btn btn-primary" style={{ marginBottom: '20px' }}>Submit Request</button>
+                        <button type="submit" className="btn btn-secondary" style={{ marginBottom: '20px' }}>Submit Request</button>
                     </div>
                 </form>
             </div>
