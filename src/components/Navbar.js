@@ -18,7 +18,7 @@ function Navbar() {
                         <li className="nav-item"><Link className="nav-link me-lg-3" to="/bids">My Bids</Link></li>
                         <li className="nav-item"><Link className="nav-link me-lg-3" to="/dashboard">My Dashboard</Link></li>
                     </ul>
-                    <Link className="btn btn-primary rounded-pill px-3 mb-2 mb-lg-0" to="/signin">
+                    <Link className="btn btn-secondary rounded-pill px-3 mb-2 mb-lg-0" to="/signin">
                         <span className="d-flex align-items-center">
                             <span className="small">Sign In</span>
                         </span>
