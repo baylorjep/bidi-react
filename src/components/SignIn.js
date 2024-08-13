@@ -28,7 +28,7 @@ function SignIn() {
         <div className="container px-5 d-flex align-items-center justify-content-center">
             <div className="col-lg-6">
                 <div className="mb-5 mb-lg-0 text-center">
-                    <h1 className="SignInPageHeader">Sign In</h1>
+                    <h1 className="SignInPageHeader" style={{ marginTop: '40px' }}>Sign In</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
                 <form onSubmit={handleSignIn}>

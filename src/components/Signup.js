@@ -57,7 +57,7 @@ function Signup() {
         <div className="container px-5 d-flex align-items-center justify-content-center">
             <div className="col-lg-6">
                 <div className="mb-5 mb-lg-0 text-center">
-                    <h1 className="SignUpPageHeader">Create an Account</h1>
+                    <h1 className="SignUpPageHeader" style={{ marginTop: '20px' }}>Create an Account</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
                 <form onSubmit={handleSubmit}>
