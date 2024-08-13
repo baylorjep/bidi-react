@@ -15,7 +15,7 @@ function Navbar() {
                 <div className="collapse navbar-collapse" id="navbarResponsive">
                     <ul className="navbar-nav ms-auto me-4 my-3 my-lg-0">
                         <li className="nav-item"><Link className="nav-link me-lg-3" to="/request">Request a Service</Link></li>
-                        <li className="nav-item"><Link className="nav-link me-lg-3" to="/bids">My Bids</Link></li>
+                        <li className="nav-item"><Link className="nav-link me-lg-3" to="/My-bids">My Bids</Link></li>
                         <li className="nav-item"><Link className="nav-link me-lg-3" to="/dashboard">My Dashboard</Link></li>
                     </ul>
                     <Link className="btn btn-secondary rounded-pill px-3 mb-2 mb-lg-0" to="/signin">
