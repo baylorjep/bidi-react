@@ -1,30 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import '../App.css';
 
-function MyBids() {
-    return (
-        <div className="container px-5">
-            <h1>My Bids</h1>
-            <p>Here you will see all your bids...</p>
-        </div>
-    );
-}
+const MyBids = () => {
+  const [activeIndex, setActiveIndex] = useState(null);
 
-const App = () => {
-    const [activeIndex, setActiveIndex] = useState(null);
-  
-    const toggleDescription = (index) => {
-      setActiveIndex(activeIndex === index ? null : index);
-    };
+  const toggleDescription = (index) => {
+    setActiveIndex(activeIndex === index ? null : index);
+  };
 
+  return (
+    <div className="container px-5">
+      <h1>My Bids</h1>
+      <p>Here you will see all your bids...</p>
 
-
-export default MyBids;
-
-<header className="masthead">
+      <header className="masthead">
         <div className="container px-5">
           <h2>Photography Shoot Bid</h2>
-
+          
           {[1, 2, 3, 4, 5, 6].map(index => (
             <div className="business-container" key={index} onClick={() => toggleDescription(index)}>
               <div className="business-info">
@@ -59,3 +51,8 @@ export default MyBids;
           ))}
         </div>
       </header>
+    </div>
+  );
+};
+
+export default MyBids;
