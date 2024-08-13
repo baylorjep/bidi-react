@@ -1,36 +1,32 @@
-import logo from './logo.svg';
 import './App.css';
-import Signup from './components/Signup';
-import Login from './components/Login';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Header from './components/Header';
 import RequestForm from './components/RequestForm';
+import Signup from './components/Signup';
+import SignIn from './components/SignIn';
+import MyBids from './components/MyBids';
+import SuccessSignup from './components/SuccessSignup';
+import SuccessRequest from './components/SuccessRequest';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <h1>
-        Welcome to Bidi</h1>
-      
-      </header>
-      <div>
-      <Signup/>
-      <Login/>
-      <RequestForm/>
-      </div>
-    </div>
-  );
+    return (
+        <Router>
+            <div>
+                <Navbar />
+                <Routes>
+                    <Route path="/" element={<Header />} />
+                    <Route path="/request" element={<RequestForm />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/my-bids" element={<MyBids />} />
+                    <Route path="/success-signup" element={<SuccessSignup />} />
+                    <Route path="/success-request" element={<SuccessRequest />} />
+                </Routes>
+            </div>
+        </Router>
+    );
 }
 
 export default App;
