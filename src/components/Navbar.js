@@ -6,7 +6,7 @@ function Navbar() {
     return (
         <nav className="navbar navbar-expand-lg navbar-light fixed-top shadow-sm" id="mainNav">
             <div className="container px-5">
-                <Link className="navbar-brand fw-bold" to="/">Bidi</Link>
+                <Link className="navbar-brand fw-bold" to="/"><img src="../../public/Bidi Logo.png" alt="Bidi Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></Link>
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
                     Menu
                     <i className="bi-list"></i>
