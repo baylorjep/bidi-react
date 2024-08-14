@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import RequestDisplay from './RequestDisplay';
+import '../../App.css';
 
 function OpenRequests() {
     const [openRequests, setOpenRequests] = useState([]); // Initialize as an empty array

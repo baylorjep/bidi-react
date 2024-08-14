@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
+import '../../App.css';
 
 function SubmitBid() {
     const { requestId } = useParams();

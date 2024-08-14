@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import logo from '../assets/images/Bidi Logo.png';
+import '../App.css';
 
 function Navbar() {
     const [user, setUser] = useState(null);
