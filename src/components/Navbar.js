@@ -10,16 +10,22 @@ function Navbar() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const session = supabase.auth.getSession();
+        const fetchSession = async () => {
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
 
-        session.then(({ data: { session } }) => {
             if (session) {
                 setUser(session.user);
                 fetchUserRole(session.user.id);
             }
-        });
+        };
 
-        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+        fetchSession();
+
+        const {
+            data: authListener,
+        } = supabase.auth.onAuthStateChange((_event, session) => {
             if (session) {
                 setUser(session.user);
                 fetchUserRole(session.user.id);
@@ -60,8 +66,18 @@ function Navbar() {
     return (
         <nav className="navbar navbar-expand-lg navbar-light fixed-top shadow-sm" id="mainNav">
             <div className="container px-5">
-                <Link className="navbar-brand fw-bold" to="/"><img src={logo} alt="Bidi Logo" style={{ height: '50px', width: 'auto' }} /></Link>
-                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <Link className="navbar-brand fw-bold" to="/">
+                    <img src={logo} alt="Bidi Logo" style={{ height: '50px', width: 'auto' }} />
+                </Link>
+                <button
+                    className="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
+                >
                     Menu
                     <i className="bi-list"></i>
                 </button>
@@ -69,17 +85,23 @@ function Navbar() {
                     <ul className="navbar-nav ms-auto me-4 my-3 my-lg-0">
                         {/* Show "Request a Service" only for individuals and non-logged-in users */}
                         {(!userRole || userRole === 'individual') && (
-                            <li className="nav-item"><Link className="nav-link me-lg-3" to="/request">Request a Service</Link></li>
+                            <li className="nav-item">
+                                <Link className="nav-link me-lg-3" to="/request">Request a Service</Link>
+                            </li>
                         )}
 
                         {/* Show "My Bids" for individuals */}
                         {userRole === 'individual' && (
-                            <li className="nav-item"><Link className="nav-link me-lg-3" to="/my-bids">My Bids</Link></li>
+                            <li className="nav-item">
+                                <Link className="nav-link me-lg-3" to="/my-bids">My Bids</Link>
+                            </li>
                         )}
                         
                         {/* Show "Open Requests" for businesses */}
                         {userRole === 'business' && (
-                            <li className="nav-item"><Link className="nav-link me-lg-3" to="/open-requests">Open Requests</Link></li>
+                            <li className="nav-item">
+                                <Link className="nav-link me-lg-3" to="/open-requests">Open Requests</Link>
+                            </li>
                         )}
                     </ul>
 
@@ -104,3 +126,4 @@ function Navbar() {
 }
 
 export default Navbar;
+
