@@ -10,6 +10,8 @@ import MyBids from './components/MyBids';
 import SuccessSignup from './components/SuccessSignup';
 import SuccessRequest from './components/SuccessRequest';
 import OpenRequests from './components/Request/OpenRequests';
+import SubmitBid from './components/Request/SubmitBid';
+import BidSuccess from './components/BidSuccess';
 import IndividualDashboard from './components/IndividualDashboard';
 
 function App() {
@@ -25,7 +27,9 @@ function App() {
                     <Route path="/my-bids" element={<MyBids />} />
                     <Route path="/success-signup" element={<SuccessSignup />} />
                     <Route path="/success-request" element={<SuccessRequest />} />
+                    <Route path="/bid-success" element={<BidSuccess />} />
                     <Route path="/open-requests" element={<OpenRequests />} />
+                    <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
                     {/* <Route path="/dashboard" element={<IndividualDashboard />} /> */}
                 </Routes>
             </div>
