@@ -3,7 +3,7 @@ import '../App.css';
 
 function IndividualDashboard() {
     return (
-        <div class="row" style={{ backgroundColor: 'var(--bs-gray-300)', minHeight: '90vh', maxWidth: '100vw', paddingTop: '10px' }}>
+        <div class="row fill-page-grey-bg">
             <div class="col-md-6">
                     <div class="DashboardPill">
                         You Have 3 new bids to view!

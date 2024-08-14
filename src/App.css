@@ -11438,4 +11438,87 @@ footer a:hover, footer a:active, footer a:focus {
   text-decoration: none;
 }
 
+/* RequestDisplay.css */
 
+.request-display {
+  position: relative; /* Required for absolute positioning of the button */
+  background-color: #ffffff; /* White background for the rectangle */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  padding: 20px; /* Padding inside the rectangle */
+  max-width: 600px; /* Max width of the display */
+  margin: 20px auto; /* Center the display horizontally */
+}
+
+.request-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.request-title {
+  font-size: 1.5em; /* Larger font size for the title */
+  margin-bottom: 10px; /* Spacing below the title */
+  color: #333; /* Dark color for the title */
+}
+
+.request-location,
+.request-category,
+.request-description,
+.request-date,
+.request-created-at,
+.request-comments {
+  font-size: 1em; /* Regular font size */
+  margin-bottom: 10px; /* Spacing between paragraphs */
+  color: #555; /* Slightly lighter color for the text */
+}
+
+.request-location strong,
+.request-category strong,
+.request-description strong,
+.request-date strong,
+.request-created-at strong,
+.request-comments strong {
+  color: #000; /* Dark color for the labels */
+  font-weight: bold; /* Bold labels */
+}
+
+.bid-button {
+  position: absolute; /* Absolute positioning to place it at the bottom right */
+  bottom: 20px; /* Space from the bottom */
+  right: 20px; /* Space from the right */
+  padding: 5px 10px; /* Adjust padding for the button */
+}
+
+@media (max-width: 768px) {
+  .request-display {
+      padding: 15px; /* Adjust padding for smaller screens */
+  }
+
+  .bid-button {
+    bottom: 10px; /* Adjust bottom position for smaller screens */
+    right: 10px; /* Adjust right position for smaller screens */
+}
+}
+
+.grey-bg {
+  background: var(--bs-gray-300);
+}
+
+.fill-page-grey-bg {
+  background: var(--bs-gray-300);
+  min-width: 100vw;
+  min-height: 100vh;
+}
+
+.content {
+  display: flex;
+  flex: 1; /* This makes the content area take up the remaining space */
+  flex-direction: column; /* Stack children vertically if there are multiple items */
+  min-width: 100vw;
+  min-height: 85vh;
+}
+
+.remaining-space {
+  flex: 1; /* This makes the remaining-space div take up all the available space */
+  padding: 20px; /* Example padding */
+}

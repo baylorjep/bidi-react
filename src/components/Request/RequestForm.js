@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import '../App.css';
+import { supabase } from '../../supabaseClient';
+import '../../App.css';
 import { useNavigate } from 'react-router-dom';
 
 

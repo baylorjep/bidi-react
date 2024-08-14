@@ -3,12 +3,13 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Header from './components/Header';
-import RequestForm from './components/RequestForm';
+import RequestForm from './components/Request/RequestForm';
 import Signup from './components/Signup';
 import SignIn from './components/SignIn';
 import MyBids from './components/MyBids';
 import SuccessSignup from './components/SuccessSignup';
 import SuccessRequest from './components/SuccessRequest';
+import OpenRequests from './components/Request/OpenRequests';
 import IndividualDashboard from './components/IndividualDashboard';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
                     <Route path="/my-bids" element={<MyBids />} />
                     <Route path="/success-signup" element={<SuccessSignup />} />
                     <Route path="/success-request" element={<SuccessRequest />} />
+                    <Route path="/open-requests" element={<OpenRequests />} />
                     {/* <Route path="/dashboard" element={<IndividualDashboard />} /> */}
                 </Routes>
             </div>
