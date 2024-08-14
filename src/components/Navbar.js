@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import '../App.css';
 import { supabase } from '../supabaseClient';
 import logo from '../assets/images/Bidi Logo.png';
 
@@ -11,9 +10,7 @@ function Navbar() {
 
     useEffect(() => {
         const fetchSession = async () => {
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
+            const { data: { session } } = await supabase.auth.getSession();
 
             if (session) {
                 setUser(session.user);
@@ -23,9 +20,7 @@ function Navbar() {
 
         fetchSession();
 
-        const {
-            data: authListener,
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
             if (session) {
                 setUser(session.user);
                 fetchUserRole(session.user.id);
@@ -83,21 +78,18 @@ function Navbar() {
                 </button>
                 <div className="collapse navbar-collapse" id="navbarResponsive">
                     <ul className="navbar-nav ms-auto me-4 my-3 my-lg-0">
-                        {/* Show "Request a Service" only for individuals and non-logged-in users */}
                         {(!userRole || userRole === 'individual') && (
                             <li className="nav-item">
                                 <Link className="nav-link me-lg-3" to="/request">Request a Service</Link>
                             </li>
                         )}
 
-                        {/* Show "My Bids" for individuals */}
                         {userRole === 'individual' && (
                             <li className="nav-item">
                                 <Link className="nav-link me-lg-3" to="/my-bids">My Bids</Link>
                             </li>
                         )}
                         
-                        {/* Show "Open Requests" for businesses */}
                         {userRole === 'business' && (
                             <li className="nav-item">
                                 <Link className="nav-link me-lg-3" to="/open-requests">Open Requests</Link>
@@ -105,7 +97,6 @@ function Navbar() {
                         )}
                     </ul>
 
-                    {/* Sign In/Out button */}
                     {user ? (
                         <button className="btn btn-secondary rounded-pill px-3 mb-2 mb-lg-0" onClick={handleSignOut}>
                             <span className="d-flex align-items-center">
@@ -126,4 +117,3 @@ function Navbar() {
 }
 
 export default Navbar;
-

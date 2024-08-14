@@ -12,6 +12,9 @@ import SuccessRequest from './components/SuccessRequest';
 import OpenRequests from './components/Request/OpenRequests';
 import SubmitBid from './components/Request/SubmitBid';
 import BidSuccess from './components/BidSuccess';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+
 import IndividualDashboard from './components/IndividualDashboard';
 
 function App() {
