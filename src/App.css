@@ -11206,19 +11206,20 @@ footer a:hover, footer a:active, footer a:focus {
   margin: 0;
 }
 
-.BusinessPageDashboard {
-  border: 2px solid white;
+.DashboardPill {
+  border: 2px;
   border-radius: 10px;
   padding: 10px;
-  background: linear-gradient(45deg, #2937f0, #9f1ae2);
+  background: var(--bs-white);
   margin: 10px 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  color: white;
+  color: var(--bs-black);
+  font-weight: bold;
   transition: background 0.3s;
   cursor: pointer; /* Change cursor to pointer */
 }
-.BusinessPageDashboard:hover {
-  background: linear-gradient(45deg, #1e2bc0, #7f15b7);
+.DashboardPill:hover {
+  background: var(--bs-gray-200);
 }
 .expanded {
   height: auto;
