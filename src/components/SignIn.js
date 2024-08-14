@@ -12,7 +12,7 @@ function SignIn() {
     const handleSignIn = async (e) => {
         e.preventDefault();
 
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: { user }, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
@@ -20,7 +20,22 @@ function SignIn() {
         if (error) {
             setErrorMessage(`Error signing in: ${error.message}`);
         } else {
-            navigate('/my-bids'); // Redirect to the "My Bids" page
+            // Fetch the user's profile information
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('category')
+                .eq('id', user.id)
+                .single();
+
+            if (profileError) {
+                console.error('Error fetching profile:', profileError.message);
+            } else {
+                if (profile.category === 'individual') {
+                    navigate('/my-bids'); // Redirect individuals to the "My Bids" page
+                } else if (profile.category === 'business') {
+                    navigate('/open-requests'); // Redirect businesses to the "Open Requests" page
+                }
+            }
         }
     };
 
@@ -28,7 +43,8 @@ function SignIn() {
         <div className="container px-5 d-flex align-items-center justify-content-center">
             <div className="col-lg-6">
                 <div className="mb-5 mb-lg-0 text-center">
-                    <h1 className="SignInPageHeader" style={{ marginTop: '40px' }}>Sign In</h1>
+                    <br/>
+                    <h1 className="SignInPageHeader">Sign In</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
                 <form onSubmit={handleSignIn}>
@@ -63,7 +79,7 @@ function SignIn() {
                     </div>
                     <br/>
                     <h6 align='center'>Don't Have an Account?   
-                        <a href='/Signup' > Sign Up Here.</a> 
+                            <a href='/Signup' > Sign Up Here.</a> 
                     </h6>
                 </form>
             </div>
