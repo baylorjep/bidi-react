@@ -9,6 +9,7 @@ import SignIn from './components/SignIn';
 import MyBids from './components/MyBids';
 import SuccessSignup from './components/SuccessSignup';
 import SuccessRequest from './components/SuccessRequest';
+import IndividualDashboard from './components/IndividualDashboard';
 
 function App() {
     return (
@@ -23,6 +24,7 @@ function App() {
                     <Route path="/my-bids" element={<MyBids />} />
                     <Route path="/success-signup" element={<SuccessSignup />} />
                     <Route path="/success-request" element={<SuccessRequest />} />
+                    {/* <Route path="/dashboard" element={<IndividualDashboard />} /> */}
                 </Routes>
             </div>
         </Router>
