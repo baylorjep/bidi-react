@@ -33,13 +33,13 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
 
                 {/* Approve/Deny Buttons */}
                 <div className="business-actions" style={{ display: 'flex', justifyContent: 'center' }}>
-                    <button
-                        className="btn btn-success"
-                        onClick={() => handleApprove(bid.request_id)}
-                        style={{ marginRight: '10px' }}
-                    >
-                        Approve
-                    </button>
+                <button
+                    className="btn btn-success"
+                    onClick={() => handleApprove(bid.id, bid.request_id)} // Pass both bidId and requestId
+                    style={{ marginRight: '10px' }}
+                >
+                    Approve
+                </button>
                     <button
                         className="btn btn-danger"
                         onClick={() => handleDeny(bid.id)}

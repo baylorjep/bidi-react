@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-function BidSuccess() {
+function BidAccepted() {
     return (
         <div className="container px-5 d-flex align-items-center justify-content-center grey-bg content">
             <div className="col-lg-6 text-center">
@@ -14,4 +14,4 @@ function BidSuccess() {
     );
 }
 
-export default BidSuccess;
+export default BidAccepted;

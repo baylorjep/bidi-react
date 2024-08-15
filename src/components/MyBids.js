@@ -59,6 +59,9 @@ function MyBids() {
     }, []);
 
     const handleApprove = async (bidId, requestId) => {
+        console.log('Bid ID:', bidId); // Add logging to confirm the values
+        console.log('Request ID:', requestId);
+    
         // Update the `status` of the bid to 'accepted'
         const { error: bidError } = await supabase
             .from('bids')
