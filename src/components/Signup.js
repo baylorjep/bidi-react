@@ -7,6 +7,7 @@ function Signup() {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
+        confirmPassword: '', // Added confirmPassword field
         firstName: '',
         lastName: '',
         phone: '',
@@ -25,6 +26,12 @@ function Signup() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Check if passwords match
+        if (formData.password !== formData.confirmPassword) {
+            setErrorMessage("Passwords do not match");
+            return;
+        }
 
         const { email, password, firstName, lastName, phone, category, businessName, businessCategory, businessAddress, website } = formData;
 
@@ -107,7 +114,7 @@ function Signup() {
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
                 <form onSubmit={handleSubmit}>
-                <div className="form-floating mb-3">
+                    <div className="form-floating mb-3">
                         <select
                             className="form-control"
                             id="category"
@@ -148,7 +155,20 @@ function Signup() {
                         />
                         <label htmlFor="password">Password</label>
                     </div>
-                    
+                    <div className="form-floating mb-3">
+                        <input
+                            className="form-control"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            type="password"
+                            placeholder="Confirm Password"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            required
+                        />
+                        <label htmlFor="confirmPassword">Confirm Password</label>
+                    </div>
+
                     {formData.category !== 'business' && (
                         <>
                             <div className="form-floating mb-3">
@@ -192,7 +212,6 @@ function Signup() {
                         />
                         <label htmlFor="phone">Phone Number</label>
                     </div>
-                    
 
                     {formData.category === 'business' && (
                         <>
