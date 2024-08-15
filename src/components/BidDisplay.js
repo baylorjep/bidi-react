@@ -29,7 +29,7 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                 )}
 
                 {/* Adding space between the last line of content and the buttons */}
-                <div style={{ marginBottom: '20px' }}></div>
+                <div style={{ marginBottom: '30px' }}></div>
 
                 {/* Approve/Deny Buttons */}
                 <div className="business-actions" style={{ display: 'flex', justifyContent: 'center' }}>
