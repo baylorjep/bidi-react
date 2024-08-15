@@ -87,7 +87,7 @@ function MyBids() {
         }
     
         // Redirect to the BidSuccess page
-        navigate('/bid-success');
+        navigate('/bid-accepted');
     };
     
     const handleDeny = async (bidId) => {
