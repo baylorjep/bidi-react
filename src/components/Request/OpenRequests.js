@@ -11,8 +11,8 @@ function OpenRequests() {
         const fetchRequests = async () => {
             const { data, error } = await supabase
                 .from('requests')
-                .select('*')
-                .eq('open', true);
+                .select('id, user_id, service_title, service_category, service_description, service_date, location, additional_comments') // Specify columns
+                .eq('open', true); // Assuming 'open' is still a valid column or condition
 
             if (error) {
                 setError(`Error fetching requests: ${error.message}`);
@@ -29,10 +29,10 @@ function OpenRequests() {
     return (
         <div className="container px-5 d-flex align-items-center justify-content-center grey-bg content">
             <div className="col-lg-6 remaining-space">
-                {/* {error && <p>Error: {error}</p>} */}
+                {error && <p>Error: {error}</p>}
                 {openRequests.length > 0 ? (
                     openRequests.map((request) => (
-                        <RequestDisplay request={request}/>
+                        <RequestDisplay key={request.id} request={request}/>
                     ))
                 ) : (
                     <>
