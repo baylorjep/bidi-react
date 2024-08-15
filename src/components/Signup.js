@@ -11,6 +11,9 @@ function Signup() {
         lastName: '',
         phone: '',
         category: '',
+        businessName: '',
+        businessCategory: '',
+        businessAddress: '',
     });
     const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
@@ -22,7 +25,7 @@ function Signup() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const { email, password, firstName, lastName, phone, category } = formData;
+        const { email, password, firstName, lastName, phone, category, businessName, businessCategory, businessAddress } = formData;
 
         const { data, error } = await supabase.auth.signUp({
             email,
@@ -54,31 +57,43 @@ function Signup() {
             return;
         }
 
-        if (category === 'individual')
-        {
+        if (category === 'individual') {
             const { error: individualError } = await supabase
-            .from('individual_profiles')
-            .insert([
-                {
-                    id: user.id,
-                    first_name: firstName,
-                    last_name: lastName,
-                    phone: phone,
-                },
-            ]);
+                .from('individual_profiles')
+                .insert([
+                    {
+                        id: user.id,
+                        first_name: firstName,
+                        last_name: lastName,
+                        phone: phone,
+                    },
+                ]);
 
             if (individualError) {
                 setErrorMessage(`Individual profile insertion error: ${individualError.message}`);
                 console.error('Individual profile insertion error:', individualError);
                 return;
-            }  
+            }
+        } else if (category === 'business') {
+            const { error: businessError } = await supabase
+                .from('business_profiles')
+                .insert([
+                    {
+                        id: user.id,
+                        business_name: businessName,
+                        business_category: businessCategory,
+                        business_address: businessAddress,
+                        phone: phone,
+                    },
+                ]);
+
+            if (businessError) {
+                setErrorMessage(`Business profile insertion error: ${businessError.message}`);
+                console.error('Business profile insertion error:', businessError);
+                return;
+            }
         }
 
-        if (category === 'business')
-        {
-            // TODO: Add business profiles when the user selects them
-            console.log('BUSINESS PROFILE IN PROGRESS');
-        }  
         navigate('/success-signup'); // Redirect to success page
     };
 
@@ -125,7 +140,8 @@ function Signup() {
                             placeholder="Enter first name..."
                             value={formData.firstName}
                             onChange={handleChange}
-                            required
+                            required={formData.category === 'individual'}
+                            disabled={formData.category === 'business'}
                         />
                         <label htmlFor="firstName">First Name</label>
                     </div>
@@ -138,7 +154,8 @@ function Signup() {
                             placeholder="Enter last name..."
                             value={formData.lastName}
                             onChange={handleChange}
-                            required
+                            required={formData.category === 'individual'}
+                            disabled={formData.category === 'business'}
                         />
                         <label htmlFor="lastName">Last Name</label>
                     </div>
@@ -170,6 +187,51 @@ function Signup() {
                         </select>
                         <label htmlFor="category">Category</label>
                     </div>
+
+                    {formData.category === 'business' && (
+                        <>
+                            <div className="form-floating mb-3">
+                                <input
+                                    className="form-control"
+                                    id="businessName"
+                                    name="businessName"
+                                    type="text"
+                                    placeholder="Business Name"
+                                    value={formData.businessName}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <label htmlFor="businessName">Business Name</label>
+                            </div>
+                            <div className="form-floating mb-3">
+                                <input
+                                    className="form-control"
+                                    id="businessCategory"
+                                    name="businessCategory"
+                                    type="text"
+                                    placeholder="Business Category"
+                                    value={formData.businessCategory}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <label htmlFor="businessCategory">Business Category</label>
+                            </div>
+                            <div className="form-floating mb-3">
+                                <input
+                                    className="form-control"
+                                    id="businessAddress"
+                                    name="businessAddress"
+                                    type="text"
+                                    placeholder="Business Address"
+                                    value={formData.businessAddress}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <label htmlFor="businessAddress">Business Address</label>
+                            </div>
+                        </>
+                    )}
+
                     <div className="d-grid">
                         <button type="submit" className="btn btn-secondary btn-lg w-100">Sign Up</button>
                     </div>
@@ -180,6 +242,3 @@ function Signup() {
 }
 
 export default Signup;
-
-
-
