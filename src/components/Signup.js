@@ -7,13 +7,14 @@ function Signup() {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        confirmPassword: '', // Added confirmPassword field
+        confirmPassword: '',
         firstName: '',
         lastName: '',
         phone: '',
         category: '',
         businessName: '',
         businessCategory: '',
+        otherBusinessCategory: '', // Add field for custom business category
         businessAddress: '',
         website: '',
     });
@@ -21,34 +22,39 @@ function Signup() {
     const navigate = useNavigate();
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value,
+            // Clear the otherBusinessCategory if businessCategory is changed and not "other"
+            ...(e.target.name === 'businessCategory' && e.target.value !== 'other' ? { otherBusinessCategory: '' } : {}),
+        });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         // Check if passwords match
         if (formData.password !== formData.confirmPassword) {
             setErrorMessage("Passwords do not match");
             return;
         }
-
-        const { email, password, firstName, lastName, phone, category, businessName, businessCategory, businessAddress, website } = formData;
-
+    
+        const { email, password, firstName, lastName, phone, category, businessName, businessCategory, otherBusinessCategory, businessAddress, website } = formData;
+    
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
         });
-
+    
         if (error) {
             setErrorMessage(`Sign up error: ${error.message}`);
             console.error('Sign up error:', error);
             return;
         }
-
+    
         const { user } = data;
         console.log('User signed up:', user);
-
+    
         const { error: profileError } = await supabase
             .from('profiles')
             .insert([
@@ -58,13 +64,13 @@ function Signup() {
                     role: category,
                 },
             ]);
-
+    
         if (profileError) {
             setErrorMessage(`Profile insertion error: ${profileError.message}`);
             console.error('Profile insertion error:', profileError);
             return;
         }
-
+    
         if (category === 'individual') {
             const { error: individualError } = await supabase
                 .from('individual_profiles')
@@ -76,7 +82,7 @@ function Signup() {
                         phone: phone,
                     },
                 ]);
-
+    
             if (individualError) {
                 setErrorMessage(`Individual profile insertion error: ${individualError.message}`);
                 console.error('Individual profile insertion error:', individualError);
@@ -89,22 +95,42 @@ function Signup() {
                     {
                         id: user.id,
                         business_name: businessName,
-                        business_category: businessCategory,
+                        business_category: businessCategory === 'other' ? otherBusinessCategory : businessCategory,
                         business_address: businessAddress,
                         phone: phone,
                         website: website,
                     },
                 ]);
-
+    
             if (businessError) {
                 setErrorMessage(`Business profile insertion error: ${businessError.message}`);
                 console.error('Business profile insertion error:', businessError);
                 return;
             }
+    
+            if (businessCategory === 'other' && otherBusinessCategory) {
+                const { error: otherCategoryError } = await supabase
+                    .from('other_business_categories')
+                    .insert([
+                        {
+                            user_id: user.id,
+                            category_name: otherBusinessCategory,
+                        },
+                    ]);
+    
+                if (otherCategoryError) {
+                    setErrorMessage(`Error submitting custom category: ${otherCategoryError.message}`);
+                    console.error('Error submitting custom category:', otherCategoryError);
+                    return;
+                } else {
+                    console.log('Custom category inserted successfully:', otherBusinessCategory);
+                }
+            }
         }
-
+    
         navigate('/success-signup'); // Redirect to success page
     };
+    
 
     return (
         <div className="container px-5 d-flex align-items-center justify-content-center">
@@ -244,10 +270,26 @@ function Signup() {
                                     <option value="plumbing">Plumbing</option>
                                     <option value="electrical">Electrical</option>
                                     <option value="moving">Moving</option>
+                                    <option value="Furniture">Furniture Cleaning</option>
                                     <option value="other">Other</option>
                                 </select>
                                 <label htmlFor="businessCategory">Business Category</label>
                             </div>
+                            {formData.businessCategory === 'other' && (
+                                <div className="form-floating mb-3">
+                                    <input
+                                        className="form-control"
+                                        id="otherBusinessCategory"
+                                        name="otherBusinessCategory"
+                                        type="text"
+                                        placeholder="Specify your business category"
+                                        value={formData.otherBusinessCategory}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                    <label htmlFor="otherBusinessCategory">Please specify your business category</label>
+                                </div>
+                            )}
                             <div className="form-floating mb-3">
                                 <input
                                     className="form-control"
