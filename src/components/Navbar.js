@@ -39,14 +39,14 @@ function Navbar() {
     const fetchUserRole = async (userId) => {
         const { data, error } = await supabase
             .from('profiles')
-            .select('category')
+            .select('role')
             .eq('id', userId)
             .single();
 
         if (error) {
             console.error('Error fetching user role:', error.message);
         } else {
-            setUserRole(data.category);
+            setUserRole(data.role);
         }
     };
 
