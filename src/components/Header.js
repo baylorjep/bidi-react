@@ -3,13 +3,13 @@ import '../App.css';
 import { Link } from 'react-router-dom';
 
 function Header() {
+//search stuff below, restore this when ready to use search
+    //const searchInput = document.getElementById('search');
 
-    const searchInput = document.getElementById('search');
-
-    const search = () => {
-        const searchValue = searchInput.value;
-        console.log(`Searched: ${searchValue}`);
-    }
+    //const search = () => {
+        //const searchValue = searchInput.value;
+        //console.log(`Searched: ${searchValue}`);
+    //}
 
     return (
         <header className="masthead-index">
