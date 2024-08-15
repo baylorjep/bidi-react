@@ -3,11 +3,8 @@ import { supabase } from '../../supabaseClient';
 import '../../App.css';
 import { useNavigate } from 'react-router-dom';
 
-
 function RequestForm() {
     const [formData, setFormData] = useState({
-        customerName: '',
-        customerEmail: '',
         serviceTitle: '',
         location: '',
         serviceCategory: '',
@@ -25,21 +22,10 @@ function RequestForm() {
             const { data } = await supabase.auth.getSession();
             if (data.session) {
                 setUser(data.session.user);
-                const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('first_name, last_name, email')
-                    .eq('id', data.session.user.id)
-                    .single();
-
-                if (profileError) {
-                    console.error('Error fetching profile:', profileError.message);
-                } else if (profile) {
-                    setFormData((prevFormData) => ({
-                        ...prevFormData,
-                        customerName: `${profile.first_name} ${profile.last_name}`,
-                        customerEmail: profile.email,
-                    }));
-                }
+                setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    customerEmail: data.session.user.email,
+                }));
             }
         };
 
@@ -58,8 +44,7 @@ function RequestForm() {
             .insert([
                 {
                     user_id: user ? user.id : null,
-                    customer_name: formData.customerName,
-                    customer_email: formData.customerEmail,
+                    customer_email: formData.customerEmail, // Use the logged-in user's email
                     service_title: formData.serviceTitle,
                     location: formData.location,
                     service_category: formData.serviceCategory,
@@ -85,36 +70,6 @@ function RequestForm() {
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
                 <form onSubmit={handleSubmit}>
-                    {!user && (
-                        <>
-                            <div className="form-floating mb-3">
-                                <input
-                                    className="form-control"
-                                    id="customerName"
-                                    name="customerName"
-                                    type="text"
-                                    placeholder="Enter your name"
-                                    value={formData.customerName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <label htmlFor="customerName">Your Name</label>
-                            </div>
-                            <div className="form-floating mb-3">
-                                <input
-                                    className="form-control"
-                                    id="customerEmail"
-                                    name="customerEmail"
-                                    type="email"
-                                    placeholder="name@example.com"
-                                    value={formData.customerEmail}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <label htmlFor="customerEmail">Your Email</label>
-                            </div>
-                        </>
-                    )}
                     <div className="form-floating mb-3">
                         <input
                             className="form-control"
@@ -134,12 +89,12 @@ function RequestForm() {
                             id="location"
                             name="location"
                             type="text"
-                            placeholder="Your Location"
+                            placeholder="Address"
                             value={formData.location}
                             onChange={handleChange}
                             required
                         />
-                        <label htmlFor="location">Your Location</label>
+                        <label htmlFor="location">Address</label>
                     </div>
                     <div className="form-floating mb-3">
                         <select
@@ -221,5 +176,3 @@ function RequestForm() {
 }
 
 export default RequestForm;
-
-
