@@ -107,22 +107,21 @@ function MyBids() {
         setBids(bids.filter(bid => bid.id !== bidId));
     };
     
+    const pendingBids = bids.filter(bid => bid.status === 'pending');
 
     return (
         <div className="container px-5">
             <header className="masthead">
                 <h2>My Bids</h2>
-                {error && <p className="text-danger">{error}</p>}
-                {bids.length > 0 ? (
-                    bids
-                        .filter(bid => bid.status === 'pending')
-                        .map((bid) => (
-                            <BidDisplay key={bid.id} bid={bid} handleApprove={handleApprove} handleDeny={handleDeny} />
-                        ))
+                {error ? (
+                    <p className="text-danger">{error}</p>
+                ) : pendingBids.length > 0 ? (
+                    pendingBids.map((bid) => (
+                        <BidDisplay key={bid.id} bid={bid} handleApprove={handleApprove} handleDeny={handleDeny} />
+                    ))
                 ) : (
-                    <p>You don't have any bids at the moment. Please check back later, or look out for notifications.</p>
+                    <p>You don't have any pending bids at the moment. Please check back later, or look out for notifications.</p>
                 )}
-
             </header>
         </div>
     );
