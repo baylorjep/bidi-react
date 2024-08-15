@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
+import { Link } from 'react-router-dom';
+
 
 function SignIn() {
     const [email, setEmail] = useState('');
@@ -84,6 +86,11 @@ function SignIn() {
                     <h6 align='center'>Don't Have an Account?   
                             <a href='/Signup' > Sign Up Here.</a> 
                     </h6>
+                    <div className="text-center mt-3">
+                    <Link to="/reset-password" className="btn btn-link">
+                        Forgot my password
+                    </Link>
+                </div>
                 </form>
             </div>
         </div>

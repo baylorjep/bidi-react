@@ -15,6 +15,7 @@ import BidSuccess from './components/BidSuccess';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import BidAccepted from './components/BidAccepted';
+import ResetPassword from './components/ResetPassword';
 
 
 import IndividualDashboard from './components/Individual/IndividualDashboard';
@@ -29,6 +30,7 @@ function App() {
                     <Route path="/request" element={<RequestForm />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/signin" element={<SignIn />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/my-bids" element={<MyBids />} />
                     <Route path="/success-signup" element={<SuccessSignup />} />
                     <Route path="/success-request" element={<SuccessRequest />} />
