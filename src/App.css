@@ -2889,6 +2889,12 @@ textarea.form-control-lg {
   --bs-btn-disabled-bg: #9a4aff!important; /* Updated disabled background color */
   --bs-btn-disabled-border-color: #9a4aff!important; /* Updated disabled border color */
 }
+.btn-custom-purple {
+  background-color: #9a4aff !important;
+  border-color: #9a4aff !important;
+  color: white !important;
+}
+
 
 .btn-secondary-white {
   --bs-btn-color: #9f1ae2!important;
