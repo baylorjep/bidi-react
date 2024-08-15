@@ -14,6 +14,7 @@ function Signup() {
         businessName: '',
         businessCategory: '',
         businessAddress: '',
+        website: '',
     });
     const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
@@ -25,7 +26,7 @@ function Signup() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const { email, password, firstName, lastName, phone, category, businessName, businessCategory, businessAddress } = formData;
+        const { email, password, firstName, lastName, phone, category, businessName, businessCategory, businessAddress, website } = formData;
 
         const { data, error } = await supabase.auth.signUp({
             email,
@@ -84,6 +85,7 @@ function Signup() {
                         business_category: businessCategory,
                         business_address: businessAddress,
                         phone: phone,
+                        website: website,
                     },
                 ]);
 
@@ -131,34 +133,37 @@ function Signup() {
                         />
                         <label htmlFor="password">Password</label>
                     </div>
-                    <div className="form-floating mb-3">
-                        <input
-                            className="form-control"
-                            id="firstName"
-                            name="firstName"
-                            type="text"
-                            placeholder="Enter first name..."
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            required={formData.category === 'individual'}
-                            disabled={formData.category === 'business'}
-                        />
-                        <label htmlFor="firstName">First Name</label>
-                    </div>
-                    <div className="form-floating mb-3">
-                        <input
-                            className="form-control"
-                            id="lastName"
-                            name="lastName"
-                            type="text"
-                            placeholder="Enter last name..."
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            required={formData.category === 'individual'}
-                            disabled={formData.category === 'business'}
-                        />
-                        <label htmlFor="lastName">Last Name</label>
-                    </div>
+                    
+                    {formData.category !== 'business' && (
+                        <>
+                            <div className="form-floating mb-3">
+                                <input
+                                    className="form-control"
+                                    id="firstName"
+                                    name="firstName"
+                                    type="text"
+                                    placeholder="Enter first name..."
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <label htmlFor="firstName">First Name</label>
+                            </div>
+                            <div className="form-floating mb-3">
+                                <input
+                                    className="form-control"
+                                    id="lastName"
+                                    name="lastName"
+                                    type="text"
+                                    placeholder="Enter last name..."
+                                    value={formData.lastName}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <label htmlFor="lastName">Last Name</label>
+                            </div>
+                        </>
+                    )}
                     <div className="form-floating mb-3">
                         <input
                             className="form-control"
@@ -204,16 +209,23 @@ function Signup() {
                                 <label htmlFor="businessName">Business Name</label>
                             </div>
                             <div className="form-floating mb-3">
-                                <input
+                                <select
                                     className="form-control"
                                     id="businessCategory"
                                     name="businessCategory"
-                                    type="text"
-                                    placeholder="Business Category"
                                     value={formData.businessCategory}
                                     onChange={handleChange}
                                     required
-                                />
+                                >
+                                    <option value="">Select a category...</option>
+                                    <option value="cleaning">Home Cleaning</option>
+                                    <option value="photography">Photo Shoot</option>
+                                    <option value="landscaping">Landscaping</option>
+                                    <option value="plumbing">Plumbing</option>
+                                    <option value="electrical">Electrical</option>
+                                    <option value="moving">Moving</option>
+                                    <option value="other">Other</option>
+                                </select>
                                 <label htmlFor="businessCategory">Business Category</label>
                             </div>
                             <div className="form-floating mb-3">
@@ -228,6 +240,18 @@ function Signup() {
                                     required
                                 />
                                 <label htmlFor="businessAddress">Business Address</label>
+                            </div>
+                            <div className="form-floating mb-3">
+                                <input
+                                    className="form-control"
+                                    id="website"
+                                    name="website"
+                                    type="url"
+                                    placeholder="Business Website"
+                                    value={formData.website}
+                                    onChange={handleChange}
+                                />
+                                <label htmlFor="website">Website (Optional)</label>
                             </div>
                         </>
                     )}
