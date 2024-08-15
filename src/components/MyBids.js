@@ -62,7 +62,7 @@ function MyBids() {
         console.log('Bid ID:', bidId); // Add logging to confirm the values
         console.log('Request ID:', requestId);
     
-        // Update the `status` of the bid to 'accepted'
+        // Update the status of the bid to 'accepted'
         const { error: bidError } = await supabase
             .from('bids')
             .update({ status: 'accepted' })
@@ -74,7 +74,7 @@ function MyBids() {
             return;
         }
     
-        // Update the `open` status of the request to false
+        // Update the open status of the request to false
         const { error: requestError } = await supabase
             .from('requests')
             .update({ open: false })
@@ -90,15 +90,16 @@ function MyBids() {
         navigate('/bid-accepted');
     };
     
+    
     const handleDeny = async (bidId) => {
-        // Update the `status` of the bid to 'denied'
+        // Update the status of the bid to 'denied'
         const { error: bidError } = await supabase
             .from('bids')
             .update({ status: 'denied' })
             .eq('id', bidId);
     
         if (bidError) {
-            setError(`Error denying bid: ${bidError.message}`);
+            setError(`Error approving bid: ${bidError.message}`);
             console.error('Error denying bid:', bidError);
             return;
         }
