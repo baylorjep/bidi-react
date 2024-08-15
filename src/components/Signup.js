@@ -30,27 +30,56 @@ function Signup() {
         });
 
         if (error) {
-            setErrorMessage(`Error signing up: ${error.message}`);
-        } else {
-            const { user } = data;
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .insert([
-                    {
-                        id: user.id,
-                        first_name: firstName,
-                        last_name: lastName,
-                        phone: phone,
-                        category: category,
-                    },
-                ]);
-
-            if (profileError) {
-                setErrorMessage(`Error storing profile info: ${profileError.message}`);
-            } else {
-                navigate('/success-signup'); // Redirect to success page
-            }
+            setErrorMessage(`Sign up error: ${error.message}`);
+            console.error('Sign up error:', error);
+            return;
         }
+
+        const { user } = data;
+        console.log('User signed up:', user);
+
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+                {
+                    id: user.id,
+                    email: email,
+                    role: category,
+                },
+            ]);
+
+        if (profileError) {
+            setErrorMessage(`Profile insertion error: ${profileError.message}`);
+            console.error('Profile insertion error:', profileError);
+            return;
+        }
+
+        if (category === 'individual')
+        {
+            const { error: individualError } = await supabase
+            .from('individual_profiles')
+            .insert([
+                {
+                    id: user.id,
+                    first_name: firstName,
+                    last_name: lastName,
+                    phone: phone,
+                },
+            ]);
+
+            if (individualError) {
+                setErrorMessage(`Individual profile insertion error: ${individualError.message}`);
+                console.error('Individual profile insertion error:', individualError);
+                return;
+            }  
+        }
+
+        if (category === 'business')
+        {
+            // TODO: Add business profiles when the user selects them
+            console.log('BUSINESS PROFILE IN PROGRESS');
+        }  
+        navigate('/success-signup'); // Redirect to success page
     };
 
     return (

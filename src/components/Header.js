@@ -2,6 +2,14 @@ import React from 'react';
 import '../App.css';
 
 function Header() {
+
+    const searchInput = document.getElementById('search');
+
+    const search = () => {
+        const searchValue = searchInput.value;
+        console.log(`Searched: ${searchValue}`);
+    }
+
     return (
         <header className="masthead-index">
             <div className="container px-5">
@@ -14,7 +22,7 @@ function Header() {
                             </p>
                             <div className="search-container">
                                 <input type="text" id="search" className="search-input" placeholder="What are you looking to do?" />
-                                <button className="search-button" onClick={() => console.log('Search clicked!')}>Search</button>
+                                <button className="search-button" onClick={() => search()}>Search</button>
                             </div>
                         </div>
                     </div>

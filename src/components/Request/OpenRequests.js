@@ -16,6 +16,7 @@ function OpenRequests() {
 
             if (error) {
                 setError(`Error fetching requests: ${error.message}`);
+                console.log(error);
             } else {
                 console.log('Fetched data:', data);
                 setOpenRequests(data || []); // Ensure data is an array
@@ -28,13 +29,16 @@ function OpenRequests() {
     return (
         <div className="container px-5 d-flex align-items-center justify-content-center grey-bg content">
             <div className="col-lg-6 remaining-space">
-                {error && <p>Error: {error}</p>}
+                {/* {error && <p>Error: {error}</p>} */}
                 {openRequests.length > 0 ? (
                     openRequests.map((request) => (
                         <RequestDisplay request={request}/>
                     ))
                 ) : (
-                    <p>No open requests found.</p>
+                    <>
+                        <h1>No open requests found.</h1>
+                        <p>Please check back later.</p>
+                    </>
                 )}
             </div>
         </div>

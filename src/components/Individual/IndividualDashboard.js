@@ -1,7 +1,14 @@
-import React from 'react';
-import '../App.css';
+import React, { useState, useEffect } from 'react';
+import '../../App.css';
+import IndividualUser from './IndividualUser';
 
 function IndividualDashboard() {
+    const [user, setUser] = useState(null); // user obj holds the user information
+
+    setUser(IndividualUser());
+
+    console.log(user)
+
     return (
         <div class="row fill-page-grey-bg">
             <div class="col-md-6">

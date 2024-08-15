@@ -18,24 +18,27 @@ function SignIn() {
         });
 
         if (error) {
-            setErrorMessage(`Error signing in: ${error.message}`);
-        } else {
-            // Fetch the user's profile information
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('category')
-                .eq('id', user.id)
-                .single();
+            setErrorMessage(`Sign in error: ${error.message}`);
+            console.log(`Sign in error: ${error.message}`);
+            return;
+        }
 
-            if (profileError) {
-                console.error('Error fetching profile:', profileError.message);
-            } else {
-                if (profile.category === 'individual') {
-                    navigate('/my-bids'); // Redirect individuals to the "My Bids" page
-                } else if (profile.category === 'business') {
-                    navigate('/open-requests'); // Redirect businesses to the "Open Requests" page
-                }
-            }
+        // Fetch the user's profile information
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError) {
+            console.error('Fetch profile error:', profileError.message);
+            return;
+        }
+
+        if (profile.role === 'individual') {
+            navigate('/my-bids'); // Redirect individuals to the "My Bids" page
+        } else if (profile.role === 'business') {
+            navigate('/open-requests'); // Redirect businesses to the "Open Requests" page
         }
     };
 

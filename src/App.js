@@ -15,7 +15,7 @@ import BidSuccess from './components/BidSuccess';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
-import IndividualDashboard from './components/IndividualDashboard';
+import IndividualDashboard from './components/Individual/IndividualDashboard';
 
 function App() {
     return (
