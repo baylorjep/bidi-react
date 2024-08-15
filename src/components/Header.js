@@ -1,5 +1,6 @@
 import React from 'react';
 import '../App.css';
+import { Link } from 'react-router-dom';
 
 function Header() {
 
@@ -21,8 +22,11 @@ function Header() {
                                 Our revolutionary bidding system simplifies obtaining real quotes for the services you need, allowing for easy comparison all in one place.
                             </p>
                             <div className="search-container">
-                                <input type="text" id="search" className="search-input" placeholder="What are you looking to do?" />
-                                <button className="search-button" onClick={() => search()}>Search</button>
+                            <Link to="Signup">
+                                <button className="search-button">
+                                Get Started
+                                </button>
+                            </Link>
                             </div>
                         </div>
                     </div>
