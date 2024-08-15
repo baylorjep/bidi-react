@@ -107,6 +107,21 @@ function Signup() {
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
                 <form onSubmit={handleSubmit}>
+                <div className="form-floating mb-3">
+                        <select
+                            className="form-control"
+                            id="category"
+                            name="category"
+                            value={formData.category}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="">I am a...</option>
+                            <option value="business">Business</option>
+                            <option value="individual">Individual</option>
+                        </select>
+                        <label htmlFor="category">Category</label>
+                    </div>
                     <div className="form-floating mb-3">
                         <input
                             className="form-control"
@@ -177,21 +192,7 @@ function Signup() {
                         />
                         <label htmlFor="phone">Phone Number</label>
                     </div>
-                    <div className="form-floating mb-3">
-                        <select
-                            className="form-control"
-                            id="category"
-                            name="category"
-                            value={formData.category}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">I am a...</option>
-                            <option value="business">Business</option>
-                            <option value="individual">Individual</option>
-                        </select>
-                        <label htmlFor="category">Category</label>
-                    </div>
+                    
 
                     {formData.category === 'business' && (
                         <>
