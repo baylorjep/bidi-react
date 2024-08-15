@@ -14,6 +14,8 @@ import SubmitBid from './components/Request/SubmitBid';
 import BidSuccess from './components/BidSuccess';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import BidAccepted from './components/BidAccepted';
+
 
 import IndividualDashboard from './components/Individual/IndividualDashboard';
 
@@ -33,6 +35,7 @@ function App() {
                     <Route path="/bid-success" element={<BidSuccess />} />
                     <Route path="/open-requests" element={<OpenRequests />} />
                     <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
+                    <Route path="/bid-accepted" element={<BidAccepted />} />
                     {/* <Route path="/dashboard" element={<IndividualDashboard />} /> */}
                 </Routes>
             </div>

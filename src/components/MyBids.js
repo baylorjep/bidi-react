@@ -72,7 +72,7 @@ function MyBids() {
         }
 
         // Redirect to the BidAccept.js page
-        navigate(`/bid-accepted/${requestId}`);
+        navigate(`/bid-accepted`);
     };
 
     const handleDeny = (bidId) => {
