@@ -58,26 +58,52 @@ function MyBids() {
         fetchUserAndBids();
     }, []);
 
-    const handleApprove = async (requestId) => {
+    const handleApprove = async (bidId, requestId) => {
+        // Update the `status` of the bid to 'accepted'
+        const { error: bidError } = await supabase
+            .from('bids')
+            .update({ status: 'accepted' })
+            .eq('id', bidId);
+    
+        if (bidError) {
+            setError(`Error approving bid: ${bidError.message}`);
+            console.error('Error approving bid:', bidError);
+            return;
+        }
+    
         // Update the `open` status of the request to false
-        const { error } = await supabase
+        const { error: requestError } = await supabase
             .from('requests')
             .update({ open: false })
             .eq('id', requestId);
-
-        if (error) {
-            setError(`Error approving bid: ${error.message}`);
-            console.error('Error approving bid:', error);
+    
+        if (requestError) {
+            setError(`Error updating request status: ${requestError.message}`);
+            console.error('Error updating request status:', requestError);
             return;
         }
-
-        // Redirect to the BidAccept.js page
-        navigate(`/bid-accepted`);
+    
+        // Redirect to the BidSuccess page
+        navigate('/bid-success');
     };
-
-    const handleDeny = (bidId) => {
+    
+    const handleDeny = async (bidId) => {
+        // Update the `status` of the bid to 'denied'
+        const { error: bidError } = await supabase
+            .from('bids')
+            .update({ status: 'denied' })
+            .eq('id', bidId);
+    
+        if (bidError) {
+            setError(`Error denying bid: ${bidError.message}`);
+            console.error('Error denying bid:', bidError);
+            return;
+        }
+    
+        // Remove the bid from the state so it no longer shows on the page
         setBids(bids.filter(bid => bid.id !== bidId));
     };
+    
 
     return (
         <div className="container px-5">
@@ -85,12 +111,15 @@ function MyBids() {
                 <h2>My Bids</h2>
                 {error && <p className="text-danger">{error}</p>}
                 {bids.length > 0 ? (
-                    bids.map((bid) => (
-                        <BidDisplay key={bid.id} bid={bid} handleApprove={handleApprove} handleDeny={handleDeny} />
-                    ))
+                    bids
+                        .filter(bid => bid.status === 'pending')
+                        .map((bid) => (
+                            <BidDisplay key={bid.id} bid={bid} handleApprove={handleApprove} handleDeny={handleDeny} />
+                        ))
                 ) : (
                     <p>You don't have any bids at the moment. Please check back later, or look out for notifications.</p>
                 )}
+
             </header>
         </div>
     );
