@@ -14,6 +14,7 @@ function RequestDisplay({ request }) {
                 
                 {/* Only show additional comments if they exist */}
                 { request.additional_comments && <p className="request-comments"><strong>Additional Comments:</strong> {request.additional_comments}</p> }
+                <div style={{ marginBottom: '30px' }}></div>
 
                 <Link className="btn btn-secondary rounded-pill px-3 mb-2 mb-lg-0 bid-button" to={`/submit-bid/${request.id}`}>
                     <span className="d-flex align-items-center">
