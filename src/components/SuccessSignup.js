@@ -7,7 +7,7 @@ function SuccessSignup() {
             <div className="col-lg-6 text-center">
                 <br/>
                 <h1>Success! Account Created.</h1>
-                <p>Check your Email to confirm your Account.</p>
+                <p>Your account has been created.</p>
                 <Link to="/signin" className="btn btn-secondary btn-lg">Click Here to Sign In</Link>
             </div>
         </div>
