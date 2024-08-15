@@ -109,23 +109,28 @@ function Signup() {
             }
     
             if (businessCategory === 'other' && otherBusinessCategory) {
-                const { error: otherCategoryError } = await supabase
-                    .from('other_business_categories')
+                console.log('Inserting into other_service_categories:');
+                console.log('user_id:', user.id);
+                console.log('category_name:', otherBusinessCategory);
+            
+                const { data: customCategoryData, error: otherCategoryError } = await supabase
+                    .from('other_service_categories')
                     .insert([
                         {
                             user_id: user.id,
                             category_name: otherBusinessCategory,
                         },
                     ]);
-    
+            
                 if (otherCategoryError) {
                     setErrorMessage(`Error submitting custom category: ${otherCategoryError.message}`);
-                    console.error('Error submitting custom category:', otherCategoryError);
+                    console.error('Detailed error:', otherCategoryError);
                     return;
                 } else {
-                    console.log('Custom category inserted successfully:', otherBusinessCategory);
+                    console.log('Custom category inserted successfully:', customCategoryData);
                 }
             }
+            
         }
     
         navigate('/success-signup'); // Redirect to success page
