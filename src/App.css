@@ -11227,6 +11227,13 @@ footer a:hover, footer a:active, footer a:focus {
 .DashboardPill:hover {
   background: var(--bs-gray-200);
 }
+
+.dashboard-title {
+  height: fit-content;
+  width: 100vw;
+  text-align: center;
+}
+
 .expanded {
   height: auto;
   transition: height 0.3s;
