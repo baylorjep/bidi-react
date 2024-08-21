@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import '../App.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 function Signup() {
     const [formData, setFormData] = useState({
@@ -11,67 +11,76 @@ function Signup() {
         firstName: '',
         lastName: '',
         phone: '',
-        category: '',
         businessName: '',
         businessCategory: '',
-        otherBusinessCategory: '', // Add field for custom business category
+        otherBusinessCategory: '', // Field for custom business category
         businessAddress: '',
         website: '',
     });
     const [errorMessage, setErrorMessage] = useState('');
+    const [userType, setUserType] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const type = params.get('type');
+        if (type) {
+            setUserType(type);
+        } else {
+            navigate('/createaccount'); // Redirect if no user type is selected
+        }
+    }, [location, navigate]);
 
     const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
-            // Clear the otherBusinessCategory if businessCategory is changed and not "other"
             ...(e.target.name === 'businessCategory' && e.target.value !== 'other' ? { otherBusinessCategory: '' } : {}),
         });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
-        // Check if passwords match
+
         if (formData.password !== formData.confirmPassword) {
             setErrorMessage("Passwords do not match");
             return;
         }
-    
-        const { email, password, firstName, lastName, phone, category, businessName, businessCategory, otherBusinessCategory, businessAddress, website } = formData;
-    
+
+        const { email, password, firstName, lastName, phone, businessName, businessCategory, otherBusinessCategory, businessAddress, website } = formData;
+
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
         });
-    
+
         if (error) {
             setErrorMessage(`Sign up error: ${error.message}`);
             console.error('Sign up error:', error);
             return;
         }
-    
+
         const { user } = data;
         console.log('User signed up:', user);
-    
+
         const { error: profileError } = await supabase
             .from('profiles')
             .insert([
                 {
                     id: user.id,
                     email: email,
-                    role: category,
+                    role: userType,
                 },
             ]);
-    
+
         if (profileError) {
             setErrorMessage(`Profile insertion error: ${profileError.message}`);
             console.error('Profile insertion error:', profileError);
             return;
         }
-    
-        if (category === 'individual') {
+
+        if (userType === 'individual') {
             const { error: individualError } = await supabase
                 .from('individual_profiles')
                 .insert([
@@ -82,13 +91,13 @@ function Signup() {
                         phone: phone,
                     },
                 ]);
-    
+
             if (individualError) {
                 setErrorMessage(`Individual profile insertion error: ${individualError.message}`);
                 console.error('Individual profile insertion error:', individualError);
                 return;
             }
-        } else if (category === 'business') {
+        } else if (userType === 'business') {
             const { error: businessError } = await supabase
                 .from('business_profiles')
                 .insert([
@@ -101,19 +110,15 @@ function Signup() {
                         website: website,
                     },
                 ]);
-    
+
             if (businessError) {
                 setErrorMessage(`Business profile insertion error: ${businessError.message}`);
                 console.error('Business profile insertion error:', businessError);
                 return;
             }
-    
+
             if (businessCategory === 'other' && otherBusinessCategory) {
-                console.log('Inserting into other_service_categories:');
-                console.log('user_id:', user.id);
-                console.log('category_name:', otherBusinessCategory);
-            
-                const { data: customCategoryData, error: otherCategoryError } = await supabase
+                const { error: otherCategoryError } = await supabase
                     .from('other_service_categories')
                     .insert([
                         {
@@ -121,21 +126,19 @@ function Signup() {
                             category_name: otherBusinessCategory,
                         },
                     ]);
-            
+
                 if (otherCategoryError) {
                     setErrorMessage(`Error submitting custom category: ${otherCategoryError.message}`);
                     console.error('Detailed error:', otherCategoryError);
                     return;
                 } else {
-                    console.log('Custom category inserted successfully:', customCategoryData);
+                    console.log('Custom category inserted successfully');
                 }
             }
-            
         }
-    
+
         navigate('/success-signup'); // Redirect to success page
     };
-    
 
     return (
         <div className="container px-5 d-flex align-items-center justify-content-center">
@@ -145,21 +148,6 @@ function Signup() {
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
                 <form onSubmit={handleSubmit}>
-                    <div className="form-floating mb-3">
-                        <select
-                            className="form-control"
-                            id="category"
-                            name="category"
-                            value={formData.category}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">I am a...</option>
-                            <option value="business">Business</option>
-                            <option value="individual">Individual</option>
-                        </select>
-                        <label htmlFor="category">Category</label>
-                    </div>
                     <div className="form-floating mb-3">
                         <input
                             className="form-control"
@@ -200,7 +188,7 @@ function Signup() {
                         <label htmlFor="confirmPassword">Confirm Password</label>
                     </div>
 
-                    {formData.category !== 'business' && (
+                    {userType === 'individual' && (
                         <>
                             <div className="form-floating mb-3">
                                 <input
@@ -230,6 +218,7 @@ function Signup() {
                             </div>
                         </>
                     )}
+
                     <div className="form-floating mb-3">
                         <input
                             className="form-control"
@@ -244,7 +233,7 @@ function Signup() {
                         <label htmlFor="phone">Phone Number</label>
                     </div>
 
-                    {formData.category === 'business' && (
+                    {userType === 'business' && (
                         <>
                             <div className="form-floating mb-3">
                                 <input

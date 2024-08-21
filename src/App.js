@@ -16,6 +16,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import BidAccepted from './components/BidAccepted';
 import ResetPassword from './components/ResetPassword';
+import ChooseUserType from './components/ChooseUserType';
 
 
 import IndividualDashboard from './components/Individual/IndividualDashboard';
@@ -38,6 +39,7 @@ function App() {
                     <Route path="/open-requests" element={<OpenRequests />} />
                     <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
                     <Route path="/bid-accepted" element={<BidAccepted />} />
+                    <Route path="/createaccount" element={<ChooseUserType />} />
                     {/* <Route path="/dashboard" element={<IndividualDashboard />} /> */}
                 </Routes>
             </div>
