@@ -10,9 +10,9 @@ function RotatingText() {
         'Moving Service',
         'Landscaping Job',
         'Painting Project',
+        'Language Lesson',
         'Web Design Project',
         'Therapy Session',
-        'Legal Service',
         'Chiropractic Visit',
         'CPA Service',
         'Financial Planning',
@@ -22,7 +22,7 @@ function RotatingText() {
         'Piano Lesson',
         'Haircut',
         'Manicure',
-        'Language Lesson',
+        
         'Social Media Management',
         'Interior Design',
     ];
