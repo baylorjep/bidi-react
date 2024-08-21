@@ -1,16 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import '../../App.css';
-import IndividualUser from './IndividualUser';
+import { useIndividualUser } from './getIndividualUser';
 
-function IndividualDashboard() {
-    const [user, setUser] = useState(null); // user obj holds the user information
+function MyDashboard() {
+    const { user, userError } = useIndividualUser();
 
-    setUser(IndividualUser());
+    if (userError) {
+        console.log(`Error fetching user or profile: ${userError.message}`);
+        return;
+    }
 
+    // for dev purposes, helps me see the user object
+    console.log('user')
     console.log(user)
 
+
     return (
-        <div class="row fill-page-grey-bg">
+        <div class="row fill-page-grey-bg pt-5">
+            <h1 className='dashboard-title'>{user.profile?.first_name}'s Dashboard</h1>
             <div class="col-md-6">
                     <div class="DashboardPill">
                         You Have 3 new bids to view!
@@ -104,7 +111,7 @@ function IndividualDashboard() {
                 </div>
             </div>
         </div>
-    );
+    )
 }
 
-export default IndividualDashboard;
+export default MyDashboard;
