@@ -128,6 +128,9 @@ h6, .h6, h5, .h5, h4, .h4, h3, .h3, h2, .h2, h1, .h1 {
   font-family: "Newsreader", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   font-weight: 600;
   line-height: 1.2;
+  white-space: nowrap; /* Prevents text from wrapping to the next line */
+  overflow: hidden; /* Prevents text overflow issues */
+  text-overflow: ellipsis; /* Adds ellipsis if text is too long */
 }
 
 h1, .h1 {
@@ -11556,14 +11559,4 @@ footer a:hover, footer a:active, footer a:focus {
   80% { transform: translateY(0); opacity: 1; }
   90% { transform: translateY(-100%); opacity: 0; }
   100% { transform: translateY(-100%); opacity: 0; }
-}
-/* Responsive font size for mobile */
-@media only screen and (max-width: 350px) {
-  h1 {
-    font-size: 3vw; /* Adjust the font size of the header */
-  }
-
-  .rotating-text {
-    font-size: 0.9em; /* Adjust the font size of the rotating text */
-  }
 }
