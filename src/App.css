@@ -11558,9 +11558,9 @@ footer a:hover, footer a:active, footer a:focus {
   100% { transform: translateY(-100%); opacity: 0; }
 }
 /* Responsive font size for mobile */
-@media only screen and (max-width: 768px) {
+@media only screen and (max-width: 350px) {
   h1 {
-    font-size: 1.5em; /* Adjust the font size of the header */
+    font-size: 3vw; /* Adjust the font size of the header */
   }
 
   .rotating-text {
