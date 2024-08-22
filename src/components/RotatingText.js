@@ -22,7 +22,6 @@ function RotatingText() {
         'Piano Lesson',
         'Haircut',
         'Manicure',
-        
         'Social Media Management',
         'Interior Design',
     ];
