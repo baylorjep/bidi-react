@@ -8,7 +8,7 @@ function Header() {
         <header className="masthead-index">
             <div className="container px-5">
                 <div className="row gx-5 justify-content-center">
-                    <div className="col-lg-8 text-center">
+                    <div className="col-lg-10 text-center">
                         <div className="text-container">
                             <h1>
                                 Real-Time Bids on Your Next <RotatingText />
