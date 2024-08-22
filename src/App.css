@@ -11551,6 +11551,7 @@ footer a:hover, footer a:active, footer a:focus {
   position: relative;
   font-size: inherit; /* Ensure it inherits the font size from the parent */
   animation: slide 3s infinite;
+  transition: transform 0.5s ease, opacity 0.5s ease;
 }
 
 @keyframes slide {
@@ -11560,3 +11561,4 @@ footer a:hover, footer a:active, footer a:focus {
   90% { transform: translateY(-100%); opacity: 0; }
   100% { transform: translateY(-100%); opacity: 0; }
 }
+

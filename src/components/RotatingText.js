@@ -30,12 +30,15 @@ function RotatingText() {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     useEffect(() => {
-        const intervalId = setInterval(() => {
-            setCurrentIndex((prevIndex) => (prevIndex + 1) % texts.length);
-        }, 3000); // Change text every 3 seconds
-
+        let intervalId = setInterval(() => {
+            setCurrentIndex((prevIndex) => {
+                return (prevIndex + 1) % texts.length;
+            });
+        }, 3000);
+    
         return () => clearInterval(intervalId);
     }, [texts.length]);
+    
 
     return (
         <div className="rotating-text-wrapper">
