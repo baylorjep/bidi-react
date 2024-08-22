@@ -12,7 +12,7 @@ function RotatingText() {
         'Painting Project',
         'Language Lesson',
         'Web Design Project',
-        'Therapy Session',
+        'Catering Job',
         'Chiropractic Visit',
         'CPA Service',
         'Financial Planning',
