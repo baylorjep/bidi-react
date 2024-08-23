@@ -16,7 +16,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import BidAccepted from './components/BidAccepted';
 import ResetPassword from './components/ResetPassword';
-
+import ContactForm from './components/ContactForm';
 import ChooseUserType from './components/ChooseUserType';
 import MyDashboard from './components/Individual/MyDashboard'
 
@@ -41,6 +41,7 @@ function App() {
                     <Route path="/bid-accepted" element={<BidAccepted />} />
                     <Route path="/createaccount" element={<ChooseUserType />} />
                     <Route path="/my-dashboard" element={<MyDashboard />} />
+                    <Route path="/contact-us" element={<ContactForm />} />
                     
                 </Routes>
             </div>

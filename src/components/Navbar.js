@@ -96,6 +96,9 @@ function Navbar() {
                                 <Link className="nav-link me-lg-3" to="/open-requests">Open Requests</Link>
                             </li>
                         )}
+                        <li className='nav-item'>
+                            <Link className="nav-link me-lg-3" to="/contact-us">Contact Us</Link>
+                        </li>
                     </ul>
 
                     {user ? (
@@ -114,6 +117,7 @@ function Navbar() {
                 </div>
             </div>
         </nav>
+        
     );
 }
 
