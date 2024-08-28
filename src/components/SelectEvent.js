@@ -9,7 +9,6 @@ function SelectEvent({ setEventType }) {
         'Family Photos Session',
         'Wedding/Engagement Photos',
         'Couples Session',
-        'Baby Photos',
         'Individual/Headshots',
         'Large Group/Event Photos',
         'Product Photos',
