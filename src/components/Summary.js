@@ -42,7 +42,6 @@ function Summary({ eventType, eventDetails }) {
         }
     };
 
-    console.log(eventDetails);
     return (
         <div className="container">
             <h2>{eventDetails.eventTitle} Summary</h2>

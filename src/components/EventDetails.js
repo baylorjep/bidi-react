@@ -19,7 +19,6 @@ function EventDetails({ eventType, setEventDetails }) {
 
     const handleChange = (e) => {
         setDetails({ ...details, [e.target.name]: e.target.value });
-        console.log(details);
     };
 
     const handleSubmit = (e) => {
