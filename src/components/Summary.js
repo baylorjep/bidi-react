@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../src/supabaseClient';
 
 function Summary({ eventType, eventDetails }) {
     const navigate = useNavigate();

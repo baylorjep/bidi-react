@@ -1,5 +1,5 @@
 import './App.css';
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Header from './components/Header';
@@ -50,8 +50,8 @@ function App() {
                     <Route path="/my-dashboard" element={<MyDashboard />} />
                     <Route path="/contact-us" element={<ContactForm />} />
                     <Route path="/select-event" element={<SelectEvent setEventType={setEventType} />} />
-                <Route path="/event-details" element={<EventDetails eventType={eventType} setEventDetails={setEventDetails} />} />
-                <Route path="/summary" element={<Summary eventType={eventType} eventDetails={eventDetails} />} />
+                    <Route path="/event-details" element={<EventDetails eventType={eventType} setEventDetails={setEventDetails} />} />
+                    <Route path="/summary" element={<Summary eventType={eventType} eventDetails={eventDetails} />} />
                 
                     
                 </Routes>
