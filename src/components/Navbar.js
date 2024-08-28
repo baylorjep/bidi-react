@@ -83,6 +83,13 @@ function Navbar() {
                             <li className="nav-item">
                                 <Link className="nav-link me-lg-3" to="/request">Request a Service</Link>
                             </li>
+                            
+                        )}
+                        {(!userRole || userRole === 'individual') && (
+                            <li className="nav-item">
+                                <Link className="nav-link me-lg-3" to="/select-event">Request a Service</Link>
+                            </li>
+                            
                         )}
 
                         {userRole === 'individual' && (
@@ -96,6 +103,7 @@ function Navbar() {
                                 <Link className="nav-link me-lg-3" to="/open-requests">Open Requests</Link>
                             </li>
                         )}
+                        
                         <li className='nav-item'>
                             <Link className="nav-link me-lg-3" to="/contact-us">Contact Us</Link>
                         </li>

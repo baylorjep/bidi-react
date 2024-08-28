@@ -19,9 +19,16 @@ import ResetPassword from './components/ResetPassword';
 import ContactForm from './components/ContactForm';
 import ChooseUserType from './components/ChooseUserType';
 import MyDashboard from './components/Individual/MyDashboard'
+import SelectEvent from './components/SelectEvent';
+import EventDetails from './components/EventDetails';
+import Summary from './components/Summary';
 
 
 function App() {
+
+    const [eventType, setEventType] = useState('');
+    const [eventDetails, setEventDetails] = useState({});
+
     return (
         <Router>
             <div>
@@ -42,6 +49,10 @@ function App() {
                     <Route path="/createaccount" element={<ChooseUserType />} />
                     <Route path="/my-dashboard" element={<MyDashboard />} />
                     <Route path="/contact-us" element={<ContactForm />} />
+                    <Route path="/select-event" element={<SelectEvent setEventType={setEventType} />} />
+                <Route path="/event-details" element={<EventDetails eventType={eventType} setEventDetails={setEventDetails} />} />
+                <Route path="/summary" element={<Summary eventType={eventType} eventDetails={eventDetails} />} />
+                
                     
                 </Routes>
             </div>
