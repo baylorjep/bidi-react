@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import '../../App.css';
-import RequestDisplay from './RequestDisplay'; // Import the RequestDisplay component
+import RequestDisplay from './RequestDisplay'; // Regular request display component
+import PhotoRequestDisplay from './PhotoRequestDisplay'; // Photography request display component
 
 function SubmitBid() {
     const { requestId } = useParams();
-    const [requestDetails, setRequestDetails] = useState(null); 
+    const [requestDetails, setRequestDetails] = useState(null);
+    const [requestType, setRequestType] = useState(''); // To track the request type
     const [bidAmount, setBidAmount] = useState('');
     const [bidDescription, setBidDescription] = useState('');
     const [error, setError] = useState('');
@@ -15,16 +17,31 @@ function SubmitBid() {
 
     useEffect(() => {
         const fetchRequestDetails = async () => {
-            const { data, error } = await supabase
+            // First, try fetching from the `requests` table
+            let { data, error } = await supabase
                 .from('requests')
                 .select('*')
                 .eq('id', requestId)
                 .single();
 
             if (error) {
-                setError('Error fetching request details');
+                // If not found, try the `photography_requests` table
+                const { data: photoData, error: photoError } = await supabase
+                    .from('photography_requests')
+                    .select('*')
+                    .eq('id', requestId)
+                    .single();
+
+                if (photoError) {
+                    setError('Error fetching request details');
+                    return;
+                }
+
+                setRequestDetails(photoData);
+                setRequestType('photography_requests');
             } else {
                 setRequestDetails(data);
+                setRequestType('requests');
             }
         };
 
@@ -44,19 +61,37 @@ function SubmitBid() {
             return;
         }
 
-        const { data, error } = await supabase
-            .from('bids')
-            .insert([
-                {
-                    bid_amount: bidAmount,
-                    bid_description: bidDescription,
-                    request_id: requestId, 
-                    user_id: user.id,
-                },
-            ]);
+        let insertError;
+        if (requestType === 'requests') {
+            // Insert into the regular bids table
+            const { error } = await supabase
+                .from('bids')
+                .insert([
+                    {
+                        request_id: requestId,
+                        user_id: user.id,
+                        bid_amount: bidAmount,
+                        bid_description: bidDescription,
+                    },
+                ]);
+            insertError = error;
+        } else if (requestType === 'photography_requests') {
+            // Insert into the photography bids table
+            const { error } = await supabase
+                .from('photography_bids')
+                .insert([
+                    {
+                        request_id: requestId,
+                        user_id: user.id,
+                        bid_amount: bidAmount,
+                        bid_description: bidDescription,
+                    },
+                ]);
+            insertError = error;
+        }
 
-        if (error) {
-            setError(`Error placing bid: ${error.message}`);
+        if (insertError) {
+            setError(`Error placing bid: ${insertError.message}`);
         } else {
             setSuccess('Bid successfully placed!');
             navigate('/bid-success');
@@ -71,7 +106,10 @@ function SubmitBid() {
                 {error && <p className="text-danger">{error}</p>}
                 {success && <p className="text-success">{success}</p>}
                 {requestDetails && (
-                    <RequestDisplay request={requestDetails} hideBidButton={true} />
+                    <>
+                        {requestType === 'requests' && <RequestDisplay request={requestDetails} hideBidButton={true} />}
+                        {requestType === 'photography_requests' && <PhotoRequestDisplay photoRequest={requestDetails} hideBidButton={true} />}
+                    </>
                 )}
                 <form onSubmit={handleSubmit}>
                     <div className="form-floating mb-3">
