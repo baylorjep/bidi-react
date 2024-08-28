@@ -7,7 +7,7 @@ function EventDetails({ eventType, setEventDetails }) {
         location: '',
         dateType: 'specific',
         startDate: '',
-        endDate: '',
+        endDate: null,
         timeOfDay: '',
         numPeople: '',
         duration: '',
@@ -19,6 +19,7 @@ function EventDetails({ eventType, setEventDetails }) {
 
     const handleChange = (e) => {
         setDetails({ ...details, [e.target.name]: e.target.value });
+        console.log(details);
     };
 
     const handleSubmit = (e) => {

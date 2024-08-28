@@ -87,7 +87,7 @@ function Navbar() {
                         )}
                         {(!userRole || userRole === 'individual') && (
                             <li className="nav-item">
-                                <Link className="nav-link me-lg-3" to="/select-event">Request a Service</Link>
+                                <Link className="nav-link me-lg-3" to="/select-event">Request a Photo Shoot</Link>
                             </li>
                             
                         )}
