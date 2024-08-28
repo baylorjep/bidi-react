@@ -11,6 +11,7 @@ function Summary({ eventType, eventDetails }) {
             .from('photography_requests')
             .insert([
                 {
+                    event_title: eventDetails.eventTitle,
                     event_type: eventType,
                     date_type: eventDetails.dateType,
                     start_date: eventDetails.startDate,
@@ -34,16 +35,16 @@ function Summary({ eventType, eventDetails }) {
 
     return (
         <div className="container">
-            <h2>Summary</h2>
+            <h2>{eventDetails.eventTitle} Summary</h2>
             <p><strong>Event Type:</strong> {eventType}</p>
-            <p>Location: {eventDetails.location}</p>
-            <p>{eventDetails.dateType === 'range' && 'Start'} Date: {eventDetails.startDate}</p>
-            {eventDetails.dateType === 'range' && <p>End Date: {eventDetails.endDate}</p>}
-            <p>Time of Day: {eventDetails.timeOfDay}</p>
-            <p>Number of People: {eventDetails.numberOfPeople}</p>
-            <p>Duration (in hours): {eventDetails.duration}</p>
-            <p>Indoor/Outdoor: {eventDetails.indoorOutdoor}</p>
-            <p>Additional Comments: {eventDetails.additionalComments}</p>
+            <p><strong>Location:</strong> {eventDetails.location}</p>
+            <p><strong>{eventDetails.dateType === 'range' && 'Start'} Date:</strong> {eventDetails.startDate}</p>
+            {eventDetails.dateType === 'range' && <p><strong>End Date:</strong> {eventDetails.endDate}</p>}
+            <p><strong>Time of Day:</strong> {eventDetails.timeOfDay}</p>
+            <p><strong>Number of People:</strong> {eventDetails.numberOfPeople}</p>
+            <p><strong>Duration (in hours):</strong> {eventDetails.duration}</p>
+            <p><strong>Indoor/Outdoor:</strong> {eventDetails.indoorOutdoor}</p>
+            <p><strong>Additional Comments:</strong> {eventDetails.additionalComments}</p>
             {/* Display other details */}
             <button className="btn btn-secondary mt-4" onClick={() => navigate('/event-details')}>Edit</button>
             <button className="btn btn-primary mt-4" onClick={handleSubmit}>Submit</button>

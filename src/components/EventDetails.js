@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 function EventDetails({ eventType, setEventDetails }) {
     const [details, setDetails] = useState({
+        eventTitle: '',
         location: '',
         dateType: 'specific',
         startDate: '',
@@ -30,6 +31,18 @@ function EventDetails({ eventType, setEventDetails }) {
         <div className="container">
             <h2>{eventType} Details</h2>
             <form onSubmit={handleSubmit}>
+                {/* Event Title */}
+                <div className="form-group">
+                    <label>Event Title</label>
+                    <input
+                        type="text"
+                        name="eventTitle"
+                        value={details.eventTitle}
+                        onChange={handleChange}
+                        className="form-control"
+                    />
+                </div>
+
                 {/* Location */}
                 <div className="form-group">
                     <label>Location</label>
