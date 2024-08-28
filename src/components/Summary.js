@@ -11,6 +11,7 @@ function Summary({ eventType, eventDetails }) {
             .from('photography_requests')
             .insert([
                 {
+                    profile_id: '',
                     event_title: eventDetails.eventTitle,
                     event_type: eventType,
                     date_type: eventDetails.dateType,
@@ -22,7 +23,8 @@ function Summary({ eventType, eventDetails }) {
                     duration: eventDetails.duration,
                     indoor_outdoor: eventDetails.indoorOutdoor,
                     additional_comments: eventDetails.additionalComments,
-                    extras: eventDetails.extras
+                    extras: eventDetails.extras,
+                    status: 'open'
                 },
             ]);
 
