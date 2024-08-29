@@ -655,7 +655,7 @@ progress {
   margin-right: auto;
   margin-left: auto;
   max-width: 1200px;
-  padding: 0 15px;
+  padding: 10px 15px;
 }
 
 @media (min-width: 576px) {
@@ -11597,7 +11597,7 @@ html, body {
   padding: 20px;
   background-color: #333; /* Adjust as needed */
   color: white;
-  margin-top: 10px;
+  /* margin-top: 10px; */
   box-sizing: border-box;
 }
 
