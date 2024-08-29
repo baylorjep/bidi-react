@@ -1,7 +1,8 @@
 import './App.css';
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import Navbar from './components/Layout/Navbar';
+import Footer from './components/Layout/Footer';
 import Header from './components/Header';
 import RequestForm from './components/Request/RequestForm';
 import Signup from './components/Signup';
@@ -22,6 +23,8 @@ import MyDashboard from './components/Individual/MyDashboard'
 import SelectEvent from './components/SelectEvent';
 import EventDetails from './components/EventDetails';
 import Summary from './components/Summary';
+import PrivacyPolicy from './components/Layout/PrivacyPolicy';
+import TermsOfUse from './components/Layout/TermsOfUse';
 
 
 function App() {
@@ -31,30 +34,46 @@ function App() {
 
     return (
         <Router>
-            <div>
+            <div className="app-container">
                 <Navbar />
-                <Routes>
-                    <Route path="/" element={<Header />} />
-                    <Route path="/request" element={<RequestForm />} />
-                    <Route path="/signup" element={<Signup />} />
-                    <Route path="/signin" element={<SignIn />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/my-bids" element={<MyBids />} />
-                    <Route path="/success-signup" element={<SuccessSignup />} />
-                    <Route path="/success-request" element={<SuccessRequest />} />
-                    <Route path="/bid-success" element={<BidSuccess />} />
-                    <Route path="/open-requests" element={<OpenRequests />} />
-                    <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
-                    <Route path="/bid-accepted" element={<BidAccepted />} />
-                    <Route path="/createaccount" element={<ChooseUserType />} />
-                    <Route path="/my-dashboard" element={<MyDashboard />} />
-                    <Route path="/contact-us" element={<ContactForm />} />
-                    <Route path="/select-event" element={<SelectEvent setEventType={setEventType} />} />
-                    <Route path="/event-details" element={<EventDetails eventType={eventType} setEventDetails={setEventDetails} />} />
-                    <Route path="/summary" element={<Summary eventType={eventType} eventDetails={eventDetails} />} />
-                
-                    
-                </Routes>
+                <div className='content'>
+                    <Routes>
+                        {/* Layout */}
+                        <Route path="/" element={<Header />} />
+                        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                        <Route path="/terms-of-use" element={<TermsOfUse />} />
+
+                        {/* Bid */}
+                        <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
+                        <Route path="/bid-accepted" element={<BidAccepted />} />
+                        <Route path="/bid-success" element={<BidSuccess />} />
+
+                        {/* Request */}
+                        <Route path="/request" element={<RequestForm />} />
+                        <Route path="/success-request" element={<SuccessRequest />} />
+                        <Route path="/my-bids" element={<MyBids />} />
+
+                        {/* Individual */}
+                        <Route path="/signup" element={<Signup />} />
+                        <Route path="/success-signup" element={<SuccessSignup />} />
+                        <Route path="/signin" element={<SignIn />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/my-dashboard" element={<MyDashboard />} />
+
+                        {/* Business */}
+                        <Route path="/open-requests" element={<OpenRequests />} />
+
+                        {/* Misc/TBD */}
+                        <Route path="/createaccount" element={<ChooseUserType />} />
+                        <Route path="/contact-us" element={<ContactForm />} />
+                        <Route path="/select-event" element={<SelectEvent setEventType={setEventType} />} />
+                        <Route path="/event-details" element={<EventDetails eventType={eventType} setEventDetails={setEventDetails} />} />
+                        <Route path="/summary" element={<Summary eventType={eventType} eventDetails={eventDetails} />} />
+                        
+                    </Routes>
+                </div>
+                {/* <div className="filler"></div> */}
+                <Footer />
             </div>
         </Router>
     );

@@ -29,7 +29,7 @@ function EventDetails({ eventType, setEventDetails }) {
 
     return (
         <div className="container">
-            <h2>{eventType} Details</h2>
+            <h2 className="PageHeader">{eventType} Details</h2>
             <form onSubmit={handleSubmit}>
                 {/* Event Title */}
                 <div className="form-group">

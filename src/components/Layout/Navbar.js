@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import logo from '../assets/images/Bidi Logo.png';
-import '../App.css';
+import { supabase } from '../../supabaseClient';
+import logo from '../../assets/images/Bidi Logo.png';
+import '../../App.css';
 
 function Navbar() {
     const [user, setUser] = useState(null);
@@ -87,7 +87,7 @@ function Navbar() {
                         )}
                         {(!userRole || userRole === 'individual') && (
                             <li className="nav-item">
-                                <Link className="nav-link me-lg-3" to="/select-event">Request a Photo Shoot</Link>
+                                <Link className="nav-link me-lg-3" to="/select-event">Hire a Photographer</Link>
                             </li>
                             
                         )}

@@ -29,7 +29,7 @@ function SelectEvent({ setEventType }) {
 
     return (
         <div className="container">
-            <h2>What are you doing?</h2>
+            <h2 className="PageHeader">What are you doing?</h2>
             <div className="list-group">
                 {eventOptions.map((event, index) => (
                     <button

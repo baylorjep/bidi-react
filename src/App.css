@@ -11208,11 +11208,11 @@ footer a:hover, footer a:active, footer a:focus {
   list-style-type: none;
 }
 
-.RequestPageHeader {
+.PageHeader {
   height: 100%;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  /* justify-content: center;
+  align-items: center; */
   margin-top: 40px;
 }
 
@@ -11564,5 +11564,52 @@ footer a:hover, footer a:active, footer a:focus {
 }
 
 #root {
-  padding-top: 48px;
+  padding-top: 32px;
+}
+
+.filler {
+  flex: 1;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* .app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+} */
+
+.content {
+  flex: 1;
+  padding-top: 60px;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+  background-color: #333; /* Adjust as needed */
+  color: white;
+  margin-top: 10px;
+  box-sizing: border-box;
+}
+
+.footer-left {
+  flex: 1;
+}
+
+.footer-right {
+  display: flex;
+  gap: 20px; /* Adjust spacing between Privacy Policy and Terms of Use */
+}
+
+.footer p {
+  margin: 0;
 }

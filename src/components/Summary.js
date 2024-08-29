@@ -44,7 +44,7 @@ function Summary({ eventType, eventDetails }) {
 
     return (
         <div className="container">
-            <h2>{eventDetails.eventTitle} Summary</h2>
+            <h2 className="PageHeader">{eventDetails.eventTitle} Summary</h2>
             <p><strong>Event Type:</strong> {eventType}</p>
             <p><strong>Location:</strong> {eventDetails.location}</p>
             <p><strong>{eventDetails.dateType === 'range' && 'Start'} Date:</strong> {String(eventDetails.startDate)}</p>
