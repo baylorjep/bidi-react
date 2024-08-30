@@ -11,6 +11,7 @@
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
  */
 :root {
+  --bidi-primary-color: #9a4aff;
   --bs-blue: #2937f0;
   --bs-indigo: #6610f2;
   --bs-purple: #9f1ae2;
@@ -2895,8 +2896,8 @@ textarea.form-control-lg {
   --bs-btn-disabled-border-color: #9a4aff!important; /* Updated disabled border color */
 }
 .btn-custom-purple {
-  background-color: #9a4aff !important;
-  border-color: #9a4aff !important;
+  background-color: var(--bidi-primary-color) !important;
+  border-color: var(--bidi-primary-color) !important;
   color: white !important;
 }
 
@@ -11430,7 +11431,7 @@ footer a:hover, footer a:active, footer a:focus {
   padding: 10px 15px;
   border: none;
   border-radius: 1.5rem;
-  background-color: #9a4aff;
+  background-color: var(--bidi-primary-color);
   color: white;
   cursor: pointer;
   width: 300px;
@@ -11617,7 +11618,7 @@ html, body {
 }
 
 .testimonials-container {
-  background-color: var(--bs-purple);
+  background-color: var(--bidi-primary-color);
   color: white;
   padding-bottom: 35px;
   padding-top: 15px;
