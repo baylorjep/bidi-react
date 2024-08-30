@@ -60,7 +60,7 @@ function Header() {
             </header>
             <div className='testimonials-container'>
                 <div className="text-container">
-                    <h2>Don't take our word for it. Take theirs</h2>
+                    <h2 className="testimonial-header">Don't take our word for it. Take theirs.</h2>
                 </div>
                 <TestimonialSlider />
             </div>

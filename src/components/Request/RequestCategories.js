@@ -15,8 +15,8 @@ function RequestCategories() {
 
     return (
         <div className="container px-5 d-flex align-items-center justify-content-center">
-            <div>
-                <div className="text-center">
+            <div className="mobile-container">
+                <div className="mb-5 mb-lg-0 text-center">
                     <h1 className="SignUpPageHeader" style={{ marginTop: '40px' }}>What kind of service do you need?</h1>
                     <div className="mt-4">
                         <select 
