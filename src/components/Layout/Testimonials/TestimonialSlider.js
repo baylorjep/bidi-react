@@ -5,8 +5,8 @@ import '../../../App.css';
 const testimonials = [
     { text: "This is incredible! Super excited!", author: "Whitney J." },
     { text: "Yay this is so cool! Can't wait!", author: "Mike S." },
-    { text: "Love what you've built!", author: "Justin W." },
-    { text: "That was fast", author: "Olivia J." },
+    { text: "You guys are kicking butt btw!", author: "Justin W." },
+    { text: "I love how automated it all is!", author: "Olivia J." },
     { text: "Will definitely use again!", author: "Josh B." },
     // Add more testimonials as needed
 ];
