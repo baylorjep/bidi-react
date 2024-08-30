@@ -157,7 +157,7 @@ function EventDetails({ eventType, setEventDetails }) {
                     />
                 </div>
 
-                <button className="btn btn-primary mt-4" type="submit">Next</button>
+                <button className="btn btn-secondary mt-4" type="submit">Next</button>
             </form>
         </div>
     );

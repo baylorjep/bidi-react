@@ -34,14 +34,14 @@ function SelectEvent({ setEventType }) {
                 {eventOptions.map((event, index) => (
                     <button
                         key={index}
-                        className={`list-group-item list-group-item-action ${selectedEvent === event ? 'active' : ''}`}
+                        className={`list-group-item list-group-item-action ${selectedEvent === event ? 'selected-event' : ''}`}
                         onClick={() => handleSelect(event)}
                     >
                         {event}
                     </button>
                 ))}
             </div>
-            <button className="btn btn-primary mt-4" onClick={handleNext} disabled={!selectedEvent}>
+            <button className="btn btn-secondary mt-4" onClick={handleNext} disabled={!selectedEvent}>
                 Next
             </button>
         </div>
