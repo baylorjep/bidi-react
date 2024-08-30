@@ -25,6 +25,7 @@ import EventDetails from './components/EventDetails';
 import Summary from './components/Summary';
 import PrivacyPolicy from './components/Layout/PrivacyPolicy';
 import TermsOfUse from './components/Layout/TermsOfUse';
+import RequestCategories from './components/Request/RequestCategories';
 
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
                         <Route path="/" element={<Header />} />
                         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                         <Route path="/terms-of-use" element={<TermsOfUse />} />
+                        <Route path="/request-categories" element={<RequestCategories />} />
 
                         {/* Bid */}
                         <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
@@ -52,6 +54,11 @@ function App() {
                         <Route path="/request" element={<RequestForm />} />
                         <Route path="/success-request" element={<SuccessRequest />} />
                         <Route path="/my-bids" element={<MyBids />} />
+
+                        {/* Events */}
+                        <Route path="/select-event" element={<SelectEvent setEventType={setEventType} />} />
+                        <Route path="/event-details" element={<EventDetails eventType={eventType} setEventDetails={setEventDetails} />} />
+                        <Route path="/summary" element={<Summary eventType={eventType} eventDetails={eventDetails} />} />
 
                         {/* Individual */}
                         <Route path="/signup" element={<Signup />} />
@@ -66,13 +73,9 @@ function App() {
                         {/* Misc/TBD */}
                         <Route path="/createaccount" element={<ChooseUserType />} />
                         <Route path="/contact-us" element={<ContactForm />} />
-                        <Route path="/select-event" element={<SelectEvent setEventType={setEventType} />} />
-                        <Route path="/event-details" element={<EventDetails eventType={eventType} setEventDetails={setEventDetails} />} />
-                        <Route path="/summary" element={<Summary eventType={eventType} eventDetails={eventDetails} />} />
                         
                     </Routes>
                 </div>
-                {/* <div className="filler"></div> */}
                 <Footer />
             </div>
         </Router>
