@@ -1,4 +1,4 @@
-import {React, useState, useEffect, useNavigate} from 'react';
+import {React, useState, useEffect} from 'react';
 import { supabase } from '../supabaseClient';
 import RotatingText from './Layout/RotatingText';
 import TestimonialSlider from './Layout/Testimonials/TestimonialSlider';
