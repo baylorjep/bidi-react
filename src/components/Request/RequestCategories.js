@@ -22,7 +22,7 @@ function RequestCategories() {
                         <select 
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="form-select form-select-lg mb-3"
+                            className="form-select form-select-lg mb-3 custom-select"
                         >
                             <option value="">Select a service</option>
                             <option value="photography">Photography</option>

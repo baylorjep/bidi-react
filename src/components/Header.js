@@ -32,9 +32,9 @@ function Header() {
                                     Real-Time Bids on Your Next <RotatingText />
                                 </h1>
                                 <br></br>
-                                <h4>
+                                <p className='homepage-subtitle'>
                                     Stop hunting for quotes: let the bids come to you!
-                                </h4>
+                                </p>
                                 <div className="search-container">
                                 {/* If no user is signed in, send them to sign up */}
                                 {user === null && (
