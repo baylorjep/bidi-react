@@ -11372,7 +11372,7 @@ footer a:hover, footer a:active, footer a:focus {
 
 .masthead-index {
   position: relative;
-  height: 100vh;
+  height: 90vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -11615,9 +11615,72 @@ html, body {
   margin: 0;
 }
 
+.testimonials-container {
+  background-color: var(--bs-purple);
+  color: white;
+  padding-bottom: 35px;
+  padding-top: 15px;
+  text-align: center;
+}
+
+.testimonial-slider {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.testimonial-wrapper {
+  display: flex;
+  width: calc(25% * 10);
+  animation: testimonial-slide 30s linear infinite;
+}
+.testimonial {
+  flex: 0 0 25%;
+  position: relative;
+  display: inline-block;
+  padding: 20px;
+  margin: 10px;
+  border-radius: 10px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Add shadow for depth */
+  max-width: 300px; /* Limit the width to avoid stretching */
+  text-align: center; /* Center text */
+  background-color: var(--bs-gray-600);
+  /* border: 1px solid var(--bs-gray-500); */
+}
+
+.testimonial::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 25%;
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-top-color: var(--bs-gray-600); /* Match the background color */
+  border-bottom: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  transform: translateX(-50%);
+  margin-bottom: -9px; /* Adjust to position the triangle properly */
+}
+
+.testimonial footer {
+  font-style: italic; /* Italicize author text */
+}
+
+
+/* Keyframes for the continuous scroll effect */
+@keyframes testimonial-slide {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%); /* Adjust to match the width of the .testimonial-wrapper */
+  }
+}
+
 .selected-event {
   background-color: #9a4aff !important; /* Replace with your hex color code */
   color: white; /* Optional: Set the text color to white for contrast */
   border-color: #9a4aff !important; /* Optional: Set the border color to match */
 }
-

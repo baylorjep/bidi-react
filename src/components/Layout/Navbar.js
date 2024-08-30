@@ -81,13 +81,7 @@ function Navbar() {
                     <ul className="navbar-nav ms-auto me-4 my-3 my-lg-0">
                         {(!userRole || userRole === 'individual') && (
                             <li className="nav-item">
-                                <Link className="nav-link me-lg-3" to="/request">Request a Service</Link>
-                            </li>
-                            
-                        )}
-                        {(!userRole || userRole === 'individual') && (
-                            <li className="nav-item">
-                                <Link className="nav-link me-lg-3" to="/select-event">Hire a Photographer</Link>
+                                <Link className="nav-link me-lg-3" to="/request-categories">Hire a Pro</Link>
                             </li>
                             
                         )}

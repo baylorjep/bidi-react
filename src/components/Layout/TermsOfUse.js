@@ -16,7 +16,7 @@ const TermsOfUse = () => {
             <h2>1. Intellectual Property Rights</h2>
             <p>
                 Unless otherwise stated, Bidi and/or its licensors own the intellectual property rights for all material on this
-                website. All intellectual property rights are reserved. You may view and/or print pages from https://savewithbidi.vercel.app/
+                website. All intellectual property rights are reserved. You may view and/or print pages from https://savewithbidi.com/
                 for your own personal use subject to restrictions set in these terms and conditions.
             </p>
 
