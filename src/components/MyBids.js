@@ -61,37 +61,52 @@ function MyBids() {
         fetchUserAndBids();
     }, []);
 
-    const handleApprove = async (bidId, requestId) => {
-        console.log('Bid ID:', bidId); // Add logging to confirm the values
-        console.log('Request ID:', requestId);
+    const handleApprove = async (bidId, requestId, category) => {
+        console.log('Bid ID:', bidId); // Confirm the Bid ID
+        console.log('Request ID:', requestId); // Confirm the Request ID
+        console.log('Category:', category); // Confirm the Category
     
-        // Update the status of the bid to 'accepted'
+        // Attempt to update the status of the bid to 'accepted'
         const { error: bidError } = await supabase
             .from('bids')
             .update({ status: 'accepted' })
             .eq('id', bidId);
     
         if (bidError) {
+            console.error('Error approving bid:', bidError.message); // Log the actual error
             setError(`Error approving bid: ${bidError.message}`);
-            console.error('Error approving bid:', bidError);
             return;
         }
     
-        // Update the open status of the request to false
-        const { error: requestError } = await supabase
-            .from('requests')
-            .update({ open: false })
-            .eq('id', requestId);
+        let requestError;
+    
+        if (category === 'requests') {
+            // Attempt to update the open status of the request in the 'requests' table to false
+            const { error } = await supabase
+                .from('requests')
+                .update({ open: false })
+                .eq('id', requestId);
+            requestError = error;
+        } else if (category === 'photography_requests') {
+            // Attempt to update the status of the photography request in the 'photography_requests' table to 'closed'
+            const { error } = await supabase
+                .from('photography_requests')
+                .update({ status: 'closed' })
+                .eq('id', requestId);
+            requestError = error;
+        }
     
         if (requestError) {
+            console.error('Error updating request status:', requestError.message); // Log the actual error
             setError(`Error updating request status: ${requestError.message}`);
-            console.error('Error updating request status:', requestError);
             return;
         }
     
-        // Redirect to the BidSuccess page
+        console.log('Bid approved and request status updated successfully.');
         navigate('/bid-accepted');
     };
+    
+    
     
     
     const handleDeny = async (bidId) => {
