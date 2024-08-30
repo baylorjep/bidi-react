@@ -123,6 +123,7 @@ hr {
 }
 
 h6, .h6, h5, .h5, h4, .h4, h3, .h3, h2, .h2, h1, .h1 {
+  word-wrap: break-word;
   margin-top: 0;
   margin-bottom: 0.5rem;
   padding-bottom: 0.5rem;
@@ -11670,6 +11671,28 @@ html, body {
   font-style: italic; /* Italicize author text */
 }
 
+@media (max-width: 576px) {
+  .testimonial-header {
+    font-size: 1.25rem; /* Reduce font size on smaller screens */
+    line-height: 1.5; /* Increase line height for better readability */
+    word-wrap: break-word; /* Ensure words wrap to new lines */
+  }
+
+  /* mobile-container is a class that makes everything inside of it mobile-friendly
+     this is an ongoing project so update as needed */
+
+  .mobile-container{
+    max-width: 100vw;
+  }
+
+  .mobile-container h1 {
+    font-size: 1.35rem;
+  }
+
+  .mobile-container h2 {
+    font-size: 1.25rem;
+  }
+}
 
 /* Keyframes for the continuous scroll effect */
 @keyframes testimonial-slide {
@@ -11681,31 +11704,37 @@ html, body {
   }
 }
 
-.selected-event {
-  background-color: purple; /* Replace with your hex color code */
-  color: white; /* Optional: Set the text color to white for contrast */
-  border-color: purple; /* Optional: Set the border color to match */
-}
-
-.custom-select {
-  color: purple; /* Text color */
-  border-color: purple; /* Border color */
-}
-
-.custom-select:focus {
-  border-color: purple; /* Border color when focused */
-  box-shadow: 0 0 0 0.25rem rgba(128, 0, 128, 0.25); /* Focus outline */
-}
-
-.custom-select option {
-  background-color: white; /* Background color for options */
-  color: purple; /* Text color for options */
-}
-
 .homepage-subtitle {
   font-size: 1.2rem; /* Reduce the font size for h4 on mobile */
   font-weight: bold;
   line-height: 1.5; /* Increase line height for better readability */
   margin-bottom: 20px; /* Add margin to ensure proper spacing */
   word-wrap: break-word; /* Ensure long words break to the next line */
+}
+
+/* Custom select styling */
+.custom-select {
+  background-color: white; /* Set the background color */
+  color: black; /* Set the text color */
+  border: 2px solid #6a0dad; /* Purple border */
+  border-radius: 4px; /* Rounded corners */
+  padding: 10px;
+  font-size: 1rem;
+}
+
+/* Hover state for the select box */
+.custom-select:hover {
+  border-color: #800080; /* Darker purple on hover */
+}
+
+/* Styling options for a better visual match */
+.custom-select option {
+  background-color: white;
+  color: black;
+}
+
+/* Focus state when the select box is clicked */
+.custom-select:focus {
+  border-color: #800080; /* Purple when focused */
+  box-shadow: 0 0 5px 1px rgba(128, 0, 128, 0.5); /* Add purple shadow */
 }

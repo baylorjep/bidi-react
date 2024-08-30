@@ -63,6 +63,7 @@ function RequestForm() {
     };
 
     return (
+        <div className='mobile-container'>
         <div className="container px-5 d-flex align-items-center justify-content-center">
             <div>
                 <div className="mb-5 mb-lg-0 text-center">
@@ -171,6 +172,7 @@ function RequestForm() {
                     </div>
                 </form>
             </div>
+        </div>
         </div>
     );
 }
