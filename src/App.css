@@ -3020,6 +3020,7 @@ textarea.form-control-lg {
   --bs-btn-disabled-border-color: #212529;
 }
 
+
 .btn-outline-primary {
   --bs-btn-color: #2937f0;
   --bs-btn-border-color: #2937f0;
@@ -11613,6 +11614,7 @@ html, body {
 .footer p {
   margin: 0;
 }
+
 .testimonials-container {
   background-color: var(--bs-purple);
   color: white;
@@ -11675,4 +11677,10 @@ html, body {
   100% {
     transform: translateX(-50%); /* Adjust to match the width of the .testimonial-wrapper */
   }
+}
+
+.selected-event {
+  background-color: #9a4aff !important; /* Replace with your hex color code */
+  color: white; /* Optional: Set the text color to white for contrast */
+  border-color: #9a4aff !important; /* Optional: Set the border color to match */
 }
