@@ -72,19 +72,21 @@ function SubmitBid() {
                         user_id: user.id,
                         bid_amount: bidAmount,
                         bid_description: bidDescription,
+                        category: 'General'
                     },
                 ]);
             insertError = error;
         } else if (requestType === 'photography_requests') {
             // Insert into the photography bids table
             const { error } = await supabase
-                .from('photography_bids')
+                .from('bids')
                 .insert([
                     {
                         request_id: requestId,
                         user_id: user.id,
                         bid_amount: bidAmount,
                         bid_description: bidDescription,
+                        category: 'Photography'
                     },
                 ]);
             insertError = error;

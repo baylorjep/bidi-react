@@ -5,41 +5,38 @@ import PhotoRequestDisplay from './PhotoRequestDisplay';
 import '../../App.css';
 
 function OpenRequests() {
-    const [openRequests, setOpenRequests] = useState([]); // Initialize as an empty array
+    const [openRequests, setOpenRequests] = useState([]);
     const [openPhotoRequests, setOpenPhotoRequests] = useState([]);
     const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchRequests = async () => {
-            const { data, error } = await supabase
+            const { data: requests, error } = await supabase
                 .from('requests')
-                .select('id, user_id, service_title, service_category, service_description, service_date, location, additional_comments') // Specify columns
-                .eq('open', true); // Assuming 'open' is still a valid column or condition
+                .select('id, user_id, service_title, service_category, location, created_at, additional_comments')
+                .eq('open', true);  // Filter only open requests with boolean true
 
             if (error) {
                 setError(`Error fetching requests: ${error.message}`);
                 console.log(error);
             } else {
-                console.log('Fetched data:', data);
-                setOpenRequests(data || []); // Ensure data is an array
+                setOpenRequests(requests || []);
             }
         };
 
         const fetchPhotoRequests = async () => {
-            const { data, error } = await supabase
+            const { data: photoRequests, error } = await supabase
                 .from('photography_requests')
-                .select('id, event_title, event_type, date_type, start_date, end_date, time_of_day, location, num_people, duration, indoor_outdoor, additional_comments, extras')
-                .eq('status', 'open'); // Assuming 'open' is a column indicating whether the request is still active
-        
+                .select('id, event_title, event_type, start_date, end_date, time_of_day, location, num_people, duration, indoor_outdoor, additional_comments, status')
+                .eq('status', 'open');  // Filter only open photography requests
+
             if (error) {
-                console.error('Error fetching photo requests:', error.message);
                 setError(`Error fetching photo requests: ${error.message}`);
+                console.error(error);
             } else {
-                console.log('Fetched photo requests:', data);
-                setOpenPhotoRequests(data || []); // Ensure data is an array
+                setOpenPhotoRequests(photoRequests || []);
             }
         };
-        
 
         fetchRequests();
         fetchPhotoRequests();
@@ -50,19 +47,15 @@ function OpenRequests() {
             <div className="col-lg-6 remaining-space">
                 {error && <p>Error: {error}</p>}
 
-                {openPhotoRequests.length > 0 && 
-                    openPhotoRequests.map((photoRequest) => (
-                        <PhotoRequestDisplay key={photoRequest.id} photoRequest={photoRequest}/>
-                    ))
-                }
+                {openRequests.length > 0 && openRequests.map((request) => (
+                    <RequestDisplay key={request.id} request={request} />
+                ))}
 
-                {openRequests.length > 0 && 
-                    openRequests.map((request) => (
-                        <RequestDisplay key={request.id} request={request}/>
-                    ))
-                }
+                {openPhotoRequests.length > 0 && openPhotoRequests.map((photoRequest) => (
+                    <PhotoRequestDisplay key={photoRequest.id} photoRequest={photoRequest} />
+                ))}
 
-                {openPhotoRequests.length === 0 && openRequests.length === 0 && (
+                {openRequests.length === 0 && openPhotoRequests.length === 0 && (
                     <div>
                         <h2>No open requests found.</h2>
                         <p>Please check again later.</p>

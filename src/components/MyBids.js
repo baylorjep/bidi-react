@@ -7,8 +7,6 @@ import { useNavigate } from 'react-router-dom';
 function MyBids() {
     const [bids, setBids] = useState([]);
     const [error, setError] = useState('');
-    // Remove user if it's not being used
-    // const [user, setUser] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -22,23 +20,28 @@ function MyBids() {
                 return;
             }
 
-            // No need to set user if you're not using it
-            // setUser(userData.user);
-
-            // Fetch requests made by the logged-in user
+            // Fetch requests made by the logged-in user from both 'requests' and 'photography_requests'
             const { data: requests, error: requestError } = await supabase
                 .from('requests')
                 .select('id')
                 .eq('user_id', userData.user.id);
 
-            if (requestError) {
+            const { data: photoRequests, error: photoRequestError } = await supabase
+                .from('photography_requests')
+                .select('id')
+                .eq('profile_id', userData.user.id);
+
+            if (requestError || photoRequestError) {
                 setError('Failed to fetch requests.');
-                console.error(requestError);
+                console.error(requestError || photoRequestError);
                 return;
             }
 
-            // Extract request IDs
-            const requestIds = requests.map(request => request.id);
+            // Combine request IDs from both tables
+            const requestIds = [
+                ...requests.map(request => request.id),
+                ...photoRequests.map(photoRequest => photoRequest.id)
+            ];
 
             // Fetch bids related to the user's requests and join with business_profiles
             const { data: bidsData, error: bidsError } = await supabase
@@ -99,7 +102,7 @@ function MyBids() {
             .eq('id', bidId);
     
         if (bidError) {
-            setError(`Error approving bid: ${bidError.message}`);
+            setError(`Error denying bid: ${bidError.message}`);
             console.error('Error denying bid:', bidError);
             return;
         }
