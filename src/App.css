@@ -11644,7 +11644,9 @@ html, body {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Add shadow for depth */
   max-width: 300px; /* Limit the width to avoid stretching */
   text-align: center; /* Center text */
-  background-color: var(--bs-gray-600);
+  color: var(--bs-gray-600);
+  background-color: white;
+  /* background-color: var(--bs-gray-600); */
   /* border: 1px solid var(--bs-gray-500); */
 }
 
@@ -11656,7 +11658,7 @@ html, body {
   width: 0;
   height: 0;
   border: 10px solid transparent;
-  border-top-color: var(--bs-gray-600); /* Match the background color */
+  border-top-color: white; /* Match the background color */
   border-bottom: 0;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
@@ -11680,7 +11682,30 @@ html, body {
 }
 
 .selected-event {
-  background-color: #9a4aff !important; /* Replace with your hex color code */
+  background-color: purple; /* Replace with your hex color code */
   color: white; /* Optional: Set the text color to white for contrast */
-  border-color: #9a4aff !important; /* Optional: Set the border color to match */
+  border-color: purple; /* Optional: Set the border color to match */
+}
+
+.custom-select {
+  color: purple; /* Text color */
+  border-color: purple; /* Border color */
+}
+
+.custom-select:focus {
+  border-color: purple; /* Border color when focused */
+  box-shadow: 0 0 0 0.25rem rgba(128, 0, 128, 0.25); /* Focus outline */
+}
+
+.custom-select option {
+  background-color: white; /* Background color for options */
+  color: purple; /* Text color for options */
+}
+
+.homepage-subtitle {
+  font-size: 1.2rem; /* Reduce the font size for h4 on mobile */
+  font-weight: bold;
+  line-height: 1.5; /* Increase line height for better readability */
+  margin-bottom: 20px; /* Add margin to ensure proper spacing */
+  word-wrap: break-word; /* Ensure long words break to the next line */
 }
