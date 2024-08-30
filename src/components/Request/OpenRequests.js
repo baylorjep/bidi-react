@@ -13,7 +13,7 @@ function OpenRequests() {
         const fetchRequests = async () => {
             const { data: requests, error } = await supabase
                 .from('requests')
-                .select('id, user_id, service_title, service_category, location, created_at, additional_comments')
+                .select('id, user_id, service_title, service_description, service_date, service_category, location, created_at, additional_comments')
                 .eq('open', true);  // Filter only open requests with boolean true
 
             if (error) {
