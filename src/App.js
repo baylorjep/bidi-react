@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import './i18n';
 
 // Layout Imports
 import Navbar from './components/Layout/Navbar';
@@ -43,6 +44,11 @@ import MyDashboard from './components/Individual/MyDashboard'
 // Misc Imports
 import Homepage from './components/Homepage';
 import ContactForm from './components/ContactForm';
+
+// spanish imports
+import HomepageES from './components/HomepageES'
+import ContactFormES from './components/ContactFormES';
+
 
 
 
@@ -93,6 +99,10 @@ function App() {
 
                         {/* Misc Routes */}
                         <Route path="/contact-us" element={<ContactForm />} />
+
+                        {/* Spanish Routes */}
+                        <Route path="/inicio" element={<HomepageES />}/>
+                        <Route path="/contactenos" element={<ContactFormES />}/>
                         
                     </Routes>
                 </div>
