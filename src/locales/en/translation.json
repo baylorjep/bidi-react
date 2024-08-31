@@ -1,0 +1,34 @@
+{
+    "header": {
+      "title": "Real-Time Bids on Your Next {{rotatingText}}",
+      "subtitle": "Stop hunting for quotes: let the bids come to you!",
+      "getStarted": "Get Started"
+    },
+    "testimonials": {
+      "header": "Don't take our word for it. Take theirs."
+    },
+    "rotatingTexts": [
+        "Family Photos",
+        "Home Cleaning",
+        "Renovation Project",
+        "Car Detailing",
+        "Moving Service",
+        "Landscaping Job",
+        "Painting Project",
+        "Language Lesson",
+        "Web Design Project",
+        "Catering Job",
+        "Chiropractic Visit",
+        "CPA Service",
+        "Financial Planning",
+        "Tutoring Session",
+        "DJ Booking",
+        "Personal Training",
+        "Piano Lesson",
+        "Haircut",
+        "Manicure",
+        "Social Media Management",
+        "Interior Design"
+      ]
+  }
+  

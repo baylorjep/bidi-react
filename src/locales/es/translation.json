@@ -1,0 +1,34 @@
+{
+    "header": {
+      "title": "Ofertas en tiempo real para tu próximo {{rotatingText}}",
+      "subtitle": "Deja de buscar cotizaciones: ¡deja que las ofertas vengan a ti!",
+      "getStarted": "Comenzar"
+    },
+    "testimonials": {
+      "header": "No solo tomes nuestra palabra. Toma la de ellos."
+    },
+    "rotatingTexts": [
+        "Fotos de Familia",
+        "Limpieza del Hogar",
+        "Proyecto de Renovación",
+        "Detalle de Coche",
+        "Servicio de Mudanza",
+        "Trabajo de Jardinería",
+        "Proyecto de Pintura",
+        "Lección de Idiomas",
+        "Proyecto de Diseño Web",
+        "Trabajo de Catering",
+        "Visita Quiropráctica",
+        "Servicio de CPA",
+        "Planificación Financiera",
+        "Sesión de Tutoría",
+        "Reserva de DJ",
+        "Entrenamiento Personal",
+        "Lección de Piano",
+        "Corte de Pelo",
+        "Manicura",
+        "Gestión de Redes Sociales",
+        "Diseño de Interiores"
+      ]
+  }
+  
