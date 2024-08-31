@@ -11,6 +11,7 @@ const Footer = () => {
                 <p>&copy; {year} Bidi. All rights reserved.</p>
             </div>
             <div className="footer-right">
+                <p><Link to="/inicio">Cambie pagina al Español</Link></p>
                 <p><Link to="/privacy-policy">Privacy Policy</Link></p>
                 <p><Link to="/terms-of-use">Terms of Use</Link></p>
             </div>
