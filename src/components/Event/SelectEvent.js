@@ -14,6 +14,7 @@ function SelectEvent({ setEventType }) {
         'Product Photos',
         'Newborn/Maternity Photos',
         'Boudoir Session',
+        'Videographer'
     ];
 
     const handleSelect = (event) => {

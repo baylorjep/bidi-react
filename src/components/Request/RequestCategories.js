@@ -25,7 +25,7 @@ function RequestCategories() {
                             className="form-select form-select-lg mb-3 custom-select"
                         >
                             <option value="">Select a service</option>
-                            <option value="photography">Photography</option>
+                            <option value="photography">Photography/Videography</option>
                             <option value="dj_services">DJ Services</option>
                             <option value="cakes">Cakes</option>
                             <option value="home_remodeling">Home Remodeling</option>
