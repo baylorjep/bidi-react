@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import BidDisplay from './BidDisplay';
-import '../App.css';
+import { supabase } from '../../supabaseClient';
+import BidDisplay from '../Bid/BidDisplay';
+import '../../App.css';
 import { useNavigate } from 'react-router-dom';
 
 function MyBids() {

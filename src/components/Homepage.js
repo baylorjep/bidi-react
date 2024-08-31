@@ -5,7 +5,7 @@ import TestimonialSlider from './Layout/Testimonials/TestimonialSlider';
 import '../App.css';
 import { Link } from 'react-router-dom';
 
-function Header() {
+function Homepage() {
     const [user, setUser] = useState(null);
     //const navigate = useNavigate();
 
@@ -68,5 +68,5 @@ function Header() {
     );
 }
 
-export default Header;
+export default Homepage;
 

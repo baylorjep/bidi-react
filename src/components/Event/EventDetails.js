@@ -24,7 +24,7 @@ function EventDetails({ eventType, setEventDetails }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         setEventDetails(details);
-        navigate('/summary');  // Navigate to the summary stage
+        navigate('/event-summary');  // Navigate to the summary stage
     };
 
     return (
