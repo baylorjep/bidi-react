@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../src/supabaseClient';
-import { useIndividualUser } from './Individual/getIndividualUser';
+import { supabase } from '../../supabaseClient';
+import { useIndividualUser } from '../Individual/getIndividualUser';
 
-function Summary({ eventType, eventDetails }) {
+function EventSummary({ eventType, eventDetails }) {
     const { user, userError } = useIndividualUser();
     const navigate = useNavigate();
 
@@ -61,4 +61,4 @@ function Summary({ eventType, eventDetails }) {
     );
 }
 
-export default Summary;
+export default EventSummary;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
-import '../App.css';
+import { supabase } from '../../supabaseClient';
+import '../../App.css';
 
 
 function ResetPassword() {
