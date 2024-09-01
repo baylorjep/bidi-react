@@ -1,6 +1,6 @@
 import {React, useState, useEffect} from 'react';
 import { supabase } from '../supabaseClient';
-import RotatingText from './Layout/RotatingText';
+import RotatingTextES from './Layout/RotatingTextES';
 import TestimonialSlider from './Layout/Testimonials/TestimonialSlider';
 import '../App.css';
 import { Link } from 'react-router-dom';
@@ -29,7 +29,7 @@ function Homepage() {
                         <div className="col-lg-10 text-center">
                             <div className="text-container">
                                 <h1>
-                                    Ofertas en tiempo real para tu próximo(a) <RotatingText />
+                                    Ofertas en tiempo real para tu próximo(a) <RotatingTextES />
                                 </h1>
                                 <br></br>
                                 <p className='homepage-subtitle'>
