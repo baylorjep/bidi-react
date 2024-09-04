@@ -87,7 +87,7 @@ function SignIn() {
                             <a href='/Signup' > Sign Up Here.</a> 
                     </h6>
                     <div className="text-center mt-3">
-                    <Link to="/reset-password" className="btn btn-link">
+                    <Link to="/request-password-reset" className="btn btn-link">
                         Forgot my password
                     </Link>
                 </div>

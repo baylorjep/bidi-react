@@ -12,7 +12,7 @@ function ResetPassword() {
         e.preventDefault();
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: 'https://savewithbidi.vercel.app/reset-password', // Replace with your app's URL
+            redirectTo: 'https://www.savewithbidi.com/reset-password', // Replace with your app's URL
         });
 
         if (error) {

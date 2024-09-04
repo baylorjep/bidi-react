@@ -34,6 +34,7 @@ import SignIn from './components/Profile/SignIn';
 import ChooseUserType from './components/Profile/ChooseUserType';
 import SuccessSignup from './components/Profile/SuccessSignup';
 import ResetPassword from './components/Profile/ResetPassword';
+import ChangePassword from './components/Profile/ChangePassword';
 
 // Individual Imports
 import MyBids from './components/Individual/MyBids';
@@ -88,7 +89,8 @@ function App() {
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/success-signup" element={<SuccessSignup />} />
                         <Route path="/signin" element={<SignIn />} />
-                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/request-password-reset" element={<ResetPassword />} />
+                        <Route path="/reset-password" element={<ChangePassword />} />
                         <Route path="/createaccount" element={<ChooseUserType />} />
 
                         {/* Individual Routes */}
