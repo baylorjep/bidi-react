@@ -7,12 +7,14 @@ function SelectEvent({ setEventType }) {
 
     const eventOptions = [
         'Family Photos Session',
-        'Wedding/Engagement Photos',
+        'Wedding Photos',
+        'Engagement Photos',
         'Couples Session',
         'Individual/Headshots',
         'Large Group/Event Photos',
         'Product Photos',
-        'Newborn/Maternity Photos',
+        'Maternity Photos',
+        'Newborn Photos',
         'Boudoir Session',
         'Videographer'
     ];
