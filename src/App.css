@@ -11389,7 +11389,7 @@ header.masthead-index {
   align-items: center;
   height: 100vh; /* Full viewport height */
   padding: 20px;
-  background: linear-gradient(90deg, #7f3dd0,#f9f9f9, #f9f9f9);
+  background: linear-gradient(90deg, #7f3dd0,white);
 
   
 }
@@ -11442,15 +11442,16 @@ header.masthead-index {
   padding: 10px 15px;
   border: none;
   border-radius: 1.5rem;
-  background-color: var(--bidi-primary-color);
-  color: white;
+  background-color: white;
+  color: var(--bidi-primary-color);
   cursor: pointer;
   width: 300px;
   font-weight: bold;
+  border: 2px solid var(--bidi-primary-color)
 }
 
 .search-button:hover {
-  background-color: #7f3dd0;
+  background-color: #f0f0f0;
 } 
 
 .description-button {
@@ -11774,6 +11775,6 @@ html, body {
 .photo {
   height: auto; /* Maintain aspect ratio */
   border-radius: 10px; /* Optional: add rounded corners */
-  margin-left: 20px; /* Adjust space to move the photo to the right */
+  margin-left: 180px; /* Adjust space to move the photo to the right */
 }
 
