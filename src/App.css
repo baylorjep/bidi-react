@@ -11374,15 +11374,26 @@ footer a:hover, footer a:active, footer a:focus {
 
 .masthead-index {
   position: relative;
-  height: 90vh;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url('../public/Index-Background.jpg'); /* Ensure the path is correct */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
+
+header.masthead-index {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full viewport height */
+  padding: 20px;
+  background: linear-gradient(90deg, #7f3dd0,#f9f9f9, #f9f9f9);
+
+  
+}
+
 
 .masthead-index::before {
   content: '';
@@ -11711,6 +11722,7 @@ html, body {
   line-height: 1.5; /* Increase line height for better readability */
   margin-bottom: 20px; /* Add margin to ensure proper spacing */
   word-wrap: break-word; /* Ensure long words break to the next line */
+  text-align: center;
 }
 
 /* Custom select styling */
@@ -11739,3 +11751,29 @@ html, body {
   border-color: #800080; /* Purple when focused */
   box-shadow: 0 0 5px 1px rgba(128, 0, 128, 0.5); /* Add purple shadow */
 }
+
+.flex-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.text-side {
+  flex: 1;
+  padding-right: 20px;
+}
+
+.video-side {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* Align items to the start */
+  position: relative; /* Ensure relative positioning for absolute children */
+}
+
+.photo {
+  height: auto; /* Maintain aspect ratio */
+  border-radius: 10px; /* Optional: add rounded corners */
+  margin-left: 20px; /* Adjust space to move the photo to the right */
+}
+

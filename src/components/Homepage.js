@@ -1,13 +1,13 @@
-import {React, useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import RotatingText from './Layout/RotatingText';
 import TestimonialSlider from './Layout/Testimonials/TestimonialSlider';
 import '../App.css';
 import { Link } from 'react-router-dom';
+import photoSrc from '../assets/images/Landing Page Photo.png'; // Import the photo
 
 function Homepage() {
     const [user, setUser] = useState(null);
-    //const navigate = useNavigate();
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -21,40 +21,35 @@ function Homepage() {
         fetchSession();
 
     }, []);
+
     return (
         <>
             <header className="masthead-index">
-                <div className="container px-5">
-                    <div className="row gx-5 justify-content-center">
-                        <div className="col-lg-10 text-center">
-                            <div className="text-container">
-                                <h1>
-                                    Real-Time Bids on Your Next <RotatingText />
-                                </h1>
-                                <br></br>
-                                <p className='homepage-subtitle'>
-                                    Stop hunting for quotes: let the bids come to you!
-                                </p>
-                                <div className="search-container">
-                                {/* If no user is signed in, send them to sign up */}
-                                {user === null && (
+                <div className="container flex-container">
+                    <div className="text-side">
+                        <div className="text-container">
+                            <h1>Welcome to Bidi!</h1>
+                            <p className='homepage-subtitle'>
+                                Bidi is a platform that makes it easy to get bids on <RotatingText /> You can start getting bids in 3 easy steps:
+                            </p>
+                            <p>Step 1: Submit a Request</p>
+                            <p>Step 2: Get bids</p>
+                            <p>Step 3: Pick the Bid that Works for You</p>
+                            <div className="search-container">
+                                {user === null ? (
                                     <Link to="Signup">
-                                        <button className="search-button">
-                                            Get Started
-                                        </button>
+                                        <button className="search-button">Get Started</button>
                                     </Link>
-                                )}
-                                {/* If a user is signed in, send them to request categories */}
-                                {user != null && (
+                                ) : (
                                     <Link to="/request-categories">
-                                        <button className="search-button">
-                                            Get Started
-                                        </button>
+                                        <button className="search-button">Get Started</button>
                                     </Link>
                                 )}
-                                </div>
                             </div>
                         </div>
+                    </div>
+                    <div className="video-side">
+                        <img src={photoSrc} alt="Photo of Bidi on Phone and Laptop" className="photo" />
                     </div>
                 </div>
             </header>
@@ -69,4 +64,3 @@ function Homepage() {
 }
 
 export default Homepage;
-
