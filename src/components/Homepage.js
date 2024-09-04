@@ -28,13 +28,16 @@ function Homepage() {
                 <div className="container flex-container">
                     <div className="text-side">
                         <div className="text-container">
-                            <h1>Welcome to Bidi!</h1>
+                            <h1 className='homepage-title'>Welcome to Bidi!</h1>
                             <p className='homepage-subtitle'>
                                 Bidi is a platform that makes it easy to get bids on <RotatingText /> You can start getting bids in 3 easy steps:
                             </p>
-                            <p>Step 1: Submit a Request</p>
-                            <p>Step 2: Get bids</p>
-                            <p>Step 3: Pick the Bid that Works for You</p>
+                            <div className='homepage-steps'>
+                                <p>Step 1: Submit a Request</p>
+                                <p>Step 2: Get bids</p>
+                                <p>Step 3: Pick the Bid that Works for You</p>
+                            </div>
+                            
                             <div className="search-container">
                                 {user === null ? (
                                     <Link to="Signup">

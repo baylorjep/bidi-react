@@ -11389,7 +11389,7 @@ header.masthead-index {
   align-items: center;
   height: 100vh; /* Full viewport height */
   padding: 20px;
-  background: linear-gradient(90deg, #7f3dd0,white);
+  background: linear-gradient(90deg, #7f3dd0,#7f3dd0,white,white);
 
   
 }
@@ -11717,13 +11717,21 @@ html, body {
   }
 }
 
-.homepage-subtitle {
-  font-size: 1.2rem; /* Reduce the font size for h4 on mobile */
+.homepage-title {
+  font-size: 2rem;
   font-weight: bold;
+}
+
+.homepage-subtitle {
+  font-size: 2rem; /* Reduce the font size for h4 on mobile */
   line-height: 1.5; /* Increase line height for better readability */
   margin-bottom: 20px; /* Add margin to ensure proper spacing */
   word-wrap: break-word; /* Ensure long words break to the next line */
   text-align: center;
+}
+
+.homepage-steps {
+  font-size: 1rem;
 }
 
 /* Custom select styling */
@@ -11763,6 +11771,7 @@ html, body {
 .text-side {
   flex: 1;
   padding-right: 20px;
+  margin-left: 100px;
 }
 
 .video-side {
@@ -11773,7 +11782,7 @@ html, body {
 }
 
 .photo {
-  height: auto; /* Maintain aspect ratio */
+  height: 85vh; /* Maintain aspect ratio */
   border-radius: 10px; /* Optional: add rounded corners */
   margin-left: 180px; /* Adjust space to move the photo to the right */
 }
