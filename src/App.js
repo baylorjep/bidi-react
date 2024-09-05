@@ -99,7 +99,7 @@ function App() {
 
                         {/* Business Routes */}
                         <Route path="/open-requests" element={<OpenRequests />} />
-                        <Route path="/business-dashboard" element={<BusinessDashboard />} />
+                        <Route path="/dashboard" element={<BusinessDashboard />} />
 
                         {/* Misc Routes */}
                         <Route path="/contact-us" element={<ContactForm />} />
