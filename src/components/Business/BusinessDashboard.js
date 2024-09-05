@@ -32,6 +32,7 @@ function BusinessDashboard() {
 
   return (
     <div>
+      <br></br>
       <h1>Business Dashboard</h1>
       <button className='btn btn-secondary' onClick={handleStripeOnboarding} disabled={loading}>
         {loading ? 'Loading...' : 'Set up Stripe Account'}
