@@ -41,6 +41,7 @@ import MyBids from './components/Individual/MyBids';
 import MyDashboard from './components/Individual/MyDashboard'
 
 // Business Imports
+import BusinessDashboard from './components/Business/BusinessDashboard';
 
 // Misc Imports
 import Homepage from './components/Homepage';
@@ -98,6 +99,7 @@ function App() {
 
                         {/* Business Routes */}
                         <Route path="/open-requests" element={<OpenRequests />} />
+                        <Route path="/business-dashboard" element={<BusinessDashboard />} />
 
                         {/* Misc Routes */}
                         <Route path="/contact-us" element={<ContactForm />} />
