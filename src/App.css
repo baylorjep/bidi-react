@@ -10978,7 +10978,7 @@ section {
 
 .device[data-device=iPhoneX][data-orientation=portrait][data-color=black]::after {
   content: "";
-  background-image: url("../public/portrait_black.png");
+  background-image: url("../src/assets/images/portrait_black.png");
 }
 
 .device[data-device=iPhoneX][data-orientation=portrait][data-color=black] .button {
@@ -11389,7 +11389,7 @@ header.masthead-index {
   align-items: center;
   height: 100vh; /* Full viewport height */
   padding: 20px;
-  background: linear-gradient(90deg, #7f3dd0,#7f3dd0,white,white);
+  background: linear-gradient(to bottom right, #9219dc,#7f3dd0, #064acc);
 
   
 }
@@ -11718,7 +11718,14 @@ html, body {
 }
 
 .homepage-title {
-  font-size: 2rem;
+  font-size: 2.5rem;
+  font-weight: bold;
+  
+}
+
+.rotating-text {
+  margin-top: 50px;
+  font-size: 2.5rem;
   font-weight: bold;
 }
 
@@ -11726,12 +11733,12 @@ html, body {
   font-size: 2rem; /* Reduce the font size for h4 on mobile */
   line-height: 1.5; /* Increase line height for better readability */
   margin-bottom: 20px; /* Add margin to ensure proper spacing */
-  word-wrap: break-word; /* Ensure long words break to the next line */
   text-align: center;
+  border-bottom: 1px solid white;
 }
 
 .homepage-steps {
-  font-size: 1rem;
+  font-size: 1.5rem;
 }
 
 /* Custom select styling */
@@ -11761,29 +11768,41 @@ html, body {
   box-shadow: 0 0 5px 1px rgba(128, 0, 128, 0.5); /* Add purple shadow */
 }
 
+/* Flex container for the entire header */
+/* Flex container for the entire header */
 .flex-container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column; /* Stack text and video vertically */
+  align-items: center; /* Center align items */
   padding: 20px;
 }
 
 .text-side {
-  flex: 1;
-  padding-right: 20px;
-  margin-left: 100px;
+  text-align: center;
+  padding-bottom: 20px;
 }
 
-.video-side {
+/* Video/iPhone container below the text */
+.video-container {
+  background-color: white;
   display: flex;
+  justify-content: center; /* Center the iPhone frame */
   align-items: center;
-  justify-content: flex-start; /* Align items to the start */
-  position: relative; /* Ensure relative positioning for absolute children */
+  padding: 40px; /* Padding around the iPhone container */
+  width: 100%;
 }
 
-.photo {
-  height: 85vh; /* Maintain aspect ratio */
-  border-radius: 10px; /* Optional: add rounded corners */
-  margin-left: 180px; /* Adjust space to move the photo to the right */
+/* Positioning for the iPhone frame and video */
+.iphone-container {
+  position: relative;
+  width: 300px;
+  height: 600px;
+}
+
+.iphone-video {
+  position: absolute;
+  width: 300px;
+  height: 600px;
+  margin-left: 30%;
 }
 

@@ -4,7 +4,8 @@ import RotatingText from './Layout/RotatingText';
 import TestimonialSlider from './Layout/Testimonials/TestimonialSlider';
 import '../App.css';
 import { Link } from 'react-router-dom';
-import photoSrc from '../assets/images/Landing Page Photo.png'; // Import the photo
+import videoSrc from '../assets/images/Landing Page Video 2.mp4'; // Import the video
+
 
 function Homepage() {
     const [user, setUser] = useState(null);
@@ -19,7 +20,6 @@ function Homepage() {
         };
 
         fetchSession();
-
     }, []);
 
     return (
@@ -28,17 +28,29 @@ function Homepage() {
                 <div className="container flex-container">
                     <div className="text-side">
                         <div className="text-container">
-                            <h1 className='homepage-title'>Welcome to Bidi!</h1>
-                            <p className='homepage-subtitle'>
-                                Bidi is a platform that makes it easy to get bids on <RotatingText /> You can start getting bids in 3 easy steps:
-                            </p>
-                            <div className='homepage-steps'>
-                                <p>Step 1: Submit a Request</p>
-                                <p>Step 2: Get bids</p>
-                                <p>Step 3: Pick the Bid that Works for You</p>
+                            <div className='homepage-title'>
+                                Bidi is a platform that makes it easy to get bids on 
                             </div>
+                            <div className='rotating-text'><RotatingText /></div>
                             
-                            <div className="search-container">
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div className="video-container">
+                {/* iPhone Frame with Video inside */}
+                <div className="iphone-container">
+                    <video src={videoSrc} className="iphone-video" autoPlay loop muted playsInline />
+                </div>
+                <div className='homepage-subtitle'>
+                                You can start getting bids in 3 easy steps:
+                            </div>
+                            <div className='homepage-steps'>
+                                <p>1: Submit a Request</p>
+                                <p>2: Get bids</p>
+                                <p>3: Pick the Bid that Works for You</p>
+                            </div>
+                <div className="search-container">
                                 {user === null ? (
                                     <Link to="Signup">
                                         <button className="search-button">Get Started</button>
@@ -49,13 +61,7 @@ function Homepage() {
                                     </Link>
                                 )}
                             </div>
-                        </div>
-                    </div>
-                    <div className="video-side">
-                        <img src={photoSrc} alt="Photo of Bidi on Phone and Laptop" className="photo" />
-                    </div>
-                </div>
-            </header>
+            </div>
             <div className='testimonials-container'>
                 <div className="text-container">
                     <h2 className="testimonial-header">Don't take our word for it. Take theirs.</h2>
