@@ -11387,13 +11387,13 @@ header.masthead-index {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh; /* Full viewport height */
+  height: 93vh; /* Full viewport height */
   padding: 20px;
-  background: linear-gradient(to bottom right, #9219dc,#7f3dd0, #064acc);
+  background-image: url(/src/assets/images/Landing\ Page\ Background.png);
+  z-index: 2;
 
   
 }
-
 
 .masthead-index::before {
   content: '';
@@ -11410,15 +11410,22 @@ header.masthead-index {
   display: flex;
   flex-direction: column; /* Stack items vertically */
   align-items: center; /* Center items horizontally */
+  justify-content: center; /* Center items vertically if needed */
   position: relative;
   z-index: 2;
-  color:white;
+  color: white;
+}
+
+.text-container-2nd-page {
+  display: flex;
+  flex-direction: column; /* Stack subtitle and steps vertically */
+  align-items: flex-start; /* Align items to the start of the flex container */
 }
 
 .search-container {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 70px;
   width: 100%;
 }
 
@@ -11447,11 +11454,29 @@ header.masthead-index {
   cursor: pointer;
   width: 300px;
   font-weight: bold;
-  border: 2px solid var(--bidi-primary-color)
+  border: 3px solid var(--bidi-primary-color)
 }
 
 .search-button:hover {
-  background-color: #f0f0f0;
+  background-color: var(--bidi-primary-color);
+  color:white;
+} 
+
+.search-button-secondary {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 1.5rem;
+  background-color: var(--bidi-primary-color);
+  color: white;
+  cursor: pointer;
+  width: 300px;
+  font-weight: bold;
+  border: 3px solid var(--bidi-primary-color)
+}
+
+.search-button-secondary:hover {
+  background-color: white;
+  color:var(--bidi-primary-color);
 } 
 
 .description-button {
@@ -11630,11 +11655,12 @@ html, body {
 }
 
 .testimonials-container {
-  background-color: var(--bidi-primary-color);
+  background: linear-gradient(to bottom right, #9219dc,#7f3dd0, #064acc);
   color: white;
   padding-bottom: 35px;
   padding-top: 15px;
   text-align: center;
+  z-index:1;
 }
 
 .testimonial-slider {
@@ -11717,28 +11743,47 @@ html, body {
   }
 }
 
+.homepage-bidi-logo {
+  text-align: center; /* Center-align the logo container */
+  margin-bottom: 50px; /* Adjust spacing between logo and title */
+  margin-top: 10px;
+}
+
+.homepage-bidi-logo img {
+  max-width: 100%; /* Ensure the image fits within its container */
+  height: auto; /* Maintain aspect ratio */
+}
+
 .homepage-title {
   font-size: 2.5rem;
-  font-weight: bold;
   
+  text-align: center; /* Center-align the title text */
+  margin: 0; /* Adjust or remove margin if needed */
 }
 
 .rotating-text {
-  margin-top: 50px;
+  margin-top: 30px;
   font-size: 2.5rem;
-  font-weight: bold;
+  
 }
 
 .homepage-subtitle {
-  font-size: 2rem; /* Reduce the font size for h4 on mobile */
-  line-height: 1.5; /* Increase line height for better readability */
-  margin-bottom: 20px; /* Add margin to ensure proper spacing */
-  text-align: center;
-  border-bottom: 1px solid white;
+  margin-bottom: 20px; /* Space between subtitle and steps */
+  font-size: 4rem; /* Adjust font size as needed */
+  color: var(--bidi-primary-color);
+  margin-bottom: 30px;
+  border-bottom: 2px solid var(--bidi-primary-color);
 }
 
 .homepage-steps {
-  font-size: 1.5rem;
+  font-size: 3rem; /* Adjust font size as needed */
+  color: var(--bidi-primary-color);
+  margin-right: 0; /* Remove if not needed, or adjust as necessary */
+  padding-right:300px; /* Example to adjust spacing from the left */
+}
+
+.homepage-steps p {
+  margin-bottom: 80px;
 }
 
 /* Custom select styling */
@@ -11749,6 +11794,25 @@ html, body {
   border-radius: 4px; /* Rounded corners */
   padding: 10px;
   font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+  .iphone-container {
+    width: 250px;
+    height: 500px;
+  }
+
+  .homepage-title {
+    font-size: 1.8rem;
+  }
+
+  .homepage-subtitle {
+    font-size: 1.5rem;
+  }
+
+  .homepage-steps {
+    font-size: 1.2rem;
+  }
 }
 
 /* Hover state for the select box */
@@ -11774,35 +11838,66 @@ html, body {
   display: flex;
   flex-direction: column; /* Stack text and video vertically */
   align-items: center; /* Center align items */
-  padding: 20px;
+  justify-content: flex-start; /* Align items to the top */
 }
 
 .text-side {
   text-align: center;
-  padding-bottom: 20px;
+  padding-bottom: 100px;
 }
 
-/* Video/iPhone container below the text */
 .video-container {
   background-color: white;
   display: flex;
-  justify-content: center; /* Center the iPhone frame */
-  align-items: center;
-  padding: 40px; /* Padding around the iPhone container */
+  align-items: center; /* Center align items vertically */
+  padding: 40px;
   width: 100%;
+  gap: 40px; /* Space between iPhone and text container */
 }
 
-/* Positioning for the iPhone frame and video */
 .iphone-container {
   position: relative;
-  width: 300px;
-  height: 600px;
+  width: 300px; /* Width of the iPhone frame */
+  height: 600px; /* Height of the iPhone frame */
 }
 
 .iphone-video {
   position: absolute;
-  width: 300px;
-  height: 600px;
-  margin-left: 30%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
+.header-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden; /* Ensure no overflow from the wave */
+  z-index: 1; /* Ensure header content is above the wave */
+}
+
+
+.wave-container-top {
+  position: absolute;
+  bottom: -140px; /* Adjust as needed to overlap */
+  left: 0;
+  width: 100%;
+  height: auto;
+  z-index: 2; /* Ensure it appears below the header content */
+}
+
+
+.wave {
+  width: 100%;
+  height: 400px;
+  fill: #ffffff; /* Match the wave color to your background */
+}
+
+.wave path {
+  transition: fill 0.3s ease;
+}
+
+.try-it-out-container {
+  margin-left: 200px;
+}
