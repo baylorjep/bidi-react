@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import BidDisplay from '../Bid/BidDisplay';
 import '../../App.css';
 import { useNavigate } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
 
 function MyBids() {
     const [bids, setBids] = useState([]);
@@ -61,7 +62,7 @@ function MyBids() {
         fetchUserAndBids();
     }, []);
 
-    const handleApprove = async (bidId, requestId, category) => {
+    const handleApprove = async (bidId, requestId, category, amount) => {
         console.log('Bid ID:', bidId); // Confirm the Bid ID
         console.log('Request ID:', requestId); // Confirm the Request ID
         console.log('Category:', category); // Confirm the Category
@@ -103,6 +104,37 @@ function MyBids() {
         }
     
         console.log('Bid approved and request status updated successfully.');
+    
+        // Step 1: Create a Stripe payment intent
+        try {
+            const response = await fetch('/api/create-payment-intent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    amount: amount * 100, // amount in cents (e.g., $50 = 5000)
+                    currency: 'usd',
+                }),
+            });
+    
+            const { clientSecret } = await response.json();
+    
+            // Step 2: Redirect to Stripe Checkout
+            const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+            const { error: stripeError } = await stripe.redirectToCheckout({
+                sessionId: clientSecret,
+            });
+    
+            if (stripeError) {
+                console.error('Stripe Checkout Error:', stripeError.message);
+                setError(`Error during payment redirect: ${stripeError.message}`);
+            }
+        } catch (error) {
+            console.error('Error with payment flow:', error.message);
+            setError(`Error with payment flow: ${error.message}`);
+        }
+    
         navigate('/bid-accepted');
     };
     
