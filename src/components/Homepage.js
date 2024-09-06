@@ -6,6 +6,7 @@ import '../App.css';
 import { Link } from 'react-router-dom';
 import videoSrc from '../assets/images/Landing Page Video 2.mp4'; // Import the video
 import bidiLogoWhite from '../assets/images/bidi logo white.png';
+import bidiCheck from '../assets/images/bidi check.png';
 
 function Homepage() {
     const [user, setUser] = useState(null);
@@ -37,15 +38,22 @@ function Homepage() {
                                 </div>
                                 <div className='rotating-text'><RotatingText /></div>
                                 <div className="search-container">
-                                    {user === null ? (
-                                        <Link to="Signup">
-                                            <button className="search-button">Get Started</button>
-                                        </Link>
-                                    ) : (
-                                        <Link to="/request-categories">
-                                            <button className="search-button">Get Started</button>
-                                        </Link>
-                                    )}
+                                    {/* If no user is signed in, send them to sign up */}
+                                {user === null && (
+                                    <Link to="Signup">
+                                        <button className="search-button">
+                                            Get Started
+                                        </button>
+                                    </Link>
+                                )}
+                                {/* If a user is signed in, send them to request categories */}
+                                {user != null && (
+                                    <Link to="/request-categories">
+                                        <button className="search-button">
+                                            Get Started
+                                        </button>
+                                    </Link>
+                                )}
                                 </div>
                             </div>
                         </div>
@@ -58,18 +66,27 @@ function Homepage() {
                 </div>
             </div>
             <div className="video-container">
-    <div className="iphone-container">
-        <video src={videoSrc} className="iphone-video" autoPlay loop muted playsInline />
-    </div>
-    <div className="text-container-2nd-page">
-        <div className="homepage-subtitle">
-            You can start getting bids in 3 easy steps
-        </div>
+                <div className="iphone-container">
+                    <video src={videoSrc} className="iphone-video" autoPlay loop muted playsInline />
+                </div>
+                <div className="text-container-2nd-page">
+                    <div className="homepage-subtitle">
+                    Start getting bids in 3 easy steps
+                </div>
         <div className="homepage-steps">
-            <p>Submit a Request</p>
-            <p>Get bids</p>
-            <p>Pick the Bid that Works for You</p>
-        </div>
+    <div className="step">
+        <img src={bidiCheck} alt="Check icon" />
+        <p>Submit a Request: Fill out a simple form explaining what you are looking for</p>
+    </div>
+    <div className="step">
+        <img src={bidiCheck} alt="Check icon" />
+        <p>Get bids: Watch the bids roll in as companies compete for your business</p>
+    </div>
+    <div className="step">
+        <img src={bidiCheck} alt="Check icon" />
+        <p>Pick the Bid that Works for You: Deny the bids you don't like, and approve the one you do</p>
+    </div>
+</div>
         <div className="try-it-out-container">
                                     {user === null ? (
                                         <Link to="Signup">

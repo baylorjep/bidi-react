@@ -6,17 +6,17 @@ function RotatingText() {
         'Family Photos',
         'Wedding Photos',
         'Engagement Photos',
-        'Couples Session',
+        'Couples Sessions',
         'Individual Photos',
         'Headshots',
         'Event Photos',
         'Product Photos',
         'Maternity Photos',
         'Newborn Photos',
-        'Videographer',
-        'DJ',
-        'Wedding Cake',
-        'Hair and Makeup Artist'
+        'Videographers',
+        'DJs',
+        'Wedding Cakes',
+        'Hair and Makeup Artists'
     ];
     
     
