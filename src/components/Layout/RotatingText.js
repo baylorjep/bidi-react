@@ -6,7 +6,7 @@ function RotatingText() {
         'Family Photos',
         'Wedding Photos',
         'Engagement Photos',
-        'Couples Sessions',
+        'Couples Photo Sessions',
         'Individual Photos',
         'Headshots',
         'Event Photos',

@@ -34,7 +34,7 @@ function Homepage() {
                                     <img src={bidiLogoWhite} alt="Bidi Logo" />
                                 </div>
                                 <div className='homepage-title'>
-                                    A platform that makes it easy to get bids on 
+                                    The easiest way to get bids on 
                                 </div>
                                 <div className='rotating-text'><RotatingText /></div>
                                 <div className="search-container">
