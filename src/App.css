@@ -10978,7 +10978,7 @@ section {
 
 .device[data-device=iPhoneX][data-orientation=portrait][data-color=black]::after {
   content: "";
-  background-image: url("../public/portrait_black.png");
+  background-image: url("../src/assets/images/portrait_black.png");
 }
 
 .device[data-device=iPhoneX][data-orientation=portrait][data-color=black] .button {
@@ -11374,14 +11374,25 @@ footer a:hover, footer a:active, footer a:focus {
 
 .masthead-index {
   position: relative;
-  height: 90vh;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url('../public/Index-Background.jpg'); /* Ensure the path is correct */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+header.masthead-index {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 93vh; /* Full viewport height */
+  padding: 20px;
+  background: linear-gradient(to bottom right, #9219dc,#7a1deb,#af05ff,#1a00ed);
+  z-index: 2;
+
+  
 }
 
 .masthead-index::before {
@@ -11399,16 +11410,24 @@ footer a:hover, footer a:active, footer a:focus {
   display: flex;
   flex-direction: column; /* Stack items vertically */
   align-items: center; /* Center items horizontally */
+  justify-content: center; /* Center items vertically if needed */
   position: relative;
   z-index: 2;
-  color:white;
+  color: white;
+}
+
+/* Ensure the subtitle and steps are centered */
+.text-container-2nd-page {
+  text-align: center;
+  margin-top: 20px;
 }
 
 .search-container {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 70px;
   width: 100%;
+  z-index: 2;
 }
 
 .search-input {
@@ -11431,15 +11450,34 @@ footer a:hover, footer a:active, footer a:focus {
   padding: 10px 15px;
   border: none;
   border-radius: 1.5rem;
+  background-color: white;
+  color: var(--bidi-primary-color);
+  cursor: pointer;
+  width: 300px;
+  font-weight: bold;
+  border: 3px solid var(--bidi-primary-color)
+}
+
+.search-button:hover {
+  background-color: var(--bidi-primary-color);
+  color:white;
+} 
+
+.search-button-secondary {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 1.5rem;
   background-color: var(--bidi-primary-color);
   color: white;
   cursor: pointer;
   width: 300px;
   font-weight: bold;
+  border: 3px solid var(--bidi-primary-color)
 }
 
-.search-button:hover {
-  background-color: #7f3dd0;
+.search-button-secondary:hover {
+  background-color: white;
+  color:var(--bidi-primary-color);
 } 
 
 .description-button {
@@ -11618,11 +11656,12 @@ html, body {
 }
 
 .testimonials-container {
-  background-color: var(--bidi-primary-color);
+  background: linear-gradient(to bottom right, #9219dc,#7f3dd0, #064acc);
   color: white;
   padding-bottom: 35px;
   padding-top: 15px;
   text-align: center;
+  z-index:1;
 }
 
 .testimonial-slider {
@@ -11705,22 +11744,106 @@ html, body {
   }
 }
 
-.homepage-subtitle {
-  font-size: 1.2rem; /* Reduce the font size for h4 on mobile */
-  font-weight: bold;
-  line-height: 1.5; /* Increase line height for better readability */
-  margin-bottom: 20px; /* Add margin to ensure proper spacing */
-  word-wrap: break-word; /* Ensure long words break to the next line */
+.homepage-bidi-logo {
+  text-align: center; /* Center-align the logo container */
+  margin-bottom: 50px; /* Adjust spacing between logo and title */
+  margin-top: 10px;
 }
 
-/* Custom select styling */
-.custom-select {
-  background-color: white; /* Set the background color */
-  color: black; /* Set the text color */
-  border: 2px solid #6a0dad; /* Purple border */
-  border-radius: 4px; /* Rounded corners */
-  padding: 10px;
-  font-size: 1rem;
+.homepage-bidi-logo img {
+  max-width: 100%; /* Ensure the image fits within its container */
+  height: auto; /* Maintain aspect ratio */
+}
+
+.homepage-title {
+  font-size: 2.5rem;
+  
+  text-align: center; /* Center-align the title text */
+  margin: 0; /* Adjust or remove margin if needed */
+}
+
+.rotating-text {
+  margin-top: 30px;
+  font-size: 2.5rem;
+  
+}
+
+/* Default Styling */
+.homepage-subtitle {
+  font-size: 2.5rem; /* Adjust font size as needed */
+  color: black;
+}
+
+.homepage-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Space between steps */
+  align-items: center; /* Center-align the steps */
+  margin-top: 20px;
+}
+
+.step {
+  display: flex;
+  align-items: left;
+  gap: 10px; /* Space between the icon and text */
+  font-size: 1.3rem;
+  margin-top: -10px;
+}
+
+.step img {
+  width: 40px;
+  height: 40px;
+  margin-top:-3px;
+}
+
+/* Mobile Specific Styling */
+@media (max-width: 768px) {
+  .iphone-container {
+    width: 250px;
+    height: 500px;
+  }
+
+  .homepage-title {
+    font-size: 1.8rem;
+  }
+
+  .homepage-subtitle {
+    font-size: 2rem;
+    margin-bottom: 15px; /* Adjust space below subtitle on mobile */
+    margin-top: -15px;
+    padding: 0px 40px;
+  }
+
+  .homepage-steps {
+    font-size: 1rem;
+    text-align: left;
+    padding: 15px 20px;
+  }
+
+  .step img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .text-container-2nd-page {
+    margin-top: 30px; /* Ensure there's enough space above */
+    padding-bottom: 60px; /* Add extra space at the bottom */
+  }
+
+  .try-it-out-container {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    margin-bottom: -40px;
+  }
+  .rotating-text {
+    font-size: 1.8rem;
+  }
+  .homepage-bidi-logo img {
+    max-width: 100%;
+    height: auto;
+  }
+
 }
 
 /* Hover state for the select box */
@@ -11738,4 +11861,78 @@ html, body {
 .custom-select:focus {
   border-color: #800080; /* Purple when focused */
   box-shadow: 0 0 5px 1px rgba(128, 0, 128, 0.5); /* Add purple shadow */
+}
+
+/* Flex container for the entire header */
+.flex-container {
+  display: flex;
+  flex-direction: column; /* Stack text and video vertically */
+  align-items: center; /* Center align items */
+  justify-content: flex-start; /* Align items to the top */
+}
+
+.text-side {
+  text-align: center;
+  padding-bottom: 100px;
+}
+
+.video-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: white;
+  width: 100%;
+}
+
+.iphone-container {
+  position: relative;
+  width: 300px;
+  height: 600px;
+  margin-bottom: 0px; /* Ensure space between iPhone and text below */
+}
+
+.iphone-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.header-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden; /* Ensure no overflow from the wave */
+  z-index: 1; /* Ensure header content is above the wave */
+}
+
+.wave-container-top {
+  position: absolute;
+  bottom: -140px; /* Adjust as needed to overlap */
+  left: 0;
+  width: 100%;
+  height: auto;
+  z-index: 2; /* Ensure it appears below the header content */
+}
+
+@media (max-width:768px) {
+  .wave-container-top {
+    bottom: -156px;
+  }
+}
+
+.wave {
+  width: 100%;
+  height: 400px;
+  fill: #ffffff; /* Match the wave color to your background */
+}
+
+.wave path {
+  transition: fill 0.3s ease;
+}
+.try-it-out-container {
+  margin-top: 15px;
 }
