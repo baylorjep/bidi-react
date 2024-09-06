@@ -11427,7 +11427,7 @@ header.masthead-index {
   justify-content: center;
   margin-top: 70px;
   width: 100%;
-  z-index: 2;
+  z-index: 10;
 }
 
 .search-input {
@@ -11908,7 +11908,7 @@ html, body {
   position: relative;
   width: 100%;
   overflow: hidden; /* Ensure no overflow from the wave */
-  z-index: 1; /* Ensure header content is above the wave */
+  z-index: 2; /* Ensure header content is above the wave */
 }
 
 .wave-container-top {
@@ -11917,13 +11917,14 @@ html, body {
   left: 0;
   width: 100%;
   height: auto;
-  z-index: 0; /* Ensure it appears below the header content */
+  z-index: 2; /* Ensure it appears below the header content */
+  pointer-events: none;
 }
 
 @media (max-width:768px) {
   .wave-container-top {
     bottom: -156px;
-    z-index: 0; /* Ensure it appears below the header content */
+    z-index: 2; /* Ensure it appears below the header content */
   }
 }
 
@@ -11931,12 +11932,12 @@ html, body {
   width: 100%;
   height: 400px;
   fill: #ffffff; /* Match the wave color to your background */
-  z-index: 0; /* Ensure it appears below the header content */
+  z-index: 2; /* Ensure it appears below the header content */
 }
 
 .wave path {
   transition: fill 0.3s ease;
-  z-index: 0; /* Ensure it appears below the header content */
+  z-index: 2; /* Ensure it appears below the header content */
 }
 .try-it-out-container {
   margin-top: 15px;
