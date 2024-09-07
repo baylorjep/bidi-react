@@ -11418,9 +11418,11 @@ header.masthead-index {
 
 /* Ensure the subtitle and steps are centered */
 .text-container-2nd-page {
-  text-align: center;
-  margin-top: 20px;
+  flex: 1;
+  max-width: 100%;
+  margin-left: -5rem;
 }
+
 
 .search-container {
   display: flex;
@@ -11770,54 +11772,105 @@ html, body {
 
 /* Default Styling */
 .homepage-subtitle {
-  font-size: 2.5rem; /* Adjust font size as needed */
+  font-size: 2.5rem; /* Default size */
   color: black;
+  width: 100%;
+  text-align: center; /* Center text */
 }
+
+
 
 .homepage-steps {
   display: flex;
   flex-direction: column;
   gap: 10px; /* Space between steps */
   align-items: center; /* Center-align the steps */
-  margin-top: 20px;
 }
 
 .step {
   display: flex;
   align-items: left;
   gap: 10px; /* Space between the icon and text */
-  font-size: 1.3rem;
-  margin-top: -10px;
+  text-align: left;
 }
 
 .step img {
   width: 40px;
   height: 40px;
-  margin-top:-3px;
+}
+
+@media (min-width:1000px) {
+  .homepage-subtitle {
+    font-size: 4rem; /* Default size */
+    color: black;
+    width: 100%;
+    text-align: center; /* Center text */
+    padding-bottom: 1rem;
+  }
+  
+  
+  
+  .homepage-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between steps */
+    align-items: center; /* Center-align the steps */
+  }
+  
+  .step {
+    display: flex;
+    align-items: left;
+    gap: 10px; /* Space between the icon and text */
+    font-size:2rem;
+    margin-top: 1rem;
+    text-align: left;
+    font-size: 1.5rem;
+  }
+  
+  .step img {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 /* Mobile Specific Styling */
-@media (max-width: 768px) {
-  .iphone-container {
-    width: 250px;
-    height: 500px;
+@media (max-width: 1000px) {
+
+  .video-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  background-color: white;
+    width: 100%;
   }
+  .iphone-container {
+    margin-left: 0;/* Center the iPhone on mobile */
+    max-width: 100%; /* Take full width on mobile */
+    max-height: none; /* Allow it to resize naturally on mobile */
+    justify-content: center; /* Center the iPhone horizontally */
+  }
+
+  .iphone-container, .text-container-2nd-page {
+    max-width: 100%;
+    text-align: center;
+    
+}
 
   .homepage-title {
     font-size: 1.8rem;
   }
 
   .homepage-subtitle {
-    font-size: 2rem;
-    margin-bottom: 15px; /* Adjust space below subtitle on mobile */
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
     margin-top: -15px;
-    padding: 0px 40px;
   }
 
   .homepage-steps {
-    font-size: 1rem;
+    font-size: 1.2rem;
     text-align: left;
-    padding: 15px 20px;
+    padding: 0px 20px;
   }
 
   .step img {
@@ -11828,13 +11881,16 @@ html, body {
   .text-container-2nd-page {
     margin-top: 30px; /* Ensure there's enough space above */
     padding-bottom: 60px; /* Add extra space at the bottom */
+    margin-left: 0; /* Ensure it aligns properly */
+    padding: 0 20px; /* Adjust padding if necessary */
+
   }
 
   .try-it-out-container {
     margin-left: auto;
     margin-right: auto;
     text-align: center;
-    margin-bottom: -40px;
+
   }
   .rotating-text {
     font-size: 1.8rem;
@@ -11845,6 +11901,8 @@ html, body {
   }
 
 }
+
+
 
 /* Hover state for the select box */
 .custom-select:hover {
@@ -11878,28 +11936,40 @@ html, body {
 
 .video-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 20px 20px;
   background-color: white;
   width: 100%;
 }
 
 .iphone-container {
+  flex: 1;
+  margin-right: 0;
   position: relative;
-  width: 300px;
-  height: 600px;
-  margin-bottom: 0px; /* Ensure space between iPhone and text below */
+  max-width: 500px;
+  height: auto;
+  max-height: 500px;
+  display: flex;
+  justify-content: center;
+  
+  
 }
 
+@media (min-width:1001px) {
+  .iphone-container {
+    padding-right: 5rem;
+  }
+}
+
+
+
+
+
 .iphone-video {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 100%; /* Make sure the video takes up the full width of the container */
+  height: auto;
+  border-radius: 20px;
 }
 
 .header-container {
@@ -11918,7 +11988,7 @@ html, body {
   z-index: 2; /* Ensure it appears below the header content */
 }
 
-@media (max-width:768px) {
+@media (max-width:1000px) {
   .wave-container-top {
     bottom: -156px;
   }
@@ -11935,4 +12005,5 @@ html, body {
 }
 .try-it-out-container {
   margin-top: 15px;
+  text-align: center;
 }
