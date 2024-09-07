@@ -1,44 +1,72 @@
 const express = require("express");
 const app = express();
-const cors = require("cors"); // Ensure your frontend can make requests
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16",
+
+const stripe = require("stripe")(
+  // This is your test secret API key.
+  'sk_test_51Pv13ZF25aBU3RMPjAxWeSf0Cvnp6OI0n5MlmU8dLopD2g5gBDOcD0oRs6RAj56SfF5pVACra3BSjJIRDphUNoJm00KUr0QoqJ',
+  {
+    apiVersion: "2023-10-16",
+  }
+);
+
+app.use(express.static("dist"));
+app.use(express.json());
+
+app.post("/account_session", async (req, res) => {
+  try {
+    const { account } = req.body;
+
+    const accountSession = await stripe.accountSessions.create({
+      account: account,
+      components: {
+        account_onboarding: { enabled: true },
+      },
+    });
+
+    res.json({
+      client_secret: accountSession.client_secret,
+    });
+  } catch (error) {
+    console.error(
+      "An error occurred when calling the Stripe API to create an account session",
+      error
+    );
+    res.status(500);
+    res.send({ error: error.message });
+  }
 });
 
-app.use(express.json());
-app.use(cors()); // Enable CORS for frontend requests
-
-// Endpoint to create a Stripe account
-app.post("/create-account", async (req, res) => {
+app.post("/account", async (req, res) => {
   try {
     const account = await stripe.accounts.create({
-      type: "express", // Use express account for Stripe Connect
+      controller: {
+        stripe_dashboard: {
+          type: "express",
+        },
+        fees: {
+          payer: "application"
+        },
+        losses: {
+          payments: "application"
+        },
+      },
     });
-    res.status(200).json({ accountId: account.id });
+
+    res.json({
+      account: account.id,
+    });
   } catch (error) {
-    console.error("Error creating account:", error);
-    res.status(500).json({ error: error.message });
+    console.error(
+      "An error occurred when calling the Stripe API to create an account",
+      error
+    );
+    res.status(500);
+    res.send({ error: error.message });
   }
 });
 
-// Endpoint to create an account link for onboarding
-app.post("/create-account-link", async (req, res) => {
-  const { accountId } = req.body;
-  try {
-    const accountLink = await stripe.accountLinks.create({
-      account: accountId,
-      refresh_url: `${req.headers.origin}/dashboard`,
-      return_url: `${req.headers.origin}/dashboard`,
-      type: "account_onboarding",
-    });
-    res.status(200).json({ url: accountLink.url });
-  } catch (error) {
-    console.error("Error creating account link:", error);
-    res.status(500).json({ error: error.message });
-  }
+app.get("/*", (_req, res) => {
+  res.sendFile(__dirname + "/dist/index.html");
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+app.listen(4242, () => console.log("Node server listening on port 4242! Visit http://localhost:4242 in your browser."));

@@ -47,9 +47,13 @@ import BusinessDashboard from './components/Business/BusinessDashboard';
 import Homepage from './components/Homepage';
 import ContactForm from './components/ContactForm';
 
-// spanish imports
+// Spanish imports
 import HomepageES from './components/HomepageES'
 import ContactFormES from './components/ContactFormES';
+
+// Stripe imports
+
+import Onboarding from './components/Stripe/Onboarding';
 
 
 
@@ -107,6 +111,9 @@ function App() {
                         {/* Spanish Routes */}
                         <Route path="/inicio" element={<HomepageES />}/>
                         <Route path="/contactenos" element={<ContactFormES />}/>
+
+                        {/* Stripe Routes */}
+                        <Route path="/onboarding" element={<Onboarding />} />
                         
                     </Routes>
                 </div>
