@@ -5,6 +5,7 @@ import {
   ConnectComponentsProvider,
 } from "@stripe/react-connect-js";
 import { supabase } from "../../supabaseClient";
+import "../../App.css"; // Assuming you have general styles in this file
 
 export default function Onboarding() {
   const [accountCreatePending, setAccountCreatePending] = useState(false);
@@ -45,7 +46,7 @@ export default function Onboarding() {
         setConnectedAccountId(json.account);
   
         // Fetch the user's ID directly from Supabase auth
-        const { data: { user } } = await supabase.auth.getUser(); // Get the authenticated user's data
+        const { data: { user } } = await supabase.auth.getUser();
   
         if (user) {
           const userId = user.id;
@@ -53,8 +54,8 @@ export default function Onboarding() {
           // Step 1: Store the connected account ID in business_profiles
           const { error: supabaseError } = await supabase
             .from('business_profiles')
-            .update({ stripe_account_id: json.account }) // Update the connected account ID
-            .eq('id', userId); // Match with the correct business profile using user ID from auth
+            .update({ stripe_account_id: json.account })
+            .eq('id', userId);
   
           if (supabaseError) {
             console.error("Failed to store connected account ID to Account:", supabaseError);
@@ -72,20 +73,33 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="container">
-      <div className="banner">
-        <h2>BIDI</h2>
-      </div>
-      <div className="content">
-        {!connectedAccountId && <h2>Get ready for take off</h2>}
-        {connectedAccountId && !stripeConnectInstance && <h2>Add information to start accepting money</h2>}
-        {!connectedAccountId && <p>Bidi is the world's best up and coming photography platform: Never pay for leads, only pay for your wins!</p>}
+    <div className="container px-5 d-flex align-items-center justify-content-center">
+      <div className="col-lg-6">
+        <div className="mb-5 text-center">
+          <h1 className="OnboardingPageHeader">Stripe Onboarding</h1>
+          {!connectedAccountId && (
+            <p>Bidi is the world's best up-and-coming photography platform: Never pay for leads, only pay for your wins!</p>
+          )}
+          {connectedAccountId && !stripeConnectInstance && (
+            <h2>Add your information to start accepting payments</h2>
+          )}
+          {error && <p className="text-danger">Something went wrong!</p>}
+        </div>
         
         {!accountCreatePending && !connectedAccountId && (
-          <div>
-            <button onClick={createAccount}>
-              Set Up Payment Account with {email} {/* Display the email to the user */}
+          <div className="d-grid">
+            <button 
+              className="btn btn-secondary btn-lg w-100" 
+              onClick={createAccount}
+            >
+              Set Up Payment Account with {email}
             </button>
+          </div>
+        )}
+        
+        {accountCreatePending && (
+          <div className="mt-4 text-center">
+            <p>Creating your Stripe connected account...</p>
           </div>
         )}
         
@@ -95,18 +109,16 @@ export default function Onboarding() {
           </ConnectComponentsProvider>
         )}
 
-        {error && <p className="error">Something went wrong!</p>}
-        {(connectedAccountId || accountCreatePending || onboardingExited) && (
-          <div className="dev-callout">
-            {connectedAccountId && <p>Your connected account ID is: <code className="bold">{connectedAccountId}</code></p>}
-            {accountCreatePending && <p>Creating a connected account...</p>}
-            {onboardingExited && <p>The Account Onboarding component has exited</p>}
+        {(connectedAccountId || onboardingExited) && (
+          <div className="mt-4 text-center">
+            {connectedAccountId && <p>Your connected account ID is: <code>{connectedAccountId}</code></p>}
+            {onboardingExited && <p>Onboarding complete! You're ready to go.</p>}
           </div>
         )}
 
-        <div className="info-callout">
+        <div className="info-callout mt-5 text-center">
           <p>
-            Bidi uses Stripe Connect onboarding. <a href="https://docs.stripe.com/connect/onboarding/quickstart?connect-onboarding-surface=embedded" target="_blank" rel="noopener noreferrer">View docs</a>
+            Bidi uses Stripe Connect onboarding. <a href="https://docs.stripe.com/connect/onboarding/quickstart?connect-onboarding-surface=embedded" target="_blank" rel="noopener noreferrer">Learn more</a>
           </p>
         </div>
       </div>
