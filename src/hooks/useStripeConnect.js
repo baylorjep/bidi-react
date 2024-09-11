@@ -7,7 +7,7 @@ export const useStripeConnect = (connectedAccountId) => {
   useEffect(() => {
     if (connectedAccountId) {
       const fetchClientSecret = async () => {
-        const response = await fetch("/account_session", {
+        const response = await fetch("https://bidi-express.vercel.app/account_session", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

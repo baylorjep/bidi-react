@@ -54,7 +54,7 @@ import ContactFormES from './components/ContactFormES';
 // Stripe imports
 
 import Onboarding from './components/Stripe/Onboarding';
-
+import EmbeddedCheckoutForm from './components/Stripe/EmbeddedCheckoutForm';
 
 
 
@@ -114,7 +114,7 @@ function App() {
 
                         {/* Stripe Routes */}
                         <Route path="/onboarding" element={<Onboarding />} />
-                        
+                        <Route path="/checkout" element={<EmbeddedCheckoutForm />} />
                     </Routes>
                 </div>
                 <Footer />
