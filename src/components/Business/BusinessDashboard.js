@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import StripeDashboardButton from "../Stripe/StripeDashboardButton"; // Import the button component for viewing Stripe dashboard
+import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import { supabase } from "../../supabaseClient";
-import { useNavigate } from "react-router-dom"; // To navigate to the onboarding page
+import { useNavigate } from "react-router-dom";
+import '../../App.css'; // Include this for custom styles
 
 const BusinessDashboard = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
-  const navigate = useNavigate(); // For navigating to the onboarding page
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStripeAccountId = async () => {
-      const { data: { user } } = await supabase.auth.getUser(); // Get the current logged-in user
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from('business_profiles')
@@ -18,7 +19,7 @@ const BusinessDashboard = () => {
           .single();
 
         if (profile && profile.stripe_account_id) {
-          setConnectedAccountId(profile.stripe_account_id); // Set the connected account ID
+          setConnectedAccountId(profile.stripe_account_id);
         }
       }
     };
@@ -27,18 +28,16 @@ const BusinessDashboard = () => {
   }, []);
 
   return (
-    <div  className="business-dashboard text-center">
-      <br></br>
+    <div className="business-dashboard">
       <h1>Welcome to your Business Dashboard</h1>
       
-      {/* Show the Stripe Dashboard button if there's a connected account */}
       {connectedAccountId ? (
         <StripeDashboardButton accountId={connectedAccountId} />
       ) : (
         <>
           <p>You haven't set up a Stripe account yet.</p>
-          <button className="btn btn-secondary btn-lg"
-    
+          <button 
+            className="onboarding-button" 
             onClick={() => navigate("/onboarding")}
           >
             Set Up Payment Account
@@ -46,9 +45,44 @@ const BusinessDashboard = () => {
         </>
       )}
       
-      {/* Other dashboard elements */}
-      <div className="other-dashboard-elements">
-        {/* Add your other dashboard features here */}
+      <div className="dashboard-section">
+        <h2>Overview</h2>
+        <div className="overview-box">
+          <div className="overview-item">
+            <h3>Total Earnings</h3>
+            <p>$5,000</p>
+          </div>
+          <div className="overview-item">
+            <h3>Upcoming Jobs</h3>
+            <p>3</p>
+          </div>
+          <div className="overview-item">
+            <h3>Pending Payments</h3>
+            <p>$1,200</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="dashboard-section">
+        <h2>Bid Management</h2>
+        <p>You have 2 active bids</p>
+        <button className="action-button">View Bids</button>
+      </div>
+      
+      <div className="dashboard-section">
+        <h2>Profile Settings</h2>
+        <button className="action-button">Update Profile</button>
+        <button className="action-button">Manage Portfolio</button>
+      </div>
+      
+      <div className="dashboard-section">
+        <h2>Payout History</h2>
+        <button className="action-button">View Payout History</button>
+      </div>
+
+      <div className="dashboard-section">
+        <h2>Notifications</h2>
+        <p>No new notifications</p>
       </div>
     </div>
   );
