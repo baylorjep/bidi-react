@@ -1,44 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import StripeDashboardButton from "./StripeDashboardButton"; // Import the button component for viewing Stripe dashboard
+import { supabase } from "../../supabaseClient";
+import { useNavigate } from "react-router-dom"; // To navigate to the onboarding page
 
-function BusinessDashboard() {
-  const [loading, setLoading] = useState(false);
+const BusinessDashboard = () => {
+  const [connectedAccountId, setConnectedAccountId] = useState(null);
+  const navigate = useNavigate(); // For navigating to the onboarding page
 
-  const handleStripeOnboarding = async () => {
-    setLoading(true);
-    try {
-      // First, create a Stripe account
-      const createAccountRes = await fetch('/api/createAccount', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const { accountId } = await createAccountRes.json();
+  useEffect(() => {
+    const fetchStripeAccountId = async () => {
+      const { data: { user } } = await supabase.auth.getUser(); // Get the current logged-in user
+      if (user) {
+        const { data: profile } = await supabase
+          .from('business_profiles')
+          .select('stripe_account_id')
+          .eq('id', user.id)
+          .single();
 
-      // Then, generate the onboarding link
-      const createLinkRes = await fetch('/api/createAccountLink', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountId }),
-      });
-      const { url } = await createLinkRes.json();
+        if (profile && profile.stripe_account_id) {
+          setConnectedAccountId(profile.stripe_account_id); // Set the connected account ID
+        }
+      }
+    };
 
-      // Redirect to the onboarding URL
-      window.location.href = url;
-    } catch (error) {
-      console.error('Error with Stripe onboarding:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchStripeAccountId();
+  }, []);
 
   return (
-    <div>
-      <br></br>
-      <h1>Business Dashboard</h1>
-      <button className='btn btn-secondary' onClick={handleStripeOnboarding} disabled={loading}>
-        {loading ? 'Loading...' : 'Set up Stripe Account'}
-      </button>
+    <div className="business-dashboard">
+      <h1>Welcome to your Business Dashboard</h1>
+      
+      {/* Show the Stripe Dashboard button if there's a connected account */}
+      {connectedAccountId ? (
+        <StripeDashboardButton accountId={connectedAccountId} />
+      ) : (
+        <>
+          <p>You haven't set up a Stripe account yet.</p>
+          <button 
+            className="onboarding-button" 
+            onClick={() => navigate("/onboarding")}
+          >
+            Set Up Payment Account
+          </button>
+        </>
+      )}
+      
+      {/* Other dashboard elements */}
+      <div className="other-dashboard-elements">
+        {/* Add your other dashboard features here */}
+      </div>
     </div>
   );
-}
+};
 
 export default BusinessDashboard;
