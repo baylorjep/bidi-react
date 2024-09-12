@@ -28,7 +28,7 @@ const StripeDashboardButton = ({ accountId }) => {
   return (
     <div>
       {error && <p>{error}</p>}
-      <button onClick={handleViewDashboard}>View Stripe Dashboard</button>
+      <button className="btn btn-secondary btn-lg w-100" onClick={handleViewDashboard}>View Dashboard</button>
     </div>
   );
 };

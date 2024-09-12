@@ -28,6 +28,7 @@ const BusinessDashboard = () => {
 
   return (
     <div className="business-dashboard">
+      <br></br>
       <h1>Welcome to your Business Dashboard</h1>
       
       {/* Show the Stripe Dashboard button if there's a connected account */}
@@ -36,8 +37,8 @@ const BusinessDashboard = () => {
       ) : (
         <>
           <p>You haven't set up a Stripe account yet.</p>
-          <button 
-            className="onboarding-button" 
+          <button className="btn btn-secondary btn-lg w-100"
+    
             onClick={() => navigate("/onboarding")}
           >
             Set Up Payment Account
