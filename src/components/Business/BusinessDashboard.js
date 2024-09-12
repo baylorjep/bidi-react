@@ -27,7 +27,7 @@ const BusinessDashboard = () => {
   }, []);
 
   return (
-    <div className="business-dashboard">
+    <div  className="business-dashboard text-center">
       <br></br>
       <h1>Welcome to your Business Dashboard</h1>
       
@@ -37,7 +37,7 @@ const BusinessDashboard = () => {
       ) : (
         <>
           <p>You haven't set up a Stripe account yet.</p>
-          <button className="btn btn-secondary btn-lg w-100"
+          <button className="btn btn-secondary btn-lg"
     
             onClick={() => navigate("/onboarding")}
           >
