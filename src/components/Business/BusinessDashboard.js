@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import StripeDashboardButton from "./StripeDashboardButton"; // Import the button component for viewing Stripe dashboard
+import StripeDashboardButton from "../Stripe/StripeDashboardButton"; // Import the button component for viewing Stripe dashboard
 import { supabase } from "../../supabaseClient";
 import { useNavigate } from "react-router-dom"; // To navigate to the onboarding page
 
