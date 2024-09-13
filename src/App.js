@@ -12,6 +12,9 @@ import Footer from './components/Layout/Footer';
 import PrivacyPolicy from './components/Layout/PrivacyPolicy';
 import TermsOfUse from './components/Layout/TermsOfUse';
 
+// Admin Imports
+import AdminDashboard from './components/admin/AdminDashboard';
+
 // Bid Imports
 import SubmitBid from './components/Request/SubmitBid';
 import BidSuccess from './components/Bid/BidSuccess';
@@ -115,6 +118,11 @@ function App() {
                         {/* Stripe Routes */}
                         <Route path="/onboarding" element={<Onboarding />} />
                         <Route path="/checkout" element={<EmbeddedCheckoutForm />} />
+
+                        {/* Admin Routes */}
+                        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+                        
+
                     </Routes>
                 </div>
                 <Footer />

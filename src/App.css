@@ -11502,66 +11502,94 @@ header.masthead-index {
 
 /* RequestDisplay.css */
 
+/* Base styles for request display */
 .request-display {
-  position: relative; /* Required for absolute positioning of the button */
-  background-color: #ffffff; /* White background for the rectangle */
-  border-radius: 8px; /* Rounded corners */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-  padding: 20px; /* Padding inside the rectangle */
-  max-width: 600px; /* Max width of the display */
-  margin: 20px auto; /* Center the display horizontally */
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 100%;
+  margin: 20px auto;
+  overflow-wrap: break-word; /* Ensure long words break properly */
+  text-align: center; /* Center-align all text within the card */
 }
 
+/* Adjust content to stack vertically */
 .request-content {
   display: flex;
   flex-direction: column;
+  align-items: center; /* Center-align child elements */
 }
 
+/* Title styling */
 .request-title {
-  font-size: 1.5em; /* Larger font size for the title */
-  margin-bottom: 10px; /* Spacing below the title */
-  color: #333; /* Dark color for the title */
+  font-size: 1.5em;
+  margin-bottom: 10px;
+  color: #333;
+  word-wrap: break-word; /* Ensure long words break */
 }
 
+/* Styling for other elements */
 .request-location,
 .request-category,
 .request-description,
 .request-date,
-.request-created-at,
 .request-comments {
-  font-size: 1em; /* Regular font size */
-  margin-bottom: 10px; /* Spacing between paragraphs */
-  color: #555; /* Slightly lighter color for the text */
+  font-size: 1em;
+  margin-bottom: 10px;
+  color: #555;
+  text-align: center; /* Center-align text */
 }
 
+/* Bold labels */
 .request-location strong,
 .request-category strong,
 .request-description strong,
 .request-date strong,
-.request-created-at strong,
 .request-comments strong {
-  color: #000; /* Dark color for the labels */
-  font-weight: bold; /* Bold labels */
+  color: #000;
+  font-weight: bold;
 }
 
+/* Bid button styling */
 .bid-button {
-  position: absolute; /* Absolute positioning to place it at the bottom right */
-  bottom: 20px; /* Space from the bottom */
-  right: 20px; /* Space from the right */
-  padding: 5px 10px; /* Adjust padding for the button */
+  display: inline-block; /* Change to inline-block to avoid taking the full width */
+  width: auto; /* Adjust width to auto */
+  max-width: 80%; /* Set a maximum width to prevent stretching */
+  margin: 10px auto 0; /* Center the button and add space above */
+  padding: 10px 20px; /* Add padding for better appearance */
+  text-align: center; /* Center the text inside the button */
 }
 
 @media (max-width: 768px) {
   .request-display {
-      padding: 15px; /* Adjust padding for smaller screens */
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .request-title {
+    font-size: 1.2em;
+  }
+
+  .request-location,
+  .request-category,
+  .request-description,
+  .request-date,
+  .request-comments {
+    font-size: 0.9em;
+    text-align: center; /* Ensure text is center-aligned on mobile */
   }
 
   .bid-button {
-    bottom: 10px; /* Adjust bottom position for smaller screens */
-    right: 10px; /* Adjust right position for smaller screens */
-}
+    display: block; /* Change to block for better alignment on mobile */
+    width: auto; /* Ensure button does not stretch */
+    max-width: 80%; /* Limit the width */
+    margin: 10px auto; /* Center the button */
+    padding: 10px 20px; /* Add padding for consistency */
+  }
 }
 
+/* Background and container adjustments */
 .grey-bg {
   background: var(--bs-gray-300);
 }
@@ -11574,15 +11602,15 @@ header.masthead-index {
 
 .content {
   display: flex;
-  flex: 1; /* This makes the content area take up the remaining space */
-  flex-direction: column; /* Stack children vertically if there are multiple items */
+  flex: 1;
+  flex-direction: column;
   min-width: 100vw;
   min-height: 85vh;
 }
 
 .remaining-space {
-  flex: 1; /* This makes the remaining-space div take up all the available space */
-  padding: 20px; /* Example padding */
+  flex: 1;
+  padding: 20px;
 }
 
 .rotating-text-wrapper {
