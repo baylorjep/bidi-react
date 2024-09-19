@@ -258,8 +258,12 @@ function Signup() {
                                     required
                                 >
                                     <option value="">Select a category...</option>
+                                    <option value="photography">Photography</option>
+                                    <option value="photography">Videography</option>
+                                    <option value="photography">DJ</option>
+                                    <option value="photography">Cake Making</option>
                                     <option value="cleaning">Home Cleaning</option>
-                                    <option value="photography">Photo Shoot</option>
+                                    <option value="photography">Home Remodeling</option>
                                     <option value="landscaping">Landscaping</option>
                                     <option value="plumbing">Plumbing</option>
                                     <option value="electrical">Electrical</option>
