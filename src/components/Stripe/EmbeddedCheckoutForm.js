@@ -18,6 +18,9 @@ const EmbeddedCheckoutForm = () => {
       return;
     }
 
+     // Log the bid object to check what data it contains
+    console.log('Bid data:', bid);
+
     // Fetch the client_secret from the backend
     const createCheckoutSession = async () => {
       try {
