@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom'; // Import useLocation for passing data
 import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 
@@ -6,36 +7,50 @@ import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe
 const stripePromise = loadStripe('pk_test_51Pv13ZF25aBU3RMPPSX9m01yHzLVa1vufmqLkKeU9iFR5tzAARw4GXYldl5uJAAHwSISI72lUZ8RNbjEAdNBZcbc00f3S1ZvLX');
 
 const EmbeddedCheckoutForm = () => {
+  const location = useLocation(); // Access location state
+  const { bid } = location.state || {}; // Destructure bid data from location state
   const [clientSecret, setClientSecret] = useState(null);
 
   useEffect(() => {
+    // Only run if bid data is provided
+    if (!bid) {
+      console.error('No bid data provided for checkout.');
+      return;
+    }
+
     // Fetch the client_secret from the backend
     const createCheckoutSession = async () => {
-      const response = await fetch("https://bidi-express.vercel.app/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          connectedAccountId: 'acct_1AbCDefGHIjKLmnO', // Example connected account ID
-          amount: 5000, // Amount in cents
-          applicationFeeAmount: 500, // Application fee in cents
-        }),
-      });
+      try {
+        const response = await fetch("https://bidi-express.vercel.app/create-checkout-session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            connectedAccountId: bid.business_profiles.stripe_account_id, // Use the business's connected account ID
+            amount: bid.bid_amount, // Amount in cents
+            applicationFeeAmount: Math.round(bid.bid_amount * 0.05), // Set a 5% fee
+          }),
+        });
 
-      const { client_secret } = await response.json();
-      setClientSecret(client_secret);
+        const { client_secret } = await response.json();
+        setClientSecret(client_secret);
+      } catch (error) {
+        console.error('Error creating checkout session:', error);
+      }
     };
 
     createCheckoutSession();
-  }, []);
+  }, [bid]); // Re-run if bid changes
 
   return (
     <div>
-      {clientSecret && (
+      {clientSecret ? (
         <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
           <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>
+      ) : (
+        <p>Loading payment form...</p>
       )}
     </div>
   );

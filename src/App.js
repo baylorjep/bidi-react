@@ -41,6 +41,7 @@ import UpdatePassword from './components/Profile/UpdatePassword';
 
 // Individual Imports
 import MyBids from './components/Individual/MyBids';
+import ApprovedBids from './components/Individual/ApprovedBids';
 import MyDashboard from './components/Individual/MyDashboard'
 
 // Business Imports
@@ -55,11 +56,10 @@ import HomepageES from './components/HomepageES'
 import ContactFormES from './components/ContactFormES';
 
 // Stripe imports
-
 import Onboarding from './components/Stripe/Onboarding';
 import EmbeddedCheckoutForm from './components/Stripe/EmbeddedCheckoutForm';
-
-
+import PaymentCancelled from './components/Stripe/PaymentCancelled';
+import SuccessPayment from './components/Stripe/SuccessfulPayment';
 
 function App() {
 
@@ -103,6 +103,7 @@ function App() {
 
                         {/* Individual Routes */}
                         <Route path="/my-dashboard" element={<MyDashboard />} />
+                        <Route path="/approved-bids" element={<ApprovedBids />} />
 
                         {/* Business Routes */}
                         <Route path="/open-requests" element={<OpenRequests />} />
@@ -118,7 +119,9 @@ function App() {
                         {/* Stripe Routes */}
                         <Route path="/onboarding" element={<Onboarding />} />
                         <Route path="/checkout" element={<EmbeddedCheckoutForm />} />
-
+                        <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+                        <Route path="/payment-successful" element={<SuccessPayment />} />
+                        
                         {/* Admin Routes */}
                         <Route path="/admin-dashboard" element={<AdminDashboard />} />
                         

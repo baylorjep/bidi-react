@@ -7,8 +7,9 @@ function BidAccepted() {
             <div className="col-lg-6 text-center">
                 <br/>
                 <h2>Bid Approved!</h2>
-                <p>You have approved the job. The business will be reaching out to you soon!</p>
-                <Link className="btn btn-secondary" to="/my-bids">Back to Bids</Link>
+                <p>You have approved the job. Pay now or reach out to the business here!</p>
+                <Link className="btn btn-secondary" to="/approved-bids">My Approved Bids</Link>
+                
             </div>
         </div>
     );
