@@ -48,7 +48,9 @@ const EmbeddedCheckoutForm = () => {
   }, [bid]); // Re-run if bid changes
 
   return (
+    
     <div>
+      <br></br>
       {clientSecret ? (
         <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
           <EmbeddedCheckout />
