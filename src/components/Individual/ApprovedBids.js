@@ -45,7 +45,7 @@ function ApprovedBids() {
             // Fetch approved bids related to the user's requests and join with business_profiles
             const { data: bidsData, error: bidsError } = await supabase
                 .from('bids')
-                .select('*, business_profiles(business_name, business_category, phone, website)')
+                .select('*, business_profiles(business_name, business_category, phone, website, stripe_account_id)')
                 .in('request_id', requestIds)
                 .eq('status', 'accepted'); // Only fetch approved bids
 
