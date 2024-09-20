@@ -37,8 +37,14 @@ const EmbeddedCheckoutForm = () => {
           }),
         });
 
-        const { client_secret } = await response.json();
+
+        const data = await response.json();
+        console.log("Backend response data:", data); // Log the response from the backend
+
+        const { client_secret } = data;
+        
         setClientSecret(client_secret);
+        console.log("Client Secret:", client_secret); // Log the client_secret
       } catch (error) {
         console.error('Error creating checkout session:', error);
       }
