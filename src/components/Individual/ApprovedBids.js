@@ -19,12 +19,35 @@ function ApprovedBids() {
                 return;
             }
 
-            // Fetch approved bids related to the user's requests
+            // Fetch requests made by the logged-in user from both 'requests' and 'photography_requests'
+            const { data: requests, error: requestError } = await supabase
+                .from('requests')
+                .select('id')
+                .eq('user_id', userData.user.id);
+
+            const { data: photoRequests, error: photoRequestError } = await supabase
+                .from('photography_requests')
+                .select('id')
+                .eq('profile_id', userData.user.id);
+
+            if (requestError || photoRequestError) {
+                setError('Failed to fetch requests.');
+                console.error(requestError || photoRequestError);
+                return;
+            }
+
+            // Combine request IDs from both tables
+            const requestIds = [
+                ...requests.map(request => request.id),
+                ...photoRequests.map(photoRequest => photoRequest.id)
+            ];
+
+            // Fetch approved bids related to the user's requests and join with business_profiles
             const { data: bidsData, error: bidsError } = await supabase
                 .from('bids')
                 .select('*, business_profiles(business_name, business_category, phone, website)')
-                .eq('status', 'accepted')
-                .eq('user_id', userData.user.id); // Filter by the logged-in user ID
+                .in('request_id', requestIds)
+                .eq('status', 'accepted'); // Only fetch approved bids
 
             if (bidsError) {
                 setError('Failed to fetch approved bids.');
@@ -40,7 +63,7 @@ function ApprovedBids() {
 
     const handlePayNow = (bid) => {
         // Redirect to the payment component, passing the bid information
-        navigate('/pay-now', { state: { bid } });
+        navigate('/checkout', { state: { bid } });
     };
 
     return (
