@@ -33,6 +33,7 @@ const EmbeddedCheckoutForm = () => {
             connectedAccountId: bid.business_profiles.stripe_account_id, // Use the business's connected account ID
             amount: bid.bid_amount, // Amount in cents
             applicationFeeAmount: Math.round(bid.bid_amount * 0.05), // Set a 5% fee
+            serviceName: bid.business_profiles.business_name,
           }),
         });
 
