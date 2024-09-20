@@ -76,7 +76,7 @@ function ApprovedBids() {
                     approvedBids.map((bid) => (
                         <div key={bid.id} className="approved-bid-card">
                             <h3>{bid.business_profiles.business_name}</h3>
-                            <p><strong>Bid Amount:</strong> ${bid.bid_amount / 100}</p>
+                            <p><strong>Bid Amount:</strong> ${bid.bid_amount}</p>
                             <p><strong>Description:</strong> {bid.bid_description}</p>
                             <button
                                 className="btn btn-secondary"
