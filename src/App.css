@@ -92,8 +92,17 @@
   }
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap');
 
+body {
+  font-family: 'Lora', serif;
+}
 
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+  font-family: 'Roboto', sans-serif;
+}
 
 .header, .form-container {
   margin-top: 20px; /* Adjust this margin if necessary */
@@ -11372,48 +11381,139 @@ footer a:hover, footer a:active, footer a:focus {
   height: 100%;
 }
 
+
+
 .masthead-index {
-  position: relative;
-  height: 100vh;
   display: flex;
+  flex-direction: row; /* This ensures text and icons are in a horizontal row */
+
   align-items: center;
-  justify-content: center;
+  background: radial-gradient(circle at 20% 30%, rgba(255, 0, 0, 0.7), 15%, transparent 25%),
+              radial-gradient(circle at 50% 40%, rgba(252,156,208,1), 25%, transparent 40%),
+              radial-gradient(circle at 30% 70%, rgba(255,107,0,0.7), 20%, transparent 30%),
+              radial-gradient(circle at 100% 70%, rgba(255,249,109,1), 15%, transparent 30%);
+  background-color: #f4e9e9;
   background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  height: calc(100vh - 100px);
+  margin: 0;
+  font-family: Arial, sans-serif;
 }
 
-header.masthead-index {
+
+
+
+h1, .masthead-index {
+  font-size: 3rem;
+  margin: 0;
+}
+
+p, .masthead-index {
+  font-size: 1.2rem;
+  margin: 20px 0;
+}
+
+.landing-page-button-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 93vh; /* Full viewport height */
-  padding: 20px;
-  background: linear-gradient(to bottom right, #9219dc,#7a1deb,#af05ff,#1a00ed);
-  z-index: 2;
-
-  
+  padding-top: 3rem;
 }
-
-.masthead-index::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.25); /* Optional overlay for better text visibility */
-  z-index: 1;
-}
-
-.text-container {
-  display: flex;
-  flex-direction: column; /* Stack items vertically */
-  align-items: center; /* Center items horizontally */
-  justify-content: center; /* Center items vertically if needed */
-  position: relative;
-  z-index: 2;
+.landing-page-button {
+  background-color: black;
   color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 30px;
+}
+
+.landing-page-button:hover {
+  background-color: white;
+  color: black;
+}
+
+.landing-page-title {
+  font-family: Lora;
+  font-size: 64px;
+  font-weight: 700;
+  text-align: left;
+  padding: 1rem 2rem; /* Reduce padding */
+}
+
+.landing-page-subtitle {
+  text-align: left;   /* Align subtitle to left for consistency */
+  padding: 1rem 2rem; /* Reduce padding to make the text section more compact */
+  font-family: Roboto;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 28.13px;
+  word-wrap: break-word;
+}
+
+
+
+.icon {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  background-color: transparent;
+}
+
+.icon:nth-child(1) {
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, 0);
+}
+
+.icon:nth-child(2) {
+  top: 20%;
+  left: 80%;
+  transform: translate(-50%, 0);
+}
+
+.icon:nth-child(3) {
+  top: 50%;
+  left: 100%;
+  transform: translate(-50%, -50%);
+}
+
+.icon:nth-child(4) {
+  bottom: 20%;
+  left: 80%;
+  transform: translate(-50%, 0);
+}
+
+.icon:nth-child(5) {
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 0);
+}
+
+.icon:nth-child(6) {
+  bottom: 20%;
+  left: 20%;
+  transform: translate(-50%, 0);
+}
+
+
+
+.icon:nth-child(7) {
+  top: 50%;
+  left: 0;
+  transform: translate(-50%, -50%);
+}
+
+.icon:nth-child(8) {
+  top: 20%;
+  left: 20%;
+  transform: translate(-50%, 0);
+}
+
+.icon:nth-child(9) {
+  top: 20%;
+  left: 20%;
+  transform: translate(-50%, 0);
 }
 
 /* Ensure the subtitle and steps are centered */
