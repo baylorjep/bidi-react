@@ -11401,17 +11401,6 @@ footer a:hover, footer a:active, footer a:focus {
 
 
 
-
-h1, .masthead-index {
-  font-size: 3rem;
-  margin: 0;
-}
-
-p, .masthead-index {
-  font-size: 1.2rem;
-  margin: 20px 0;
-}
-
 .landing-page-button-container {
   display: flex;
   justify-content: center;
