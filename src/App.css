@@ -13,7 +13,7 @@
 
 
 :root {
-  --bidi-primary-color: #9a4aff;
+  --bidi-primary-color: black;
   --bs-blue: #2937f0;
   --bs-indigo: #6610f2;
   --bs-purple: #9f1ae2;
@@ -88,6 +88,19 @@
   box-sizing: border-box;
 }
 
+body {
+  margin: 0;
+  padding: 0;
+  background: 
+      radial-gradient(circle at 20% 30%, rgba(255, 0, 0, 0.7), transparent 25%),
+      radial-gradient(circle at 50% 40%, rgba(252,156,208,1), transparent 40%),
+      radial-gradient(circle at 30% 70%, rgba(255,107,0,0.7), transparent 30%),
+      radial-gradient(circle at 100% 70%, rgba(255,249,109,1), transparent 30%);
+  height: auto;
+  min-height: 100vh;
+}
+
+
 @media (prefers-reduced-motion: no-preference) {
   :root {
     scroll-behavior: smooth;
@@ -121,7 +134,7 @@ body {
   line-height: var(--bs-body-line-height);
   color: var(--bs-body-color);
   text-align: var(--bs-body-text-align);
-  background-color: var(--bs-body-bg);
+
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
@@ -2892,19 +2905,19 @@ textarea.form-control-lg {
 
 .btn-secondary {
   --bs-btn-color: #fff!important;
-  --bs-btn-bg: #9a4aff!important;
-  --bs-btn-border-color: #9a4aff!important;
-  --bs-btn-hover-color: #fff!important;
-  --bs-btn-hover-bg: #7f3dd0!important; /* Adjusted hover background color */
-  --bs-btn-hover-border-color: #6e3bcc!important; /* Adjusted hover border color */
+  --bs-btn-bg: black !important;
+  --bs-btn-border-color: black!important;
+  --bs-btn-hover-color: black!important;
+  --bs-btn-hover-bg: white!important; /* Adjusted hover background color */
+  --bs-btn-hover-border-color: black!important; /* Adjusted hover border color */
   --bs-btn-focus-shadow-rgb: 154, 74, 255!important;
   --bs-btn-active-color: #fff!important;
-  --bs-btn-active-bg: #6e3bcc!important; /* Adjusted active background color */
-  --bs-btn-active-border-color: #5b2eab!important; /* Adjusted active border color */
+  --bs-btn-active-bg: black!important; /* Adjusted active background color */
+  --bs-btn-active-border-color: blackimportant; /* Adjusted active border color */
   --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125)!important;
   --bs-btn-disabled-color: #fff!important;
-  --bs-btn-disabled-bg: #9a4aff!important; /* Updated disabled background color */
-  --bs-btn-disabled-border-color: #9a4aff!important; /* Updated disabled border color */
+  --bs-btn-disabled-bg: black!important; /* Updated disabled background color */
+  --bs-btn-disabled-border-color: black!important; /* Updated disabled border color */
 }
 .btn-custom-purple {
   background-color: var(--bidi-primary-color) !important;
@@ -3783,7 +3796,7 @@ textarea.form-control-lg {
 .navbar {
   --bs-navbar-padding-x: 0;
   --bs-navbar-padding-y: 0.5rem;
-  --bs-navbar-color: rgba(0, 0, 0, 0.55);
+  --bs-navbar-color: rgba(244, 233, 233, 0.0);
   --bs-navbar-hover-color: rgba(0, 0, 0, 0.7);
   --bs-navbar-disabled-color: rgba(0, 0, 0, 0.3);
   --bs-navbar-active-color: rgba(0, 0, 0, 0.9);
@@ -3832,6 +3845,7 @@ textarea.form-control-lg {
   text-decoration: none;
   white-space: nowrap;
 }
+
 .navbar-brand:hover, .navbar-brand:focus {
   color: var(--bs-navbar-brand-hover-color);
 }
@@ -10916,9 +10930,22 @@ section {
 }
 
 #mainNav {
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  background-color: #fff;
+  background-color: rgba(244, 233, 233, 0.0); /* Light pink with 80% opacity */
+  position: relative;
+    z-index: 1000; /* Make sure it appears above other elements */
+    transition: background-color 0.3s; /* Optional: smooth transition */
+  
+
+  
+}
+
+nav.hidden {
+  transform: translateY(-100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+nav {
+  transition: transform 0.3s ease-in-out;
 }
 #mainNav .navbar-brand {
   font-family: "Kanit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -11391,15 +11418,14 @@ footer a:hover, footer a:active, footer a:focus {
   justify-content: space-between;
   gap: 1rem;
   align-items: center;
-  background: radial-gradient(circle at 20% 30%, rgba(255, 0, 0, 0.7), 15%, transparent 25%),
-              radial-gradient(circle at 50% 40%, rgba(252,156,208,1), 25%, transparent 40%),
-              radial-gradient(circle at 30% 70%, rgba(255,107,0,0.7), 20%, transparent 30%),
-              radial-gradient(circle at 100% 70%, rgba(255,249,109,1), 15%, transparent 30%);
-  background-color: #f4e9e9;
+  
+  background-color: transparent;
   background-size: cover;
-  height: calc(100vh - 100px);
+  height:100vh;
   margin: 0;
-
+  z-index: 1;
+  padding-top: -200px;
+  
 }
 
 .text-section {
@@ -11479,7 +11505,227 @@ footer a:hover, footer a:active, footer a:focus {
 .icon:nth-child(7) { transform: rotate(270deg) translate(250px) rotate(-270deg); }
 .icon:nth-child(8) { transform: rotate(315deg) translate(250px) rotate(-315deg); }
 
-/* Ensure the subtitle and steps are centered */
+.why-bidi-section {
+  height: 70vh;
+  background-color: transparent;
+  background-size: cover;
+ 
+}
+
+.why-bidi {
+  
+  font-family: Lora;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 71.68px;
+  text-align: center;
+
+}
+
+.reasons-why {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-content: space-between;
+  margin-top: 8rem;
+  gap: 3rem;
+}
+
+.reason-title {
+  font-family: Lora;
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 51.2px;
+  text-align: center;
+  
+
+}
+
+.reason-box {
+  width: 548px;
+  height: 288px;
+  border-radius: 40px;
+  border: 2px 0px 0px 0px;
+  background-color: white;
+  border: 2px solid rgba(0, 0, 0, 1);
+  text-align: center;
+  padding: 40px 35px;
+  margin-top: 5rem;
+  font-family: Roboto;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 37.5px;
+  justify-content: center;
+
+}
+
+.how-to-use-section {
+  height: 80vh;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between; /* This will evenly space items */
+  align-items: center; /* Vertically center items */
+}
+
+.how-to-phone {
+  flex: 1;
+  flex-basis: 50%;
+}
+
+.phone-frame {
+
+  position: relative;
+  width: 300px; /* Width of the phone */
+  height: 510px; /* Height of the phone */
+  border: 16px solid black; /* Outer border representing phone body */
+  border-radius: 36px; /* Rounded corners to simulate a phone frame */
+  padding: 0px; /* Padding for the inner screen */
+  background-color: #333; /* Color for the phone body */
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2); /* Optional shadow for a realistic look */
+  margin-left: 20rem;
+}
+
+.phone-screen {
+  position: relative;
+  border-radius: 20px; /* Rounded corners for the screen */
+}
+
+.phone-screen video {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.how-to-text {
+  flex: 1;
+  flex-basis: 50%;
+  width: 80%;
+}
+
+.how-to-title {
+  font-family: Lora;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 71.68px;
+  text-align: center;
+  margin-bottom: 1rem;
+  width: 80%;
+}
+
+.how-to-steps {
+  font-family: Roboto;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 37.5px;
+  text-align: center;
+  word-break: break-word;
+  padding: 3rem 1rem;
+  width: 80%;
+  border-bottom: 3px solid black;
+}
+
+.try-now-button-container {
+  text-align: center;
+  width: 80%;
+}
+
+.user-reviews-section {
+  height: 80vh;
+}
+
+.user-reviews-title {
+  height: 72px;
+  font-family: Lora;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 71.68px;
+  text-align: center;
+
+}
+
+.review-slider-container {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+  margin-top: 5rem;
+  gap: 3rem;
+}
+
+.review {
+  width: 550px;
+  height: 500px;
+  border-radius: 40px;
+  border: 2px 0px 0px 0px;
+  background-color: white;
+  text-align: center;
+  padding: 10.5rem 6rem;
+  justify-content: center;
+  align-items: center;
+  font-family: Roboto;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 37.5px;
+  text-align: center;
+  border: 2px solid rgba(0, 0, 0, 1);
+  position: relative;
+}
+.quote-icon {
+  position: absolute;
+  top: 30px; /* Adjust as needed */
+  left: 30px; /* Adjust as needed */
+  width: 41px; /* Set a size for the icon */
+  height: 106px;
+  height: auto; /* Maintain aspect ratio */
+}
+
+.newsletter-section {
+  height: 50vh;
+}
+
+.newsletter-title {
+  font-family: Inter;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 77.45px;
+  text-align: center;
+
+}
+
+.newsletter-subtitle {
+  font-family: Inter;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 24.2px;
+  text-align: center;
+  padding: 1rem 30em;
+}
+
+.newsletter-input-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-left: 5rem;
+  margin-top: 3rem;
+}
+
+.newsletter-input {
+  border: 2px solid rgba(0, 0, 0, 1);
+  width: 616px; /* Adjust width as needed */
+  height: 63px; /* Adjust height as needed */
+  border-radius: 14px;
+  padding: 0 10px; /* Add some padding */
+  box-sizing: border-box; /* Include padding in width */
+}
+
+.newsletter-button-container {
+  justify-content: center;
+  display: flex;
+  text-align: center;
+
+}
+
 .text-container-2nd-page {
   flex: 1;
   max-width: 100%;
@@ -11673,7 +11919,7 @@ footer a:hover, footer a:active, footer a:focus {
 
 .remaining-space {
   flex: 1;
-  padding: 20px;
+  padding: 0px;
 }
 
 .rotating-text-wrapper {
@@ -11700,7 +11946,7 @@ footer a:hover, footer a:active, footer a:focus {
 }
 
 #root {
-  padding-top: 32px;
+  
 }
 
 .filler {
@@ -11714,31 +11960,89 @@ html, body {
   overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
-/* .app-container {
+ .app-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-} */
+} 
 
 .content {
   flex: 1;
-  padding-top: 60px;
+  padding-top: 0px;
 }
 
 .footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 20px;
-  background-color: #333; /* Adjust as needed */
-  color: white;
-  /* margin-top: 10px; */
-  box-sizing: border-box;
+  background-color: white; /* Adjust as needed */
 }
 
+.footer a {
+  color: black;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+  color:black;
+}
+
+.footer-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  border-bottom: 2px solid black;
+  padding: 30px 20px;
+}
 .footer-left {
   flex: 1;
+  flex-basis: 50%;
+}
+
+.footer-link {
+  color:black
+}
+
+.footer-bottom {
+  padding: 2rem;
+}
+
+.bidi-description-footer {
+  font-family: Inter;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 24.2px;
+  text-align: left;
+  padding: 3rem 20rem 0rem 10rem;
+
+}
+
+.contact-us {
+  flex:1;
+  flex-basis: 20%;
+}
+
+.contact-title {
+  font-family: Inter;
+font-size: 32px;
+font-weight: 600;
+line-height: 38.73px;
+text-align: left;
+margin-top: 3rem;
+
+}
+
+.contact-text {
+  font-family: Inter;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 24.2px;
+  text-align: left;
+  padding-top: 2rem;
+
+}
+.quick-links {
+  flex:1;
+  color:black;
+  flex-basis: 20%;
 }
 
 .footer-right {
@@ -11749,6 +12053,7 @@ html, body {
 .footer p {
   margin: 0;
 }
+
 
 .testimonials-container {
   background: linear-gradient(to bottom right, #9219dc,#7f3dd0, #064acc);
@@ -12045,6 +12350,7 @@ html, body {
   max-height: 500px;
   display: flex;
   justify-content: center;
+  margin-left: 20rem;
   
   
 }

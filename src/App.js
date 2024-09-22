@@ -61,6 +61,7 @@ import EmbeddedCheckoutForm from './components/Stripe/EmbeddedCheckoutForm';
 import PaymentCancelled from './components/Stripe/PaymentCancelled';
 import SuccessPayment from './components/Stripe/SuccessfulPayment';
 
+
 function App() {
 
     const [eventType, setEventType] = useState('');
@@ -69,6 +70,7 @@ function App() {
     return (
         <Router>
             <div className="app-container">
+                
                 <Navbar />
                 <div className='content'>
                     <Routes>
