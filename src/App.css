@@ -10,6 +10,8 @@
  * Copyright 2011-2022 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
  */
+
+
 :root {
   --bidi-primary-color: #9a4aff;
   --bs-blue: #2937f0;
@@ -11386,7 +11388,8 @@ footer a:hover, footer a:active, footer a:focus {
 .masthead-index {
   display: flex;
   flex-direction: row; /* This ensures text and icons are in a horizontal row */
-
+  justify-content: space-between;
+  gap: 1rem;
   align-items: center;
   background: radial-gradient(circle at 20% 30%, rgba(255, 0, 0, 0.7), 15%, transparent 25%),
               radial-gradient(circle at 50% 40%, rgba(252,156,208,1), 25%, transparent 40%),
@@ -11396,7 +11399,21 @@ footer a:hover, footer a:active, footer a:focus {
   background-size: cover;
   height: calc(100vh - 100px);
   margin: 0;
-  font-family: Arial, sans-serif;
+
+}
+
+.text-section {
+  flex: 1;
+  flex-basis: 50%;
+}
+
+.icon-section {
+  flex: 1;
+  flex-basis: 50%;
+  position: relative;
+  width: 600px;  /* Adjust size of the container */
+  height: 500px; /* Ensure the container is a square */
+  margin: auto;  /* Center the container */
 }
 
 
@@ -11428,82 +11445,39 @@ footer a:hover, footer a:active, footer a:focus {
   font-weight: 700;
   text-align: left;
   padding: 1rem 2rem; /* Reduce padding */
+  margin-left: 8rem;
 }
 
 .landing-page-subtitle {
-  text-align: left;   /* Align subtitle to left for consistency */
+  text-align: center;   /* Align subtitle to left for consistency */
   padding: 1rem 2rem; /* Reduce padding to make the text section more compact */
   font-family: Roboto;
   font-size: 24px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 28.13px;
   word-wrap: break-word;
+  margin: 0 10rem;
 }
 
 
 
 .icon {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  background-color: transparent;
+  position: absolute;  /* Position each icon absolutely within the container */
+  width: 50px;         /* Set icon size */
+  height: 50px;        /* Set icon size */
+  top: 40%;            /* Center the icons vertically */
+  left: 45%;           /* Center the icons horizontally */
+
 }
 
-.icon:nth-child(1) {
-  top: 0;
-  left: 50%;
-  transform: translate(-50%, 0);
-}
-
-.icon:nth-child(2) {
-  top: 20%;
-  left: 80%;
-  transform: translate(-50%, 0);
-}
-
-.icon:nth-child(3) {
-  top: 50%;
-  left: 100%;
-  transform: translate(-50%, -50%);
-}
-
-.icon:nth-child(4) {
-  bottom: 20%;
-  left: 80%;
-  transform: translate(-50%, 0);
-}
-
-.icon:nth-child(5) {
-  bottom: 0;
-  left: 50%;
-  transform: translate(-50%, 0);
-}
-
-.icon:nth-child(6) {
-  bottom: 20%;
-  left: 20%;
-  transform: translate(-50%, 0);
-}
-
-
-
-.icon:nth-child(7) {
-  top: 50%;
-  left: 0;
-  transform: translate(-50%, -50%);
-}
-
-.icon:nth-child(8) {
-  top: 20%;
-  left: 20%;
-  transform: translate(-50%, 0);
-}
-
-.icon:nth-child(9) {
-  top: 20%;
-  left: 20%;
-  transform: translate(-50%, 0);
-}
+.icon:nth-child(1) { transform: rotate(0deg) translate(250px) rotate(0deg); }
+.icon:nth-child(2) { transform: rotate(45deg) translate(250px) rotate(-45deg); }
+.icon:nth-child(3) { transform: rotate(90deg) translate(250px) rotate(-90deg); }
+.icon:nth-child(4) { transform: rotate(135deg) translate(250px) rotate(-135deg); }
+.icon:nth-child(5) { transform: rotate(180deg) translate(250px) rotate(-180deg); }
+.icon:nth-child(6) { transform: rotate(225deg) translate(250px) rotate(-225deg); }
+.icon:nth-child(7) { transform: rotate(270deg) translate(250px) rotate(-270deg); }
+.icon:nth-child(8) { transform: rotate(315deg) translate(250px) rotate(-315deg); }
 
 /* Ensure the subtitle and steps are centered */
 .text-container-2nd-page {
