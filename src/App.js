@@ -60,6 +60,7 @@ import Onboarding from './components/Stripe/Onboarding';
 import EmbeddedCheckoutForm from './components/Stripe/EmbeddedCheckoutForm';
 import PaymentCancelled from './components/Stripe/PaymentCancelled';
 import SuccessPayment from './components/Stripe/SuccessfulPayment';
+import PaymentStatus from './components/Stripe/PaymentStatus';
 
 function App() {
 
@@ -121,6 +122,7 @@ function App() {
                         <Route path="/checkout" element={<EmbeddedCheckoutForm />} />
                         <Route path="/payment-cancelled" element={<PaymentCancelled />} />
                         <Route path="/payment-successful" element={<SuccessPayment />} />
+                        <Route path="/payment-status" element={<PaymentStatus />} />
                         
                         {/* Admin Routes */}
                         <Route path="/admin-dashboard" element={<AdminDashboard />} />
