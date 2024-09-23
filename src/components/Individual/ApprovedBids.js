@@ -73,19 +73,21 @@ function ApprovedBids() {
                 {error ? (
                     <p className="text-danger">{error}</p>
                 ) : approvedBids.length > 0 ? (
-                    approvedBids.map((bid) => (
-                        <div key={bid.id} className="approved-bid-card">
-                            <h3>{bid.business_profiles.business_name}</h3>
-                            <p><strong>Bid Amount:</strong> ${bid.bid_amount}</p>
-                            <p><strong>Description:</strong> {bid.bid_description}</p>
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => handlePayNow(bid)}
-                            >
-                                Pay Now
-                            </button>
-                        </div>
-                    ))
+                    <div className="d-flex flex-column align-items-center"> {/* Center the whole card */}
+                        {approvedBids.map((bid) => (
+                            <div key={bid.id} className="approved-bid-card card p-4 mb-4" style={{ width: '100%', maxWidth: '500px' }}>
+                                <h3>{bid.business_profiles.business_name}</h3>
+                                <p><strong>Bid Amount:</strong> ${bid.bid_amount}</p>
+                                <p><strong>Description:</strong> {bid.bid_description}</p>
+                                <button
+                                    className="btn btn-secondary mt-3"
+                                    onClick={() => handlePayNow(bid)}
+                                >
+                                    Pay Now
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 ) : (
                     <p>You don't have any approved bids at the moment.</p>
                 )}
