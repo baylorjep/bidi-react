@@ -62,7 +62,7 @@ const EmbeddedCheckoutForm = () => {
           <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>
       ) : (
-        <p>Loading payment form...</p>
+        <h4>Loading payment form...</h4>
       )}
     </div>
   );
