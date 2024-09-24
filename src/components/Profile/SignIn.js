@@ -40,7 +40,7 @@ function SignIn() {
         if (profile.role === 'individual') {
             navigate('/my-bids'); // Redirect individuals to the "My Bids" page
         } else if (profile.role === 'business') {
-            navigate('/open-requests'); // Redirect businesses to the "Open Requests" page
+            navigate('/dashboard'); // Redirect businesses to the "Open Requests" page
         }
     };
 
