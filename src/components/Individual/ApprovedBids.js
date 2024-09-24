@@ -103,7 +103,7 @@ function ApprovedBids() {
                                     onClick={() => handleMessage(bid)}
                                     style={{ marginLeft: '10px' }}
                                 >
-                                    Message
+                                    Message {bid.business_profiles.business_name}
                                 </button>
                             </div>
                         ))}
