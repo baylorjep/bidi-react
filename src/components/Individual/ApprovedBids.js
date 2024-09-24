@@ -66,6 +66,19 @@ function ApprovedBids() {
         navigate('/checkout', { state: { bid } });
     };
 
+    const handleMessage = (bid) => {
+        // Create mailto link with a pre-filled email template
+        const subject = encodeURIComponent('Regarding Your Bid');
+        const body = encodeURIComponent(
+            `Hi ${bid.business_profiles.business_name},\n\n` +
+            `I have accepted your bid and would like to discuss the next steps.\n\n` +
+            `Looking forward to your response.\n\nBest regards,\n[Your Name]`
+        );
+        const email = bid.business_profiles.email || ''; // Use business email if available
+        const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+        window.location.href = mailtoLink;
+    };
+
     return (
         <div className="container px-5">
             <header className="masthead">
@@ -84,6 +97,13 @@ function ApprovedBids() {
                                     onClick={() => handlePayNow(bid)}
                                 >
                                     Pay Now
+                                </button>
+                                <button
+                                    className="btn btn-secondary mt-3"
+                                    onClick={() => handleMessage(bid)}
+                                    style={{ marginLeft: '10px' }}
+                                >
+                                    Message
                                 </button>
                             </div>
                         ))}
