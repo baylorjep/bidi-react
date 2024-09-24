@@ -95,6 +95,7 @@ function ApprovedBids() {
                                 <button
                                     className="btn btn-secondary btn-lg flex-fill"
                                     onClick={() => handlePayNow(bid)}
+                                    style={{ marginRight: '10px' }}
                                 >
                                     Pay Now
                                 </button>
