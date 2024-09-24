@@ -93,7 +93,7 @@ function ApprovedBids() {
                                 <p><strong>Bid Amount:</strong> ${bid.bid_amount}</p>
                                 <p><strong>Description:</strong> {bid.bid_description}</p>
                                 <button
-                                    className="btn btn-secondary btn-lg flex-fill"
+                                    className="btn btn-secondary btn-md flex-fill"
                                     onClick={() => handlePayNow(bid)}
                                     style={{ marginRight: '10px' }}
                                 >
@@ -101,7 +101,7 @@ function ApprovedBids() {
                                 </button>
                                 <br></br>
                                 <button
-                                    className="btn btn-secondary btn-lg flex-fill"
+                                    className="btn btn-secondary btn-md flex-fill"
                                     onClick={() => handleMessage(bid)}
                                     style={{ marginLeft: '10px' }}
                                 >
