@@ -33,7 +33,7 @@ const BusinessDashboard = () => {
 
   return (
     <div className="business-dashboard text-center">
-      <h1>Welcome, {businessName}!</h1>
+      <h1 className="dashboard-title">Welcome, {businessName}!</h1>
       
       <div className="container mt-4">
         <div className="row justify-content-center">
