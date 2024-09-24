@@ -37,20 +37,20 @@ const BusinessDashboard = () => {
       
       <div className="container mt-4">
         <div className="row justify-content-center">
-          <div className="col-lg-5 col-md-6 col-sm-12">
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
             <button 
-              className="btn btn-secondary btn-lg w-100 mb-3" 
+              className="btn btn-secondary btn-lg w-100 mb-3 flex-fill" 
               onClick={() => navigate("/open-requests")}
             >
               View Requests
             </button>
           </div>
-          <div className="col-lg-5 col-md-6 col-sm-12">
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
             {connectedAccountId ? (
               <StripeDashboardButton accountId={connectedAccountId} />
             ) : (
               <button 
-                className="btn btn-secondary btn-lg w-100 mb-3" 
+                className="btn btn-secondary btn-lg w-100 mb-3 flex-fill" 
                 onClick={() => navigate("/onboarding")}
               >
                 Set Up Payment Account
