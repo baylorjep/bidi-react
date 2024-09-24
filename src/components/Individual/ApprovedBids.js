@@ -98,6 +98,7 @@ function ApprovedBids() {
                                 >
                                     Pay Now
                                 </button>
+                                <br></br>
                                 <button
                                     className="btn btn-secondary btn-lg flex-fill"
                                     onClick={() => handleMessage(bid)}
