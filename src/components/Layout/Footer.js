@@ -11,7 +11,7 @@ const Footer = () => {
             <div className='footer-container'>
 
                 <div className='footer-left'>
-                    <img src={logo} alt="Bidi Logo" style={{ height: '100px', width: 'auto', marginLeft:"10rem", marginTop:"2rem" }}/>
+                    <img className='footer-left-img'src={logo} alt="Bidi Logo"/>
                     <div className='bidi-description-footer'>Help you with professionals who have been checked out and have been shown to be reliable, whether you need help with any tasks or planning an unforgettable event. </div>
                 </div>
 

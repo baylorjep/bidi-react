@@ -88,15 +88,20 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
   padding: 0;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+body {
   background-image: url(../src/assets/images/background.png);
 }
 
-@media (max-width: 1500px){
+@media (max-width: 1500px) {
   body {
-    background: linear-gradient(to bottom, #fbc5c7,#fdbbbd, #fbe9bf);
+    background: linear-gradient(to bottom, #fbc5c7, #fdbbbd, #fbe9bf); /* Gradient for smaller screens */
+    
   }
 }
 
@@ -125,19 +130,7 @@ body {
 }
 
 
-body {
-  margin: 0;
-  padding-top: 70px; /* Adjust according to your navbar height */
-  font-family: var(--bs-body-font-family);
-  font-size: var(--bs-body-font-size);
-  font-weight: var(--bs-body-font-weight);
-  line-height: var(--bs-body-line-height);
-  color: var(--bs-body-color);
-  text-align: var(--bs-body-text-align);
 
-  -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-}
 
 hr {
   margin: 1rem 0;
@@ -2887,20 +2880,36 @@ textarea.form-control-lg {
 }
 
 .btn-primary {
-  --bs-btn-color: #fff;
-  --bs-btn-bg: #2937f0;
-  --bs-btn-border-color: #2937f0;
-  --bs-btn-hover-color: #fff;
-  --bs-btn-hover-bg: #232fcc;
-  --bs-btn-hover-border-color: #212cc0;
-  --bs-btn-focus-shadow-rgb: 73, 85, 242;
-  --bs-btn-active-color: #fff;
-  --bs-btn-active-bg: #212cc0;
-  --bs-btn-active-border-color: #1f29b4;
-  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
-  --bs-btn-disabled-color: #fff;
-  --bs-btn-disabled-bg: #2937f0;
-  --bs-btn-disabled-border-color: #2937f0;
+  --bs-btn-color: black!important;
+  --bs-btn-bg: transparent !important;
+  --bs-btn-border-color: black!important;
+  --bs-btn-hover-color: white!important;
+  --bs-btn-hover-bg: black !important; /* Adjusted hover background color */
+  --bs-btn-hover-border-color: white!important; /* Adjusted hover border color */
+  --bs-btn-focus-shadow-rgb: 154, 74, 255!important;
+  --bs-btn-active-color: #fff!important;
+  --bs-btn-active-bg: black!important; /* Adjusted active background color */
+  --bs-btn-active-border-color: blackimportant; /* Adjusted active border color */
+  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125)!important;
+  --bs-btn-disabled-color: #fff!important;
+  --bs-btn-disabled-bg: black!important; /* Updated disabled background color */
+  --bs-btn-disabled-border-color: black!important; /* Updated disabled border color */
+  width: 150px;
+  height: 50px;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+}
+
+.btn-text {
+  color: #000;
+text-align: center;
+font-family: Roboto;
+font-size: 20px;
+font-style: normal;
+font-weight: 700;
+justify-content: center;
+line-height: px;
 }
 
 .btn-secondary {
@@ -2908,7 +2917,7 @@ textarea.form-control-lg {
   --bs-btn-bg: black !important;
   --bs-btn-border-color: black!important;
   --bs-btn-hover-color: black!important;
-  --bs-btn-hover-bg: white!important; /* Adjusted hover background color */
+  --bs-btn-hover-bg: transparent!important; /* Adjusted hover background color */
   --bs-btn-hover-border-color: black!important; /* Adjusted hover border color */
   --bs-btn-focus-shadow-rgb: 154, 74, 255!important;
   --bs-btn-active-color: #fff!important;
@@ -2918,6 +2927,73 @@ textarea.form-control-lg {
   --bs-btn-disabled-color: #fff!important;
   --bs-btn-disabled-bg: black!important; /* Updated disabled background color */
   --bs-btn-disabled-border-color: black!important; /* Updated disabled border color */
+}
+
+.btn-nav-primary {
+  border-radius: 30px;
+  border: 2px;
+  width: 110px;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+  border: 2px solid #000;
+  font-style: normal;
+  text-decoration: none;
+  margin-right: 1rem;
+}
+
+.btn-nav-primary:hover {
+  background-color: black;
+}
+
+.btn-nav-primary:hover .btn-text {
+  color: white; /* Change text color to white on button hover */
+}
+
+
+.btn-text {
+  color: #000;
+text-align: center;
+font-family: Roboto;
+font-size: 18px;
+font-style: normal;
+font-weight: 600;
+justify-content: center;
+line-height: 0px;
+}
+
+.btn-nav-secondary {
+  border-radius: 30px;
+  border: 2px;
+  width: 110px;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+  border: 2px solid #000;
+  font-style: normal;
+  text-decoration: none;
+  background-color: black;
+}
+
+.btn-text-secondary {
+  color: white;
+text-align: center;
+font-family: Roboto;
+font-size: 18px;
+font-style: normal;
+font-weight: 600;
+justify-content: center;
+line-height: 0px;
+}
+
+.btn-nav-secondary:hover {
+  background-color: transparent;
+}
+
+.btn-nav-secondary:hover .btn-text-secondary {
+  color: black; /* Change text color to white on button hover */
 }
 .btn-custom-purple {
   background-color: var(--bidi-primary-color) !important;
@@ -10896,9 +10972,6 @@ textarea.form-control-lg {
     display: none !important;
   }
 }
-html {
-  scroll-padding-top: 4.5rem;
-}
 
 .bg-black {
   background-color: #000 !important;
@@ -11453,7 +11526,7 @@ footer a:hover, footer a:active, footer a:focus {
 .landing-page-button {
   background-color: black;
   color: white;
-  border: none;
+  border: 2px solid #000;
   padding: 10px 20px;
   font-size: 1.2rem;
   cursor: pointer;
@@ -11461,7 +11534,7 @@ footer a:hover, footer a:active, footer a:focus {
 }
 
 .landing-page-button:hover {
-  background-color: white;
+  background-color: transparent;
   color: black;
 }
 
@@ -11509,6 +11582,9 @@ footer a:hover, footer a:active, footer a:focus {
   .masthead-index {
     display: flex;
     flex-direction: column;
+    margin-top: 0px;
+    margin-right: 0;
+    padding-right: 0;
   }
 
   .icon:nth-child(1) { transform: rotate(0deg) translate(150px) rotate(0deg); }
@@ -11540,25 +11616,55 @@ footer a:hover, footer a:active, footer a:focus {
 
 }
 
-@media (max-width: 795px) {
+@media (max-width: 794px) {
   .icon-section {
-    margin-top: -80rem
+    margin-top: -70rem;
   }
 
   .icon {
     width: 20px;
     height: 20px;
   }
+  .landing-page-subtitle {
+    font-size: 1rem;
+    padding-top:0;
+    margin-top:27rem;
+  }
 }
 
 @media (max-width: 600px) {
   .icon-section {
-    margin-left: -1.5rem;
+    margin-left: -0.5rem;
+    margin-top: -75rem;
+  }
+  .landing-page-button-container {
+    margin-top: 0;
+    padding-top:1rem;
   }
 }
 
+@media (max-width:580px) {
+  .icon-section {
+    margin-left: -1rem;
+  }
+}
 
 @media (max-width:550px) {
+  .icon-section {
+    margin-left: -1.8rem;
+  }
+}
+
+@media (max-width:530px) {
+  .icon-section {
+    margin-left: -2.5rem;
+  }
+  .landing-page-subtitle {
+    padding: 0 3rem;
+  }
+}
+
+@media (max-width:500px) {
   .icon-section {
     margin-left: -3.5rem;
   }
@@ -11576,12 +11682,19 @@ footer a:hover, footer a:active, footer a:focus {
     margin-top: -75rem;
   }
 }
+
+@media (max-width:430px) {
+  .icon-section {
+    margin-left: -6rem;
+    margin-top: -75rem;
+  }
+}
 .why-bidi-section {
-  height: 70vh;
   background-color: transparent;
   background-size: cover;
- 
+  margin-bottom: 10rem;
 }
+
 
 .why-bidi {
   
@@ -11599,8 +11712,10 @@ footer a:hover, footer a:active, footer a:focus {
   justify-content: center;
   align-content: space-between;
   margin-top: 8rem;
-  gap: 2rem;
+  gap: 3rem;
 }
+
+
 
 .reason-title {
   font-family: 'Lora', serif;
@@ -11623,15 +11738,37 @@ footer a:hover, footer a:active, footer a:focus {
   line-height: 37.5px;
   justify-content: center;
   height: auto; /* Maintain aspect ratio */
-  position: relative;
+}
+
+@media (max-width:1500px) {
+  .reasons-why {
+    flex-direction: column;
+    align-items: center;
+    margin-top:3rem;
+  }
+  .reason-title {
+    font-size: 2.5rem;
+  }
+  .reason-box {
+    margin-top:0rem;
+  }
+}
+
+@media (max-width:550px) {
+  .reason-box {
+    width: 25rem;
+  }
+  .reason-title {
+    font-size: 2rem;
+  }
 }
 
 .how-to-use-section {
-  height: 80vh;
   display: flex;
   flex-direction: row;
   justify-content: space-between; /* This will evenly space items */
   align-items: center; /* Vertically center items */
+  margin-bottom: 10rem;
 }
 
 .how-to-phone {
@@ -11696,8 +11833,26 @@ footer a:hover, footer a:active, footer a:focus {
   width: 80%;
 }
 
+@media (max-width:1500px) {
+  .how-to-use-section {
+    flex-direction: column;
+  }
+  .phone-frame {
+    margin-left: 0rem;
+    margin-top: 5rem;
+  }
+  .how-to-text, .how-to-steps, .how-to-title, .try-now-button-container {
+    width:100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  .how-to-title {
+    margin-top: 3rem;
+  }
+}
+
 .user-reviews-section {
-  height: 80vh;
+  margin-bottom: 10rem;
 }
 
 .user-reviews-title {
@@ -11712,10 +11867,10 @@ footer a:hover, footer a:active, footer a:focus {
 
 .review-slider-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   flex-direction: row;
   margin-top: 5rem;
-  gap: 3rem;
+  gap: 1rem;
 }
 
 .review {
@@ -11745,8 +11900,31 @@ footer a:hover, footer a:active, footer a:focus {
   height: auto; /* Maintain aspect ratio */
 }
 
+@media(max-width:1500px) {
+  .review-slider-container {
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+    margin-top: 8rem;
+  }
+  .user-reviews-title {
+    margin-top: 3rem;
+    text-align: center;
+  }
+  .review {
+    width: 450px;
+    height: 400px;
+    padding: 8rem 5rem;
+  }
+}
+
+@media(max-width:500px) {
+  .user-reviews-title {
+    margin-bottom: 11rem;
+  }
+}
 .newsletter-section {
-  height: 50vh;
+  margin-bottom: 5rem;
 }
 
 .newsletter-title {
@@ -11791,6 +11969,19 @@ footer a:hover, footer a:active, footer a:focus {
   display: flex;
   text-align: center;
 
+}
+
+@media (max-width:1500px) {
+  .newsletter-title {
+    font-size: 45px;
+  }
+  .newsletter-subtitle {
+    padding: 1rem 0rem;
+  }
+  .newsletter-input-container {
+    margin-left: 2rem;
+    margin-right: 2rem;
+  }
 }
 
 .text-container-2nd-page {
@@ -12012,19 +12203,12 @@ footer a:hover, footer a:active, footer a:focus {
   100% { transform: translateY(-100%); opacity: 0; }
 }
 
-#root {
-  
-}
+
 
 .filler {
   flex: 1;
 }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
 
  .app-container {
   display: flex;
@@ -12065,6 +12249,13 @@ html, body {
 
 .footer-link {
   color:black
+}
+
+.footer-left-img {
+  height: 100px;
+  width:auto;
+  margin-left: 10rem;
+  margin-top: 2rem;
 }
 
 .footer-bottom {
@@ -12118,6 +12309,22 @@ margin-top: 3rem;
 
 .footer p {
   margin: 0;
+}
+
+@media (max-width:1500px) {
+  .footer-container {
+    flex-direction: column;
+  }
+  .bidi-description-footer {
+    padding:0;
+    margin-top: 1rem;
+  }
+  .footer-left-img {
+    margin-left: 0rem;
+  }
+  .contact-title {
+    margin-top: 1rem;
+  }
 }
 
 

@@ -16,6 +16,7 @@ import paintIcon from '../assets/images/Icons/paint icon.png'
 import renchIcon from '../assets/images/Icons/rench icon.png'
 import scissorsIcon from '../assets/images/Icons/scissors icon.png'
 import quoteicon from '../assets/images/Icons/“.png'
+import icongroup from '../assets/images/Icons/Group 2.png'
 function Homepage() {
     const [user, setUser] = useState(null);
 
@@ -133,14 +134,7 @@ function Homepage() {
                     className='newsletter-input'
                     id="email-input"
                     type="text" // or "email", "password", etc.
-                    placeholder="Email (Optional)"
-                />
-                or
-                <input
-                    className='newsletter-input'
-                    id="phone-number-input"
-                    type="text" // or "email", "password", etc.
-                    placeholder="Phone # (Optional)"
+                    placeholder="Email"
                 />
                 <div className='newsletter-button-container'>
                     <Link className="btn btn-secondary rounded-pill" style={{width:"150px", height:"60px"}} to="/signin">

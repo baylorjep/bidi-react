@@ -127,19 +127,27 @@ function Navbar() {
                         </li>
                     </ul>
 
+                    
+
                     {user ? (
-                        <button className="btn btn-secondary rounded-pill" onClick={handleSignOut}>
-                            <span className="d-flex align-items-center">
-                                <span className="small">Sign Out</span>
+                        <button className="btn-nav-primary" onClick={handleSignOut}>
+                            <span className="btn-text">
+                                <span className="small">Log Out</span>
                             </span>
                         </button>
                     ) : (
-                        <Link className="btn btn-secondary rounded-pill" to="/signin">
-                            <span className="d-flex align-items-center">
-                                <span className="small">Sign In</span>
+                        <Link className="btn-nav-primary" to="/signin">
+                            <span className="btn-text">
+                                <span className="small">Log In</span>
                             </span>
                         </Link>
                     )}
+
+                        <Link className="btn-nav-secondary" to="/signup">
+                            <span className="btn-text-secondary">
+                                <span className="small">Sign Up</span>
+                            </span>
+                        </Link>
                 </div>
             </div>
         </nav>
