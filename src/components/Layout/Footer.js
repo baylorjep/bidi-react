@@ -22,6 +22,8 @@ const Footer = () => {
                 </div>
                 <div className="quick-links">
                     <div className='contact-title'>Quick Links</div>
+                    <div className='contact-text'><Link to="/">Home</Link></div>
+                    <div className='contact-text'><Link to="signin">Sign In/Sign Up</Link></div>
                     <div className='contact-text'><Link to="/inicio">Cambie pagina al Español</Link></div>
                     <div className='contact-text'><Link to="/privacy-policy">Privacy Policy</Link></div>
                     <div className='contact-text'><Link to="/terms-of-use">Terms of Use</Link></div>

@@ -28,8 +28,10 @@ function RequestCategories() {
                             <option value="photography">Photography/Videography</option>
                             <option value="dj_services">DJ Services</option>
                             <option value="cakes">Cakes</option>
-                            <option value="home_remodeling">Home Remodeling</option>
-                            <option value="roofing">Roofing</option>
+                            <option value="Hair_and_Makeup_Artist">Hair and Makeup Artist</option>
+                            <option value="Catering">Catering</option>
+                            <option value="Event/Wedding_Planner">Event/Wedding Planner</option>
+                            <option value="Cleaning">Cleaning</option>
                             <option value="other">Other</option>
                         </select>
                         <button 

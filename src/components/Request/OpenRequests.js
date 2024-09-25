@@ -43,7 +43,7 @@ function OpenRequests() {
     }, []);
 
     return (
-        <div className="container px-5 d-flex align-items-center justify-content-center grey-bg content">
+        <div className="container px-5 d-flex align-items-center justify-content-center content">
             <div className="col-lg-6 remaining-space">
                 {error && <p>Error: {error}</p>}
 

@@ -128,13 +128,13 @@ function Navbar() {
                     </ul>
 
                     {user ? (
-                        <button className="btn-secondary" onClick={handleSignOut}>
+                        <button className="btn btn-secondary rounded-pill" onClick={handleSignOut}>
                             <span className="d-flex align-items-center">
                                 <span className="small">Sign Out</span>
                             </span>
                         </button>
                     ) : (
-                        <Link className="btn btn-secondary rounded-pill px-3 mb-2 mb-lg-0" to="/signin">
+                        <Link className="btn btn-secondary rounded-pill" to="/signin">
                             <span className="d-flex align-items-center">
                                 <span className="small">Sign In</span>
                             </span>
