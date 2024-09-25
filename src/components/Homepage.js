@@ -112,17 +112,17 @@ function Homepage() {
                 </div>
                 <div className='review'>
                     <img className='quote-icon' src={quoteicon} alt="Quote Icon" />
-                    I love how automated it all is.
+                    You gusy are kicking butt btw!.
                     <br />
                     <br />
-                    <span>- olivia J.</span>
+                    <span>- Savannah O.</span>
                 </div>
                 <div className='review'>
                     <img className='quote-icon' src={quoteicon} alt="Quote Icon" />
-                    I love how automated it all is.
+                    This is incredible! Super excited!
                     <br />
                     <br />
-                    <span>- olivia J.</span>
+                    <span>- Josh B.</span>
                 </div>
             </div>
         </div>
