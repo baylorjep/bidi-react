@@ -6,83 +6,58 @@ import '../../App.css'; // Include this for custom styles
 
 const BusinessDashboard = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
+  const [businessName, setBusinessName] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchStripeAccountId = async () => {
+    const fetchBusinessDetails = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from('business_profiles')
-          .select('stripe_account_id')
+          .select('business_name, stripe_account_id')
           .eq('id', user.id)
           .single();
 
-        if (profile && profile.stripe_account_id) {
-          setConnectedAccountId(profile.stripe_account_id);
+        if (profile) {
+          setBusinessName(profile.business_name);
+          if (profile.stripe_account_id) {
+            setConnectedAccountId(profile.stripe_account_id);
+          }
         }
       }
     };
 
-    fetchStripeAccountId();
+    fetchBusinessDetails();
   }, []);
 
   return (
-    <div className="business-dashboard">
-      <h1>Welcome to your Business Dashboard</h1>
+    <div className="business-dashboard text-center">
+      <h1 className="dashboard-title">Welcome, {businessName}!</h1>
       
-      {connectedAccountId ? (
-        <StripeDashboardButton accountId={connectedAccountId} />
-      ) : (
-        <>
-          <p>You haven't set up a Stripe account yet.</p>
-          <button 
-            className="onboarding-button" 
-            onClick={() => navigate("/onboarding")}
-          >
-            Set Up Payment Account
-          </button>
-        </>
-      )}
-      
-      <div className="dashboard-section">
-        <h2>Overview</h2>
-        <div className="overview-box">
-          <div className="overview-item">
-            <h3>Total Earnings</h3>
-            <p>$5,000</p>
+      <div className="container mt-4">
+        <div className="row justify-content-center">
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+            <button 
+              className="btn btn-secondary btn-lg w-100 mb-3 flex-fill" 
+              onClick={() => navigate("/open-requests")}
+            >
+              View Requests
+            </button>
           </div>
-          <div className="overview-item">
-            <h3>Upcoming Jobs</h3>
-            <p>3</p>
-          </div>
-          <div className="overview-item">
-            <h3>Pending Payments</h3>
-            <p>$1,200</p>
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+            {connectedAccountId ? (
+              <StripeDashboardButton accountId={connectedAccountId} />
+            ) : (
+              <button 
+                className="btn btn-secondary btn-lg w-100 mb-3 flex-fill" 
+                onClick={() => navigate("/onboarding")}
+              >
+                Set Up Payment Account
+              </button>
+            )}
           </div>
         </div>
-      </div>
-      
-      <div className="dashboard-section">
-        <h2>Bid Management</h2>
-        <p>You have 2 active bids</p>
-        <button className="action-button">View Bids</button>
-      </div>
-      
-      <div className="dashboard-section">
-        <h2>Profile Settings</h2>
-        <button className="action-button">Update Profile</button>
-        <button className="action-button">Manage Portfolio</button>
-      </div>
-      
-      <div className="dashboard-section">
-        <h2>Payout History</h2>
-        <button className="action-button">View Payout History</button>
-      </div>
-
-      <div className="dashboard-section">
-        <h2>Notifications</h2>
-        <p>No new notifications</p>
       </div>
     </div>
   );

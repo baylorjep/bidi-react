@@ -12740,3 +12740,16 @@ p {
   color: #333;
   text-align: center;
 }
+
+.dashboard-title {
+  font-size: 1.8rem;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+@media (max-width: 768px) {
+  .dashboard-title {
+    font-size: 1.5rem;
+    white-space: normal;
+  }
+}

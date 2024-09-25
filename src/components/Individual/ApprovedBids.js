@@ -66,6 +66,19 @@ function ApprovedBids() {
         navigate('/checkout', { state: { bid } });
     };
 
+    const handleMessage = (bid) => {
+        // Create mailto link with a pre-filled email template
+        const subject = encodeURIComponent('Regarding Your Bid');
+        const body = encodeURIComponent(
+            `Hi ${bid.business_profiles.business_name},\n\n` +
+            `I have accepted your bid and would like to discuss the next steps.\n\n` +
+            `Looking forward to your response.\n\nBest regards,\n[Your Name]`
+        );
+        const email = bid.business_profiles.email || ''; // Use business email if available
+        const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+        window.location.href = mailtoLink;
+    };
+
     return (
         <div className="container px-5">
             <header className="masthead">
@@ -73,19 +86,30 @@ function ApprovedBids() {
                 {error ? (
                     <p className="text-danger">{error}</p>
                 ) : approvedBids.length > 0 ? (
-                    approvedBids.map((bid) => (
-                        <div key={bid.id} className="approved-bid-card">
-                            <h3>{bid.business_profiles.business_name}</h3>
-                            <p><strong>Bid Amount:</strong> ${bid.bid_amount}</p>
-                            <p><strong>Description:</strong> {bid.bid_description}</p>
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => handlePayNow(bid)}
-                            >
-                                Pay Now
-                            </button>
-                        </div>
-                    ))
+                    <div className="d-flex flex-column align-items-center"> {/* Center the whole card */}
+                        {approvedBids.map((bid) => (
+                            <div key={bid.id} className="approved-bid-card card p-4 mb-4" style={{ width: '100%', maxWidth: '500px' }}>
+                                <h3>{bid.business_profiles.business_name}</h3>
+                                <p><strong>Bid Amount:</strong> ${bid.bid_amount}</p>
+                                <p><strong>Description:</strong> {bid.bid_description}</p>
+                                <button
+                                    className="btn btn-secondary btn-md flex-fill"
+                                    onClick={() => handlePayNow(bid)}
+                                    style={{ marginRight: '10px' }}
+                                >
+                                    Pay Now
+                                </button>
+                                <br></br>
+                                <button
+                                    className="btn btn-secondary btn-md flex-fill"
+                                    onClick={() => handleMessage(bid)}
+                                    style={{ marginLeft: '10px' }}
+                                >
+                                    Message
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 ) : (
                     <p>You don't have any approved bids at the moment.</p>
                 )}
