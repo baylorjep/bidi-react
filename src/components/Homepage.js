@@ -39,6 +39,16 @@ function Homepage() {
                 <div className='landing-page-title'>
                     Tired of looking for the Perfect Business?
                 </div>
+            <div class="icon-section-mobile">
+                <div className="icon"><img src={cakeIcon} alt="Cake Icon" /></div>
+                <div className="icon"><img src={cameraIcon} alt="Camera Icon" /></div>
+                <div className="icon"><img src={floristIcon} alt="Florist Icon" /></div>
+                <div className="icon"><img src={hairIcon} alt="Hair Icon" /></div>
+                <div className="icon"><img src={homeIcon} alt="Home Icon" /></div>
+                <div className="icon"><img src={paintIcon} alt="Paint Icon" /></div>
+                <div className="icon"><img src={renchIcon} alt="Rench Icon" /></div>
+                <div className="icon"><img src={scissorsIcon} alt="Scissors Icon" /></div>
+            </div>
                 <div className='landing-page-subtitle'>
                 With bidi, you don’t have to waste time searching for the perfect businesses to help you with your event. All you do is tell us what you need, and we’ll find the right business for you. No more hours and hours of searching.
                 </div>
