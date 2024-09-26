@@ -7,7 +7,32 @@ import '../../App.css';
 function Navbar() {
     const [user, setUser] = useState(null);
     const [userRole, setUserRole] = useState(null);
+    const [isVisible, setIsVisible] = useState(true);
     const navigate = useNavigate();
+    
+    useEffect(() => {
+        let lastScrollY = window.pageYOffset;
+
+        const handleScroll = () => {
+            const currentScrollY = window.pageYOffset;
+
+            if (currentScrollY > lastScrollY) {
+                // Scrolling down, hide the navbar
+                setIsVisible(false);
+            } else {
+                // Scrolling up, show the navbar
+                setIsVisible(true);
+            }
+
+            lastScrollY = currentScrollY;
+        };
+
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -60,7 +85,7 @@ function Navbar() {
     };
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-light fixed-top shadow-sm" id="mainNav">
+        <nav className={`navbar navbar-expand-lg ${isVisible ? '' : 'hidden'}`} id="mainNav">
             <div className="container px-5">
                 <Link className="navbar-brand fw-bold" to="/">
                     <img src={logo} alt="Bidi Logo" style={{ height: '50px', width: 'auto' }} />
@@ -83,7 +108,6 @@ function Navbar() {
                             <li className="nav-item">
                                 <Link className="nav-link me-lg-3" to="/request-categories">Hire a Pro</Link>
                             </li>
-                            
                         )}
 
                         {userRole === 'individual' && (
@@ -108,23 +132,30 @@ function Navbar() {
                         </li>
                     </ul>
 
+                    
+
                     {user ? (
-                        <button className="btn btn-secondary rounded-pill px-3 mb-2 mb-lg-0" onClick={handleSignOut}>
-                            <span className="d-flex align-items-center">
-                                <span className="small">Sign Out</span>
+                        <button className="btn-nav-primary" onClick={handleSignOut}>
+                            <span className="btn-text">
+                                <span className="small">Log Out</span>
                             </span>
                         </button>
                     ) : (
-                        <Link className="btn btn-secondary rounded-pill px-3 mb-2 mb-lg-0" to="/signin">
-                            <span className="d-flex align-items-center">
-                                <span className="small">Sign In</span>
+                        <Link className="btn-nav-primary" to="/signin">
+                            <span className="btn-text">
+                                <span className="small">Log In</span>
                             </span>
                         </Link>
                     )}
+
+                        <Link className="btn-nav-secondary" to="/signup">
+                            <span className="btn-text-secondary">
+                                <span className="small">Sign Up</span>
+                            </span>
+                        </Link>
                 </div>
             </div>
         </nav>
-        
     );
 }
 

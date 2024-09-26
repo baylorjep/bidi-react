@@ -62,6 +62,7 @@ import PaymentCancelled from './components/Stripe/PaymentCancelled';
 import SuccessPayment from './components/Stripe/SuccessfulPayment';
 import PaymentStatus from './components/Stripe/PaymentStatus';
 
+
 function App() {
 
     const [eventType, setEventType] = useState('');
@@ -70,6 +71,7 @@ function App() {
     return (
         <Router>
             <div className="app-container">
+                
                 <Navbar />
                 <div className='content'>
                     <Routes>
