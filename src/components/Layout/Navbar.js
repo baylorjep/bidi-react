@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import logo from '../../assets/images/Bidi Logo.png';
@@ -7,32 +7,8 @@ import '../../App.css';
 function Navbar() {
     const [user, setUser] = useState(null);
     const [userRole, setUserRole] = useState(null);
-    const [isVisible, setIsVisible] = useState(true);
     const navigate = useNavigate();
-    
-    useEffect(() => {
-        let lastScrollY = window.pageYOffset;
-
-        const handleScroll = () => {
-            const currentScrollY = window.pageYOffset;
-
-            if (currentScrollY > lastScrollY) {
-                // Scrolling down, hide the navbar
-                setIsVisible(false);
-            } else {
-                // Scrolling up, show the navbar
-                setIsVisible(true);
-            }
-
-            lastScrollY = currentScrollY;
-        };
-
-        window.addEventListener('scroll', handleScroll);
-
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-        };
-    }, []);
+    const navbarRef = useRef(null); // Create a ref for the navbar
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -84,8 +60,30 @@ function Navbar() {
         }
     };
 
+    // Function to close the navbar menu
+    const closeMenu = () => {
+        const navbarCollapse = document.getElementById('navbarResponsive');
+        if (navbarCollapse) {
+            navbarCollapse.classList.remove('show');
+        }
+    };
+
+    // Event listener for clicks outside the navbar
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (navbarRef.current && !navbarRef.current.contains(event.target)) {
+                closeMenu();
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [navbarRef]);
+
     return (
-        <nav className={`navbar navbar-expand-lg ${isVisible ? '' : 'hidden'}`} id="mainNav">
+        <nav className="navbar navbar-expand-lg" id="mainNav" ref={navbarRef}>
             <div className="container px-5">
                 <Link className="navbar-brand fw-bold" to="/">
                     <img src={logo} alt="Bidi Logo" style={{ height: '50px', width: 'auto' }} />
@@ -112,27 +110,25 @@ function Navbar() {
 
                         {userRole === 'individual' && (
                             <>
-                            <li className="nav-item">
-                                <Link className="nav-link me-lg-3" to="/my-bids">New Bids</Link>
-                            </li>
-                            <li className="nav-item">
-                                <Link className="nav-link me-lg-3" to="/approved-bids">Approved Bids</Link>
-                            </li>
-                        </>
+                                <li className="nav-item">
+                                    <Link className="nav-link me-lg-3" to="/my-bids">New Bids</Link>
+                                </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link me-lg-3" to="/approved-bids">Approved Bids</Link>
+                                </li>
+                            </>
                         )}
-                        
+
                         {userRole === 'business' && (
                             <li className="nav-item">
                                 <Link className="nav-link me-lg-3" to="/open-requests">Open Requests</Link>
                             </li>
                         )}
-                        
-                        <li className='nav-item'>
+
+                        <li className="nav-item">
                             <Link className="nav-link me-lg-3" to="/contact-us">Contact Us</Link>
                         </li>
                     </ul>
-
-                    
 
                     {user ? (
                         <button className="btn-nav-primary" onClick={handleSignOut}>
@@ -148,11 +144,14 @@ function Navbar() {
                         </Link>
                     )}
 
+                    {/* Conditionally render the Sign Up button */}
+                    {!user && (
                         <Link className="btn-nav-secondary" to="/signup">
                             <span className="btn-text-secondary">
                                 <span className="small">Sign Up</span>
                             </span>
                         </Link>
+                    )}
                 </div>
             </div>
         </nav>
