@@ -5,6 +5,7 @@ import {
   ConnectComponentsProvider,
 } from "@stripe/react-connect-js";
 import { supabase } from "../../supabaseClient";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import "../../App.css"; // Assuming you have general styles in this file
 
 export default function Onboarding() {
@@ -14,7 +15,8 @@ export default function Onboarding() {
   const [connectedAccountId, setConnectedAccountId] = useState();
   const [email, setEmail] = useState(""); // Will be set from Supabase auth
   const stripeConnectInstance = useStripeConnect(connectedAccountId);
-
+  const navigate = useNavigate(); // Initialize navigate
+  
   // Fetch email when component loads
   useEffect(() => {
     const fetchEmail = async () => {
@@ -115,6 +117,15 @@ export default function Onboarding() {
             {onboardingExited && <p>Onboarding complete! You're ready to go.</p>}
           </div>
         )}
+        {/* Return to Dashboard button */}
+        <div className="mt-4 text-center">
+          <button
+            className="btn btn-primary"
+            onClick={() => navigate("/dashboard")}
+          >
+            Return to Dashboard
+          </button>
+        </div>
       </div>
     </div>
   );
