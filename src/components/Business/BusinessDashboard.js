@@ -53,7 +53,7 @@ const BusinessDashboard = () => {
                 className="btn btn-secondary btn-lg w-100 mb-3 flex-fill" 
                 onClick={() => navigate("/onboarding")}
               >
-                Set Up Payment Account
+                View Payment Dashboard
               </button>
             )}
           </div>
