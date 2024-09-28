@@ -122,9 +122,14 @@ function Navbar() {
                         )}
                         
                         {userRole === 'business' && (
+                            <>
+                            <li className="nav-item">
+                                <Link className="nav-link me-lg-3" to="/dashboard">Dashboard</Link>
+                            </li>
                             <li className="nav-item">
                                 <Link className="nav-link me-lg-3" to="/open-requests">Open Requests</Link>
                             </li>
+                            </>
                         )}
                         
                         <li className='nav-item'>
