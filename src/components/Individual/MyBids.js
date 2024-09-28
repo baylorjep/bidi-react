@@ -139,7 +139,7 @@ function MyBids() {
                         <BidDisplay key={bid.id} bid={bid} handleApprove={handleApprove} handleDeny={handleDeny} />
                     ))
                 ) : (
-                    <p>You don't have any pending bids at the moment. Please check back later, or look out for notifications.</p>
+                    <p>You don't have any pending bids at the moment. <br ></br> Please check back later, or look out for notifications.</p>
                 )}
             </header>
         </div>

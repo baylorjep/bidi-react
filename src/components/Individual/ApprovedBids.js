@@ -95,7 +95,7 @@ function ApprovedBids() {
                                 <button
                                     className="btn btn-secondary btn-md flex-fill"
                                     onClick={() => handlePayNow(bid)}
-                                    style={{ marginRight: '10px' }}
+                                    
                                 >
                                     Pay Now
                                 </button>
@@ -103,7 +103,7 @@ function ApprovedBids() {
                                 <button
                                     className="btn btn-secondary btn-md flex-fill"
                                     onClick={() => handleMessage(bid)}
-                                    style={{ marginLeft: '10px' }}
+                                    
                                 >
                                     Message
                                 </button>

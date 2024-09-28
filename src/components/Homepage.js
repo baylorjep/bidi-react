@@ -50,7 +50,7 @@ function Homepage() {
                 <div className="icon"><img src={scissorsIcon} alt="Scissors Icon" /></div>
             </div>
                 <div className='landing-page-subtitle'>
-                With bidi, you don’t have to waste time searching for the perfect businesses to help you with your event. All you do is tell us what you need, and we’ll find the right business for you. No more hours and hours of searching.
+                Bidi is a service request platform for local services. With bidi, you don’t have to waste time searching for the perfect businesses to help you. All you do is tell us what you need, and we’ll find the right business for you. No more hours and hours of searching.
                 </div>
                 <div className='landing-page-button-container'>
                     <Link to="/signup">
@@ -80,12 +80,12 @@ function Homepage() {
                     <div className='reason-box'>We hate spending time looking for the perfect fit, and we think you do too. With Bidi, all you do is tell us what you want and we’ll find the right service for you. </div>
                 </div>
                 <div className='reason'>
-                    <div className='reason-title'>Reliable Experts</div>
-                    <div className='reason-box'>With our Bidi verified program. We connect you with local service providers that have been verified to be reliable, communicative, and professional</div>
-                </div>
-                <div className='reason'>
                     <div className='reason-title'>Competitive Pricing</div>
                     <div className='reason-box'>Our revolutionary bidding system forces companies to directly compete with each other for your business. Meaning you get the best price, every time. </div>
+                </div>
+                <div className='reason'>
+                    <div className='reason-title'>Reliable Experts</div>
+                    <div className='reason-box'>With our Bidi verified program. We connect you with local service providers that have been verified to be reliable, communicative, and professional</div>
                 </div>
             </div>
         </div>
