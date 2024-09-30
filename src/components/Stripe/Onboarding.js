@@ -123,7 +123,7 @@ export default function Onboarding() {
             className="btn btn-primary"
             onClick={() => navigate("/dashboard")}
           >
-            Return to Dashboard
+            Return
           </button>
         </div>
       </div>
