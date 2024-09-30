@@ -42,7 +42,7 @@ const BusinessDashboard = () => {
               className="btn btn-secondary btn-lg w-100 mb-3" 
               onClick={() => navigate("/open-requests")}
             >
-              View Requests
+              Job Opportunities
             </button>
           </div>
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
@@ -53,7 +53,7 @@ const BusinessDashboard = () => {
                 className="btn btn-secondary btn-lg w-100 mb-3 flex-fill" 
                 onClick={() => navigate("/onboarding")}
               >
-                View Payment Dashboard
+                Payment Dashboard
               </button>
             )}
           </div>
