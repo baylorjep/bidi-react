@@ -62,6 +62,8 @@ import PaymentCancelled from './components/Stripe/PaymentCancelled';
 import SuccessPayment from './components/Stripe/SuccessfulPayment';
 import PaymentStatus from './components/Stripe/PaymentStatus';
 
+// ScrollToTop import
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
 
@@ -70,8 +72,8 @@ function App() {
 
     return (
         <Router>
+            <ScrollToTop />
             <div className="app-container">
-                
                 <Navbar />
                 <div className='content'>
                     <Routes>
@@ -116,8 +118,8 @@ function App() {
                         <Route path="/contact-us" element={<ContactForm />} />
 
                         {/* Spanish Routes */}
-                        <Route path="/inicio" element={<HomepageES />}/>
-                        <Route path="/contactenos" element={<ContactFormES />}/>
+                        <Route path="/inicio" element={<HomepageES />} />
+                        <Route path="/contactenos" element={<ContactFormES />} />
 
                         {/* Stripe Routes */}
                         <Route path="/onboarding" element={<Onboarding />} />
@@ -125,10 +127,9 @@ function App() {
                         <Route path="/payment-cancelled" element={<PaymentCancelled />} />
                         <Route path="/payment-successful" element={<SuccessPayment />} />
                         <Route path="/payment-status" element={<PaymentStatus />} />
-                        
+
                         {/* Admin Routes */}
                         <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                        
 
                     </Routes>
                 </div>

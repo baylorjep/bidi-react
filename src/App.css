@@ -98,7 +98,7 @@ body {
   background-image: url(../src/assets/images/background.png);
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1200px) {
   body {
     background: linear-gradient(to bottom, rgba(250,229,229,1),rgba(250,229,229,1), #fbe9bf); /* Gradient for smaller screens */
     
@@ -11487,7 +11487,7 @@ footer a:hover, footer a:active, footer a:focus {
   display: flex;
   flex-direction: row; /* This ensures text and icons are in a horizontal row */
   justify-content: space-between;
-  gap: 1rem;
+  gap: 3rem;
   align-items: center;
   background-color: transparent;
   background-size: cover;
@@ -11495,6 +11495,7 @@ footer a:hover, footer a:active, footer a:focus {
   z-index: 1;
   margin-top: 0rem;
   padding-top: 0rem;
+  margin-left: 5rem;
 }
 
 
@@ -11575,14 +11576,14 @@ footer a:hover, footer a:active, footer a:focus {
 
 }
 
-.icon:nth-child(1) { transform: rotate(0deg) translate(200px) rotate(0deg); }
-.icon:nth-child(2) { transform: rotate(45deg) translate(200px) rotate(-45deg); }
-.icon:nth-child(3) { transform: rotate(90deg) translate(200px) rotate(-90deg); }
-.icon:nth-child(4) { transform: rotate(135deg) translate(200px) rotate(-135deg); }
-.icon:nth-child(5) { transform: rotate(180deg) translate(200px) rotate(-180deg); }
-.icon:nth-child(6) { transform: rotate(225deg) translate(200px) rotate(-225deg); }
-.icon:nth-child(7) { transform: rotate(270deg) translate(200px) rotate(-270deg); }
-.icon:nth-child(8) { transform: rotate(315deg) translate(200px) rotate(-315deg); }
+.icon:nth-child(1) { transform: rotate(0deg) translate(15rem) rotate(0deg); }
+.icon:nth-child(2) { transform: rotate(45deg) translate(15rem) rotate(-45deg); }
+.icon:nth-child(3) { transform: rotate(90deg) translate(15rem) rotate(-90deg); }
+.icon:nth-child(4) { transform: rotate(135deg) translate(15rem) rotate(-135deg); }
+.icon:nth-child(5) { transform: rotate(180deg) translate(15rem) rotate(-180deg); }
+.icon:nth-child(6) { transform: rotate(225deg) translate(15rem) rotate(-225deg); }
+.icon:nth-child(7) { transform: rotate(270deg) translate(15rem) rotate(-270deg); }
+.icon:nth-child(8) { transform: rotate(315deg) translate(15rem) rotate(-315deg); }
 
 @media (max-width:1200px) {
   .masthead-index {
@@ -11592,7 +11593,9 @@ footer a:hover, footer a:active, footer a:focus {
     margin-right: 0;
     padding-right: 0;
   }
-
+  .text-section {
+    margin-left: 0;
+  }
   .icon-section{
     display: none;
   }
@@ -11606,14 +11609,14 @@ footer a:hover, footer a:active, footer a:focus {
     left: 46%;
   }
 
-  .icon:nth-child(1) { transform: rotate(0deg) translate(150px) rotate(0deg); }
-.icon:nth-child(2) { transform: rotate(45deg) translate(150px) rotate(-45deg); }
-.icon:nth-child(3) { transform: rotate(90deg) translate(150px) rotate(-90deg); }
-.icon:nth-child(4) { transform: rotate(135deg) translate(150px) rotate(-135deg); }
-.icon:nth-child(5) { transform: rotate(180deg) translate(150px) rotate(-180deg); }
-.icon:nth-child(6) { transform: rotate(225deg) translate(150px) rotate(-225deg); }
-.icon:nth-child(7) { transform: rotate(270deg) translate(150px) rotate(-270deg); }
-.icon:nth-child(8) { transform: rotate(315deg) translate(150px) rotate(-315deg); }
+  .icon:nth-child(1) { transform: rotate(0deg) translate(12rem) rotate(0deg); }
+.icon:nth-child(2) { transform: rotate(45deg) translate(12rem) rotate(-45deg); }
+.icon:nth-child(3) { transform: rotate(90deg) translate(12rem) rotate(-90deg); }
+.icon:nth-child(4) { transform: rotate(135deg) translate(12rem) rotate(-135deg); }
+.icon:nth-child(5) { transform: rotate(180deg) translate(12rem) rotate(-180deg); }
+.icon:nth-child(6) { transform: rotate(225deg) translate(12rem) rotate(-225deg); }
+.icon:nth-child(7) { transform: rotate(270deg) translate(12rem) rotate(-270deg); }
+.icon:nth-child(8) { transform: rotate(315deg) translate(12rem) rotate(-315deg); }
 
   .landing-page-title {
     font-size:1.8rem;
@@ -11648,6 +11651,43 @@ footer a:hover, footer a:active, footer a:focus {
   .landing-page-button-container {
     padding-top: 1rem;
   }
+  .icon:nth-child(1) { transform: rotate(0deg) translate(150px) rotate(0deg); }
+  .icon:nth-child(2) { transform: rotate(45deg) translate(150px) rotate(-45deg); }
+  .icon:nth-child(3) { transform: rotate(90deg) translate(150px) rotate(-90deg); }
+  .icon:nth-child(4) { transform: rotate(135deg) translate(150px) rotate(-135deg); }
+  .icon:nth-child(5) { transform: rotate(180deg) translate(150px) rotate(-180deg); }
+  .icon:nth-child(6) { transform: rotate(225deg) translate(150px) rotate(-225deg); }
+  .icon:nth-child(7) { transform: rotate(270deg) translate(150px) rotate(-270deg); }
+  .icon:nth-child(8) { transform: rotate(315deg) translate(150px) rotate(-315deg); }
+}
+
+@media(max-width:580px) {
+  .icon {
+    left: 44%;
+  }
+}
+
+@media (max-width:540px) {
+  .icon {
+    left: 43%;
+  }
+}
+
+
+@media (max-width:500px) {
+  .icon {
+    left: 43%;
+  }
+}
+
+
+@media (max-width:480px) {
+  .icon {
+    left: 41%;
+  }
+}
+
+@media (max-width:400px) {
   .icon:nth-child(1) { transform: rotate(0deg) translate(125px) rotate(0deg); }
   .icon:nth-child(2) { transform: rotate(45deg) translate(125px) rotate(-45deg); }
   .icon:nth-child(3) { transform: rotate(90deg) translate(125px) rotate(-90deg); }
@@ -11656,12 +11696,6 @@ footer a:hover, footer a:active, footer a:focus {
   .icon:nth-child(6) { transform: rotate(225deg) translate(125px) rotate(-225deg); }
   .icon:nth-child(7) { transform: rotate(270deg) translate(125px) rotate(-270deg); }
   .icon:nth-child(8) { transform: rotate(315deg) translate(125px) rotate(-315deg); }
-}
-
-@media (max-width:450px) {
-  .icon {
-    left: 41%;
-  }
 }
 
 .why-bidi-section {

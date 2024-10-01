@@ -12,7 +12,7 @@ const Footer = () => {
 
                 <div className='footer-left'>
                     <img className='footer-left-img'src={logo} alt="Bidi Logo"/>
-                    <div className='bidi-description-footer'>Help you with professionals who have been checked out and have been shown to be reliable, whether you need help with any tasks or planning an unforgettable event. </div>
+                    <div className='bidi-description-footer'>A bidding platform where you request services, and businesses come to you. Stop searching and start finding with Bidi.</div>
                 </div>
 
                 <div className='contact-us'>
