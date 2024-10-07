@@ -85,7 +85,7 @@ function Homepage() {
                 </div>
                 <div className='reason'>
                     <div className='reason-title'>Reliable Experts</div>
-                    <div className='reason-box'>With our Bidi verified program. We connect you with local service providers that have been verified to be reliable, communicative, and professional</div>
+                    <div className='reason-box'>At Bidi, we connect you with local service providers that have been verified to be reliable, communicative, and professional. That way, you only get the best.</div>
                 </div>
             </div>
         </div>
