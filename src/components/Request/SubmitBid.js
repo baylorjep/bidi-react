@@ -5,6 +5,20 @@ import '../../App.css';
 import RequestDisplay from './RequestDisplay'; // Regular request display component
 import PhotoRequestDisplay from './PhotoRequestDisplay'; // Photography request display component
 
+const sendEmailNotification = async (recipientEmail, subject, htmlContent) => {
+    try {
+        await fetch('https://bidi-express.vercel.app/send-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ recipientEmail, subject, htmlContent }),
+        });
+    } catch (error) {
+        console.error('Error sending email:', error);
+    }
+};
+
 function SubmitBid() {
     const { requestId } = useParams();
     const [requestDetails, setRequestDetails] = useState(null);
