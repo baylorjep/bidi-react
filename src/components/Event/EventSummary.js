@@ -7,10 +7,20 @@ function EventSummary({ eventType, eventDetails }) {
     const { user, userError } = useIndividualUser();
     const navigate = useNavigate();
 
-    if (userError) {
-        console.log(`Error fetching user or profile: ${userError.message}`);
-        return;
-    }
+    const sendEmailNotification = async (recipientEmail, subject, htmlContent) => {
+        try {
+            await fetch('https://bidi-express.vercel.app/send-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ recipientEmail, subject, htmlContent }),
+            });
+        } catch (error) {
+            console.error('Error sending email:', error);
+        }
+    };
+
 
     const handleSubmit = async () => {
         // Insert the request into the photography_requests table
@@ -35,12 +45,19 @@ function EventSummary({ eventType, eventDetails }) {
                 },
             ]);
 
-        if (error) {
-            console.error('Error submitting request:', error.message);
-        } else {
-            navigate('/success-request');
-        }
-    };
+            if (!error) {
+                // Email businesses when a new request is placed
+                const subject = 'New Photography Request';
+                const htmlContent = `<p>A new photography request has been posted.</p>
+                                    <p><strong>Event:</strong> ${eventDetails.eventTitle}</p>
+                                    <p><strong>Location:</strong> ${eventDetails.location}</p>`;
+                await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent); // Send to relevant businesses
+    
+                navigate('/success-request');
+            } else {
+                console.error('Error submitting request:', error.message);
+            }
+        };
 
     return (
         <div className="container">

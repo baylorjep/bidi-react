@@ -68,7 +68,7 @@ function ApprovedBids() {
 
     const handleMessage = (bid) => {
         // Create mailto link with a pre-filled email template
-        const subject = encodeURIComponent('Regarding Your Bid');
+        const subject = encodeURIComponent('Your Bid');
         const body = encodeURIComponent(
             `Hi ${bid.business_profiles.business_name},\n\n` +
             `I have accepted your bid and would like to discuss the next steps.\n\n` +

@@ -62,6 +62,12 @@ function SubmitBid() {
         }
 
         let insertError;
+        const subject = 'New Bid Received';
+        const htmlContent = `<p>A new bid has been placed on your request.</p>
+                            <p><strong>Bid Amount:</strong> ${bidAmount}</p>
+                            <p><strong>Description:</strong> ${bidDescription}</p>`;
+
+
         if (requestType === 'requests') {
             // Insert into the regular bids table
             const { error } = await supabase
@@ -92,11 +98,12 @@ function SubmitBid() {
             insertError = error;
         }
 
-        if (insertError) {
-            setError(`Error placing bid: ${insertError.message}`);
-        } else {
+        if (!insertError) {
+            await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent); // Send to user email
             setSuccess('Bid successfully placed!');
             navigate('/bid-success');
+        } else {
+            setError(`Error placing bid: ${insertError.message}`);
         }
     };
 
