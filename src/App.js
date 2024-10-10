@@ -50,6 +50,7 @@ import BusinessDashboard from './components/Business/BusinessDashboard';
 // Misc Imports
 import Homepage from './components/Homepage';
 import ContactForm from './components/ContactForm';
+import AboutUs from './components/AboutUs';
 
 // Spanish imports
 import HomepageES from './components/HomepageES'
@@ -116,6 +117,7 @@ function App() {
 
                         {/* Misc Routes */}
                         <Route path="/contact-us" element={<ContactForm />} />
+                        <Route path="/about-us" element={<AboutUs />} />
 
                         {/* Spanish Routes */}
                         <Route path="/inicio" element={<HomepageES />} />

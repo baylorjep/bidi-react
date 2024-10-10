@@ -11087,10 +11087,7 @@ nav {
   height: 93.6288088643%;
 }
 
-.device[data-device=iPhoneX][data-orientation=portrait][data-color=black]::after {
-  content: "";
-  background-image: url("../src/assets/images/portrait_black.png");
-}
+
 
 .device[data-device=iPhoneX][data-orientation=portrait][data-color=black] .button {
   display: none;
@@ -11780,8 +11777,7 @@ footer a:hover, footer a:active, footer a:focus {
 }
 .how-to-use-section {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between; /* This will evenly space items */
+  flex-direction: row;;
   align-items: center; /* Vertically center items */
   margin-bottom: 10rem;
   gap:5rem;
@@ -11789,31 +11785,46 @@ footer a:hover, footer a:active, footer a:focus {
 }
 
 .how-to-phone {
-  flex: 1;
-  margin-left: 15rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  flex-basis: 50%;
 }
 
 .phone-frame {
-
   position: relative;
-  width: 300px; /* Width of the phone */
-  height: 510px; /* Height of the phone */
-  border: 16px solid black; /* Outer border representing phone body */
-  border-radius: 36px; /* Rounded corners to simulate a phone frame */
-  padding: 0px; /* Padding for the inner screen */
-  background-color: #333; /* Color for the phone body */
-  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2); /* Optional shadow for a realistic look */
+  width: 400px;
+  height: 850px;
+}
+
+.iphone-frame-img {
+  width: 100%; /* Ensures the frame scales responsively */
+  height: auto;
+  display: block;
+}
+
+.status-bar-img {
+  position: absolute;
+  top: 1.8%; /* Adjust positioning inside the iPhone frame */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%; /* Adjust size of the status bar to fit within the frame */
+  height: auto;
 }
 
 .phone-screen {
-  position: relative;
-  border-radius: 20px; /* Rounded corners for the screen */
+  position: absolute;
+  top: 8%; /* Adjust based on the iPhone frame's screen */
+  left: 6%; /* Adjust based on the iPhone frame's screen */
+  width: 110%; /* Adjust width to fit the screen */
+  height: auto;
 }
 
 .phone-screen video {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
+    width: 80%;
+    height: 100%;
+    object-fit: cover; /* Makes sure video scales properly */
 }
 
 .how-to-text {
@@ -11848,24 +11859,13 @@ footer a:hover, footer a:active, footer a:focus {
   text-align: center;
   width: 80%;
 }
-
-@media (max-width:1500px) {
-    .how-to-phone {
-      margin-left: 8rem;
-    }
-}
-
 @media (max-width:1200px) {
   .how-to-use-section {
     flex-direction: column;
+    gap:0;
+    margin-right: .5rem;
   }
-  .how-to-phone {
-    margin-left: 0;
-  }
-  .phone-frame {
-    margin-left: 0rem;
-    margin-top: 5rem;
-  }
+ 
   .how-to-text, .how-to-steps, .how-to-title, .try-now-button-container {
     width:100%;
     padding-left: 2rem;
@@ -11873,6 +11873,18 @@ footer a:hover, footer a:active, footer a:focus {
   }
   .how-to-title {
     margin-top: 3rem;
+  }
+}
+
+@media (max-width:400px) {
+  .phone-frame {
+    
+    width: 300px;
+    height: 600px;
+  }
+
+  .how-to-use-section {
+    margin-right: 0;
   }
 }
 
@@ -11896,16 +11908,76 @@ footer a:hover, footer a:active, footer a:focus {
   flex-direction: row;
   margin-top: 5rem;
   gap: 1rem;
+  overflow: hidden;
+  position: relative;
+}
+.review-slider {
+  display: flex; /* Use flexbox for alignment */
+  overflow-x: auto; /* Allow horizontal scrolling */
+  scrollbar-width: none; /* Optional: customize scrollbar appearance */
 }
 
-.review {
-  width: 550px;
+.scroll-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 2rem; /* Adjust button size */
+  z-index: 1; /* Ensure buttons are above the slider */
+  position: absolute;
+  top: 50%; /* Align both buttons in the same vertical position */
+  transform: translateY(-50%); /* Vertically center the buttons */
+}
+
+.scroll-btn.left {
+  left: 30px; /* Adjust as needed */
+  transform: translateY(-50%) rotate(180deg); /* Flip the left button */
+}
+
+.scroll-btn.right {
+  right: 30px; /* Adjust as needed */
+  padding-bottom: 8px;
+}
+
+.scroll-btn img {
+  width: auto;
+  height: 50px;
+}
+
+.large-review {
+  min-width: 90%;
   height: 500px;
   border-radius: 40px;
   border: 2px 0px 0px 0px;
   background-color: white;
   text-align: center;
-  padding: 10.5rem 6rem;
+  padding: 5rem;
+  justify-content: center;
+  align-items: center;
+  font-family: Roboto;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 35px;
+  text-align: center;
+  border: 2px solid rgba(0, 0, 0, 1);
+  position: relative;
+  margin:0 5%;
+  font-family: Roboto;
+
+}
+
+.profile-icon {
+  margin-right: 10px;
+  margin-top: 1rem;
+}
+
+.review {
+  min-width: 550px;
+  height: 500px;
+  border-radius: 40px;
+  border: 2px 0px 0px 0px;
+  background-color: white;
+  text-align: center;
+  padding: 12rem 2rem;
   justify-content: center;
   align-items: center;
   font-family: Roboto;
@@ -11915,7 +11987,9 @@ footer a:hover, footer a:active, footer a:focus {
   text-align: center;
   border: 2px solid rgba(0, 0, 0, 1);
   position: relative;
+  margin: 0rem 1rem;
 }
+
 .quote-icon {
   position: absolute;
   top: 30px; /* Adjust as needed */
@@ -11925,36 +11999,105 @@ footer a:hover, footer a:active, footer a:focus {
   height: auto; /* Maintain aspect ratio */
 }
 
+@media (max-width:1542px) {
+  .large-review {
+    font-size: 20px;
+  }
+}
+
+@media (max-width:1333px) {
+  .large-review {
+    padding: 3.8rem;
+    font-size: 19px;
+  }
+}
+
 @media(max-width:1200px) {
   .review-slider-container {
-    flex-direction: column;
-    gap: 2rem;
     align-items: center;
-    margin-top: 8rem;
   }
   .user-reviews-title {
     margin-top: 3rem;
     text-align: center;
   }
-  .review {
-    width: 450px;
-    height: 400px;
-    padding: 8rem 5rem;
+  .large-review {
+    font-size: 17px;
   }
 }
 
-@media(max-width:500px) {
-  .user-reviews-title {
-    margin-bottom: 11rem;
+@media(max-width:1080px) {
+  .large-review {
+    font-size: 15px;
   }
-  .review {
-    width: 400px;
-  }
-@media(max-width:410px) {
-  .review {
-    width: 330px;
+  .profile-icon {
+    height: 60px;
   }
 }
+
+@media(max-width:880px) {
+  .large-review {
+    height: 600px;
+    padding: 4rem;
+  }
+}
+@media(max-width:700px) {
+  .large-review {
+    line-height: 28px;
+  }
+  .review {
+    min-width: 400px;
+  }
+
+  @media(max-width:600px) {
+    .large-review {
+      line-height: 25px;
+      font-size: 13px;
+    }
+    
+  }
+
+  @media(max-width:520px) {
+    .large-review {
+      line-height: 22px;
+      font-size: 13px;
+      padding:4.5rem 2rem;
+    }
+    .review-slider-container {
+      margin-top: 10rem;
+    }
+  }
+
+  @media(max-width:500px) {
+    .large-review {
+      height: 600px;
+    }
+  }
+
+@media(max-width:410px) {
+  .review {
+    min-width: 330px;
+  }
+  .large-review {
+    padding: 4.5rem 1.5rem;
+  }
+}
+
+@media(max-width:380px) {
+  .large-review {
+    padding: 4.5rem 1rem;
+  }
+}
+
+@media(max-width:350px) {
+  .large-review {
+    padding: 4.5rem .5rem;
+    height: 650px;
+  }
+  .review-slider-container {
+    margin-top: 15rem;
+  }
+}
+
 }
 .newsletter-section {
   margin-bottom: 5rem;
@@ -12283,7 +12426,7 @@ footer a:hover, footer a:active, footer a:focus {
   flex-direction: row;
   justify-content: center;
   border-bottom: 2px solid black;
-  padding: 30px 20px;
+  padding: 30px 10px;
 }
 .footer-left {
   flex: 1;
@@ -12297,7 +12440,7 @@ footer a:hover, footer a:active, footer a:focus {
 .footer-left-img {
   height: 100px;
   width:auto;
-  margin-left: 10rem;
+  margin-left: 5rem;
   margin-top: 2rem;
 }
 
@@ -12307,11 +12450,11 @@ footer a:hover, footer a:active, footer a:focus {
 
 .bidi-description-footer {
   font-family: Inter;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 300;
   line-height: 24.2px;
   text-align: left;
-  padding: 3rem 20rem 0rem 10rem;
+  padding: 3rem 20rem 0rem 5rem;
 
 }
 
@@ -12344,6 +12487,23 @@ margin-top: 3rem;
   color:black;
   flex-basis: 20%;
 }
+.supported-by {
+  display: flex;
+  justify-content: center; /* Centers the logos horizontally */
+  align-items: left; /* Aligns the logos vertically */
+  gap: 30px; /* Adds space between the logos */
+  margin-top: 50px; /* Adjust as needed */
+  flex-direction: row;
+}
+
+@media (max-width:1500px) {
+  .supported-by{
+    flex-direction: column;
+  }
+
+  
+}
+
 
 .footer-right {
   display: flex;
@@ -12788,6 +12948,7 @@ p {
   font-size: 1.8rem;
   word-wrap: break-word;
   white-space: normal;
+  padding-right: 1rem;
 }
 
 @media (max-width: 768px) {
@@ -12795,4 +12956,130 @@ p {
     font-size: 1.5rem;
     white-space: normal;
   }
+}
+
+.about-us-container {
+  padding: 0;
+  margin:0;
+}
+
+.about-us-title {
+  text-align: left;
+  margin-left: 10rem;
+  margin-top: 2rem;
+  font-family: Lora;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 46.08px;
+
+}
+
+
+
+.team-member-container {
+  display: flex;
+  flex-direction: row;
+  margin-left: 10rem;
+  margin-bottom: 3rem;
+}
+
+.team-member-image-container{
+  height: auto;
+  height: 438px; /* Example maximum height */
+  width: auto;
+  max-width: 100%; /* Prevents overflow */
+  margin-top: 3rem;
+  margin-right: 2rem;
+  margin-bottom: 1rem;
+}
+
+
+.about-us-text {
+  font-family: Roboto Mono;
+font-size: 20px;
+font-weight: 400;
+line-height: 26.38px;
+text-align: left;
+  padding: 3rem;
+}
+
+.about-us-text-baylor {
+  font-family: Roboto Mono;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 26.38px;
+  text-align: left;
+  padding: 3rem;
+  margin-left: 0;
+  padding-left: 0;
+  padding-top: 0;
+}
+
+.team-member-image-container-baylor-mobile {
+  display: none;
+}
+
+@media (max-width:1000px) {
+  .team-member-container {
+    flex-direction: column;
+    margin-left: 2rem;
+    text-align: center;
+
+  }
+  .about-us-container {
+    margin-left: -2rem;
+  }
+  
+  .team-member-image-container {
+    padding: 0;
+    margin: 0;
+    margin-bottom: 3rem;
+  }
+
+  .team-member-image-container-baylor-mobile {
+    display: block;
+  }
+
+  .team-member-image-container-baylor-mobile img {
+    margin-top: 0;
+  }
+
+  .team-member-image-container-baylor {
+    display: none;
+  }
+
+  .about-us-text-baylor {
+    padding: 1rem 1.5rem;
+    text-align: center;
+  }
+
+  .about-us-text {
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+  
+
+  .about-us-title {
+    text-align: center;
+    margin: 0;
+  }
+  .team-member-container img {
+    width: 420px;
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+}
+
+@media (max-width:440px) {
+  .team-member-container img {
+    width: 350px;
+  }
+  .about-us-text {
+    padding: 0
+  }
+}
+  @media (max-width:380px) {
+    .team-member-container img {
+      width: 300px;
+    }
 }
