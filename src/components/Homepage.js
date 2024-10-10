@@ -82,6 +82,26 @@ function Homepage() {
                 </div>
             </div>
 
+            <div className="why-bidi-section">
+            <div className='why-bidi'>
+                Why Choose Bidi?
+            </div>
+            <div className='reasons-why'>
+                <div className='reason'>
+                    <div className='reason-title'>Convenient & Easy</div>
+                    <div className='reason-box'>We hate spending time looking for the perfect fit, and we think you do too. With Bidi, all you do is tell us what you want and we’ll find the right service for you. </div>
+                </div>
+                <div className='reason'>
+                    <div className='reason-title'>Competitive Pricing</div>
+                    <div className='reason-box'>Our revolutionary bidding system forces companies to directly compete with each other for your business. Meaning you get the best price, every time. </div>
+                </div>
+                <div className='reason'>
+                    <div className='reason-title'>Reliable Experts</div>
+                    <div className='reason-box'>At Bidi, we connect you with local service providers that have been verified to be reliable, communicative, and professional. That way, you only get the best.</div>
+                </div>
+            </div>
+        </div>
+
         <div className="how-to-use-section">
             <div className='how-to-phone'>
                 <div className="phone-frame">
