@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import '../../App.css';
 import logo from '../../assets/images/Bidi Logo.png';
+import BYU from '../../assets/images/BYU.png'
+import Sandbox from '../../assets/images/Sandbox.png'
 
 const Footer = () => {
     let year = new Date().getFullYear();
@@ -26,6 +28,13 @@ const Footer = () => {
                     <div className='contact-text'><Link to="signin">Sign In/Sign Up</Link></div>
                     <div className='contact-text'><Link to="/privacy-policy">Privacy Policy</Link></div>
                     <div className='contact-text'><Link to="/terms-of-use">Terms of Use</Link></div>
+                </div>
+                <div className="quick-links">
+                    <div className='contact-title'>Supported By</div>
+                    <div className="supported-by">
+                        <div className='support-logo'><Link to="https://www.byu.edu/"><img src={BYU}></img></Link></div>
+                        <div className='support-logo'><Link to="https://sandbox.ing/"><img src={Sandbox}  style={{paddingTop:'10px'}}></img></Link></div>
+                    </div>
                 </div>
             </div>
             
