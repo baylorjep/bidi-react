@@ -22,7 +22,7 @@ function AboutUs() {
                 <div className='team-member-image-container-baylor-mobile'>
                     <img src={Baylor}></img>
                 </div>
-                <div className='about-us-text-baylor'>What’s up!? My name is Baylor Jeppsen, and I’m from Draper, Utah. It’s always been my dream to start and scale my own company, and I’m excited to be doing that with Bidi. I’m currently studying Information Systems at BYU as part of the Sandbox program, which has been an incredible opportunity to develop my entrepreneurial skills and bring Bidi to life.<br></br>
+                <div className='about-us-text-baylor'>Howdy! I'm Baylor Jeppsen, and I’m from Draper, Utah. It’s always been my dream to start and scale my own company, and I’m excited to be doing that with Bidi. I’m currently studying Information Systems at BYU as part of the Sandbox program, which has been an incredible opportunity to develop my entrepreneurial skills and bring Bidi to life. Right now, my wife Isabel and I are living in Germany for an internship, which has been an amazing experience.<br></br>
 
 <br></br><br></br>I handle all the development at Bidi, making sure the platform runs smoothly and building out new features. If there’s anything you’d love to see added or ways we can make Bidi better, I’m always looking for feedback and suggestions!  Feel free to reach out to me at baylor.jeppsen@gmail.com or text me at 385-223-7237 -I’d love to hear your thoughts!</div>
                 <div className='team-member-image-container-baylor'>
