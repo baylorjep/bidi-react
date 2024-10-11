@@ -11929,18 +11929,18 @@ footer a:hover, footer a:active, footer a:focus {
 }
 
 .scroll-btn.left {
-  left: 30px; /* Adjust as needed */
+  left: 10px; /* Adjust as needed */
   transform: translateY(-50%) rotate(180deg); /* Flip the left button */
 }
 
 .scroll-btn.right {
-  right: 30px; /* Adjust as needed */
-  padding-bottom: 8px;
+  right: 10px; /* Adjust as needed */
+  padding-bottom: 1.4rem;
 }
 
 .scroll-btn img {
   width: auto;
-  height: 50px;
+  height: 30px;
 }
 
 .large-review {
