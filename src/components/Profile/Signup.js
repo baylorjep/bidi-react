@@ -259,16 +259,14 @@ function Signup() {
                                 >
                                     <option value="">Select a category...</option>
                                     <option value="photography">Photography</option>
-                                    <option value="photography">Videography</option>
-                                    <option value="photography">DJ</option>
-                                    <option value="photography">Cake Making</option>
+                                    <option value="Videography">Videography</option>
+                                    <option value="DJ">DJ</option>
+                                    <option value="Cake">Cake Making</option>
+                                    <option value="Catering">Catering</option>
+                                    <option value="Hair & Makeup Artist">Hair and Makeup Artist</option>
+                                    <option value="Wedding Planner/Coordinator">Wedding/Event Planner</option>
+                                    <option value="Florist">Florist</option>
                                     <option value="cleaning">Home Cleaning</option>
-                                    <option value="photography">Home Remodeling</option>
-                                    <option value="landscaping">Landscaping</option>
-                                    <option value="plumbing">Plumbing</option>
-                                    <option value="electrical">Electrical</option>
-                                    <option value="moving">Moving</option>
-                                    <option value="Furniture">Furniture Cleaning</option>
                                     <option value="other">Other</option>
                                 </select>
                                 <label htmlFor="businessCategory">Business Category</label>
