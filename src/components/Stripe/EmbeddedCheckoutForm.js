@@ -4,7 +4,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 
 // Load Stripe with your publishable key
-const stripePromise = loadStripe('pk_test_51Pv13ZF25aBU3RMPPSX9m01yHzLVa1vufmqLkKeU9iFR5tzAARw4GXYldl5uJAAHwSISI72lUZ8RNbjEAdNBZcbc00f3S1ZvLX');
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 const EmbeddedCheckoutForm = () => {
   const location = useLocation(); // Access location state
