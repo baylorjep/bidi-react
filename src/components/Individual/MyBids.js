@@ -131,7 +131,7 @@ function MyBids() {
     return (
         <div className="container px-5">
             <header className="masthead">
-                <h2>My Bids</h2>
+                <div className='Sign-Up-Page-Header'>My Bids</div>
                 {error ? (
                     <p className="text-danger">{error}</p>
                 ) : pendingBids.length > 0 ? (

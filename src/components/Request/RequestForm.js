@@ -15,7 +15,7 @@ function RequestForm() {
     });
     const [user, setUser] = useState(null);
     const [errorMessage, setErrorMessage] = useState('');
-    const navigate = useNavigate();
+    const navigate = useNavigate(); // Use useNavigate hook
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -41,19 +41,17 @@ function RequestForm() {
 
         const { error } = await supabase
             .from('requests')
-            .insert([
-                {
-                    user_id: user ? user.id : null,
-                    customer_email: formData.customerEmail, // Use the logged-in user's email
-                    service_title: formData.serviceTitle,
-                    location: formData.location,
-                    service_category: formData.serviceCategory,
-                    service_description: formData.serviceDescription,
-                    service_date: formData.serviceDate,
-                    price_range: formData.priceRange,
-                    additional_comments: formData.additionalComments,
-                },
-            ]);
+            .insert([{
+                user_id: user ? user.id : null,
+                customer_email: formData.customerEmail,
+                service_title: formData.serviceTitle,
+                location: formData.location,
+                service_category: formData.serviceCategory,
+                service_description: formData.serviceDescription,
+                service_date: formData.serviceDate,
+                price_range: formData.priceRange,
+                additional_comments: formData.additionalComments,
+            }]);
 
         if (error) {
             setErrorMessage(`Error submitting request: ${error.message}`);
@@ -62,16 +60,20 @@ function RequestForm() {
         }
     };
 
+    const handleBack = () => {
+        navigate('/request-categories'); // Navigate to the previous page
+    };
+
     return (
-        <div className='mobile-container'>
-        <div className="container px-5 d-flex align-items-center justify-content-center">
+        <div className="request-form-container  align-items-center justify-content-center">
             <div>
                 <div className="mb-5 mb-lg-0 text-center">
-                    <h1 className="PageHeader">What do you want done today?</h1>
+                    <div className="Sign-Up-Page-Header">Tell us more about what you need done</div>
+                    <div className='submit-form-2nd-header'>Your details guide us in making the perfect connection</div>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
                 <form onSubmit={handleSubmit}>
-                    <div className="form-floating mb-3">
+                    <div className="form-floating request-form mb-3">
                         <input
                             className="form-control"
                             id="serviceTitle"
@@ -84,40 +86,8 @@ function RequestForm() {
                         />
                         <label htmlFor="serviceTitle">Title of Service</label>
                     </div>
-                    <div className="form-floating mb-3">
-                        <input
-                            className="form-control"
-                            id="location"
-                            name="location"
-                            type="text"
-                            placeholder="Address"
-                            value={formData.location}
-                            onChange={handleChange}
-                            required
-                        />
-                        <label htmlFor="location">Address</label>
-                    </div>
-                    <div className="form-floating mb-3">
-                        <select
-                            className="form-control"
-                            id="serviceCategory"
-                            name="serviceCategory"
-                            value={formData.serviceCategory}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">Select a category...</option>
-                            <option value="cleaning">Home Cleaning</option>
-                            <option value="photography">Photo Shoot</option>
-                            <option value="landscaping">Landscaping</option>
-                            <option value="plumbing">Plumbing</option>
-                            <option value="electrical">Electrical</option>
-                            <option value="moving">Moving</option>
-                            <option value="other">Other</option>
-                        </select>
-                        <label htmlFor="serviceCategory">Service Category</label>
-                    </div>
-                    <div className="form-floating mb-3">
+                    
+                    <div className="form-floating request-form mb-3">
                         <textarea
                             className="form-control"
                             id="serviceDescription"
@@ -130,7 +100,20 @@ function RequestForm() {
                         ></textarea>
                         <label htmlFor="serviceDescription">Description of Service</label>
                     </div>
-                    <div className="form-floating mb-3">
+                    <div className="form-floating request-form mb-3">
+                        <input
+                            className="form-control"
+                            id="location"
+                            name="location"
+                            type="text"
+                            placeholder="Address"
+                            value={formData.location}
+                            onChange={handleChange}
+                            required
+                        />
+                        <label htmlFor="location">Zip Code</label>
+                    </div>
+                    <div className="form-floating request-form mb-3">
                         <input
                             className="form-control"
                             id="serviceDate"
@@ -142,7 +125,7 @@ function RequestForm() {
                         />
                         <label htmlFor="serviceDate">Date of Service</label>
                     </div>
-                    <div className="form-floating mb-3">
+                    <div className="form-floating request-form mb-3">
                         <input
                             className="form-control"
                             id="priceRange"
@@ -153,9 +136,9 @@ function RequestForm() {
                             onChange={handleChange}
                             required
                         />
-                        <label htmlFor="priceRange">Expected Price Range</label>
+                        <label htmlFor="priceRange">What's Your Budget?</label>
                     </div>
-                    <div className="form-floating mb-3">
+                    <div className="form-floating request-form mb-3">
                         <textarea
                             className="form-control"
                             id="additionalComments"
@@ -167,12 +150,16 @@ function RequestForm() {
                         ></textarea>
                         <label htmlFor="additionalComments">Additional Comments</label>
                     </div>
-                    <div className="d-grid">
-                        <button type="submit" className="btn btn-secondary" style={{ marginBottom: '20px' }}>Submit Request</button>
+                    <div className="form-button-container-submit">
+                        <button onClick={handleBack} className="btn btn-primary form-button" style={{ marginBottom: '20px' }}>
+                            Back
+                        </button>
+                        <button type="submit" className="btn btn-secondary form-button" style={{ marginBottom: '20px' }}>
+                            Submit Request
+                        </button>
                     </div>
                 </form>
             </div>
-        </div>
         </div>
     );
 }

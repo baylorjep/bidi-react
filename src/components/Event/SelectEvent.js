@@ -30,10 +30,14 @@ function SelectEvent({ setEventType }) {
         }
     };
 
+    const handleBack = () => {
+        navigate('/request-categories');  // Adjust the route for going back
+    };
+
     return (
         <div className="container">
-            <h2 className="PageHeader">What are you doing?</h2>
-            <div className="list-group">
+            <h2 className="Sign-Up-Page-Header">What are you doing?</h2>
+            <div className="list-group" style={{margin:'16px 56px'}}>
                 {eventOptions.map((event, index) => (
                     <button
                         key={index}
@@ -43,10 +47,17 @@ function SelectEvent({ setEventType }) {
                         {event}
                     </button>
                 ))}
+                <div className='form-button-container'>
+                <button className="btn btn-primary mt-4" onClick={handleBack}>
+                    Back
+                </button>
+                <button className="btn btn-secondary mt-4" onClick={handleNext} disabled={!selectedEvent}>
+                    Next
+                </button>
             </div>
-            <button className="btn btn-secondary mt-4" onClick={handleNext} disabled={!selectedEvent}>
-                Next
-            </button>
+            </div>
+            
+            
         </div>
     );
 }

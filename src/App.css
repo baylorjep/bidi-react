@@ -2185,13 +2185,13 @@ textarea.form-control-lg {
   font-size: 1rem;
   font-weight: 500;
   line-height: 1.5;
-  color: #212529;
+  color: black;
   background-color: #fff;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 16px 12px;
-  border: 1px solid #ced4da;
+  border: 2px solid black;
   border-radius: 0.375rem;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   -webkit-appearance: none;
@@ -2204,7 +2204,7 @@ textarea.form-control-lg {
   }
 }
 .form-select:focus {
-  border-color: #949bf8;
+  border-color: black;
   outline: 0;
   box-shadow: 0 0 0 0.25rem rgba(41, 55, 240, 0.25);
 }
@@ -2885,7 +2885,6 @@ textarea.form-control-lg {
   --bs-btn-border-color: black!important;
   --bs-btn-hover-color: white!important;
   --bs-btn-hover-bg: black !important; /* Adjusted hover background color */
-  --bs-btn-hover-border-color: white!important; /* Adjusted hover border color */
   --bs-btn-focus-shadow-rgb: 154, 74, 255!important;
   --bs-btn-active-color: #fff!important;
   --bs-btn-active-bg: black!important; /* Adjusted active background color */
@@ -2894,8 +2893,6 @@ textarea.form-control-lg {
   --bs-btn-disabled-color: #fff!important;
   --bs-btn-disabled-bg: black!important; /* Updated disabled background color */
   --bs-btn-disabled-border-color: black!important; /* Updated disabled border color */
-  width: 150px;
-  height: 50px;
   justify-content: center;
   align-items: center;
   display: inline-flex;
@@ -3021,20 +3018,31 @@ line-height: 0px;
 
 
 .btn-success {
-  --bs-btn-color: #fff;
-  --bs-btn-bg: #198754;
-  --bs-btn-border-color: #198754;
-  --bs-btn-hover-color: #fff;
-  --bs-btn-hover-bg: #157347;
-  --bs-btn-hover-border-color: #146c43;
-  --bs-btn-focus-shadow-rgb: 60, 153, 110;
-  --bs-btn-active-color: #fff;
-  --bs-btn-active-bg: #146c43;
-  --bs-btn-active-border-color: #13653f;
-  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
-  --bs-btn-disabled-color: #fff;
-  --bs-btn-disabled-bg: #198754;
-  --bs-btn-disabled-border-color: #198754;
+  border-radius: 30px;
+  background: #000;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  color: #FFF;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  display: flex;
+  width: 136px;
+  height: 48px;
+  padding: 18px 32px;
+  border: none;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+}
+
+.btn-success:hover {
+  background-color: transparent;
+  color:black;
+  border:black 2px solid;
 }
 
 .btn-info {
@@ -3072,20 +3080,31 @@ line-height: 0px;
 }
 
 .btn-danger {
-  --bs-btn-color: #fff;
-  --bs-btn-bg: #dc3545;
-  --bs-btn-border-color: #dc3545;
-  --bs-btn-hover-color: #fff;
-  --bs-btn-hover-bg: #bb2d3b;
-  --bs-btn-hover-border-color: #b02a37;
-  --bs-btn-focus-shadow-rgb: 225, 83, 97;
-  --bs-btn-active-color: #fff;
-  --bs-btn-active-bg: #b02a37;
-  --bs-btn-active-border-color: #a52834;
-  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
-  --bs-btn-disabled-color: #fff;
-  --bs-btn-disabled-bg: #dc3545;
-  --bs-btn-disabled-border-color: #dc3545;
+  border-radius: 30px;
+  background: transparent;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  color: black;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  display: flex;
+  width: 136px;
+  height: 48px;
+  padding: 18px 32px;
+  border: 2px black solid;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+}
+
+.btn-danger:hover {
+  background-color: black;
+  color:white;
+  border:black 2px solid;
 }
 
 .btn-light {
@@ -4931,7 +4950,7 @@ line-height: 0px;
 .list-group {
   --bs-list-group-color: #212529;
   --bs-list-group-bg: #fff;
-  --bs-list-group-border-color: rgba(0, 0, 0, 0.125);
+  --bs-list-group-border-color: black;
   --bs-list-group-border-width: 1px;
   --bs-list-group-border-radius: 0.375rem;
   --bs-list-group-item-padding-x: 1rem;
@@ -4985,7 +5004,7 @@ line-height: 0px;
   color: var(--bs-list-group-color);
   text-decoration: none;
   background-color: var(--bs-list-group-bg);
-  border: var(--bs-list-group-border-width) solid var(--bs-list-group-border-color);
+  border: 1px solid black;
 }
 .list-group-item:first-child {
   border-top-left-radius: inherit;
@@ -11414,7 +11433,7 @@ footer a:hover, footer a:active, footer a:focus {
 
 .business-actions {
   display: flex;
-  justify-content: right;
+  justify-content: center;
   gap: 1rem;
 }
 
@@ -12260,7 +12279,7 @@ footer a:hover, footer a:active, footer a:focus {
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  padding: 32px;
   max-width: 100%;
   margin: 20px auto;
   overflow-wrap: break-word; /* Ensure long words break properly */
@@ -12271,7 +12290,6 @@ footer a:hover, footer a:active, footer a:focus {
 .request-content {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center-align child elements */
 }
 
 /* Title styling */
@@ -12280,12 +12298,19 @@ footer a:hover, footer a:active, footer a:focus {
   margin-bottom: 10px;
   color: #333;
   word-wrap: break-word; /* Ensure long words break */
+  color: #000;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
 }
 
 /* Styling for other elements */
 .request-location,
 .request-category,
 .request-description,
+.price-range,
 .request-date,
 .request-comments {
   font-size: 1em;
@@ -12299,6 +12324,7 @@ footer a:hover, footer a:active, footer a:focus {
 .request-category strong,
 .request-description strong,
 .request-date strong,
+.price-range strong, 
 .request-comments strong {
   color: #000;
   font-weight: bold;
@@ -12325,6 +12351,7 @@ footer a:hover, footer a:active, footer a:focus {
   }
 
   .request-location,
+  .price-range,
   .request-category,
   .request-description,
   .request-date,
@@ -12780,7 +12807,7 @@ margin-top: 3rem;
 
 /* Hover state for the select box */
 .custom-select:hover {
-  border-color: #800080; /* Darker purple on hover */
+  border-color: black; /* Darker purple on hover */
 }
 
 /* Styling options for a better visual match */
@@ -12791,7 +12818,7 @@ margin-top: 3rem;
 
 /* Focus state when the select box is clicked */
 .custom-select:focus {
-  border-color: #800080; /* Purple when focused */
+  border-color: black; /* Purple when focused */
   box-shadow: 0 0 5px 1px rgba(128, 0, 128, 0.5); /* Add purple shadow */
 }
 
@@ -13082,4 +13109,260 @@ text-align: left;
     .team-member-container img {
       width: 300px;
     }
+}
+
+.form-button-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between; /* Positions buttons at opposite ends */
+  align-items: center; /* Aligns buttons vertically, if needed */
+  width: 100%; /* Optional: Ensures the container takes full width */
+}
+
+.form-button-container-submit {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between; /* Positions buttons at opposite ends */
+  align-items: center; /* Aligns buttons vertically, if needed */
+  width: 100%; /* Optional: Ensures the container takes full width */
+  gap: 1rem;
+}
+
+.form-button {
+  width:100%
+}
+
+.Sign-Up-Page-Header {
+  color: #000;
+  text-align: center;
+  font-family: Lora;
+  font-size: 40px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  word-break:break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.choose-type-button-container {
+  padding-top: 48px;
+  justify-content: center;
+  display: flex;
+  flex-direction: row;
+  gap: 48px;
+}
+
+.choose-type-button {
+  border-radius: 5px;
+  border: 2px solid #000;
+  background: #FFF;
+  width: 391px;
+  height: 48px;
+  flex-shrink: 0;
+  color: #000;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.choose-type-button:hover {
+  cursor: pointer;
+  background-color: transparent;
+}
+
+.choose-type-or {
+  color: #000;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 20px;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 48px;
+  justify-content: center
+}
+
+.create-account-form {
+  border-radius: 5px;
+  border: 2px solid #000;
+  background: #F1F1F1;
+  color: #000;
+  color: #000;
+
+  font-family: Roboto;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 550;
+  line-height: 24px;
+  
+}
+
+.sign-up-button {
+  display: flex;
+  padding: 18px 32px;
+  height: 50px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 30px;
+  border: 2px black solid;
+  box-shadow: 0px 4px 15px 0px rgba(46, 46, 46, 0.15);
+  background: #000;
+  color: #FFF;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 20px;
+  font-weight: 500;
+}
+.sign-up-button:hover {
+  background-color: transparent;
+  color:black;
+
+}
+
+.already-have-account {
+  color: #000;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  padding-top: 16px;
+}
+.forgot-your-password {
+  text-align: center;
+  font-family: Roboto;
+  font-size: 20px;
+  font-style: italic;
+  font-weight: 100;
+  line-height: normal;
+  text-decoration-line: underline; /* This applies to the entire block */
+}
+
+.forgot-your-password a {
+  color: #000 !important; /* Make link text black */
+  text-decoration: underline; /* Ensure the link is underlined */
+}
+
+.forgot-your-password a:hover {
+  color: #000 !important; /* Ensure the hover state is also black */
+  text-decoration: underline; /* Keep the underline on hover */
+}
+
+.forgot-your-password a:visited {
+  color: #000 !important; /* Ensure visited links are black */
+}
+
+.sign-in-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 16px;
+}
+
+.submit-form-2nd-header {
+  color: #000;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  padding: 1rem;
+  padding-bottom: 16px;
+}
+
+.request-form {
+  border-radius: 5px;
+  border: 0.5px solid #000;
+  background: #FFF;
+  color: #000;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.bid-button {
+  border-radius: 30px;
+  background: #000;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  color: #FFF;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  display: flex;
+  width: 120px;
+  height: 56px;
+  border: none;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+  margin:0;
+}
+
+.request-form-container {
+  padding: 20px 30rem;
+}
+
+@media (max-width:1500px) {
+  .request-form-container {
+    padding: 20px 20rem;
+  }
+  
+}
+
+@media (max-width:1200px) {
+  .request-form-container {
+    padding: 20px 15rem;
+  }
+  
+}
+
+@media (max-width:1000px) {
+  .request-form-container {
+    padding: 20px 10rem;
+  }
+  
+}
+
+@media (max-width:800px) {
+  .request-form-container {
+    padding: 20px 5rem;
+  }
+  
+}
+
+@media (max-width:500px) {
+  .request-form-container {
+    padding: 20px 2rem;
+  }
+  
+}
+
+.contact-us-btn {
+  display: flex;
+width: 160px;
+height: 38px;
+flex-direction: column;
+justify-content: center;
+flex-shrink: 0;
+color: #FFF;
+text-align: center;
+font-family: Roboto;
+font-size: 20px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
 }

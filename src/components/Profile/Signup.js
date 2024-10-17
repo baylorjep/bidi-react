@@ -144,98 +144,12 @@ function Signup() {
         <div className="container px-5 d-flex align-items-center justify-content-center">
             <div className="col-lg-6">
                 <div className="mb-5 mb-lg-0 text-center">
-                    <h1 className="SignUpPageHeader" style={{ marginTop: '40px' }}>Create an Account</h1>
+                    <h1 className="Sign-Up-Page-Header" style={{ marginTop: '40px' }}>Create an Account</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
-                <form onSubmit={handleSubmit}>
-                    <div className="form-floating mb-3">
-                        <input
-                            className="form-control"
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="name@example.com"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                        />
-                        <label htmlFor="email">Email Address</label>
-                    </div>
-                    <div className="form-floating mb-3">
-                        <input
-                            className="form-control"
-                            id="password"
-                            name="password"
-                            type="password"
-                            placeholder="Password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                        />
-                        <label htmlFor="password">Password</label>
-                    </div>
-                    <div className="form-floating mb-3">
-                        <input
-                            className="form-control"
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            type="password"
-                            placeholder="Confirm Password"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            required
-                        />
-                        <label htmlFor="confirmPassword">Confirm Password</label>
-                    </div>
-
-                    {userType === 'individual' && (
+                {userType === 'business' && (
                         <>
-                            <div className="form-floating mb-3">
-                                <input
-                                    className="form-control"
-                                    id="firstName"
-                                    name="firstName"
-                                    type="text"
-                                    placeholder="Enter first name..."
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <label htmlFor="firstName">First Name</label>
-                            </div>
-                            <div className="form-floating mb-3">
-                                <input
-                                    className="form-control"
-                                    id="lastName"
-                                    name="lastName"
-                                    type="text"
-                                    placeholder="Enter last name..."
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <label htmlFor="lastName">Last Name</label>
-                            </div>
-                        </>
-                    )}
-
-                    <div className="form-floating mb-3">
-                        <input
-                            className="form-control"
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            placeholder="(123) 456-7890"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            required
-                        />
-                        <label htmlFor="phone">Phone Number</label>
-                    </div>
-
-                    {userType === 'business' && (
-                        <>
-                            <div className="form-floating mb-3">
+                            <div className="form-floating create-account-form mb-3">
                                 <input
                                     className="form-control"
                                     id="businessName"
@@ -248,7 +162,7 @@ function Signup() {
                                 />
                                 <label htmlFor="businessName">Business Name</label>
                             </div>
-                            <div className="form-floating mb-3">
+                            <div className="form-floating create-account-form mb-3">
                                 <select
                                     className="form-control"
                                     id="businessCategory"
@@ -272,7 +186,7 @@ function Signup() {
                                 <label htmlFor="businessCategory">Business Category</label>
                             </div>
                             {formData.businessCategory === 'other' && (
-                                <div className="form-floating mb-3">
+                                <div className="form-floating create-account-form mb-3">
                                     <input
                                         className="form-control"
                                         id="otherBusinessCategory"
@@ -282,11 +196,12 @@ function Signup() {
                                         value={formData.otherBusinessCategory}
                                         onChange={handleChange}
                                         required
+                                        
                                     />
                                     <label htmlFor="otherBusinessCategory">Please specify your business category</label>
                                 </div>
                             )}
-                            <div className="form-floating mb-3">
+                            <div className="form-floating create-account-form mb-3">
                                 <input
                                     className="form-control"
                                     id="businessAddress"
@@ -299,7 +214,7 @@ function Signup() {
                                 />
                                 <label htmlFor="businessAddress">Business Address</label>
                             </div>
-                            <div className="form-floating mb-3">
+                            <div className="form-floating create-account-form mb-3">
                                 <input
                                     className="form-control"
                                     id="website"
@@ -308,15 +223,104 @@ function Signup() {
                                     placeholder="Business Website"
                                     value={formData.website}
                                     onChange={handleChange}
+                                    
                                 />
                                 <label htmlFor="website">Website (Optional)</label>
                             </div>
                         </>
                     )}
+                {userType === 'individual' && (
+                        <>
+                            <div className="form-floating create-account-form mb-3">
+                                <input
+                                    className="form-control"
+                                    id="firstName"
+                                    name="firstName"
+                                    type="text"
+                                    placeholder="Enter first name..."
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <label htmlFor="firstName"> First Name</label>
+                            </div>
+                            <div className="form-floating create-account-form mb-3">
+                                <input
+                                    className="form-control"
+                                    id="lastName"
+                                    name="lastName"
+                                    type="text"
+                                    placeholder="Enter last name..."
+                                    value={formData.lastName}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <label htmlFor="lastName">Last Name</label>
+                            </div>
+                        </>
+                    )}
+                    <div className="form-floating create-account-form mb-3">
+                        <input
+                            className="form-control"
+                            id="phone"
+                            name="phone"
+                            type="tel"
+                            placeholder="(123) 456-7890"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            required
+                        />
+                        <label htmlFor="phone">Phone Number</label>
+                    </div>
+                <form onSubmit={handleSubmit}>
+                    <div className="form-floating create-account-form mb-3">
+                        <input
+                            className="form-control"
+                            id="email"
+                            name="email"
+                            type="email"
+                            placeholder="name@example.com"
+                            value={formData.email}
+                            onChange={handleChange}
+                            required
+                        />
+                        <label htmlFor="email">Email</label>
+                    </div>
+                    <div className="form-floating create-account-form mb-3">
+                        <input
+                            className="form-control"
+                            id="password"
+                            name="password"
+                            type="password"
+                            placeholder="Password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            required
+                        />
+                        <label htmlFor="password">Password</label>
+                    </div>
+                    <div className="form-floating create-account-form mb-3">
+                        <input
+                            className="form-control"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            type="password"
+                            placeholder="Confirm Password"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            required
+                        />
+                        <label htmlFor="confirmPassword">Confirm Password</label>
+                    </div>
 
                     <div className="d-grid">
-                        <button type="submit" className="btn btn-secondary btn-lg w-100">Sign Up</button>
+                        <button type="submit" className="sign-up-button">Sign Up</button>
                     </div>
+
+                    <div className='already-have-account'>
+                        <div>Already have an account? <a href="/signin">Log In</a></div>
+                    </div>
+
                 </form>
             </div>
         </div>
