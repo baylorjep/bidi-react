@@ -13167,6 +13167,15 @@ text-align: left;
   display: flex;
   flex-direction: row;
   gap: 48px;
+  width: 100%;
+}
+
+@media (max-width: 1000px) {
+    .choose-type-button-container {
+      flex-direction: column;
+      text-align: center;
+      
+    }
 }
 
 .choose-type-button {
@@ -13183,6 +13192,12 @@ text-align: left;
   font-style: normal;
   font-weight: 700;
   line-height: normal;
+}
+
+@media (max-width:450px) {
+  .choose-type-button {
+    width: 300px
+  }
 }
 
 .choose-type-button:hover {
