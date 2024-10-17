@@ -73,7 +73,7 @@ function ContactForm() {
                 <div className="mb-5 mb-lg-0 text-center">
                 <br/>
                     <div className='Sign-Up-Page-Header'>Let's Talk!</div>
-                    <div className='submit-form-2nd-header' style={{textAlign:'left', padding:'16px'}}>Have a question or need assistance? We’re here to help! feel free to reach out. Our team is dedicated to providing quick and helpful responses to make sure you get the support you need </div>
+                    <div className='submit-form-2nd-header' style={{textAlign:'left', padding:'16px'}}>Have any questions or need assistance? We’re here to help! Feel free to reach out to us. Our team is dedicated to providing prompt and helpful responses to ensure you get the support you need.</div>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                     {successMessage && <p className="text-success">{successMessage}</p>}
                 </div>
