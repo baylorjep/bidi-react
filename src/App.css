@@ -12354,6 +12354,8 @@ footer a:hover, footer a:active, footer a:focus {
   text-align: center; /* Center the text inside the button */
 }
 
+
+
 @media (max-width: 768px) {
   .request-display {
     padding: 15px;
@@ -13400,4 +13402,35 @@ line-height: normal;
   display: flex;
   flex-direction: row;
   gap: 8px;
+}
+
+.submit-bid-button {
+  
+  border-radius: 30px;
+  background: #000;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  color: #FFF;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  display: flex;
+  width: 160px;
+  height: 56px;
+  border: none;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+  margin:0;
+
+}
+
+.submit-bid-btn-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  
 }
