@@ -14,9 +14,9 @@ function RequestDisplay({ request, hideBidButton }) {
                 {request.additional_comments && <p className="request-comments"><strong>Additional Comments:</strong> {request.additional_comments}</p>}
                 
                 {!hideBidButton && (
-                    <Link className="btn btn-secondary rounded-pill px-3 mb-2 mb-lg-0 bid-button" to={`/submit-bid/${request.id}`}>
-                        <span className="d-flex align-items-center">
-                            <span className="small">Bid</span>
+                    <Link className="btn btn-secondary rounded-pill bid-button" to={`/submit-bid/${request.id}`}>
+                        <span className="bid-button-text">
+                            <span>Bid</span>
                         </span>
                     </Link>
                 )}
