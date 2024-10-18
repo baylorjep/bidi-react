@@ -148,7 +148,7 @@ function RequestForm() {
                             id="priceRange"
                             name="priceRange"
                             type="text"
-                            placeholder="Expected Price Range"
+                            placeholder="Budget"
                             value={formData.priceRange}
                             onChange={handleChange}
                             required
