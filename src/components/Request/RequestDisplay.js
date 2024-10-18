@@ -11,6 +11,8 @@ function RequestDisplay({ request, hideBidButton }) {
                 <p className="request-category"><strong>Category:</strong> {request.service_category}</p>
                 <p className="request-description"><strong>Description:</strong> {request.service_description}</p>
                 <p className="request-date"><strong>Date of Service:</strong> {new Date(request.service_date).toLocaleDateString()}</p>
+                <p className="request-category"><strong>Budget:</strong> {request.price_range}</p>
+                
                 {request.additional_comments && <p className="request-comments"><strong>Additional Comments:</strong> {request.additional_comments}</p>}
                 
                 {!hideBidButton && (
