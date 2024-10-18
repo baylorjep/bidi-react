@@ -18,6 +18,17 @@
 
   gtag('config', 'AW-16690782587');
 </script>
+<script>
+  import posthog from 'posthog-js'
+
+posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh',
+    {
+        api_host: 'https://us.i.posthog.com',
+        person_profiles: 'identified_only' // or 'always' to create profiles for anonymous users as well
+    }
+)
+</script>
+
 
 
     <meta charset="utf-8" />

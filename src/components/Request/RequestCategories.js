@@ -13,25 +13,27 @@ function RequestCategories() {
         }
     };
 
+    
+
     return (
         <div className="container px-5 d-flex align-items-center justify-content-center">
             <div className="mobile-container">
                 <div className="mb-5 mb-lg-0 text-center">
-                    <h1 className="SignUpPageHeader" style={{ marginTop: '40px' }}>What kind of service do you need?</h1>
+                    <h1 className="Sign-Up-Page-Header" style={{ marginTop: '40px' }}>What kind of service do you need?</h1>
                     <div className="mt-4">
                         <select 
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="form-select form-select-lg mb-3 custom-select"
+                            className="form-select create-account-form form-select-lg mb-3 custom-select "
                         >
-                            <option value="">Select a service</option>
+                            <option value="" disabled hidden>Select a service</option>
                             <option value="photography">Photography/Videography</option>
-                            <option value="dj_services">DJ Services</option>
+                            <option value="dj-services">DJ Services</option>
                             <option value="cakes">Cakes</option>
-                            <option value="Hair_and_Makeup_Artist">Hair and Makeup Artist</option>
-                            <option value="Catering">Catering</option>
-                            <option value="Event/Wedding_Planner">Event/Wedding Planner</option>
-                            <option value="Cleaning">Cleaning</option>
+                            <option value="hair-and-makeup-artist">Hair and Makeup Artist</option>
+                            <option value="catering">Catering</option>
+                            <option value="event/wedding-planner">Event/Wedding Planner</option>
+                            <option value="cleaning">Cleaning</option>
                             <option value="other">Other</option>
                         </select>
                         <button 

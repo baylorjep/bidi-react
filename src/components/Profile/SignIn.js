@@ -49,11 +49,11 @@ function SignIn() {
             <div className="col-lg-6">
                 <div className="mb-5 mb-lg-0 text-center">
                     <br/>
-                    <h1 className="SignInPageHeader">Sign In</h1>
+                    <h1 className="Sign-Up-Page-Header">Sign In</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
                 <form onSubmit={handleSignIn}>
-                    <div className="form-floating mb-3">
+                    <div className="form-floating create-account-form mb-3">
                         <input
                             className="form-control"
                             id="email"
@@ -66,7 +66,7 @@ function SignIn() {
                         />
                         <label htmlFor="email">Email Address</label>
                     </div>
-                    <div className="form-floating mb-3">
+                    <div className="form-floating create-account-form mb-3">
                         <input
                             className="form-control"
                             id="password"
@@ -79,18 +79,19 @@ function SignIn() {
                         />
                         <label htmlFor="password">Password</label>
                     </div>
-                    <div className="d-grid">
-                        <button type="submit" className="btn btn-secondary btn-lg w-100">Sign In</button>
+                    <div className="forgot-your-password">
+                        <Link to="/request-password-reset" className="btn btn-link">
+                            Forgot your password?
+                        </Link>
+                    </div>
+                    <div className="sign-in-container">
+                        <button type="submit" className="sign-up-button" style={{width:'160px'}}>Sign In</button>
                     </div>
                     <br/>
-                    <h6 align='center'>Don't Have an Account?   
+                    <div className="forgot-your-password"align='center' style={{textDecoration:'none'}}>Don't Have an Account?
                             <a href='/Signup' > Sign Up Here.</a> 
-                    </h6>
-                    <div className="text-center mt-3">
-                    <Link to="/request-password-reset" className="btn btn-link">
-                        Forgot my password
-                    </Link>
-                </div>
+                    </div>
+                    
                 </form>
             </div>
         </div>

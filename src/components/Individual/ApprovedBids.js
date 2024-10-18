@@ -80,33 +80,47 @@ function ApprovedBids() {
     };
 
     return (
-        <div className="container px-5">
+        <div className="container">
             <header className="masthead">
-                <h2>Approved Bids</h2>
+                <div className='Sign-Up-Page-Header' style={{paddingBottom:'16px'}}>Approved Bids</div>
                 {error ? (
                     <p className="text-danger">{error}</p>
                 ) : approvedBids.length > 0 ? (
                     <div className="d-flex flex-column align-items-center"> {/* Center the whole card */}
                         {approvedBids.map((bid) => (
-                            <div key={bid.id} className="approved-bid-card card p-4 mb-4" style={{ width: '100%', maxWidth: '500px' }}>
-                                <h3>{bid.business_profiles.business_name}</h3>
-                                <p><strong>Bid Amount:</strong> ${bid.bid_amount}</p>
-                                <p><strong>Description:</strong> {bid.bid_description}</p>
-                                <button
-                                    className="btn btn-secondary btn-md flex-fill"
-                                    onClick={() => handlePayNow(bid)}
-                                    
-                                >
-                                    Pay Now
-                                </button>
-                                <br></br>
-                                <button
-                                    className="btn btn-secondary btn-md flex-fill"
-                                    onClick={() => handleMessage(bid)}
-                                    
-                                >
-                                    Message
-                                </button>
+                            <div key={bid.id} className="approved-bid-card card p-4 mb-4" style={{ width: '100%', maxWidth: '600px' }}>
+                                <div className='title-and-price'>
+                                    <div className='request-title' style={{ marginBottom: '0', textAlign: 'left' }}>{bid.business_profiles.business_name}</div>
+                                    <button
+                                        className="bid-button"
+                                        
+                                        disabled
+                                    >
+                                        ${bid.bid_amount}
+                                    </button>
+                                </div>
+                                
+                                <p style={{marginTop:"16px"}}><strong>Description:</strong> {bid.bid_description}</p>
+                                <p><strong>Phone:</strong> {bid.business_profiles.phone}</p>
+
+                                <div className='pay-and-message-container'>
+                                    <button
+                                        className="btn btn-secondary btn-md flex-fill"
+                                        onClick={() => handlePayNow(bid)}
+                                        
+                                    >
+                                        Pay Now
+                                    </button>
+                                    <br></br>
+                                    <button
+                                        className="btn btn-secondary btn-md flex-fill"
+                                        onClick={() => handleMessage(bid)}
+                                        
+                                    >
+                                        Message
+                                    </button>
+                                </div>
+                                
                             </div>
                         ))}
                     </div>

@@ -72,13 +72,14 @@ function ContactForm() {
             <div className="col-lg-6">
                 <div className="mb-5 mb-lg-0 text-center">
                 <br/>
-                    <h1>Contact Us</h1>
+                    <div className='Sign-Up-Page-Header'>Let's Talk!</div>
+                    <div className='submit-form-2nd-header' style={{textAlign:'left', padding:'16px'}}>Have any questions or need assistance? We’re here to help! Feel free to reach out to us. Our team is dedicated to providing prompt and helpful responses to ensure you get the support you need.</div>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                     {successMessage && <p className="text-success">{successMessage}</p>}
                 </div>
                 <form onSubmit={handleSubmit}>
                     {!user && (
-                        <div className="form-floating mb-3">
+                        <div className="form-floating request-form mb-3">
                             <input
                                 className="form-control"
                                 id="email"
@@ -92,7 +93,7 @@ function ContactForm() {
                             <label htmlFor="email">Email Address</label>
                         </div>
                     )}
-                    <div className="form-floating mb-3">
+                    <div className="form-floating request-form mb-3">
                         <input
                             className="form-control"
                             id="subject"
@@ -105,7 +106,7 @@ function ContactForm() {
                         />
                         <label htmlFor="subject">Subject</label>
                     </div>
-                    <div className="form-floating mb-3">
+                    <div className="form-floating request-form mb-3">
                         <textarea
                             className="form-control"
                             id="message"

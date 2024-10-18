@@ -122,10 +122,10 @@ function SubmitBid() {
     };
 
     return (
-        <div className="container px-5 d-flex align-items-center justify-content-center content">
+        <div className="container d-flex align-items-center justify-content-center content" style={{marginBottom:"55px"}}>
             <div className="col-lg-6">
                 <br/>
-                <h2 style={{ textAlign: 'center' }}>Place Your Bid</h2>
+                <div className="Sign-Up-Page-Header"style={{ textAlign: 'center' }}>Place Your Bid</div>
                 {error && <p className="text-danger">{error}</p>}
                 {success && <p className="text-success">{success}</p>}
                 {requestDetails && (
@@ -135,7 +135,7 @@ function SubmitBid() {
                     </>
                 )}
                 <form onSubmit={handleSubmit}>
-                    <div className="form-floating mb-3">
+                    <div className="form-floating request-form mb-3">
                         <input
                             className="form-control"
                             id="bidAmount"
@@ -148,7 +148,7 @@ function SubmitBid() {
                         />
                         <label htmlFor="bidAmount">Bid Price</label>
                     </div>
-                    <div className="form-floating mb-3">
+                    <div className="form-floating request-form mb-3">
                         <textarea
                             className="form-control"
                             id="bidDescription"
@@ -160,8 +160,8 @@ function SubmitBid() {
                         />
                         <label htmlFor="bidDescription">Bid Description</label>
                     </div>
-                    <div className="d-grid">
-                        <button type="submit" className="btn btn-secondary btn-lg w-100">Submit Bid</button>
+                    <div className="submit-bid-btn-container">
+                        <button type="submit" className="submit-bid-button btn btn-secondary rounded-pill">Submit Bid</button>
                     </div>
                     <br/>
                 </form>

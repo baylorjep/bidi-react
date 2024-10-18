@@ -72,8 +72,10 @@ function EventSummary({ eventType, eventDetails }) {
             <p><strong>Indoor/Outdoor:</strong> {eventDetails.indoorOutdoor}</p>
             <p><strong>Additional Comments:</strong> {eventDetails.additionalComments}</p>
             {/* Display other details */}
-            <button className="btn btn-dark mt-3" onClick={() => navigate('/event-details')}>Edit</button>
+            <div className='form-button-container'><button className="btn btn-primary mt-3" onClick={() => navigate('/event-details')}>Back</button>
             <button className="btn btn-secondary mt-3" onClick={handleSubmit}>Submit</button>
+            </div>
+            
         </div>
     );
 }
