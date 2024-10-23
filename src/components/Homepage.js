@@ -41,8 +41,19 @@ function Homepage() {
         }
     };
 
+    client.capture({
+        distinctId: 'test-id',
+        event: 'test-event'
+    })
+    
+    // Send queued events immediately. Use for example in a serverless environment
+    // where the program may terminate before everything is sent.
+    // Use `client.flush()` instead if you still need to send more events or fetch feature flags.
+    client.shutdown()
+
     return (
         <>
+        
             <div className="masthead-index">
                 <div className='text-section'>
                     <div className='landing-page-title'>

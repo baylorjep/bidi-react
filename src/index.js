@@ -4,11 +4,12 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import './i18n';
-import { PostHogProvider} from 'posthog-js/react'
+import { PostHog } from 'posthog-node'
 
-const options = {
-  api_host: process.env.REACT_APP_PUBLIC_POSTHOG_HOST,
-}
+const client = new PostHog(
+    'phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh',
+    { host: 'https://us.i.posthog.com' }
+)
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -20,7 +21,10 @@ root.render(
       <App />
     </PostHogProvider>
   </React.StrictMode>
+  
 );
+
+
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
