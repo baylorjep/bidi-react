@@ -15,6 +15,23 @@ import jennaferIcon from '../assets/images/Jennafer Profile.png'
 import scrollBtn from '../assets/images/Icons/scroll button.png'
 import IphoneFrame from '../assets/images/Iphone 14 - 1.png'
 import statusBar from '../assets/images/iPhone 13.png'
+import { PostHog } from 'posthog-node'
+
+const client = new PostHog(
+    'phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh',
+    { host: 'https://us.i.posthog.com' }
+)
+
+client.capture({
+  distinctId: 'test-id',
+  event: 'test-event'
+})
+
+// Send queued events immediately. Use for example in a serverless environment
+// where the program may terminate before everything is sent.
+// Use `client.flush()` instead if you still need to send more events or fetch feature flags.
+client.shutdown()
+
 function Homepage() {
     const [user, setUser] = useState(null);
     const reviewSliderRef = useRef(null);
@@ -41,19 +58,10 @@ function Homepage() {
         }
     };
 
-    client.capture({
-        distinctId: 'test-id',
-        event: 'test-event'
-    })
     
-    // Send queued events immediately. Use for example in a serverless environment
-    // where the program may terminate before everything is sent.
-    // Use `client.flush()` instead if you still need to send more events or fetch feature flags.
-    client.shutdown()
-
     return (
         <>
-        
+            
             <div className="masthead-index">
                 <div className='text-section'>
                     <div className='landing-page-title'>
