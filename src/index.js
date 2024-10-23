@@ -11,6 +11,8 @@ const client = new PostHog(
     { host: 'https://us.i.posthog.com' }
 )
 
+await client.shutdown()
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
