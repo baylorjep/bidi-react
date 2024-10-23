@@ -81,7 +81,6 @@ function SubmitBid() {
                             <p><strong>Bid Amount:</strong> ${bidAmount}</p>
                             <p><strong>Description:</strong> ${bidDescription}</p>`;
 
-
         if (requestType === 'requests') {
             // Insert into the regular bids table
             const { error } = await supabase
@@ -92,7 +91,7 @@ function SubmitBid() {
                         user_id: user.id,
                         bid_amount: bidAmount,
                         bid_description: bidDescription,
-                        category: 'General'
+                        category: 'General',
                     },
                 ]);
             insertError = error;
@@ -106,7 +105,7 @@ function SubmitBid() {
                         user_id: user.id,
                         bid_amount: bidAmount,
                         bid_description: bidDescription,
-                        category: 'Photography'
+                        category: 'Photography',
                     },
                 ]);
             insertError = error;
@@ -121,11 +120,15 @@ function SubmitBid() {
         }
     };
 
+    const handleBack = () => {
+        navigate(-1); // This takes the user back to the previous page
+    };
+
     return (
         <div className="container d-flex align-items-center justify-content-center content" style={{marginBottom:"55px"}}>
             <div className="col-lg-6">
                 <br/>
-                <div className="Sign-Up-Page-Header"style={{ textAlign: 'center' }}>Place Your Bid</div>
+                <div className="Sign-Up-Page-Header" style={{ textAlign: 'center' }}>Place Your Bid</div>
                 {error && <p className="text-danger">{error}</p>}
                 {success && <p className="text-success">{success}</p>}
                 {requestDetails && (
@@ -162,9 +165,19 @@ function SubmitBid() {
                         <label htmlFor="bidDescription">Bid Description</label>
                     </div>
 
-                    <div className="submit-bid-btn-container">
-                        <button type="submit" className="submit-bid-button btn btn-secondary rounded-pill">Submit Bid</button>
+                    <div style={{ display: "flex", flexDirection: "row", justifyContent: "center", gap: "16px" }}>
+                        <div className="submit-bid-btn-container">
+                            <button onClick={handleBack} className="submit-bid-button btn btn-primary rounded-pill">
+                                Back
+                            </button>
+                        </div>
+                        <div className="submit-bid-btn-container">
+                            <button type="submit" className="submit-bid-button btn btn-secondary rounded-pill">
+                                Submit Bid
+                            </button>
+                        </div>
                     </div>
+                    
                     <br/>
                 </form>
             </div>
