@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient'; // Ensure this path is correct
 import { Link } from 'react-router-dom';
-import videoSrc from '../assets/images//Landing Page Video 3.mov'; // Import the video
+import videoSrc from '../assets/images/Landing Page Video 3.mov'; // Import the video
 import cakeIcon from '../assets/images/Icons/cake icon.png';
 import cameraIcon from '../assets/images/Icons/camera icon.png';
 import floristIcon from '../assets/images/Icons/Florist icon.png';
@@ -11,55 +11,53 @@ import paintIcon from '../assets/images/Icons/paint icon.png';
 import renchIcon from '../assets/images/Icons/rench icon.png';
 import scissorsIcon from '../assets/images/Icons/scissors icon.png';
 import quoteIcon from '../assets/images/Icons/“.png';
-import jennaferIcon from '../assets/images/Jennafer Profile.png'
-import scrollBtn from '../assets/images/Icons/scroll button.png'
-import IphoneFrame from '../assets/images/Iphone 14 - 1.png'
-import statusBar from '../assets/images/iPhone 13.png'
-import { PostHog } from 'posthog-node'
+import jennaferIcon from '../assets/images/Jennafer Profile.png';
+import scrollBtn from '../assets/images/Icons/scroll button.png';
+import IphoneFrame from '../assets/images/Iphone 14 - 1.png';
+import statusBar from '../assets/images/iPhone 13.png';
+import posthog from 'posthog-js';
 
-const client = new PostHog(
-    'phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh',
-    { host: 'https://us.i.posthog.com' }
-)
-
-client.capture({
-  distinctId: 'test-id',
-  event: 'test-event'
-})
-
-// Send queued events immediately. Use for example in a serverless environment
-// where the program may terminate before everything is sent.
-// Use `client.flush()` instead if you still need to send more events or fetch feature flags.
-client.shutdown()
+// Initialize PostHog for client-side tracking
+posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
+  api_host: 'https://us.i.posthog.com',
+  loaded: (posthog) => {
+    if (process.env.NODE_ENV === 'development') posthog.debug();
+  },
+});
 
 function Homepage() {
-    const [user, setUser] = useState(null);
-    const reviewSliderRef = useRef(null);
+  const [user, setUser] = useState(null);
+  const reviewSliderRef = useRef(null);
 
-    useEffect(() => {
-        const fetchSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-
-            if (session) {
-                setUser(session.user);
-            }
-        };
-
-        fetchSession();
-    }, []);
-
-    const scrollReviews = (direction) => {
-        if (reviewSliderRef.current) {
-            const scrollAmount = 400; // Adjust based on review card width
-            reviewSliderRef.current.scrollBy({
-                left: direction === 'right' ? scrollAmount : -scrollAmount,
-                behavior: 'smooth',
-            });
-        }
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+      }
     };
 
-    
-    return (
+    fetchSession();
+
+    // Capture a page view when the component mounts
+    posthog.capture('page_view', {
+      distinctId: user?.id || 'anonymous',
+      url: window.location.href,
+      page_title: document.title,
+    });
+  }, [user]);
+
+  const scrollReviews = (direction) => {
+    if (reviewSliderRef.current) {
+      const scrollAmount = 400; // Adjust based on review card width
+      reviewSliderRef.current.scrollBy({
+        left: direction === 'right' ? scrollAmount : -scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  return (
         <>
             
             <div className="masthead-index">
@@ -81,7 +79,7 @@ function Homepage() {
                         Bidi is a service request platform for local services. With Bidi, you don’t have to waste time searching for the perfect businesses to help you. All you do is tell us what you need, and we’ll find the right business for you. No more hours and hours of searching.
                     </div>
                     <div className='landing-page-button-container'>
-                        <Link to="/signup">
+                        <Link to="/signup" onClick={() => posthog.capture('signup_button_click')}>
                             <button className='landing-page-button'>Get Started</button>
                         </Link>
                 
