@@ -157,9 +157,11 @@ function SubmitBid() {
                             value={bidDescription}
                             onChange={(e) => setBidDescription(e.target.value)}
                             required
+                            style={{ height: "160px" }} // Adjust the height as needed
                         />
                         <label htmlFor="bidDescription">Bid Description</label>
                     </div>
+
                     <div className="submit-bid-btn-container">
                         <button type="submit" className="submit-bid-button btn btn-secondary rounded-pill">Submit Bid</button>
                     </div>
