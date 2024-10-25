@@ -2,14 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient'; // Ensure this path is correct
 import { Link } from 'react-router-dom';
 import videoSrc from '../assets/images/Landing Page Video 3.mov'; // Import the video
-import cakeIcon from '../assets/images/Icons/cake icon.png';
-import cameraIcon from '../assets/images/Icons/camera icon.png';
-import floristIcon from '../assets/images/Icons/Florist icon.png';
-import hairIcon from '../assets/images/Icons/hair stylist icon.png';
-import homeIcon from '../assets/images/Icons/home icon.png';
-import paintIcon from '../assets/images/Icons/paint icon.png';
-import renchIcon from '../assets/images/Icons/rench icon.png';
-import scissorsIcon from '../assets/images/Icons/scissors icon.png';
+import cakeIcon from '../assets/images/Icons/cake icon.svg';
+import cameraIcon from '../assets/images/Icons/camera icon.svg';
+import floristIcon from '../assets/images/Icons/Florist Icon.svg';
+import hairIcon from '../assets/images/Icons/music_line.svg';
+import homeIcon from '../assets/images/Icons/home icon.svg';
+import paintIcon from '../assets/images/Icons/paint icon.svg';
+import renchIcon from '../assets/images/Icons/Wrench.svg';
+import scissorsIcon from '../assets/images/Icons/scissors icon.svg';
 import quoteIcon from '../assets/images/Icons/“.png';
 import jennaferIcon from '../assets/images/Jennafer Profile.png';
 import scrollBtn from '../assets/images/Icons/scroll button.png';

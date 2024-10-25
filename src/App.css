@@ -11598,7 +11598,7 @@ footer a:hover, footer a:active, footer a:focus {
 .icon:nth-child(4) { transform: rotate(135deg) translate(15rem) rotate(-135deg); }
 .icon:nth-child(5) { transform: rotate(180deg) translate(15rem) rotate(-180deg); }
 .icon:nth-child(6) { transform: rotate(225deg) translate(15rem) rotate(-225deg); }
-.icon:nth-child(7) { transform: rotate(270deg) translate(15rem) rotate(-270deg); }
+.icon:nth-child(7) { transform: rotate(270deg) translate(15rem) rotate(-230deg); }
 .icon:nth-child(8) { transform: rotate(315deg) translate(15rem) rotate(-315deg); }
 
 @media (max-width:1200px) {
@@ -11632,7 +11632,7 @@ footer a:hover, footer a:active, footer a:focus {
 .icon:nth-child(4) { transform: rotate(135deg) translate(12rem) rotate(-135deg); }
 .icon:nth-child(5) { transform: rotate(180deg) translate(12rem) rotate(-180deg); }
 .icon:nth-child(6) { transform: rotate(225deg) translate(12rem) rotate(-225deg); }
-.icon:nth-child(7) { transform: rotate(270deg) translate(12rem) rotate(-270deg); }
+.icon:nth-child(7) { transform: rotate(270deg) translate(12rem) rotate(-235deg); }
 .icon:nth-child(8) { transform: rotate(315deg) translate(12rem) rotate(-315deg); }
 
   .landing-page-title {
@@ -11674,7 +11674,7 @@ footer a:hover, footer a:active, footer a:focus {
   .icon:nth-child(4) { transform: rotate(135deg) translate(150px) rotate(-135deg); }
   .icon:nth-child(5) { transform: rotate(180deg) translate(150px) rotate(-180deg); }
   .icon:nth-child(6) { transform: rotate(225deg) translate(150px) rotate(-225deg); }
-  .icon:nth-child(7) { transform: rotate(270deg) translate(150px) rotate(-270deg); }
+  .icon:nth-child(7) { transform: rotate(270deg) translate(160px) rotate(-235deg); }
   .icon:nth-child(8) { transform: rotate(315deg) translate(150px) rotate(-315deg); }
 }
 
@@ -11711,7 +11711,7 @@ footer a:hover, footer a:active, footer a:focus {
   .icon:nth-child(4) { transform: rotate(135deg) translate(125px) rotate(-135deg); }
   .icon:nth-child(5) { transform: rotate(180deg) translate(125px) rotate(-180deg); }
   .icon:nth-child(6) { transform: rotate(225deg) translate(125px) rotate(-225deg); }
-  .icon:nth-child(7) { transform: rotate(270deg) translate(125px) rotate(-270deg); }
+  .icon:nth-child(7) { transform: rotate(270deg) translate(140px) rotate(-235deg); }
   .icon:nth-child(8) { transform: rotate(315deg) translate(125px) rotate(-315deg); }
 }
 
