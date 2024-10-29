@@ -11984,10 +11984,25 @@ footer a:hover, footer a:active, footer a:focus {
 
 }
 
-.profile-icon {
-  margin-right: 10px;
-  margin-top: 1rem;
+.star-container {
+  margin: 32px;
 }
+
+.profile-icon {
+  width: 80px; /* Adjust the size as needed */
+  height: 80px; /* Match the width for a perfect circle */
+  border-radius: 50%; /* This makes the image a circle */
+  object-fit: cover; /* Ensures the image fills the circle */
+  border: 1px solid black; /* Optional: Adds a border */
+  margin-bottom: 8px;
+}
+
+.profile-icon span {
+  margin-bottom: 8px;
+}
+
+
+
 
 .review {
   min-width: 550px;
@@ -12009,6 +12024,8 @@ footer a:hover, footer a:active, footer a:focus {
   margin: 0rem 1rem;
 }
 
+
+
 .quote-icon {
   position: absolute;
   top: 30px; /* Adjust as needed */
@@ -12022,11 +12039,14 @@ footer a:hover, footer a:active, footer a:focus {
   .large-review {
     font-size: 20px;
   }
+  .review-text {
+    margin-top: 0px;
+  }
 }
 
 @media (max-width:1333px) {
   .large-review {
-    padding: 3.8rem;
+    padding: 4rem;
     font-size: 19px;
   }
 }
@@ -12050,6 +12070,7 @@ footer a:hover, footer a:active, footer a:focus {
   }
   .profile-icon {
     height: 60px;
+    width: 60px;
   }
 }
 
@@ -12401,7 +12422,7 @@ footer a:hover, footer a:active, footer a:focus {
   flex: 1;
   flex-direction: column;
   min-width: 100vw;
-  min-height: 85vh;
+  min-height: 90vh;
 }
 
 .remaining-space {

@@ -11,7 +11,7 @@ function ChooseUserType() {
     return (
         
         <div className="text-center">
-            <div className="Sign-Up-Page-Header" style={{ marginTop: '40px' }}>Create Account</div>
+            <div className="Sign-Up-Page-Header" style={{ marginTop: '160px' }}>Create Account</div>
             <div className="choose-type-button-container">
                 <div>
                    <button 
