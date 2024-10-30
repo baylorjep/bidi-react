@@ -3,17 +3,15 @@ import { useNavigate } from 'react-router-dom';
 
 function RequestCategories() {
     const navigate = useNavigate();
-    const [selectedCategory, setSelectedCategory] = useState('');
+    const [category, setCategory] = useState('');
 
     const handleSelection = () => {
-        if (selectedCategory === 'photography') {
+        if (category === 'photography') {
             navigate(`/select-event`);
         } else {
-            navigate(`/request`);
+            navigate(`/request-form`, { state: { category } }); // Pass category in state
         }
     };
-
-    
 
     return (
         <div className="container px-5 d-flex align-items-center justify-content-center">
@@ -22,9 +20,9 @@ function RequestCategories() {
                     <h1 className="Sign-Up-Page-Header" style={{ marginTop: '40px' }}>What kind of service do you need?</h1>
                     <div className="mt-4">
                         <select 
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="form-select create-account-form form-select-lg mb-3 custom-select "
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                            className="form-select create-account-form form-select-lg mb-3 custom-select"
                         >
                             <option value="" disabled hidden>Select a service</option>
                             <option value="photography">Photography/Videography</option>
@@ -39,7 +37,7 @@ function RequestCategories() {
                         <button 
                             onClick={handleSelection} 
                             className="btn btn-secondary btn-lg w-100"
-                            disabled={!selectedCategory}
+                            disabled={!category}
                         >
                             Continue
                         </button>

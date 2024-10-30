@@ -124,11 +124,19 @@ body {
   font-family: 'Roboto', sans-serif;
 }
 
-.header, .form-container {
+.header{
   margin-top: 20px; /* Adjust this margin if necessary */
   padding-top: 20px;
 }
 
+.form-container {
+  margin-top: 20px; /* Adjust this margin if necessary */
+  max-width: 600px;  /* Adjust as needed */
+  margin: auto;
+  padding: 20px;
+  border-radius: 8px;  /* Optional: round the corners */
+
+}
 
 
 

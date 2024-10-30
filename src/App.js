@@ -26,6 +26,10 @@ import RequestForm from './components/Request/RequestForm';
 import SuccessRequest from './components/Request/SuccessRequest';
 import OpenRequests from './components/Request/OpenRequests';
 
+// New staged request imports
+import MultiStepRequestForm from './components/Request/general requests/MultiStepRequestForm';
+
+
 // Event Imports
 import SelectEvent from './components/Event/SelectEvent';
 import EventDetails from './components/Event/EventDetails';
@@ -91,6 +95,11 @@ function App() {
                         {/* Request Routes */}
                         <Route path="/request-categories" element={<RequestCategories />} />
                         <Route path="/request" element={<RequestForm />} />
+                        <Route path="/success-request" element={<SuccessRequest />} />
+                        <Route path="/my-bids" element={<MyBids />} />
+
+                        {/* New Staged Request Routes */}
+                        <Route path="/request-form" element={<MultiStepRequestForm />} />
                         <Route path="/success-request" element={<SuccessRequest />} />
                         <Route path="/my-bids" element={<MyBids />} />
 
