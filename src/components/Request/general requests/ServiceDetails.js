@@ -1,6 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
 
 function ServiceDetails({ formData, setServiceDetails, nextStep }) {
+    const navigate = useNavigate();
+
     const handleChange = (e) => {
         setServiceDetails({ ...formData, [e.target.name]: e.target.value });
     };
@@ -44,9 +48,12 @@ function ServiceDetails({ formData, setServiceDetails, nextStep }) {
                         className="form-control"
                     />
                 </div>
-                <button type="submit" className="btn btn-secondary mt-3">
-                    Next
-                </button>
+                <div className="form-button-container">
+                    <button type="button" onClick={() => navigate('/request-categories')} className="btn btn-primary mt-3">Back</button>
+                    <button type="submit" className="btn btn-secondary mt-3">
+                        Next
+                    </button>
+                </div>
             </form>
         </div>
     );
