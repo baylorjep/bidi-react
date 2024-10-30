@@ -12,10 +12,13 @@ import renchIcon from '../assets/images/Icons/Wrench.svg';
 import scissorsIcon from '../assets/images/Icons/scissors icon.svg';
 import quoteIcon from '../assets/images/Icons/“.png';
 import jennaferIcon from '../assets/images/Jennafer Profile.png';
+import jaronIcon from '../assets/images/Jaron Anderson.jpg';
+import starIcon from '../assets/images/Star.svg'
 import scrollBtn from '../assets/images/Icons/scroll button.png';
 import IphoneFrame from '../assets/images/Iphone 14 - 1.png';
 import statusBar from '../assets/images/iPhone 13.png';
 import posthog from 'posthog-js';
+
 
 // Initialize PostHog for client-side tracking
 posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
@@ -25,37 +28,53 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
   },
 });
 
-function Homepage() {
-  const [user, setUser] = useState(null);
-  const reviewSliderRef = useRef(null);
 
-  useEffect(() => {
-    const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setUser(session.user);
+
+function Homepage() {
+    const [user, setUser] = useState(null);
+    const reviewSliderRef = useRef(null);
+    const reviewCardRef = useRef(null); // Ref for measuring the full width of a review card
+    const [scrollAmount, setScrollAmount] = useState(0);
+  
+    useEffect(() => {
+      const fetchSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setUser(session.user);
+        }
+      };
+  
+      fetchSession();
+  
+      // Capture a page view when the component mounts
+      posthog.capture('page_view', {
+        distinctId: user?.id || 'anonymous',
+        url: window.location.href,
+        page_title: document.title,
+      });
+  
+    // Calculate exact scroll width for each card
+    if (reviewSliderRef.current) {
+        const reviewCards = reviewSliderRef.current.children;
+        if (reviewCards.length > 0) {
+          // Calculate the width of one review card (including margins)
+          const totalWidth = reviewSliderRef.current.scrollWidth;
+          const cardCount = reviewCards.length;
+          setScrollAmount(totalWidth / cardCount);
+        }
+      }
+    }, [user]);
+  
+    const scrollReviews = (direction) => {
+      if (reviewSliderRef.current) {
+        reviewSliderRef.current.scrollBy({
+          left: direction === 'right' ? scrollAmount : -scrollAmount,
+          behavior: 'smooth',
+        });
       }
     };
-
-    fetchSession();
-
-    // Capture a page view when the component mounts
-    posthog.capture('page_view', {
-      distinctId: user?.id || 'anonymous',
-      url: window.location.href,
-      page_title: document.title,
-    });
-  }, [user]);
-
-  const scrollReviews = (direction) => {
-    if (reviewSliderRef.current) {
-      const scrollAmount = 400; // Adjust based on review card width
-      reviewSliderRef.current.scrollBy({
-        left: direction === 'right' ? scrollAmount : -scrollAmount,
-        behavior: 'smooth',
-      });
-    }
-  };
+  
+  
 
   return (
         <>
@@ -142,43 +161,43 @@ function Homepage() {
                     </div>
                 </div>
         </div>
-
-            <div className="user-reviews-section">
-                <div className='user-reviews-title'>Here is what our users say about Bidi</div>
-                <div className='review-slider-container'>
-                    <button className="scroll-btn left" onClick={() => scrollReviews('left')}><img src={scrollBtn}></img></button>
-                    <div className='review-slider' ref={reviewSliderRef}>
-                        <div className='large-review'>
-                            <img className='quote-icon' src={quoteIcon} alt="Quote Icon" />
-                            I was looking for a roofer to fix a leak on the roof of my cabin in Eden. I only found 2 options and neither of them would call me back. I put my job request on bidi when they first launched. Because bidi was brand new there were not any roofers in their network yet. Within a day the bidi founders personally made tons of calls to find me a handful of roofers who could bid on my job. I was blown away! My 2nd experience was even better. I needed a fast turnaround for family pictures (one week). I submitted my request for a photographer to take a family photos. Within an hour of my request, I had 12 photographers post bids. The prices were competitive because they know they have to be. Since my first experience with my roofing request, bidi has only gotten better and better. I've noticed more and more updates. This company is going to be a game changer in the way I shop for services!
-                            <br />
-                            <br />
-                            <img className='profile-icon' src={jennaferIcon}></img><span>- Jennafer J.</span>
-                        </div>
-                        <div className='review'>
-                            <img className='quote-icon' src={quoteIcon} alt="Quote Icon" />
-                            I love how automated it all is.
-                            <br />
-                            <br />
-                            <span>- Olivia J.</span>
-                        </div>
-                        <div className='review'>
-                            <img className='quote-icon' src={quoteIcon} alt="Quote Icon" />
-                            You guys are kicking butt btw!.
-                            <br />
-                            <br />
-                            <span>- Savannah O.</span>
-                        </div>
-                        <div className='review'>
-                            <img className='quote-icon' src={quoteIcon} alt="Quote Icon" />
-                            This is incredible! Super excited!
-                            <br />
-                            <br />
-                            <span>- Josh B.</span>
-                        </div>
+                <div className="user-reviews-section">
+            <div className='user-reviews-title'>Here is what our users say about Bidi</div>
+            <div className='review-slider-container'>
+                <button className="scroll-btn left" onClick={() => scrollReviews('left')}>
+                <img src={scrollBtn} alt="Scroll Left" />
+                </button>
+                <div className='review-slider' ref={reviewSliderRef}>
+                <div className='large-review'>
+                    <img className='quote-icon' src={quoteIcon} alt="Quote Icon" />
+                    <div className='review-text'>I was looking for a roofer to fix a leak on the roof of my cabin. I put my job request on bidi when they first launched. Because bidi was brand new there were not any roofers yet. 
+                        Within a day the bidi founders personally made tons of calls to find me a handful of roofers who could bid on my job. I was blown away! My 2nd experience was even better. 
+                        I needed a fast turnaround for family pictures (one week). I submitted my request for a photographer to take a family photos. Within an hour of my request, I had 12 photographers post bids. 
+                        Since my first experience with bidi, it has only gotten better and better. This company is going to be a game changer in the way I shop for services!</div>
+        
+                    <div className='star-container'>
+                    <img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img>
                     </div>
-                    <button className="scroll-btn right" onClick={() => scrollReviews('right')}><img src={scrollBtn}></img></button>
+                    
+                    <img className='profile-icon' src={jennaferIcon} alt="Jennafer's profile" /><span>  - Jennafer J.</span>
                 </div>
+                <div className='large-review'>
+                    <img className='quote-icon' src={quoteIcon} alt="Quote Icon" />
+                    <div className='review-text'>We recently used Bidi to find a cleaning service, and it was a total game-changer. 
+                        With a new baby on the way, we needed all the help we could get, and Bidi made it super easy. 
+                        After I submitted a quick request, I got lots of bids from different cleaning services right away. 
+                        Bidi took care of all the details, saving us tons of time, and it ended up being way more affordable. 
+                        If you’re looking for a quick, budget-friendly way to find a reliable service, I’d definitely recommend Bidi!</div>
+                    <div className='star-container'>
+                    <img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img>
+                    </div>
+                    <img className='profile-icon' src={jaronIcon} alt="Jaron's profile" /><span>  - Jaron A.</span>
+                </div>
+                </div>
+                <button className="scroll-btn right" onClick={() => scrollReviews('right')}>
+                <img src={scrollBtn} alt="Scroll Right" />
+                </button>
+            </div>
             </div>
 
             <div className='newsletter-section'>

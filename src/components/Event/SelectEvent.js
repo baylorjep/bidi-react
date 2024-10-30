@@ -36,7 +36,7 @@ function SelectEvent({ setEventType }) {
 
     return (
         <div className="container">
-            <h2 className="Sign-Up-Page-Header">What are you doing?</h2>
+            <h2 className="Sign-Up-Page-Header" style={{marginTop:"80px"}}>What are you doing?</h2>
             <div className="list-group" style={{margin:'16px 56px'}}>
                 {eventOptions.map((event, index) => (
                     <button
