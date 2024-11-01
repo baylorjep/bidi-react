@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import BidDisplay from '../Bid/BidDisplay';
 import '../../App.css';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 function MyBids() {
     const [bids, setBids] = useState([]);
@@ -129,8 +130,7 @@ function MyBids() {
     const pendingBids = bids.filter(bid => bid.status === 'pending');
 
     return (
-        <div className="container px-5">
-            <header className="masthead">
+        <div className="container px-5 d-flex align-items-center justify-content-center" style={{flexDirection:'column', minHeight:'80vh'}}>
                 <div className='Sign-Up-Page-Header'>My Bids</div>
                 {error ? (
                     <p className="text-danger">{error}</p>
@@ -139,9 +139,14 @@ function MyBids() {
                         <BidDisplay key={bid.id} bid={bid} handleApprove={handleApprove} handleDeny={handleDeny} />
                     ))
                 ) : (
-                    <p>You don't have any pending bids at the moment. <br ></br> Please check back later, or look out for notifications.</p>
+                    <div className='submit-form-2nd-header' style={{padding:"20px"}}>
+                        <div style={{borderBottom:"1px solid black", padding:"20px"}} >You don't have any pending bids at the moment. <br ></br> Please check back later, or look out for notifications.</div>
+                        <div className='Sign-Up-Page-Header' style={{padding:"32px"}}>New to Bidi?</div>
+                        <Link to="/request-categories">
+                            <button className='landing-page-button'>Make a Request</button>
+                        </Link>
+                    </div>
                 )}
-            </header>
         </div>
     );
 }

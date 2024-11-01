@@ -2,14 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient'; // Ensure this path is correct
 import { Link } from 'react-router-dom';
 import videoSrc from '../assets/images/Landing Page Video 3.mov'; // Import the video
-import cakeIcon from '../assets/images/Icons/cake icon.svg';
-import cameraIcon from '../assets/images/Icons/camera icon.svg';
-import floristIcon from '../assets/images/Icons/Florist Icon.svg';
-import hairIcon from '../assets/images/Icons/music_line.svg';
-import homeIcon from '../assets/images/Icons/home icon.svg';
-import paintIcon from '../assets/images/Icons/paint icon.svg';
-import renchIcon from '../assets/images/Icons/Wrench.svg';
-import scissorsIcon from '../assets/images/Icons/scissors icon.svg';
 import quoteIcon from '../assets/images/Icons/“.png';
 import jennaferIcon from '../assets/images/Jennafer Profile.png';
 import jaronIcon from '../assets/images/Jaron Anderson.jpg';
@@ -18,6 +10,7 @@ import scrollBtn from '../assets/images/Icons/scroll button.png';
 import IphoneFrame from '../assets/images/Iphone 14 - 1.png';
 import statusBar from '../assets/images/iPhone 13.png';
 import posthog from 'posthog-js';
+import RotatingText from './Layout/RotatingText';
 
 
 // Initialize PostHog for client-side tracking
@@ -80,22 +73,14 @@ function Homepage() {
         <>
             
             <div className="masthead-index">
-                <div className='text-section'>
-                    <div className='landing-page-title'>
-                        Tired of looking for the Perfect Business?
-                    </div>
-                    <div className="icon-section-mobile">
-                        <div className="icon"><img src={cakeIcon} alt="Cake Icon" /></div>
-                        <div className="icon"><img src={cameraIcon} alt="Camera Icon" /></div>
-                        <div className="icon"><img src={floristIcon} alt="Florist Icon" /></div>
-                        <div className="icon"><img src={hairIcon} alt="Hair Icon" /></div>
-                        <div className="icon"><img src={homeIcon} alt="Home Icon" /></div>
-                        <div className="icon"><img src={paintIcon} alt="Paint Icon" /></div>
-                        <div className="icon"><img src={renchIcon} alt="Rench Icon" /></div>
-                        <div className="icon"><img src={scissorsIcon} alt="Scissors Icon" /></div>
-                    </div>
-                    <div className='landing-page-subtitle'>
-                        Bidi is a service request platform for local services. With Bidi, you don’t have to waste time searching for the perfect businesses to help you. All you do is tell us what you need, and we’ll find the right business for you. No more hours and hours of searching.
+                <div className='text-section' >
+                    <div className='landing-page-title'>Make a Request For a</div>
+                        <RotatingText />
+                    <div className='landing-page-title' >And Get Bids</div>
+                    
+                    
+                    <div className='landing-page-subtitle' style={{marginTop:'20px'}}>
+                        Bidi is a platform where customers make requests for services and local businesses bid on those services. With Bidi, you don’t have to waste time searching for the perfect businesses to help you. All you do is tell us what you need, and we’ll find the right business for you. No more hours and hours of searching.
                     </div>
                     <div className='landing-page-button-container'>
                         <Link to="/signup" onClick={() => posthog.capture('signup_button_click')}>
@@ -104,19 +89,32 @@ function Homepage() {
                 
                     </div>
                 </div>
-                <div className='icon-section'>
-                <div className="icon-section">
-                        <div className="icon"><img src={cakeIcon} alt="Cake Icon" /></div>
-                        <div className="icon"><img src={cameraIcon} alt="Camera Icon" /></div>
-                        <div className="icon"><img src={floristIcon} alt="Florist Icon" /></div>
-                        <div className="icon"><img src={hairIcon} alt="Hair Icon" /></div>
-                        <div className="icon"><img src={homeIcon} alt="Home Icon" /></div>
-                        <div className="icon"><img src={paintIcon} alt="Paint Icon" /></div>
-                        <div className="icon"><img src={renchIcon} alt="Rench Icon" /></div>
-                        <div className="icon"><img src={scissorsIcon} alt="Scissors Icon" /></div>
+   
+            </div>
+
+            <div className="how-to-use-section">
+            <div className='how-to-phone'>
+                <div className="phone-frame">
+                    <img src={IphoneFrame} alt="iPhone frame" className="iphone-frame-img" />
+                    <img src={statusBar} alt="Status bar" className="status-bar-img" />
+                    <div className='phone-screen'>
+                        <video src={videoSrc} type="video/mp4" autoPlay muted loop playsInline />
                     </div>
                 </div>
             </div>
+
+                <div className='how-to-text'>
+                    <div className='how-to-title'>How do I use Bidi?</div>
+                    <div className='how-to-steps'>1. Tell us what you are looking for</div>
+                    <div className='how-to-steps'>2. We will notify local businesses and they will send in bids</div>
+                    <div className='how-to-steps' style={{ borderBottom: "none" }}>3. We'll send those bids to you, find the one you like and press "accept"</div>
+                    <div className='try-now-button-container'>
+                        <Link className="btn btn-secondary rounded-pill" style={{ width: "150px" }} to="/signin">
+                            <span style={{ font: "Roboto" }}>Try Now</span>
+                        </Link>
+                    </div>
+                </div>
+        </div>
 
             <div className="why-bidi-section">
             <div className='why-bidi'>
@@ -138,29 +136,7 @@ function Homepage() {
             </div>
         </div>
 
-        <div className="how-to-use-section">
-            <div className='how-to-phone'>
-                <div className="phone-frame">
-                    <img src={IphoneFrame} alt="iPhone frame" className="iphone-frame-img" />
-                    <img src={statusBar} alt="Status bar" className="status-bar-img" />
-                    <div className='phone-screen'>
-                        <video src={videoSrc} type="video/mp4" autoPlay muted loop playsInline />
-                    </div>
-                </div>
-            </div>
 
-                <div className='how-to-text'>
-                    <div className='how-to-title'>How do I use Bidi?</div>
-                    <div className='how-to-steps'>1. Tell us what you are looking for</div>
-                    <div className='how-to-steps'>2. We will notify local businesses and they will send in bids</div>
-                    <div className='how-to-steps' style={{ borderBottom: "none" }}>3. Find the best fit for you</div>
-                    <div className='try-now-button-container'>
-                        <Link className="btn btn-secondary rounded-pill" style={{ width: "150px" }} to="/signin">
-                            <span style={{ font: "Roboto" }}>Try Now</span>
-                        </Link>
-                    </div>
-                </div>
-        </div>
                 <div className="user-reviews-section">
             <div className='user-reviews-title'>Here is what our users say about Bidi</div>
             <div className='review-slider-container'>

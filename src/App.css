@@ -11509,17 +11509,15 @@ footer a:hover, footer a:active, footer a:focus {
 
 .masthead-index {
   display: flex;
-  flex-direction: row; /* This ensures text and icons are in a horizontal row */
-  justify-content: space-between;
+  justify-content: center;
   gap: 3rem;
   align-items: center;
   background-color: transparent;
   background-size: cover;
   margin: 0;
   z-index: 1;
-  margin-top: 0rem;
-  padding-top: 0rem;
-  margin-left: 5rem;
+  min-height: 90vh;
+  
 }
 
 
@@ -11527,6 +11525,7 @@ footer a:hover, footer a:active, footer a:focus {
 .text-section {
   flex: 1;
   flex-basis: 50%;
+  justify-content: center;
 }
 
 .icon-section {
@@ -11573,20 +11572,17 @@ footer a:hover, footer a:active, footer a:focus {
   font-size: 64px;
   font-weight: 700;
   text-align: center;
-  padding: 1rem 1rem; /* Reduce padding */
-  margin: 0rem 2rem;
-  margin-top: -3rem;
+  
 }
 
 .landing-page-subtitle {
   text-align: center;   /* Align subtitle to left for consistency */
-  padding: 1rem 2rem; /* Reduce padding to make the text section more compact */
+  padding: 1rem 25rem; /* Reduce padding to make the text section more compact */
   font-family: Roboto;
   font-size: 24px;
   font-weight: 500;
   line-height: 28.13px;
   word-wrap: break-word;
-  margin: 0 2rem;
 }
 
 
@@ -11610,14 +11606,7 @@ footer a:hover, footer a:active, footer a:focus {
 .icon:nth-child(8) { transform: rotate(315deg) translate(15rem) rotate(-315deg); }
 
 @media (max-width:1200px) {
-  .masthead-index {
-    display: flex;
-    flex-direction: column;
-    margin-top: 0;
-    margin-right: 0;
-    padding-right: 0;
-    margin-left: 0;
-  }
+  
   .text-section {
     margin-left: 0;
   }
@@ -11652,7 +11641,7 @@ footer a:hover, footer a:active, footer a:focus {
   .landing-page-subtitle {
     font-size: 1.4rem;
     margin: 0;
-    padding: 0 2rem;
+    padding: 0 5rem;
   }
   .landing-page-button-container {
     margin-bottom: 3rem;
@@ -11665,7 +11654,6 @@ footer a:hover, footer a:active, footer a:focus {
   left:44%;
   }
   .landing-page-subtitle {
-    font-size: 1rem;
     margin: 0;
     padding: 0 1rem;
   }
@@ -12445,19 +12433,52 @@ footer a:hover, footer a:active, footer a:focus {
   padding: 0px;
 }
 
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.rotating-text.fade-in {
+  animation: fadeIn 0.5s forwards; /* Controls fade-in duration */
+}
+
+.rotating-text.fade-out {
+  animation: fadeOut 0.5s forwards; /* Controls fade-out duration */
+}
+
 .rotating-text-wrapper {
-  
-  overflow: hidden;
-  
-  vertical-align: middle; /* Ensure text is vertically aligned */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .rotating-text {
-  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   position: relative;
   font-size: inherit; /* Ensure it inherits the font size from the parent */
-  animation: slide 3s infinite;
-  transition: transform 0.5s ease, opacity 0.5s ease;
+  animation: fadeInOut 3.5s ease-in-out infinite;
+  font-family: Lora;
+  font-size: 64px;
+  font-weight: 700;
+  text-align: center;
+}
+.rotating-image {
+  width: 80px; /* Adjust size as needed */
+  height: 80px;
+}
+@media (max-width:1200px) {
+    .rotating-image {
+      width: 40px;
+      height: 40px;
+    }
 }
 
 @keyframes slide {
@@ -12717,11 +12738,6 @@ margin-top: 3rem;
   margin: 0; /* Adjust or remove margin if needed */
 }
 
-.rotating-text {
-  margin-top: 30px;
-  font-size: 2.5rem;
-  
-}
 
 /* Default Styling */
 .homepage-subtitle {
