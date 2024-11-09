@@ -11633,13 +11633,13 @@ footer a:hover, footer a:active, footer a:focus {
 .icon:nth-child(8) { transform: rotate(315deg) translate(12rem) rotate(-315deg); }
 
   .landing-page-title {
-    font-size:1.8rem;
+    font-size:48px;
     text-align: center;
     margin:0;
     padding: 0rem 1rem;
   }
   .landing-page-subtitle {
-    font-size: 1.4rem;
+    font-size: 20px;
     margin: 0;
     padding: 0 5rem;
   }
@@ -11649,7 +11649,14 @@ footer a:hover, footer a:active, footer a:focus {
   }
 }
 
-@media (max-width:666px) {
+@media (max-width:650px) {
+  .landing-page-title {
+    font-size: 32px;
+  }
+  .landing-page-subtitle {
+    font-size: 18px;
+  }
+
   .icon {
   left:44%;
   }
@@ -11725,7 +11732,7 @@ footer a:hover, footer a:active, footer a:focus {
   font-weight: 700;
   line-height: 71.68px;
   text-align: center;
-
+  padding:4px;
 }
 
 .reasons-why {
@@ -11789,6 +11796,14 @@ footer a:hover, footer a:active, footer a:focus {
   .reason-box {
     width: 22rem;
   }
+}
+
+@media (max-width:350px) {
+  .reason-box {
+    width: 18rem;
+    font-size: 20px;
+  }
+
 }
 .how-to-use-section {
   display: flex;
@@ -12322,6 +12337,17 @@ footer a:hover, footer a:active, footer a:focus {
   }
 }
 
+.request-title,
+.request-category,
+.request-description,
+.request-comments {
+    width: 100%;
+}
+
+.request-comments a {
+  word-break: break-all;
+}
+
 /* Adjust content to stack vertically */
 .request-content {
   display: flex;
@@ -12476,10 +12502,40 @@ footer a:hover, footer a:active, footer a:focus {
 }
 @media (max-width:1200px) {
     .rotating-image {
-      width: 40px;
-      height: 40px;
+      width: 50px;
+      height: 50px;
+    }
+    .rotating-text {
+      font-size: 48px;
     }
 }
+
+@media (max-width:650px) {
+  .rotating-text {
+    font-size: 32px;
+  }
+  .rotating-image {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width:450px) {
+  .rotating-text {
+    font-size: 24px;
+  }
+  .rotating-image {
+    width: 30px;
+    height: 30px;
+  }
+  .landing-page-title {
+    font-size: 24px;
+  }
+  .landing-page-subtitle {
+    font-size: 16px;
+  }
+}
+
 
 @keyframes slide {
   0% { transform: translateY(100%); opacity: 0; }
@@ -12860,9 +12916,6 @@ margin-top: 3rem;
     margin-right: auto;
     text-align: center;
 
-  }
-  .rotating-text {
-    font-size: 1.8rem;
   }
   .homepage-bidi-logo img {
     max-width: 100%;

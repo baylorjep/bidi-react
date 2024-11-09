@@ -15,48 +15,52 @@ import RotatingText from './Layout/RotatingText';
 
 // Initialize PostHog for client-side tracking
 posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
-  api_host: 'https://us.i.posthog.com',
-  loaded: (posthog) => {
-    if (process.env.NODE_ENV === 'development') posthog.debug();
-  },
-});
-
-
-
-function Homepage() {
+    api_host: 'https://us.i.posthog.com',
+    loaded: (posthog) => {
+      if (process.env.NODE_ENV === 'development') posthog.debug();
+    },
+  });
+  
+  function Homepage() {
     const [user, setUser] = useState(null);
+    const [role, setRole] = useState(null);
     const reviewSliderRef = useRef(null);
-    const reviewCardRef = useRef(null); // Ref for measuring the full width of a review card
     const [scrollAmount, setScrollAmount] = useState(0);
   
     useEffect(() => {
-      const fetchSession = async () => {
+      const fetchSessionAndRole = async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setUser(session.user);
+  
+          // Fetch the user's profile to get the role
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+  
+          if (profile) setRole(profile.role);
         }
       };
   
-      fetchSession();
+      fetchSessionAndRole();
   
-      // Capture a page view when the component mounts
+      // Capture a page view only once on mount
       posthog.capture('page_view', {
         distinctId: user?.id || 'anonymous',
         url: window.location.href,
         page_title: document.title,
       });
+    }, []);
   
-    // Calculate exact scroll width for each card
-    if (reviewSliderRef.current) {
-        const reviewCards = reviewSliderRef.current.children;
-        if (reviewCards.length > 0) {
-          // Calculate the width of one review card (including margins)
-          const totalWidth = reviewSliderRef.current.scrollWidth;
-          const cardCount = reviewCards.length;
-          setScrollAmount(totalWidth / cardCount);
-        }
+    useEffect(() => {
+      if (reviewSliderRef.current) {
+        const totalWidth = reviewSliderRef.current.scrollWidth;
+        const cardCount = reviewSliderRef.current.children.length;
+        setScrollAmount(totalWidth / cardCount);
       }
-    }, [user]);
+    }, []);
   
     const scrollReviews = (direction) => {
       if (reviewSliderRef.current) {
@@ -66,28 +70,44 @@ function Homepage() {
         });
       }
     };
-  
-  
 
   return (
         <>
             
             <div className="masthead-index">
                 <div className='text-section' >
-                    <div className='landing-page-title'>Make a Request For a</div>
+                    <div className='landing-page-title' style={{padding:'20px'}}>Make a Request For a</div>
                         <RotatingText />
-                    <div className='landing-page-title' >And Get Bids</div>
+                    <div className='landing-page-title' style={{padding:'20px'}}>And Get Bids</div>
                     
                     
                     <div className='landing-page-subtitle' style={{marginTop:'20px'}}>
                         Bidi is a platform where customers make requests for services and local businesses bid on those services. With Bidi, you don’t have to waste time searching for the perfect businesses to help you. All you do is tell us what you need, and we’ll find the right business for you. No more hours and hours of searching.
                     </div>
-                    <div className='landing-page-button-container'>
-                        <Link to="/signup" onClick={() => posthog.capture('signup_button_click')}>
-                            <button className='landing-page-button'>Get Started</button>
-                        </Link>
-                
-                    </div>
+                       <div className='landing-page-button-container'>
+                            {user ? (
+                                // Conditionally render different routes based on the role
+                                role === 'individual' ? (
+                                <Link to="/my-bids" onClick={() => posthog.capture('client_dashboard')}>
+                                    <button className='landing-page-button'>See Your Bids</button>
+                                </Link>
+                                ) : role === 'business' ? (
+                                <Link to="/dashboard" onClick={() => posthog.capture('vendor_dashboard')}>
+                                    <button className='landing-page-button'>See Open Requests</button>
+                                </Link>
+                                ) : (
+                                // Default route if no role is found or unhandled role
+                                <Link to="/dashboard">
+                                    <button className='landing-page-button'>Get Started</button>
+                                </Link>
+                                )
+                            ) : (
+                                <Link to="/signup" onClick={() => posthog.capture('signup_button_click')}>
+                                <button className='landing-page-button'>Get Started</button>
+                                </Link>
+                            )}
+                        </div>
+
                 </div>
    
             </div>
