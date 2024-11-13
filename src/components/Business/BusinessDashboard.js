@@ -80,7 +80,9 @@ const BusinessDashboard = () => {
   </Modal.Header>
   <Modal.Body className="d-flex flex-column align-items-center justify-content-center">
     <p className="text-center">
-      You must set up a payment account to proceed with placing bids and viewing requests.
+    
+            To start making bids, you’ll need to set up a payment account. Bidi will never charge you to talk to users or bid on jobs — you only pay when you win.
+        
     </p>
     <Button variant="primary" onClick={() => navigate("/onboarding")} className="mt-3">
       Set Up Account

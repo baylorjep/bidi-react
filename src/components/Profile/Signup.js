@@ -64,6 +64,15 @@ function Signup() {
         const { user } = data;
         console.log('User signed up:', user);
 
+        // Step 2: Log the user in immediately after sign up
+        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (loginError) {
+            setErrorMessage(`Login error after sign up: ${loginError.message}`);
+            console.error('Login error:', loginError);
+            return;
+        }
+
         const { error: profileError } = await supabase
             .from('profiles')
             .insert([
@@ -137,7 +146,11 @@ function Signup() {
             }
         }
 
-        navigate('/success-signup'); // Redirect to success page
+        if (userType === 'business') {
+            navigate('/stripe-setup'); // Redirect business users to Stripe setup
+        } else {
+            navigate('/my-bids'); // Redirect individuals to a success page
+        }
     };
 
     return (
