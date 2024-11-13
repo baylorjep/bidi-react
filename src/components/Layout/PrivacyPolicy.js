@@ -1,12 +1,12 @@
 import React from 'react';
-import '../../App.css'
+import '../../App.css';
 
 const PrivacyPolicy = () => {
     return (
         <div className="mobile-container" style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
             <h1>Privacy Policy</h1>
 
-            <p>Last updated: August 28, 2024</p>
+            <p>Last updated: November 13, 2024</p>
 
             <p>
                 At Bidi, we respect your privacy and are committed to protecting the personal information you share with us.
@@ -38,10 +38,12 @@ const PrivacyPolicy = () => {
             </p>
 
             <h2>4. Your Rights and Choices</h2>
-            <p>
-                You may review, update, or delete your personal information by contacting us directly. You may also opt out of receiving
-                marketing communications from us at any time.
-            </p>
+            <p>You have the following rights regarding your personal information:</p>
+            <ul>
+                <li><strong>Access and Update:</strong> You can review, update, or delete your personal information by contacting us.</li>
+                <li><strong>Marketing Opt-Out:</strong> You can opt out of marketing communications by clicking the "Unsubscribe" link in our emails or contacting us.</li>
+                <li><strong>Data Deletion:</strong> You may request the deletion of your data at any time by emailing us at savewithbidi@gmail.com.</li>
+            </ul>
 
             <h2>5. Security of Your Information</h2>
             <p>
@@ -58,11 +60,29 @@ const PrivacyPolicy = () => {
             </p>
 
             <h2>7. Contact Us</h2>
+            <p>If you have any questions or concerns about this Privacy Policy, please contact us at:</p>
+            <p>Email: savewithbidi@gmail.com</p>
+            <p>Text: 385-223-7237</p>
+
+            <h2>8. Information Collected Through Google OAuth</h2>
             <p>
-                If you have any questions or concerns about this Privacy Policy, please contact us at:
+                We use Google OAuth to allow you to sign in securely using your Google account. When you choose to sign in with Google,
+                we may collect and use the following information:
             </p>
+            <ul>
+                <li>Your Google-provided name and email address to create and manage your account.</li>
+                <li>Your profile picture (if provided) to personalize your user experience.</li>
+            </ul>
+            <p>We only use this information for authentication and account management purposes. We do not share this information with third parties or use it for marketing purposes without your consent.</p>
+
+            <h2>9. Data Retention</h2>
             <p>
-                Email: savewithbidi@gmail.com<br />
+                We retain your personal information only as long as necessary to fulfill the purposes outlined in this Privacy Policy or as required by law. If you wish to delete your account or personal data, please contact us at savewithbidi@gmail.com, and we will process your request promptly.
+            </p>
+
+            <h2>10. Revoking Google OAuth Permissions</h2>
+            <p>
+                If you would like to revoke our access to your Google account, you can do so at any time through your Google Account settings: <a href="https://myaccount.google.com/permissions">https://myaccount.google.com/permissions</a>.
             </p>
         </div>
     );
