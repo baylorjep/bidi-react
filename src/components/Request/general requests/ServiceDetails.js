@@ -18,18 +18,21 @@ function ServiceDetails({ formData, setServiceDetails, nextStep }) {
         <div className="form-container">
             <h2>{formattedCategory} Details</h2>
             <form onSubmit={(e) => { e.preventDefault(); nextStep(); }}>
-                <div className="form-group">
-                    <label>Service Title</label>
+            <label>Service Title</label>
+                <div className="form-floating request-form mb-3">
+                    
                     <input
-                        type="text"
-                        name="serviceTitle"
-                        value={formData.serviceTitle || ""}
-                        onChange={handleChange}
                         className="form-control"
+                        id="serviceTitle"
+                        name="serviceTitle"
+                        type="text"
+                        placeholder="Title of Service"
+                        value={formData.serviceTitle}
+                        onChange={handleChange}
                         required
                     />
                 </div>
-                <div className="form-group">
+                <div className="form-floating request-form mb-3">
                     <label>Description</label>
                     <textarea
                         name="description"
@@ -38,7 +41,7 @@ function ServiceDetails({ formData, setServiceDetails, nextStep }) {
                         className="form-control"
                     ></textarea>
                 </div>
-                <div className="form-group">
+                <div className="form-floating request-form mb-3">
                     <label>Budget</label>
                     <input
                         type="text"

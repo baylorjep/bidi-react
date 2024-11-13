@@ -28,9 +28,9 @@ function DateAndTime({ formData, setDateDetails, nextStep, prevStep }) {
         <div className="form-container">
             <h2>Date and Time Details</h2>
             <form>
-                
-                <div className="form-group">
-                    <label>Date Type</label>
+                <label>Date Type</label>
+                <div className="form-floating request-form mb-3">
+                    
                     <select
                         value={dateOption}
                         onChange={handleDateOptionChange}
@@ -43,7 +43,7 @@ function DateAndTime({ formData, setDateDetails, nextStep, prevStep }) {
                 </div>
 
                 {dateOption === 'specific' && !formData.tbdDate && (
-                    <div className="form-group">
+                    <div className="form-floating request-form mb-3">
                         <label>Specific Date</label>
                         <input
                             type="date"
@@ -57,7 +57,7 @@ function DateAndTime({ formData, setDateDetails, nextStep, prevStep }) {
 
                 {dateOption === 'range' && !formData.tbdDate && (
                     <>
-                        <div className="form-group">
+                        <div className="form-floating request-form mb-3">
                             <label>Start Date</label>
                             <input
                                 type="date"
@@ -67,7 +67,7 @@ function DateAndTime({ formData, setDateDetails, nextStep, prevStep }) {
                                 className="form-control"
                             />
                         </div>
-                        <div className="form-group">
+                        <div className="form-floating request-form mb-3">
                             <label>End Date</label>
                             <input
                                 type="date"
@@ -80,7 +80,7 @@ function DateAndTime({ formData, setDateDetails, nextStep, prevStep }) {
                     </>
                 )}
 
-                <div className="form-group">
+                <div className="form-floating request-form mb-3">
                     <label>Time of Day</label>
                     <input
                         type="time"
