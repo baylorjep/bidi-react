@@ -62,6 +62,7 @@ import ContactFormES from './components/ContactFormES';
 
 // Stripe imports
 import Onboarding from './components/Stripe/Onboarding';
+import StripeOnboarding from './components/Stripe/StripeOnboarding';
 import EmbeddedCheckoutForm from './components/Stripe/EmbeddedCheckoutForm';
 import PaymentCancelled from './components/Stripe/PaymentCancelled';
 import SuccessPayment from './components/Stripe/SuccessfulPayment';
@@ -134,6 +135,7 @@ function App() {
 
                         {/* Stripe Routes */}
                         <Route path="/onboarding" element={<Onboarding />} />
+                        <Route path="/stripe-setup" element={<StripeOnboarding />} />
                         <Route path="/checkout" element={<EmbeddedCheckoutForm />} />
                         <Route path="/payment-cancelled" element={<PaymentCancelled />} />
                         <Route path="/payment-successful" element={<SuccessPayment />} />
