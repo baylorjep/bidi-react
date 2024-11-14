@@ -5,7 +5,13 @@ function ChooseUserType() {
     const navigate = useNavigate();
 
     const handleSelection = (userType) => {
-        navigate(`/signup?type=${userType}`);
+        if (userType === 'business') {
+            navigate('/choose-pricing');
+        }
+        else {
+            navigate(`/signup?type=${userType}`);
+        }
+        
     };
 
     return (

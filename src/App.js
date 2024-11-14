@@ -41,6 +41,7 @@ import EventSummary from './components/Event/EventSummary';
 import Signup from './components/Profile/Signup';
 import SignIn from './components/Profile/SignIn';
 import ChooseUserType from './components/Profile/ChooseUserType';
+import ChoosePricingPlan from './components/Profile/ChoosePricingPlan';
 import SuccessSignup from './components/Profile/SuccessSignup';
 import ResetPassword from './components/Profile/ResetPassword';
 import UpdatePassword from './components/Profile/UpdatePassword';
@@ -119,6 +120,7 @@ function App() {
                         <Route path="/request-password-reset" element={<ResetPassword />} />
                         <Route path="/reset-password" element={<UpdatePassword />} />
                         <Route path="/createaccount" element={<ChooseUserType />} />
+                        <Route path="/choose-pricing" element={<ChoosePricingPlan />}/>
 
                         {/* Individual Routes */}
                         <Route path="/my-dashboard" element={<MyDashboard />} />
