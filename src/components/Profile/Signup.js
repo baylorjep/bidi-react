@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import '../../App.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+
 function Signup() {
     const [formData, setFormData] = useState({
         email: '',
@@ -21,6 +22,24 @@ function Signup() {
     const [userType, setUserType] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
+
+    const handleGoogleSignUp = async () => {
+        try {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+            });
+    
+            if (error) {
+                setErrorMessage(`Google sign-up error: ${error.message}`);
+                console.error('Google sign-up error:', error);
+            } else {
+                console.log('Google sign-up successful:', data);
+            }
+        } catch (err) {
+            setErrorMessage(`Unexpected error during Google sign-up: ${err.message}`);
+            console.error('Unexpected error during Google sign-up:', err);
+        }
+    };
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -160,6 +179,23 @@ function Signup() {
                     <h1 className="Sign-Up-Page-Header" style={{ marginTop: '40px' }}>Create an Account</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
+                <div className="form-floating create-account-form mb-3">
+                    <button
+                        type="button"
+                        className="btn btn-secondary w-100"
+                        onClick={handleGoogleSignUp}
+                        
+                    >
+                        Sign Up with Google
+                    </button>
+                </div>
+
+                <div className="divider" style={{ display: 'flex', alignItems: 'center', margin: '20px 0' }}>
+                    <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ccc', margin: '0 10px' }} />
+                    <span style={{ fontSize: '14px', color: '#666' }}>OR</span>
+                    <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ccc', margin: '0 10px' }} />
+                </div>
+
                 {userType === 'business' && (
                         <>
                             <div className="form-floating create-account-form mb-3">
