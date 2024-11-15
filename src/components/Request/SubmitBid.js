@@ -4,6 +4,8 @@ import { supabase } from '../../supabaseClient';
 import '../../App.css';
 import RequestDisplay from './RequestDisplay'; // Regular request display component
 import PhotoRequestDisplay from './PhotoRequestDisplay'; // Photography request display component
+import { Modal, Button } from 'react-bootstrap'; // Make sure to install react-bootstrap
+
 
 const sendEmailNotification = async (recipientEmail, subject, htmlContent) => {
     try {
@@ -27,6 +29,8 @@ function SubmitBid() {
     const [bidDescription, setBidDescription] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [connectedAccountId, setConnectedAccountId] = useState(null); // To track Stripe account status
+    const [showModal, setShowModal] = useState(false); // For showing modal
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -59,11 +63,32 @@ function SubmitBid() {
             }
         };
 
+        const fetchStripeStatus = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('business_profiles')
+                    .select('stripe_account_id')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile?.stripe_account_id) {
+                    setConnectedAccountId(profile.stripe_account_id);
+                }
+            }
+        };
+
         fetchRequestDetails();
+        fetchStripeStatus();
     }, [requestId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!connectedAccountId) {
+            setShowModal(true); // Show modal if no Stripe account is connected
+            return;
+        }
 
         const {
             data: { user },
@@ -181,6 +206,23 @@ function SubmitBid() {
                     <br/>
                 </form>
             </div>
+            {/* Modal for Stripe Account Setup */}
+                <Modal show={showModal} onHide={() => setShowModal(false)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Stripe Account Setup Required</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className="d-flex flex-column align-items-center justify-content-center">
+                        <p className="text-center">
+                        
+                                To start making bids, you’ll need to set up a payment account. Bidi will never charge you to talk to users or bid on jobs — you only pay when you win.
+                            
+                        </p>
+                        <Button variant="primary" onClick={() => navigate("/onboarding")} className="mt-3">
+                        Set Up Account
+                        </Button>
+                    </Modal.Body>
+                </Modal>
+
         </div>
     );
 }

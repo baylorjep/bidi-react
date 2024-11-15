@@ -38,7 +38,8 @@ const BusinessDashboard = () => {
   // Function to handle the "View Requests" button click
   const handleViewRequests = () => {
     if (!connectedAccountId) {
-      setShowModal(true); // Show modal if Stripe is not set up
+      //setShowModal(true); // Show modal if Stripe is not set up
+      navigate("/open-requests");
     } else {
       navigate("/open-requests"); // Navigate to requests if Stripe is set up
     }
@@ -73,7 +74,7 @@ const BusinessDashboard = () => {
         </div>
       </div>
 
-      {/* Modal for Stripe Account Setup */}
+      {/* Modal for Stripe Account Setup 
 <Modal show={showModal} onHide={() => setShowModal(false)}>
   <Modal.Header closeButton>
     <Modal.Title>Stripe Account Setup Required</Modal.Title>
@@ -89,7 +90,7 @@ const BusinessDashboard = () => {
     </Button>
   </Modal.Body>
 </Modal>
-
+*/}
     </div>
   );
 };
