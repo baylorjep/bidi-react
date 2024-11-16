@@ -2934,6 +2934,44 @@ line-height: px;
   --bs-btn-disabled-border-color: black!important; /* Updated disabled border color */
 }
 
+.btn-google-signin {
+  --bs-btn-color: #black!important;
+  --bs-btn-bg: white !important;
+  --bs-btn-border-color: transparent!important;
+  --bs-btn-hover-color: black!important;
+  --bs-btn-hover-bg: white!important; /* Adjusted hover background color */
+  --bs-btn-hover-border-color: black!important; /* Adjusted hover border color */
+  --bs-btn-focus-shadow-rgb: 154, 74, 255!important;
+  --bs-btn-active-color: #fff!important;
+  --bs-btn-active-bg: black!important; /* Adjusted active background color */
+  --bs-btn-active-border-color: blackimportant; /* Adjusted active border color */
+  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125)!important;
+  --bs-btn-disabled-color: #fff!important;
+  --bs-btn-disabled-bg: black!important; /* Updated disabled background color */
+  --bs-btn-disabled-border-color: black!important; /* Updated disabled border color */
+
+  display: flex;
+  font-family: Roboto;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem; /* Adjust padding for better button size */
+  font-size: 1rem;
+  position: relative;
+}
+
+.btn-google-signin::before {
+  content: '';
+  display: inline-block;
+  background: url('/src/assets/images/Icons/g-logo.png') no-repeat center center; /* Adjust the path */
+  background-size: contain;
+  width: 20px; /* Adjust logo width */
+  height: 20px; /* Adjust logo height */
+  margin-right: 0.5rem; /* Space between logo and text */
+  vertical-align: middle;
+  position: relative;
+  top: -2px;
+}
+
 .btn-nav-primary {
   border-radius: 30px;
   border: 2px;

@@ -179,10 +179,10 @@ function Signup() {
                     <h1 className="Sign-Up-Page-Header" style={{ marginTop: '40px' }}>Create an Account</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
-                <div className="form-floating create-account-form mb-3">
+                <div className="mt-3 text-center">
                     <button
                         type="button"
-                        className="btn btn-secondary w-100"
+                        className="btn btn-google-signin"
                         onClick={handleGoogleSignUp}
                         
                     >
