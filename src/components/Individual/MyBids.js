@@ -47,7 +47,7 @@ function MyBids() {
             // Fetch bids related to the user's requests and join with business_profiles
             const { data: bidsData, error: bidsError } = await supabase
                 .from('bids')
-                .select('*, business_profiles(business_name, business_category, phone, website)')
+                .select('*, business_profiles(business_name, business_category, phone, website, id)')
                 .in('request_id', requestIds);
 
             if (bidsError) {
