@@ -13822,13 +13822,13 @@ margin-bottom: 40px;
   border-radius: 24px;
   border: 1px solid #000;
   background: #FFF;
-  width: 324px;
-  height: 400px;
+  width: 350px;
+  height: 450px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap:20px;
-  padding:20px;
+  gap:12px;
+  padding:24px 28px;
 }
 
 .plus-plan {
@@ -13866,6 +13866,16 @@ flex-shrink: 0;
   
 }
 
+.plan-items-subheader {
+  color: #000;
+  font-family: Outfit;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: normal;
+  margin-bottom: 8px;
+}
+
 .plan-items {
   display: flex;
   flex-direction: row;
@@ -13877,5 +13887,42 @@ flex-shrink: 0;
   font-style: normal;
   font-weight: 400;
   line-height: normal;
-  justify-content: center;
+
 }
+
+.price-text {
+  color: #030303;
+font-family: Inter;
+font-size: 25px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+}
+
+.price-text-span {
+  color: #000;
+font-family: Inter;
+font-size: 16px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+}
+
+.free-plan-button {
+  border-radius: 8px;
+  background: #000;
+  width: 264.047px;
+  height: 49.459px;
+  flex-shrink: 0;
+  color: #FFF;
+  text-align: center;
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+
