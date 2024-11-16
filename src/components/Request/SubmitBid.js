@@ -30,6 +30,7 @@ function SubmitBid() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [connectedAccountId, setConnectedAccountId] = useState(null); // To track Stripe account status
+    const [Bidi_Plus, setBidiPlus] = useState(null);
     const [showModal, setShowModal] = useState(false); // For showing modal
     const navigate = useNavigate();
 
@@ -68,12 +69,15 @@ function SubmitBid() {
             if (user) {
                 const { data: profile } = await supabase
                     .from('business_profiles')
-                    .select('stripe_account_id')
+                    .select('stripe_account_id, Bidi_Plus')
                     .eq('id', user.id)
                     .single();
 
                 if (profile?.stripe_account_id) {
                     setConnectedAccountId(profile.stripe_account_id);
+                }
+                if (profile.Bidi_Plus) {
+                    setBidiPlus(true);
                 }
             }
         };
@@ -85,7 +89,7 @@ function SubmitBid() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!connectedAccountId) {
+        if (!connectedAccountId && !Bidi_Plus) {
             setShowModal(true); // Show modal if no Stripe account is connected
             return;
         }
