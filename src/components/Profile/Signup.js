@@ -179,7 +179,7 @@ function Signup() {
                     <h1 className="Sign-Up-Page-Header" style={{ marginTop: '40px' }}>Create an Account</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
-                <div className="mt-3 text-center">
+                {/*<div className="mt-3 text-center">
                     <button
                         type="button"
                         className="btn btn-google-signin"
@@ -194,7 +194,7 @@ function Signup() {
                     <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ccc', margin: '0 10px' }} />
                     <span style={{ fontSize: '14px', color: '#666' }}>OR</span>
                     <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ccc', margin: '0 10px' }} />
-                </div>
+                </div>*/}
 
                 {userType === 'business' && (
                         <>
