@@ -31,7 +31,8 @@ function RequestCategories() {
                             <option value="hair-and-makeup-artist">Hair and Makeup Artist</option>
                             <option value="catering">Catering</option>
                             <option value="event/wedding-planner">Event/Wedding Planner</option>
-                            <option value="cleaning">Cleaning</option>
+                            <option value="Florist">Florist</option>
+                            <option value="Venue">Venue</option>
                             <option value="other">Other</option>
                         </select>
                         <button 

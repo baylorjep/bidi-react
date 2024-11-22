@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import '../../App.css';
+import bidiCheck from '../../assets/images/Bidi-Favicon.png'
 
 function ApprovedBids() {
     const [approvedBids, setApprovedBids] = useState([]);
@@ -39,13 +40,13 @@ function ApprovedBids() {
             // Combine request IDs from both tables
             const requestIds = [
                 ...requests.map(request => request.id),
-                ...photoRequests.map(photoRequest => photoRequest.id)
+                ...photoRequests.map(photoRequest => photoRequest.id),
             ];
 
             // Fetch approved bids related to the user's requests and join with business_profiles
             const { data: bidsData, error: bidsError } = await supabase
                 .from('bids')
-                .select('*, business_profiles(business_name, business_category, phone, website, stripe_account_id)')
+                .select('*, business_profiles(business_name, business_category, phone, website, stripe_account_id, membership_tier)')
                 .in('request_id', requestIds)
                 .eq('status', 'accepted'); // Only fetch approved bids
 
@@ -80,49 +81,89 @@ function ApprovedBids() {
     };
 
     return (
-        <div className="container">
+        <div className="container" style={{padding:'20px'}}>
             <header className="masthead">
-                <div className='Sign-Up-Page-Header' style={{paddingBottom:'16px'}}>Approved Bids</div>
+                <div className="Sign-Up-Page-Header" style={{ paddingBottom: '16px' }}>
+                    Approved Bids
+                </div>
                 {error ? (
                     <p className="text-danger">{error}</p>
                 ) : approvedBids.length > 0 ? (
-                    <div className="d-flex flex-column align-items-center"> {/* Center the whole card */}
-                        {approvedBids.map((bid) => (
-                            <div key={bid.id} className="approved-bid-card card p-4 mb-4" style={{ width: '100%', maxWidth: '600px' }}>
-                                <div className='title-and-price'>
-                                    <div className='request-title' style={{ marginBottom: '0', textAlign: 'left' }}>{bid.business_profiles.business_name}</div>
-                                    <button
-                                        className="bid-button"
-                                        
-                                        disabled
-                                    >
-                                        ${bid.bid_amount}
-                                    </button>
-                                </div>
-                                
-                                <p style={{marginTop:"16px"}}><strong>Description:</strong> {bid.bid_description}</p>
-                                <p><strong>Phone:</strong> {bid.business_profiles.phone}</p>
+                    <div className="d-flex flex-column align-items-center">
+                        {approvedBids.map((bid) => {
+                            const isBidiVerified = ["Plus", "Verified"].includes(bid.business_profiles.membership_tier);
 
-                                <div className='pay-and-message-container'>
-                                    <button
-                                        className="btn btn-secondary btn-md flex-fill"
-                                        onClick={() => handlePayNow(bid)}
+                            return (
+                                <div
+                                    key={bid.id}
+                                    className="approved-bid-card p-4 mb-4"
+                                    style={{ width: '100%', maxWidth: '600px', display:'flex' }}
+                                >
+                                    <div className="title-and-price" style={{textAlign:'left'}}>
+                                        <div>
+                                            <div
+                                                className="request-title"
+                                                style={{ marginBottom: '0', textAlign: 'left', wordBreak:'break-word' }}
+                                            >
+                                                {bid.business_profiles.business_name}
+                                                {isBidiVerified && (
+                                                    <img
+                                                    src={bidiCheck}
+                                                    style={{ height: '40px', width: 'auto', padding: '0px', marginLeft: '4px' }}
+                                                    alt="Bidi Verified Icon"
+                                                />
+                                                ) }
+                                                {isBidiVerified && (
+                                            <>  
+                                                
+                                                <div style={{ textAlign: 'left', padding: '0px 0px' }}>
+                                                    <div style={{ fontSize: '0.9rem', margin: '0', fontWeight: 'bold' }}>
+                                                        Bidi Verified
+                                                    </div>
+                                                    <div style={{ fontSize: '0.8rem', margin: '5px 0 0', fontStyle: 'italic' }}>
+                                                        100% Money-Back Guarantee When You Pay Through Bidi
+                                                    </div>
+                                                </div>
+
+                                          
+                                                
+                                            </>
+                                        )}
+                                                
+                                            </div>
+                                        </div>
+
                                         
-                                    >
-                                        Pay Now
-                                    </button>
-                                    <br></br>
-                                    <button
-                                        className="btn btn-secondary btn-md flex-fill"
-                                        onClick={() => handleMessage(bid)}
-                                        
-                                    >
-                                        Message
-                                    </button>
+                                        <button className="bid-button" disabled>
+                                            ${bid.bid_amount}
+                                        </button>
+                                    </div>
+
+                                    <p style={{ marginTop: '16px', textAlign:'left' }}>
+                                        <strong>Description:</strong> {bid.bid_description}
+                                    </p>
+                                    <p style={{textAlign:'left'}}>
+                                        <strong>Phone:</strong> {bid.business_profiles.phone}
+                                    </p>
+
+                                    <div className="pay-and-message-container">
+                                        <button
+                                            className="btn btn-secondary btn-md flex-fill"
+                                            onClick={() => handlePayNow(bid)}
+                                        >
+                                            Pay Now
+                                        </button>
+                                        <br />
+                                        <button
+                                            className="btn btn-secondary btn-md flex-fill"
+                                            onClick={() => handleMessage(bid)}
+                                        >
+                                            Message
+                                        </button>
+                                    </div>
                                 </div>
-                                
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : (
                     <p>You don't have any approved bids at the moment.</p>

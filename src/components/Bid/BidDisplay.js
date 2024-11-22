@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient'; // Import your Supabase client
-import bidiCheck from '../../assets/images/Bidi-Favicon.png'
+import bidiCheck from '../../assets/images/Bidi-Favicon.png';
 
 function BidDisplay({ bid, handleApprove, handleDeny }) {
-    const [hasBidiPlus, setHasBidiPlus] = useState(false);
+    const [isBidiVerified, setIsBidiVerified] = useState(false);
     const [loading, setLoading] = useState(true);  // Loading state
     const [error, setError] = useState(null);  // Error state
 
     useEffect(() => {
-        const fetchBidiPlusStatus = async () => {
+        const fetchMembershipTier = async () => {
             try {
                 // Log to ensure bid ID is valid
-                console.log('Fetching Bidi Plus status for business profile ID:', bid.business_profiles.id);
+                console.log('Fetching membership tier for business profile ID:', bid.business_profiles.id);
 
-                // Fetch Bidi_Plus status for this bid's associated business profile
+                // Fetch membership-tier for this bid's associated business profile
                 const { data, error } = await supabase
                     .from('business_profiles') // Replace with your actual table name
-                    .select('Bidi_Plus')
+                    .select('membership_tier')
                     .eq('id', bid.business_profiles.id) // Match the business profile ID
                     .single();
 
@@ -27,17 +27,18 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                     throw error;
                 }
 
-                // If data exists and Bidi_Plus is true, update state
-                setHasBidiPlus(data?.Bidi_Plus || false); // Update the state
+                // Check if membership-tier is "Plus" or "Verified"
+                const tier = data?.['membership_tier'];
+                setIsBidiVerified(tier === 'Plus' || tier === 'Verified');
             } catch (error) {
-                console.error('Error fetching Bidi Plus status:', error.message);
-                setError('Failed to fetch Bidi Plus status'); // Set a friendly error message
+                console.error('Error fetching membership tier:', error.message);
+                setError('Failed to fetch membership tier'); // Set a friendly error message
             } finally {
                 setLoading(false);  // Set loading to false once the fetch is complete
             }
         };
 
-        fetchBidiPlusStatus();
+        fetchMembershipTier();
     }, [bid.business_profiles.id]);
 
     return (
@@ -45,16 +46,25 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
             <div className="d-flex justify-content-between align-items-center">
                 {/* Left Aligned: Business Name */}
                 <div className="request-title" style={{ marginBottom: '0', textAlign: 'left' }}>
-                {hasBidiPlus && (<img src={bidiCheck} style={{height:'40px', widht:'auto'}}></img>)}{bid.business_profiles.business_name} 
+
+                    {bid.business_profiles.business_name}
+                    {isBidiVerified && (
+                        <img src={bidiCheck} style={{ height: '40px', width: 'auto', padding:"0px", marginLeft:"4px " }} alt="Bidi Verified Icon" />
+                    )}
                     {loading ? (
                         <p>Loading...</p>  // Show loading text while fetching
                     ) : error ? (
-                        <p></p>
+                        <p>{error}</p>
                     ) : (
-                        hasBidiPlus && (
-                            <p style={{ fontSize: '0.9rem', margin: '0', fontWeight: 'bold', textAlign:'left' }}>
-                                Bidi Verified
-                            </p>
+                        isBidiVerified && (
+                            <div style={{ textAlign: 'left',padding:"0px 0px" }}>
+                                <p style={{ fontSize: '0.9rem', margin: '0', fontWeight: 'bold', textAlign:'left'}}>
+                                    Bidi Verified
+                                </p>
+                                <p style={{ fontSize: '0.8rem', margin: '5px 0 0', fontStyle: 'italic', textAlign:'left' }}>
+                                    100% Money-Back Guarantee When You Pay Through Bidi
+                                </p>
+                            </div>
                         )
                     )}
                 </div>

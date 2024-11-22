@@ -47,7 +47,7 @@ function MyBids() {
             // Fetch bids related to the user's requests and join with business_profiles
             const { data: bidsData, error: bidsError } = await supabase
                 .from('bids')
-                .select('*, business_profiles(business_name, business_category, phone, website, id)')
+                .select('*, business_profiles(business_name, business_category, phone, website, id,membership_tier)')
                 .in('request_id', requestIds);
 
             if (bidsError) {
@@ -56,7 +56,13 @@ function MyBids() {
                 return;
             }
 
-            setBids(bidsData);
+            const sortedBids = bidsData.sort((a, b) => {
+                const aIsVerified = a.business_profiles?.membership_tier === "Plus" || a.business_profiles?.membership_tier === "Verified";
+                const bIsVerified = b.business_profiles?.membership_tier === "Plus" || b.business_profiles?.membership_tier === "Verified";
+                return bIsVerified - aIsVerified; // Verified bids will appear first
+            });
+
+            setBids(sortedBids);
         };
 
         fetchUserAndBids();
