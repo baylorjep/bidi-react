@@ -160,12 +160,23 @@ function SubmitBid() {
                 <div className="Sign-Up-Page-Header" style={{ textAlign: 'center' }}>Place Your Bid</div>
                 {error && <p className="text-danger">{error}</p>}
                 {success && <p className="text-success">{success}</p>}
+                <div style={{
+                width:'100%', 
+                alignItems:'center', 
+                justifyContent:'center', 
+                display:'flex',
+                flexDirection:'column', 
+                padding:"20px", 
+                maxWidth:'1000px'
+            }}>
                 {requestDetails && (
                     <>
                         {requestType === 'requests' && <RequestDisplay request={requestDetails} hideBidButton={true} />}
                         {requestType === 'photography_requests' && <PhotoRequestDisplay photoRequest={requestDetails} hideBidButton={true} />}
                     </>
                 )}
+            </div>
+                
                 <form onSubmit={handleSubmit}>
                     <div className="form-floating request-form mb-3">
                         <input
