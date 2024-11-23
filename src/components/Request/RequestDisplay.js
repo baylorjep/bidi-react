@@ -9,7 +9,7 @@ function RequestDisplay({ request, hideBidButton }) {
                 <h2 className="request-title">{request.service_title}</h2>
                 <p className="request-location"><strong>Location:</strong> {request.location}</p>
                 <p className="request-category"><strong>Category:</strong> {request.service_category}</p>
-                <p className="request-description"><strong>Description:</strong> {request.service_description}</p>
+                <p className="request-description"><strong>Description:</strong> {request.service_description}</p>           
                 <p className="request-date"><strong>Date of Service:</strong> {new Date(request.service_date).toLocaleDateString()}</p>
                 {request.time_of_day && (
                     <p className="request-description">

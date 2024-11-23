@@ -134,7 +134,7 @@ function OpenRequests() {
     
                     const { data: allPhotoRequests, error: allPhotoRequestsError } = await supabase
                         .from('photography_requests')
-                        .select('id, event_title, event_type, start_date, end_date, time_of_day, location, num_people, duration, indoor_outdoor, additional_comments, status')
+                        .select('id, event_title, event_type, start_date, end_date, date_type,time_of_day, location, num_people, duration, indoor_outdoor, additional_comments, status')
                         .eq('status', 'open');
     
                     if (allRequestsError || allPhotoRequestsError) {
@@ -160,8 +160,16 @@ function OpenRequests() {
     
 
     return (
-        <div className="d-flex align-items-center justify-content-center content">
-            <div className="col-lg-6 remaining-space">
+        <div className="d-flex align-items-center justify-content-center ">
+            <div style={{
+                width:'100%', 
+                alignItems:'center', 
+                justifyContent:'center', 
+                display:'flex',
+                flexDirection:'column', 
+                padding:"20px", 
+                maxWidth:'1000px'
+            }}>
                 {error && <p>Error: {error}</p>}
 
                 {openRequests.length > 0 && openRequests.map((request) => (

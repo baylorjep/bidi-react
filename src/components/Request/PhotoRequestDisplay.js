@@ -10,24 +10,34 @@ function PhotoRequestDisplay({ photoRequest, hideBidButton }) {
                 
                 <p className="request-type"><strong>Event Type:</strong> {photoRequest.event_type}</p>
                 {/* <p className="request-date-type"><strong>Date Type:</strong> {photoRequest.date_type}</p> */}
-
-                <p className="request-start-date">
-                    <strong>{photoRequest.date_type === 'range' ? 'Start Date: ' : 'Date: '}</strong> 
-                    {new Date(photoRequest.start_date).toLocaleDateString()}
-                </p>
-
                 {photoRequest.date_type === 'range' && (
-                    <p className="request-end-date"><strong>End Date:</strong> {new Date(photoRequest.end_date).toLocaleDateString()}</p>
+                    <div>
+                        <p className='request-time-of-day'style={{borderBottom:"black 2px solid", width:"100%"}}><strong>Estimated Date:</strong></p>
+                        <div style={{display:'flex', gap:'20px'}}>
+                         <p className='request-start-date'>{new Date(photoRequest.start_date).toLocaleDateString()}</p>
+                         <p>-</p>
+                         <p className='request-start-date'>{new Date(photoRequest.end_date).toLocaleDateString()}</p>
+                        </div>
+                    </div>
                 )}
 
+                {photoRequest.date_type === 'specific' && (
+                    <p className="request-start-date">
+                    <strong>{photoRequest.date_type === 'range' ? 'Start Date: ' : 'Date: '}</strong> 
+                    {new Date(photoRequest.start_date).toLocaleDateString()}
+                    </p>
+
+                )}
+                
+
                 <p className="request-time-of-day"><strong>Time of Day:</strong> {photoRequest.time_of_day}</p>
-                <p className="request-location"><strong>Location:</strong> {photoRequest.location}</p>
+                <p className="request-time-of-day"><strong>Location:</strong> {photoRequest.location}</p>
                 <p className="request-num-people"><strong>Number of People:</strong> {photoRequest.num_people}</p>
                 <p className="request-duration"><strong>Duration (in hours):</strong> {photoRequest.duration}</p>
                 <p className="request-indoor-outdoor"><strong>Indoor/Outdoor:</strong> {photoRequest.indoor_outdoor}</p>
                 
                 {photoRequest.additional_comments && (
-                    <p className="request-comments"><strong>Additional Comments:</strong> {photoRequest.additional_comments}</p>
+                    <p className="request-time-of-day"><strong>Additional Comments:</strong> {photoRequest.additional_comments}</p>
                 )}
 
                 {photoRequest.extras && Object.keys(photoRequest.extras).length > 0 && (
