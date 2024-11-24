@@ -7,53 +7,36 @@ import { Modal, Button } from 'react-bootstrap'; // Make sure to install react-b
 
 const BusinessDashboard = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
-  const [businessName, setBusinessName] = useState("");
-  const [showModal, setShowModal] = useState(false); // For showing modal
+  const [businessName, setBusinessName] = useState("Business Owner");
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
   const [percentage, setPercentage] = useState("");
   const [number, setNumber] = useState("");
   const [paymentType, setPaymentType] = useState(""); // "percentage" or "flat fee"
+  const [downPaymentType, setDownPaymentType] = useState("");
   const [downPaymentAmount, setDownPaymentAmount] = useState(0);
 
   useEffect(() => {
-    const fetchBusinessDetails = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+    const fetchUserData = async () => {
+      const user = await supabase.auth.getSession();
       if (user) {
-        const { data: profile } = await supabase
-          .from('business_profiles')
-          .select('business_name, stripe_account_id, id')
-          .eq('id', user.id)
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("business_name, stripe_account_id, id")
+          .eq("id", user.id)
           .single();
-
-        if (profile) {
-          setBusinessName(profile.business_name);
-          if (profile.stripe_account_id) {
-            setConnectedAccountId(profile.stripe_account_id);
-          } else {
-            setShowModal(true); // Show modal immediately if no Stripe account is connected
-          }
+  
+        if (!error && data) {
+          setBusinessName(data.business_name || "Business Owner");
+          setConnectedAccountId(data.stripe_account_id);
+          setUserId(data.id); // Store the user ID for later use
         }
       }
     };
-
-    fetchBusinessDetails();
+    fetchUserData();
   }, []);
 
-  // Function to handle the "View Requests" button click
-  const handleViewRequests = () => {
-    if (!connectedAccountId) {
-      //setShowModal(true); // Show modal if Stripe is not set up
-      navigate("/open-requests");
-    } else {
-      navigate("/open-requests"); // Navigate to requests if Stripe is set up
-    }
-  };
-
-  const handlePaymentTypeChange = (type) => {
-    setPaymentType(type); // Set the selected type (percentage or flat fee)
-    setPercentage(""); // Reset percentage input when toggling
-    setNumber(""); // Reset number input when toggling
-  };
+  const [userId, setUserId] = useState("");  // State to store user ID
 
   const handleChangePercentage = (e) => {
     let value = e.target.value;
@@ -67,95 +50,50 @@ const BusinessDashboard = () => {
     setNumber(e.target.value);
   };
 
+  const handlePaymentTypeChange = (type) => {
+    setPaymentType(type); // Set the selected type (percentage or flat fee)
+    setPercentage(""); // Reset percentage input when toggling
+    setNumber(""); // Reset number input when toggling
+  };
 
+  // Function to handle the "View Requests" button click
+  const handleViewRequests = () => {
+    navigate("/open-requests");
+  };
 
   const handleDownPaymentSubmit = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-  
-    if (!user) {
-      alert("User not found. Please log in again.");
-      return;
-    }
-  
-    // Check that the down payment type is selected and the down payment amount is not empty
-    if (!paymentType) {
-      alert("Please select a down payment type (Percentage or Flat Fee).");
-      return;
-    }
-  
-    if (paymentType === "percentage" && (percentage === "" || percentage <= 0)) {
-      alert("Please enter a valid percentage amount.");
-      return;
-    }
-  
-    if (paymentType === "flat fee" && (number === "" || number <= 0)) {
-      alert("Please enter a valid flat fee amount.");
-      return;
-    }
-  
-    // Convert the percentage to decimal (divide by 100) if it's a percentage type
-    let downPaymentAmount = 0;
-    if (paymentType === "percentage") {
-      downPaymentAmount = parseFloat(percentage) / 100; // Convert percentage to decimal
-    } else if (paymentType === "flat fee") {
-      downPaymentAmount = parseFloat(number); // Flat fee stays as it is
-    }
-  
-    if (!downPaymentAmount) {
-      alert("Please enter a valid down payment amount.");
-      return;
-    }
-  
-    // Check if a business profile already exists for this user ID
-    const { data: existingProfile, error: fetchError } = await supabase
-      .from('business_profiles')
-      .select('id')
-      .eq('id', user.id)
-      .single();
-  
-    if (fetchError) {
-      console.error("Error fetching business profile:", fetchError);
-      alert("An error occurred while fetching your profile.");
-      return;
-    }
-  
-    if (existingProfile) {
-      // Update the down payment details if the profile exists
+    if (downPaymentType && downPaymentAmount) {
       const { data, error } = await supabase
-        .from('business_profiles')
-        .update({
-          down_payment_type: paymentType,
-          amount: downPaymentAmount, // Store down payment as decimal (percentage/100)
-        })
-        .eq('id', user.id); // Ensure we update the correct profile based on user ID
-  
+        .from("down_payments")
+        .upsert([
+          {
+            user_id: userId,
+            down_payment_type: downPaymentType,
+            amount: downPaymentAmount,
+          },
+        ]);
       if (error) {
-        console.error("Error updating down payment:", error);
-        alert("An error occurred while updating your down payment details.");
+        console.error("Error inserting down payment:", error);
       } else {
-        setShowModal(false); // Close modal on successful update
-        alert("Down payment details updated successfully!");
+        setShowModal(false); // Close modal on successful submission
       }
     } else {
-      // No action if profile doesn't exist (no insertion)
-      alert("Business profile not found. Please make sure your account is set up correctly.");
+      alert("Please fill in all fields.");
     }
   };
-  
-  
   
   
 
   return (
     <div className="business-dashboard text-center">
       <h1 className="dashboard-title">Welcome, {businessName}!</h1>
-      
+
       <div className="container mt-4">
         <div className="row justify-content-center">
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-            <button 
-              className="btn btn-secondary btn-lg w-100 mb-3 flex-fill" 
-              onClick={handleViewRequests} // Updated to conditionally show modal
+            <button
+              className="btn btn-secondary btn-lg w-100 mb-3 flex-fill"
+              onClick={handleViewRequests}
             >
               View Requests
             </button>
@@ -164,14 +102,13 @@ const BusinessDashboard = () => {
             {connectedAccountId ? (
               <StripeDashboardButton accountId={connectedAccountId} />
             ) : (
-              <button 
-                className="btn btn-secondary btn-lg w-100 mb-3 flex-fill" 
+              <button
+                className="btn btn-secondary btn-lg w-100 mb-3 flex-fill"
                 onClick={() => navigate("/onboarding")}
               >
                 Set Up Payment Account
               </button>
             )}
-            
           </div>
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
             <button
@@ -181,7 +118,10 @@ const BusinessDashboard = () => {
               Set Up Down Payment
             </button>
           </div>
-                {/* Modal for Down Payment Setup */}
+        </div>
+      </div>
+
+      {/* Modal for Down Payment Setup */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
         <Modal.Header closeButton>
           <Modal.Title className="text-center">
@@ -257,26 +197,7 @@ const BusinessDashboard = () => {
           </div>
         </Modal.Body>
       </Modal>
-        </div>
-      </div>
 
-      {/* Modal for Stripe Account Setup 
-<Modal show={showModal} onHide={() => setShowModal(false)}>
-  <Modal.Header closeButton>
-    <Modal.Title>Stripe Account Setup Required</Modal.Title>
-  </Modal.Header>
-  <Modal.Body className="d-flex flex-column align-items-center justify-content-center">
-    <p className="text-center">
-    
-            To start making bids, you’ll need to set up a payment account. Bidi will never charge you to talk to users or bid on jobs — you only pay when you win.
-        
-    </p>
-    <Button variant="primary" onClick={() => navigate("/onboarding")} className="mt-3">
-      Set Up Account
-    </Button>
-  </Modal.Body>
-</Modal>
-*/}
     </div>
   );
 };

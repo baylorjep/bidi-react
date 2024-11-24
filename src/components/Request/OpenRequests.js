@@ -108,12 +108,12 @@ function OpenRequests() {
     
                 // For photography and videography requests
                 if (businessType === 'photography' || businessType === 'Videography') {
-                    const { data: photoRequests, error } = await supabase
+                    const { data: allPhotoRequests, error: allPhotoRequestsError } = await supabase
                         .from('photography_requests')
-                        .select('id, event_title, event_type, start_date, end_date, time_of_day, location, num_people, duration, indoor_outdoor, additional_comments, status')
+                        .select('id, event_title, event_type, start_date, end_date, date_type,time_of_day, location, num_people, duration, indoor_outdoor, additional_comments, status')
                         .eq('status', 'open');
                     if (error) throw error;
-                    filteredPhotoRequests = photoRequests || [];
+                    filteredPhotoRequests = allPhotoRequests || [];
                 }
     
                 // Default case: If no specific business type matches, fetch all requests
