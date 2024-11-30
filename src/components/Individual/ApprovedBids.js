@@ -84,7 +84,7 @@ function ApprovedBids() {
         // Create mailto link with a pre-filled email template
         const subject = encodeURIComponent('Your Bid');
         const body = encodeURIComponent(
-            `Hi ${bid.business_profiles.business_name},\n\n` +
+            `Hi ${bid.profiles.business_name},\n\n` +
             `I have accepted your bid and would like to discuss the next steps.\n\n` +
             `Looking forward to your response.\n\nBest regards,\n[Your Name]`
         );
@@ -92,6 +92,71 @@ function ApprovedBids() {
         const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
         window.location.href = mailtoLink;
     };
+
+    const handleMessageText = async (bid) => {
+        // Fetch the profile linked to the user_id from the 'profiles' table (for email)
+        const { data: userProfile, error: userProfileError } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', bid.user_id)  // Assuming 'bid.user_id' links to 'profiles.id'
+            .single();  // Fetching a single profile
+        
+        if (userProfileError) {
+            console.error(userProfileError);
+            alert('Failed to fetch user profile.');
+            return;
+        }
+    
+        // Fetch the business profile linked to the user_id or profile_id (for phone number)
+        const { data: businessProfile, error: businessProfileError } = await supabase
+            .from('business_profiles')
+            .select('phone')
+            .eq('profile_id', bid.user_id)  // Assuming 'profile_id' in business_profiles links to 'user_id'
+            .single();  // Fetching a single business profile
+        
+        if (businessProfileError) {
+            console.error(businessProfileError);
+            alert('Failed to fetch business profile.');
+            return;
+        }
+    
+        const phoneNumber = businessProfile.phone;
+        const email = userProfile.email || '';  // Use the email from the profile
+    
+        // Improved device detection method
+        const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    
+        if (isMobile) {
+            // If on mobile, open the SMS app
+            const smsLink = `sms:${phoneNumber}`;
+            window.location.href = smsLink;
+        } else {
+            // If on desktop, open the email client
+            if (email) {
+                const subject = encodeURIComponent('Your Bid');
+                const body = encodeURIComponent(
+                    `Hi ${bid.business_profiles.business_name},\n\n` +
+                    `I have accepted your bid and would like to discuss the next steps.\n\n` +
+                    `Looking forward to your response.\n\nBest regards,\n[Your Name]`
+                );
+                const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+                
+                // Try to open the email client (checks for webmail or desktop client)
+                const mailClientCheck = window.open(mailtoLink, '_blank');
+                
+                if (!mailClientCheck) {
+                    alert("No email client detected. Please use an email service like Gmail or Outlook.");
+                }
+            } else {
+                // Fallback if no email address is available
+                alert("This user does not have an email address.");
+            }
+        }
+    };
+    
+    
+    
+    
 
     return (
         <div className="container" style={{padding:'20px'}}>
@@ -189,7 +254,7 @@ function ApprovedBids() {
                                         <br />
                                         <button
                                             className="btn btn-secondary btn-md flex-fill"
-                                            onClick={() => handleMessage(bid)}
+                                            onClick={() => handleMessageText(bid)}
                                         >
                                             Message
                                         </button>
