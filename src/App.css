@@ -12381,6 +12381,11 @@ footer a:hover, footer a:active, footer a:focus {
 .request-description,
 .request-comments {
     width: 100%;
+    text-align:left;
+}
+
+.request-comments {
+  text-align:left;
 }
 
 .request-comments a {
@@ -13561,6 +13566,8 @@ line-height: normal;
   display: flex;
   flex-direction: row;
   gap: 8px;
+  word-break:break-word;
+  justify-content: space-evenly;
 }
 
 .submit-bid-button {

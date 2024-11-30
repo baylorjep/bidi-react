@@ -33,6 +33,7 @@ function SubmitBid() {
     const [Bidi_Plus, setBidiPlus] = useState(null);
     const [showModal, setShowModal] = useState(false); // For showing modal
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         const fetchRequestDetails = async () => {
@@ -88,30 +89,32 @@ function SubmitBid() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         if (!connectedAccountId && !Bidi_Plus) {
             setShowModal(true); // Show modal if no Stripe account is connected
             return;
         }
-
+    
+        setIsLoading(true); // Start loading
+    
         const {
             data: { user },
             error: userError,
         } = await supabase.auth.getUser();
-
+    
         if (userError || !user) {
             setError('You need to be signed in to place a bid.');
+            setIsLoading(false);
             return;
         }
-
+    
         let insertError;
         const subject = 'New Bid Received';
         const htmlContent = `<p>A new bid has been placed on your request.</p>
-                            <p><strong>Bid Amount:</strong> ${bidAmount}</p>
-                            <p><strong>Description:</strong> ${bidDescription}</p>`;
-
+                              <p><strong>Bid Amount:</strong> ${bidAmount}</p>
+                              <p><strong>Description:</strong> ${bidDescription}</p>`;
+    
         if (requestType === 'requests') {
-            // Insert into the regular bids table
             const { error } = await supabase
                 .from('bids')
                 .insert([
@@ -125,7 +128,6 @@ function SubmitBid() {
                 ]);
             insertError = error;
         } else if (requestType === 'photography_requests') {
-            // Insert into the photography bids table
             const { error } = await supabase
                 .from('bids')
                 .insert([
@@ -139,7 +141,7 @@ function SubmitBid() {
                 ]);
             insertError = error;
         }
-
+    
         if (!insertError) {
             await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent); // Send to user email
             setSuccess('Bid successfully placed!');
@@ -147,6 +149,8 @@ function SubmitBid() {
         } else {
             setError(`Error placing bid: ${insertError.message}`);
         }
+    
+        setIsLoading(false); // End loading
     };
 
     const handleBack = () => {
@@ -212,10 +216,23 @@ function SubmitBid() {
                             </button>
                         </div>
                         <div className="submit-bid-btn-container">
-                            <button type="submit" className="submit-bid-button btn btn-secondary rounded-pill">
-                                Submit Bid
+                            <button 
+                                type="submit" 
+                                className="submit-bid-button btn btn-secondary rounded-pill d-flex align-items-center justify-content-center gap-2"
+                                disabled={isLoading}
+                            >
+                                {isLoading && (
+                                    <span 
+                                        className="spinner-border spinner-border-sm text-light" 
+                                        role="status" 
+                                        aria-hidden="true"
+                                    ></span>
+                                )}
+                                {isLoading ? 'Submitting...' : 'Submit Bid'}
                             </button>
                         </div>
+
+
                     </div>
                     
                     <br/>

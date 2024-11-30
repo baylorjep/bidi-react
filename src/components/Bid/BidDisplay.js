@@ -6,7 +6,8 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
     const [isBidiVerified, setIsBidiVerified] = useState(false);
     const [loading, setLoading] = useState(true);  // Loading state
     const [error, setError] = useState(null);  // Error state
-
+    const [downPayment, setDownPayment] = useState(null); // New state for down payment
+    const [downPaymentAmount, setDownPaymentAmount] = useState(null); // New state for down payment
     useEffect(() => {
         const fetchMembershipTier = async () => {
             try {
@@ -16,7 +17,7 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                 // Fetch membership-tier for this bid's associated business profile
                 const { data, error } = await supabase
                     .from('business_profiles') // Replace with your actual table name
-                    .select('membership_tier')
+                    .select('membership_tier, down_payment_type, amount')
                     .eq('id', bid.business_profiles.id) // Match the business profile ID
                     .single();
 
@@ -30,6 +31,9 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                 // Check if membership-tier is "Plus" or "Verified"
                 const tier = data?.['membership_tier'];
                 setIsBidiVerified(tier === 'Plus' || tier === 'Verified');
+                setDownPayment(data?.['down_payment_type']);
+                setDownPaymentAmount(data?.['amount']);
+
             } catch (error) {
                 console.error('Error fetching membership tier:', error.message);
                 setError('Failed to fetch membership tier'); // Set a friendly error message
@@ -86,10 +90,20 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                 </p>
                 {/* If there's a website, display it */}
                 {bid.business_profiles.website && (
-                    <p className="request-comments">
+                    <p className="request-comments" style={{ textAlign: 'left' }}>
                         <strong>Website:</strong> <a href={bid.business_profiles.website} target="_blank" rel="noopener noreferrer">{bid.business_profiles.website}</a>
                     </p>
                 )}
+                {/* Display down payment information */}
+                {downPayment && downPaymentAmount !== null && (
+                    <p className="request-comments" style={{ textAlign: 'left' }}>
+                        <strong>Down Payment:</strong>{' '}
+                        {downPayment === 'percentage'
+                            ? `$${(bid.bid_amount * (downPaymentAmount)).toFixed(2)} (${downPaymentAmount*100}%)`
+                            : `$${downPaymentAmount}`}
+                    </p>
+                )}
+ 
             </div>
 
             {/* Adding space between the last line of content and the buttons */}

@@ -46,7 +46,7 @@ function ApprovedBids() {
             // Fetch approved bids related to the user's requests and join with business_profiles
             const { data: bidsData, error: bidsError } = await supabase
                 .from('bids')
-                .select('*, business_profiles(business_name, business_category, phone, website, stripe_account_id, membership_tier)')
+                .select('*, business_profiles(business_name, business_category, phone, website, stripe_account_id, membership_tier, down_payment_type,amount)')
                 .in('request_id', requestIds)
                 .eq('status', 'accepted'); // Only fetch approved bids
 
@@ -145,13 +145,33 @@ function ApprovedBids() {
                                     <p style={{textAlign:'left'}}>
                                         <strong>Phone:</strong> {bid.business_profiles.phone}
                                     </p>
+                                    {/* Display down payment information */}
+                                    {bid.business_profiles.down_payment_type && bid.business_profiles.amount !== null && (
+                                        <p style={{ marginTop: '8px', textAlign: 'left' }}>
+                                            <strong>Down Payment:</strong>{' '}
+                                            {bid.business_profiles.down_payment_type === 'percentage'
+                                                ? `$${(bid.bid_amount * (bid.business_profiles.amount)).toFixed(2)} (${bid.business_profiles.amount*100}%)`
+                                                : `$${bid.business_profiles.amount}`}
+                                        </p>
+                                    )}
+
 
                                     <div className="pay-and-message-container">
+                                        {bid.business_profiles.down_payment_type && bid.business_profiles.amount !== null && (
+                                                <button
+                                                className="btn btn-secondary btn-md flex-fill"
+                                                onClick={() => handlePayNow(bid.bid_amount * (bid.business_profiles.amount))}
+                                            >
+                                                Pay ${bid.bid_amount * (bid.business_profiles.amount)}
+                                            </button>
+                                        )}
+
+                                        <br />
                                         <button
                                             className="btn btn-secondary btn-md flex-fill"
                                             onClick={() => handlePayNow(bid)}
                                         >
-                                            Pay Now
+                                            {bid.business_profiles.down_payment_type && bid.business_profiles.amount !== null ? 'Pay In Full' : 'Pay'}
                                         </button>
                                         <br />
                                         <button
