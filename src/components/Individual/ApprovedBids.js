@@ -67,14 +67,14 @@ function ApprovedBids() {
         navigate('/checkout', { state: { bid } });
     };
 
-    const handleDownPayNow = (bid) => {
+    const handleDownPayNow = (amountToPay) => {
         // Determine the amount based on whether there's a down payment
         const amountToPay = bid.business_profiles.down_payment_type && bid.business_profiles.amount !== null
             ? bid.bid_amount * bid.business_profiles.amount // Calculate down payment amount
             : bid.bid_amount; // Use full bid amount if no down payment
     
         // Redirect to the payment component, passing the correct amount and bid information
-        navigate('/checkout', { state: { bid, amount: amountToPay } });
+        navigate('/checkout', { state: { amountToPay } });
     };
 
     
