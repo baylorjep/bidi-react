@@ -63,9 +63,18 @@ function ApprovedBids() {
     }, []);
 
     const handlePayNow = (bid) => {
-        // Redirect to the payment component, passing the bid information
-        navigate('/checkout', { state: { bid } });
+        // Ensure bid.business_profiles is defined before checking for down payment
+        const hasDownPaymentInfo = bid.business_profiles && bid.business_profiles.down_payment_type && bid.business_profiles.amount !== null;
+    
+        // Determine the amount based on whether there's a down payment
+        const amountToPay = hasDownPaymentInfo
+            ? bid.bid_amount * bid.business_profiles.amount // Calculate down payment amount
+            : bid.bid_amount; // Use full bid amount if no down payment
+    
+        // Redirect to the payment component, passing the correct amount and bid information
+        navigate('/checkout', { state: { bid, amount: amountToPay } });
     };
+    
 
     const handleMessage = (bid) => {
         // Create mailto link with a pre-filled email template
