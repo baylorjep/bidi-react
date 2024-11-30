@@ -10,10 +10,12 @@ const EmbeddedCheckoutForm = () => {
   const location = useLocation(); // Access location state
   const { bid, amountToPay } = location.state || {}; // Destructure bid data and amountToPay from location state
   const [clientSecret, setClientSecret] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null); // State to store error messages
 
   useEffect(() => {
     // Only run if bid data is provided
     if (!bid) {
+      setErrorMessage('No bid data provided for checkout.');
       console.error('No bid data provided for checkout.');
       return;
     }
@@ -44,11 +46,17 @@ const EmbeddedCheckoutForm = () => {
         const data = await response.json();
         console.log("Backend response data:", data); // Log the response from the backend
 
+        // Check if there is an error in the response
+        if (data.error) {
+          setErrorMessage(data.error.message || 'An error occurred while processing the checkout session.');
+          return;
+        }
+
         const { client_secret } = data;
-        
         setClientSecret(client_secret);
         console.log("Client Secret:", client_secret); // Log the client_secret
       } catch (error) {
+        setErrorMessage('Error creating checkout session: ' + error.message);
         console.error('Error creating checkout session:', error);
       }
     };
@@ -59,12 +67,16 @@ const EmbeddedCheckoutForm = () => {
   return (
     <div>
       <br></br>
-      {clientSecret ? (
+      {errorMessage ? (
+        <div style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center',height:'50vh' }}>
+          {errorMessage}
+        </div>
+      ) : clientSecret ? (
         <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
           <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>
       ) : (
-        <h4>Loading payment form...</h4>
+        <div className='center'style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center',height:'50vh' }}>Loading payment form...</div>
       )}
     </div>
   );
