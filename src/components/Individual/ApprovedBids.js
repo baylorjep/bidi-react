@@ -111,7 +111,7 @@ function ApprovedBids() {
         const { data: businessProfile, error: businessProfileError } = await supabase
             .from('business_profiles')
             .select('phone')
-            .eq('profile_id', bid.user_id)  // Assuming 'profile_id' in business_profiles links to 'user_id'
+            .eq('id', bid.user_id)  // Assuming 'profile_id' in business_profiles links to 'user_id'
             .single();  // Fetching a single business profile
         
         if (businessProfileError) {
