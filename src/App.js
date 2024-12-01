@@ -51,7 +51,7 @@ import MyDashboard from './components/Individual/MyDashboard'
 
 // Business Imports
 import BusinessDashboard from './components/Business/BusinessDashboard';
-
+import EditBid from './components/Business/EditBid';
 // Misc Imports
 import Homepage from './components/Homepage';
 import ContactForm from './components/ContactForm';
@@ -126,7 +126,8 @@ function App() {
                         {/* Business Routes */}
                         <Route path="/open-requests" element={<OpenRequests />} />
                         <Route path="/dashboard" element={<BusinessDashboard />} />
-
+                        <Route path="/edit-bid/:requestId/:bidId" element={<EditBid />} /> {/* Dynamic URL for editing bids */}
+                        
                         {/* Misc Routes */}
                         <Route path="/contact-us" element={<ContactForm />} />
                         <Route path="/about-us" element={<AboutUs />} />

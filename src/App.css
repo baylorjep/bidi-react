@@ -13817,6 +13817,15 @@ line-height: normal;
    line-height: normal;
   }
 
+  .bid-details-dashboard {
+    border: 1px solid black;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius:12px;
+  }
+  
+  
+
   .approved-bid-card {
     background: white;
     max-width: 100%;
@@ -13836,3 +13845,5 @@ line-height: normal;
     justify-content: center;
     
   }
+
+

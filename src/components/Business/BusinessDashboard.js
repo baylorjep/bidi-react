@@ -9,22 +9,31 @@ const BusinessDashboard = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
   const [businessName, setBusinessName] = useState("");
   const [showModal, setShowModal] = useState(false); // For showing modal
+  const [bids, setBids] = useState([]); // State to store the bids
   const navigate = useNavigate();
   const [percentage, setPercentage] = useState("");
   const [number, setNumber] = useState("");
   const [paymentType, setPaymentType] = useState(""); // "percentage" or "flat fee"
   const [downPaymentAmount, setDownPaymentAmount] = useState(0);
+  const [requestData, setRequestData] = useState(null);
+  const [photographyRequestData, setPhotographyRequestData] = useState(null);
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase
+        // Fetch business profile details
+        const { data: profile, error: profileError } = await supabase
           .from('business_profiles')
           .select('business_name, stripe_account_id, id')
           .eq('id', user.id)
           .single();
-
+  
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          return; // Exit early if there is an error fetching the profile
+        }
+  
         if (profile) {
           setBusinessName(profile.business_name);
           if (profile.stripe_account_id) {
@@ -32,17 +41,114 @@ const BusinessDashboard = () => {
           } else {
             setShowModal(true); // Show modal immediately if no Stripe account is connected
           }
+  
+          // Fetch current bids for this business
+          const { data: bidsData, error: bidsError } = await supabase
+            .from('bids')
+            .select('bid_amount, id, status, bid_description, request_id, hidden') // Get the request_id for each bid
+            .eq('user_id', profile.id) // Only fetch bids for the current business
+            .or('hidden.is.false,hidden.is.null'); // This will check for both false and null
+  
+          if (bidsError) {
+            console.error('Error fetching bids:', bidsError);
+            return;
+          }
+  
+          // Process each bid and fetch its associated request details
+          const bidsWithRequestData = await Promise.all(
+            bidsData.map(async (bid) => {
+              try {
+                // Fetch normal request details
+                const { data: request, error: requestError } = await supabase
+                  .from('requests')
+                  .select('service_title, service_description, service_date, location, additional_comments, price_range, end_date')
+                  .eq('id', bid.request_id)
+                  .single(); // Assuming one-to-one relation
+  
+                // Fetch photography request details
+                const { data: photographyRequest, error: photographyRequestError } = await supabase
+                  .from('photography_requests')
+                  .select('event_title, event_type, start_date, end_date, location, num_people, duration, indoor_outdoor, additional_comments')
+                  .eq('id', bid.request_id) // Assuming the `request_id` is the link
+                  .single(); // Assuming one-to-one relation
+  
+                if (requestError && photographyRequestError) {
+                  console.error('Error fetching requests:', requestError, photographyRequestError);
+                }
+  
+                // Add the relevant request data to the bid
+                return {
+                  ...bid,
+                  service_title: request?.service_title || photographyRequest?.event_title || 'No title',
+                  request_type: request ? 'Normal Request' : 'Photography Request', // Indicate the type of request
+                  request_data: {
+                    // All request data from either the normal request or photography request
+                    ...(request || photographyRequest), // This merges the fields from either request type
+                  },
+                  isDescriptionExpanded: false, // Add description expansion state
+                };
+              } catch (error) {
+                console.error('Error processing bid:', error);
+                return bid; // Return the bid as is if there is an error
+              }
+            })
+          );
+  
+          // Update state with the bids that now have associated request data
+          setBids(bidsWithRequestData);
         }
       }
     };
-
+  
     fetchBusinessDetails();
   }, []);
+  
+  
+  // Shorten description to a certain length
+  const truncateDescription = (description, length) => {
+    if (description.length <= length) return description;
+    return description.slice(0, length) + "...";
+  };
 
-  // Function to handle the "View Requests" button click
+  // Check if there's more content to view
+  const hasMoreContent = (description, length) => {
+    return description.length > length;
+  };
+
+  const handleViewMore = (index) => {
+    setBids((prevBids) => {
+      const updatedBids = [...prevBids];
+      updatedBids[index] = {
+        ...updatedBids[index],
+        isDescriptionExpanded: !updatedBids[index].isDescriptionExpanded
+      };
+      return updatedBids;
+    });
+  };
+
+  
+  const handleRemoveBid = async (bidId) => {
+    try {
+      const { data, error } = await supabase
+        .from('bids')
+        .update({ hidden: true })
+        .eq('id', bidId);
+  
+      if (error) {
+        console.error('Error updating bid:', error);
+      } else {
+        // Update the local state to reflect the change immediately
+        setBids((prevBids) => prevBids.filter((bid) => bid.id !== bidId));
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
+  
+  
+
   const handleViewRequests = () => {
     if (!connectedAccountId) {
-      //setShowModal(true); // Show modal if Stripe is not set up
       navigate("/open-requests");
     } else {
       navigate("/open-requests"); // Navigate to requests if Stripe is set up
@@ -67,68 +173,62 @@ const BusinessDashboard = () => {
     setNumber(e.target.value);
   };
 
-
-
   const handleDownPaymentSubmit = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-  
+
     if (!user) {
       alert("User not found. Please log in again.");
       return;
     }
-  
-    // Check that the down payment type is selected and the down payment amount is not empty
+
     if (!paymentType) {
       alert("Please select a down payment type (Percentage or Flat Fee).");
       return;
     }
-  
+
     if (paymentType === "percentage" && (percentage === "" || percentage <= 0)) {
       alert("Please enter a valid percentage amount.");
       return;
     }
-  
+
     if (paymentType === "flat fee" && (number === "" || number <= 0)) {
       alert("Please enter a valid flat fee amount.");
       return;
     }
-  
-    // Convert the percentage to decimal (divide by 100) if it's a percentage type
+
     let downPaymentAmount = 0;
     if (paymentType === "percentage") {
       downPaymentAmount = parseFloat(percentage) / 100; // Convert percentage to decimal
     } else if (paymentType === "flat fee") {
       downPaymentAmount = parseFloat(number); // Flat fee stays as it is
     }
-  
+
     if (!downPaymentAmount) {
       alert("Please enter a valid down payment amount.");
       return;
     }
-  
-    // Check if a business profile already exists for this user ID
+
     const { data: existingProfile, error: fetchError } = await supabase
       .from('business_profiles')
       .select('id')
       .eq('id', user.id)
       .single();
-  
+
     if (fetchError) {
       console.error("Error fetching business profile:", fetchError);
       alert("An error occurred while fetching your profile.");
       return;
     }
-  
+
     if (existingProfile) {
-      // Update the down payment details if the profile exists
       const { data, error } = await supabase
         .from('business_profiles')
         .update({
           down_payment_type: paymentType,
           amount: downPaymentAmount, // Store down payment as decimal (percentage/100)
         })
-        .eq('id', user.id); // Ensure we update the correct profile based on user ID
-  
+        .eq('id', user.id);
+
       if (error) {
         console.error("Error updating down payment:", error);
         alert("An error occurred while updating your down payment details.");
@@ -137,24 +237,19 @@ const BusinessDashboard = () => {
         alert("Down payment details updated successfully!");
       }
     } else {
-      // No action if profile doesn't exist (no insertion)
       alert("Business profile not found. Please make sure your account is set up correctly.");
     }
   };
-  
-  
-  
-  
 
   return (
     <div className="business-dashboard text-center">
       <h1 className="dashboard-title">Welcome, {businessName}!</h1>
-      
+
       <div className="container mt-4">
         <div className="row justify-content-center">
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-            <button 
-              className="btn btn-secondary btn-lg w-100 mb-3 flex-fill" 
+            <button
+              className="btn btn-secondary btn-lg w-100 mb-3 flex-fill"
               onClick={handleViewRequests} // Updated to conditionally show modal
             >
               View Requests
@@ -164,14 +259,13 @@ const BusinessDashboard = () => {
             {connectedAccountId ? (
               <StripeDashboardButton accountId={connectedAccountId} />
             ) : (
-              <button 
-                className="btn btn-secondary btn-lg w-100 mb-3 flex-fill" 
+              <button
+                className="btn btn-secondary btn-lg w-100 mb-3 flex-fill"
                 onClick={() => navigate("/onboarding")}
               >
                 Set Up Payment Account
               </button>
             )}
-            
           </div>
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
             <button
@@ -181,7 +275,112 @@ const BusinessDashboard = () => {
               Set Up Down Payment
             </button>
           </div>
-                {/* Modal for Down Payment Setup */}
+        </div>
+      </div>
+
+      {/* Bids Section */}
+      <div className="container">
+  <h3>Your Active Bids</h3>
+  <div className="row">
+    {bids.length > 0 ? (
+      bids.map((bid, index) => (
+        <div key={bid.id} className="col-lg-4 col-md-6 col-sm-12 mb-3">
+          <div className="card">
+            <div className="card-body">
+              {/* Request Details */}
+              <h5 className="card-title">
+                Request Title: {bid.service_title}
+              </h5>
+              {bid.request_type === "Normal Request" ? (
+                <div>
+                  <p><strong>Location:</strong> {bid.request_data?.location}</p>
+                  <p><strong>{bid.request_data?.end_date ? 'Start Date' : 'Date'}:</strong> {bid.request_data?.service_date}</p>
+                  {bid.request_data?.end_date && (
+                    <p><strong>End Date:</strong> {bid.request_data?.end_date}</p>
+                  )}
+                  <p><strong>Price Range: </strong>{bid.request_data?.price_range}</p>
+                  <p className="card-text">
+                    {bid.isDescriptionExpanded ? (
+                      bid.request_data?.service_description || bid.request_data?.additional_comments
+                    ) : (
+                      truncateDescription(bid.request_data?.service_description || bid.request_data?.additional_comments, 80)
+                    )}
+                  </p>
+                  {hasMoreContent(bid.request_data?.service_description || bid.request_data?.additional_comments, 80) && (
+                    <button
+                      className="btn"
+                      style={{border:'black solid 1px', borderRadius:'20px'}}
+                      onClick={() => handleViewMore(index)}
+                    >
+                      {bid.isDescriptionExpanded ? "View Less" : "View More"}
+                    </button>
+                  )}
+                    
+                </div>
+              ) : (
+                <div>
+                  <p><strong>Event Type: </strong>{bid.request_data?.event_type}</p>
+                  <p><strong>{bid.request_data?.end_date ? 'Start Date' : 'Date'}:</strong> {bid.request_data?.start_date}</p>
+                   {/* Conditionally render End Date */}
+                  {bid.request_data?.end_date && (
+                    <p><strong>End Date: </strong>{bid.request_data?.end_date}</p>
+                  )}
+                  <p><strong>Location: </strong>{bid.request_data?.location}</p>
+                  <p><strong>Number of People:</strong> {bid.request_data?.num_people}</p>
+                  <p><strong>Duration: </strong>{bid.request_data?.duration}</p>
+                  <p className="card-text">
+                    {bid.isDescriptionExpanded ? (
+                      bid.request_data?.service_description || bid.request_data?.additional_comments
+                    ) : (
+                      truncateDescription(bid.request_data?.service_description || bid.request_data?.additional_comments, 80)
+                    )}
+                  </p>
+                  {hasMoreContent(bid.request_data?.service_description || bid.request_data?.additional_comments, 80) && (
+                    <button
+                      className="btn"
+                      style={{border:'black solid 1px', borderRadius:'20px'}}
+                      onClick={() => handleViewMore(index)}
+                    >
+                      {bid.isDescriptionExpanded ? "View Less" : "View More"}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Bid Details */}
+              <div className="bid-details-dashboard">
+                <h4 className="mb-2">Your Bid:</h4>
+                <p className="card-text">Amount: ${bid.bid_amount}</p>
+                <p className="card-text">Description: {bid.bid_description}</p>
+                <p className="card-text">Status: {bid.status}</p>
+                <div style={{display:'flex',flexDirection:'row',gap:'10px', justifyContent:'center'}}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => handleRemoveBid(bid.id)}
+                    >
+                      Remove
+                    </button>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => navigate(`/edit-bid/${bid.request_id}/${bid.id}`)} // Pass both requestId and bidId
+                  >
+                    Edit
+                  </button>
+                </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      ))
+    ) : (
+      <p>No current bids available.</p>
+    )}
+  </div>
+</div>
+
+
+      {/* Modal for Down Payment Setup */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
         <Modal.Header closeButton>
           <Modal.Title className="text-center">
@@ -192,7 +391,7 @@ const BusinessDashboard = () => {
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>Do you charge a percentage or a flat fee up front?</div>
           <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: '20px', marginBottom:'20px'}}>
             <button
-              className={`btn btn-${paymentType === "percentage" ? "primary" : "secondary"} `}
+              className={`btn btn-${paymentType === "percentage" ? "primary" : "secondary"}`}
               onClick={() => handlePaymentTypeChange("percentage")}
             >
               Percentage
@@ -205,78 +404,38 @@ const BusinessDashboard = () => {
             </button>
           </div>
 
-          {/* Conditionally render based on payment type */}
           {paymentType === "percentage" && (
-            <div style={{ marginBottom: '20px' }}>
-              <label htmlFor="percentage">Percentage:</label>
-              <div className="input-group">
-                <input
-                  id="percentage"
-                  type="number"
-                  value={percentage}
-                  onChange={handleChangePercentage}
-                  className="form-control"
-                  placeholder="Enter percentage"
-                />
-                <span className="input-group-text">%</span>
-              </div>
+            <div>
+              <input
+                type="number"
+                value={percentage}
+                onChange={handleChangePercentage}
+                placeholder="Enter Percentage"
+                className="form-control"
+                min="0"
+                max="100"
+              />
             </div>
           )}
 
           {paymentType === "flat fee" && (
             <div>
-              <label htmlFor="number">Enter a Number:</label>
-              <div className="input-group">
-                <span className="input-group-text">$</span>
-                <input
-                  id="number"
-                  type="number"
-                  value={number}
-                  onChange={handleChangeNumber}
-                  className="form-control"
-                  placeholder="Enter a number"
-                />
-              </div>
+              <input
+                type="number"
+                value={number}
+                onChange={handleChangeNumber}
+                placeholder="Enter Flat Fee"
+                className="form-control"
+              />
             </div>
           )}
-
-          <div className="down-payment-modal-body">
-            <Button
-              variant="primary"
-              onClick={() => setShowModal(false)}
-              className="me-2"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={handleDownPaymentSubmit}
-            >
-              Submit
-            </Button>
-          </div>
         </Modal.Body>
-      </Modal>
-        </div>
-      </div>
 
-      {/* Modal for Stripe Account Setup 
-<Modal show={showModal} onHide={() => setShowModal(false)}>
-  <Modal.Header closeButton>
-    <Modal.Title>Stripe Account Setup Required</Modal.Title>
-  </Modal.Header>
-  <Modal.Body className="d-flex flex-column align-items-center justify-content-center">
-    <p className="text-center">
-    
-            To start making bids, you’ll need to set up a payment account. Bidi will never charge you to talk to users or bid on jobs — you only pay when you win.
-        
-    </p>
-    <Button variant="primary" onClick={() => navigate("/onboarding")} className="mt-3">
-      Set Up Account
-    </Button>
-  </Modal.Body>
-</Modal>
-*/}
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>Close</Button>
+          <Button variant="primary" onClick={handleDownPaymentSubmit}>Submit</Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
