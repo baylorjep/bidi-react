@@ -48,6 +48,7 @@ import UpdatePassword from './components/Profile/UpdatePassword';
 import MyBids from './components/Individual/MyBids';
 import ApprovedBids from './components/Individual/ApprovedBids';
 import MyDashboard from './components/Individual/MyDashboard'
+import DeniedBids from './components/Individual/DeniedBids';
 
 // Business Imports
 import BusinessDashboard from './components/Business/BusinessDashboard';
@@ -122,12 +123,13 @@ function App() {
                         {/* Individual Routes */}
                         <Route path="/my-dashboard" element={<MyDashboard />} />
                         <Route path="/approved-bids" element={<ApprovedBids />} />
+                        <Route path="/denied-bids" element={<DeniedBids />} />
 
                         {/* Business Routes */}
                         <Route path="/open-requests" element={<OpenRequests />} />
                         <Route path="/dashboard" element={<BusinessDashboard />} />
                         <Route path="/edit-bid/:requestId/:bidId" element={<EditBid />} /> {/* Dynamic URL for editing bids */}
-                        
+
                         {/* Misc Routes */}
                         <Route path="/contact-us" element={<ContactForm />} />
                         <Route path="/about-us" element={<AboutUs />} />

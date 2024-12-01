@@ -153,6 +153,16 @@ function MyBids() {
                         </Link>
                     </div>
                 )}
+            {/*
+            <div className="d-flex justify-content-center mt-4">
+                <button
+                    className="btn btn-secondary"
+                    onClick={() => navigate('/denied-bids')}
+                >
+                    View Denied Bids
+                </button>
+            </div>
+            */}
         </div>
     );
 }

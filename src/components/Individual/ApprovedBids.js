@@ -153,6 +153,30 @@ function ApprovedBids() {
             }
         }
     };
+
+    const handleMoveToPending = async (bid) => {
+        try {
+            // Update the bid status to "pending"
+            const { data, error } = await supabase
+                .from('bids')
+                .update({ status: 'pending' })  // Set the status to "pending"
+                .eq('id', bid.id);  // Only update the bid with the matching ID
+            
+            if (error) {
+                throw error;
+            }
+    
+            // Remove the bid from the state by filtering it out
+            setApprovedBids((prevBids) =>
+                prevBids.filter((prevBid) => prevBid.id !== bid.id)
+            );
+    
+            
+        } catch (error) {
+            console.error('Error updating bid status:', error);
+            setError('Failed to update bid status.');
+        }
+    };
     
     
     
@@ -235,6 +259,12 @@ function ApprovedBids() {
 
 
                                     <div className="pay-and-message-container">
+                                        <button 
+                                            className="btn btn-primary btn-md flex-fill"
+                                            onClick={() => handleMoveToPending(bid)}
+                                            >
+                                            Move to Pending
+                                        </button>
                                         {bid.business_profiles.down_payment_type && bid.business_profiles.amount !== null && (
                                                 <button
                                                 className="btn btn-secondary btn-md flex-fill"
