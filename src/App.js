@@ -5,6 +5,8 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './i18n';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
 
 // Layout Imports
 import Navbar from './components/Layout/Navbar';
