@@ -32,6 +32,20 @@ function Signup() {
         }
     }, [location, navigate]);
 
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const redirect = params.get('redirect');
+        if (redirect) {
+            // Store this value to navigate after successful signup
+            setRedirectUrl(redirect);
+        }
+    }, [location]);
+    
+    const [redirectUrl, setRedirectUrl] = useState('');
+
+    
+    
+
     const handleChange = (e) => {
         setFormData({
             ...formData,
@@ -39,6 +53,8 @@ function Signup() {
             ...(e.target.name === 'businessCategory' && e.target.value !== 'other' ? { otherBusinessCategory: '' } : {}),
         });
     };
+
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -137,7 +153,7 @@ function Signup() {
             }
         }
 
-        navigate('/success-signup'); // Redirect to success page
+        navigate(redirectUrl || '/success-signup');
     };
 
     return (

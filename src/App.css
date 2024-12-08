@@ -13,7 +13,7 @@
 
 
 :root {
-  --bidi-primary-color: black;
+  --bidi-primary-color: #FF008A;
   --bs-blue: #2937f0;
   --bs-indigo: #6610f2;
   --bs-purple: #9f1ae2;
@@ -2063,7 +2063,7 @@ progress {
   cursor: pointer;
 }
 .form-control:focus {
-  color: #212529;
+  color:var(--bidi-primary-color);
   background-color: #fff;
   border-color: #949bf8;
   outline: 0;
@@ -2212,7 +2212,7 @@ textarea.form-control-lg {
   }
 }
 .form-select:focus {
-  border-color: black;
+  border-color: var(--bidi-primary-color);
   outline: 0;
   box-shadow: 0 0 0 0.25rem rgba(41, 55, 240, 0.25);
 }
@@ -4958,7 +4958,7 @@ line-height: 0px;
 .list-group {
   --bs-list-group-color: #212529;
   --bs-list-group-bg: #fff;
-  --bs-list-group-border-color: black;
+  --bs-list-group-border-color: var(--bidi-primary-color);
   --bs-list-group-border-width: 1px;
   --bs-list-group-border-radius: 0.375rem;
   --bs-list-group-item-padding-x: 1rem;
@@ -12939,7 +12939,7 @@ margin-top: 3rem;
 
 /* Focus state when the select box is clicked */
 .custom-select:focus {
-  border-color: black; /* Purple when focused */
+  border-color: var(--bidi-color); /* Purple when focused */
   box-shadow: 0 0 5px 1px rgba(128, 0, 128, 0.5); /* Add purple shadow */
 }
 
@@ -13239,6 +13239,8 @@ text-align: left;
   align-items: center; /* Aligns buttons vertically, if needed */
   width: 100%; /* Optional: Ensures the container takes full width */
   margin:20px 0px;
+  margin-top: auto;
+
 }
 
 .form-button-container-submit {
@@ -13255,17 +13257,23 @@ text-align: left;
 }
 
 .Sign-Up-Page-Header {
-  color: #000;
-  text-align: center;
-  font-family: Lora;
-  font-size: 40px;
+  color: var(--Black-900, #000);
+  font-family: Outfit;
+  font-size: 24px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 600;
   line-height: normal;
-  word-break:break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
-  margin: 0;
+}
+
+.Sign-Up-Page-Subheader {
+  color: var(--Black-800, #404040);
+  text-align: center;
+  font-family: Outfit;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  opacity: 0.5;
 }
 
 .choose-type-button-container {
@@ -13315,12 +13323,15 @@ text-align: left;
 .choose-type-or {
   color: #000;
   text-align: center;
-  font-family: Roboto;
-  font-size: 20px;
-  font-style: italic;
   font-weight: 400;
   line-height: 48px;
-  justify-content: center
+  justify-content: center;
+  color: var(--Black-800, #404040);
+
+  font-family: Outfit;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
 }
 
 .create-account-form {
@@ -13464,13 +13475,27 @@ text-align: left;
   display: flex; /* Enables flexbox layout */
   flex-direction: column; /* Arrange children in a column */
   align-items: center; /* Centers content horizontally */
-  justify-content: center; /* Centers content vertically */
   padding: 20px;
   text-align: center;
   border-radius: 20px;
   background: #FAFAFA;
   box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
   margin: 0px;
+}
+
+
+
+.signup-form-container {
+  width: 50vw; /* Takes up half of the viewport width */
+  height: 75vh; /* 75% of the viewport height */
+  display: flex; /* Enables flexbox layout */
+  flex-direction: column; /* Arrange children in a column */
+  padding: 20px;
+  text-align: center;
+  border-radius: 16px;
+  border: 6px solid #FFF;
+  background: linear-gradient(180deg, #FBFAFB 0%, #FFF 100%);
+  box-shadow: 0px 0px 30px 0px rgba(205, 198, 219, 0.30);
 }
 
 
@@ -13563,9 +13588,27 @@ line-height: normal;
 
 .event-grid-container {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 3 columns */
+  grid-template-columns: repeat(3, 1fr); /* 3 columns */
   gap: 16px; /* Space between buttons */
   justify-items: center; /* Center buttons in each grid cell */
+}
+
+@media(max-width:1000px) {
+  .event-grid-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 3 columns */
+    gap: 16px; /* Space between buttons */
+    justify-items: center; /* Center buttons in each grid cell */
+  }
+}
+
+@media(max-width:700px) {
+  .event-grid-container {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr); /* 3 columns */
+    gap: 16px; /* Space between buttons */
+    justify-items: center; /* Center buttons in each grid cell */
+  }
 }
 
 .request-form-back-and-foward-btn {
@@ -13586,6 +13629,14 @@ line-height: normal;
   cursor: not-allowed;
 }
 
+.request-form-selector {
+  display: flex;
+  width: 260px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .selected-border {
   border: 2px solid #000; /* Adjust color and thickness as needed */
   border-radius: 24px;
@@ -13595,11 +13646,11 @@ line-height: normal;
 .request-form-header {
   color: #000;
   font-family: Inter;
-  font-size: 40px;
+  font-size: 25px;
   font-style: normal;
   font-weight: 700;
   line-height: normal;
-  margin:0;
+  margin-top:12px;
 }
 
 .status-line {
@@ -13719,8 +13770,18 @@ line-height: normal;
 
 .photo-upload-btn-text {
   color: #000;
-  font-family: Inter;
-  font-size: 28px;
+  text-align: center;
+  font-family: Outfit;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.photo-upload-btn-text-pink {
+  color: #FF008A;
+  font-family: Outfit;
+  font-size: 14px;
   font-style: normal;
   font-weight: 400;
   line-height: normal;
@@ -13970,5 +14031,218 @@ margin-bottom: -20px;
   font-weight: 700;
   line-height: normal;
 }
+
+
+.custom-input-container {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+/* Default state */
+.custom-input-container .custom-input {
+  height: 3rem;
+  padding: .5rem 1rem;
+  width: 100%;
+  border: 1px solid #ccc; /* Default border color */
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  box-shadow: none;
+  transition: border-color 0.3s ease;
+}
+
+/* Focus state */
+.custom-input-container .custom-input:focus {
+  border-color: var(--bidi-primary-color) !important; /* Ensure focus border color */
+  outline: none; /* Remove default outline */
+}
+
+/* For :focus-visible if it's overriding styles */
+.custom-input-container .custom-input:focus-visible {
+  border-color: var(--bidi-primary-color) !important;
+}
+
+/* Label changes on focus */
+.custom-input-container .custom-input:focus + .custom-label {
+  color: var(--bidi-primary-color);
+}
+
+.custom-label {
+  color: #49454F;
+
+  /* M3/body/small */
+  font-family: var(--Body-Small-Font, Roboto);
+  font-size: var(--Body-Small-Size, 12px);
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--Body-Small-Line-Height, 16px); /* 133.333% */
+  letter-spacing: var(--Body-Small-Tracking, 0.4px);
+}
+
+/* Label style */
+.custom-input-container .custom-label {
+  position: absolute;
+  font-size: 1rem;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  top: -0.75rem; /* Move above the input */
+  left: 0.75rem;
+  font-size: 0.75rem;
+  background-color: #fafafa;
+  padding: 0 0.25rem;
+}
+
+/* Modal overlay (background) stays static */
+.sign-up-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+}
+
+/* Modal content (the actual box) starts off-screen */
+.sign-up-modal-content {
+  position:relative;
+  border-radius: 8px;
+  border: 1px solid var(--Stroke-light, #DEE2E6);
+  background-color: white;
+  height: auto;
+  display: inline-flex;
+  padding: 36px 40px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 40%;
+  max-width: 600px;
+  gap: 24px;
+  box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.12), 0px 20px 20px 0px rgba(0, 0, 0, 0.08);
+}
+
+
+.sign-up-modal-title {
+  color: #000;
+  font-family: Inter;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.sign-up-modal-subtitle {
+  color: rgba(84, 89, 94, 0.60);
+  text-align: center;
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 22px; /* 157.143% */
+  max-width: 400px;
+  margin-top: -16px;
+}
+
+/* Prevent any link styling from interfering with the buttons */
+.sign-up-modal a {
+  text-decoration: none;  /* Remove underline from Link */
+  display: inline-block;  /* Ensure the Link behaves like a button */
+}
+
+/* Button Styling for Primary Button */
+.sign-up-modal-button-primary {
+display: flex;
+height: 44px;
+width: 180px;
+padding: 14px 20px;
+justify-content: center;
+align-items: center;
+gap: 10px;
+flex: 1 0 0;
+border-radius: 24px;
+border: 1px solid #000;
+background: var(--White, #FFF);
+color: #000;
+font-family: Inter;
+font-size: 14px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+}
+
+.sign-up-modal-button-primary:hover {
+background-color: black;
+color: white;
+}
+
+/* Button Styling for Secondary Button */
+.sign-up-modal-button-secondary {
+display: flex;
+height: 44px;
+width: 180px;
+padding: 14px 20px;
+justify-content: center;
+align-items: center;
+gap: 10px;
+flex: 1 0 0;
+border-radius: 24px;
+border: 1px solid #000;
+background: black;
+color: white;
+font-family: Inter;
+font-size: 14px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+}
+
+.sign-up-modal-button-secondary:hover {
+background-color: white;
+color: black;
+}
+
+
+    .sign-up-modal-X {
+      position: absolute; /* Positioning the close button */
+      top: 5px;
+      right: 5px;
+      display: flex;
+      width: 28px;
+      height: 28px;
+      padding: 4px;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      border-radius: 29px;
+      background: var(--Grey-Medium, #E5E5E5);
+      border:none;
+    }
+
+    .photo-upload-box {
+      width: 80%;
+      height: 80%;
+      flex-shrink: 0;
+      border-radius: 1px;
+      border: 1px dashed #FF008A;
+      background: #EFEFEF;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      cursor: pointer;
+
+    }
+
+
+
+
+
+
+
+
+
 
 

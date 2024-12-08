@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../supabaseClient';
+import SignInModal from './SignInModal';
 
 function EventDetails({ eventType, setEventDetails }) {
     const [details, setDetails] = useState({
@@ -15,16 +17,31 @@ function EventDetails({ eventType, setEventDetails }) {
         additionalComments: '',
         extras: {}
     });
+    
+    const [isModalOpen, setIsModalOpen] = useState(false);  // Modal state
     const navigate = useNavigate();
 
     const handleChange = (e) => {
         setDetails({ ...details, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setEventDetails(details);
-        navigate('/event-photos');  // Navigate to the photo upload stage
+        
+        // Check if user is signed in
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+            // Save the form data temporarily (localStorage or sessionStorage)
+            localStorage.setItem('eventDetails', JSON.stringify(details));
+
+            // Open the sign-in modal
+            setIsModalOpen(true);
+        } else {
+            // User is signed in, proceed with setting the event details
+            setEventDetails(details);
+            navigate('/personal-details');  // Proceed to personal details page
+        }
     };
 
     const handleBack = () => {
@@ -33,21 +50,25 @@ function EventDetails({ eventType, setEventDetails }) {
 
     return (
         <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
+             {/* Render the SignInModal if isModalOpen is true */}
+             {/* Modal: Display only if isModalOpen is true */}
+            {isModalOpen && (
+                <>
+                    {console.log('Rendering modal...')}
+                    <SignInModal setIsModalOpen={setIsModalOpen} />
+                </>
+            )}
             <div className='request-form-status-container'>
                 <div className='status-bar-container'>
-                    <div className='status-check-container' style={{ display: 'flex', gap: '10px', transform: "rotate(260deg)"}}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 25" fill="none">
-                            <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
-                        </svg>
+                <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
+                    01
                     </div>
                     <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
-                        <line x1="12" y1="0" x2="12" y2="300" stroke="black" strokeWidth="2" />
+                        <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                     </svg>
-                    
-                    <div className='status-check-container' style={{ display: 'flex', gap: '10px', transform: "rotate(260deg)"}}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 25" fill="none">
-                            <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
-                        </svg>
+
+                    <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
+                    02
                     </div>
                     <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
@@ -73,165 +94,176 @@ function EventDetails({ eventType, setEventDetails }) {
                     
                 </div>
                 <div className='status-text-container'>
-                    <div className='status-text'>Type of Service</div>
                     <div className='status-text'>Service Details</div>
-                    <div className='status-text'>Add Photos</div>
                     <div className='status-text'>Personal Details</div>
+                    <div className='status-text'>Add Photos</div>
+                    <div className='status-text'>Review</div>
                     <div className='status-text'>Submit</div>
                 </div>
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
                 <h2 className="request-form-header" style={{textAlign:'left', marginBottom:'40px',marginLeft:"20px"}}>{eventType} Details</h2>
                 <form style={{minWidth:'100%'}}onSubmit={handleSubmit}>
-                    <div className="form-grid">
+                    <div className='form-grid'>
                         {/* Event Title */}
-                        <div className="form-floating request-form mb-3">
+                        <div className="custom-input-container">
                             <input
                                 type="text"
                                 name="eventTitle"
-                                placeholder='Event Title'
                                 value={details.eventTitle}
                                 onChange={handleChange}
-                                className="form-control"
+                                className="custom-input"
+                                id="eventTitle"
                             />
-                            <label htmlFor="eventTitle">Title</label>
+                            <label htmlFor="eventTitle" className="custom-label">
+                                Title
+                            </label>
                         </div>
-
+                        
                         {/* Location */}
-                        <div className="form-floating request-form mb-3">
+                        <div className="custom-input-container">
                             <input
                                 type="text"
                                 name="location"
-                                placeholder='Location'
+
                                 value={details.location}
                                 onChange={handleChange}
-                                className="form-control"
+                                className="custom-input"
                             />
-                            <label htmlFor='location'>Location</label>
+                            <label htmlFor='location' className="custom-label">
+                                Location
+                            </label>
                         </div>
                     </div>
+
                     <div className='non-grid-form'>
                         {/* Date Type (Specific Date or Date Range) */}
-                        <div className="select-container form-floating request-form mb-3">
-                            
+                        <div className="custom-input-container">
                             <select
                                 name="dateType"
-                                placeholder="Date Type"
+
                                 value={details.dateType}
                                 onChange={handleChange}
-                                className="form-control date-type-select"
+                                className="custom-input"
+                                style={{height:'56px'}}
                             >
                                 <option value="specific">Specific Date</option>
                                 <option value="range">Date Range</option>
                             </select>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="10" viewBox="0 0 16 10" fill="none" className="select-arrow">
-                                <path fill-rule="evenodd" clip-rule="evenodd" d="M9.06066 9.06068C8.47487 9.64646 7.52513 9.64646 6.93934 9.06068L1.28249 3.40382C0.696699 2.81804 0.696699 1.86829 1.28248 1.2825C1.86827 0.696717 2.81802 0.696717 3.40381 1.2825L8 5.8787L12.5962 1.2825C13.182 0.696716 14.1317 0.696716 14.7175 1.2825C15.3033 1.86829 15.3033 2.81804 14.7175 3.40382L9.06066 9.06068Z" fill="black"/>
-                            </svg>
-                            <label htmlFor="dateType">Date Type</label>
+                            <label htmlFor="dateType" className="custom-label">
+                                Date Type
+                            </label>
                         </div>
-                        
                     </div>
 
-                    
                     <div className='form-grid'>
                         {/* Start Date */}
-                        <div className="form-floating request-form mb-3">
+                        <div className="custom-input-container">
                             <input
                                 type="date"
                                 name="startDate"
                                 value={details.startDate}
                                 onChange={handleChange}
-                                className="form-control"
+                                className="custom-input"
                             />
-                            <label>{details.dateType === 'range' ? 'Start Date' : 'Date'}</label>
+                            <label htmlFor="startDate" className="custom-label">
+                                {details.dateType === 'range' ? 'Start Date' : 'Date'}
+                            </label>
                         </div>
 
                         {/* End Date (only show if dateType is range) */}
-                        {details.dateType === 'range' ? (
-                            <div className="form-floating request-form mb-3">
+                        {details.dateType === 'range' && (
+                            <div className="custom-input-container">
                                 <input
                                     type="date"
                                     name="endDate"
                                     value={details.endDate || ''}
                                     onChange={handleChange}
-                                    className="form-control"
+                                    className="custom-input"
                                 />
-                                <label>End Date</label>
-                            </div>
-                        ) : (
-                            // Empty space for "Specific Date"
-                            <div className="mb-3 col-6">
-                                <div className="empty-date"></div>
+                                <label htmlFor="endDate" className="custom-label">
+                                    End Date
+                                </label>
                             </div>
                         )}
 
                         {/* Time of Day */}
-                        <div className="form-floating request-form mb-3">
+                        <div className="custom-input-container">
                             <input
                                 type="time"
                                 name="timeOfDay"
                                 value={details.timeOfDay}
                                 onChange={handleChange}
-                                className="form-control"
+                                className="custom-input"
                             />
-                            <label>Time of Day</label>
+                            <label htmlFor="timeOfDay" className="custom-label">
+                                Time of Day
+                            </label>
                         </div>
 
                         {/* Number of People */}
-                        <div className="form-floating request-form mb-3">
+                        <div className="custom-input-container">
                             <input
                                 type="number"
                                 name="numPeople"
-                                placeholder='Number of People'
                                 value={details.numPeople}
                                 onChange={handleChange}
-                                className="form-control"
+                                className="custom-input"
                             />
-                            <label>Number of People</label>
+                            <label htmlFor="numPeople" className="custom-label">
+                                Number of People
+                            </label>
                         </div>
 
                         {/* Duration */}
-                        <div className="form-floating request-form mb-3">
+                        <div className="custom-input-container">
                             <input
                                 type="number"
                                 name="duration"
-                                placeholder='Duration'
                                 value={details.duration}
                                 onChange={handleChange}
-                                className="form-control"
+                                className="custom-input"
                             />
-                            <label>Duration (in hours)</label>
+                            <label htmlFor="duration" className="custom-label">
+                                Duration (in hours)
+                            </label>
                         </div>
 
                         {/* Indoor or Outdoor */}
-                        <div className="form-floating request-form mb-3">
+                        <div className="custom-input-container">
                             <select
                                 name="indoorOutdoor"
                                 value={details.indoorOutdoor}
                                 onChange={handleChange}
-                                className="form-control"
+                                className="custom-input"
+
                             >
                                 <option value="">Select</option>
                                 <option value="indoor">Indoor</option>
                                 <option value="outdoor">Outdoor</option>
                             </select>
-                            <label>Indoor/Outdoor</label>
+                            <label htmlFor="indoorOutdoor" className="custom-label">
+                                Indoor/Outdoor
+                            </label>
                         </div>
-
                     </div>
-                    {/* Additional Comments (outside the grid) */}
-                <div className='non-grid-form'>
-                    <div className="form-floating request-form mb-3">
-                        <textarea
-                            name="additionalComments"
-                            placeholder='Additional Comments'
-                            value={details.additionalComments}
-                            onChange={handleChange}
-                            className="form-control"
-                        />
-                        <label>Additional Comments</label>
-                    </div> 
-                </div>
+
+                    {/* Additional Comments */}
+                    <div className='non-grid-form'>
+                        <div className="custom-input-container">
+                            <textarea
+                                name="additionalComments"
+                                value={details.additionalComments}
+                                onChange={handleChange}
+                                className="custom-input"
+                                style={{height:'120px'}}
+                            />
+                            <label htmlFor="additionalComments" className="custom-label">
+                                Additional Comments
+                            </label>
+                        </div> 
+                    </div>
+
 
 
                     <div className="form-button-container">
@@ -260,9 +292,11 @@ function EventDetails({ eventType, setEventDetails }) {
             </div>
                 </form>
             </div>
-
+           
         </div>
     );
 }
+
+
 
 export default EventDetails;
