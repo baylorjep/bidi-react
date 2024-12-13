@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function SelectEvent({ setEventType }) {
-    const [selectedEvent, setSelectedEvent] = useState('');
+    const [selectedEvent, setSelectedEvent] = useState(() => {
+        const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
+        return savedForm.eventType || '';
+    });
     const navigate = useNavigate();
 
     const eventOptions = [
@@ -22,6 +25,11 @@ function SelectEvent({ setEventType }) {
     const handleSelect = (event) => {
         setSelectedEvent(event);
         setEventType(event);
+        const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
+        localStorage.setItem('photographyRequest', JSON.stringify({
+            ...savedForm,
+            eventType: event
+        }));
     };
 
     const handleNext = () => {

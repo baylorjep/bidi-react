@@ -27,14 +27,58 @@ function OpenRequests() {
         const fetchPhotoRequests = async () => {
             const { data: photoRequests, error } = await supabase
                 .from('photography_requests')
-                .select('id, event_title, event_type, start_date, end_date, time_of_day, location, num_people, duration, indoor_outdoor, additional_comments, status')
-                .eq('status', 'open');  // Filter only open photography requests
+                .select(`
+                    id, 
+                    event_title, 
+                    event_type, 
+                    start_date, 
+                    end_date, 
+                    time_of_day, 
+                    location, 
+                    num_people, 
+                    duration, 
+                    indoor_outdoor, 
+                    additional_comments, 
+                    status,
+                    event_photos (
+                        photo_url,
+                        file_path
+                    )
+                `)
+                .eq('status', 'open');
 
             if (error) {
                 setError(`Error fetching photo requests: ${error.message}`);
                 console.error(error);
             } else {
-                setOpenPhotoRequests(photoRequests || []);
+                console.log('Raw photo requests:', photoRequests);
+        
+                const formattedRequests = photoRequests?.map(request => {
+                    // Map photos with full URLs
+                    const photos = request.event_photos?.map(photo => {
+                        // Get public URL 
+                        const { data } = supabase.storage
+                            .from('request-media')
+                            .getPublicUrl(photo.file_path);
+        
+                        console.log('Generated URL:', data?.publicUrl);
+                        
+                        return {
+                            url: data?.publicUrl || photo.photo_url, // Fallback to stored URL
+                            name: photo.file_path?.split('/').pop() || 'photo'
+                        };
+                    }) || [];
+        
+                    console.log(`Photos for request ${request.id}:`, photos);
+        
+                    return {
+                        ...request,
+                        photos: photos
+                    };
+                });
+        
+                console.log('Formatted requests:', formattedRequests);
+                setOpenPhotoRequests(formattedRequests || []);
             }
         };
 

@@ -4,25 +4,34 @@ import { supabase } from '../../supabaseClient';
 import SignInModal from './SignInModal';
 
 function EventDetails({ eventType, setEventDetails }) {
-    const [details, setDetails] = useState({
-        eventTitle: '',
-        location: '',
-        dateType: 'specific',
-        startDate: '',
-        endDate: null,
-        timeOfDay: '',
-        numPeople: '',
-        duration: '',
-        indoorOutdoor: '',
-        additionalComments: '',
-        extras: {}
+    const [details, setDetails] = useState(() => {
+        const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
+        return savedForm.eventDetails || {
+            eventTitle: '',
+            location: '',
+            dateType: 'specific',
+            startDate: '',
+            endDate: null,
+            timeOfDay: '',
+            numPeople: '',
+            duration: '',
+            indoorOutdoor: '',
+            additionalComments: '',
+            extras: {}
+        };
     });
     
     const [isModalOpen, setIsModalOpen] = useState(false);  // Modal state
     const navigate = useNavigate();
 
     const handleChange = (e) => {
-        setDetails({ ...details, [e.target.name]: e.target.value });
+        const newDetails = { ...details, [e.target.name]: e.target.value };
+        setDetails(newDetails);
+        const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
+        localStorage.setItem('photographyRequest', JSON.stringify({
+            ...savedForm,
+            eventDetails: newDetails
+        }));
     };
 
     const handleSubmit = async (e) => {

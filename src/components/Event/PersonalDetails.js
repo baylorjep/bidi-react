@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { Spinner } from 'react-bootstrap';
 
 function PersonalDetails() {
-    const [userInfo, setUserInfo] = useState({
-        firstName: '',
-        lastName: '',
-        phoneNumber: '',
-        email: ''
+    const [userInfo, setUserInfo] = useState(() => {
+        const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
+        return savedForm.personalDetails || {
+            firstName: '',
+            lastName: '',
+            phoneNumber: '',
+            email: ''
+        };
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -58,10 +62,12 @@ function PersonalDetails() {
 
     // Handle form input changes
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setUserInfo((prevInfo) => ({
-            ...prevInfo,
-            [name]: value
+        const newInfo = { ...userInfo, [e.target.name]: e.target.value };
+        setUserInfo(newInfo);
+        const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
+        localStorage.setItem('photographyRequest', JSON.stringify({
+            ...savedForm,
+            personalDetails: newInfo
         }));
     };
 
@@ -97,7 +103,11 @@ function PersonalDetails() {
     
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div style={{display:'flex', justifyContent:'center',alignItems:'center', height:"80vh"}}>
+                <div>
+                    <Spinner />
+                </div>
+        </div>;
     }
 
     if (error) {
