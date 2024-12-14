@@ -166,7 +166,7 @@ function PersonalDetails() {
                 </div>
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
-            <h2 className="request-form-header" style={{textAlign:'left', marginBottom:'80px',marginLeft:"40px", marginTop:'40px'}}>Personal Details</h2>
+            <h2 className="request-form-header" style={{textAlign:'left', marginBottom:'80px',marginLeft:"40px", marginTop:'20px'}}>Personal Details</h2>
                 <div style={{justifyContent:'center',alignItems:'center', marginTop:'80px', display:'flex'}}>
                     <form onSubmit={handleSubmit} >
                     <div className='custom-input-container'>

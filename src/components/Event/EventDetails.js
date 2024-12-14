@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import SignInModal from './SignInModal';
@@ -23,6 +23,7 @@ function EventDetails({ eventType, setEventDetails }) {
     
     const [isModalOpen, setIsModalOpen] = useState(false);  // Modal state
     const navigate = useNavigate();
+    const formRef = useRef(null);
 
     const handleChange = (e) => {
         const newDetails = { ...details, [e.target.name]: e.target.value };
@@ -35,7 +36,7 @@ function EventDetails({ eventType, setEventDetails }) {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         
         // Check if user is signed in
         const { data: { session } } = await supabase.auth.getSession();
@@ -111,9 +112,10 @@ function EventDetails({ eventType, setEventDetails }) {
                 </div>
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
-                <h2 className="request-form-header" style={{textAlign:'left', marginBottom:'40px',marginLeft:"20px"}}>{eventType} Details</h2>
-                <form style={{minWidth:'100%'}}onSubmit={handleSubmit}>
-                    <div className='form-grid'>
+                <h2 className="request-form-header" style={{textAlign:'left',marginLeft:"20px"}}>{eventType} Details</h2>
+                <div className="form-scrollable-content">
+                <form ref={formRef} style={{minWidth:'100%'}}onSubmit={handleSubmit}>
+                    <div className='form-grid' style={{}}>
                         {/* Event Title */}
                         <div className="custom-input-container">
                             <input
@@ -272,34 +274,33 @@ function EventDetails({ eventType, setEventDetails }) {
                             </label>
                         </div> 
                     </div>
-
-
-
-                    <div className="form-button-container">
-                <button className="request-form-back-and-foward-btn" onClick={handleBack} style={{color:"black"}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M20.0002 11V13L8.00016 13L13.5002 18.5L12.0802 19.92L4.16016 12L12.0802 4.07996L13.5002 5.49996L8.00016 11L20.0002 11Z" fill="black"/>
-                    </svg>
-                    Back
-                </button>
-                <button
-                type='submit'
-                className='request-form-back-and-foward-btn'
-                style={{color:'black'}}
-                >
-                    Next
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-
-                    >
-                        <path d="M3.99984 13L3.99984 11L15.9998 11L10.4998 5.50004L11.9198 4.08004L19.8398 12L11.9198 19.92L10.4998 18.5L15.9998 13L3.99984 13Z" />
-                    </svg>
-                </button>
-            </div>
                 </form>
+                </div>
+                <div className="form-button-container">
+                    <button type="button"className="request-form-back-and-foward-btn" onClick={handleBack} style={{color:"black"}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M20.0002 11V13L8.00016 13L13.5002 18.5L12.0802 19.92L4.16016 12L12.0802 4.07996L13.5002 5.49996L8.00016 11L20.0002 11Z" fill="black"/>
+                        </svg>
+                        Back
+                    </button>
+                    <button
+                    type='button'
+                    className='request-form-back-and-foward-btn'
+                    style={{color:'black'}}
+                    onClick={() => formRef.current.requestSubmit()}
+                    >
+                        Next
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+
+                        >
+                            <path d="M3.99984 13L3.99984 11L15.9998 11L10.4998 5.50004L11.9198 4.08004L19.8398 12L11.9198 19.92L10.4998 18.5L15.9998 13L3.99984 13Z" />
+                        </svg>
+                    </button>
+                </div>
             </div>
            
         </div>
