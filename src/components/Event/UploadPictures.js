@@ -197,6 +197,36 @@ const handleRemovePhoto = async (photoUrl) => {
         }));
     }, [photos]);
 
+    // Add this CSS class to handle the overflow issue
+    const styles = {
+      photoPreviewContainer: {
+        maxHeight: '460px',
+        overflowY: 'auto',
+        // Add padding to prevent content from being cut off
+        paddingTop: '10px',
+        paddingBottom: '10px',
+      },
+      addMoreText: {
+        color: '#FF008A',
+        transition: 'color 0.3s',
+      },
+      addMoreTextHover: {
+        color: 'white',
+      },
+    };
+
+    useEffect(() => {
+      const addMoreText = document.querySelector('.add-more-text');
+      if (addMoreText) {
+        addMoreText.addEventListener('mouseover', () => {
+          addMoreText.style.color = styles.addMoreTextHover.color;
+        });
+        addMoreText.addEventListener('mouseout', () => {
+          addMoreText.style.color = styles.addMoreText.color;
+        });
+      }
+    }, []);
+
     return (
         <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
             <div className='request-form-status-container'>
@@ -247,7 +277,7 @@ const handleRemovePhoto = async (photoUrl) => {
                 </div>
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal", justifyContent:"flex-start",alignItems:"flex-start"}}>
-                <h2 className="request-form-header" style={{textAlign:'left', marginBottom:"0",marginLeft:"20px"}}>Inspiration Photos</h2>
+                <h2 className="request-form-header" style={{textAlign:'left', marginBottom:"8px",marginLeft:"20px"}}>Inspiration Photos</h2>
                 <p style={{textAlign:'left',marginLeft:"20px", marginTop:"0",marginBottom:"0"}}>You can upload inspo (inspiration) photos here. If you aren't sure what you are looking for, just press next.
                 </p>
                 <div className="photo-uploads-container">
@@ -281,7 +311,7 @@ const handleRemovePhoto = async (photoUrl) => {
                         </div>
                     ) : (
                         // Show the preview and remove button when a photo is uploaded
-                        <div className="photo-preview-container">
+                        <div  style={styles.photoPreviewContainer}>
                             <PhotoGrid photos={photos} removePhoto={removePhoto} />
                         
                         </div>
@@ -295,7 +325,7 @@ const handleRemovePhoto = async (photoUrl) => {
                         <div style={{display:'flex', justifyContent:'center', alignItems:'center', width:'100%'}}>
                             <button 
                                 onClick={handleClick}
-                                className="landing-page-button"
+                                className="add-more-photos-btn"
                                 disabled={addMoreLoading}
                             >
                                 <input
@@ -303,12 +333,12 @@ const handleRemovePhoto = async (photoUrl) => {
                                     id="file-input"
                                     multiple
                                     onChange={handleFileSelect}
-                                    style={{ display: 'none' }}
+                                    style={{ display: 'none'}}
                                 />
                                 {addMoreLoading ? (
                                     <Spinner />
                                 ) : (
-                                    'Add More Photos'
+                                    <span className="add-more-text">Add More</span>
                                 )}
                             </button>
                         </div>

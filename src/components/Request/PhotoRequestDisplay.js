@@ -5,6 +5,7 @@ import '../../App.css';
 
 function PhotoRequestDisplay({ photoRequest, hideBidButton }) {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
 
     // Add debugging log
     useEffect(() => {
@@ -21,78 +22,107 @@ function PhotoRequestDisplay({ photoRequest, hideBidButton }) {
         );
     };
 
+    const handlePhotoClick = (photo) => {
+        setSelectedPhoto(photo);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedPhoto(null);
+    };
+
     return (
         <div className="request-display text-center mb-4">
             <div className="request-content p-3">
-                <h2 className="request-title">{photoRequest.event_title}</h2>
-                
-                <p className="request-type"><strong>Event Type:</strong> {photoRequest.event_type}</p>
+                <div style={{textAlign:'left', width: '100%', padding: '0 20px', marginBottom: '20px'}}>
+                    <div className="request-title">{photoRequest.event_title}</div>
+                    <div className="request-status">Pending</div>
+                </div>
 
-                <p className="request-start-date">
-                    <strong>{photoRequest.date_type === 'range' ? 'Start Date: ' : 'Date: '}</strong> 
-                    {new Date(photoRequest.start_date).toLocaleDateString()}
-                </p>
+                <div className="request-grid">
+                   
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Event Type</div>
+                        <div className="request-info">{photoRequest.event_type}</div>
+                    </div>
 
-                {photoRequest.date_type === 'range' && (
-                    <p className="request-end-date"><strong>End Date:</strong> {new Date(photoRequest.end_date).toLocaleDateString()}</p>
-                )}
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype"> {photoRequest.date_type === 'range' ? 'Start Date ' : 'Date '}</div>
+                        <div className="request-info">{new Date(photoRequest.start_date).toLocaleDateString()}</div>
+                        
+                    </div>
+                    {photoRequest.date_type === 'range' && (
+                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                            <div className="request-subtype">End Date</div>
+                            <div className="request-info">{new Date(photoRequest.end_date).toLocaleDateString()}</div>
+                            
+                        </div>
+                    )}
 
-                <p className="request-time-of-day"><strong>Time of Day:</strong> {photoRequest.time_of_day}</p>
-                <p className="request-type"><strong>Location:</strong> {photoRequest.location}</p>
-                <p className="request-num-people"><strong>Number of People:</strong> {photoRequest.num_people}</p>
-                <p className="request-duration"><strong>Duration (in hours):</strong> {photoRequest.duration}</p>
-                <p className="request-indoor-outdoor"><strong>Indoor/Outdoor:</strong> {photoRequest.indoor_outdoor}</p>
-                
+                 
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Time of Day</div>
+                        <div className="request-info">{photoRequest.time_of_day}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Location</div>
+                        <div className="request-info">{photoRequest.location}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Number of People</div>
+                        <div className="request-info">{photoRequest.num_people}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Duration (in hours)</div>
+                        <div className="request-info">{photoRequest.duration}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Indoor/Outdoor</div>
+                        <div className="request-info">{photoRequest.indoor_outdoor}</div>
+                    </div>
+                    
+                    {photoRequest.extras && Object.keys(photoRequest.extras).length > 0 && (
+                        <div className="request-extras">
+                            <strong>Extras:</strong>
+                            <ul>
+                                {Object.entries(photoRequest.extras).map(([key, value]) => (
+                                    <li key={key}>{key}: {value.toString()}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+
                 {photoRequest.additional_comments && (
-                    <p className="request-type"><strong>Additional Comments:</strong> {photoRequest.additional_comments}</p>
-                )}
-
-                {photoRequest.extras && Object.keys(photoRequest.extras).length > 0 && (
-                    <div className="request-extras">
-                        <strong>Extras:</strong>
-                        <ul>
-                            {Object.entries(photoRequest.extras).map(([key, value]) => (
-                                <li key={key}>{key}: {value.toString()}</li>
-                            ))}
-                        </ul>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Additional Comments</div>
+                        <div className="request-info">{photoRequest.additional_comments}</div>
                     </div>
                 )}
 
                 {photoRequest.photos && photoRequest.photos.length > 0 ? (
                     <>
-                        <p className="request-indoor-outdoor">
-                            <strong>Inspiration Photos: </strong>
-                        </p>
-                        <div className="photo-preview-container">
-                            <div className="photo-carousel">
-                                <button
-                                    className="carousel-arrow left-arrow"
-                                    onClick={handlePrevious}
-                                    disabled={photoRequest.photos.length <= 1}
-                                >
-                                    <img src={scrollBtn} alt="Left Arrow" />
-                                </button>
-
-                                <div className="photo-container">
-                                <img
-                                    src={photoRequest.photos[currentIndex].url} // Ensure this matches the URL property from your data
-                                    className="photo"
-                                    alt={`Photo ${currentIndex + 1}`} // Simplified alt text
-                                    onError={(e) => {
-                                        console.error('Image failed to load:', photoRequest.photos[currentIndex]);
-                                        e.target.alt = 'Failed to load image';
-                                    }}
-                                />
+                        <div className="request-subtype">
+                            Inspiration Photos
+                        </div>
+                        <div className="photo-grid scroll-container">
+                            {/* Replace carousel with grid layout */}
+                            {photoRequest.photos.map((photo, index) => (
+                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
+                                    <img
+                                        src={photo.url}
+                                        className="photo"
+                                        alt={`Photo ${index + 1}`}
+                                        onError={(e) => {
+                                            console.error('Image failed to load:', photo);
+                                            e.target.alt = 'Failed to load image';
+                                        }}
+                                    />
                                 </div>
-
-                                <button
-                                    className="carousel-arrow right-arrow"
-                                    onClick={handleNext}
-                                    disabled={photoRequest.photos.length <= 1}
-                                >
-                                    <img src={scrollBtn} alt="Right Arrow" />
-                                </button>
-                            </div>
+                            ))}
                         </div>
                     </>
                 ) : null}
@@ -105,6 +135,13 @@ function PhotoRequestDisplay({ photoRequest, hideBidButton }) {
                     </Link>
                 )}
             </div>
+            {selectedPhoto && (
+                <div className="modal-overlay" onClick={handleCloseModal}>
+                    <div className="modal-content" >
+                        <img src={selectedPhoto.url} onClick={(e) => e.stopPropagation()} alt="Selected" />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

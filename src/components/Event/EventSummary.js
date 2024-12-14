@@ -158,7 +158,7 @@ function UploadPictures() {
             let uploadedCount = 0;
             
             // Upload all photos
-            const uploadedPhotos = await Promise.all(
+            const uploadedPictures = await Promise.all(
                 photos.map(async (photo) => {
                     const filePath = `${user.id}/${requestId}/${uuidv4()}-${photo.name}`;
                     
@@ -240,18 +240,22 @@ function UploadPictures() {
                         <line x1="12" y1="0" x2="12" y2="300" stroke="black" strokeWidth="2" />
                     </svg>
 
-                    <div className='status-check-container' style={{ background: "transparent", border: "2px solid gray" }}>
-                        02
+                    <div className='status-check-container' style={{ display: 'flex', gap: '10px', transform: "rotate(260deg)"}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 25" fill="none">
+                            <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
+                        </svg>
                     </div>
                     <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
-                        <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
+                        <line x1="12" y1="0" x2="12" y2="300" stroke="black" strokeWidth="2" />
                     </svg>
 
-                    <div className='status-check-container' style={{ background: "transparent", border: "2px solid gray" }}>
-                        03
+                    <div className='status-check-container' style={{ display: 'flex', gap: '10px', transform: "rotate(260deg)"}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 25" fill="none">
+                            <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
+                        </svg>
                     </div>
                     <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
-                        <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
+                        <line x1="12" y1="0" x2="12" y2="300" stroke="black" strokeWidth="2" />
                     </svg>
 
                     <div className='status-check-container' style={{ background: "transparent", border: "2px solid gray" }}>
@@ -275,8 +279,8 @@ function UploadPictures() {
                 </div>
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
-                <h2 className="request-form-header" style={{textAlign:'left', marginBottom:"0",marginLeft:"20px"}}>Review</h2>
-                <p style={{textAlign:'left',marginLeft:"20px", marginTop:"0",marginBottom:"0"}}>Please review the details of your event before submitting your request. If you need to change something, you can go back and change it.
+                <h2 className="request-form-header" style={{textAlign:'left',marginLeft:"20px"}}>Review</h2>
+                <p style={{textAlign:'left',marginLeft:"20px", marginTop:"0"}}>Please review the details of your event before submitting your request. If you need to change something, you can go back and change it.
                 </p>
 
                 <div>
