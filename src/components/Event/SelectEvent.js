@@ -43,34 +43,34 @@ function SelectEvent({ setEventType }) {
     };
 
     return (
-    <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
+    <div className='request-form-overall-container'>
         <div className='request-form-status-container'>
             <div className='status-bar-container'>
             <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
                 01
                 </div>
-                <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                <svg width="25px" xmlns="http://www.w3.org/2000/svg">
                     <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                 </svg>
                 
                 <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
                 02
                 </div>
-                <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                     <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                 </svg>
 
                 <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
                 03
                 </div>
-                <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                     <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                 </svg>
 
                 <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
                 04
                 </div>
-                <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                <svg width="25px" xmlns="http://www.w3.org/2000/svg">
                     <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                 </svg>
 
@@ -89,7 +89,7 @@ function SelectEvent({ setEventType }) {
         </div>
         <div className="request-form-container-details" style={{display:'flex',flexDirection:'column',gap:'20px'}}>
             <div className="request-form-header" style={{marginTop:'40px'}}>What would you like to get done today? </div>
-            <div style={{margin:"Sign-Up-Page-Subheader"}}>Please select one</div>
+            <div className="Sign-Up-Page-Subheader">Please select one</div>
             {/* Grid Container for Event Buttons */}
             <div className="event-grid-container" >
                 {eventOptions.map((event, index) => (
