@@ -2,6 +2,26 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import SignInModal from './SignInModal';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+
+const modules = {
+  toolbar: [
+    [{ 'header': [1, 2, false] }],
+    ['bold', 'italic', 'underline'],
+    ['blockquote', 'code-block'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['clean']
+  ]
+};
+
+const formats = [
+  'header',
+  'bold', 'italic', 'underline',
+
+  'blockquote', 'code-block',
+  'list', 'bullet'
+];
 
 function EventDetails({ eventType, setEventDetails }) {
     const [details, setDetails] = useState(() => {
@@ -262,12 +282,21 @@ function EventDetails({ eventType, setEventDetails }) {
                     {/* Additional Comments */}
                     <div className='non-grid-form'>
                         <div className="custom-input-container">
-                            <textarea
-                                name="additionalComments"
+                            <ReactQuill 
+                                theme="snow"
                                 value={details.additionalComments}
-                                onChange={handleChange}
-                                className="custom-input"
-                                style={{height:'120px'}}
+                                onChange={(content) => handleChange({
+                                    target: {
+                                        name: 'additionalComments',
+                                        value: content
+                                    }
+                                })}
+                                modules={modules}
+                                formats={formats}
+                                style={{
+                                    height: '200px',
+                                    marginBottom: '50px'
+                                }}
                             />
                             <label htmlFor="additionalComments" className="custom-label">
                                 Additional Comments

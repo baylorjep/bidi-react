@@ -6,12 +6,12 @@ import { Spinner } from 'react-bootstrap';
 import scrollBtn from '../../assets/images/Icons/scroll button.png';
 import { useLocation } from 'react-router-dom';
 
-const PhotoGrid = ({ photos, removePhoto }) => {
+const PhotoGrid = ({ photos, removePhoto, openModal }) => {
   return (
     <div className="photo-grid">
       {photos.map((photo, index) => (
         <div key={index} className="photo-grid-item">
-          <img src={photo.url} alt={`Uploaded ${index}`} className="photo-grid-image" />
+          <img src={photo.url} alt={`Uploaded ${index}`} className="photo-grid-image" onClick={() => openModal(photo)} />
           <button className="remove-photo-button" onClick={() => removePhoto(index)}>X</button>
         </div>
       ))}
@@ -31,6 +31,7 @@ function UploadPictures() {
     const [deletingPhotoUrl, setDeletingPhotoUrl] = useState(null);
     const [uploadingFiles, setUploadingFiles] = useState(0);
     const [addMoreLoading, setAddMoreLoading] = useState(false); // Add new state for add more button loading
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
     const navigate = useNavigate();
     const requestId = uuidv4(); // Generate a new request ID
 
@@ -227,6 +228,14 @@ const handleRemovePhoto = async (photoUrl) => {
       }
     }, []);
 
+    const openModal = (photo) => {
+      setSelectedPhoto(photo);
+    };
+
+    const closeModal = () => {
+      setSelectedPhoto(null);
+    };
+
     return (
         <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
             <div className='request-form-status-container'>
@@ -278,10 +287,13 @@ const handleRemovePhoto = async (photoUrl) => {
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal", justifyContent:"flex-start",alignItems:"flex-start"}}>
                 <h2 className="request-form-header" style={{textAlign:'left', marginBottom:"8px",marginLeft:"20px"}}>Inspiration Photos</h2>
-                <p style={{textAlign:'left',marginLeft:"20px", marginTop:"0",marginBottom:"0"}}>You can upload inspo (inspiration) photos here. If you aren't sure what you are looking for, just press next.
+                <p className="Sign-Up-Page-Subheader" style={{textAlign:'left',marginLeft:"20px", marginTop:"0",marginBottom:"0"}}>You can upload inspo (inspiration) photos here. If you aren't sure what you are looking for, just press next.
                 </p>
-                <div className="photo-uploads-container">
+                
+
+                
                     {photos.length === 0 ? ( // Only show this when no photo is uploaded
+                    <div className='photo-preview-container'>
                         <div
                             onDrop={handleDrop}
                             onDragOver={handleDragOver}
@@ -309,41 +321,41 @@ const handleRemovePhoto = async (photoUrl) => {
                                 </div>
                             )}
                         </div>
+                    </div>
                     ) : (
-                        // Show the preview and remove button when a photo is uploaded
-                        <div  style={styles.photoPreviewContainer}>
-                            <PhotoGrid photos={photos} removePhoto={removePhoto} />
+
+                    <div className="photo-grid-container">
+                        <PhotoGrid photos={photos} removePhoto={removePhoto} openModal={openModal} />
+                    </div>
+
                         
-                        </div>
+                        
                         
                     )}
-
+                
                     {error && <p style={{ color: 'red' }}>{error}</p>}
-                </div>
-
                 {photos.length > 0 && (
-                        <div style={{display:'flex', justifyContent:'center', alignItems:'center', width:'100%'}}>
-                            <button 
-                                onClick={handleClick}
-                                className="add-more-photos-btn"
-                                disabled={addMoreLoading}
-                            >
-                                <input
-                                    type="file"
-                                    id="file-input"
-                                    multiple
-                                    onChange={handleFileSelect}
-                                    style={{ display: 'none'}}
-                                />
-                                {addMoreLoading ? (
-                                    <Spinner />
-                                ) : (
-                                    <span className="add-more-text">Add More</span>
-                                )}
-                            </button>
-                        </div>
-                    )}
-
+                <div style={{display:'flex', justifyContent:'center', alignItems:'center', width:'100%'}}>
+                                    <button 
+                                        onClick={handleClick}
+                                        className="add-more-photos-btn"
+                                        disabled={addMoreLoading}
+                                    >
+                                        <input
+                                            type="file"
+                                            id="file-input"
+                                            multiple
+                                            onChange={handleFileSelect}
+                                            style={{ display: 'none'}}
+                                        />
+                                        {addMoreLoading ? (
+                                            <Spinner />
+                                        ) : (
+                                            <span className="add-more-text">Add More</span>
+                                        )}
+                                    </button>
+                                </div>
+ )}
             <div className="form-button-container" style={{margin:"0"}}>
                 <button className="request-form-back-and-foward-btn" onClick={handleBack} style={{color:"black"}}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -370,7 +382,20 @@ const handleRemovePhoto = async (photoUrl) => {
             </div>
                 </div>
 
-                
+                {selectedPhoto && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content">
+            <button 
+              className="remove-photo-button"
+              style={{ position: 'absolute', top: '10px', right: '10px' }}
+              onClick={closeModal}
+            >
+              ✕
+            </button>
+            <img src={selectedPhoto.url} alt="Enlarged view" />
+          </div>
+        </div>
+      )}
         </div>
         
     );

@@ -6,17 +6,26 @@ function RequestCategories() {
     const [category, setCategory] = useState('');
 
     const handleSelection = () => {
+        const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
+        
         if (category === 'photography') {
-            navigate(`/select-event`);
+            localStorage.setItem('photographyRequest', JSON.stringify({
+                ...savedForm,
+                serviceType: category
+            }));
+            navigate('/select-event');
         } else {
-            navigate(`/request-form`, { state: { category } }); // Pass category in state
+            localStorage.setItem('photographyRequest', JSON.stringify({
+                ...savedForm,
+                requestType: category
+            }));
+            navigate('/request-form', { state: { category } });
         }
     };
 
-        const handleBack = () => {
-            navigate('/createaccount');  // Adjust the route for going back
-        };
-
+    const handleBack = () => {
+        navigate('/createaccount');  // Adjust the route for going back
+    };
 
     return (
         <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
@@ -33,11 +42,10 @@ function RequestCategories() {
                         <option value="" disabled hidden>Select a service</option>
                         <option value="photography">Photography/Videography</option>
                         <option value="dj-services">DJ Services</option>
-                        <option value="cakes">Cakes</option>
                         <option value="hair-and-makeup-artist">Hair and Makeup Artist</option>
+                        <option value="florist">Florist</option>
                         <option value="catering">Catering</option>
-                        <option value="event/wedding-planner">Event/Wedding Planner</option>
-                        <option value="cleaning">Cleaning</option>
+                        <option value="event/wedding-planner">Event/Wedding Planner</option>    
                         <option value="other">Other</option>
                     </select>
                     

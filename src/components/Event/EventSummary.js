@@ -153,50 +153,10 @@ function UploadPictures() {
         setError(null);
         
         try {
-            // Generate request ID
-            const requestId = uuidv4();
-            let uploadedCount = 0;
-            
-            // Upload all photos
-            const uploadedPictures = await Promise.all(
-                photos.map(async (photo) => {
-                    const filePath = `${user.id}/${requestId}/${uuidv4()}-${photo.name}`;
-                    
-                    // Upload file
-                    const { error: uploadError } = await supabase.storage
-                        .from('request-media')
-                        .upload(filePath, photo.file);
-                    if (uploadError) throw uploadError;
-                    
-                    // Get public URL
-                    const { data: publicData, error: publicError } = await supabase.storage
-                        .from('request-media')
-                        .getPublicUrl(filePath);
-                    if (publicError) throw publicError;
-                    
-                    // Save metadata
-                    const { error: dbError } = await supabase
-                        .from('event_photos')
-                        .insert([{ 
-                            user_id: user.id, 
-                            request_id: requestId, 
-                            photo_url: publicData.publicUrl, 
-                            file_path: filePath 
-                        }]);
-                    if (dbError) throw dbError;
-
-                    uploadedCount++;
-                    setUploadingFiles(photos.length - uploadedCount);
-                    
-                    return { url: publicData.publicUrl, filePath };
-                })
-            );
-
-            // Create photography request
-            const { error } = await supabase
+            // First create the photography request
+            const { data: request, error: requestError } = await supabase
                 .from('photography_requests')
                 .insert([{
-                    id: requestId,
                     profile_id: user.id,
                     event_title: eventDetails.eventTitle,
                     event_type: eventType,
@@ -208,14 +168,46 @@ function UploadPictures() {
                     num_people: eventDetails.numPeople,
                     duration: eventDetails.duration,
                     indoor_outdoor: eventDetails.indoorOutdoor,
-                    additional_comments: eventDetails.additionalComments,
-                    extras: eventDetails.extras,
-                    status: 'open'
-                }]);
+                    additional_comments: eventDetails.additionalComments
+                }])
+                .select()
+                .single();
 
-            if (error) throw error;
+            if (requestError) throw requestError;
 
-            // Clear localStorage and navigate on success
+            // Then upload photos using the new request ID
+            if (photos.length > 0) {
+                const uploadPromises = photos.map(async (photo) => {
+                    const filePath = `${user.id}/${request.id}/${photo.name}`;
+                    
+                    // Upload photo file
+                    const { error: uploadError } = await supabase.storage
+                        .from('request-media')
+                        .upload(filePath, photo);
+                    if (uploadError) throw uploadError;
+
+                    // Get public URL
+                    const { data: publicData, error: publicError } = await supabase.storage
+                        .from('request-media')
+                        .getPublicUrl(filePath);
+                    if (publicError) throw publicError;
+
+                    // Save photo metadata
+                    const { error: dbError } = await supabase
+                        .from('event_photos')
+                        .insert([{
+                            user_id: user.id,
+                            request_id: request.id,
+                            photo_url: publicData.publicUrl,
+                            file_path: filePath
+                        }]);
+                    if (dbError) throw dbError;
+                });
+
+                await Promise.all(uploadPromises);
+            }
+
+            // Clear form and navigate on success
             localStorage.removeItem('photographyRequest');
             navigate('/success-request');
 
@@ -280,25 +272,13 @@ function UploadPictures() {
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
                 <h2 className="request-form-header" style={{textAlign:'left',marginLeft:"20px"}}>Review</h2>
-                <p style={{textAlign:'left',marginLeft:"20px", marginTop:"0"}}>Please review the details of your event before submitting your request. If you need to change something, you can go back and change it.
+                <p className="Sign-Up-Page-Subheader" style={{textAlign:'left',marginLeft:"20px", marginTop:"0"}}>Please review the details of your event before submitting your request. If you need to change something, you can go back and change it.
                 </p>
 
                 <div>
-                    {/* Display the event details
-                    <div className="review-text"style={{display:'flex', marginTop:'120px', textAlign:'left', flexDirection:'column'}}>
-                        <p style={{textAlign:'left'}}><strong>Event Type:</strong> {eventType}</p>
-                        <p style={{textAlign:'left'}}><strong>Location:</strong> {eventDetails.location}</p>
-                        <p style={{textAlign:'left'}}><strong>{eventDetails.dateType === 'range' && 'Start'} Date:</strong> {String(eventDetails.startDate)}</p>
-                        {eventDetails.dateType === 'range' && <p style={{textAlign:'left'}}><strong>End Date:</strong> {String(eventDetails.endDate)}</p>}
-                        <p style={{textAlign:'left'}}><strong>Time of Day:</strong> {String(eventDetails.timeOfDay)}</p>
-                        <p style={{textAlign:'left'}}><strong>Number of People:</strong> {String(eventDetails.numPeople)}</p>
-                        <p style={{textAlign:'left'}}><strong>Duration (in hours):</strong> {String(eventDetails.duration)}</p>
-                        <p style={{textAlign:'left'}}><strong>Indoor/Outdoor:</strong> {eventDetails.indoorOutdoor}</p>
-                        <p style={{textAlign:'left'}}><strong>Additional Comments:</strong> {eventDetails.additionalComments}</p>
-                        
-                    </div>
-        */}
-                    <div className="scroll-container">
+
+                    {/* Display event details
+                    <div className="scroll-container" style={{height:'60%'}}>
                     <PhotoRequestDisplay 
                         photoRequest={{
                         event_title: eventDetails.eventTitle,
@@ -319,6 +299,69 @@ function UploadPictures() {
                     />
 
                     </div>
+
+                    \*/}
+
+            <div className="request-grid" style={{marginTop:"8px"}}>
+                   
+                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Event Type</div>
+                       <div className="request-info">{eventType}</div>  
+                   </div>   
+
+                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype"> {eventDetails.dateType === 'range' ? 'Start Date ' : 'Date '}</div>
+                       <div className="request-info">{new Date(eventDetails.startDate).toLocaleDateString()}</div>
+                       
+                   </div>
+                   {eventDetails.dateType === 'range' && (
+                           <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                           <div className="request-subtype">End Date</div>
+                           <div className="request-info">{new Date(eventDetails.endDate).toLocaleDateString()}</div>
+                           
+                       </div>
+                   )}
+
+                
+                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Time of Day</div>
+                       <div className="request-info">{eventDetails.timeOfDay}</div>
+                   </div>
+
+                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Location</div>
+                       <div className="request-info">{eventDetails.location}</div>
+                   </div>
+
+                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Number of People</div>
+                       <div className="request-info">{eventDetails.numPeople}</div>
+                   </div>
+
+                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Duration (in hours)</div>
+                       <div className="request-info">{eventDetails.duration}</div>
+                   </div>
+
+                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Indoor/Outdoor</div>
+                       <div className="request-info">{eventDetails.indoorOutdoor}</div>
+                   </div>
+                    
+               </div>
+               <div style={{
+                        display: 'flex',
+                        flexDirection: 'column', 
+                        gap: '8px', 
+                        paddingTop:'20px', 
+                        alignItems:'flex-start',
+                    }}>
+                        <div className="request-subtype">Additional Comments</div>
+                        <div 
+                            className="request-info quill-content"
+                            dangerouslySetInnerHTML={{ __html: eventDetails.additionalComments }}
+                        />
+                    </div>
                     
                 </div>
                 
@@ -333,21 +376,12 @@ function UploadPictures() {
                         Back
                     </button>
                     <button
-                    type='submit'
                     className='request-form-back-and-foward-btn'
-                    onClick={handleSubmit} // Call the handleSubmit function
+                    onClick={handleSubmit}
+                    disabled={loading}
                     style={{color:'black'}}
                     >
-                        Next
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-
-                        >
-                            <path d="M3.99984 13L3.99984 11L15.9998 11L10.4998 5.50004L11.9198 4.08004L19.8398 12L11.9198 19.92L10.4998 18.5L15.9998 13L3.99984 13Z" />
-                        </svg>
+                        {loading ? 'Submitting...' : 'Submit'}
                     </button>
                 </div>
             </div>
