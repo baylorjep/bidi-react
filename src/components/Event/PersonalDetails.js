@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Spinner } from 'react-bootstrap';
 
-function PersonalDetails() {
+function PersonalDetails({ formData, setPersonalDetails, nextStep, prevStep, source: propSource }) {
     const [userInfo, setUserInfo] = useState(() => {
         const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
         return savedForm.personalDetails || {
@@ -16,25 +16,29 @@ function PersonalDetails() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const isFromAdditionalComments = location.state?.from === 'additionalComments';
+    const source = isFromAdditionalComments ? 'additionalComments' : propSource;
 
     // Fetch user info when the component mounts
     useEffect(() => {
         const fetchUserInfo = async () => {
-            const { data, error } = await supabase.auth.getUser();
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-            if (error) {
+            if (authError) {
                 setError('Error fetching user information.');
                 setLoading(false);
                 return;
             }
 
-            if (data?.user) {
+            if (user) {
                 try {
                     // Fetch additional info from the individual_profiles table
                     const { data: userData, error: userError } = await supabase
                         .from('individual_profiles') // Ensure the table name matches
                         .select('first_name, last_name, phone')
-                        .eq('id', data.user.id)
+                        .eq('id', user.id)  // Use user.id here
                         .single();
 
                     if (userError) {
@@ -73,26 +77,31 @@ function PersonalDetails() {
 
     // Handle form submission to update user info
     const handleSubmit = async (e) => {
-        e.preventDefault(); // Prevent the form's default behavior if triggered elsewhere
-        const { data } = await supabase.auth.getUser();
-    
-        if (data?.user) {
+        e.preventDefault();
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
             try {
                 const { error } = await supabase
-                    .from('individual_profiles') // Ensure the table name matches
+                    .from('individual_profiles')
                     .update({
                         first_name: userInfo.firstName,
                         last_name: userInfo.lastName,
-                        phone: userInfo.phoneNumber // Ensure the column name is correct
+                        phone: userInfo.phoneNumber
                     })
-                    .eq('id', data.user.id);
-    
-                if (error) {
-                    throw new Error(error.message);
+                    .eq('id', user.id);  // Use user.id here
+
+                if (error) throw new Error(error.message);
+
+                // Navigation logic
+                if (source === 'additionalComments') {
+                    navigate('/event-photos', { 
+                        state: { from: 'additional-comments' } 
+                    });
+                } else {
+                    navigate('/event-photos');
                 }
-    
-                // Navigate to the 'event-photos' page after successful submission
-                navigate('/event-photos');
             } catch (err) {
                 setError('Error updating information.');
             }
@@ -115,7 +124,11 @@ function PersonalDetails() {
     }
 
     const handleBack = () => {
-        navigate('/event-details');  // Adjust the route for going back
+        if (source === 'additionalComments') {
+            navigate('/additional-comments');
+        } else {
+            navigate('/event-details');
+        } 
     };
 
     return (

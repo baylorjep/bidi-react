@@ -303,11 +303,20 @@ function UploadPictures() {
                     \*/}
 
             <div className="request-grid" style={{marginTop:"8px"}}>
-                   
-                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                        <div className="request-subtype">Event Type</div>
                        <div className="request-info">{eventType}</div>  
-                   </div>   
+                   </div>  
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Title</div>
+                       <div className="request-info">{eventDetails.eventTitle}</div>  
+                   </div>  
+
+                   
+                   
+                
 
                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                        <div className="request-subtype"> {eventDetails.dateType === 'range' ? 'Start Date ' : 'Date '}</div>
@@ -322,16 +331,17 @@ function UploadPictures() {
                        </div>
                    )}
 
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Location</div>
+                       <div className="request-info">{eventDetails.location}</div>
+                   </div>
                 
                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                        <div className="request-subtype">Time of Day</div>
                        <div className="request-info">{eventDetails.timeOfDay}</div>
                    </div>
 
-                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                       <div className="request-subtype">Location</div>
-                       <div className="request-info">{eventDetails.location}</div>
-                   </div>
+                   
 
                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                        <div className="request-subtype">Number of People</div>
@@ -362,6 +372,28 @@ function UploadPictures() {
                             dangerouslySetInnerHTML={{ __html: eventDetails.additionalComments }}
                         />
                     </div>
+
+
+                {/* Add after additional comments section
+                {photos && photos.length > 0 && (
+                    <div className="photos-section" style={{overflowY:'auto'}}>
+                        <div className="photo-grid">
+                            {photos.map((photo, index) => (
+                                <div key={index} className="photo-grid-item">
+                                    <img
+                                        src={photo.url}
+                                        alt={`Inspiration ${index + 1}`}
+                                        className="photo"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                ?*/}
+
+               
                     
                 </div>
                 
@@ -384,6 +416,7 @@ function UploadPictures() {
                         {loading ? 'Submitting...' : 'Submit'}
                     </button>
                 </div>
+                
             </div>
             </div>
     );

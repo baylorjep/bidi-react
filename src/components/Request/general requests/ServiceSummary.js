@@ -43,24 +43,139 @@ function SummaryPage({ formData, prevStep }) {
     };
 
     return (
-        <div className="form-container">
-            <h2>Summary of Your Request</h2>
-            <p><strong>Service Title:</strong> {formData.serviceTitle}</p>
-            <p><strong>Description:</strong> {formData.description}</p>
-            <p><strong>Budget:</strong> {formData.budget}</p>
-            <p><strong>Start Date:</strong> {formData.startDate}</p>
-            {formData.endDate && <p><strong>End Date:</strong> {formData.endDate}</p>}
-            <p><strong>Time of Day:</strong> {formData.timeOfDay || 'TBD'}</p>
-            <p><strong>Location:</strong> {formData.location}</p>
-            {formData.additionalComments && <p><strong>Additional Comments:</strong> {formData.additionalComments}</p>}
+
+        <div className='request-form-overall-container'>
+        <div className='request-form-status-container'>
+            <div className='status-bar-container'>
+            <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
+                01
+                </div>
+                <svg width="25px" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
+                </svg>
+                
+                <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
+                02
+                </div>
+                <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
+                    <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
+                </svg>
+
+                <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
+                03
+                </div>
+                <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
+                    <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
+                </svg>
+
+                <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
+                04
+                </div>
+                <svg width="25px" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
+                </svg>
+
+                <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
+                05
+                </div>
+                
+            </div>
+            <div className='status-text-container'>
+                <div className='status-text'>Service Details</div>
+                <div className='status-text'>Personal Details</div>
+                <div className='status-text'>Add Photos</div>
+                <div className='status-text'>Review</div>
+                <div className='status-text'>Submit</div>
+            </div>
+        </div>
+        <div className="request-form-container-details" style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+            <div className="request-form-header" style={{marginTop:'40px'}}>Summary of Your Request</div>
+            <div className="request-grid">
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Title</div>
+                        <div className="request-info">{formData.serviceTitle}</div>  
+                </div>
+
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Description</div>
+                        <div className="request-info">{formData.description}</div>  
+                </div>
+
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Budget</div>
+                        <div className="request-info">{formData.budget}</div>  
+                </div>      
+
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Start Date</div>
+                        <div className="request-info">{formData.startDate}</div>  
+                </div>
+                {formData.endDate &&
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">End Date</div>
+                        <div className="request-info">{formData.endDate}</div>  
+                </div>
+                }    
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Time of Day</div>
+                       <div className="request-info">{formData.timeOfDay}</div>  
+                   </div> 
+
+                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Location</div>
+                       <div className="request-info">{formData.location}</div>  
+                   </div>  
+            </div> 
+            <div style={{
+                        display: 'flex',
+                        flexDirection: 'column', 
+                        gap: '8px', 
+                        paddingTop:'20px', 
+                        alignItems:'flex-start',
+                        width:'70%',
+                        
+                    }}>
+                        <div className="request-subtype">Additional Comments</div>
+                        <div 
+                            style={{width:'100%', height:'100%'}}
+                            className="request-info quill-content"
+                            dangerouslySetInnerHTML={{ __html: formData.additionalComments }}
+                            
+                        />
+                    </div>
 
             {errorMessage && <p className="text-danger">{errorMessage}</p>}
 
+        
+
             <div className="form-button-container">
-                <button type="button" onClick={prevStep} className="btn btn-primary mt-3">Back</button>
-                <button type="button" onClick={handleSubmit} className="btn btn-secondary mt-3">Submit</button>
+                <button 
+                    type="button" 
+                    onClick={prevStep} 
+                    className="request-form-back-and-foward-btn"
+                    style={{color:"black"}}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M20.0002 11V13L8.00016 13L13.5002 18.5L12.0802 19.92L4.16016 12L12.0802 4.07996L13.5002 5.49996L8.00016 11L20.0002 11Z" fill="black"/>
+                    </svg>
+                    Back
+                </button>
+                <button
+                    className="request-form-back-and-foward-btn"
+                    onClick={handleSubmit}
+                    style={{
+                        color:'black',}}
+                        
+                >
+                    Submit
+
+                </button>
             </div>
+
         </div>
+    </div>
+
     );
 }
 

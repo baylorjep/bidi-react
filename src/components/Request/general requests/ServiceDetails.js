@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 function ServiceDetails({ formData, setServiceDetails, nextStep }) {
     const navigate = useNavigate();
-
+    const [isFormValid, setIsFormValid] = useState(false);
     const [requestType, setRequestType] = useState('');
     
     useEffect(() => {
@@ -16,8 +15,21 @@ function ServiceDetails({ formData, setServiceDetails, nextStep }) {
     }, []);
 
     const handleChange = (e) => {
-        setServiceDetails({ ...formData, [e.target.name]: e.target.value });
+        const updatedData = { ...formData, [e.target.name]: e.target.value };
+        setServiceDetails(updatedData);
+        // Save to localStorage
+        localStorage.setItem('requestFormData', JSON.stringify(updatedData));
     };
+
+    useEffect(() => {
+        // Check if all required fields are filled
+        const isValid = formData.serviceTitle && 
+                       formData.description && 
+                       formData.budget;
+        setIsFormValid(isValid);
+    }, [formData]);
+
+    
 
     // Capitalize category name with spaces instead of hyphens
     const formattedCategory = formData.category
@@ -73,8 +85,9 @@ function ServiceDetails({ formData, setServiceDetails, nextStep }) {
         </div>
         <div className="request-form-container-details" style={{display:'flex',flexDirection:'column',gap:'20px'}}>
             <div className="request-form-header" style={{marginTop:'40px'}}>{requestType} Details</div>
+            <div className="form-container">
             <form onSubmit={(e) => { e.preventDefault(); nextStep(); }}>
-           
+            
                 <div className="custom-input-container">
                     
                     <input
@@ -111,23 +124,29 @@ function ServiceDetails({ formData, setServiceDetails, nextStep }) {
                     />
                     <label className='custom-label'>Budget</label>
                 </div>
-                <div className="form-button-container">
-                    <button type="button" onClick={() => navigate('/request-categories')} className="btn btn-primary mt-3">Back</button>
-                    <button type="submit" className="btn btn-secondary mt-3">
-                        Next
-                    </button>
-                </div>
             </form>
+            </div>
 
             <div className="form-button-container">
-                <button className="request-form-back-and-foward-btn"  style={{color:"black"}}>
+                <button 
+                    type="button" 
+                    onClick={() => navigate('/request-categories')} 
+                    className="request-form-back-and-foward-btn"
+                    style={{color:"black"}}
+                >
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                         <path d="M20.0002 11V13L8.00016 13L13.5002 18.5L12.0802 19.92L4.16016 12L12.0802 4.07996L13.5002 5.49996L8.00016 11L20.0002 11Z" fill="black"/>
                     </svg>
                     Back
                 </button>
                 <button
-                    className={`request-form-back-and-foward-btn`}
+                    className="request-form-back-and-foward-btn"
+                    onClick={() => isFormValid && nextStep()}
+                    disabled={!isFormValid}
+                    style={{
+                        color: isFormValid ? "black" : "#999",
+                        cursor: isFormValid ? "pointer" : "not-allowed"
+                    }}
                 >
                     Next
                     <svg
@@ -135,6 +154,7 @@ function ServiceDetails({ formData, setServiceDetails, nextStep }) {
                         width="24"
                         height="24"
                         viewBox="0 0 24 24"
+                        fill={isFormValid ? "black" : "#999"}
                     >
                         <path d="M3.99984 13L3.99984 11L15.9998 11L10.4998 5.50004L11.9198 4.08004L19.8398 12L11.9198 19.92L10.4998 18.5L15.9998 13L3.99984 13Z" />
                     </svg>

@@ -4,28 +4,39 @@ import ServiceDetails from './ServiceDetails';
 import DateAndTime from './DateandTime';
 import LocationDetails from './Location';
 import AdditionalComments from './AdditionalComments';
+import PersonalDetails from '../../Event/PersonalDetails';
+import EventPhotos from '../../Event/UploadPictures';
 import SummaryPage from './ServiceSummary';
+
 
 function MultiStepRequestForm() {
     const location = useLocation();
-    const category = location.state?.category || 'General';
-
-    const [formData, setFormData] = useState({
-        category,
-        serviceTitle: '',
-        description: '',
-        budget: '',
-        startDate: '',
-        endDate: '',
-        timeOfDay: '',
-        location: '',
-        additionalComments: ''
-    });
-    const [currentStep, setCurrentStep] = useState(1);
     const navigate = useNavigate();
+    const category = location.state?.category || 'General';
+    const [currentStep, setCurrentStep] = useState(1);
+
+    const [formData, setFormData] = useState(() => {
+        // Load saved data from localStorage on mount
+        const savedData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
+        return {
+            category,
+            serviceTitle: '',
+            description: '',
+            budget: '',
+            startDate: '',
+            endDate: '',
+            timeOfDay: '',
+            location: '',
+            additionalComments: '',
+            ...savedData // Merge saved data with default values
+        };
+    });
 
     const updateFormData = (newData) => {
-        setFormData(prevData => ({ ...prevData, ...newData }));
+        const updatedData = { ...formData, ...newData };
+        setFormData(updatedData);
+        // Save to localStorage whenever data changes
+        localStorage.setItem('requestFormData', JSON.stringify(updatedData));
     };
 
     const nextStep = () => setCurrentStep(prevStep => prevStep + 1);
@@ -67,9 +78,28 @@ function MultiStepRequestForm() {
                     setAdditionalComments={updateFormData}
                     nextStep={nextStep}
                     prevStep={prevStep}
+                    source="requestForm"  // This is where the source prop is set
                 />
             )}
             {currentStep === 5 && (
+                <PersonalDetails
+                    formData={formData}
+                    setPersonalDetails={updateFormData}
+                    nextStep={nextStep}
+                    prevStep={prevStep}
+                    
+                />
+            )}
+            {currentStep === 6 && (
+                <EventPhotos
+                    formData={formData}
+                    setPersonalDetails={updateFormData}
+                    nextStep={nextStep}
+                    prevStep={prevStep}
+                    
+                />
+            )}
+            {currentStep === 7 && (
                 <SummaryPage
                     formData={formData}
                     handleSubmit={handleSubmit}

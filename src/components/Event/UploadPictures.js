@@ -19,7 +19,9 @@ const PhotoGrid = ({ photos, removePhoto, openModal }) => {
   );
 };
 
-function UploadPictures() {
+function UploadPictures({ formData, nextStep, prevStep }) {
+    const location = useLocation();
+    const isFromAdditionalComments = location.state?.from === 'additional-comments';
     const [photos, setPhotos] = useState(() => {
         const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
         return savedForm.photos || [];
@@ -136,11 +138,6 @@ const handleRemovePhoto = async (photoUrl) => {
             }
         });
     };
-    
-
-    const handleBack = () => {
-        navigate('/personal-details');  // Navigate back
-    };
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -153,18 +150,6 @@ const handleRemovePhoto = async (photoUrl) => {
         handleFileSelect(inputEvent);
     };
 
-    const [currentIndex, setCurrentIndex] = useState(0);
-
-    const handleNext = () => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % photos.length);
-    };
-
-    const handlePrevious = () => {
-        setCurrentIndex((prevIndex) =>
-            prevIndex === 0 ? photos.length - 1 : prevIndex - 1
-        );
-    };
-    
     const renderRemoveButton = (photo) => {
         return (
           <div 
@@ -234,6 +219,33 @@ const handleRemovePhoto = async (photoUrl) => {
 
     const closeModal = () => {
       setSelectedPhoto(null);
+    };
+
+    const handleNext = () => {
+        if (isFromAdditionalComments) {
+            navigate('/request-form', { 
+                state: { 
+                    from: 'additional-comments',
+                    step: 'service-summary'
+                } 
+            });
+        } else {
+            navigate('/request-form', { 
+                state: { 
+                    currentStep: 7
+                } 
+            });
+        }
+    };
+
+    const handleBack = () => {
+        if (isFromAdditionalComments) {
+            navigate('/personal-details', { 
+                state: { from: 'additional-comments' } 
+            });
+        } else {
+            navigate('/personal-details');
+        }
     };
 
     return (
@@ -366,7 +378,7 @@ const handleRemovePhoto = async (photoUrl) => {
                 <button
                 type='submit'
                 className='request-form-back-and-foward-btn'
-                style={{color:'black'}} onClick={handleSubmit}
+                style={{color:'black'}} onClick={handleNext}
                 >
                     Next
                     <svg
