@@ -3,20 +3,21 @@ import { supabase } from '../../supabaseClient';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Spinner } from 'react-bootstrap';
 
-function PersonalDetails({ formData, setPersonalDetails, nextStep, prevStep, source: propSource }) {
-    const [userInfo, setUserInfo] = useState(() => {
-        const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
-        return savedForm.personalDetails || {
-            firstName: '',
-            lastName: '',
-            phoneNumber: '',
-            email: ''
-        };
-    });
+function PersonalDetails({ formData,  nextStep, prevStep, source: propSource }) {
+    
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
+    const serviceType = localStorage.getItem('serviceType');
+    const isFromPhotographyRequest = location.pathname === '/personal-details' && location.state?.from === 'event-details';
+    const [userInfo, setUserInfo] = useState({
+        firstName: '',
+        lastName: '',
+        phoneNumber: ''
+    });
+
 
     const isFromAdditionalComments = location.state?.from === 'additionalComments';
     const source = isFromAdditionalComments ? 'additionalComments' : propSource;
@@ -75,40 +76,50 @@ function PersonalDetails({ formData, setPersonalDetails, nextStep, prevStep, sou
         }));
     };
 
+    useEffect(() => {
+        if (typeof nextStep !== 'function' || typeof prevStep !== 'function') {
+            console.error('Required props nextStep or prevStep not provided to PersonalDetails');
+        }
+    }, [nextStep, prevStep]);
+
     // Handle form submission to update user info
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-            try {
-                const { error } = await supabase
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { error: updateError } = await supabase
                     .from('individual_profiles')
                     .update({
                         first_name: userInfo.firstName,
                         last_name: userInfo.lastName,
                         phone: userInfo.phoneNumber
                     })
-                    .eq('id', user.id);  // Use user.id here
+                    .eq('id', user.id);
 
-                if (error) throw new Error(error.message);
+                if (updateError) throw new Error(updateError.message);
 
-                // Navigation logic
-                if (source === 'additionalComments') {
-                    navigate('/event-photos', { 
-                        state: { from: 'additional-comments' } 
-                    });
-                } else {
+                if (isFromPhotographyRequest) {
+                    const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
+                    localStorage.setItem('photographyRequest', JSON.stringify({
+                        ...savedForm,
+                        personalDetails: {
+                            firstName: userInfo.firstName,
+                            lastName: userInfo.lastName,
+                            phoneNumber: userInfo.phoneNumber
+                        }
+                    }));
                     navigate('/event-photos');
+                } else if (typeof nextStep === 'function') {
+                    nextStep();
                 }
-            } catch (err) {
-                setError('Error updating information.');
             }
-        } else {
-            setError('User not logged in.');
+        } catch (err) {
+            console.error('Submission error:', err);
+            setError(err.message || 'Error updating information.');
         }
     };
+
     
 
     if (loading) {
@@ -124,11 +135,13 @@ function PersonalDetails({ formData, setPersonalDetails, nextStep, prevStep, sou
     }
 
     const handleBack = () => {
-        if (source === 'additionalComments') {
-            navigate('/additional-comments');
-        } else {
+        if (serviceType === 'photography') {
             navigate('/event-details');
-        } 
+        } else if (typeof prevStep === 'function') {
+            prevStep();
+        } else {
+            navigate(-1);
+        }
     };
 
     return (
@@ -140,28 +153,28 @@ function PersonalDetails({ formData, setPersonalDetails, nextStep, prevStep, sou
                             <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
                         </svg>
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="300" stroke="black" strokeWidth="2" />
                     </svg>
 
                     <div className='status-check-container' style={{ background: "transparent", border: "2px solid gray" }}>
                         02
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px" xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                     </svg>
 
                     <div className='status-check-container' style={{ background: "transparent", border: "2px solid gray" }}>
                         03
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                     </svg>
 
                     <div className='status-check-container' style={{ background: "transparent", border: "2px solid gray" }}>
                         04
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                     </svg>
 

@@ -13,29 +13,20 @@ function MultiStepRequestForm() {
     const location = useLocation();
     const navigate = useNavigate();
     const category = location.state?.category || 'General';
-    const [currentStep, setCurrentStep] = useState(1);
+    const [currentStep, setCurrentStep] = useState(() => {
+        return location.state?.currentStep || 1;
+    });
 
     const [formData, setFormData] = useState(() => {
-        // Load saved data from localStorage on mount
         const savedData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
         return {
-            category,
-            serviceTitle: '',
-            description: '',
-            budget: '',
-            startDate: '',
-            endDate: '',
-            timeOfDay: '',
-            location: '',
-            additionalComments: '',
-            ...savedData // Merge saved data with default values
+            ...savedData
         };
     });
 
     const updateFormData = (newData) => {
         const updatedData = { ...formData, ...newData };
         setFormData(updatedData);
-        // Save to localStorage whenever data changes
         localStorage.setItem('requestFormData', JSON.stringify(updatedData));
     };
 

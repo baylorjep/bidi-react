@@ -228,7 +228,7 @@ function UploadPictures() {
                             <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
                         </svg>
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="300" stroke="black" strokeWidth="2" />
                     </svg>
 
@@ -237,7 +237,7 @@ function UploadPictures() {
                             <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
                         </svg>
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="300" stroke="black" strokeWidth="2" />
                     </svg>
 
@@ -246,14 +246,14 @@ function UploadPictures() {
                             <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
                         </svg>
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="300" stroke="black" strokeWidth="2" />
                     </svg>
 
                     <div className='status-check-container' style={{ background: "transparent", border: "2px solid gray" }}>
                         04
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                     </svg>
 

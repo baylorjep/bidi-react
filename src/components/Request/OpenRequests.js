@@ -3,10 +3,12 @@ import { supabase } from '../../supabaseClient';
 import RequestDisplay from './RequestDisplay';
 import PhotoRequestDisplay from './PhotoRequestDisplay';
 import '../../App.css';
+import SearchBar from '../SearchBar/SearchBar';
 
 function OpenRequests() {
     const [openRequests, setOpenRequests] = useState([]);
     const [openPhotoRequests, setOpenPhotoRequests] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -87,9 +89,12 @@ function OpenRequests() {
     }, []);
 
     return (
-        <div className=" d-flex align-items-center justify-content-center content">
-            <div className="col-lg-6 remaining-space">
+        <div className="request-grid-container">
+
+            <div className="request-grid">
                 {error && <p>Error: {error}</p>}
+
+
 
                 {openRequests.length > 0 && openRequests.map((request) => (
                     <RequestDisplay key={request.id} request={request} />
@@ -111,3 +116,4 @@ function OpenRequests() {
 }
 
 export default OpenRequests;
+

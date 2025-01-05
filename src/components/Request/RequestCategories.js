@@ -6,22 +6,25 @@ function RequestCategories() {
     const [category, setCategory] = useState('');
 
     const handleSelection = () => {
-        const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
+        const serviceType = category === 'photography' ? 'photography' : 'general';
         
-        if (category === 'photography') {
-            localStorage.setItem('photographyRequest', JSON.stringify({
-                ...savedForm,
-                serviceType: category
-            }));
-            navigate('/select-event');
+        // Store in localStorage
+        localStorage.setItem('serviceType', serviceType);
+        
+        if (serviceType === 'photography') {
+            navigate('/select-event', { 
+                state: { serviceType } 
+            });
         } else {
-            localStorage.setItem('photographyRequest', JSON.stringify({
-                ...savedForm,
-                requestType: category
-            }));
-            navigate('/request-form', { state: { category } });
+            navigate('/request-form', { 
+                state: { 
+                    category,
+                    serviceType 
+                } 
+            });
         }
     };
+
 
     const handleBack = () => {
         navigate('/createaccount');  // Adjust the route for going back

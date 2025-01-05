@@ -38,17 +38,11 @@ function AdditionalComments({ formData, setAdditionalComments, nextStep, prevSte
 
     const handleNext = async () => {
         const { data: { session } } = await supabase.auth.getSession();
-
         if (!session) {
             localStorage.setItem('additionalComments', formData.additionalComments);
             setIsModalOpen(true);
         } else {
-            navigate('/personal-details', { 
-                state: { 
-                    from: 'additionalComments',
-                    formData: formData 
-                }
-            });
+            nextStep(); // Use nextStep instead of navigate
         }
     };
 

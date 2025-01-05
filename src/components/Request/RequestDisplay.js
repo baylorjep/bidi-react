@@ -7,18 +7,38 @@ function RequestDisplay({ request, hideBidButton }) {
         <div className="request-display text-center mb-4">
             <div className="request-content p-3">
                 <h2 className="request-title">{request.service_title}</h2>
-                <p className="request-location"><strong>Location:</strong> {request.location}</p>
-                <p className="request-category"><strong>Category:</strong> {request.service_category}</p>
-                <p className="request-description"><strong>Description:</strong> {request.service_description}</p>
-                <p className="request-date"><strong>Date of Service:</strong> {new Date(request.service_date).toLocaleDateString()}</p>
                 
+                <div className="details-grid">
+                    <div className="detail-item">
+                        <span className="detail-label">Location</span>
+                        <span className="detail-value">{request.location}</span>
+                    </div>
+                    <div className="detail-item">
+                        <span className="detail-label">Category</span>
+                        <span className="detail-value">{request.service_category}</span>
+                    </div>
+                    <div className="detail-item">
+                        <span className="detail-label">Date of Service</span>
+                        <span className="detail-value">{new Date(request.service_date).toLocaleDateString()}</span>
+                    </div>
+                </div>
+    
+                <div className="request-description">
+                    <span className="detail-label">Description</span>
+                    <p className="detail-value">{request.service_description}</p>
+                </div>
                 
-                {request.additional_comments && <p className="request-comments"><strong>Additional Comments:</strong> {request.additional_comments}</p>}
+                {request.additional_comments && (
+                    <div className="request-additional-comments">
+                        <span className="detail-label">Additional Comments</span>
+                        <p className="detail-value">{request.additional_comments}</p>
+                    </div>
+                )}
                 
                 {!hideBidButton && (
                     <Link className="btn btn-secondary rounded-pill bid-button" to={`/submit-bid/${request.id}`}>
                         <span className="bid-button-text">
-                            <span>Bid</span>
+                            <span>View More</span>
                         </span>
                     </Link>
                 )}

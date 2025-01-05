@@ -12336,11 +12336,12 @@ footer a:hover, footer a:active, footer a:focus {
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin:8px;
+  margin: 8px;
   padding: 16px;
-  max-width: 100%;
-  overflow-wrap: break-word; /* Ensure long words break properly */
-  text-align: center; /* Center-align all text within the card */
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
 @media (max-width:500px) {
@@ -12353,6 +12354,14 @@ footer a:hover, footer a:active, footer a:focus {
   .request-display {
     max-width: 300px;
   }
+}
+
+.request-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .request-title,
@@ -12439,14 +12448,21 @@ footer a:hover, footer a:active, footer a:focus {
 
 .request-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-top: 8px;
-  width:70%;
-  overflow-y: auto;
-  padding-right: 16px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+  padding: 20px;
+}
+
+@media (max-width: 1200px) {
+  .request-grid {
+      grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .request-grid {
+      grid-template-columns: 1fr;
+  }
 }
 
 .request-grid::-webkit-scrollbar {
@@ -12470,10 +12486,41 @@ footer a:hover, footer a:active, footer a:focus {
 
 /* Adjust content to stack vertically */
 .request-content {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap:12px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  color: #8A8A8A;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.detail-value {
+  color: #000;
+  font-family: Roboto;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
 }
 
 /* Title styling */
@@ -12485,7 +12532,6 @@ footer a:hover, footer a:active, footer a:focus {
   font-style: normal;
   font-weight: 700;
   line-height: normal;
-  margin-bottom: 10px;
 }
 
 .request-status {
@@ -12520,23 +12566,14 @@ footer a:hover, footer a:active, footer a:focus {
 }
 
 .request-info {
-  color: #000;
-font-family: Roboto;
-font-size: 16px;
-font-style: normal;
-font-weight: 400;
-line-height: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 8px;
 }
 
-/* Bid button styling */
-.bid-button {
-  display: inline-block; /* Change to inline-block to avoid taking the full width */
-  width: auto; /* Adjust width to auto */
-  max-width: 80%; /* Set a maximum width to prevent stretching */
-  margin: 10px auto 0; /* Center the button and add space above */
-  padding: 10px 20px; /* Add padding for better appearance */
-  text-align: center; /* Center the text inside the button */
-}
 
 
 
@@ -14900,6 +14937,10 @@ color: black;
   .photos-section {
     max-height: 150px;
   }
+}
+
+.requests-container {
+  padding: 40px;
 }
 
   

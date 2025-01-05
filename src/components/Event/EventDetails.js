@@ -58,19 +58,20 @@ function EventDetails({ eventType, setEventDetails }) {
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
         
-        // Check if user is signed in
         const { data: { session } } = await supabase.auth.getSession();
-
+    
         if (!session) {
-            // Save the form data temporarily (localStorage or sessionStorage)
             localStorage.setItem('eventDetails', JSON.stringify(details));
-
-            // Open the sign-in modal
             setIsModalOpen(true);
         } else {
-            // User is signed in, proceed with setting the event details
             setEventDetails(details);
-            navigate('/personal-details');  // Proceed to personal details page
+            // Ensure we're passing the state properly
+            navigate('/personal-details', { 
+                state: { 
+                    from: 'event-details',
+                    eventDetails: details 
+                } 
+            });
         }
     };
 
@@ -93,28 +94,28 @@ function EventDetails({ eventType, setEventDetails }) {
                 <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
                     01
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px" xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                     </svg>
 
                     <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
                     02
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                     </svg>
 
                     <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
                     03
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                     </svg>
 
                     <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
                     04
                     </div>
-                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                     </svg>
 

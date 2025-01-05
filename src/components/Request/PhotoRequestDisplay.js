@@ -130,7 +130,7 @@ function PhotoRequestDisplay({ photoRequest, hideBidButton }) {
                 {!hideBidButton && (
                     <Link className="btn btn-secondary rounded-pill bid-button" to={`/submit-bid/${photoRequest.id}`}>
                         <span className="bid-button-text">
-                            <span>Bid</span>
+                            <span>View More</span>
                         </span>
                     </Link>
                 )}
