@@ -18,27 +18,78 @@ function SummaryPage({ formData, prevStep }) {
         fetchUser();
     }, []);
 
-    const handleSubmit = async () => {
-        const { error } = await supabase
-            .from('requests')
-            .insert([{
-                user_id: user ? user.id : null,
-                customer_email: user ? user.email : null,
-                service_title: formData.serviceTitle,
-                location: formData.location,
-                service_category: formData.category,
-                service_description: formData.description,
-                service_date: formData.startDate, // Assuming startDate is the main date
-                end_date: formData.endDate || null,
-                time_of_day: formData.timeOfDay || 'TBD',
-                price_range: formData.budget,
-                additional_comments: formData.additionalComments || ''
-            }]);
+    useEffect(() => {
+        console.log('Form data received in ServiceSummary:', formData); // Add this
+        console.log('Photos in formData:', formData.photos); // Add this
+    }, [formData]);
 
-        if (error) {
-            setErrorMessage(`Error submitting request: ${error.message}`);
-        } else {
+    const handleSubmit = async () => {
+        try {
+            console.log('Submitting data:', formData);
+            
+            const { data: request, error } = await supabase
+                .from('requests')
+                .insert([{
+                    user_id: user ? user.id : null,
+                    customer_email: user ? user.email : null,
+                    service_title: formData.serviceTitle,
+                    location: formData.location || 'TBD',
+                    service_category: formData.category || 'General',
+                    service_description: formData.description,
+                    service_date: formData.startDate || 'TBD',
+                    end_date: formData.endDate || null,
+                    time_of_day: formData.timeOfDay || 'TBD',
+                    price_range: formData.budget,
+                    additional_comments: formData.additionalComments || '',
+                    open: true,
+                }])
+                .select();
+
+            if (error) throw error;
+
+            // Handle photo uploads if they exist
+            if (formData.photos && formData.photos.length > 0) {
+                for (const photo of formData.photos) {
+                    const filePath = `${user.id}/${request[0].id}/${photo.name}`;
+                    
+                    // Convert base64 URL to Blob with correct type
+                    const response = await fetch(photo.url);
+                    const blob = await response.blob();
+                    const file = new File([blob], photo.name, { type: photo.type || blob.type });
+                    
+                    // Upload photo file
+                    const { error: uploadError } = await supabase.storage
+                        .from('request-media')
+                        .upload(filePath, file, {
+                            contentType: photo.type || blob.type
+                        });
+                    if (uploadError) throw uploadError;
+
+                    // Get public URL first
+                    const { data: publicData } = await supabase.storage
+                        .from('request-media')
+                        .getPublicUrl(filePath);
+
+                    // Save to service_photos table
+                    const { error: photoError } = await supabase
+                        .from('service_photos')
+                        .insert({
+                            user_id: user.id,
+                            request_id: request[0].id,
+                            photo_url: publicData.publicUrl,
+                            file_path: filePath
+                        });
+
+                    if (photoError) throw photoError;
+                }
+            }
+
+            console.log('Success! Data:', request);
+            localStorage.removeItem('requestFormData');
             navigate('/success-request');
+        } catch (err) {
+            console.error('Submission error:', err);
+            setErrorMessage(`Error submitting request: ${err.message}`);
         }
     };
 

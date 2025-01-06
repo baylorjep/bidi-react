@@ -153,7 +153,7 @@ function UploadPictures() {
         setError(null);
         
         try {
-            // First create the photography request
+            // First create the photography request with status set to 'open'
             const { data: request, error: requestError } = await supabase
                 .from('photography_requests')
                 .insert([{
@@ -168,7 +168,8 @@ function UploadPictures() {
                     num_people: eventDetails.numPeople,
                     duration: eventDetails.duration,
                     indoor_outdoor: eventDetails.indoorOutdoor,
-                    additional_comments: eventDetails.additionalComments
+                    additional_comments: eventDetails.additionalComments,
+                    status: 'open'  // Add this line to set the initial status
                 }])
                 .select()
                 .single();
@@ -177,39 +178,66 @@ function UploadPictures() {
 
             // Then upload photos using the new request ID
             if (photos.length > 0) {
-                const uploadPromises = photos.map(async (photo) => {
+                for (const photo of photos) {
                     const filePath = `${user.id}/${request.id}/${photo.name}`;
+                    
+                    // Convert base64 URL to Blob with correct type
+                    const response = await fetch(photo.url);
+                    const blob = await response.blob();
+                    const file = new File([blob], photo.name, { type: photo.type || blob.type });
                     
                     // Upload photo file
                     const { error: uploadError } = await supabase.storage
                         .from('request-media')
-                        .upload(filePath, photo);
+                        .upload(filePath, file, {
+                            contentType: photo.type || blob.type
+                        });
                     if (uploadError) throw uploadError;
 
-                    // Get public URL
-                    const { data: publicData, error: publicError } = await supabase.storage
+                    // Get public URL first
+                    const { data: publicData } = await supabase.storage
                         .from('request-media')
                         .getPublicUrl(filePath);
-                    if (publicError) throw publicError;
 
-                    // Save photo metadata
+                    console.log('Attempting to save to event_photos:', {
+                        user_id: user.id,
+                        request_id: request.id,
+                        photo_url: publicData.publicUrl,
+                        file_path: filePath,
+                        file_type: photo.type || blob.type
+                    });
+
+                    // Save photo metadata as a separate operation - removed file_type field
                     const { error: dbError } = await supabase
                         .from('event_photos')
-                        .insert([{
+                        .insert({
                             user_id: user.id,
                             request_id: request.id,
                             photo_url: publicData.publicUrl,
                             file_path: filePath
-                        }]);
-                    if (dbError) throw dbError;
-                });
+                        });
 
-                await Promise.all(uploadPromises);
+                    if (dbError) {
+                        console.error('Error saving to event_photos:', dbError);
+                        throw dbError;
+                    }
+                }
             }
 
-            // Clear form and navigate on success
+            // Clear localStorage and navigate
             localStorage.removeItem('photographyRequest');
-            navigate('/success-request');
+            localStorage.removeItem('requestFormData');
+            localStorage.removeItem('eventDetails');
+            localStorage.removeItem('personalDetails');
+            localStorage.removeItem('additionalComments');
+            localStorage.removeItem('serviceType');
+            
+            navigate('/success-request', { 
+                state: { 
+                    requestId: request.id,
+                    message: 'Your photography request has been submitted successfully!'
+                }
+            });
 
         } catch (err) {
             console.error('Error submitting request:', err);
@@ -272,8 +300,8 @@ function UploadPictures() {
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
                 <h2 className="request-form-header" style={{textAlign:'left',marginLeft:"20px"}}>Review</h2>
-                <p className="Sign-Up-Page-Subheader" style={{textAlign:'left',marginLeft:"20px", marginTop:"0"}}>Please review the details of your event before submitting your request. If you need to change something, you can go back and change it.
-                </p>
+                <div className="Sign-Up-Page-Subheader" style={{textAlign:'left',marginLeft:"20px", marginTop:"0"}}>Please review the details of your event before submitting your request. If you need to change something, you can go back and change it.
+                </div>
 
                 <div>
 
@@ -302,7 +330,7 @@ function UploadPictures() {
 
                     \*/}
 
-            <div className="request-grid" style={{marginTop:"8px"}}>
+            <div className="request-grid">
 
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                        <div className="request-subtype">Event Type</div>
@@ -363,12 +391,11 @@ function UploadPictures() {
                         display: 'flex',
                         flexDirection: 'column', 
                         gap: '8px', 
-                        paddingTop:'20px', 
                         alignItems:'flex-start',
                     }}>
                         <div className="request-subtype">Additional Comments</div>
                         <div 
-                            className="request-info quill-content"
+                            className="quill-content"
                             dangerouslySetInnerHTML={{ __html: eventDetails.additionalComments }}
                         />
                     </div>

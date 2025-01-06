@@ -27,12 +27,14 @@ function SubmitBid() {
     const [bidDescription, setBidDescription] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [eventPhotos, setEventPhotos] = useState([]);
+    const [servicePhotos, setServicePhotos] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchRequestDetails = async () => {
             // First, try fetching from the `requests` table
-            let { data, error } = await supabase
+            let { data, error } = await supabase    
                 .from('requests')
                 .select('*')
                 .eq('id', requestId)
@@ -51,9 +53,36 @@ function SubmitBid() {
                     return;
                 }
 
+                // Fetch associated event photos
+                const { data: photos, error: photosError } = await supabase
+                    .from('event_photos')
+                    .select('*')
+                    .eq('request_id', photoData.id); // Use the photo request's ID directly
+
+                if (!photosError) {
+                    console.log("Fetched photos:", photos);
+                    console.log("Request ID:", requestId);
+                    setEventPhotos(photos);
+                } else {
+                    console.error("Error fetching photos:", photosError);
+                }
+
                 setRequestDetails(photoData);
                 setRequestType('photography_requests');
             } else {
+                // Fetch associated service photos
+                const { data: photos, error: photosError } = await supabase
+                    .from('service_photos')
+                    .select('*')
+                    .eq('request_id', data.id);
+
+                if (!photosError) {
+                    console.log("Fetched service photos:", photos);
+                    setServicePhotos(photos);
+                } else {
+                    console.error("Error fetching service photos:", photosError);
+                }
+
                 setRequestDetails(data);
                 setRequestType('requests');
             }
@@ -133,8 +162,14 @@ function SubmitBid() {
                 {success && <p className="text-success">{success}</p>}
                 {requestDetails && (
                     <>
-                        {requestType === 'requests' && <RequestDisplay request={requestDetails} hideBidButton={true} />}
-                        {requestType === 'photography_requests' && <PhotoRequestDisplay photoRequest={requestDetails} hideBidButton={true} />}
+                        {requestType === 'requests' && <RequestDisplay request={requestDetails} servicePhotos={servicePhotos} hideBidButton={true} created_at={requestDetails.created_at} />}
+                        {requestType === 'photography_requests' && (
+                            <PhotoRequestDisplay 
+                                photoRequest={requestDetails} 
+                                event_photos={eventPhotos}
+                                hideBidButton={true} 
+                            />
+                        )}
                     </>
                 )}
                 <form onSubmit={handleSubmit}>

@@ -19,9 +19,7 @@ const PhotoGrid = ({ photos, removePhoto, openModal }) => {
   );
 };
 
-function UploadPictures({ formData, nextStep, prevStep }) {
-    const location = useLocation();
-    const isFromAdditionalComments = location.state?.from === 'additional-comments';
+function UploadPictures({ formData, setFormPhotos, nextStep, prevStep }) { // Changed setPhotos to setFormPhotos
     const [photos, setPhotos] = useState(() => {
         const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
         return savedForm.photos || [];
@@ -52,6 +50,15 @@ function UploadPictures({ formData, nextStep, prevStep }) {
         const files = Array.from(event.target.files);
         if (!files.length) return setError("No file selected");
         
+        // Validate file types
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+        const invalidFiles = files.filter(file => !validImageTypes.includes(file.type));
+        
+        if (invalidFiles.length > 0) {
+            setError("Please only upload image files (JPEG, PNG, GIF, WEBP)");
+            return;
+        }
+        
         setLoading(true);
         setAddMoreLoading(true);
         
@@ -59,12 +66,14 @@ function UploadPictures({ formData, nextStep, prevStep }) {
             const newPhotos = files.map(file => ({
                 file: file,
                 url: URL.createObjectURL(file),
-                name: file.name
+                name: file.name,
+                type: file.type // Add file type to the photo object
             }));
             
             setPhotos(prev => [...prev, ...newPhotos]);
+            setFormPhotos([...photos, ...newPhotos]); // Update parent state
             
-            // Save to localStorage
+            // Save to localStorage with file type information
             const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
             localStorage.setItem('photographyRequest', JSON.stringify({
                 ...savedForm,
@@ -131,12 +140,26 @@ const handleRemovePhoto = async (photoUrl) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const serviceType = localStorage.getItem('serviceType');
         const formDetails = { ...details, photoUrl: photos };
-        navigate('/event-summary', { 
-            state: { 
-                photos: photos // Pass photos in navigation state
-            }
-        });
+
+        if (typeof nextStep === 'function') {
+            setFormPhotos(photos); // Make sure parent has latest photos before moving to next step
+            nextStep();
+        } else {
+            // Navigate to event summary with photos
+            navigate('/event-summary', {
+                state: { photos: photos }
+            });
+        }
+    };
+
+    const handleBack = () => {
+        if (typeof prevStep === 'function') {
+            prevStep();
+        } else {
+            navigate('/personal-details');
+        }
     };
 
     const handleDragOver = (e) => {
@@ -150,6 +173,18 @@ const handleRemovePhoto = async (photoUrl) => {
         handleFileSelect(inputEvent);
     };
 
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    const handleNext = () => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % photos.length);
+    };
+
+    const handlePrevious = () => {
+        setCurrentIndex((prevIndex) =>
+            prevIndex === 0 ? photos.length - 1 : prevIndex - 1
+        );
+    };
+    
     const renderRemoveButton = (photo) => {
         return (
           <div 
@@ -221,28 +256,6 @@ const handleRemovePhoto = async (photoUrl) => {
       setSelectedPhoto(null);
     };
 
-    useEffect(() => {
-      if (typeof nextStep !== 'function' || typeof prevStep !== 'function') {
-          console.error('Required props nextStep or prevStep not provided to UploadPictures');
-      }
-  }, [nextStep, prevStep]);
-
-  const handleNext = () => {
-    if (typeof nextStep === 'function') {
-        nextStep();
-    } else {
-        navigate('/event-summary');
-    }
-};
-
-const handleBack = () => {
-    if (typeof prevStep === 'function') {
-        prevStep();
-    } else {
-        navigate('/personal-details');
-    }
-};
-
     return (
         <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
             <div className='request-form-status-container'>
@@ -252,7 +265,7 @@ const handleBack = () => {
                             <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
                         </svg>
                     </div>
-                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="300" stroke="black" strokeWidth="2" />
                     </svg>
                     
@@ -261,21 +274,21 @@ const handleBack = () => {
                             <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
                         </svg>
                     </div>
-                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="black" strokeWidth="2" />
                     </svg>
 
                     <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
                     03
                     </div>
-                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                     </svg>
 
                     <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
                     04
                     </div>
-                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
+                    <svg width="25px" height="120px" xmlns="http://www.w3.org/2000/svg">
                         <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
                     </svg>
 
@@ -373,7 +386,7 @@ const handleBack = () => {
                 <button
                 type='submit'
                 className='request-form-back-and-foward-btn'
-                style={{color:'black'}} onClick={handleNext}
+                style={{color:'black'}} onClick={handleSubmit}
                 >
                     Next
                     <svg

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import RequestDisplay from './RequestDisplay';
-import PhotoRequestDisplay from './PhotoRequestDisplay';
+import RequestDisplayMini from './RequestDisplayMini';
+import PhotoRequestDisplayMini from './PhotoRequestDisplayMini.js';
 import '../../App.css';
 import SearchBar from '../SearchBar/SearchBar';
 
@@ -11,18 +11,34 @@ function OpenRequests() {
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState('');
 
+    const isNew = (createdAt) => {
+        const now = new Date();
+        const created = new Date(createdAt);
+        const diffInDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+        return diffInDays < 7;
+    };
+
     useEffect(() => {
         const fetchRequests = async () => {
             const { data: requests, error } = await supabase
                 .from('requests')
-                .select('id, user_id, service_title, service_description, service_date, service_category, location, created_at, additional_comments')
-                .eq('open', true);  // Filter only open requests with boolean true
+                .select('*')
+                .eq('open', true)
+                .order('created_at', { ascending: false });
 
             if (error) {
                 setError(`Error fetching requests: ${error.message}`);
                 console.log(error);
             } else {
-                setOpenRequests(requests || []);
+                // Sort requests with new ones at the top
+                const sortedRequests = [...(requests || [])].sort((a, b) => {
+                    const aIsNew = isNew(a.created_at);
+                    const bIsNew = isNew(b.created_at);
+                    if (aIsNew && !bIsNew) return -1;
+                    if (!aIsNew && bIsNew) return 1;
+                    return new Date(b.created_at) - new Date(a.created_at);
+                });
+                setOpenRequests(sortedRequests);
             }
         };
 
@@ -30,57 +46,28 @@ function OpenRequests() {
             const { data: photoRequests, error } = await supabase
                 .from('photography_requests')
                 .select(`
-                    id, 
-                    event_title, 
-                    event_type, 
-                    start_date, 
-                    end_date, 
-                    time_of_day, 
-                    location, 
-                    num_people, 
-                    duration, 
-                    indoor_outdoor, 
-                    additional_comments, 
-                    status,
+                    *,
                     event_photos (
                         photo_url,
                         file_path
                     )
                 `)
-                .eq('status', 'open');
+                .eq('status', 'open')
+                .order('created_at', { ascending: false });
 
             if (error) {
                 setError(`Error fetching photo requests: ${error.message}`);
                 console.error(error);
             } else {
-                console.log('Raw photo requests:', photoRequests);
-        
-                const formattedRequests = photoRequests?.map(request => {
-                    // Map photos with full URLs
-                    const photos = request.event_photos?.map(photo => {
-                        // Get public URL 
-                        const { data } = supabase.storage
-                            .from('request-media')
-                            .getPublicUrl(photo.file_path);
-        
-                        console.log('Generated URL:', data?.publicUrl);
-                        
-                        return {
-                            url: data?.publicUrl || photo.photo_url, // Fallback to stored URL
-                            name: photo.file_path?.split('/').pop() || 'photo'
-                        };
-                    }) || [];
-        
-                    console.log(`Photos for request ${request.id}:`, photos);
-        
-                    return {
-                        ...request,
-                        photos: photos
-                    };
+                // Sort photo requests with new ones at the top
+                const sortedPhotoRequests = [...(photoRequests || [])].sort((a, b) => {
+                    const aIsNew = isNew(a.created_at);
+                    const bIsNew = isNew(b.created_at);
+                    if (aIsNew && !bIsNew) return -1;
+                    if (!aIsNew && bIsNew) return 1;
+                    return new Date(b.created_at) - new Date(a.created_at);
                 });
-        
-                console.log('Formatted requests:', formattedRequests);
-                setOpenPhotoRequests(formattedRequests || []);
+                setOpenPhotoRequests(sortedPhotoRequests);
             }
         };
 
@@ -90,18 +77,21 @@ function OpenRequests() {
 
     return (
         <div className="request-grid-container">
-
             <div className="request-grid">
                 {error && <p>Error: {error}</p>}
 
-
-
                 {openRequests.length > 0 && openRequests.map((request) => (
-                    <RequestDisplay key={request.id} request={request} />
+                    <RequestDisplayMini 
+                        key={request.id} 
+                        request={request}
+                    />
                 ))}
 
                 {openPhotoRequests.length > 0 && openPhotoRequests.map((photoRequest) => (
-                    <PhotoRequestDisplay key={photoRequest.id} photoRequest={photoRequest} />
+                    <PhotoRequestDisplayMini 
+                        key={photoRequest.id} 
+                        photoRequest={photoRequest} 
+                    />
                 ))}
 
                 {openRequests.length === 0 && openPhotoRequests.length === 0 && (
