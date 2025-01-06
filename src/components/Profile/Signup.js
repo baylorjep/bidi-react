@@ -361,6 +361,21 @@ function Signup() {
                         />
                         <label htmlFor="confirmPassword">Confirm Password</label>
                     </div>
+                    <div 
+    className="notification-bar" 
+    style={{
+        backgroundColor: '#f9f9f9', 
+        border: '1px solid #ddd', 
+        borderRadius: '5px', 
+        padding: '10px', 
+        marginBottom: '20px',
+        fontSize: '14px',
+        color: '#555',
+        textAlign: 'center'
+    }}
+>
+    By signing up, you consent to receive notifications related to your account. 
+</div>
 
                     <div className="d-grid">
                         <button type="submit" className="sign-up-button">Sign Up</button>
