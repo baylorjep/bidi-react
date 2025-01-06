@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../../App.css';
 import { Link } from 'react-router-dom';
-
 
 function SignIn() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Get the 'from' property from the state passed in the Link (SignInModal)
+    const redirectTo = location.state?.from || '/'; // Default to home if no redirect
 
     const handleSignIn = async (e) => {
         e.preventDefault();
@@ -38,7 +41,7 @@ function SignIn() {
         }
 
         if (profile.role === 'individual') {
-            navigate('/my-bids'); // Redirect individuals to the "My Bids" page
+            navigate(redirectTo); // Navigate to the original page (request form)
         } else if (profile.role === 'business') {
             navigate('/dashboard'); // Redirect businesses to the "Open Requests" page
         }
@@ -56,10 +59,11 @@ function SignIn() {
     };
 
     return (
-        <div className="container px-5 d-flex align-items-center justify-content-center" style={{marginTop:"120px"}}>
+        <div className="container px-5 d-flex align-items-center justify-content-center" style={{ marginTop: "120px" }}>
             <div className="col-lg-6">
                 <div className="mb-5 mb-lg-0 text-center">
-                    <h1 className="Sign-Up-Page-Header">Login</h1>
+                    <br />
+                    <h1 className="Sign-Up-Page-Header">Sign In</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 </div>
                 <br/>
@@ -110,13 +114,13 @@ function SignIn() {
                         </Link>
                     </div>
                     <div className="sign-in-container">
-                        <button type="submit" className="sign-up-button" style={{width:'160px'}}>Sign In</button>
+                        <button type="submit" className="sign-up-button" style={{ width: '160px' }}>Sign In</button>
                     </div>
-                    <br/>
-                    <div className="forgot-your-password"align='center' style={{textDecoration:'none'}}>Don't Have an Account?
-                            <a href='/Signup' > Sign Up Here.</a> 
+                    <br />
+                    <div className="forgot-your-password" align='center' style={{ textDecoration: 'none' }}>
+                        Don't Have an Account?
+                        <a href='/Signup' > Sign Up Here.</a>
                     </div>
-                    
                 </form>
             </div>
         </div>

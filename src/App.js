@@ -35,6 +35,8 @@ import MultiStepRequestForm from './components/Request/general requests/MultiSte
 // Event Imports
 import SelectEvent from './components/Event/SelectEvent';
 import EventDetails from './components/Event/EventDetails';
+import EventPhotos from './components/Event/UploadPictures';
+import PersonalDetails from './components/Event/PersonalDetails';
 import EventSummary from './components/Event/EventSummary';
 
 // Profile Imports
@@ -42,6 +44,7 @@ import Signup from './components/Profile/Signup';
 import SignIn from './components/Profile/SignIn';
 import ChoosePricingPlan from './components/Profile/ChoosePricingPlan';
 import ChooseUserType from './components/Profile/ChooseUserType';
+import ChoosePricingPlan from './components/Profile/ChoosePricingPlan';
 import SuccessSignup from './components/Profile/SuccessSignup';
 import ResetPassword from './components/Profile/ResetPassword';
 import UpdatePassword from './components/Profile/UpdatePassword';
@@ -111,6 +114,8 @@ function App() {
                         {/* Event Routes */}
                         <Route path="/select-event" element={<SelectEvent setEventType={setEventType} />} />
                         <Route path="/event-details" element={<EventDetails eventType={eventType} setEventDetails={setEventDetails} />} />
+                        <Route path="/event-photos" element={<EventPhotos eventType={eventType} setEventDetails={setEventDetails} />} />
+                        <Route path="/personal-details" element={<PersonalDetails eventType={eventType} setEventDetails={setEventDetails} />} />
                         <Route path="/event-summary" element={<EventSummary eventType={eventType} eventDetails={eventDetails} />} />
 
                         {/* Profile Routes */}
@@ -121,6 +126,7 @@ function App() {
                         <Route path="/request-password-reset" element={<ResetPassword />} />
                         <Route path="/reset-password" element={<UpdatePassword />} />
                         <Route path="/createaccount" element={<ChooseUserType />} />
+                        <Route path="/choose-pricing" element={<ChoosePricingPlan />}/>
 
                         {/* Individual Routes */}
                         <Route path="/my-dashboard" element={<MyDashboard />} />

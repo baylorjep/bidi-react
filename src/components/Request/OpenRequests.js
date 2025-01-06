@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import RequestDisplay from './RequestDisplay';
-import PhotoRequestDisplay from './PhotoRequestDisplay';
+import RequestDisplayMini from './RequestDisplayMini';
+import PhotoRequestDisplayMini from './PhotoRequestDisplayMini.js';
 import '../../App.css';
+import SearchBar from '../SearchBar/SearchBar';
 
 function OpenRequests() {
     const [openRequests, setOpenRequests] = useState([]);
     const [openPhotoRequests, setOpenPhotoRequests] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState('');
     const [businessType, setBusinessType] = useState('');
 
@@ -36,6 +38,13 @@ function OpenRequests() {
 
         fetchUserBusinessType();
     }, []);
+
+    const isNew = (createdAt) => {
+        const now = new Date();
+        const created = new Date(createdAt);
+        const diffInDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+        return diffInDays < 7;
+    };
 
     useEffect(() => {
         if (!businessType) return;
@@ -151,7 +160,46 @@ function OpenRequests() {
                 setOpenPhotoRequests(filteredPhotoRequests);
             } catch (error) {
                 setError(`Error fetching requests: ${error.message}`);
+                console.log(error);
+            } else {
+                // Sort requests with new ones at the top
+                const sortedRequests = [...(requests || [])].sort((a, b) => {
+                    const aIsNew = isNew(a.created_at);
+                    const bIsNew = isNew(b.created_at);
+                    if (aIsNew && !bIsNew) return -1;
+                    if (!aIsNew && bIsNew) return 1;
+                    return new Date(b.created_at) - new Date(a.created_at);
+                });
+                setOpenRequests(sortedRequests);
+            }
+        };
+
+        const fetchPhotoRequests = async () => {
+            const { data: photoRequests, error } = await supabase
+                .from('photography_requests')
+                .select(`
+                    *,
+                    event_photos (
+                        photo_url,
+                        file_path
+                    )
+                `)
+                .eq('status', 'open')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                setError(`Error fetching photo requests: ${error.message}`);
                 console.error(error);
+            } else {
+                // Sort photo requests with new ones at the top
+                const sortedPhotoRequests = [...(photoRequests || [])].sort((a, b) => {
+                    const aIsNew = isNew(a.created_at);
+                    const bIsNew = isNew(b.created_at);
+                    if (aIsNew && !bIsNew) return -1;
+                    if (!aIsNew && bIsNew) return 1;
+                    return new Date(b.created_at) - new Date(a.created_at);
+                });
+                setOpenPhotoRequests(sortedPhotoRequests);
             }
         };
     
@@ -160,24 +208,22 @@ function OpenRequests() {
     
 
     return (
-        <div className="d-flex align-items-center justify-content-center ">
-            <div style={{
-                width:'100%', 
-                alignItems:'center', 
-                justifyContent:'center', 
-                display:'flex',
-                flexDirection:'column', 
-                padding:"20px", 
-                maxWidth:'1000px'
-            }}>
+        <div className="request-grid-container">
+            <div className="request-grid">
                 {error && <p>Error: {error}</p>}
 
                 {openRequests.length > 0 && openRequests.map((request) => (
-                    <RequestDisplay key={request.id} request={request} />
+                    <RequestDisplayMini 
+                        key={request.id} 
+                        request={request}
+                    />
                 ))}
 
                 {openPhotoRequests.length > 0 && openPhotoRequests.map((photoRequest) => (
-                    <PhotoRequestDisplay key={photoRequest.id} photoRequest={photoRequest} />
+                    <PhotoRequestDisplayMini 
+                        key={photoRequest.id} 
+                        photoRequest={photoRequest} 
+                    />
                 ))}
 
                 {openRequests.length === 0 && openPhotoRequests.length === 0 && (
@@ -192,3 +238,4 @@ function OpenRequests() {
 }
 
 export default OpenRequests;
+
