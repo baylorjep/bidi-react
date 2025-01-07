@@ -6,17 +6,17 @@ function SelectEvent({ setEventType }) {
     const navigate = useNavigate();
 
     const eventOptions = [
-        'Family',
         'Wedding',
         'Engagement',
         'Couples Session',
+        'Family',
+        'Videographer',
         'Individual / Headshots',
         'Large Group / Event',
         'Product',
         'Maternity',
         'Newborn',
         'Boudoir Session',
-        'Videographer'
     ];
 
     const handleSelect = (event) => {
