@@ -13539,7 +13539,7 @@ text-align: left;
     .choose-type-button-container {
       flex-direction: column;
       text-align: center;
-      
+      padding-top: 0px;
     }
 }
 

@@ -59,16 +59,19 @@ function EventDetails({ eventType, setEventDetails }) {
         if (e) e.preventDefault();
         
         const { data: { session } } = await supabase.auth.getSession();
-    
+
+        // Store the source
+        localStorage.setItem('requestSource', 'photography');
+
         if (!session) {
             localStorage.setItem('eventDetails', JSON.stringify(details));
             setIsModalOpen(true);
         } else {
             setEventDetails(details);
-            // Ensure we're passing the state properly
             navigate('/personal-details', { 
                 state: { 
                     from: 'event-details',
+                    source: 'photography',
                     eventDetails: details 
                 } 
             });

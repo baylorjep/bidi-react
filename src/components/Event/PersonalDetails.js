@@ -3,7 +3,7 @@ import { supabase } from '../../supabaseClient';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Spinner } from 'react-bootstrap';
 
-function PersonalDetails({ formData,  nextStep, prevStep, source: propSource }) {
+function PersonalDetails({ formData, nextStep, prevStep, source: propSource }) {
     
 
     const [loading, setLoading] = useState(true);
@@ -20,7 +20,16 @@ function PersonalDetails({ formData,  nextStep, prevStep, source: propSource }) 
 
 
     const isFromAdditionalComments = location.state?.from === 'additionalComments';
-    const source = isFromAdditionalComments ? 'additionalComments' : propSource;
+    const [source] = useState(() => {
+        return propSource || location.state?.source || localStorage.getItem('requestSource');
+    });
+
+    useEffect(() => {
+        // Store source in localStorage when it changes
+        if (source) {
+            localStorage.setItem('requestSource', source);
+        }
+    }, [source]);
 
     // Fetch user info when the component mounts
     useEffect(() => {
@@ -99,19 +108,14 @@ function PersonalDetails({ formData,  nextStep, prevStep, source: propSource }) 
 
                 if (updateError) throw new Error(updateError.message);
 
-                if (isFromPhotographyRequest) {
-                    const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
-                    localStorage.setItem('photographyRequest', JSON.stringify({
-                        ...savedForm,
-                        personalDetails: {
-                            firstName: userInfo.firstName,
-                            lastName: userInfo.lastName,
-                            phoneNumber: userInfo.phoneNumber
-                        }
-                    }));
+                // Use the source to determine navigation
+                if (source === 'photography') {
                     navigate('/event-photos');
                 } else if (typeof nextStep === 'function') {
                     nextStep();
+                } else {
+                    // Default navigation if no specific route
+                    navigate('/upload-photos');
                 }
             }
         } catch (err) {

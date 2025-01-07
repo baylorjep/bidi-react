@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-function SignInModal({ setIsModalOpen }) {
+const SignInModal = ({ setIsModalOpen }) => {
     const [isOpen, setIsOpen] = useState(false); // Internal state to trigger transitions
     const navigate = useNavigate(); // useNavigate hook for navigation
 
@@ -21,6 +21,17 @@ function SignInModal({ setIsModalOpen }) {
         navigate('/personal-details');
     };
 
+    const handleSignInClick = () => {
+        const source = localStorage.getItem('requestSource');
+        navigate('/signin', { 
+            state: { 
+                from: '/personal-details',
+                source: source
+            } 
+        });
+        setIsModalOpen(false);
+    };
+
     return (
         <div className='sign-up-modal'>
             <div className='sign-up-modal-content'>
@@ -37,7 +48,7 @@ function SignInModal({ setIsModalOpen }) {
                         <button className="sign-up-modal-button-primary">Create an Account</button>
                     </Link>
                     <Link to="/signin" state={{ from: '/personal-details' }}>
-                        <button className="sign-up-modal-button-secondary">Sign In</button>
+                        <button className="sign-up-modal-button-secondary" onClick={handleSignInClick}>Sign In</button>
                     </Link>
                 </div>
             </div>

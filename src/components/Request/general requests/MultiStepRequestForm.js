@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ServiceDetails from './ServiceDetails';
 import DateAndTime from './DateandTime';
 import LocationDetails from './Location';
 import AdditionalComments from './AdditionalComments';
-import PersonalDetails from '../../Event/PersonalDetails';
+import PersonalDetails from '../../Event/PersonalDetails';  
 import EventPhotos from '../../Event/UploadPictures';
 import SummaryPage from './ServiceSummary';
 
@@ -24,6 +24,11 @@ function MultiStepRequestForm() {
             category: category // Add this line to ensure category is included
         };
     });
+
+    useEffect(() => {
+        // Store the source when component mounts
+        localStorage.setItem('requestSource', 'general');
+    }, []);
 
     const updateFormData = (newData) => {
         console.log('Updating form data with:', newData); // Add this
