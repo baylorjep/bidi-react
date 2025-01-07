@@ -128,27 +128,6 @@ function SelectEvent({ setEventType }) {
                 </button>
             </div>
             </div>
-            <div style={{display:'flex',justifyContent:'center',flexDirection:'column', alignItems:'center'}   }>
-            <h1 className="Sign-Up-Page-Header" style={{ marginTop: '40px' }}>
-                        Need Help Figuring Out What You Need?
-                    </h1>
-                    <button 
-                        className="btn btn-secondary btn-lg"
-                        style={{marginBottom:'20px', maxWidth:'400px'}}
-                        onClick={() => {
-                            const isWindows = navigator.userAgent.includes('Windows');
-                            if (isWindows) {
-                                window.open('https://calendly.com/weston-burnett19/meetingwithweston', '_blank');
-                            } else {
-                                window.location.href = 'tel:+13852169587';
-                            }
-                        }}
-                    >   
-                    <i className="fas fa-phone-alt me-2" style={{rotate:'90deg'}}></i>
-                        Schedule a Free Consultation Call
-                    </button>
-
-            </div>
             
         </div>
     );
