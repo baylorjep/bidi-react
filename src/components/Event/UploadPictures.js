@@ -67,18 +67,26 @@ function UploadPictures({ formData, setFormPhotos, nextStep, prevStep }) { // Ch
                 file: file,
                 url: URL.createObjectURL(file),
                 name: file.name,
-                type: file.type // Add file type to the photo object
+                type: file.type
             }));
             
-            setPhotos(prev => [...prev, ...newPhotos]);
-            setFormPhotos([...photos, ...newPhotos]); // Update parent state
-            
-            // Save to localStorage with file type information
-            const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
-            localStorage.setItem('photographyRequest', JSON.stringify({
-                ...savedForm,
-                photos: [...(savedForm.photos || []), ...newPhotos]
-            }));
+            // Update local state first
+            setPhotos(prevPhotos => {
+                const updatedPhotos = [...prevPhotos, ...newPhotos];
+                
+                // Then update parent state and localStorage
+                if (typeof setFormPhotos === 'function') {
+                    setFormPhotos(updatedPhotos);
+                }
+                
+                const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
+                localStorage.setItem('photographyRequest', JSON.stringify({
+                    ...savedForm,
+                    photos: updatedPhotos
+                }));
+                
+                return updatedPhotos;
+            });
             
         } catch (err) {
             console.error("Error processing files:", err);
