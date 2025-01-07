@@ -42,7 +42,6 @@ import EventSummary from './components/Event/EventSummary';
 // Profile Imports
 import Signup from './components/Profile/Signup';
 import SignIn from './components/Profile/SignIn';
-import ChoosePricingPlan from './components/Profile/ChoosePricingPlan';
 import ChooseUserType from './components/Profile/ChooseUserType';
 import ChoosePricingPlan from './components/Profile/ChoosePricingPlan';
 import SuccessSignup from './components/Profile/SuccessSignup';
