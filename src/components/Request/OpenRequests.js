@@ -48,11 +48,11 @@ function OpenRequests() {
 
     useEffect(() => {
         if (!businessType) return;
-    
+
         const fetchRequests = async () => {
             let filteredRequests = [];
             let filteredPhotoRequests = [];
-    
+
             try {
                 // For specific business types
                 if (businessType === 'Cake') {
@@ -64,7 +64,7 @@ function OpenRequests() {
                     if (error) throw error;
                     filteredRequests = requests || [];
                 }
-    
+
                 if (businessType === 'Catering') {
                     const { data: requests, error } = await supabase
                         .from('requests')
@@ -74,57 +74,16 @@ function OpenRequests() {
                     if (error) throw error;
                     filteredRequests = requests || [];
                 }
-    
-                if (businessType === 'DJ') {
-                    const { data: requests, error } = await supabase
-                        .from('requests')
-                        .select('id, user_id, service_title, service_description, service_date, service_category, location, additional_comments, price_range, time_of_day')
-                        .eq('open', true)
-                        .eq('service_category', 'dj-services');
-                    if (error) throw error;
-                    filteredRequests = requests || [];
-                }
-    
-                if (businessType === 'Hair & Makeup Artist') {
-                    const { data: requests, error } = await supabase
-                        .from('requests')
-                        .select('id, user_id, service_title, service_description, service_date, service_category, location, additional_comments, price_range, time_of_day')
-                        .eq('open', true)
-                        .eq('service_category', 'hair-and-makeup-artist');
-                    if (error) throw error;
-                    filteredRequests = requests || [];
-                }
-    
-                if (businessType === 'Wedding Planner/Coordinator') {
-                    const { data: requests, error } = await supabase
-                        .from('requests')
-                        .select('id, user_id, service_title, service_description, service_date, service_category, location, additional_comments, price_range, time_of_day')
-                        .eq('open', true)
-                        .eq('service_category', 'event/wedding-planner');
-                    if (error) throw error;
-                    filteredRequests = requests || [];
-                }
-    
-                if (businessType === 'Florist') {
-                    const { data: requests, error } = await supabase
-                        .from('requests')
-                        .select('id, user_id, service_title, service_description, service_date, service_category, location, additional_comments, price_range, time_of_day')
-                        .eq('open', true)
-                        .eq('service_category', 'Florist');
-                    if (error) throw error;
-                    filteredRequests = requests || [];
-                }
-    
-                // For photography and videography requests
+
                 if (businessType === 'photography' || businessType === 'Videography') {
                     const { data: allPhotoRequests, error: allPhotoRequestsError } = await supabase
                         .from('photography_requests')
-                        .select('id, event_title, event_type, start_date, end_date, date_type,time_of_day, location, num_people, duration, indoor_outdoor, additional_comments, status')
+                        .select('id, event_title, event_type, start_date, end_date, date_type, time_of_day, location, num_people, duration, indoor_outdoor, additional_comments, status')
                         .eq('status', 'open');
-                    if (error) throw error;
+                    if (allPhotoRequestsError) throw allPhotoRequestsError;
                     filteredPhotoRequests = allPhotoRequests || [];
                 }
-    
+
                 // Default case: If no specific business type matches, fetch all requests
                 if (
                     businessType !== 'Cake' &&
@@ -140,72 +99,41 @@ function OpenRequests() {
                         .from('requests')
                         .select('id, user_id, service_title, service_description, service_date, service_category, location, additional_comments, price_range, time_of_day')
                         .eq('open', true);
-    
+
                     const { data: allPhotoRequests, error: allPhotoRequestsError } = await supabase
                         .from('photography_requests')
-                        .select('id, event_title, event_type, start_date, end_date, date_type,time_of_day, location, num_people, duration, indoor_outdoor, additional_comments, status')
+                        .select('id, event_title, event_type, start_date, end_date, date_type, time_of_day, location, num_people, duration, indoor_outdoor, additional_comments, status')
                         .eq('status', 'open');
-    
+
                     if (allRequestsError || allPhotoRequestsError) {
                         throw new Error(
                             `Error fetching all requests: ${allRequestsError?.message || ''} ${allPhotoRequestsError?.message || ''}`
                         );
                     }
-    
+
                     filteredRequests = allRequests || [];
                     filteredPhotoRequests = allPhotoRequests || [];
                 }
-    
-                setOpenRequests(filteredRequests);
+
+                // Sort requests
+                const sortedRequests = [...(filteredRequests || [])].sort((a, b) => {
+                    const aIsNew = isNew(a.created_at);
+                    const bIsNew = isNew(b.created_at);
+                    if (aIsNew && !bIsNew) return -1;
+                    if (!aIsNew && bIsNew) return 1;
+                    return new Date(b.created_at) - new Date(a.created_at);
+                });
+
+                setOpenRequests(sortedRequests);
                 setOpenPhotoRequests(filteredPhotoRequests);
             } catch (error) {
                 setError(`Error fetching requests: ${error.message}`);
-                console.log(error);
-            } else {
-                // Sort requests with new ones at the top
-                const sortedRequests = [...(requests || [])].sort((a, b) => {
-                    const aIsNew = isNew(a.created_at);
-                    const bIsNew = isNew(b.created_at);
-                    if (aIsNew && !bIsNew) return -1;
-                    if (!aIsNew && bIsNew) return 1;
-                    return new Date(b.created_at) - new Date(a.created_at);
-                });
-                setOpenRequests(sortedRequests);
-            }
-        };
-
-        const fetchPhotoRequests = async () => {
-            const { data: photoRequests, error } = await supabase
-                .from('photography_requests')
-                .select(`
-                    *,
-                    event_photos (
-                        photo_url,
-                        file_path
-                    )
-                `)
-                .eq('status', 'open')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                setError(`Error fetching photo requests: ${error.message}`);
                 console.error(error);
-            } else {
-                // Sort photo requests with new ones at the top
-                const sortedPhotoRequests = [...(photoRequests || [])].sort((a, b) => {
-                    const aIsNew = isNew(a.created_at);
-                    const bIsNew = isNew(b.created_at);
-                    if (aIsNew && !bIsNew) return -1;
-                    if (!aIsNew && bIsNew) return 1;
-                    return new Date(b.created_at) - new Date(a.created_at);
-                });
-                setOpenPhotoRequests(sortedPhotoRequests);
             }
         };
-    
+
         fetchRequests();
     }, [businessType]);
-    
 
     return (
         <div className="request-grid-container">
@@ -238,4 +166,3 @@ function OpenRequests() {
 }
 
 export default OpenRequests;
-
