@@ -12388,11 +12388,6 @@ footer a:hover, footer a:active, footer a:focus {
   }
 }
 
-@media (max-width:430px) {
-  .request-display {
-    max-width: 300px;
-  }
-}
 
 .request-display-mini {
   background-color: #ffffff;
@@ -12408,8 +12403,7 @@ footer a:hover, footer a:active, footer a:focus {
 
 @media (max-width:430px) {
   .request-display-mini {
-    width: 100%;
-    height: 100%;
+    width: auto;
   }
 }
 
