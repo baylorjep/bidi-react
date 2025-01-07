@@ -4,19 +4,27 @@ import '../../App.css';
 
 function RequestDisplay({ request, hideBidButton }) {
     const isNew = (createdAt) => {
+        console.log('Checking if new:', createdAt); // Add logging
+        if (!createdAt) {
+            console.log('No created_at timestamp');
+            return false;
+        }
         const now = new Date();
         const created = new Date(createdAt);
         const diffInDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+        console.log('Days difference:', diffInDays);
         return diffInDays < 7;
     };
 
     return (
         <div className="request-display-mini text-center mb-4">
             <div className="request-content p-3">
-                <h2 className="request-title">{request.service_title}</h2>
-                {isNew(request.created_at) && (
-                    <div className="request-status">New</div>
-                )}
+                <div style={{textAlign:'left', width: '100%', padding: '0 20px', marginBottom: '20px'}}>
+                    <h2 className="request-title">{request.service_title}</h2>
+                    {isNew(request.created_at) && (
+                        <div className="request-status">New</div>
+                    )}
+                </div>
                 
                 <div className="details-grid">
                     <div className="detail-item">

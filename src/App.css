@@ -12834,6 +12834,7 @@ footer a:hover, footer a:active, footer a:focus {
 .footer-left {
   flex: 1;
   flex-basis: 50%;
+  margin-right: 20px; 
 }
 
 .footer-link {
@@ -12857,13 +12858,15 @@ footer a:hover, footer a:active, footer a:focus {
   font-weight: 300;
   line-height: 24.2px;
   text-align: left;
-  padding: 3rem 20rem 0rem 5rem;
+  margin-left: 5rem;
+  margin-right: 2rem;
 
 }
 
 .contact-us {
   flex:1;
   flex-basis: 20%;
+  margin-right:20px;
 }
 
 .contact-title {
@@ -12889,6 +12892,7 @@ margin-top: 3rem;
   flex:1;
   color:black;
   flex-basis: 20%;
+  margin-right:20px;
 }
 .supported-by {
   display: flex;
@@ -12899,7 +12903,7 @@ margin-top: 3rem;
   flex-direction: row;
 }
 
-@media (max-width:1500px) {
+@media (max-width:1200px) {
   .supported-by{
     flex-direction: column;
   }
@@ -12917,7 +12921,7 @@ margin-top: 3rem;
   margin: 0;
 }
 
-@media (max-width:1500px) {
+@media (max-width:1200px) {
   .footer-container {
     flex-direction: column;
   }
@@ -13814,6 +13818,12 @@ text-align: left;
   box-shadow: 0px 0px 30px 0px rgba(205, 198, 219, 0.30);
 }
 
+@media screen and (max-width: 768px) {
+  .signup-form-container {
+      width: 90%;
+  }
+}
+
 
 
 
@@ -14530,6 +14540,14 @@ margin-bottom: -20px;
   box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.12), 0px 20px 20px 0px rgba(0, 0, 0, 0.08);
 }
 
+@media screen and (max-width: 1200px) {
+  .sign-up-modal-content {
+    width: 90%;
+    padding: 24px 20px;
+  }
+}
+
+
 
 .sign-up-modal-title {
   color: #000;
@@ -14609,6 +14627,15 @@ line-height: normal;
 background-color: white;
 color: black;
 }
+
+@media screen and (max-width: 1200px) {
+  .sign-up-modal-button-primary, .sign-up-modal-button-secondary {
+    width: 100%;
+  }
+}
+
+
+
 
 
     .sign-up-modal-X {

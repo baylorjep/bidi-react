@@ -6,6 +6,7 @@ function SummaryPage({ formData, prevStep }) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [errorMessage, setErrorMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         // Fetch the current user’s session
@@ -24,6 +25,9 @@ function SummaryPage({ formData, prevStep }) {
     }, [formData]);
 
     const handleSubmit = async () => {
+        if (isSubmitting) return; // Prevent multiple submissions
+        setIsSubmitting(true);
+        
         try {
             console.log('Submitting data:', formData);
             
@@ -90,6 +94,8 @@ function SummaryPage({ formData, prevStep }) {
         } catch (err) {
             console.error('Submission error:', err);
             setErrorMessage(`Error submitting request: ${err.message}`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -221,12 +227,20 @@ function SummaryPage({ formData, prevStep }) {
                 <button
                     className="request-form-back-and-foward-btn"
                     onClick={handleSubmit}
+                    disabled={isSubmitting}
                     style={{
-                        color:'black',}}
-                        
+                        color: 'black',
+                        cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    }}
                 >
-                    Submit
-
+                    {isSubmitting ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div className="spinner"></div>
+                            Submitting...
+                        </div>
+                    ) : (
+                        'Submit'
+                    )}
                 </button>
             </div>
         </div>

@@ -44,6 +44,19 @@ function AdditionalComments({ formData, setAdditionalComments, nextStep, prevSte
         }
     };
 
+    const handleSubmit = async (e) => {
+        e.preventDefault(); // Prevent default form submission
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            setIsModalOpen(true);
+            return; // Stop execution if user is not signed in
+        }
+
+        // If user is signed in, proceed with navigation
+        nextStep();
+    };
+
     return (
         <div className="request-form-overall-container">
             {isModalOpen && <SignInModal setIsModalOpen={setIsModalOpen} />}
@@ -79,7 +92,7 @@ function AdditionalComments({ formData, setAdditionalComments, nextStep, prevSte
                 <div className="request-form-header" style={{ marginTop: '40px' }}>Additional comments</div>
 
                 <div className="form-container">
-                    <form>
+                    <form onSubmit={handleSubmit}>
                         <div className="custom-input-container">
                             <ReactQuill
                                 theme="snow"
@@ -105,8 +118,8 @@ function AdditionalComments({ formData, setAdditionalComments, nextStep, prevSte
                                 Back
                             </button>
                             <button
+                                type="submit"
                                 className="request-form-back-and-foward-btn"
-                                onClick={handleNext}
                                 style={{ color: 'black' }}
                             >
                                 Next

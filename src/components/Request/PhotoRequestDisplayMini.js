@@ -46,9 +46,15 @@ function PhotoRequestDisplay({ photoRequest, hideBidButton }) {
     };
 
     const isNew = (createdAt) => {
+        console.log('Checking if photo request is new:', createdAt); // Add logging
+        if (!createdAt) {
+            console.log('No created_at timestamp for photo request');
+            return false;
+        }
         const now = new Date();
         const created = new Date(createdAt);
         const diffInDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+        console.log('Days difference for photo request:', diffInDays);
         return diffInDays < 7;
     };
 

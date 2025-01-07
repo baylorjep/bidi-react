@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function SelectEvent({ setEventType }) {
-    const [selectedEvent, setSelectedEvent] = useState(() => {
-        const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
-        return savedForm.eventType || '';
-    });
+    const [selectedEvent, setSelectedEvent] = useState('');
     const navigate = useNavigate();
 
     const eventOptions = [
@@ -33,9 +30,11 @@ function SelectEvent({ setEventType }) {
     };
 
     const handleNext = () => {
-        if (selectedEvent) {
-            navigate('/event-details');  // Navigate to the next stage
+        if (!selectedEvent) {
+            alert('Please select an event type to continue');
+            return;
         }
+        navigate('/event-details');
     };
 
     const handleBack = () => {
