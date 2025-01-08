@@ -137,7 +137,7 @@ function PhotoRequestDisplay({ photoRequest, event_photos, hideBidButton }) {
             <div className="request-content p-3">
                 <div style={{textAlign:'left', width: '100%', padding: '0 20px', marginBottom: '20px'}}>
                     <h2 className="request-title">{photoRequest.event_title}</h2>
-                    <div style={{display: 'flex', gap: '10px'}}>
+                    <div className='status-request-container'>
                         <div className="request-status">
                             {getEventDateDistance(photoRequest.start_date)}
                         </div>

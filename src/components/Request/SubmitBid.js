@@ -216,7 +216,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                 )}
             </div>
                 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} style={{padding:"20px"}}>
                     <div className="form-floating request-form mb-3">
                         <input
                             className="form-control"
@@ -244,7 +244,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                         <label htmlFor="bidDescription">Bid Description</label>
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "row", justifyContent: "center", gap: "16px" }}>
+                    <div style={{ display: "flex", flexDirection: "row", justifyContent:'space-between', gap: "12px" }}>
                         <div className="submit-bid-btn-container">
                             <button onClick={handleBack} className="submit-bid-button btn btn-primary rounded-pill">
                                 Back

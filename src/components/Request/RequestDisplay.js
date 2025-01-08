@@ -132,7 +132,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton }) {
         <div className="request-display text-center mb-4">
             <div className="request-content p-3">
                 <h2 className="request-title">{request.service_title}</h2>
-                <div style={{display: 'flex', gap: '10px'}}>
+                <div className='status-request-container'>
                     <div className="request-status">
                         {getServiceDateDistance(request.service_date)}
                     </div>
