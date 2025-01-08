@@ -51,7 +51,7 @@ function PhotoRequestDisplay({ photoRequest, event_photos, hideBidButton }) {
         // Date comparison in local time
         const localCreated = new Date(createdAt);
         const createdDate = localCreated.toLocaleDateString('en-CA');
-        const specialDates = ['2025-01-08', '2025-01-25'];
+        const specialDates = ['2025-01-11', '2025-01-25'];
 
         if (!specialDates.includes(createdDate)) {
             return null;

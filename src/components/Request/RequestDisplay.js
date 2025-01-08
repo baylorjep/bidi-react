@@ -69,7 +69,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton }) {
         // Date comparison in local time (this part works fine)
         const localCreated = new Date(createdAt);
         const createdDate = localCreated.toLocaleDateString('en-CA');
-        const specialDates = ['2025-01-08', '2025-01-25'];
+        const specialDates = ['2025-01-11', '2025-01-25'];
 
         // Debug logging
         console.log('Raw createdAt:', createdAt);
