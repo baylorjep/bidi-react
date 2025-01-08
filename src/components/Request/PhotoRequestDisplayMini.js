@@ -6,6 +6,7 @@ import '../../App.css';
 function PhotoRequestDisplay({ photoRequest, hideBidButton }) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedPhoto, setSelectedPhoto] = useState(null);
+    const [timeLeft, setTimeLeft] = useState('');
 
     // Add debugging log
     useEffect(() => {
@@ -58,14 +59,88 @@ function PhotoRequestDisplay({ photoRequest, hideBidButton }) {
         return diffInDays < 7;
     };
 
+    const checkPromotion = (createdAt) => {
+        if (!createdAt) return null;
+
+        // Parse PostgreSQL timestamp string to get UTC milliseconds
+        const createdParts = createdAt.split(/[^0-9]/);
+        const created = Date.UTC(
+            parseInt(createdParts[0]),
+            parseInt(createdParts[1]) - 1,
+            parseInt(createdParts[2]),
+            parseInt(createdParts[3]),
+            parseInt(createdParts[4]),
+            parseInt(createdParts[5]),
+            parseInt(createdParts[6].substr(0, 3))
+        );
+        const now = Date.now();
+
+        // Date comparison in local time
+        const localCreated = new Date(createdAt);
+        const createdDate = localCreated.toLocaleDateString('en-CA');
+        const specialDates = ['2025-01-08', '2025-01-25'];
+
+        if (!specialDates.includes(createdDate)) return null;
+
+        // Get milliseconds since creation
+        const msSinceCreation = now - created;
+        const minutesSinceCreation = msSinceCreation / (1000 * 60);
+
+        if (minutesSinceCreation < 30) {
+            return {
+                message: "⚡Save 2%",  // Removed space after emoji
+                endTime: new Date(created + (30 * 60 * 1000))
+            };
+        }
+        if (minutesSinceCreation < 60) {
+            return {
+                message: "⏳Save 1%",  // Removed space after emoji
+                endTime: new Date(created + (60 * 60 * 1000))
+            };
+        }
+
+        return null;
+    };
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const promotion = checkPromotion(photoRequest.created_at);
+            if (promotion && promotion.endTime) {
+                const now = new Date();
+                const timeRemaining = promotion.endTime.getTime() - now.getTime();
+                
+                if (timeRemaining > 0) {
+                    const totalSeconds = Math.floor(timeRemaining / 1000);
+                    const minutes = Math.floor(totalSeconds / 60);
+                    const seconds = totalSeconds % 60;
+                    setTimeLeft(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
+                } else {
+                    setTimeLeft('');
+                }
+            } else {
+                setTimeLeft('');
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [photoRequest.created_at]);
+
     return (
         <div className="request-display-mini text-center mb-4">
             <div className="request-content p-3 ">
                 <div style={{textAlign:'left', width: '100%', padding: '0 20px', marginBottom: '20px'}}>
                     <h2 className="request-title">{photoRequest.event_title || 'Untitled Event'}</h2>
-                    {isNew(photoRequest.created_at) && (
-                        <div className="request-status">New</div>
-                    )}
+                    <div style={{display: 'flex', gap: '10px'}}>
+                        {isNew(photoRequest.created_at) && (
+                            <div className="request-status">New</div>
+                        )}
+                        {checkPromotion(photoRequest.created_at) && (
+                            <div className="promotion-status">
+                                {checkPromotion(photoRequest.created_at).message}
+                                {timeLeft && <span> ({timeLeft})</span>}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="details-grid">

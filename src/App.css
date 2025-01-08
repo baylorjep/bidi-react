@@ -12611,7 +12611,7 @@ footer a:hover, footer a:active, footer a:focus {
 .request-status {
   text-align: left;
   display: flex;
-  width:40%;
+
   height: 39px;
   padding: 18px 32px;
   justify-content: center;
@@ -12621,6 +12621,27 @@ footer a:hover, footer a:active, footer a:focus {
   border-radius: 30px;
   background: #FAE5E5;
   color: #FF008A;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.promotion-status {
+  text-align: left;
+  display: flex;
+
+  height: 39px;
+  padding: 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+  border-radius: 30px;
+  background: #f7ecff;
+  color: #a328f4;
   text-align: center;
   font-family: Roboto;
   font-size: 16px;

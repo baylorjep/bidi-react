@@ -9,6 +9,7 @@ import { supabase } from '../../supabaseClient';
 function PhotoRequestDisplay({ photoRequest, event_photos, hideBidButton }) {
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const [filteredPhotos, setFilteredPhotos] = useState([]);
+    const [timeLeft, setTimeLeft] = useState(''); // Add this state
 
     const getTimeDifference = (createdAt) => {
         const now = new Date();
@@ -29,6 +30,52 @@ function PhotoRequestDisplay({ photoRequest, event_photos, hideBidButton }) {
         if (diffInDays === 0) return 'Today';
         if (diffInDays === 1) return 'Tomorrow';
         return `In ${diffInDays} days`;
+    };
+
+    const checkPromotion = (createdAt) => {
+        if (!createdAt) return null;
+
+        // Parse PostgreSQL timestamp string to get UTC milliseconds
+        const createdParts = createdAt.split(/[^0-9]/);
+        const year = parseInt(createdParts[0]);
+        const month = parseInt(createdParts[1]) - 1;
+        const day = parseInt(createdParts[2]);
+        const hour = parseInt(createdParts[3]);
+        const minute = parseInt(createdParts[4]);
+        const second = parseInt(createdParts[5]);
+        const millisecond = parseInt(createdParts[6].substr(0, 3));
+
+        const created = Date.UTC(year, month, day, hour, minute, second, millisecond);
+        const now = Date.now();
+
+        // Date comparison in local time
+        const localCreated = new Date(createdAt);
+        const createdDate = localCreated.toLocaleDateString('en-CA');
+        const specialDates = ['2025-01-08', '2025-01-25'];
+
+        if (!specialDates.includes(createdDate)) {
+            return null;
+        }
+
+        // Get milliseconds since creation
+        const msSinceCreation = now - created;
+        const minutesSinceCreation = msSinceCreation / (1000 * 60);
+
+        // Check time windows
+        if (minutesSinceCreation < 30) {
+            return {
+                message: "⚡ Save 2% (Now 6% vs. 8%)",
+                endTime: new Date(created + (30 * 60 * 1000))
+            };
+        }
+        if (minutesSinceCreation < 60) {
+            return {
+                message: "⏳ Save 1% (Now 7% vs. 8%)",
+                endTime: new Date(created + (60 * 60 * 1000))
+            };
+        }
+
+        return null;
     };
 
     useEffect(() => {
@@ -61,13 +108,45 @@ function PhotoRequestDisplay({ photoRequest, event_photos, hideBidButton }) {
         }
     };
 
+    // Add the promotion timer effect
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const promotion = checkPromotion(photoRequest.created_at);
+            if (promotion && promotion.endTime) {
+                const now = new Date();
+                const timeRemaining = promotion.endTime.getTime() - now.getTime();
+                
+                if (timeRemaining > 0) {
+                    const totalSeconds = Math.floor(timeRemaining / 1000);
+                    const minutes = Math.floor(totalSeconds / 60);
+                    const seconds = totalSeconds % 60;
+                    setTimeLeft(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
+                } else {
+                    setTimeLeft('');
+                }
+            } else {
+                setTimeLeft('');
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [photoRequest.created_at]);
+
     return (
         <div className="request-display text-center mb-4">
             <div className="request-content p-3">
                 <div style={{textAlign:'left', width: '100%', padding: '0 20px', marginBottom: '20px'}}>
                     <h2 className="request-title">{photoRequest.event_title}</h2>
-                    <div className="request-status">
-                        {getEventDateDistance(photoRequest.start_date)}
+                    <div style={{display: 'flex', gap: '10px'}}>
+                        <div className="request-status">
+                            {getEventDateDistance(photoRequest.start_date)}
+                        </div>
+                        {checkPromotion(photoRequest.created_at) && (
+                            <div className="promotion-status">
+                                {checkPromotion(photoRequest.created_at).message}
+                                {timeLeft && <span> ({timeLeft})</span>}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -129,40 +208,38 @@ function PhotoRequestDisplay({ photoRequest, event_photos, hideBidButton }) {
                     )}
                 </div>
 
-                {filteredPhotos && filteredPhotos.length > 0 ? (
-                    <>
-                        <div className="request-subtype">
-                            Inspiration Photos
-                        </div>
-                        <div className="photo-grid scroll-container">
-                            {filteredPhotos.map((photo, index) => {
-                                const publicUrl = getPublicUrl(photo.file_path);
-                                console.log("Generated public URL:", publicUrl);
-                                
-                                return (
-                                    <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
-                                        <img
-                                            src={publicUrl || photo.photo_url}
-                                            className="photo"
-                                            alt={`Photo ${index + 1}`}
-                                            onError={(e) => {
-                                                console.error('Image failed to load:', {
-                                                    publicUrl,
-                                                    originalUrl: photo.photo_url,
-                                                    filePath: photo.file_path
-                                                });
-                                                e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
-                                            }}
-                                            loading="lazy"
-                                        />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </> 
-                ) : (
-                    <div className="request-subtype">No inspiration photos available</div>
-                )}
+                            {filteredPhotos && filteredPhotos.length > 0 && (
+                <>
+                    <div className="request-subtype">
+                        Inspiration Photos
+                    </div>
+                    <div className="photo-grid scroll-container">
+                        {filteredPhotos.map((photo, index) => {
+                            const publicUrl = getPublicUrl(photo.file_path);
+                            console.log("Generated public URL:", publicUrl);
+                            
+                            return (
+                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
+                                    <img
+                                        src={publicUrl || photo.photo_url}
+                                        className="photo"
+                                        alt={`Photo ${index + 1}`}
+                                        onError={(e) => {
+                                            console.error('Image failed to load:', {
+                                                publicUrl,
+                                                originalUrl: photo.photo_url,
+                                                filePath: photo.file_path
+                                            });
+                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
+                                        }}
+                                        loading="lazy"
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+                </>
+            )}
 
                 {photoRequest.additional_comments && (
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>

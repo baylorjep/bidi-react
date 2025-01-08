@@ -46,6 +46,31 @@ function OpenRequests() {
         return diffInDays < 7;
     };
 
+    const checkPromotion = (createdAt) => {
+        if (!createdAt) return null;
+        
+        const created = new Date(createdAt);
+        const specialDates = [
+            new Date('2025-01-11'),
+            new Date('2025-01-25')
+        ];
+        
+        const isSpecialDate = specialDates.some(date => 
+            created.getFullYear() === date.getFullYear() &&
+            created.getMonth() === date.getMonth() &&
+            created.getDate() === date.getDate()
+        );
+
+        if (!isSpecialDate) return null;
+
+        const now = new Date();
+        const diffInMinutes = Math.floor((now - created) / (1000 * 60));
+        
+        if (diffInMinutes <= 30) return "Only Pay 6%";
+        if (diffInMinutes <= 60) return "Only Pay 7%";
+        return null;
+    };
+
     useEffect(() => {
         if (!businessType) return;
 
@@ -147,6 +172,7 @@ function OpenRequests() {
                         <RequestDisplayMini 
                             key={`regular-${request.id}`}
                             request={request}
+                            checkPromotion={checkPromotion}
                         />
                     ))
                 ) : businessType === 'photography' || businessType === 'Videography' ? (
@@ -155,6 +181,7 @@ function OpenRequests() {
                         <PhotoRequestDisplayMini 
                             key={`photo-${request.id}`}
                             photoRequest={request}
+                            checkPromotion={checkPromotion}
                         />
                     ))
                 ) : (
@@ -172,11 +199,13 @@ function OpenRequests() {
                                 <PhotoRequestDisplayMini 
                                     key={`photo-${request.id}`}
                                     photoRequest={request}
+                                    checkPromotion={checkPromotion}
                                 />
                             ) : (
                                 <RequestDisplayMini 
                                     key={`regular-${request.id}`}
                                     request={request}
+                                    checkPromotion={checkPromotion}
                                 />
                             )
                         ))

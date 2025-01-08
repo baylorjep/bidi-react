@@ -21,7 +21,7 @@ const sendEmailNotification = async (recipientEmail, subject, htmlContent) => {
     }
 };
 
-function SubmitBid() {
+function SubmitBid({ onClose }) { // Remove request from props since we're fetching it
     const { requestId } = useParams();
     const [requestDetails, setRequestDetails] = useState(null);
     const [requestType, setRequestType] = useState(''); // To track the request type

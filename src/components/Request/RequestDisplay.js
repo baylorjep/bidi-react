@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -7,6 +7,7 @@ import { supabase } from '../../supabaseClient';
 
 function RequestDisplay({ request, servicePhotos, hideBidButton }) {
     const [selectedPhoto, setSelectedPhoto] = useState(null);
+    const [timeLeft, setTimeLeft] = useState('');
 
     const handlePhotoClick = (photo) => {
         setSelectedPhoto(photo);
@@ -49,13 +50,100 @@ function RequestDisplay({ request, servicePhotos, hideBidButton }) {
         return `In ${diffInDays} days`;
     };
 
+    const checkPromotion = (createdAt) => {
+        if (!createdAt) return null;
+
+        // Parse PostgreSQL timestamp string to get UTC milliseconds
+        const createdParts = createdAt.split(/[^0-9]/);
+        const year = parseInt(createdParts[0]);
+        const month = parseInt(createdParts[1]) - 1; // months are 0-based
+        const day = parseInt(createdParts[2]);
+        const hour = parseInt(createdParts[3]);
+        const minute = parseInt(createdParts[4]);
+        const second = parseInt(createdParts[5]);
+        const millisecond = parseInt(createdParts[6].substr(0, 3));
+
+        const created = Date.UTC(year, month, day, hour, minute, second, millisecond);
+        const now = Date.now();
+
+        // Date comparison in local time (this part works fine)
+        const localCreated = new Date(createdAt);
+        const createdDate = localCreated.toLocaleDateString('en-CA');
+        const specialDates = ['2025-01-08', '2025-01-25'];
+
+        // Debug logging
+        console.log('Raw createdAt:', createdAt);
+        console.log('Parsed created UTC:', new Date(created).toISOString());
+        console.log('Now:', new Date(now).toISOString());
+        console.log('Created parts:', { year, month, day, hour, minute, second, millisecond });
+
+        if (!specialDates.includes(createdDate)) {
+            return null;
+        }
+
+        // Get milliseconds since creation
+        const msSinceCreation = now - created;
+        const minutesSinceCreation = msSinceCreation / (1000 * 60);
+
+        console.log('Milliseconds since creation:', msSinceCreation);
+        console.log('Minutes since creation:', minutesSinceCreation);
+
+        // Check time windows
+        if (minutesSinceCreation < 30) {
+            return {
+                message: "⚡ Save 2% (Now 6% vs. 8%)",
+                endTime: new Date(created + (30 * 60 * 1000))
+            };
+        }
+        if (minutesSinceCreation < 60) {
+            return {
+                message: "⏳ Save 1% (Now 7% vs. 8%)",
+                endTime: new Date(created + (60 * 60 * 1000))
+            };
+        }
+
+        return null;
+    };
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const promotion = checkPromotion(request.created_at);
+            if (promotion && promotion.endTime) {
+                const now = new Date();
+                const timeRemaining = promotion.endTime.getTime() - now.getTime();
+                
+                if (timeRemaining > 0) {
+                    const totalSeconds = Math.floor(timeRemaining / 1000);
+                    const minutes = Math.floor(totalSeconds / 60);
+                    const seconds = totalSeconds % 60;
+                    setTimeLeft(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
+                } else {
+                    setTimeLeft('');
+                }
+            } else {
+                setTimeLeft('');
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [request.created_at]);
+
     return (
         <div className="request-display text-center mb-4">
             <div className="request-content p-3">
                 <h2 className="request-title">{request.service_title}</h2>
-                <div className="request-status">
-                    {getServiceDateDistance(request.service_date)}
+                <div style={{display: 'flex', gap: '10px'}}>
+                    <div className="request-status">
+                        {getServiceDateDistance(request.service_date)}
+                    </div>
+                    {checkPromotion(request.created_at) && (
+                        <div className="promotion-status">
+                            {checkPromotion(request.created_at).message}
+                            {timeLeft && <span> ({timeLeft})</span>}
+                        </div>
+                    )}
                 </div>
+                
                 
                 <div className="details-grid">
                     <div className="detail-item">
@@ -77,10 +165,12 @@ function RequestDisplay({ request, servicePhotos, hideBidButton }) {
                     <div className="detail-value-long">{request.service_description}</div>
                 </div>
 
+
+
                 {servicePhotos && servicePhotos.length > 0 ? (
                     <>
                         <div className="request-subtype">
-                            Service Photos
+                            Photos
                         </div>
                         <div className="photo-grid scroll-container">
                             {servicePhotos.map((photo, index) => {
