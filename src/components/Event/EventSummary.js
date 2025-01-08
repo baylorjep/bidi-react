@@ -18,6 +18,10 @@ function EventSummary({ eventType, eventDetails }) {
     const [error, setError] = useState(null);
     const [uploadingFiles, setUploadingFiles] = useState(0);
     const currentStep = 4;
+    const [couponCode, setCouponCode] = useState('');
+    const [couponError, setCouponError] = useState(null);
+    const [isValidCoupon, setIsValidCoupon] = useState(false);
+    const [discountAmount, setDiscountAmount] = useState(null);
 
     const [selectedEvent, setSelectedEvent] = useState(() => {
         const savedForm = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
@@ -148,30 +152,67 @@ function UploadPictures() {
         navigate('/event-photos');  // Adjust the route for going back
     };
 
+    const verifyCouponCode = async () => {
+        if (!couponCode.trim()) {
+            setCouponError('Please enter a coupon code');
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('coupons')
+                .select('code, discount_amount')  // Explicitly select the fields we need
+                .eq('code', couponCode)
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                setIsValidCoupon(true);
+                setCouponError(null);
+                setDiscountAmount(data.discount_amount);  // Set the discount amount from the coupons table
+            } else {
+                setIsValidCoupon(false);
+                setCouponError('Invalid coupon code');
+                setDiscountAmount(null);
+            }
+        } catch (err) {
+            console.error('Error verifying coupon:', err);
+            setCouponError('Error verifying coupon code');
+            setIsValidCoupon(false);
+            setDiscountAmount(null);
+        }
+    };
 
     const handleSubmit = async () => {
         setLoading(true);
         setError(null);
         
         try {
-            // First create the photography request with status set to 'open'
+            const requestData = {
+                profile_id: user.id,
+                event_title: eventDetails.eventTitle,
+                event_type: eventType,
+                date_type: eventDetails.dateType,
+                start_date: eventDetails.startDate,
+                end_date: eventDetails.endDate,
+                time_of_day: eventDetails.timeOfDay,
+                location: eventDetails.location,
+                num_people: eventDetails.numPeople,
+                duration: eventDetails.duration,
+                indoor_outdoor: eventDetails.indoorOutdoor,
+                additional_comments: eventDetails.additionalComments,
+                status: 'open'
+            };
+
+            // Only add coupon code if it's verified
+            if (isValidCoupon && couponCode) {
+                requestData.coupon_code = couponCode;
+            }
+
             const { data: request, error: requestError } = await supabase
                 .from('photography_requests')
-                .insert([{
-                    profile_id: user.id,
-                    event_title: eventDetails.eventTitle,
-                    event_type: eventType,
-                    date_type: eventDetails.dateType,
-                    start_date: eventDetails.startDate,
-                    end_date: eventDetails.endDate,
-                    time_of_day: eventDetails.timeOfDay,
-                    location: eventDetails.location,
-                    num_people: eventDetails.numPeople,
-                    duration: eventDetails.duration,
-                    indoor_outdoor: eventDetails.indoorOutdoor,
-                    additional_comments: eventDetails.additionalComments,
-                    status: 'open'  // Add this line to set the initial status
-                }])
+                .insert([requestData])
                 .select()
                 .single();
 
@@ -400,6 +441,7 @@ function UploadPictures() {
                         flexDirection: 'column', 
                         gap: '8px', 
                         alignItems:'flex-start',
+                        
                     }}>
                         <div className="request-subtype">Additional Comments</div>
                         <div 
@@ -427,6 +469,35 @@ function UploadPictures() {
                 )}
 
                 ?*/}
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px'}}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent:'center'    }}>
+                            <input
+                                type="text"
+                                value={couponCode}
+                                onChange={(e) => {
+                                    setCouponCode(e.target.value);
+                                    setIsValidCoupon(false);  // Reset validation when code changes
+                                    setDiscountAmount(null);
+                                }}
+                                placeholder="Enter coupon code"
+                                className='coupon-code-input'
+                                style={{
+                                    
+                                    backgroundColor: isValidCoupon ? '#f0fff0' : 'white'  // Light green background if valid
+                                }}
+                            />
+                            <button
+                                onClick={verifyCouponCode}
+                                className="landing-page-button"
+                                style={{ padding: '8px 12px', fontSize: '16px' }}
+                            >
+                                Verify
+                            </button>
+                        </div>
+                        {couponError && <div style={{color: 'red', fontSize: '14px'}}>{couponError}</div>}
+                        {isValidCoupon && <div style={{color: 'green', fontSize: '14px'}}>Coupon code is valid! Discount amount: ${discountAmount}</div>}
+                    </div>
 
                
                     

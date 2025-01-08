@@ -8,6 +8,10 @@ function SummaryPage({ formData, prevStep }) {
     const [errorMessage, setErrorMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const currentStep = 4; // Change this to the current step
+    const [couponCode, setCouponCode] = useState('');
+    const [couponError, setCouponError] = useState(null);
+    const [isValidCoupon, setIsValidCoupon] = useState(false);
+    const [discountAmount, setDiscountAmount] = useState(null);
 
     useEffect(() => {
         // Fetch the current user’s session
@@ -25,6 +29,38 @@ function SummaryPage({ formData, prevStep }) {
         console.log('Photos in formData:', formData.photos); // Add this
     }, [formData]);
 
+    const verifyCouponCode = async () => {
+        if (!couponCode.trim()) {
+            setCouponError('Please enter a coupon code');
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('coupons')
+                .select('code, discount_amount')
+                .eq('code', couponCode)
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                setIsValidCoupon(true);
+                setCouponError(null);
+                setDiscountAmount(data.discount_amount);
+            } else {
+                setIsValidCoupon(false);
+                setCouponError('Invalid coupon code');
+                setDiscountAmount(null);
+            }
+        } catch (err) {
+            console.error('Error verifying coupon:', err);
+            setCouponError('Error verifying coupon code');
+            setIsValidCoupon(false);
+            setDiscountAmount(null);
+        }
+    };
+
     const handleSubmit = async () => {
         if (isSubmitting) return; // Prevent multiple submissions
         setIsSubmitting(true);
@@ -32,22 +68,29 @@ function SummaryPage({ formData, prevStep }) {
         try {
             console.log('Submitting data:', formData);
             
+            const requestData = {
+                user_id: user ? user.id : null,
+                customer_email: user ? user.email : null,
+                service_title: formData.serviceTitle,
+                location: formData.location || 'TBD',
+                service_category: formData.category || 'General',
+                service_description: formData.description,
+                service_date: formData.startDate || 'TBD',
+                end_date: formData.endDate || null,
+                time_of_day: formData.timeOfDay || 'TBD',
+                price_range: formData.budget,
+                additional_comments: formData.additionalComments || '',
+                open: true,
+            };
+
+            // Only add coupon code if it's verified
+            if (isValidCoupon && couponCode) {
+                requestData.coupon_code = couponCode;
+            }
+
             const { data: request, error } = await supabase
                 .from('requests')
-                .insert([{
-                    user_id: user ? user.id : null,
-                    customer_email: user ? user.email : null,
-                    service_title: formData.serviceTitle,
-                    location: formData.location || 'TBD',
-                    service_category: formData.category || 'General',
-                    service_description: formData.description,
-                    service_date: formData.startDate || 'TBD',
-                    end_date: formData.endDate || null,
-                    time_of_day: formData.timeOfDay || 'TBD',
-                    price_range: formData.budget,
-                    additional_comments: formData.additionalComments || '',
-                    open: true,
-                }])
+                .insert([requestData])
                 .select();
 
             if (error) throw error;
@@ -209,12 +252,47 @@ function SummaryPage({ formData, prevStep }) {
                     }}>
                         <div className="request-subtype">Additional Comments</div>
                         <div 
-                            style={{width:'100%', height:'100%'}}
+                            style={{width:'100%', height:'100%', overflowY:'auto'}}
                             className="request-info quill-content"
                             dangerouslySetInnerHTML={{ __html: formData.additionalComments }}
                             
                         />
                     </div>
+
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                marginTop: 'auto',
+                marginBottom: '20px',
+                alignItems: 'center'
+            }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => {
+                            setCouponCode(e.target.value);
+                            setIsValidCoupon(false);
+                            setDiscountAmount(null);
+                        }}
+                        placeholder="Enter coupon code"
+                        className='coupon-code-input'
+                        style={{
+                            backgroundColor: isValidCoupon ? '#f0fff0' : 'white'
+                        }}
+                    />
+                    <button
+                        onClick={verifyCouponCode}
+                        className="landing-page-button"
+                        style={{ padding: '8px 12px', fontSize: '16px' }}
+                    >
+                        Verify
+                    </button>
+                </div>
+                {couponError && <div style={{color: 'red', fontSize: '14px'}}>{couponError}</div>}
+                {isValidCoupon && <div style={{color: 'green', fontSize: '14px'}}>Coupon code is valid! Discount amount: ${discountAmount}</div>}
+            </div>
 
             {errorMessage && <p className="text-danger">{errorMessage}</p>}
 
