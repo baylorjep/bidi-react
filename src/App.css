@@ -12458,15 +12458,11 @@ footer a:hover, footer a:active, footer a:focus {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add slight shadow */
   border-radius: 20px;
   overflow-y: auto;
+  max-height: 15vh;
 }
 
-@media (max-width: 1200px) {
-  .quill-content {
-    max-height: 20vh;
-  }
-}
 
-@media (max-width: 400px) {
+@media (max-width: 600px) {
   .quill-content {
     max-height: 10vh;
   }
@@ -12528,10 +12524,10 @@ footer a:hover, footer a:active, footer a:focus {
   }
 }
 
-@media (max-width: 830px) {
+@media (max-width: 500px) {
   .request-grid {
     grid-template-columns: repeat(1, 1fr);
-      padding: 4px 20px;
+    max-height: 240px;
   }
 }
 
@@ -15300,4 +15296,20 @@ color: black;
     
   }
 
+.coupon-code-input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  width: 200px;
+}
+
+@media (max-width: 380px ) {
+
+  .coupon-code-input {
+    width: 150px;
+    font-size: 14px;
+  }
+  
+}
 
