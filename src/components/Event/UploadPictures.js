@@ -34,6 +34,7 @@ function UploadPictures({ formData, setFormPhotos, nextStep, prevStep }) { // Ch
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const navigate = useNavigate();
     const requestId = uuidv4(); // Generate a new request ID
+    const currentStep = 3; // Change this to the current step
 
     useEffect(() => {
         // Fetch authenticated user's ID
@@ -266,53 +267,62 @@ const handleRemovePhoto = async (photoUrl) => {
 
     return (
         <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
-            <div className='request-form-status-container'>
-                <div className='status-bar-container'>
-                    <div className='status-check-container' style={{ display: 'flex', gap: '10px', transform: "rotate(260deg)"}}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 25" fill="none">
-                            <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
-                        </svg>
-                    </div>
-                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
-                        <line x1="12" y1="0" x2="12" y2="300" stroke="black" strokeWidth="2" />
-                    </svg>
-                    
-                    <div className='status-check-container' style={{ display: 'flex', gap: '10px', transform: "rotate(260deg)"}}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 25" fill="none">
-                            <path d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z" fill="white"/>
-                        </svg>
-                    </div>
-                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
-                        <line x1="12" y1="0" x2="12" y2="150" stroke="black" strokeWidth="2" />
-                    </svg>
-
-                    <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
-                    03
-                    </div>
-                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
-                        <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
-                    </svg>
-
-                    <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
-                    04
-                    </div>
-                    <svg width="25px"  xmlns="http://www.w3.org/2000/svg">
-                        <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
-                    </svg>
-
-                    <div className='status-check-container' style={{background:"transparent", border:"2px solid gray"}}>
-                    05
-                    </div>
-                    
-                </div>
-                <div className='status-text-container'>
-                    <div className='status-text'>Service Details</div>
-                    <div className='status-text'>Personal Details</div>
-                    <div className='status-text'>Add Photos</div>
-                    <div className='status-text'>Review</div>
-                    <div className='status-text'>Submit</div>
-                </div>
-            </div>
+            <div className="request-form-status-container">
+              <div className="status-bar-container">
+                  {Array.from({ length: 5 }, (_, index) => (
+                      <React.Fragment key={index}>
+                          <div
+                              className={`status-check-container ${
+                                  index + 1 === currentStep
+                                      ? 'active'
+                                      : index + 1 < currentStep
+                                      ? 'completed'
+                                      : ''
+                              }`}
+                          >
+                              {index + 1 < currentStep ? (
+                                  <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="32"
+                                      height="32"
+                                      viewBox="0 0 24 25"
+                                      fill="none"
+                                      style={{ transform: 'rotate(-90deg)' }} // Rotating to vertical
+                                  >
+                                      <path
+                                          d="M8.358 9.57801L18 19.22L16.7198 20.5003L5.7975 9.57801L10.8743 4.49976L12.1545 5.78001L8.358 9.57801Z"
+                                          fill="white"
+                                      />
+                                  </svg>
+                              ) : (
+                                  `0${index + 1}`
+                              )}
+                          </div>
+                          {index < 4 && (
+                              <div
+                                  className={`status-line ${
+                                      index + 1 < currentStep ? 'completed' : ''
+                                  }`}
+                              ></div>
+                          )}
+                      </React.Fragment>
+                  ))}
+              </div>
+              <div className="status-text-container">
+                  {['Service Details', 'Personal Details', 'Add Photos', 'Review', 'Submit'].map(
+                      (text, index) => (
+                          <div
+                              className={`status-text ${
+                                  index + 1 === currentStep ? 'active' : ''
+                              }`}
+                              key={index}
+                          >
+                              {text}
+                          </div>
+                      )
+                  )}
+              </div>
+          </div>
             <div className='request-form-container-details' style={{alignItems:"normal", justifyContent:"flex-start",alignItems:"flex-start"}}>
                 <h2 className="request-form-header" style={{textAlign:'left', marginBottom:"8px",marginLeft:"20px"}}>Inspiration Photos</h2>
                 <p className="Sign-Up-Page-Subheader" style={{textAlign:'left',marginLeft:"20px", marginTop:"0",marginBottom:"0"}}>You can upload inspo (inspiration) photos here. If you aren't sure what you are looking for, just press next.

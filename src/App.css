@@ -14062,36 +14062,78 @@ line-height: normal;
  }
 }
 
-.status-check-container {
-  background-color: black;
-  border-radius: 80px;
-  width: 32px;
-  height: 32px;
-  line-height: 25px;
-}
 .status-bar-container {
   display: flex;
   flex-direction: column;
+  align-items: center; /* Centers circles and lines horizontally */
+  justify-content: space-between; /* Ensures even spacing between circles */
+  height: 100%; /* Ensures the bar fills the parent container */
+  padding: 10px 0; /* Adds spacing to the top and bottom */
+}
+
+.status-check-container {
+  display: flex;
   align-items: center;
-  height: 100%; /* 75% of the viewport height */
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid gray;
+  border-radius: 50%;
+  background-color: white;
+  font-size: 14px;
+  font-weight: bold;
+  position: relative;
+}
+
+.status-line {
+  width: 2px;
+  flex-grow: 1; /* Dynamically fills space between circles */
+  background-color: gray;
+  margin: 0; /* Removes unwanted spacing */
 }
 
 .status-text-container {
   display: flex;
   flex-direction: column;
-  text-align: left;
   justify-content: space-between;
-  height: 100%; /* 75% of the viewport height */
+  height: 100%; /* Matches the height of the status-bar-container */
+  margin-left: 20px; /* Aligns text to the right of the circles */
 }
 
 .status-text {
-  color: #000;
-  font-family: Inter;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 32px;
+  text-align: left; /* Aligns text to the left */
+  font-size: 14px;
+  font-weight: normal;
+  color: black;
+  line-height: 40px; /* Matches the height of the circles for alignment */
 }
+
+/* Active circle */
+.status-check-container.active {
+  border: 2px solid #000; /* Black border for active step */
+  background-color: #fff;
+  color: #000; /* Black text */
+}
+
+/* Completed Circle */
+.status-check-container.completed {
+  border: 2px solid black; /* Black border */
+  background-color: black; /* Black fill for completed steps */
+  color: white; /* White text or checkmark */
+}
+
+/* Completed Line */
+.status-line.completed {
+  background-color: black; /* Black line for completed steps */
+}
+
+/* Active text */
+.status-text.active {
+  font-weight: bold;
+  color: #000; /* Black color for active text */
+}
+
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
