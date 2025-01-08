@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../supabaseClient';
 import SignInModal from '../../Event/SignInModal';
 
-function AdditionalComments({ formData, setAdditionalComments, nextStep, prevStep }) {
+function AdditionalComments({ formData, setAdditionalComments, nextStep, prevStep, currentStep }) {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -45,15 +45,14 @@ function AdditionalComments({ formData, setAdditionalComments, nextStep, prevSte
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault(); // Prevent default form submission
+        e.preventDefault();
 
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
             setIsModalOpen(true);
-            return; // Stop execution if user is not signed in
+            return;
         }
 
-        // If user is signed in, proceed with navigation
         nextStep();
     };
 
@@ -66,30 +65,44 @@ function AdditionalComments({ formData, setAdditionalComments, nextStep, prevSte
                     {Array.from({ length: 5 }, (_, index) => (
                         <React.Fragment key={index}>
                             <div
-                                className="status-check-container"
-                                style={{ background: "transparent", border: "2px solid gray" }}
+                                className={`status-check-container ${
+                                    index + 1 === currentStep
+                                        ? 'active'
+                                        : index + 1 < currentStep
+                                        ? 'completed'
+                                        : ''
+                                }`}
                             >
                                 {`0${index + 1}`}
                             </div>
                             {index < 4 && (
-                                <svg width="25px" xmlns="http://www.w3.org/2000/svg">
-                                    <line x1="12" y1="0" x2="12" y2="150" stroke="gray" strokeWidth="2" />
-                                </svg>
+                                <div
+                                    className={`status-line ${
+                                        index + 1 < currentStep ? 'completed' : ''
+                                    }`}
+                                ></div>
                             )}
                         </React.Fragment>
                     ))}
                 </div>
                 <div className="status-text-container">
-                    <div className="status-text">Service Details</div>
-                    <div className="status-text">Personal Details</div>
-                    <div className="status-text">Add Photos</div>
-                    <div className="status-text">Review</div>
-                    <div className="status-text">Submit</div>
+                    {['Service Details', 'Personal Details', 'Add Photos', 'Review', 'Submit'].map(
+                        (text, index) => (
+                            <div
+                                className={`status-text ${
+                                    index + 1 === currentStep ? 'active' : ''
+                                }`}
+                                key={index}
+                            >
+                                {text}
+                            </div>
+                        )
+                    )}
                 </div>
             </div>
 
             <div className="request-form-container-details" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div className="request-form-header" style={{ marginTop: '40px' }}>Additional comments</div>
+                <div className="request-form-header" style={{ marginTop: '40px' }}>Additional Comments</div>
 
                 <div className="form-container">
                     <form onSubmit={handleSubmit}>
@@ -130,7 +143,6 @@ function AdditionalComments({ formData, setAdditionalComments, nextStep, prevSte
                         </div>
                     </form>
                 </div>
-
             </div>
         </div>
     );
