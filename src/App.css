@@ -15415,3 +15415,47 @@ color: black;
   
 }
 
+.edit-profile {
+  color: gray; /* Subtle gray color */
+  font-size: 14px; /* Adjust size to make it subtle */
+  text-decoration: none; /* Remove underline for better aesthetics */
+  cursor: pointer; /* Show pointer cursor to indicate clickability */
+}
+
+.edit-profile:hover {
+  text-decoration: underline; /* Add underline on hover for better accessibility */
+  color: darkgray; /* Slightly darker gray on hover */
+}
+
+/* Profile reusable styles */
+.profile-form-overall-container {
+  display: flex;
+  flex-direction: column; /* Change to column for better alignment */
+  justify-content: center;
+  align-items: center;
+  min-height: 85vh; /* Ensure the height is responsive */
+  padding: 20px; /* Add padding for better spacing */
+  background-color: #f4f4f4; /* Optional background color */
+}
+
+.profile-form-container-details {
+  width: 90%; /* Use a percentage for responsiveness */
+  max-width: 600px; /* Limit the width for better readability */
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-radius: 20px;
+  background: #fafafa;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  overflow: hidden; /* Prevent content overflow */
+}
+
+.profile-form-container-details h1 {
+  font-size: 1.5rem; /* Adjust font size for headers */
+  margin-bottom: 20px; /* Add margin below the heading */
+  text-align: center;
+  word-wrap: break-word; /* Wrap long names */
+}

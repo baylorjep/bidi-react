@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import { supabase } from "../../supabaseClient";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import '../../App.css'; // Include this for custom styles
 import { Modal, Button } from 'react-bootstrap'; // Make sure to install react-bootstrap
 
@@ -244,6 +244,12 @@ const BusinessDashboard = () => {
   return (
     <div className="business-dashboard text-center">
       <h1 className="dashboard-title">Welcome, {businessName}!</h1>
+
+      <div className="edit-profile-container">
+          <Link to="/profile" className="edit-profile">
+              Edit Profile
+          </Link>
+      </div>
 
       <div className="container mt-4">
         <div className="row justify-content-center">

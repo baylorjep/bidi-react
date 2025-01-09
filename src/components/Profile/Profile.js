@@ -89,10 +89,22 @@ const ProfilePage = () => {
       if (updateError) throw updateError;
 
       setSuccessMessage("Profile updated successfully!");
+
+       // Automatically clear the success message after 5 seconds
+        setTimeout(() => {
+            setSuccessMessage("");
+        }, 5000);
+
       setLoading(false);
     } catch (error) {
       console.error("Error updating profile:", error);
       setErrorMessage("Failed to update profile.");
+
+      // Automatically clear the error message after 5 seconds
+    setTimeout(() => {
+        setErrorMessage("");
+      }, 5000);
+      
       setLoading(false);
     }
   };
@@ -100,9 +112,10 @@ const ProfilePage = () => {
   if (loading) return <p>Loading...</p>;
 
   return (
-    <div className="container py-5">
+    <div classname="profile-form-overall-container">
+    <div className="profile-form-container-details">
       <h1>
-        Welcome, {isBusiness ? profileData.business_name : `${profileData.first_name} ${profileData.last_name}`}!
+        {isBusiness ? profileData.business_name : `${profileData.first_name} ${profileData.last_name}`}
       </h1>
       {errorMessage && <p className="text-danger">{errorMessage}</p>}
       {successMessage && <p className="text-success">{successMessage}</p>}
@@ -213,6 +226,7 @@ const ProfilePage = () => {
       >
         {loading ? "Saving..." : "Save Changes"}
       </button>
+    </div>
     </div>
   );
 };
