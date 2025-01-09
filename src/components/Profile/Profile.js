@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
   const [profileData, setProfileData] = useState({});
@@ -8,6 +9,7 @@ const ProfilePage = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [currentEmail, setCurrentEmail] = useState(""); // For preloading email
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -234,6 +236,12 @@ const ProfilePage = () => {
       >
         {loading ? "Saving..." : "Save Changes"}
       </button>
+      <button
+          className="btn btn-secondary mt-3"
+          onClick={() => navigate(-1)}
+        >
+          Back
+        </button>
     </div>
     </div>
   );
