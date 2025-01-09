@@ -47,6 +47,7 @@ import ChoosePricingPlan from './components/Profile/ChoosePricingPlan';
 import SuccessSignup from './components/Profile/SuccessSignup';
 import ResetPassword from './components/Profile/ResetPassword';
 import UpdatePassword from './components/Profile/UpdatePassword';
+import ProfilePage from './components/Profile/Profile';
 
 // Individual Imports
 import MyBids from './components/Individual/MyBids';
@@ -126,6 +127,7 @@ function App() {
                         <Route path="/reset-password" element={<UpdatePassword />} />
                         <Route path="/createaccount" element={<ChooseUserType />} />
                         <Route path="/choose-pricing" element={<ChoosePricingPlan />}/>
+                        <Route path="/profile" element={<ProfilePage />} />
 
                         {/* Individual Routes */}
                         <Route path="/my-dashboard" element={<MyDashboard />} />
