@@ -76,6 +76,14 @@ const ProfilePage = () => {
         const { error: emailError } = await supabase.auth.updateUser({ email });
         if (emailError) throw emailError;
         setCurrentEmail(email); // Update current email after successful change
+
+        // Update email in the profiles table
+        const { error: profilesError } = await supabase
+        .from("profiles")
+        .update({ email })
+        .eq("id", profileData.id);
+
+        if (profilesError) throw profilesError;
       }
 
       // Update other profile data
@@ -104,7 +112,7 @@ const ProfilePage = () => {
     setTimeout(() => {
         setErrorMessage("");
       }, 5000);
-      
+
       setLoading(false);
     }
   };
