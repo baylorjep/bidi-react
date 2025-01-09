@@ -17,6 +17,10 @@ function SignIn() {
     const handleSignIn = async (e) => {
         e.preventDefault();
 
+        // Get source from localStorage before sign-in
+        const requestSource = localStorage.getItem('requestSource');
+        const requestFormData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
+
         const { data: { user }, error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -41,9 +45,15 @@ function SignIn() {
         }
 
         if (profile.role === 'individual') {
-            navigate(redirectTo); // Navigate to the original page (request form)
+            // Include source in navigation state
+            navigate(redirectTo, {
+                state: { 
+                    source: requestSource || requestFormData.source || 'general',
+                    from: 'signin'
+                }
+            });
         } else if (profile.role === 'business') {
-            navigate('/dashboard'); // Redirect businesses to the "Open Requests" page
+            navigate('/dashboard');
         }
     };
 

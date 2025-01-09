@@ -22,13 +22,27 @@ function PersonalDetails({ formData, nextStep, prevStep, source: propSource }) {
 
     const isFromAdditionalComments = location.state?.from === 'additionalComments';
     const [source] = useState(() => {
-        return propSource || location.state?.source || localStorage.getItem('requestSource');
+        // First check if there's a saved requestFormData in localStorage
+        const requestFormData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
+        
+        // Return source in priority order:
+        return propSource || 
+               location.state?.source || 
+               requestFormData.source || // Add this check
+               localStorage.getItem('requestSource') ||
+               'general'; // Default fallback
     });
 
     useEffect(() => {
         // Store source in localStorage when it changes
         if (source) {
             localStorage.setItem('requestSource', source);
+            // Also save to requestFormData
+            const requestFormData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
+            localStorage.setItem('requestFormData', JSON.stringify({
+                ...requestFormData,
+                source: source
+            }));
         }
     }, [source]);
 
@@ -112,11 +126,11 @@ function PersonalDetails({ formData, nextStep, prevStep, source: propSource }) {
                 // Use the source to determine navigation
                 if (source === 'photography') {
                     navigate('/event-photos');
-                } else if (typeof nextStep === 'function') {
+                } else if (source === 'general' && typeof nextStep === 'function') {
                     nextStep();
                 } else {
                     // Default navigation if no specific route
-                    navigate('/upload-photos');
+                    navigate('/event-photos');
                 }
             }
         } catch (err) {
@@ -142,10 +156,18 @@ function PersonalDetails({ formData, nextStep, prevStep, source: propSource }) {
     const handleBack = () => {
         if (serviceType === 'photography') {
             navigate('/event-details');
-        } else if (typeof prevStep === 'function') {
-            prevStep();
         } else {
-            navigate(-1);
+            // Use prevStep for multi-step form navigation
+            if (typeof prevStep === 'function') {
+                prevStep();
+            } else {
+                navigate('/request-form', { 
+                    state: { 
+                        currentStep: 4,
+                        formData: JSON.parse(localStorage.getItem('requestFormData') || '{}')
+                    }
+                });
+            }
         }
     };
 

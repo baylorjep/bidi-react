@@ -149,17 +149,43 @@ const handleRemovePhoto = async (photoUrl) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const serviceType = localStorage.getItem('serviceType');
+        
+        // Get source type and form data from localStorage
+        const requestSource = localStorage.getItem('requestSource');
+        const requestFormData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
         const formDetails = { ...details, photoUrl: photos };
-
-        if (typeof nextStep === 'function') {
-            setFormPhotos(photos); // Make sure parent has latest photos before moving to next step
-            nextStep();
+    
+        // Update form data in localStorage
+        localStorage.setItem('requestFormData', JSON.stringify({
+            ...requestFormData,
+            photos: photos,
+            details: formDetails
+        }));
+    
+        if (requestSource === 'photography') {
+            if (typeof nextStep === 'function') {
+                setFormPhotos(photos);
+                nextStep();
+            } else {
+                navigate('/event-summary', {
+                    state: { photos, formDetails }
+                });
+            }
         } else {
-            // Navigate to event summary with photos
-            navigate('/event-summary', {
-                state: { photos: photos }
-            });
+            // For general requests within multi-step form
+            if (typeof nextStep === 'function') {
+                setFormPhotos(photos);
+                nextStep();
+            } else {
+                navigate('/request-form', { 
+                    state: { 
+                        currentStep: 7,
+                        photos,
+                        formDetails,
+                        source: 'general'
+                    }
+                });
+            }
         }
     };
 
