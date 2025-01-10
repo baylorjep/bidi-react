@@ -12,24 +12,23 @@ function MyBids() {
 
     useEffect(() => {
         const fetchUserAndBids = async () => {
-            // Fetch the logged-in user
             const { data: userData, error: userError } = await supabase.auth.getUser();
-
+            
             if (userError) {
                 setError('Failed to fetch user.');
                 console.error(userError);
                 return;
             }
 
-            // Fetch requests made by the logged-in user from both 'requests' and 'photography_requests'
+            // Fetch requests with coupon codes
             const { data: requests, error: requestError } = await supabase
                 .from('requests')
-                .select('id')
+                .select('id, coupon_code')
                 .eq('user_id', userData.user.id);
 
             const { data: photoRequests, error: photoRequestError } = await supabase
                 .from('photography_requests')
-                .select('id')
+                .select('id, coupon_code')
                 .eq('profile_id', userData.user.id);
 
             if (requestError || photoRequestError) {
@@ -38,17 +37,38 @@ function MyBids() {
                 return;
             }
 
-            // Combine request IDs from both tables
-            const requestIds = [
-                ...requests.map(request => request.id),
-                ...photoRequests.map(photoRequest => photoRequest.id)
-            ];
+            // Fetch all unique coupon codes
+            const allCouponCodes = [...new Set([
+                ...requests.filter(r => r.coupon_code).map(r => r.coupon_code),
+                ...photoRequests.filter(r => r.coupon_code).map(r => r.coupon_code)
+            ])];
 
-            // Fetch bids related to the user's requests and join with business_profiles
+            // Fetch coupon details from coupons table
+            const { data: couponsData, error: couponsError } = await supabase
+                .from('coupons')
+                .select('code, discount_amount')
+                .in('code', allCouponCodes);
+
+            if (couponsError) {
+                console.error('Failed to fetch coupons:', couponsError);
+                return;
+            }
+
+            // Create maps for quick lookup
+            const couponDetailsMap = new Map(
+                couponsData.map(coupon => [coupon.code, coupon.discount_amount])
+            );
+
+            const requestCouponMap = new Map([
+                ...requests.map(request => [request.id, request.coupon_code]),
+                ...photoRequests.map(request => [request.id, request.coupon_code])
+            ]);
+
+            // Fetch bids with business profiles
             const { data: bidsData, error: bidsError } = await supabase
                 .from('bids')
                 .select('*, business_profiles(business_name, business_category, phone, website, id,membership_tier)')
-                .in('request_id', requestIds);
+                .in('request_id', [...requests.map(r => r.id), ...photoRequests.map(r => r.id)]);
 
             if (bidsError) {
                 setError('Failed to fetch bids.');
@@ -56,7 +76,30 @@ function MyBids() {
                 return;
             }
 
-            const sortedBids = bidsData.sort((a, b) => {
+            // Apply coupon discounts to bids
+            const bidsWithDiscount = bidsData.map(bid => {
+                const couponCode = requestCouponMap.get(bid.request_id);
+                const discountAmount = couponDetailsMap.get(couponCode) || 0;
+                
+                if (couponCode && discountAmount && bid.bid_amount) {
+                    const discountedAmount = Math.max(0, Number(bid.bid_amount) - Number(discountAmount));
+                    return {
+                        ...bid,
+                        original_amount: Number(bid.bid_amount),
+                        bid_amount: discountedAmount,
+                        coupon_applied: true,
+                        coupon_code: couponCode,
+                        discount_amount: Number(discountAmount)
+                    };
+                }
+                return {
+                    ...bid,
+                    bid_amount: Number(bid.bid_amount) || 0
+                };
+            });
+
+            // Sort bids by verification status
+            const sortedBids = bidsWithDiscount.sort((a, b) => {
                 const aIsVerified = a.business_profiles?.membership_tier === "Plus" || a.business_profiles?.membership_tier === "Verified";
                 const bIsVerified = b.business_profiles?.membership_tier === "Plus" || b.business_profiles?.membership_tier === "Verified";
                 return bIsVerified - aIsVerified; // Verified bids will appear first

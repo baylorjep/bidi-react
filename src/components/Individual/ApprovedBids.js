@@ -23,12 +23,12 @@ function ApprovedBids() {
             // Fetch requests made by the logged-in user from both 'requests' and 'photography_requests'
             const { data: requests, error: requestError } = await supabase
                 .from('requests')
-                .select('id')
+                .select('id, coupon_code')
                 .eq('user_id', userData.user.id);
 
             const { data: photoRequests, error: photoRequestError } = await supabase
                 .from('photography_requests')
-                .select('id')
+                .select('id, coupon_code')
                 .eq('profile_id', userData.user.id);
 
             if (requestError || photoRequestError) {
@@ -36,6 +36,33 @@ function ApprovedBids() {
                 console.error(requestError || photoRequestError);
                 return;
             }
+
+            // Fetch all unique coupon codes
+            const allCouponCodes = [...new Set([
+                ...requests.filter(r => r.coupon_code).map(r => r.coupon_code),
+                ...photoRequests.filter(r => r.coupon_code).map(r => r.coupon_code)
+            ])];
+
+            // Fetch coupon details from coupons table
+            const { data: couponsData, error: couponsError } = await supabase
+                .from('coupons')
+                .select('code, discount_amount')
+                .in('code', allCouponCodes);
+
+            if (couponsError) {
+                console.error('Failed to fetch coupons:', couponsError);
+                return;
+            }
+
+            // Create maps for quick lookup
+            const couponDetailsMap = new Map(
+                couponsData.map(coupon => [coupon.code, coupon.discount_amount])
+            );
+
+            const requestCouponMap = new Map([
+                ...requests.map(request => [request.id, request.coupon_code]),
+                ...photoRequests.map(request => [request.id, request.coupon_code])
+            ]);
 
             // Combine request IDs from both tables
             const requestIds = [
@@ -56,7 +83,29 @@ function ApprovedBids() {
                 return;
             }
 
-            setApprovedBids(bidsData);
+            // Apply coupon discounts to bids with safety checks
+            const bidsWithDiscount = bidsData.map(bid => {
+                const couponCode = requestCouponMap.get(bid.request_id);
+                const discountAmount = couponDetailsMap.get(couponCode) || 0;
+                
+                if (couponCode && discountAmount && bid.bid_amount) {
+                    const discountedAmount = Math.max(0, Number(bid.bid_amount) - Number(discountAmount));
+                    return {
+                        ...bid,
+                        original_amount: Number(bid.bid_amount),
+                        bid_amount: discountedAmount,
+                        coupon_applied: true,
+                        coupon_code: couponCode,
+                        discount_amount: Number(discountAmount)
+                    };
+                }
+                return {
+                    ...bid,
+                    bid_amount: Number(bid.bid_amount) || 0
+                };
+            });
+
+            setApprovedBids(bidsWithDiscount);
         };
 
         fetchApprovedBids();
@@ -237,7 +286,7 @@ function ApprovedBids() {
 
                                         
                                         <button className="bid-button" disabled>
-                                            ${bid.bid_amount}
+                                            ${(bid.bid_amount || 0).toFixed(2)}
                                         </button>
                                     </div>
 
@@ -252,11 +301,20 @@ function ApprovedBids() {
                                         <p style={{ marginTop: '8px', textAlign: 'left' }}>
                                             <strong>Down Payment:</strong>{' '}
                                             {bid.business_profiles.down_payment_type === 'percentage'
-                                                ? `$${(bid.bid_amount * (bid.business_profiles.amount)).toFixed(2)} (${bid.business_profiles.amount*100}%)`
-                                                : `$${bid.business_profiles.amount}`}
+                                                ? `$${((bid.bid_amount || 0) * (bid.business_profiles.amount || 0)).toFixed(2)} (${(bid.business_profiles.amount * 100 || 0).toFixed(0)}%)`
+                                                : `$${(bid.business_profiles.amount || 0).toFixed(2)}`}
                                         </p>
                                     )}
 
+                                    {/* Add coupon discount display */}
+                                    {bid.coupon_applied && (
+                                        <div style={{ marginTop: '8px', textAlign: 'left', color: '#a328f4' }}>
+                                            <strong>Coupon Applied:</strong> {bid.coupon_code}<br />
+                                            <strong>Original Price:</strong> ${(bid.original_amount || 0).toFixed(2)}<br />
+                                            <strong>Discount:</strong> ${(bid.discount_amount || 0).toFixed(2)}<br />
+                                            <strong>Final Price:</strong> ${(bid.bid_amount || 0).toFixed(2)}
+                                        </div>
+                                    )}
 
                                     <div className="pay-and-message-container">
                                         <button 

@@ -103,7 +103,15 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                             : `$${downPaymentAmount}`}
                     </p>
                 )}
- 
+                {/* Add coupon discount display */}
+                {bid.coupon_applied && (
+                    <div style={{ marginTop: '8px', textAlign: 'left', color: '#a328f4' }}>
+                        <strong>Coupon Applied:</strong> {bid.coupon_code}<br />
+                        <strong>Original Price:</strong> ${(bid.original_amount || 0).toFixed(2)}<br />
+                        <strong>Discount:</strong> ${(bid.discount_amount || 0).toFixed(2)}<br />
+                        <strong>Final Price:</strong> ${(bid.bid_amount || 0).toFixed(2)}
+                    </div>
+                )}
             </div>
 
             {/* Adding space between the last line of content and the buttons */}
