@@ -139,7 +139,6 @@ function App() {
                         {/* Test API Routes */}
                         <Route path="/testemail" element={<EmailTest />} />
                         
-
                         {/* Business Routes */}
                         <Route path="/open-requests" element={<OpenRequests />} />
                         <Route path="/dashboard" element={<BusinessDashboard />} />
