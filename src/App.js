@@ -31,6 +31,8 @@ import OpenRequests from './components/Request/OpenRequests';
 // New staged request imports
 import MultiStepRequestForm from './components/Request/general requests/MultiStepRequestForm';
 
+// test email imports
+import EmailTest from './components/emailtest';
 
 // Event Imports
 import SelectEvent from './components/Event/SelectEvent';
@@ -133,6 +135,10 @@ function App() {
                         <Route path="/my-dashboard" element={<MyDashboard />} />
                         <Route path="/approved-bids" element={<ApprovedBids />} />
                         <Route path="/denied-bids" element={<DeniedBids />} />
+
+                        {/* Test API Routes */}
+                        <Route path="/testemail" element={<EmailTest />} />
+                        
 
                         {/* Business Routes */}
                         <Route path="/open-requests" element={<OpenRequests />} />
