@@ -189,7 +189,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
 
             <div className="how-to-use-section">
                 <div className='how-to-text'>
-                    <div className='how-to-title'>How it Works</div>
+                    <div className='how-to-title'>How it Works  </div>
                     <div className='how-to-steps'>1. Tell us what you are looking for</div>
                     <div className='how-to-steps'>2. We will notify local businesses and they will send in bids</div>
                     <div className='how-to-steps' style={{ borderBottom: "none" }}>3. We'll send those bids to you, find the one you like and press "accept"</div>
