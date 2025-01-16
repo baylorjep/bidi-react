@@ -20,8 +20,7 @@ import LandingPagePhoto6 from '../../src/assets/images/Landing Page Photo 6.jpg'
 import WhyBidiPhoto from '../../src/assets/images/Icons/input-search.svg';
 import WhyBidiPhoto2 from '../../src/assets/images/Icons/people.svg';
 import WhyBidiPhoto3 from '../../src/assets/images/Icons/cash-coin.svg';
-
-
+import UserReviews from './UserReviews';
 
 // Initialize PostHog for client-side tracking
 posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
@@ -36,6 +35,19 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
     const [role, setRole] = useState(null);
     const reviewSliderRef = useRef(null);
     const [scrollAmount, setScrollAmount] = useState(0);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [reviews, setReviews] = useState([
+        {
+            text: "I was looking for a roofer to fix a leak on the roof of my cabin. I put my job request on bidi when they first launched. Because bidi was brand new there were not any roofers yet. Within a day the bidi founders personally made tons of calls to find me a handful of roofers who could bid on my job. I was blown away! My 2nd experience was even better. I needed a fast turnaround for family pictures (one week). I submitted my request for a photographer to take a family photos. Within an hour of my request, I had 12 photographers post bids. Since my first experience with bidi, it has only gotten better and better. This company is going to be a game changer in the way I shop for services!",
+            name: "Jennafer J.",
+            icon: jennaferIcon
+        },
+        {
+            text: "We recently used Bidi to find a cleaning service, and it was a total game-changer. With a new baby on the way, we needed all the help we could get, and Bidi made it super easy. After I submitted a quick request, I got lots of bids from different cleaning services right away. Bidi took care of all the details, saving us tons of time, and it ended up being way more affordable. If you’re looking for a quick, budget-friendly way to find a reliable service, I’d definitely recommend Bidi!",
+            name: "Jaron A.",
+            icon: jaronIcon
+        }
+    ]);
   
     useEffect(() => {
       const fetchSessionAndRole = async () => {
@@ -73,11 +85,10 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
     }, []);
   
     const scrollReviews = (direction) => {
-      if (reviewSliderRef.current) {
-        reviewSliderRef.current.scrollBy({
-          left: direction === 'right' ? scrollAmount : -scrollAmount,
-          behavior: 'smooth',
-        });
+      if (direction === 'right') {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % reviews.length);
+      } else {
+        setCurrentIndex((prevIndex) => (prevIndex - 1 + reviews.length) % reviews.length);
       }
     };
 
@@ -189,79 +200,54 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
 
             <div className="how-to-use-section">
                 <div className='how-to-text'>
-                    <div className='how-to-title'>How it Works  </div>
-                    <div className='how-to-steps'>1. Tell us what you are looking for</div>
-                    <div className='how-to-steps'>2. We will notify local businesses and they will send in bids</div>
-                    <div className='how-to-steps' style={{ borderBottom: "none" }}>3. We'll send those bids to you, find the one you like and press "accept"</div>
-                    <div className='try-now-button-container'>
-                        <Link className="btn btn-secondary rounded-pill" style={{ width: "150px" }} to="/signin">
-                            <span style={{ font: "Roboto" }}>Try Now</span>
+                    <div className='how-to-sub-title'>Simple and hassle-free.</div>
+                    <div className='how-to-title'>How It Works</div>
+                    <div className='how-to-number'>1</div>
+                    <div className='step-container'>
+                        <div className='step-title'>Sign Up and Create Your Profile</div>
+                        <div className='step-sub-title'>Connect with local service providers effortlessly, without lengthy forms.</div>
+                    </div>
+                    <div className='how-to-number'>2</div>
+                    <div className='step-container'>
+                        <div className='step-title'>Post Your Wedding Needs</div>
+                        <div className='step-sub-title'>Get tailored bids from wedding professionals that match your preferences.</div>
+                    </div>
+                    <div className='how-to-number'>3</div>
+                    <div className='step-container'>
+                        <div className='step-title'>Receive and Compare Bids</div>
+                        <div className='step-sub-title'>Relax as bids come in, and easily compare them to find the perfect match.</div>
+                    </div>
+                    <div className='landing-page-button-container'>
+                        <Link  to="/signin">
+                            <button className="landing-page-button" style={{ width: "150px", textDecoration:'none', alignItems:'center', justifyContent:'center' }}>Try Now</button>
                         </Link>
                     </div>
                 </div>
         </div>
 
+        <section id="user-reviews">
+        <UserReviews />
+        </section>
 
-
-
-                <div className="user-reviews-section">
-            <div className='user-reviews-title'>Here is what our users say about Bidi</div>
-            <div className='review-slider-container'>
-                <button className="scroll-btn left" onClick={() => scrollReviews('left')}>
-                <img src={scrollBtn} alt="Scroll Left" />
-                </button>
-                <div className='review-slider' ref={reviewSliderRef}>
-                <div className='large-review'>
-                    <img className='quote-icon' src={quoteIcon} alt="Quote Icon" />
-                    <div className='review-text'>I was looking for a roofer to fix a leak on the roof of my cabin. I put my job request on bidi when they first launched. Because bidi was brand new there were not any roofers yet. 
-                        Within a day the bidi founders personally made tons of calls to find me a handful of roofers who could bid on my job. I was blown away! My 2nd experience was even better. 
-                        I needed a fast turnaround for family pictures (one week). I submitted my request for a photographer to take a family photos. Within an hour of my request, I had 12 photographers post bids. 
-                        Since my first experience with bidi, it has only gotten better and better. This company is going to be a game changer in the way I shop for services!</div>
-        
-                    <div className='star-container'>
-                    <img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img>
-                    </div>
-                    
-                    <img className='profile-icon' src={jennaferIcon} alt="Jennafer's profile" /><span>  - Jennafer J.</span>
-                </div>
-                <div className='large-review'>
-                    <img className='quote-icon' src={quoteIcon} alt="Quote Icon" />
-                    <div className='review-text'>We recently used Bidi to find a cleaning service, and it was a total game-changer. 
-                        With a new baby on the way, we needed all the help we could get, and Bidi made it super easy. 
-                        After I submitted a quick request, I got lots of bids from different cleaning services right away. 
-                        Bidi took care of all the details, saving us tons of time, and it ended up being way more affordable. 
-                        If you’re looking for a quick, budget-friendly way to find a reliable service, I’d definitely recommend Bidi!</div>
-                    <div className='star-container'>
-                    <img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img><img src={starIcon}></img>
-                    </div>
-                    <img className='profile-icon' src={jaronIcon} alt="Jaron's profile" /><span>  - Jaron A.</span>
-                </div>
-                </div>
-                <button className="scroll-btn right" onClick={() => scrollReviews('right')}>
-                <img src={scrollBtn} alt="Scroll Right" />
-                </button>
-            </div>
-            </div>
-
-            <div className='newsletter-section'>
-                <div className='newsletter-title'>Want More? Subscribe to our Newsletter</div>
-                <div className="newsletter-subtitle">Bidi’s newsletter posts updates on new features, new available services, updates, and more!</div>
-                <div className='newsletter-input-container'>
-                    <input
-                        className='newsletter-input'
-                        id="email-input"
-                        type="text" // or "email", "password", etc.
-                        placeholder="Email"
-                    />
-                    <div className='newsletter-button-container'>
-                        <Link className="btn btn-secondary rounded-pill" style={{ width: "150px", height: "60px" }} to="/signin">
-                            <div style={{ font: "Roboto", marginTop: "10px" }}>Sign Up</div>
-                        </Link>
-                    </div>
+        <div className='newsletter-section'>
+            <div className='newsletter-title'>Want More? Subscribe to our Newsletter</div>
+            <div className="newsletter-subtitle">Bidi’s newsletter posts updates on new features, new available services, updates, and more!</div>
+            <div className='newsletter-input-container'>
+                <input
+                    className='newsletter-input'
+                    id="email-input"
+                    type="text" // or "email", "password", etc.
+                    placeholder="Email"
+                />
+                <div className='newsletter-button-container'>
+                    <Link className="btn btn-secondary rounded-pill" style={{ width: "150px", height: "60px" }} to="/signin">
+                        <div style={{ font: "Roboto", marginTop: "10px" }}>Sign Up</div>
+                    </Link>
                 </div>
             </div>
-        </>
-    );
+        </div>
+    </>
+  );
 }
 
 export default Homepage;

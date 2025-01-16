@@ -11982,28 +11982,99 @@ line-height: normal;
 
 .how-to-text {
   background: #FCE8FF;
-height: 840px;
-flex-shrink: 0;
+  height: 960px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80%;
+  border-radius: 20px;
 }
 
 .how-to-title {
-  font-family: Lora;
-  font-size: 56px;
+  color: #000;
+  font-family: Outfit;
+  font-size: 48px;
+  font-style: normal;
   font-weight: 700;
-  line-height: 71.68px;
+  line-height: normal;
   text-align: center;
-  margin-bottom: 1rem;
+  margin-top: 40px;
+  margin-bottom: 20px;
 }
 
-.how-to-steps {
-  font-family: Roboto;
-  font-size: 32px;
-  font-weight: 800;
-  line-height: 37.5px;
+.how-to-sub-title {
+  color: #000;
+font-family: Outfit;
+font-size: 16px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+text-align: center;
+margin-top: 80px;
+}
+
+
+
+.how-to-number {
+  display: flex;
+  width: 69px;
+  height: 69px;
+  padding: 16px 29px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  border-radius: 34.5px;
+  background: #A328F4;
+  color: #FFF;
   text-align: center;
-  word-break: break-word;
-  padding: 3rem 1rem;
-  border-bottom: 3px solid black;
+  font-family: Outfit;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 36px */
+  margin-bottom: -16px;
+  z-index: 2;
+  margin-top: 20px;
+}
+
+.step-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 70%;
+  height: 115px;
+  padding: 15px 0px;
+  align-items: flex-start;
+  gap: 24px;
+  flex-shrink: 0;
+  background: #FFF;
+  border-radius: 20px;
+}
+
+.step-title {
+  color: var(--Schemes-On-Secondary-Container, #4A4459);
+  text-align: center;
+  font-family: Outfit;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%; /* 33.6px */
+  width: 100%;
+}
+
+.step-sub-title {
+  color: var(--Schemes-On-Surface, #1D1B20);
+  text-align: center;
+  font-family: Outfit;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 24px */
+  width: 100%;
 }
 
 .try-now-button-container {
@@ -12038,245 +12109,149 @@ flex-shrink: 0;
   }
 }
 
-.user-reviews-section {
-  margin-bottom: 10rem;
-}
-
 .user-reviews-title {
-  height: 72px;
-  font-family: Lora;
-  font-size: 56px;
-  font-weight: 700;
-  line-height: 71.68px;
-  text-align: center;
-
+  color: #4A4459;
+text-align: center;
+font-family: Outfit;
+font-size: 48px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
 }
 
-.review-slider-container {
+.review-container {
   display: flex;
-  justify-content: space-around;
   flex-direction: row;
-  margin-top: 5rem;
-  gap: 1rem;
-  overflow: hidden;
-  position: relative;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 0px 120px;
+  height: 600px;
 }
-.review-slider {
-  display: flex; /* Use flexbox for alignment */
-  overflow-x: auto; /* Allow horizontal scrolling */
-  scrollbar-width: none; /* Optional: customize scrollbar appearance */
+
+.review-card {
+  border-radius: 16px;
+  background: #FFF;
+  box-shadow: -2px 2px 9.1px 1px rgba(0, 0, 0, 0.25);
+  width: 80%;
+  height: 311px;
+  flex-shrink: 0;
+  display: flex;
+  padding:20px;
+}
+
+.review-avatar {
+  width: 181px;
+  height: 181px;
+  flex-shrink: 0;
+  border-radius: 181px;
+  justify-content: center;
+  align-items: center;
+}
+
+.review-name {
+  color: #4A4459;
+  font-family: Outfit;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.review-text {
+  color: var(--Text-primary, #000);
+  font-family: Outfit;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%; /* 22.4px */
+}
+
+.review-date {
+  color: #525252;
+  text-align: center;
+  font-family: Outfit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.review-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 .scroll-btn {
-  background-color: transparent;
+  background: none;
   border: none;
   cursor: pointer;
-  font-size: 2rem; /* Adjust button size */
-  z-index: 1; /* Ensure buttons are above the slider */
-  position: absolute;
-  top: 50%; /* Align both buttons in the same vertical position */
-  transform: translateY(-50%); /* Vertically center the buttons */
+  margin: 0 10px;
 }
 
-.scroll-btn.left {
-  left: 10px; /* Adjust as needed */
-  transform: translateY(-50%) rotate(180deg); /* Flip the left button */
-}
-
-.scroll-btn.right {
-  right: 10px; /* Adjust as needed */
-  padding-bottom: 1.4rem;
-}
-
-.scroll-btn img {
-  width: auto;
-  height: 30px;
-}
-
-.large-review {
-  min-width: 90%;
-  height: 500px;
-  border-radius: 40px;
-  border: 2px 0px 0px 0px;
-  background-color: white;
-  text-align: center;
-  padding: 5rem;
+.dots-container {
+  display: flex;
   justify-content: center;
-  align-items: center;
-  font-family: Roboto;
-  font-size: 24px;
-  font-weight: 400;
-  line-height: 35px;
-  text-align: center;
-  border: 2px solid rgba(0, 0, 0, 1);
-  position: relative;
-  margin:0 5%;
-  font-family: Roboto;
-
+  margin: 0 10px;
 }
 
-.star-container {
-  margin: 32px;
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ccc;
+  margin: 0 5px;
+  cursor: pointer;
 }
 
-.profile-icon {
-  width: 80px; /* Adjust the size as needed */
-  height: 80px; /* Match the width for a perfect circle */
-  border-radius: 50%; /* This makes the image a circle */
-  object-fit: cover; /* Ensures the image fills the circle */
-  border: 1px solid black; /* Optional: Adds a border */
-  margin-bottom: 8px;
-}
-
-.profile-icon span {
-  margin-bottom: 8px;
+.dot.active {
+  background: #000;
 }
 
 
+.swiper-button-next,
+.swiper-button-prev {
+  top: auto !important;
+  bottom: 0 !important;
+  color: #A328F4 !important; /* Match your theme color */
+  width: 120px !important; /* Increased clickable area */
+  height: 40px !important; /* Increased clickable area */
+  
+}
 
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 20px !important;
+}
 
-.review {
-  min-width: 550px;
-  height: 500px;
-  border-radius: 40px;
-  border: 2px 0px 0px 0px;
-  background-color: white;
-  text-align: center;
-  padding: 12rem 2rem;
-  justify-content: center;
-  align-items: center;
-  font-family: Roboto;
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 37.5px;
-  text-align: center;
-  border: 2px solid rgba(0, 0, 0, 1);
-  position: relative;
-  margin: 0rem 1rem;
+.swiper-button-prev {
+  left: 35% !important;
+}
+
+.swiper-button-next {
+  right: 35% !important;
+}
+
+.swiper-pagination {
+  bottom: 10px !important;
+}
+
+.swiper-pagination-bullet {
+  background: #A328F4 !important; /* Match your theme color */
+}
+
+.swiper-pagination-bullet-active {
+  background: #FF008A !important; /* Secondary color for active state */
 }
 
 
 
-.quote-icon {
-  position: absolute;
-  top: 30px; /* Adjust as needed */
-  left: 30px; /* Adjust as needed */
-  width: 41px; /* Set a size for the icon */
-  height: 106px;
-  height: auto; /* Maintain aspect ratio */
-}
 
-@media (max-width:1542px) {
-  .large-review {
-    font-size: 20px;
-  }
-  .review-text {
-    margin-top: 0px;
-  }
-}
 
-@media (max-width:1333px) {
-  .large-review {
-    padding: 4rem;
-    font-size: 19px;
-  }
-}
 
-@media(max-width:1200px) {
-  .review-slider-container {
-    align-items: center;
-  }
-  .user-reviews-title {
-    margin-top: 3rem;
-    text-align: center;
-  }
-  .large-review {
-    font-size: 17px;
-  }
-}
 
-@media(max-width:1080px) {
-  .large-review {
-    font-size: 15px;
-  }
-  .profile-icon {
-    height: 60px;
-    width: 60px;
-  }
-}
-
-@media(max-width:880px) {
-  .large-review {
-    height: 600px;
-    padding: 4rem;
-  }
-  .review-text {
-    margin-top: 20px;
-  }
-}
-@media(max-width:700px) {
-  .large-review {
-    line-height: 28px;
-  }
-  .review {
-    min-width: 400px;
-  }
-
-  @media(max-width:600px) {
-    .large-review {
-      line-height: 25px;
-      font-size: 13px;
-    }
-    
-  }
-
-  @media(max-width:520px) {
-    .large-review {
-      line-height: 22px;
-      font-size: 13px;
-      padding:4.5rem 2rem;
-    }
-    .review-slider-container {
-      margin-top: 10rem;
-    }
-
-    .review-text {
-      margin-top: 20px;
-    }
-  }
-
-  @media(max-width:500px) {
-    .large-review {
-      height: 600px;
-    }
-  }
-
-@media(max-width:410px) {
-  .review {
-    min-width: 330px;
-  }
-  .large-review {
-    padding: 4.5rem 1.5rem;
-  }
-}
-
-@media(max-width:380px) {
-  .large-review {
-    padding: 4.5rem 1rem;
-  }
-}
-
-@media(max-width:350px) {
-  .large-review {
-    padding: 4.5rem .5rem;
-    height: 650px;
-  }
-  .review-slider-container {
-    margin-top: 15rem;
-  }
-}
-
-}
 .newsletter-section {
   margin-bottom: 5rem;
 }
@@ -14913,21 +14888,6 @@ color: black;
     
     .left-arrow img {
       transform: scaleX(-1); /* Flip horizontally */
-    }
-    
-    .review-text {
-      color: #000;
-      font-family: Outfit;
-      font-size: 24px;
-      font-style: normal;
-      font-weight: 400;
-      line-height: normal;
-    }
-
-    @media screen and (max-width: 1024px) {
-      .review-text {
-        font-size: 16px;
-      }
     }
     
     .photo-grid {
