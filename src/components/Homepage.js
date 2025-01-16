@@ -11,6 +11,16 @@ import IphoneFrame from '../assets/images/Iphone 14 - 1.png';
 import statusBar from '../assets/images/iPhone 13.png';
 import posthog from 'posthog-js';
 import RotatingText from './Layout/RotatingText';
+import LandingPagePhoto from '../../src/assets/images/Landing Page Photo.jpg';
+import LandingPagePhoto2 from '../../src/assets/images/Landing Page Photo 2.jpg';
+import LandingPagePhoto3 from '../../src/assets/images/Landing Page Photo 3.jpg';
+import LandingPagePhoto4 from '../../src/assets/images/Landing Page Photo 4.jpg';
+import LandingPagePhoto5 from '../../src/assets/images/Landing Page Photo 5.jpg';
+import LandingPagePhoto6 from '../../src/assets/images/Landing Page Photo 6.jpg';
+import WhyBidiPhoto from '../../src/assets/images/Icons/input-search.svg';
+import WhyBidiPhoto2 from '../../src/assets/images/Icons/people.svg';
+import WhyBidiPhoto3 from '../../src/assets/images/Icons/cash-coin.svg';
+
 
 
 // Initialize PostHog for client-side tracking
@@ -76,13 +86,13 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
             
             <div className="masthead-index">
                 <div className='text-section' >
-                    <div className='landing-page-title' style={{padding:'20px'}}>Make a Request For a</div>
-                        <RotatingText />
-                    <div className='landing-page-title' style={{padding:'20px'}}>And Get Bids</div>
-                    
-                    
+                    <div className='landing-page-title'>
+                        Tired of Looking for the Perfect <RotatingText />
+                    </div>
                     <div className='landing-page-subtitle' style={{marginTop:'20px'}}>
-                        Bidi is a platform where customers make requests for services and local businesses bid on those services. With Bidi, you don’t have to waste time searching for the perfect businesses to help you. All you do is tell us what you need, and we’ll find the right business for you. No more hours and hours of searching.
+                    With Bidi, you don’t have to waste time searching for the perfect businesses to help you with your event. 
+                    All you do is tell us what you need, and we’ll find the right business for you. 
+                    No more hours and hours of searching. 
                     </div>
                        <div className='landing-page-button-container'>
                             {user ? (
@@ -103,28 +113,83 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                                 )
                             ) : (
                                 <Link to="/signup" onClick={() => posthog.capture('signup_button_click')}>
-                                <button className='landing-page-button'>Get Started</button>
+                                <button className='landing-page-button'>Start Now</button>
                                 </Link>
                             )}
                         </div>
+                    <div style={{marginTop:'40px', display:'flex', justifyContent:'left', gap:'40px'}}>
+                            <div style={{display:'flex', flexDirection:'column', borderRight:'2px solid black', paddingRight:'20px', alignItems:'center'}} >
+                                <div className='stat-title'>Requests</div>
+                                <div className='stat'>70+</div>
+                            </div>
+                            <div style={{display:'flex', flexDirection:'column', borderRight:'2px solid black', paddingRight:'20px', alignItems:'center'}} >
+                                <div className='stat-title'>Users</div>
+                                <div className='stat'>270+</div>
+                            </div>
+                            <div style={{display:'flex', flexDirection:'column', alignItems:'center'}} >
+                                <div className='stat-title'>Bids</div>
+                                <div className='stat'>550+</div>
+                            </div>
 
+                    </div>
+
+                </div>
+
+                <div className="pink-splotch"></div> {/* Add this line */}
+
+                <div className='photo-section'>
+                    <img src={LandingPagePhoto} className='photo-item'></img>
+                    <img src={LandingPagePhoto2} className='photo-item offset'></img>
+                    <img src={LandingPagePhoto3} className='photo-item'></img>
+                    <img src={LandingPagePhoto4} className='photo-item'></img>
+                    <img src={LandingPagePhoto5} className='photo-item offset'></img>
+                    <img src={LandingPagePhoto6} className='photo-item'></img>
                 </div>
    
             </div>
 
-            <div className="how-to-use-section">
-            <div className='how-to-phone'>
-                <div className="phone-frame">
-                    <img src={IphoneFrame} alt="iPhone frame" className="iphone-frame-img" />
-                    <img src={statusBar} alt="Status bar" className="status-bar-img" />
-                    <div className='phone-screen'>
-                        <video src={videoSrc} type="video/mp4" autoPlay muted loop playsInline />
+            <div className='connect-section'>
+                <div style={{display:'flex', flexDirection:'column', gap:'20px'}}> 
+                    <div className='connect-sub-title'>Connect</div>
+                    <div className='connect-title'>Discover Wedding Vendors <br></br><span className='connect-highlight'>Effortlessly</span></div>
+                    <div className='connect-text'>Our platform simplifies the process of finding local services. Say goodbye to endless forms and hello to instant connections.</div>
+                    <button className='connect-button'>Try Now</button>
+                </div>
+                <div style={{display:'flex', flexDirection:'column', gap:'20px'}}> 
+                    <div className='connect-sub-title'>Personalized</div>
+                    <div className='connect-title'>Bids Tailored to <br></br><span className='connect-highlight'>Your Wedding</span></div>
+                    <div className='connect-text'>Every bid is focused on you. Get real pricing tailored to your specific situation. No more general quotes, just bids, made for you.</div>
+                    <button className='connect-button'>Try Now</button>
+                </div>
+                
+            </div>
+
+            <div className="why-bidi-section">
+                <div className='why-bidi'>
+                    Simplifying Your Search for Local Sercvices
+                </div>
+                <div className='reasons-why'>
+                    <div className='reason'>
+                        <img className='reason-photo'src={WhyBidiPhoto}></img>
+                        <div className='reason-title'>Convenient & Easy</div>
+                        <div className='reason-box'>We hate spending time looking for the perfect fit, and we think you do too. With Bidi, all you do is tell us what you want and we’ll find the right service for you. </div>
+                    </div>
+                    <div className='reason'>
+                        <img className='reason-photo'src={WhyBidiPhoto2}></img>
+                        <div className='reason-title'>Competitive Pricing</div>
+                        <div className='reason-box'>Our revolutionary bidding system forces companies to directly compete with each other for your business. Meaning you get the best price, every time. </div>
+                    </div>
+                    <div className='reason'>
+                        <img className='reason-photo'src={WhyBidiPhoto3}></img>
+                        <div className='reason-title'>Reliable Experts</div>
+                        <div className='reason-box'>With our Bidi verified program. We connect you with local service providers that have been verified to be reliable, communicative, and professional</div>
                     </div>
                 </div>
             </div>
 
+            <div className="how-to-use-section">
                 <div className='how-to-text'>
-                    <div className='how-to-title'>How do I use Bidi?</div>
+                    <div className='how-to-title'>How it Works</div>
                     <div className='how-to-steps'>1. Tell us what you are looking for</div>
                     <div className='how-to-steps'>2. We will notify local businesses and they will send in bids</div>
                     <div className='how-to-steps' style={{ borderBottom: "none" }}>3. We'll send those bids to you, find the one you like and press "accept"</div>
@@ -136,25 +201,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                 </div>
         </div>
 
-            <div className="why-bidi-section">
-            <div className='why-bidi'>
-                Why Choose Bidi?
-            </div>
-            <div className='reasons-why'>
-                <div className='reason'>
-                    <div className='reason-title'>Convenient & Easy</div>
-                    <div className='reason-box'>We hate spending time looking for the perfect fit, and we think you do too. With Bidi, all you do is tell us what you want and we’ll find the right service for you. </div>
-                </div>
-                <div className='reason'>
-                    <div className='reason-title'>Competitive Pricing</div>
-                    <div className='reason-box'>Our revolutionary bidding system forces companies to directly compete with each other for your business. Meaning you get the best price, every time. </div>
-                </div>
-                <div className='reason'>
-                    <div className='reason-title'>Reliable Experts</div>
-                    <div className='reason-box'>At Bidi, we connect you with local service providers that have been verified to be reliable, communicative, and professional. That way, you only get the best.</div>
-                </div>
-            </div>
-        </div>
+
 
 
                 <div className="user-reviews-section">
