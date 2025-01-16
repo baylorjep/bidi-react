@@ -32,7 +32,7 @@ import OpenRequests from './components/Request/OpenRequests';
 import MultiStepRequestForm from './components/Request/general requests/MultiStepRequestForm';
 
 // test email imports
-import EmailTest from './components/emailtest';
+import TestEmail from './components/TestEmail';
 
 // Event Imports
 import SelectEvent from './components/Event/SelectEvent';
@@ -137,7 +137,7 @@ function App() {
                         <Route path="/denied-bids" element={<DeniedBids />} />
 
                         {/* Test API Routes */}
-                        <Route path="/testemail" element={<EmailTest />} />
+                         <Route path="/test-email" element={<TestEmail />} />
                         
                         {/* Business Routes */}
                         <Route path="/open-requests" element={<OpenRequests />} />

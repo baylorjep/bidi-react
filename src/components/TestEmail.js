@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function EmailTest() {
+function TestEmail() {
     const [formData, setFormData] = useState({
         email: '',
         subject: '',
@@ -98,4 +98,4 @@ function EmailTest() {
     );
 }
 
-export default EmailTest;
+export default TestEmail;
