@@ -5,6 +5,7 @@ function TestEmail() {
         email: '',
         subject: '',
         message: '',
+        bcc: '', 
     });
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -16,7 +17,7 @@ function TestEmail() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const { email, subject, message } = formData;
+        const { email, subject, message, bcc } = formData;
 
         try {
             const response = await fetch('https://bidi-express.vercel.app/send-resend-email', {
@@ -26,6 +27,7 @@ function TestEmail() {
                     recipientEmail: email,
                     subject: subject,
                     htmlContent: `<p>${message}</p>`,
+                    bccEmails: bcc.split(',').map((email) => email.trim()),
                 }),
             });
 
@@ -39,6 +41,7 @@ function TestEmail() {
                 email: '',
                 subject: '',
                 message: '',
+                bcc: '',
             });
         } catch (error) {
             setErrorMessage(`Error sending email: ${error.message}`);
@@ -90,6 +93,18 @@ function TestEmail() {
                             style={{ height: '150px' }}
                         ></textarea>
                         <label htmlFor="message">Message Content</label>
+                    </div>
+                    <div className="form-floating mb-3">
+                        <input
+                            className="form-control"
+                            id="bcc"
+                            name="bcc"
+                            type="text"
+                            placeholder="BCC Emails (comma-separated)"
+                            value={formData.bcc}
+                            onChange={handleChange}
+                        />
+                        <label htmlFor="bcc">BCC Emails (comma-separated)</label>
                     </div>
                     <button type="submit" className="btn btn-primary w-100">Send Test Email</button>
                 </form>
