@@ -21,6 +21,8 @@ import WhyBidiPhoto from '../../src/assets/images/Icons/input-search.svg';
 import WhyBidiPhoto2 from '../../src/assets/images/Icons/people.svg';
 import WhyBidiPhoto3 from '../../src/assets/images/Icons/cash-coin.svg';
 import UserReviews from './UserReviews';
+import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
+import '../styles/animations.css';
 
 // Initialize PostHog for client-side tracking
 posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
@@ -36,18 +38,6 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
     const reviewSliderRef = useRef(null);
     const [scrollAmount, setScrollAmount] = useState(0);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [reviews, setReviews] = useState([
-        {
-            text: "I was looking for a roofer to fix a leak on the roof of my cabin. I put my job request on bidi when they first launched. Because bidi was brand new there were not any roofers yet. Within a day the bidi founders personally made tons of calls to find me a handful of roofers who could bid on my job. I was blown away! My 2nd experience was even better. I needed a fast turnaround for family pictures (one week). I submitted my request for a photographer to take a family photos. Within an hour of my request, I had 12 photographers post bids. Since my first experience with bidi, it has only gotten better and better. This company is going to be a game changer in the way I shop for services!",
-            name: "Jennafer J.",
-            icon: jennaferIcon
-        },
-        {
-            text: "We recently used Bidi to find a cleaning service, and it was a total game-changer. With a new baby on the way, we needed all the help we could get, and Bidi made it super easy. After I submitted a quick request, I got lots of bids from different cleaning services right away. Bidi took care of all the details, saving us tons of time, and it ended up being way more affordable. If you’re looking for a quick, budget-friendly way to find a reliable service, I’d definitely recommend Bidi!",
-            name: "Jaron A.",
-            icon: jaronIcon
-        }
-    ]);
   
     useEffect(() => {
       const fetchSessionAndRole = async () => {
@@ -84,18 +74,20 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
       }
     }, []);
   
-    const scrollReviews = (direction) => {
-      if (direction === 'right') {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % reviews.length);
-      } else {
-        setCurrentIndex((prevIndex) => (prevIndex - 1 + reviews.length) % reviews.length);
-      }
-    };
+
+    // Add refs for each section
+    const [mastheadRef, mastheadVisible] = useIntersectionObserver();
+    const [connectRef, connectVisible] = useIntersectionObserver();
+    const [whyBidiRef, whyBidiVisible] = useIntersectionObserver();
+    const [howToRef, howToVisible] = useIntersectionObserver();
+    const [reviewsRef, reviewsVisible] = useIntersectionObserver(); // Add this line
+    const [newsletterRef, newsletterVisible] = useIntersectionObserver();
+    const [tryNowRef, tryNowVisible] = useIntersectionObserver();
 
   return (
         <>
             
-            <div className="masthead-index">
+            <div ref={mastheadRef} className={`masthead-index fade-in-section ${mastheadVisible ? 'is-visible' : ''}`}>
                 <div className='text-section' >
                     <div className='landing-page-title'>
                         Tired of Looking for the Perfect <RotatingText />
@@ -128,16 +120,16 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                                 </Link>
                             )}
                         </div>
-                    <div style={{marginTop:'40px', display:'flex', justifyContent:'left', gap:'40px'}}>
-                            <div style={{display:'flex', flexDirection:'column', borderRight:'2px solid black', paddingRight:'20px', alignItems:'center'}} >
+                    <div className='stat-container'>
+                            <div className='stat-box' >
                                 <div className='stat-title'>Requests</div>
                                 <div className='stat'>70+</div>
                             </div>
-                            <div style={{display:'flex', flexDirection:'column', borderRight:'2px solid black', paddingRight:'20px', alignItems:'center'}} >
+                            <div className='stat-box'>
                                 <div className='stat-title'>Users</div>
                                 <div className='stat'>270+</div>
                             </div>
-                            <div style={{display:'flex', flexDirection:'column', alignItems:'center'}} >
+                            <div className='stat-box final'>
                                 <div className='stat-title'>Bids</div>
                                 <div className='stat'>550+</div>
                             </div>
@@ -159,7 +151,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
    
             </div>
 
-            <div className='connect-section'>
+            <div ref={connectRef} className={`connect-section fade-in-section ${connectVisible ? 'is-visible' : ''}`}>
                 <div style={{display:'flex', flexDirection:'column', gap:'20px'}}> 
                     <div className='connect-sub-title'>Connect</div>
                     <div className='connect-title'>Discover Wedding Vendors <br></br><span className='connect-highlight'>Effortlessly</span></div>
@@ -175,7 +167,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                 
             </div>
 
-            <div className="why-bidi-section">
+            <div ref={whyBidiRef} className={`why-bidi-section fade-in-section ${whyBidiVisible ? 'is-visible' : ''}`}>
                 <div className='why-bidi'>
                     Simplifying Your Search for Local Sercvices
                 </div>
@@ -198,7 +190,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                 </div>
             </div>
 
-            <div className="how-to-use-section">
+            <div ref={howToRef} className={`how-to-use-section fade-in-section ${howToVisible ? 'is-visible' : ''}`}>
                 <div className='how-to-text'>
                     <div className='how-to-sub-title'>Simple and hassle-free.</div>
                     <div className='how-to-title'>How It Works</div>
@@ -225,26 +217,34 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                 </div>
         </div>
 
-        <section id="user-reviews">
-        <UserReviews />
+        <section 
+            ref={reviewsRef} 
+            className={`fade-in-section ${reviewsVisible ? 'is-visible' : ''}`} 
+            id="user-reviews"
+        >
+            <UserReviews />
         </section>
 
-        <div className='newsletter-section'>
-            <div className='newsletter-title'>Want More? Subscribe to our Newsletter</div>
-            <div className="newsletter-subtitle">Bidi’s newsletter posts updates on new features, new available services, updates, and more!</div>
-            <div className='newsletter-input-container'>
-                <input
-                    className='newsletter-input'
-                    id="email-input"
-                    type="text" // or "email", "password", etc.
-                    placeholder="Email"
-                />
-                <div className='newsletter-button-container'>
-                    <Link className="btn btn-secondary rounded-pill" style={{ width: "150px", height: "60px" }} to="/signin">
-                        <div style={{ font: "Roboto", marginTop: "10px" }}>Sign Up</div>
-                    </Link>
-                </div>
+        <div ref={tryNowRef} className={`try-now-container fade-in-section ${tryNowVisible ? 'is-visible' : ''}`}>
+          <div className='try-now-box'>
+            <div className='try-now-title'>Ready to Save Time and Money? <span className='try-now-highlight'>Join Bidi Today</span></div>
+            <div className='try-now-subtitle'>Over 270 users are already finding their perfect wedding vendors. Don't miss out on stress-free hiring.</div>
+            <button className='try-now-button'>Get Started Free</button>
+          </div>
+        </div>
+
+        <div ref={newsletterRef} className={`newsletter-section fade-in-section ${newsletterVisible ? 'is-visible' : ''}`}>
+            <div style={{display:'flex', flexDirection:'column', gap:'20px', alignItems:'center'}}>
+            <div className='newsletter-title'>Are You A Wedding Vendor?</div>
+            <div className="newsletter-subtitle">Join Bidi to access hundreds of clients and grow your business—only pay for the bids you win!</div>
             </div>
+ 
+            <div className='newsletter-button-container'>
+                <Link className="newsletter-button"to="/signin">
+                    <div>Sign Up</div>
+                </Link>
+            </div>
+
         </div>
     </>
   );

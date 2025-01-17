@@ -34,6 +34,7 @@ function RequestCategories() {
         <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
 
             <div className="request-form-container-details">
+            <div className="pink-splotch"></div> 
                 <div className="request-form-header" style={{marginTop:'120px'}}>What would you like to get done today?</div>
                 <div style={{marginTop:'40px'}}>
                     <select 
