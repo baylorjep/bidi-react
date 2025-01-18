@@ -28,7 +28,7 @@ function ChooseUserType() {
                 <div>
                    <button 
                     onClick={() => handleSelection('individual')} 
-                    className="landing-page-button">
+                    className="choose-type-button">
                     Hire someone to help me
                 </button> 
                 </div>
@@ -36,7 +36,7 @@ function ChooseUserType() {
                 <div className='choose-type-or'>Or</div>
                 <div><button 
                     onClick={() => handleSelection('business')} 
-                    className="landing-page-button">
+                    className="choose-type-button">
                     Offer my skills to others
                 </button>
                 </div>

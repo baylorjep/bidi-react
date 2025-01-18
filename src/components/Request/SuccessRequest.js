@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 function SuccessRequest() {
     return (
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '64px', justifyContent: 'center', alignItems: 'center', height: '85vh' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height:'auto', }}>
             <div className='request-form-status-container'>
                 <div className='status-bar-container'>
                     {Array.from({ length: 5 }, (_, index) => (
@@ -73,13 +73,16 @@ function SuccessRequest() {
                         You will receive an email or texts as vendors send in bids. You're done! Just relax and let the bids roll in.
                     </div>
 
-                    <Link to='/request-categories' className='success-page-button-primary'>
-                        Make Another Request
-                    </Link>
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
+                        <Link to='/my-bids' className='success-page-button-secondary'>
+                            Close
+                        </Link>
+                        <Link to='/request-categories' className='success-page-button-primary'>
+                            Make Another Request
+                        </Link>
+                    </div>
 
-                    <Link to='/my-bids' className='success-page-button-secondary'>
-                        Close
-                    </Link>
+
                 </div>
             </div>
         </div>

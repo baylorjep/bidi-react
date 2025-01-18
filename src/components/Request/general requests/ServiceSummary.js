@@ -261,53 +261,54 @@ function SummaryPage({ formData, prevStep }) {
 
             <div style={{
                 display: 'flex',
-                flexDirection: 'column',
+                flexDirection: 'row',
                 gap: '8px',
                 marginTop: 'auto',
                 marginBottom: '20px',
                 alignItems: 'center'
             }}>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <input
-                        type="text"
-                        value={couponCode}
-                        onChange={(e) => {
-                            setCouponCode(e.target.value);
-                            setIsValidCoupon(false);
-                            setDiscountAmount(null);
-                        }}
-                        placeholder="Enter coupon code"
-                        className='coupon-code-input'
-                        style={{
-                            backgroundColor: isValidCoupon ? '#f0fff0' : 'white'
-                        }}
-                    />
-                    <button
-                        onClick={verifyCouponCode}
-                        className="landing-page-button"
-                        style={{ padding: '8px 12px', fontSize: '16px' }}
-                    >
-                        Verify
-                    </button>
-                </div>
-                {couponError && <div style={{color: 'red', fontSize: '14px'}}>{couponError}</div>}
-                {isValidCoupon && <div style={{color: 'green', fontSize: '14px'}}>Coupon code is valid! Discount amount: ${discountAmount}</div>}
-            </div>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px'}}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent:'center'    }}>
+                            <div className='custom-input-container' style={{marginBottom:'0'}}>
+                                <input
+                                    type="text"
+                                    value={couponCode}
+                                    onChange={(e) => {
+                                        setCouponCode(e.target.value);
+                                        setIsValidCoupon(false);  // Reset validation when code changes
+                                        setDiscountAmount(null);
+                                    }}
+                                    placeholder="Enter coupon code"
+                                    className='custom-input'
+                                    style={{
+                                        
+                                        backgroundColor: isValidCoupon ? '#f0fff0' : 'white'  // Light green background if valid
+                                    }}
+                                />
+                                <label htmlFor="coupon" className="custom-label">
+                                        Coupon
+                                </label>
+                            </div>
 
-            {errorMessage && <p className="text-danger">{errorMessage}</p>}
-
-        
+                            <button
+                                onClick={verifyCouponCode}
+                                className="request-form-back-and-foward-btn"
+                                style={{ padding: '8px 12px', fontSize: '16px' }}
+                            >
+                                Verify
+                            </button>
+                        </div>
+                        {couponError && <div style={{color: 'red', fontSize: '14px'}}>{couponError}</div>}
+                        {isValidCoupon && <div style={{color: 'green', fontSize: '14px'}}>Coupon code is valid! Discount amount: ${discountAmount}</div>}
+                    </div>
+                    </div>
 
             <div className="form-button-container">
                 <button 
                     type="button" 
                     onClick={prevStep} 
                     className="request-form-back-and-foward-btn"
-                    style={{color:"black"}}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M20.0002 11V13L8.00016 13L13.5002 18.5L12.0802 19.92L4.16016 12L12.0802 4.07996L13.5002 5.49996L8.00016 11L20.0002 11Z" fill="black"/>
-                    </svg>
                     Back
                 </button>
                 <button
@@ -315,7 +316,6 @@ function SummaryPage({ formData, prevStep }) {
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                     style={{
-                        color: 'black',
                         cursor: isSubmitting ? 'not-allowed' : 'pointer',
                     }}
                 >

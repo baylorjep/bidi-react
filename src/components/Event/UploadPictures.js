@@ -147,42 +147,38 @@ const handleRemovePhoto = async (photoUrl) => {
     };
     
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const handleSubmit = async (e) => {
+        if (e) e.preventDefault();
         
-        // Get source type and form data from localStorage
-        const requestSource = localStorage.getItem('requestSource');
-        const requestFormData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
-        const formDetails = { ...details, photoUrl: photos };
-    
-        // Update form data in localStorage
+        const serviceType = localStorage.getItem('serviceType');
+        const specificService = localStorage.getItem('specificService');
+        
+        // Store photos in localStorage
+        const savedFormData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
         localStorage.setItem('requestFormData', JSON.stringify({
-            ...requestFormData,
-            photos: photos,
-            details: formDetails
+            ...savedFormData,
+            photos: photos
         }));
-    
-        if (requestSource === 'photography') {
-            if (typeof nextStep === 'function') {
-                setFormPhotos(photos);
-                nextStep();
-            } else {
-                navigate('/event-summary', {
-                    state: { photos, formDetails }
-                });
-            }
+
+        // Navigate based on service type
+        if (serviceType === 'photography') {
+            navigate('/event-summary', {
+                state: { 
+                    photos,
+                    eventDetails: JSON.parse(localStorage.getItem('photographyRequest') || '{}').eventDetails || {}
+                }
+            });
         } else {
-            // For general requests within multi-step form
+            // For general services, use the multi-step form navigation
             if (typeof nextStep === 'function') {
-                setFormPhotos(photos);
-                nextStep();
+                nextStep(); // Use the provided nextStep function
             } else {
+                // If not in multi-step form, navigate to the form with the correct step
                 navigate('/request-form', { 
                     state: { 
-                        currentStep: 7,
+                        currentStep: 7, // Set to the summary step
                         photos,
-                        formDetails,
-                        source: 'general'
+                        formData: savedFormData
                     }
                 });
             }
@@ -292,7 +288,7 @@ const handleRemovePhoto = async (photoUrl) => {
     };
 
     return (
-        <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
+        <div style={{display:'flex', flexDirection:'row',    justifyContent:'center', alignItems:'center',height:'85vh'}}>
             <div className="request-form-status-container">
               <div className="status-bar-container">
                   {Array.from({ length: 5 }, (_, index) => (
@@ -421,27 +417,17 @@ const handleRemovePhoto = async (photoUrl) => {
                                 </div>
  )}
             <div className="form-button-container" style={{margin:"0"}}>
-                <button className="request-form-back-and-foward-btn" onClick={handleBack} style={{color:"black"}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M20.0002 11V13L8.00016 13L13.5002 18.5L12.0802 19.92L4.16016 12L12.0802 4.07996L13.5002 5.49996L8.00016 11L20.0002 11Z" fill="black"/>
-                    </svg>
+                <button className="request-form-back-and-foward-btn" onClick={handleBack}>
                     Back
                 </button>
                 <button
                 type='submit'
                 className='request-form-back-and-foward-btn'
-                style={{color:'black'}} onClick={handleSubmit}
+                 onClick={handleSubmit}
                 >
                     Next
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
 
-                    >
-                        <path d="M3.99984 13L3.99984 11L15.9998 11L10.4998 5.50004L11.9198 4.08004L19.8398 12L11.9198 19.92L10.4998 18.5L15.9998 13L3.99984 13Z" />
-                    </svg>
+
                 </button>
             </div>
                 </div>

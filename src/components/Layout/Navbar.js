@@ -84,7 +84,7 @@ function Navbar() {
 
     return (
         <nav className="navbar navbar-expand-lg" id="mainNav" ref={navbarRef}>
-            <div className="container px-5">
+            <div className="container">
                 <Link className="navbar-brand fw-bold" to="/">
                     <div className='bidi-logo'>Bidi</div>
                 </Link>

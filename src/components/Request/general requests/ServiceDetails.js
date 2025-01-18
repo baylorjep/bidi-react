@@ -114,14 +114,8 @@ function ServiceDetails({ formData, setServiceDetails, nextStep, currentStep }) 
                         type="button"
                         onClick={() => navigate('/request-categories')}
                         className="request-form-back-and-foward-btn"
-                        style={{ color: 'black' }}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path
-                                d="M20.0002 11V13L8.00016 13L13.5002 18.5L12.0802 19.92L4.16016 12L12.0802 4.07996L13.5002 5.49996L8.00016 11L20.0002 11Z"
-                                fill="black"
-                            />
-                        </svg>
+
                         Back
                     </button>
                     <button
@@ -129,22 +123,12 @@ function ServiceDetails({ formData, setServiceDetails, nextStep, currentStep }) 
                         onClick={() => isFormValid && nextStep()}
                         disabled={!isFormValid}
                         style={{
-                            color: isFormValid ? 'black' : '#999',
+                            color: isFormValid ? 'white' : '#999',
                             cursor: isFormValid ? 'pointer' : 'not-allowed',
                         }}
                     >
                         Next
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill={isFormValid ? 'black' : '#999'}
-                        >
-                            <path
-                                d="M3.99984 13L3.99984 11L15.9998 11L10.4998 5.50004L11.9198 4.08004L19.8398 12L11.9198 19.92L10.4998 18.5L15.9998 13L3.99984 13Z"
-                            />
-                        </svg>
+
                     </button>
                 </div>
             </div>

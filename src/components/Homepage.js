@@ -209,9 +209,9 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                         <div className='step-title'>Receive and Compare Bids</div>
                         <div className='step-sub-title'>Relax as bids come in, and easily compare them to find the perfect match.</div>
                     </div>
-                    <div style={{display:'flex', justifyContent:'center', marginTop:'40px'}}>
-                        <Link style={{textDecoration:'none'}} to="/signin">
-                            <button className='try-now-button'>Try Now</button>
+                    <div className='landing-page-button-container'>
+                        <Link  to="/signin">
+                            <button className="landing-page-button" style={{ width: "150px", textDecoration:'none', alignItems:'center', justifyContent:'center', marginLeft:'0' }}>Try Now</button>
                         </Link>
                     </div>
                 </div>
@@ -234,7 +234,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
         </div>
 
         <div ref={newsletterRef} className={`newsletter-section fade-in-section ${newsletterVisible ? 'is-visible' : ''}`}>
-            <div style={{display:'flex', flexDirection:'column', gap:'20px'}}>
+            <div style={{display:'flex', flexDirection:'column', gap:'20px', alignItems:'center'}}>
             <div className='newsletter-title'>Are You A Wedding Vendor?</div>
             <div className="newsletter-subtitle">Join Bidi to access hundreds of clients and grow your business—only pay for the bids you win!</div>
             </div>

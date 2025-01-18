@@ -84,7 +84,7 @@ function EventDetails({ eventType, setEventDetails }) {
     };
 
     return (
-        <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
+        <div style={{display:'flex', flexDirection:'row', justifyContent:'center', alignItems:'center',height:'85vh'}}>
              {/* Render the SignInModal if isModalOpen is true */}
              {/* Modal: Display only if isModalOpen is true */}
             {isModalOpen && (
@@ -324,28 +324,17 @@ function EventDetails({ eventType, setEventDetails }) {
                 </form>
                 </div>
                 <div className="form-button-container">
-                    <button type="button"className="request-form-back-and-foward-btn" onClick={handleBack} style={{color:"black"}}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M20.0002 11V13L8.00016 13L13.5002 18.5L12.0802 19.92L4.16016 12L12.0802 4.07996L13.5002 5.49996L8.00016 11L20.0002 11Z" fill="black"/>
-                        </svg>
+                    <button type="button"className="request-form-back-and-foward-btn" onClick={handleBack}>
+
                         Back
                     </button>
                     <button
                     type='button'
                     className='request-form-back-and-foward-btn'
-                    style={{color:'black'}}
                     onClick={() => formRef.current.requestSubmit()}
                     >
                         Next
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
 
-                        >
-                            <path d="M3.99984 13L3.99984 11L15.9998 11L10.4998 5.50004L11.9198 4.08004L19.8398 12L11.9198 19.92L10.4998 18.5L15.9998 13L3.99984 13Z" />
-                        </svg>
                     </button>
                 </div>
             </div>
