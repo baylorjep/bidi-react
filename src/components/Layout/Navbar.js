@@ -86,7 +86,7 @@ function Navbar() {
         <nav className="navbar navbar-expand-lg" id="mainNav" ref={navbarRef}>
             <div className="container px-5">
                 <Link className="navbar-brand fw-bold" to="/">
-                    <img src={logo} alt="Bidi Logo" style={{ height: '50px', width: 'auto' }} />
+                    <div className='bidi-logo'>Bidi</div>
                 </Link>
                 <button
                     className="navbar-toggler"
@@ -146,7 +146,7 @@ function Navbar() {
                             </span>
                         </button>
                     ) : (
-                        <Link className="btn-nav-primary" to="/signin">
+                        <Link style={{textDecoration:'none'}}className="btn-nav-primary" to="/signin">
                             <span className="btn-text">
                                 <span className="small">Log In</span>
                             </span>
@@ -155,7 +155,7 @@ function Navbar() {
 
                     {/* Conditionally render the Sign Up button */}
                     {!user && (
-                        <Link className="btn-nav-secondary" to="/signup">
+                        <Link className="btn-nav-secondary" style={{textDecoration:'none'}} to="/signup">
                             <span className="btn-text-secondary">
                                 <span className="small">Sign Up</span>
                             </span>
