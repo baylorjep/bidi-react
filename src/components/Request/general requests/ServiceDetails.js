@@ -97,14 +97,24 @@ function ServiceDetails({ formData, setServiceDetails, nextStep, currentStep }) 
                             <label className="custom-label">Description</label>
                         </div>
                         <div className="custom-input-container">
-                            <input
-                                type="text"
+                            <select
                                 name="budget"
                                 value={formData.budget || ''}
                                 onChange={handleChange}
                                 className="custom-input"
-                            />
-                            <label className="custom-label">Budget</label>
+                            >
+                                <option value="">Select a Budget Range</option>
+                                <option value="0-$500">$0 - $500</option>
+                                <option value="501-$1000">$501 - $1,000</option>
+                                <option value="1001-$1500">$1,001 - $1,500</option>
+                                <option value="1501-$2000">$1,501 - $2,000</option>
+                                <option value="2001-$2500">$2,001 - $2,500</option>
+                                <option value="2501-$3000">$2,501 - $3,000</option>
+                                <option value="3001+">$3,001+</option>
+                            </select>
+                            <label htmlFor="price_range" className="custom-label">
+                                Budget
+                            </label>
                         </div>
                     </form>
                 </div>

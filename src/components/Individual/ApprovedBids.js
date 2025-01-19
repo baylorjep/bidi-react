@@ -319,6 +319,7 @@ function ApprovedBids() {
                                     <div className="pay-and-message-container">
                                         <button 
                                             className="btn-primary btn-md flex-fill"
+                                            style={{width: '100%'}}
                                             onClick={() => handleMoveToPending(bid)}
                                             >
                                             Move to Pending

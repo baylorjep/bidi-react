@@ -202,6 +202,7 @@ function UploadPictures() {
                 duration: eventDetails.duration,
                 indoor_outdoor: eventDetails.indoorOutdoor,
                 additional_comments: eventDetails.additionalComments,
+                price_range: eventDetails.price_range,
                 status: 'open'
             };
 
@@ -435,6 +436,11 @@ function UploadPictures() {
                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                        <div className="request-subtype">Indoor/Outdoor</div>
                        <div className="request-info">{eventDetails.indoorOutdoor}</div>
+                   </div>
+
+                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Budget</div>
+                       <div className="request-info">${eventDetails.price_range}</div>
                    </div>
                     
                </div>

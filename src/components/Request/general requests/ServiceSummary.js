@@ -217,7 +217,7 @@ function SummaryPage({ formData, prevStep }) {
 
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Budget</div>
-                        <div className="request-info">{formData.budget}</div>  
+                        <div className="request-info">${formData.budget}</div>  
                 </div>      
 
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
