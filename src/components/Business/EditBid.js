@@ -98,7 +98,7 @@ const EditBid = () => {
 
   return (
     <div className="container">
-      <h2>Edit Bid</h2>
+      <h2 className="dashboard-title">Edit Bid</h2>
       {requestDetails ? (
         <>
           {requestType === 'requests' && <RequestDisplay request={requestDetails} hideBidButton={true} />}
@@ -110,33 +110,33 @@ const EditBid = () => {
 
       {bidDetails ? (
         <form onSubmit={handleSubmit}>
-          <div className="form-floating request-form mb-3">
+          <div className="custom-input-container">
             <input
                 type="number"
                 id="bidAmount"
-                className="form-control"
+                className="custom-input"
                 value={bidAmount}
                 onChange={(e) => setBidAmount(e.target.value)}
                 min="0" // Optional: Ensure no negative numbers are input
             />
-            <label htmlFor="bidAmount">Bid Amount</label>
+            <label className='custom-label'htmlFor="bidAmount">Bid Amount</label>
             </div>
 
-          <div className="form-floating request-form mb-3">
+          <div className="custom-input-container">
             
             <textarea
               id="bidDescription"
-              className="form-control"
+              className="custom-input"
               value={bidDescription}
               style={{ height: "120px" }}
               onChange={(e) => setBidDescription(e.target.value)}
             />
-            <label htmlFor="bidDescription">Bid Description</label>
+            <label className="custom-label"htmlFor="bidDescription">Bid Description</label>
           </div>
 
           <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
           <button
-                className="btn btn-primary"
+                className="btn-primary"
                 style={{ marginTop: "20px", textAlign: "center" }}
                 onClick={(e) => {
                     e.preventDefault(); // Prevent form submission
@@ -145,7 +145,7 @@ const EditBid = () => {
                 >
                 Back
                 </button>
-            <button type="submit" className="btn btn-secondary" style={{ marginTop: "20px", textAlign: "center" }}>
+            <button type="submit" className="btn-secondary" style={{ marginTop: "20px", textAlign: "center" }}>
               Update Bid
             </button>
           </div>

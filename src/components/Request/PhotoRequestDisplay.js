@@ -157,18 +157,15 @@ function PhotoRequestDisplay({ photoRequest, event_photos, hideBidButton }) {
                         <div className="request-info">{photoRequest.event_type}</div>
                     </div>
 
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype"> {photoRequest.date_type === 'range' ? 'Start Date ' : 'Date '}</div>
-                        <div className="request-info">{new Date(photoRequest.start_date).toLocaleDateString()}</div>
-                        
+                    <div className="detail-item">
+                        <span className="detail-label">Date of Service</span>
+                        <span className="detail-value-long">
+                            {photoRequest.end_date 
+                                ? `${new Date(photoRequest.start_date).toLocaleDateString()} - ${new Date(photoRequest.end_date).toLocaleDateString()}`
+                                : new Date(photoRequest.start_date).toLocaleDateString()
+                            }
+                        </span>
                     </div>
-                    {photoRequest.date_type === 'range' && (
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                            <div className="request-subtype">End Date</div>
-                            <div className="request-info">{new Date(photoRequest.end_date).toLocaleDateString()}</div>
-                            
-                        </div>
-                    )}
 
                  
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -194,6 +191,11 @@ function PhotoRequestDisplay({ photoRequest, event_photos, hideBidButton }) {
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Indoor/Outdoor</div>
                         <div className="request-info">{photoRequest.indoor_outdoor}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Budget</div>
+                        <div className="request-info">${photoRequest.price_range}</div>
                     </div>
                     
                     {photoRequest.extras && Object.keys(photoRequest.extras).length > 0 && (

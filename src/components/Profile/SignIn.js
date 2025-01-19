@@ -69,15 +69,12 @@ function SignIn() {
     };
 
     return (
-        <div className="container px-5 d-flex align-items-center justify-content-center" style={{ marginTop: "120px" }}>
-            <div className="col-lg-6">
-                <div className="mb-5 mb-lg-0 text-center">
+        <div className="sign-in-container">
+                <div className="sign-in-form-container">
                     <br />
                     <h1 className="Sign-Up-Page-Header">Sign In</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
-                </div>
-                <br/>
-                    <div className="mt-3 text-center">
+                    <div className="google-sign-in-container">
                         <button
                             type="button"
                             className="btn btn-google-signin"
@@ -86,28 +83,28 @@ function SignIn() {
                             Sign in with Google
                         </button>
                     </div>
-                    <div className="divider" style={{ display: 'flex', alignItems: 'center', margin: '20px 0' }}>
-                        <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ccc', margin: '0 10px' }} />
-                        <span style={{ fontSize: '14px', color: '#666' }}>OR</span>
-                        <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ccc', margin: '0 10px' }} />
+                    <div className="divider">
+                        <span>OR</span>
                     </div>
-                <form onSubmit={handleSignIn}>
-                    <div className="form-floating create-account-form mb-3">
-                        <input
-                            className="form-control"
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="name@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                        <label htmlFor="email">Email Address</label>
+                <form style={{width:'100%'}} onSubmit={handleSignIn}>
+                <div className='sign-in-input-container'>
+                    <label htmlFor="email">Email</label>
+                    <input
+                        className="sign-in-form"
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="name@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
                     </div>
-                    <div className="form-floating create-account-form mb-3">
+
+                    <div>
+                    <label htmlFor="password">Password</label>
                         <input
-                            className="form-control"
+                            className="sign-in-form"
                             id="password"
                             name="password"
                             type="password"
@@ -116,24 +113,26 @@ function SignIn() {
                             onChange={(e) => setPassword(e.target.value)}
                             required
                         />
-                        <label htmlFor="password">Password</label>
+
                     </div>
-                    <div className="forgot-your-password">
-                        <Link to="/request-password-reset" className="btn btn-link">
+                    <div className="sign-in-container">
+                        <button type="submit" className="sign-up-button">Log In</button>
+                    </div>
+                    <div className="forgot-your-password" style={{marginTop:'20px'}}>
+                        <Link to="/request-password-reset" className="forgot-your-password-highlight">
                             Forgot your password?
                         </Link>
                     </div>
-                    <div className="sign-in-container">
-                        <button type="submit" className="sign-up-button" style={{ width: '160px' }}>Sign In</button>
-                    </div>
+
                     <br />
                     <div className="forgot-your-password" align='center' style={{ textDecoration: 'none' }}>
                         Don't Have an Account?
-                        <a href='/Signup' > Sign Up Here.</a>
+                        <a className='forgot-your-password-highlight' href='/Signup' > Sign Up Here.</a>
                     </div>
                 </form>
+                </div>
+
             </div>
-        </div>
     );
 }
 

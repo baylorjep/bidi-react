@@ -6,7 +6,7 @@ function AboutUs() {
     return (
         <div className="about-us-container">
             <div className="about-us-title">
-                Meet Our <br></br> Team 
+                Meet Our <span className='about-us-highlight'>Team </span> 
             </div>
             <div className='team-member-container'>
                 <div className='team-member-image-container'>

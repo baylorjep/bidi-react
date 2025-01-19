@@ -1,21 +1,24 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 function ChooseUserType() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const source = searchParams.get('source');
 
     const handleSelection = (userType) => {
-
-        if(userType==='business') {
-            navigate(`/signup?type=business`);
-        }
-
-        else {
-            navigate(`/request-categories`);
-        }
-            
+        const fromNavbar = searchParams.get('source') === 'navbar';
         
-        
+        if(userType === 'business') {
+            navigate('/signup?type=business');
+        } else {
+            if(fromNavbar) {
+                navigate('/signup?type=individual');
+            } else {
+                navigate('/request-categories');
+            }
+        }
     };
 
     return (
@@ -28,7 +31,7 @@ function ChooseUserType() {
                 <div>
                    <button 
                     onClick={() => handleSelection('individual')} 
-                    className="landing-page-button">
+                    className="choose-type-button">
                     Hire someone to help me
                 </button> 
                 </div>
@@ -36,7 +39,7 @@ function ChooseUserType() {
                 <div className='choose-type-or'>Or</div>
                 <div><button 
                     onClick={() => handleSelection('business')} 
-                    className="landing-page-button">
+                    className="choose-type-button">
                     Offer my skills to others
                 </button>
                 </div>

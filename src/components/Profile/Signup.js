@@ -185,12 +185,12 @@ function Signup() {
     };
 
     return (
-        <div className="container px-5 d-flex align-items-center justify-content-center" style={{marginBottom:'20px '}}>
-            <div className="col-lg-6">
-                <div className="mb-5 mb-lg-0 text-center">
-                    <h1 className="Sign-Up-Page-Header">Create an Account</h1>
-                    {errorMessage && <p className="text-danger">{errorMessage}</p>}
-                </div>
+        <div className="sign-in-container" style={{marginBottom:'20px '}}>
+            <div className="sign-in-form-container" style={{height:'auto'}}>
+
+                <h1 className="Sign-Up-Page-Header" style={{marginTop:'20px'}}>Create an Account</h1>
+                {errorMessage && <p className="text-danger">{errorMessage}</p>}
+
                 {/*<div className="mt-3 text-center">
                     <button
                         type="button"
@@ -210,9 +210,10 @@ function Signup() {
 
                 {userType === 'business' && (
                         <>
-                            <div className="form-floating create-account-form mb-3">
+                            <div className="sign-in-input-container">
+                            <label htmlFor="businessName">Business Name</label>
                                 <input
-                                    className="form-control"
+                                    className="sign-in-form"
                                     id="businessName"
                                     name="businessName"
                                     type="text"
@@ -221,11 +222,12 @@ function Signup() {
                                     onChange={handleChange}
                                     required
                                 />
-                                <label htmlFor="businessName">Business Name</label>
+
                             </div>
-                            <div className="form-floating create-account-form mb-3">
+                            <div className="sign-in-input-container">
+                            <label htmlFor="businessCategory">Business Category</label>
                                 <select
-                                    className="form-control"
+                                    className="sign-in-form"
                                     id="businessCategory"
                                     name="businessCategory"
                                     value={formData.businessCategory}
@@ -244,12 +246,13 @@ function Signup() {
                                     <option value="cleaning">Home Cleaning</option>
                                     <option value="other">Other</option>
                                 </select>
-                                <label htmlFor="businessCategory">Business Category</label>
+
                             </div>
                             {formData.businessCategory === 'other' && (
-                                <div className="form-floating create-account-form mb-3">
+                                <div className="sign-in-input-container">
+                                    <label htmlFor="otherBusinessCategory">Please specify your business category</label>
                                     <input
-                                        className="form-control"
+                                        className="sign-in-form"
                                         id="otherBusinessCategory"
                                         name="otherBusinessCategory"
                                         type="text"
@@ -259,12 +262,12 @@ function Signup() {
                                         required
                                         
                                     />
-                                    <label htmlFor="otherBusinessCategory">Please specify your business category</label>
                                 </div>
                             )}
-                            <div className="form-floating create-account-form mb-3">
+                            <div className="sign-in-input-container">
+                            <label htmlFor="businessAddress">Business Address</label>
                                 <input
-                                    className="form-control"
+                                    className="sign-in-form"
                                     id="businessAddress"
                                     name="businessAddress"
                                     type="text"
@@ -273,11 +276,12 @@ function Signup() {
                                     onChange={handleChange}
                                     required
                                 />
-                                <label htmlFor="businessAddress">Business Address</label>
+
                             </div>
-                            <div className="form-floating create-account-form mb-3">
+                            <div className="sign-in-input-container">
+                            <label htmlFor="website">Website (Optional)</label>
                                 <input
-                                    className="form-control"
+                                    className="sign-in-form"
                                     id="website"
                                     name="website"
                                     type="url"
@@ -286,70 +290,70 @@ function Signup() {
                                     onChange={handleChange}
                                     
                                 />
-                                <label htmlFor="website">Website (Optional)</label>
                             </div>
                         </>
                     )}
                 {userType === 'individual' && (
-                        <>
-                            <div className="form-floating create-account-form mb-3">
-                                <input
-                                    className="form-control"
-                                    id="firstName"
-                                    name="firstName"
-                                    type="text"
-                                    placeholder="Enter first name..."
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <label htmlFor="firstName"> First Name</label>
-                            </div>
-                            <div className="form-floating create-account-form mb-3">
-                                <input
-                                    className="form-control"
-                                    id="lastName"
-                                    name="lastName"
-                                    type="text"
-                                    placeholder="Enter last name..."
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <label htmlFor="lastName">Last Name</label>
-                            </div>
-                        </>
-                    )}
-                    <div className="form-floating create-account-form mb-3">
+                    <>
+                        <div className="sign-in-input-container">
+                            <label htmlFor="firstName">First Name</label>
+                            <input
+                                className="sign-in-form"
+                                id="firstName"
+                                name="firstName"
+                                type="text"
+                                placeholder="First Name"
+                                value={formData.firstName}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                        <div className="sign-in-input-container">
+                            <label htmlFor="lastName">Last Name</label>
+                            <input
+                                className="sign-in-form"
+                                id="lastName"
+                                name="lastName"
+                                type="text"
+                                placeholder="Last Name"
+                                value={formData.lastName}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                    </>
+                )}
+                    <div className="sign-in-input-container">
+                        <label htmlFor="phone">Phone Number</label>
                         <input
-                            className="form-control"
+                            className="sign-in-form"
                             id="phone"
                             name="phone"
                             type="tel"
-                            placeholder="(123) 456-7890"
+                            placeholder="Phone Number"
                             value={formData.phone}
                             onChange={handleChange}
                             required
                         />
-                        <label htmlFor="phone">Phone Number</label>
                     </div>
                 <form onSubmit={handleSubmit}>
-                    <div className="form-floating create-account-form mb-3">
+                <div className="sign-in-input-container">
+                        <label htmlFor="email">Email</label>
                         <input
-                            className="form-control"
+                            className="sign-in-form"
                             id="email"
                             name="email"
                             type="email"
-                            placeholder="name@example.com"
+                            placeholder="Email"
                             value={formData.email}
                             onChange={handleChange}
                             required
                         />
-                        <label htmlFor="email">Email</label>
                     </div>
-                    <div className="form-floating create-account-form mb-3">
+                    <div className="sign-in-input-container">
+                        <label htmlFor="password">Password</label>
                         <input
-                            className="form-control"
+                            className="sign-in-form"
                             id="password"
                             name="password"
                             type="password"
@@ -358,11 +362,11 @@ function Signup() {
                             onChange={handleChange}
                             required
                         />
-                        <label htmlFor="password">Password</label>
                     </div>
-                    <div className="form-floating create-account-form mb-3">
+                    <div className="sign-in-input-container" style={{marginBottom:'20px'}}>
+                        <label htmlFor="confirmPassword">Confirm Password</label>
                         <input
-                            className="form-control"
+                            className="sign-in-form"
                             id="confirmPassword"
                             name="confirmPassword"
                             type="password"
@@ -371,7 +375,6 @@ function Signup() {
                             onChange={handleChange}
                             required
                         />
-                        <label htmlFor="confirmPassword">Confirm Password</label>
                     </div>
                     <div 
     className="notification-bar" 
@@ -393,8 +396,8 @@ function Signup() {
                         <button type="submit" className="sign-up-button">Sign Up</button>
                     </div>
 
-                    <div className='already-have-account'>
-                        <div>Already have an account? <a href="/signin">Log In</a></div>
+                    <div className='forgot-your-password' style={{marginTop:'20px'}}>
+                        <div>Already have an account? <a href="/signin" className='forgot-your-password-highlight'>Log In</a></div>
                     </div>
 
                 </form>

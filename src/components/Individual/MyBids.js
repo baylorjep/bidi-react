@@ -8,6 +8,8 @@ import { Link } from 'react-router-dom';
 function MyBids() {
     const [bids, setBids] = useState([]);
     const [error, setError] = useState('');
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [pendingApproval, setPendingApproval] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -176,6 +178,60 @@ function MyBids() {
         setBids(bids.filter(bid => bid.id !== bidId));
     };
     
+    const handleApproveClick = (bid) => {
+        setPendingApproval(bid);
+        setShowConfirmModal(true);
+    };
+
+    const handleConfirmApprove = async () => {
+        if (!pendingApproval) return;
+        
+        await handleApprove(
+            pendingApproval.id,
+            pendingApproval.request_id,
+            pendingApproval.category
+        );
+        setShowConfirmModal(false);
+        setPendingApproval(null);
+    };
+
+    const ConfirmationModal = () => (
+        <div className="modal" tabIndex="-1" role="dialog" style={{
+            display: showConfirmModal ? 'block' : 'none',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1000
+        }}>
+            <div className='modal-dialog'role="document" style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '80%',
+            }}>
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">Confirm</h5>
+                        <button type="button" className="sign-up-modal-X" onClick={() => setShowConfirmModal(false)}>
+                            <span>X</span>
+                        </button>
+                    </div>
+                    <div className="modal-body">
+                        <p>Are you sure you want to accept this bid? The business will be notified and will reach out to you shortly.</p>
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="modal-btn-primary" onClick={() => setShowConfirmModal(false)}>Cancel</button>
+                        <button type="button" className="modal-btn-secondary" onClick={handleConfirmApprove}>Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
     const pendingBids = bids.filter(bid => bid.status === 'pending');
 
     return (
@@ -185,7 +241,7 @@ function MyBids() {
                     <p className="text-danger">{error}</p>
                 ) : pendingBids.length > 0 ? (
                     pendingBids.map((bid) => (
-                        <BidDisplay key={bid.id} bid={bid} handleApprove={handleApprove} handleDeny={handleDeny} />
+                        <BidDisplay key={bid.id} bid={bid} handleApprove={() => handleApproveClick(bid)} handleDeny={handleDeny} />
                     ))
                 ) : (
                     <div className='submit-form-2nd-header' style={{padding:"20px"}}>
@@ -196,6 +252,7 @@ function MyBids() {
                         </Link>
                     </div>
                 )}
+            <ConfirmationModal />
             {/*
             <div className="d-flex justify-content-center mt-4">
                 <button

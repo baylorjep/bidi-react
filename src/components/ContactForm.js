@@ -72,16 +72,16 @@ function ContactForm() {
             <div className="col-lg-6">
                 <div className="mb-5 mb-lg-0 text-center">
                 <br/>
-                    <div className='Sign-Up-Page-Header'>Let's Talk!</div>
+                    <div className='Sign-Up-Page-Header'>Let's <span className='Sign-Up-Page-Header highlight'>Talk!</span></div>
                     <div className='submit-form-2nd-header' style={{textAlign:'left', padding:'16px'}}>Have any questions or need assistance? We’re here to help! Feel free to reach out to us. Our team is dedicated to providing prompt and helpful responses to ensure you get the support you need.</div>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
                     {successMessage && <p className="text-success">{successMessage}</p>}
                 </div>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} style={{marginTop:'40px'}}>
                     {!user && (
-                        <div className="form-floating request-form mb-3">
+                        <div className="custom-input-container">
                             <input
-                                className="form-control"
+                                className="custom-input"
                                 id="email"
                                 name="email"
                                 type="email"
@@ -90,12 +90,12 @@ function ContactForm() {
                                 onChange={handleChange}
                                 required
                             />
-                            <label htmlFor="email">Email Address</label>
+                            <label className='custom-label'htmlFor="email">Email Address</label>
                         </div>
                     )}
-                    <div className="form-floating request-form mb-3">
+                    <div className="custom-input-container">
                         <input
-                            className="form-control"
+                            className="custom-input"
                             id="subject"
                             name="subject"
                             type="text"
@@ -104,23 +104,23 @@ function ContactForm() {
                             onChange={handleChange}
                             required
                         />
-                        <label htmlFor="subject">Subject</label>
+                        <label htmlFor="subject" className='custom-label'>Subject</label>
                     </div>
-                    <div className="form-floating request-form mb-3">
+                    <div className="custom-input-container">
                         <textarea
-                            className="form-control"
+                            className="custom-input"
                             id="message"
                             name="message"
                             placeholder="Your message..."
                             value={formData.message}
                             onChange={handleChange}
                             required
-                            style={{ height: '10rem' }}
+                            style={{ height: '5rem' }}
                         ></textarea>
-                        <label htmlFor="message">Message</label>
+                        <label className='custom-label' htmlFor="message">Message</label>
                     </div>
                     <div className="d-grid">
-                        <button type="submit" className="btn btn-secondary btn-lg w-100">Send Message</button>
+                        <button type="submit" className="btn-primary">Send Message</button>
                     </div>
                 </form>
             </div>

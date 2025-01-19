@@ -25,7 +25,7 @@ const BusinessDashboard = () => {
         // Fetch business profile details
         const { data: profile, error: profileError } = await supabase
           .from('business_profiles')
-          .select('business_name, stripe_account_id, id')
+          .select('business_name, stripe_account_id, id, down_payment_type, amount')
           .eq('id', user.id)
           .single();
   
@@ -38,8 +38,11 @@ const BusinessDashboard = () => {
           setBusinessName(profile.business_name);
           if (profile.stripe_account_id) {
             setConnectedAccountId(profile.stripe_account_id);
-          } else {
-            setShowModal(true); // Show modal immediately if no Stripe account is connected
+          } 
+          
+          // Only show modal automatically if down payment has never been set
+          if (profile.down_payment_type === null && profile.amount === null) {
+            setShowModal(true);
           }
   
           // Fetch current bids for this business
@@ -234,7 +237,6 @@ const BusinessDashboard = () => {
         alert("An error occurred while updating your down payment details.");
       } else {
         setShowModal(false); // Close modal on successful update
-        alert("Down payment details updated successfully!");
       }
     } else {
       alert("Business profile not found. Please make sure your account is set up correctly.");
@@ -253,29 +255,32 @@ const BusinessDashboard = () => {
 
       <div className="container mt-4">
         <div className="row justify-content-center">
-          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}} >
             <button
-              className="btn btn-secondary btn-lg w-100 mb-3 flex-fill"
+              className="btn-secondary flex-fill"
+              style={{fontWeight:'bold'}}
               onClick={handleViewRequests} // Updated to conditionally show modal
             >
               View Requests
             </button>
           </div>
-          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
             {connectedAccountId ? (
               <StripeDashboardButton accountId={connectedAccountId} />
             ) : (
               <button
-                className="btn btn-secondary btn-lg w-100 mb-3 flex-fill"
+              style={{fontWeight:'bold'}}
+                className="btn-secondary flex-fill"
                 onClick={() => navigate("/onboarding")}
               >
                 Set Up Payment Account
               </button>
             )}
           </div>
-          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
             <button
-              className="btn btn-secondary btn-lg w-100 mb-3 flex-fill"
+            style={{fontWeight:'bold'}}
+              className="btn-secondary flex-fill"
               onClick={() => setShowModal(true)}
             >
               Set Up Down Payment
@@ -361,13 +366,13 @@ const BusinessDashboard = () => {
                 <p className="card-text">Status: {bid.status}</p>
                 <div style={{display:'flex',flexDirection:'row',gap:'10px', justifyContent:'center'}}>
                     <button
-                      className="btn btn-primary"
+                      className="btn-primary"
                       onClick={() => handleRemoveBid(bid.id)}
                     >
                       Remove
                     </button>
                   <button 
-                    className="btn btn-secondary" 
+                    className="btn-secondary" 
                     onClick={() => navigate(`/edit-bid/${bid.request_id}/${bid.id}`)} // Pass both requestId and bidId
                   >
                     Edit
@@ -394,16 +399,18 @@ const BusinessDashboard = () => {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>Do you charge a percentage or a flat fee up front?</div>
+          <div style={{ textAlign: 'center', marginBottom: '20px', wordBreak:'break-word' }}>Do you charge a percentage or a flat fee up front?</div>
           <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: '20px', marginBottom:'20px'}}>
             <button
-              className={`btn btn-${paymentType === "percentage" ? "primary" : "secondary"}`}
+            style={{width:'50%', maxHeight:'48px'}}
+              className={`btn-${paymentType === "percentage" ? "secondary" : "primary"}`}
               onClick={() => handlePaymentTypeChange("percentage")}
             >
               Percentage
             </button>
             <button
-              className={`btn btn-${paymentType === "flat fee" ? "primary" : "secondary"}`}
+             style={{width:'50%', maxHeight:'48px'}}
+              className={`btn-${paymentType === "flat fee" ? "secondary" : "primary"}`}
               onClick={() => handlePaymentTypeChange("flat fee")}
             >
               Flat Fee
@@ -438,8 +445,10 @@ const BusinessDashboard = () => {
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>Close</Button>
-          <Button variant="primary" onClick={handleDownPaymentSubmit}>Submit</Button>
+          <div style={{display:'flex', flexDirection:'row', gap:'20px', justifyContent:'center'}}>
+          <button  style={{maxHeight:'32px'}}className="btn-primary"onClick={() => setShowModal(false)}>Close</button>
+          <button  style={{maxHeight:'32px'}}className="btn-secondary" onClick={handleDownPaymentSubmit}>Submit</button>
+          </div>
         </Modal.Footer>
       </Modal>
     </div>
