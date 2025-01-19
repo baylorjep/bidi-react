@@ -155,7 +155,7 @@ function Navbar() {
 
                     {/* Conditionally render the Sign Up button */}
                     {!user && (
-                        <Link className="btn-nav-secondary" style={{textDecoration:'none'}} to="/signup">
+                        <Link className="btn-nav-secondary" style={{textDecoration:'none'}} to="/createaccount?source=navbar">
                             <span className="btn-text-secondary">
                                 <span className="small">Sign Up</span>
                             </span>

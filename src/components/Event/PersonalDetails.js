@@ -172,8 +172,9 @@ function PersonalDetails({ formData, nextStep, prevStep, source: propSource }) {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'row',justifyContent: 'center', alignItems: 'center', height: '85vh' }}>
+        <div className='request-form-overall-container'>
             <div className="request-form-status-container">
+                <div className='request-form-box'>
                 <div className="status-bar-container">
                     {Array.from({ length: 5 }, (_, index) => (
                         <React.Fragment key={index}>
@@ -228,6 +229,8 @@ function PersonalDetails({ formData, nextStep, prevStep, source: propSource }) {
                         )
                     )}
                 </div>
+                </div>
+
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
             <h2 className="request-form-header" style={{textAlign:'left', marginBottom:'8px',marginLeft:"40px", marginTop:'20px'}}>Personal Details</h2>

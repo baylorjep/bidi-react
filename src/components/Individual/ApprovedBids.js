@@ -232,7 +232,7 @@ function ApprovedBids() {
     
 
     return (
-        <div className="container" style={{padding:'20px'}}>
+        <div className="container">
             <header className="masthead">
                 <div className="Sign-Up-Page-Header" style={{ paddingBottom: '16px' }}>
                     Approved Bids
@@ -247,7 +247,7 @@ function ApprovedBids() {
                             return (
                                 <div
                                     key={bid.id}
-                                    className="approved-bid-card p-4 mb-4"
+                                    className="approved-bid-card "
                                     style={{ width: '100%', maxWidth: '600px', display:'flex' }}
                                 >
                                     <div className="title-and-price" style={{textAlign:'left'}}>
@@ -286,7 +286,7 @@ function ApprovedBids() {
 
                                         
                                         <button className="bid-button" disabled>
-                                            ${(bid.bid_amount || 0).toFixed(2)}
+                                            ${(bid.bid_amount || 0)}
                                         </button>
                                     </div>
 
@@ -318,14 +318,14 @@ function ApprovedBids() {
 
                                     <div className="pay-and-message-container">
                                         <button 
-                                            className="btn btn-primary btn-md flex-fill"
+                                            className="btn-primary btn-md flex-fill"
                                             onClick={() => handleMoveToPending(bid)}
                                             >
                                             Move to Pending
                                         </button>
                                         {bid.business_profiles.down_payment_type && bid.business_profiles.amount !== null && (
                                                 <button
-                                                className="btn btn-secondary btn-md flex-fill"
+                                                className="btn-secondary flex-fill"
                                                 onClick={() => handleDownPayNow(bid)}
                                             >
                                                 Pay ${bid.bid_amount * (bid.business_profiles.amount)}
@@ -334,14 +334,14 @@ function ApprovedBids() {
 
                                         <br />
                                         <button
-                                            className="btn btn-secondary btn-md flex-fill"
+                                            className="btn-secondary flex-fill"
                                             onClick={() => handlePayNow(bid)}
                                         >
                                             {bid.business_profiles.down_payment_type && bid.business_profiles.amount !== null ? 'Pay In Full' : 'Pay'}
                                         </button>
                                         <br />
                                         <button
-                                            className="btn btn-secondary btn-md flex-fill"
+                                            className="btn-secondary flex-fill"
                                             onClick={() => handleMessageText(bid)}
                                         >
                                             Message

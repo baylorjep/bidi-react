@@ -290,8 +290,9 @@ function UploadPictures() {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: 'auto' }}>
+        <div className='request-form-overall-container'>
             <div className="request-form-status-container">
+                <div className="request-form-box">
     <div className="status-bar-container">
         {Array.from({ length: 5 }, (_, index) => (
             <React.Fragment key={index}>
@@ -345,6 +346,7 @@ function UploadPictures() {
                 </div>
             )
         )}
+    </div>
     </div>
 </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>

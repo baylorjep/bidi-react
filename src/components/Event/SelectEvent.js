@@ -44,44 +44,47 @@ function SelectEvent({ setEventType, currentStep }) {
     return (
         <div className='request-form-overall-container'>
             <div className='request-form-status-container'>
-                <div className='status-bar-container'>
-                    {Array.from({ length: 5 }, (_, index) => (
-                        <React.Fragment key={index}>
-                            <div
-                                className={`status-check-container ${
-                                    index + 1 === currentStep
-                                        ? 'active'
-                                        : index + 1 < currentStep
-                                        ? 'completed'
-                                        : ''
-                                }`}
-                            >
-                                {`0${index + 1}`}
-                            </div>
-                            {index < 4 && (
+                <div className='request-form-box'>
+                    <div className='status-bar-container'>
+                        {Array.from({ length: 5 }, (_, index) => (
+                            <React.Fragment key={index}>
                                 <div
-                                    className={`status-line ${
-                                        index + 1 < currentStep ? 'completed' : ''
+                                    className={`status-check-container ${
+                                        index + 1 === currentStep
+                                            ? 'active'
+                                            : index + 1 < currentStep
+                                            ? 'completed'
+                                            : ''
                                     }`}
-                                ></div>
-                            )}
-                        </React.Fragment>
-                    ))}
+                                >
+                                    {`0${index + 1}`}
+                                </div>
+                                {index < 4 && (
+                                    <div
+                                        className={`status-line ${
+                                            index + 1 < currentStep ? 'completed' : ''
+                                        }`}
+                                    ></div>
+                                )}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    <div className='status-text-container'>
+                        {['Service Details', 'Personal Details', 'Add Photos', 'Review', 'Submit'].map(
+                            (text, index) => (
+                                <div
+                                    className={`status-text ${
+                                        index + 1 === currentStep ? 'active' : ''
+                                    }`}
+                                    key={index}
+                                >
+                                    {text}
+                                </div>
+                            )
+                        )}
+                    </div>
                 </div>
-                <div className='status-text-container'>
-                    {['Service Details', 'Personal Details', 'Add Photos', 'Review', 'Submit'].map(
-                        (text, index) => (
-                            <div
-                                className={`status-text ${
-                                    index + 1 === currentStep ? 'active' : ''
-                                }`}
-                                key={index}
-                            >
-                                {text}
-                            </div>
-                        )
-                    )}
-                </div>
+
             </div>
             <div className="request-form-container-details" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div className="request-form-header" style={{ marginTop: '40px' }}>What would you like to get done today? </div>

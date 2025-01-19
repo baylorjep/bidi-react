@@ -84,7 +84,7 @@ function EventDetails({ eventType, setEventDetails }) {
     };
 
     return (
-        <div style={{display:'flex', flexDirection:'row', justifyContent:'center', alignItems:'center',height:'85vh'}}>
+        <div className='request-form-overall-container'>
              {/* Render the SignInModal if isModalOpen is true */}
              {/* Modal: Display only if isModalOpen is true */}
             {isModalOpen && (
@@ -94,6 +94,7 @@ function EventDetails({ eventType, setEventDetails }) {
                 </>
             )}
             <div className="request-form-status-container">
+                <div className='request-form-box'>
                 <div className="status-bar-container">
                     {Array.from({ length: 5 }, (_, index) => (
                         <React.Fragment key={index}>
@@ -148,6 +149,8 @@ function EventDetails({ eventType, setEventDetails }) {
                         )
                     )}
                 </div>
+                </div>
+
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
                 <h2 className="request-form-header" style={{textAlign:'left',marginLeft:"20px"}}>{eventType} Details</h2>
