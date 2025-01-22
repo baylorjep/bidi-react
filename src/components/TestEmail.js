@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 
 function TestEmail() {
     const [formData, setFormData] = useState({
-        email: '',
-        subject: '',
-        message: '',
-        bcc: '', 
+        category: '', // Add a category field to specify the business category
     });
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -17,17 +14,14 @@ function TestEmail() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const { email, subject, message, bcc } = formData;
+        const { category } = formData;
 
         try {
             const response = await fetch('https://bidi-express.vercel.app/send-resend-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    recipientEmail: email,
-                    subject: subject,
-                    htmlContent: `<p>${message}</p>`,
-                    bccEmails: bcc.split(',').map((email) => email.trim()),
+                    category, // Send the business category to the backend
                 }),
             });
 
@@ -36,77 +30,34 @@ function TestEmail() {
                 throw new Error(error.error || 'Failed to send the email.');
             }
 
-            setSuccessMessage('Email sent successfully!');
-            setFormData({
-                email: '',
-                subject: '',
-                message: '',
-                bcc: '',
-            });
+            setSuccessMessage(`Emails successfully sent to ${category} users!`);
+            setFormData({ category: '' }); // Clear the form after success
         } catch (error) {
-            setErrorMessage(`Error sending email: ${error.message}`);
+            setErrorMessage(`Error sending emails: ${error.message}`);
         }
     };
 
     return (
         <div className="container px-5 d-flex align-items-center justify-content-center">
             <div className="col-lg-6">
-                <h2 className="text-center">Test Email Sending</h2>
+                <h2 className="text-center">Send Emails by Category</h2>
                 {successMessage && <p className="text-success">{successMessage}</p>}
                 {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 <form onSubmit={handleSubmit}>
                     <div className="form-floating mb-3">
                         <input
                             className="form-control"
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="Recipient Email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                        />
-                        <label htmlFor="email">Recipient Email</label>
-                    </div>
-                    <div className="form-floating mb-3">
-                        <input
-                            className="form-control"
-                            id="subject"
-                            name="subject"
+                            id="category"
+                            name="category"
                             type="text"
-                            placeholder="Subject"
-                            value={formData.subject}
+                            placeholder="Business Category (e.g., Photographer)"
+                            value={formData.category}
                             onChange={handleChange}
                             required
                         />
-                        <label htmlFor="subject">Subject</label>
+                        <label htmlFor="category">Business Category (e.g., Photographer)</label>
                     </div>
-                    <div className="form-floating mb-3">
-                        <textarea
-                            className="form-control"
-                            id="message"
-                            name="message"
-                            placeholder="Message Content"
-                            value={formData.message}
-                            onChange={handleChange}
-                            required
-                            style={{ height: '150px' }}
-                        ></textarea>
-                        <label htmlFor="message">Message Content</label>
-                    </div>
-                    <div className="form-floating mb-3">
-                        <input
-                            className="form-control"
-                            id="bcc"
-                            name="bcc"
-                            type="text"
-                            placeholder="BCC Emails (comma-separated)"
-                            value={formData.bcc}
-                            onChange={handleChange}
-                        />
-                        <label htmlFor="bcc">BCC Emails (comma-separated)</label>
-                    </div>
-                    <button type="submit" className="btn btn-primary w-100">Send Test Email</button>
+                    <button type="submit" className="btn btn-primary w-100">Send Emails</button>
                 </form>
             </div>
         </div>
