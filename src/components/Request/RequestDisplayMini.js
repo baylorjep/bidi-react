@@ -113,14 +113,23 @@ function RequestDisplayMini({ request, hideBidButton }) {
                     </div>
                     <div className="detail-item">
                         <span className="detail-label">Date of Service</span>
-                        <span className="detail-value">{new Date(request.service_date).toLocaleDateString()}</span>
+                        <span className="detail-value-long">
+                            {request.end_date 
+                                ? `${new Date(request.service_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                                : new Date(request.service_date).toLocaleDateString()
+                            }
+                        </span>
+                    </div>
+                    <div className="detail-item">
+                        <span className="detail-label">Budget</span>
+                        <span className="detail-value">${request.price_range}</span>
                     </div>
                 </div>
 
                 
                 {!hideBidButton && (
-                    <div style={{marginTop: '20px'}}>
-                        <Link className="btn btn-secondary rounded-pill bid-button" to={`/submit-bid/${request.id}`}>
+                    <div style={{marginTop: '20px', display: 'flex', justifyContent: 'center'}}>
+                        <Link className="submit-bid-button" to={`/submit-bid/${request.id}`} style={{textDecoration:'none'}}>
                             <span className="bid-button-text">
                                 <span>View More</span>
                             </span>

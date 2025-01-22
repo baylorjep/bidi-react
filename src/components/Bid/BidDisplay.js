@@ -62,10 +62,10 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                     ) : (
                         isBidiVerified && (
                             <div style={{ textAlign: 'left',padding:"0px 0px" }}>
-                                <p style={{ fontSize: '0.9rem', margin: '0', fontWeight: 'bold', textAlign:'left'}}>
+                                <p style={{ fontSize: '0.9rem', margin: '0', fontWeight: 'bold', textAlign:'left', fontFamily: 'Outfit' }}>
                                     Bidi Verified
                                 </p>
-                                <p style={{ fontSize: '0.8rem', margin: '5px 0 0', fontStyle: 'italic', textAlign:'left' }}>
+                                <p style={{ fontSize: '0.8rem', margin: '5px 0 0', fontStyle: 'italic', textAlign:'left',fontFamily: 'Outfit' }}>
                                     100% Money-Back Guarantee When You Pay Through Bidi
                                 </p>
                             </div>
@@ -119,17 +119,18 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
 
             {/* Approve/Deny Buttons, separated from the main content */}
             <div className="business-actions">
-                <button
-                    className="btn-success"
-                    onClick={() => handleApprove(bid.id, bid.request_id)} // Pass both bidId and requestId
-                >
-                    Accept
-                </button>
+
                 <button
                     className="btn-danger"
                     onClick={() => handleDeny(bid.id)}
                 >
                     Deny
+                </button>
+                <button
+                    className="btn-success"
+                    onClick={() => handleApprove(bid.id, bid.request_id)} // Pass both bidId and requestId
+                >
+                    Accept
                 </button>
             </div>
         </div>

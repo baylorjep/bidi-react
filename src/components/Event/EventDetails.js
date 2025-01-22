@@ -37,6 +37,7 @@ function EventDetails({ eventType, setEventDetails }) {
             duration: '',
             indoorOutdoor: '',
             additionalComments: '',
+            priceRange: '',
             extras: {}
         };
     });
@@ -84,7 +85,7 @@ function EventDetails({ eventType, setEventDetails }) {
     };
 
     return (
-        <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
+        <div className='request-form-overall-container'>
              {/* Render the SignInModal if isModalOpen is true */}
              {/* Modal: Display only if isModalOpen is true */}
             {isModalOpen && (
@@ -94,6 +95,7 @@ function EventDetails({ eventType, setEventDetails }) {
                 </>
             )}
             <div className="request-form-status-container">
+                <div className='request-form-box'>
                 <div className="status-bar-container">
                     {Array.from({ length: 5 }, (_, index) => (
                         <React.Fragment key={index}>
@@ -148,6 +150,8 @@ function EventDetails({ eventType, setEventDetails }) {
                         )
                     )}
                 </div>
+                </div>
+
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
                 <h2 className="request-form-header" style={{textAlign:'left',marginLeft:"20px"}}>{eventType} Details</h2>
@@ -295,6 +299,26 @@ function EventDetails({ eventType, setEventDetails }) {
                                 Indoor/Outdoor
                             </label>
                         </div>
+                        <div className="custom-input-container">
+                            <select
+                                name="price_range"
+                                value={details.price_range}
+                                onChange={handleChange}
+                                className="custom-input"
+                            >
+                                <option value="">Select a Budget Range</option>
+                                <option value="0-$500">$0 - $500</option>
+                                <option value="501-$1000">$501 - $1,000</option>
+                                <option value="1001-$1500">$1,001 - $1,500</option>
+                                <option value="1501-$2000">$1,501 - $2,000</option>
+                                <option value="2001-$2500">$2,001 - $2,500</option>
+                                <option value="2501-$3000">$2,501 - $3,000</option>
+                                <option value="3001+">$3,001+</option>
+                            </select>
+                            <label htmlFor="price_range" className="custom-label">
+                                Budget
+                            </label>
+                        </div>
                     </div>
 
                     {/* Additional Comments */}
@@ -324,28 +348,17 @@ function EventDetails({ eventType, setEventDetails }) {
                 </form>
                 </div>
                 <div className="form-button-container">
-                    <button type="button"className="request-form-back-and-foward-btn" onClick={handleBack} style={{color:"black"}}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M20.0002 11V13L8.00016 13L13.5002 18.5L12.0802 19.92L4.16016 12L12.0802 4.07996L13.5002 5.49996L8.00016 11L20.0002 11Z" fill="black"/>
-                        </svg>
+                    <button type="button"className="request-form-back-and-foward-btn" onClick={handleBack}>
+
                         Back
                     </button>
                     <button
                     type='button'
                     className='request-form-back-and-foward-btn'
-                    style={{color:'black'}}
                     onClick={() => formRef.current.requestSubmit()}
                     >
                         Next
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
 
-                        >
-                            <path d="M3.99984 13L3.99984 11L15.9998 11L10.4998 5.50004L11.9198 4.08004L19.8398 12L11.9198 19.92L10.4998 18.5L15.9998 13L3.99984 13Z" />
-                        </svg>
                     </button>
                 </div>
             </div>

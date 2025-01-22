@@ -217,9 +217,9 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
             </div>
                 
                 <form onSubmit={handleSubmit} style={{padding:"20px"}}>
-                    <div className="form-floating request-form mb-3">
+                    <div className="custom-input-container">
                         <input
-                            className="form-control"
+                            className="custom-input"
                             id="bidAmount"
                             name="bidAmount"
                             type="number"
@@ -228,11 +228,11 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                             onChange={(e) => setBidAmount(e.target.value)}
                             required
                         />
-                        <label htmlFor="bidAmount">Bid Price</label>
+                        <label className="custom-label"htmlFor="bidAmount">Bid Price</label>
                     </div>
-                    <div className="form-floating request-form mb-3">
+                    <div className="custom-input-container">
                         <textarea
-                            className="form-control"
+                            className="custom-input"
                             id="bidDescription"
                             name="bidDescription"
                             placeholder="Bid Description"
@@ -241,19 +241,19 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                             required
                             style={{ height: "160px" }} // Adjust the height as needed
                         />
-                        <label htmlFor="bidDescription">Bid Description</label>
+                        <label className="custom-label"htmlFor="bidDescription">Bid Description</label>
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "row", justifyContent:'space-between', gap: "12px" }}>
                         <div className="submit-bid-btn-container">
-                            <button onClick={handleBack} className="submit-bid-button btn btn-primary rounded-pill">
+                            <button onClick={handleBack} className="submit-bid-button secondary">
                                 Back
                             </button>
                         </div>
                         <div className="submit-bid-btn-container">
                             <button 
                                 type="submit" 
-                                className="submit-bid-button btn btn-secondary rounded-pill d-flex align-items-center justify-content-center gap-2"
+                                className="submit-bid-button"
                                 disabled={isLoading}
                             >
                                 {isLoading && (

@@ -150,22 +150,23 @@ function PhotoRequestDisplay({ photoRequest, hideBidButton }) {
                         <div className="detail-value">{photoRequest.event_type || 'Not specified'}</div>
                     </div>
 
-                    <div className='detail-item'>
-                        <div className="request-subtype"> {photoRequest.date_type === 'range' ? 'Start Date ' : 'Date '}</div>
-                        <div className="detail-value">{formatDate(photoRequest.start_date)}</div>
-                        
+                    <div className="detail-item">
+                        <span className="detail-label">Date of Service</span>
+                        <span className="detail-value-long">
+                            {photoRequest.end_date 
+                                ? `${new Date(photoRequest.start_date).toLocaleDateString()} - ${new Date(photoRequest.end_date).toLocaleDateString()}`
+                                : new Date(photoRequest.start_date).toLocaleDateString()
+                            }
+                        </span>
                     </div>
-                    {photoRequest.date_type === 'range' && (
-                            <div className='detail-item'>
-                            <div className="request-subtype">End Date</div>
-                            <div className="detail-value">{formatDate(photoRequest.end_date)}</div>
-                            
-                        </div>
-                    )}
 
                     <div className='detail-item'>
                         <div className="request-subtype">Location</div>
                         <div className="detail-value">{photoRequest.location || 'Not specified'}</div>
+                    </div>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Budget</div>
+                        <div className="request-info">${photoRequest.price_range}</div>
                     </div>
                 
                 </div>

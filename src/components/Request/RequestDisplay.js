@@ -156,7 +156,20 @@ function RequestDisplay({ request, servicePhotos, hideBidButton }) {
                     </div>
                     <div className="detail-item">
                         <span className="detail-label">Date of Service</span>
-                        <span className="detail-value-long">{new Date(request.service_date).toLocaleDateString()}</span>
+                        <span className="detail-value-long">
+                            {request.end_date 
+                                ? `${new Date(request.service_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                                : new Date(request.service_date).toLocaleDateString()
+                            }
+                        </span>
+                    </div>
+                    <div className="detail-item">
+                        <span className="detail-label">Time of Day</span>
+                        <span className="detail-value-long">{request.time_of_day}</span>
+                    </div>
+                    <div className="detail-item">
+                        <span className="detail-label">Budget</span>
+                        <span className="detail-value-long">${request.price_range}</span>
                     </div>
                 </div>
     

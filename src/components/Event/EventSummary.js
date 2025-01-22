@@ -202,6 +202,7 @@ function UploadPictures() {
                 duration: eventDetails.duration,
                 indoor_outdoor: eventDetails.indoorOutdoor,
                 additional_comments: eventDetails.additionalComments,
+                price_range: eventDetails.price_range,
                 status: 'open'
             };
 
@@ -290,8 +291,9 @@ function UploadPictures() {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '64px', justifyContent: 'center', alignItems: 'center', height: '85vh' }}>
+        <div className='request-form-overall-container'>
             <div className="request-form-status-container">
+                <div className="request-form-box">
     <div className="status-bar-container">
         {Array.from({ length: 5 }, (_, index) => (
             <React.Fragment key={index}>
@@ -345,6 +347,7 @@ function UploadPictures() {
                 </div>
             )
         )}
+    </div>
     </div>
 </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
@@ -434,6 +437,11 @@ function UploadPictures() {
                        <div className="request-subtype">Indoor/Outdoor</div>
                        <div className="request-info">{eventDetails.indoorOutdoor}</div>
                    </div>
+
+                   <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                       <div className="request-subtype">Budget</div>
+                       <div className="request-info">${eventDetails.price_range}</div>
+                   </div>
                     
                </div>
                <div style={{
@@ -472,24 +480,30 @@ function UploadPictures() {
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px'}}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent:'center'    }}>
-                            <input
-                                type="text"
-                                value={couponCode}
-                                onChange={(e) => {
-                                    setCouponCode(e.target.value);
-                                    setIsValidCoupon(false);  // Reset validation when code changes
-                                    setDiscountAmount(null);
-                                }}
-                                placeholder="Enter coupon code"
-                                className='coupon-code-input'
-                                style={{
-                                    
-                                    backgroundColor: isValidCoupon ? '#f0fff0' : 'white'  // Light green background if valid
-                                }}
-                            />
+                            <div className='custom-input-container' style={{marginBottom:'0'}}>
+                                <input
+                                    type="text"
+                                    value={couponCode}
+                                    onChange={(e) => {
+                                        setCouponCode(e.target.value);
+                                        setIsValidCoupon(false);  // Reset validation when code changes
+                                        setDiscountAmount(null);
+                                    }}
+                                    placeholder="Enter coupon code"
+                                    className='custom-input'
+                                    style={{
+                                        
+                                        backgroundColor: isValidCoupon ? '#f0fff0' : 'white'  // Light green background if valid
+                                    }}
+                                />
+                                <label htmlFor="coupon" className="custom-label">
+                                        Coupon
+                                </label>
+                            </div>
+
                             <button
                                 onClick={verifyCouponCode}
-                                className="landing-page-button"
+                                className="request-form-back-and-foward-btn"
                                 style={{ padding: '8px 12px', fontSize: '16px' }}
                             >
                                 Verify
@@ -507,17 +521,14 @@ function UploadPictures() {
 
                 {/* Display other details */}
                 <div className="form-button-container">
-                    <button className="request-form-back-and-foward-btn" onClick={handleBack} style={{color:"black"}}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M20.0002 11V13L8.00016 13L13.5002 18.5L12.0802 19.92L4.16016 12L12.0802 4.07996L13.5002 5.49996L8.00016 11L20.0002 11Z" fill="black"/>
-                        </svg>
+                    <button className="request-form-back-and-foward-btn" onClick={handleBack}>
+
                         Back
                     </button>
                     <button
                     className='request-form-back-and-foward-btn'
                     onClick={handleSubmit}
                     disabled={loading}
-                    style={{color:'black'}}
                     >
                         {loading ? 'Submitting...' : 'Submit'}
                     </button>

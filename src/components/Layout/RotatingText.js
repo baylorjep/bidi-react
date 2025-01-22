@@ -7,13 +7,16 @@ import scicssorIcon from '../../assets/images/Icons/scissors icon.svg'
 
 function RotatingText() {
     const items = [
-        { text: 'Photographer', image: cameraIcon },
-        { text: 'DJ', image: hairIcon },
-        { text: 'Hair and Makeup Artist', image: scicssorIcon },
-        { text: 'Wedding/Event Planner', image: cakeIcon },
-        { text: 'Videographer', image: cameraIcon }
+        'Photographer',
+        'DJ',
+        'Hairstylist',
+        'Makeup Artist',
+        'Videographer',
+        'Caterer',
+        'Florist',
+        'Venue',
     ];
-    
+
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFadingOut, setIsFadingOut] = useState(false);
 
@@ -34,8 +37,7 @@ function RotatingText() {
     return (
         <div className="rotating-text-wrapper">
             <div className={`rotating-text ${isFadingOut ? 'fade-out' : 'fade-in'}`}>
-                <img src={items[currentIndex].image} alt={items[currentIndex].text} className="rotating-image" />
-                <span>{items[currentIndex].text}</span>
+                <span>{items[currentIndex]}</span>
             </div>
         </div>
     );

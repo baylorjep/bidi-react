@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 
 function SuccessRequest() {
     return (
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '64px', justifyContent: 'center', alignItems: 'center', height: '85vh' }}>
-            <div className='request-form-status-container'>
+        <div className='request-form-overall-container'>
+            <div className='request-form-status-container success'>
+                <div className='request-form-box'>
                 <div className='status-bar-container'>
                     {Array.from({ length: 5 }, (_, index) => (
                         <React.Fragment key={index}>
@@ -14,8 +15,8 @@ function SuccessRequest() {
                                     display: 'flex',
                                     justifyContent: 'center',
                                     alignItems: 'center',
-                                    backgroundColor: index + 1 <= 5 ? '#000' : 'transparent', // Filled black for all completed steps
-                                    border: '2px solid #000',
+                                    backgroundColor: index + 1 <= 5 ? '#a328f4' : 'transparent', // Filled black for all completed steps
+                                    border: '2px solid #a328f4',
                                 }}
                             >
                                 {index + 1 <= 5 ? (
@@ -42,7 +43,7 @@ function SuccessRequest() {
                                     style={{
                                         width: '2px',
                                         height: '50px',
-                                        backgroundColor: '#000', // Black for completed lines
+                                        backgroundColor: '#a328f4', // Black for completed lines
                                         margin: '0 auto',
                                     }}
                                 />
@@ -56,6 +57,7 @@ function SuccessRequest() {
                     <div className='status-text'>Add Photos</div>
                     <div className='status-text'>Review</div>
                     <div className='status-text'>Submit</div>
+                </div>
                 </div>
             </div>
             <div className='request-form-container-details'>
@@ -73,13 +75,16 @@ function SuccessRequest() {
                         You will receive an email or texts as vendors send in bids. You're done! Just relax and let the bids roll in.
                     </div>
 
-                    <Link to='/request-categories' className='success-page-button-primary'>
-                        Make Another Request
-                    </Link>
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
+                        <Link to='/my-bids' className='success-page-button-secondary'>
+                            Close
+                        </Link>
+                        <Link to='/request-categories' className='success-page-button-primary'>
+                            Make Another Request
+                        </Link>
+                    </div>
 
-                    <Link to='/my-bids' className='success-page-button-secondary'>
-                        Close
-                    </Link>
+
                 </div>
             </div>
         </div>
