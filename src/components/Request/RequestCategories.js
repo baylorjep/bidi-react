@@ -14,8 +14,7 @@ function RequestCategories() {
         'Catering',
         'Event Planner',
         'Wedding Planner',
-        'Other',
-        'Admin'
+        'Other'
     ];
 
     const handleSelection = () => {

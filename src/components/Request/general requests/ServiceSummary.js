@@ -134,26 +134,7 @@ function SummaryPage({ formData, prevStep }) {
 
             console.log('Success! Data:', request);
 
-            // Send email notification
-        const emailPayload = {
-            category: formData.category || 'General', // Use the request category
-        };
-
-        const emailResponse = await fetch('https://bidi-express.vercel.app/send-resend-email', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(emailPayload),
-        });
-
-        if (!emailResponse.ok) {
-            const errorDetails = await emailResponse.json();
-            console.error('Failed to send email:', errorDetails);
-            throw new Error('Failed to send email notifications.');
-        }
-
-        console.log('Emails sent successfully!');
+            
             // Redirect to success page
             localStorage.removeItem('requestFormData');
             navigate('/success-request');
