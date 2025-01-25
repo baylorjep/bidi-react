@@ -80,7 +80,7 @@ function OpenRequests() {
 
             try {
                 // For specific business types
-                if (businessType === 'Cake') {
+                if (businessType === 'cake') {
                     const { data: requests, error } = await supabase
                         .from('requests')
                         .select('*, created_at')
@@ -93,7 +93,7 @@ function OpenRequests() {
                     return; // Exit early for specific category
                 }
 
-                if (businessType === 'Catering') {
+                if (businessType === 'catering') {
                     const { data: requests, error } = await supabase
                         .from('requests')
                         .select('*, created_at')
@@ -106,7 +106,7 @@ function OpenRequests() {
                     return; // Exit early for specific category
                 }
 
-                if (businessType === 'photography' || businessType === 'Videography') {
+                if (businessType === 'photography' || businessType === 'videography') {
                     const { data: allPhotoRequests, error: allPhotoRequestsError } = await supabase
                         .from('photography_requests')
                         .select('*, created_at')
