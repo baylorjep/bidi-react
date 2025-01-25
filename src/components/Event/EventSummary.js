@@ -266,27 +266,6 @@ function UploadPictures() {
                     }
                 }
             }
-
-            // Send email notification
-        const emailPayload = {
-            category: eventType, // Use the event type
-        };
-
-        const emailResponse = await fetch('https://bidi-express.vercel.app/send-resend-email', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(emailPayload),
-        });
-
-        if (!emailResponse.ok) {
-            const errorDetails = await emailResponse.json();
-            console.error('Failed to send email:', errorDetails);
-            throw new Error('Failed to send email notifications.');
-        }
-
-        console.log('Emails sent successfully!');
             
 
             // Clear localStorage and navigate
