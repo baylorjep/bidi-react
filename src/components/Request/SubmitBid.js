@@ -106,8 +106,12 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                 if (profile?.stripe_account_id) {
                     setConnectedAccountId(profile.stripe_account_id);
                 }
-                if (profile.Bidi_Plus) {
+                if (profile?.Bidi_Plus) {
                     setBidiPlus(true);
+                }
+                // Show modal immediately if no Stripe account and no Bidi Plus
+                if (!profile?.stripe_account_id && !profile?.Bidi_Plus) {
+                    setShowModal(true);
                 }
             }
         };
@@ -118,25 +122,26 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
+        // Check if user has stripe account or Bidi Plus
         if (!connectedAccountId && !Bidi_Plus) {
-            setShowModal(true); // Show modal if no Stripe account is connected
-            return;
+            setShowModal(true);
+            return; // Prevent form submission
         }
-    
-        setIsLoading(true); // Start loading
-    
+
+        setIsLoading(true);
+
         const {
             data: { user },
             error: userError,
         } = await supabase.auth.getUser();
-    
+
         if (userError || !user) {
             setError('You need to be signed in to place a bid.');
             setIsLoading(false);
             return;
         }
-    
+
         let insertError;
         const subject = 'New Bid Received';
         const htmlContent = `<p>A new bid has been placed on your request.</p>
@@ -274,7 +279,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                 </form>
             </div>
             {/* Modal for Stripe Account Setup */}
-                <Modal show={showModal} onHide={() => setShowModal(false)}>
+                <Modal show={showModal} onHide={() => setShowModal(false)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                     <Modal.Header closeButton>
                         <Modal.Title>Stripe Account Setup Required</Modal.Title>
                     </Modal.Header>
@@ -284,7 +289,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                                 To start making bids, you’ll need to set up a payment account. Bidi will never charge you to talk to users or bid on jobs — you only pay when you win.
                             
                         </p>
-                        <Button variant="primary" onClick={() => navigate("/onboarding")} className="mt-3">
+                        <Button className="btn-secondary" onClick={() => navigate("/onboarding")}>
                         Set Up Account
                         </Button>
                     </Modal.Body>
