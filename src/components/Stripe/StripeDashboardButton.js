@@ -28,7 +28,7 @@ const StripeDashboardButton = ({ accountId }) => {
   return (
     <div>
       {error && <p>{error}</p>}
-      <button className="btn-secondary flex-fill" onClick={handleViewDashboard}>Payment Dashboard</button>
+      <button className="btn-secondary flex-fill"  style={{fontWeight:'bold'}}onClick={handleViewDashboard}>Payment Dashboard</button>
     </div>
   );
 };

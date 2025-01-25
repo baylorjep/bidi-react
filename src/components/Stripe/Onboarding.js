@@ -79,7 +79,7 @@ export default function Onboarding() {
       <div className="col-lg-6">
         <div className="mb-5 text-center">
             <br></br>
-          <h1 className="OnboardingPageHeader">Stripe Onboarding</h1>
+          <h1 className="dashboard-title">Stripe Onboarding</h1>
           {!connectedAccountId && (
             <p>
             To start making bids, you’ll need to set up a payment account. <br/>
@@ -95,10 +95,10 @@ export default function Onboarding() {
         {!accountCreatePending && !connectedAccountId && (
           <div className="d-grid">
             <button 
-              className="btn btn-secondary btn-lg w-100" 
+              className="btn-secondary" 
               onClick={createAccount}
             >
-              Set Up Payment Account with {email}
+              Connect {email} with Stripe
             </button>
           </div>
         )}
@@ -123,7 +123,8 @@ export default function Onboarding() {
         {/* Return to Dashboard button */}
         <div className="mt-4 text-center">
           <button
-            className="btn btn-primary"
+            className="btn-primary"
+            style={{width: '100%'}}
             onClick={() => navigate("/dashboard")}
           >
             Return

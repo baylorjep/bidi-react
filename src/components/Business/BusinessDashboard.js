@@ -368,6 +368,7 @@ const BusinessDashboard = () => {
                     <button
                       className="btn-primary"
                       onClick={() => handleRemoveBid(bid.id)}
+                      style={{width:'100%'}}
                     >
                       Remove
                     </button>

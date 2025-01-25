@@ -14193,7 +14193,7 @@ text-align: left;
 }
 
 .forgot-your-password-highlight {
-  color: #FF008A !important;
+  color: #a328f4 !important;
   font-family: Outfit;
   font-size: 14px;
   font-style: normal;
@@ -15698,7 +15698,7 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 4px 8px 0px rgba(52, 
 }
 
 .photo-grid-item img {
-  width: 100%;
+  width: var(--bs-accordion-btn-focus-box-shadow);
   height: 200px;
   object-fit: cover;
   border-radius: 8px;
@@ -15724,7 +15724,19 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 4px 8px 0px rgba(52, 
   padding: 40px;
 }
 
-  
+ .modal-content-photo {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+ }
+ 
+ .modal-content-photo img {
+  width: auto;
+  height: 90vh;
+  object-fit: cover;
+  border-radius: 8px;
+ }
 
 
 
