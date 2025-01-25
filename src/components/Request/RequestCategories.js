@@ -86,8 +86,8 @@ function RequestCategories() {
                         onClick={handleSelection}
                         disabled={!category}
                         style={{
-                            color: !category ? "#808080" : "white", // Gray text when disabled, white when enabled
-                            cursor: !category ? "not-allowed" : "pointer", // Not-allowed cursor when disabled
+                            backgroundColor: !category ? "#9F8AB3" : "#a328f4", // Lighter purple when disabled
+                            cursor: !category ? "not-allowed" : "pointer",
                         }}
                     >
                         Next

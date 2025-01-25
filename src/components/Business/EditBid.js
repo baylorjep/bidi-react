@@ -137,7 +137,7 @@ const EditBid = () => {
           <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
           <button
                 className="btn-primary"
-                style={{ marginTop: "20px", textAlign: "center" }}
+                style={{ marginTop: "20px", textAlign: "center", width:'100%' }}
                 onClick={(e) => {
                     e.preventDefault(); // Prevent form submission
                     handleBackClick();

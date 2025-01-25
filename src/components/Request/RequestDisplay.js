@@ -224,7 +224,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton }) {
 
                 {selectedPhoto && (
                     <div className="modal-overlay" onClick={handleCloseModal}>
-                        <div className="modal-content">
+                        <div className="modal-content-photo">
                             <img src={selectedPhoto.photo_url} onClick={(e) => e.stopPropagation()} alt="Selected" />
                         </div>
                     </div>

@@ -173,8 +173,8 @@ function PhotoRequestDisplay({ photoRequest, hideBidButton }) {
 
                 
                 {!hideBidButton && (
-                    <div style={{marginTop: '20px'}}>
-                        <Link className="btn btn-secondary rounded-pill bid-button" to={`/submit-bid/${photoRequest.id}`}>
+                    <div style={{marginTop: '20px', display: 'flex', justifyContent: 'center'}}>
+                        <Link className="submit-bid-button" to={`/submit-bid/${photoRequest.id}`} style={{textDecoration:'none'}}>
                             <span className="bid-button-text">
                                 <span>View More</span>
                             </span>

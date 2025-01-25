@@ -29,7 +29,7 @@ function RotatingText() {
                 setCurrentIndex((prevIndex) => (prevIndex + 1) % items.length);
                 setIsFadingOut(false);
             }, 500); // This should match the CSS fade-out duration
-        }, 3000); // 3 seconds for each full cycle (fade-out + display)
+        }, 2000); // Changed from 3000 to 2000 for faster rotation
 
         return () => clearInterval(fadeOutInterval);
     }, [items.length]);
