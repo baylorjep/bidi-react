@@ -62,7 +62,7 @@ function SummaryPage({ formData, prevStep }) {
     };
 
     const handleSubmit = async () => {
-        if (isSubmitting) return; // Prevent multiple submissions
+        if (isSubmitting) return;
         setIsSubmitting(true);
         
         try {
@@ -73,7 +73,7 @@ function SummaryPage({ formData, prevStep }) {
                 customer_email: user ? user.email : null,
                 service_title: formData.serviceTitle,
                 location: formData.location || 'TBD',
-                service_category: formData.category || 'General',
+                service_category: formData.serviceType || formData.category, // Use serviceType first, fall back to category
                 service_description: formData.description,
                 service_date: formData.startDate || 'TBD',
                 end_date: formData.endDate || null,
@@ -94,6 +94,8 @@ function SummaryPage({ formData, prevStep }) {
                 .select();
 
             if (error) throw error;
+
+            console.log('Insert successful:', request);
 
             // Handle photo uploads if they exist
             if (formData.photos && formData.photos.length > 0) {
@@ -159,7 +161,7 @@ function SummaryPage({ formData, prevStep }) {
             
             // Redirect to success page
             localStorage.removeItem('requestFormData');
-            navigate('/success-request');
+            window.location.href = '/success-request'; // Use direct navigation instead of navigate()
         } catch (err) {
             console.error('Submission error:', err);
             setErrorMessage(`Error submitting request: ${err.message}`);

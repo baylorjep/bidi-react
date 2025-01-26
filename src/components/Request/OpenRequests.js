@@ -140,6 +140,19 @@ function OpenRequests() {
                     return; // Exit early for specific category
                 }
 
+                if (businessType === 'hair and makeup artist') {
+                    const { data: requests, error } = await supabase
+                        .from('requests')
+                        .select('*, created_at')
+                        .eq('open', true)
+                        .eq('service_category', 'hair and makeup artist')
+                        .order('created_at', { ascending: false });
+                    if (error) throw error;
+                    setOpenRequests(requests || []);
+                    setOpenPhotoRequests([]);
+                    return; // Exit early for specific category
+                }
+
                 if (businessType === 'photography' || businessType === 'videography') {
                     const { data: allPhotoRequests, error: allPhotoRequestsError } = await supabase
                         .from('photography_requests')

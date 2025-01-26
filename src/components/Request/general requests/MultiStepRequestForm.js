@@ -19,10 +19,7 @@ function MultiStepRequestForm() {
 
     const [formData, setFormData] = useState(() => {
         const savedData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
-        return {
-            ...savedData,
-            category: category // Add this line to ensure category is included
-        };
+        return savedData;
     });
 
     useEffect(() => {

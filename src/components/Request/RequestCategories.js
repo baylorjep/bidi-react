@@ -14,13 +14,14 @@ function RequestCategories() {
         'Catering',
         'Event Planner',
         'Wedding Planner',
+        'Venue',
         'Other'
     ];
 
     const handleSelection = () => {
-        // Store both the service type and specific category
+        // Only photography and videography are considered media services
         const isMediaService = category === 'photography' || category === 'videography';
-        const serviceType = isMediaService ? 'photography' : 'general';
+        const serviceType = isMediaService ? 'photography' : category; // Changed from 'general' to category
         
         // Store in localStorage
         localStorage.setItem('serviceType', serviceType);
