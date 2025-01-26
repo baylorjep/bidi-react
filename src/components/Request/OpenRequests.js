@@ -11,6 +11,23 @@ function OpenRequests() {
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState('');
     const [businessType, setBusinessType] = useState('');
+    const [userBids, setUserBids] = useState(new Set()); // Add this new state
+
+    // Add this new function to fetch user's bids
+    const fetchUserBids = async (userId) => {
+        const { data: bids, error } = await supabase
+            .from('bids')
+            .select('request_id')
+            .eq('user_id', userId);
+
+        if (error) {
+            console.error('Error fetching user bids:', error);
+            return;
+        }
+
+        // Create a Set of request_ids that the user has already bid on
+        return new Set(bids.map(bid => bid.request_id));
+    };
 
     useEffect(() => {
         const fetchUserBusinessType = async () => {
@@ -20,6 +37,10 @@ function OpenRequests() {
                 console.error(userError);
                 return;
             }
+
+            // Fetch user's bids first
+            const userBidsSet = await fetchUserBids(userData.user.id);
+            setUserBids(userBidsSet);
 
             const { data: profileData, error: profileError } = await supabase
                 .from('business_profiles')
@@ -181,25 +202,30 @@ function OpenRequests() {
                 {/* Render requests based on business type */}
                 {businessType && ['Cake', 'Catering'].includes(businessType) ? (
                     // For specific categories, just show their requests
-                    openRequests.map(request => (
-                        <RequestDisplayMini 
-                            key={`regular-${request.id}`}
-                            request={request}
-                            checkPromotion={checkPromotion}
-                        />
-                    ))
+                    openRequests
+                        .filter(request => !userBids.has(request.id)) // Filter out requests with existing bids
+                        .map(request => (
+                            <RequestDisplayMini 
+                                key={`regular-${request.id}`}
+                                request={request}
+                                checkPromotion={checkPromotion}
+                            />
+                        ))
                 ) : businessType === 'photography' || businessType === 'Videography' ? (
                     // For photography/videography, just show photo requests
-                    openPhotoRequests.map(request => (
-                        <PhotoRequestDisplayMini 
-                            key={`photo-${request.id}`}
-                            photoRequest={request}
-                            checkPromotion={checkPromotion}
-                        />
-                    ))
+                    openPhotoRequests
+                        .filter(request => !userBids.has(request.id)) // Filter out requests with existing bids
+                        .map(request => (
+                            <PhotoRequestDisplayMini 
+                                key={`photo-${request.id}`}
+                                photoRequest={request}
+                                checkPromotion={checkPromotion}
+                            />
+                        ))
                 ) : (
                     // For default case, show combined and sorted requests
                     [...openRequests, ...openPhotoRequests]
+                        .filter(request => !userBids.has(request.id)) // Filter out requests with existing bids
                         .sort((a, b) => {
                             const aIsNew = isNew(a.created_at);
                             const bIsNew = isNew(b.created_at);
