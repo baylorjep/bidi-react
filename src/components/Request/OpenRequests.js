@@ -114,6 +114,19 @@ function OpenRequests() {
                     return; // Exit early for specific category
                 }
 
+                if (businessType === 'wedding planner/coordinator') {
+                    const { data: requests, error } = await supabase
+                        .from('requests')
+                        .select('*, created_at')
+                        .eq('open', true)
+                        .eq('service_category', 'wedding planner', { or: 'rental' })
+                        .order('created_at', { ascending: false });
+                    if (error) throw error;
+                    setOpenRequests(requests || []);
+                    setOpenPhotoRequests([]);
+                    return; // Exit early for specific category
+                }
+
                 if (businessType === 'catering') {
                     const { data: requests, error } = await supabase
                         .from('requests')
