@@ -123,15 +123,15 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                     <div className='stat-container'>
                             <div className='stat-box' >
                                 <div className='stat-title'>Requests</div>
-                                <div className='stat'>70+</div>
+                                <div className='stat'>100+</div>
                             </div>
                             <div className='stat-box'>
                                 <div className='stat-title'>Users</div>
-                                <div className='stat'>270+</div>
+                                <div className='stat'>330+</div>
                             </div>
                             <div className='stat-box final'>
                                 <div className='stat-title'>Bids</div>
-                                <div className='stat'>550+</div>
+                                <div className='stat'>750+</div>
                             </div>
 
                     </div>
