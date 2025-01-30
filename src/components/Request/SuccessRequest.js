@@ -32,7 +32,7 @@ function SuccessRequest() {
                     setEmailStatus('Failed to send email notifications.');
                 } else {
                     console.log('Emails sent successfully!');
-                    setEmailStatus('Emails sent successfully!');
+                    setEmailStatus('Vendors successfully contacted!');
                     localStorage.removeItem("requestFormData");
                     localStorage.removeItem('submittedCategory'); // Clear localStorage after success
                 }
