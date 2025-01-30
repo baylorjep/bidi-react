@@ -31,8 +31,8 @@ function SuccessRequest() {
                     console.error('Failed to send email:', errorDetails);
                     setEmailStatus('Failed to send email notifications.');
                 } else {
-                    console.log('Emails sent successfully!');
-                    setEmailStatus('Vendors successfully contacted!');
+                    console.log('Emails sent successfully! ');
+                    setEmailStatus('Vendors successfully contacted! You will receive an email or texts as vendors send in bids.');
                     localStorage.removeItem("requestFormData");
                     localStorage.removeItem('submittedCategory'); // Clear localStorage after success
                 }
