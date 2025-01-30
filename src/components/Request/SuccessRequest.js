@@ -1,7 +1,50 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 function SuccessRequest() {
+    const [emailStatus, setEmailStatus] = useState(null);
+    const location = useLocation();
+    const formData = location.state?.formData || {};
+
+    useEffect(() => {
+        const sendEmail = async () => {
+            const category = formData.serviceType || formData.category || "General";
+            console.log("Retrieved category:", category);
+            if (!category) {
+                setEmailStatus('No category found. Email not sent.');
+                return;
+            }
+
+            try {
+                const emailPayload = { category };
+                const response = await fetch('https://bidi-express.vercel.app/send-resend-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(emailPayload),
+                });
+
+                if (!response.ok) {
+                    const errorDetails = await response.json();
+                    console.error('Failed to send email:', errorDetails);
+                    setEmailStatus('Failed to send email notifications.');
+                } else {
+                    console.log('Emails sent successfully!');
+                    setEmailStatus('Emails sent successfully!');
+                    localStorage.removeItem("requestFormData");
+                    localStorage.removeItem('submittedCategory'); // Clear localStorage after success
+                }
+            } catch (error) {
+                console.error('Error sending email:', error);
+                setEmailStatus('Error sending email notifications.');
+            }
+        };
+
+        sendEmail();
+    }, []);
+
     return (
         <div className='request-form-overall-container'>
             <div className='request-form-status-container success'>
@@ -71,8 +114,10 @@ function SuccessRequest() {
                         Successfully Submitted!
                     </div>
 
-                    <div className='successfully-submitted-subheader'>
-                        You will receive an email or texts as vendors send in bids. You're done! Just relax and let the bids roll in.
+                    <div className='successfully-submitted-subheader'
+                    role="status"
+                    aria-live="polite">
+                    {emailStatus || "You will receive an email or texts as vendors send in bids. You're done! Just relax and let the bids roll in."}
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
