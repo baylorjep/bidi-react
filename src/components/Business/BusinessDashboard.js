@@ -249,7 +249,7 @@ const BusinessDashboard = () => {
 
       <div className="edit-profile-container">
           <Link to="/profile" className="edit-profile">
-              Edit Your Profile
+              Edit Profile
           </Link>
       </div>
 

@@ -230,7 +230,7 @@ const ProfilePage = () => {
       )}
 
       <button
-        className="btn btn-primary mt-4"
+        className="btn btn-secondary mt-4"
         onClick={handleSave}
         disabled={loading}
       >
