@@ -60,6 +60,10 @@ function PhotographyRequest() {
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [deletingPhotoUrl, setDeletingPhotoUrl] = useState(null);
+    const [uploadingFiles, setUploadingFiles] = useState(0);
+    const [addMoreLoading, setAddMoreLoading] = useState(false);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
@@ -474,19 +478,23 @@ function PhotographyRequest() {
     };
 
     // Photo Upload Component
-    const renderPhotoUpload = () => {
-        const handleFileSelect = async (event) => {
-            const files = Array.from(event.target.files);
-            if (!files.length) return;
-            
-            const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
-            const invalidFiles = files.filter(file => !validImageTypes.includes(file.type));
-            
-            if (invalidFiles.length > 0) {
-                console.error("Please only upload image files");
-                return;
-            }
-            
+    const handleFileSelect = async (event) => {
+        const files = Array.from(event.target.files);
+        if (!files.length) return setError("No file selected");
+        
+        // Validate file types
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+        const invalidFiles = files.filter(file => !validImageTypes.includes(file.type));
+        
+        if (invalidFiles.length > 0) {
+            setError("Please only upload image files (JPEG, PNG, GIF, WEBP)");
+            return;
+        }
+        
+        setLoading(true);
+        setAddMoreLoading(true);
+        
+        try {
             const newPhotos = files.map(file => ({
                 file: file,
                 url: URL.createObjectURL(file),
@@ -494,9 +502,86 @@ function PhotographyRequest() {
                 type: file.type
             }));
             
-            handleInputChange('photos', [...formData.photos, ...newPhotos]);
-        };
-
+            // Update local state first
+            setFormData(prev => {
+                const updatedPhotos = [...prev.photos, ...newPhotos];
+                const newData = { ...prev, photos: updatedPhotos };
+                localStorage.setItem('photographyRequest', JSON.stringify(newData));
+                return newData;
+            });
+            
+        } catch (err) {
+            console.error("Error processing files:", err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+            setAddMoreLoading(false);
+        }
+    };
+    
+    const handleRemovePhoto = async (photoUrl) => {
+        try {
+            setDeletingPhotoUrl(photoUrl);
+            const filePathMatch = photoUrl.match(/request-media\/(.+)/);
+            if (!filePathMatch) {
+                console.error('Invalid file path:', photoUrl);
+                return;
+            }
+    
+            const filePath = filePathMatch[1];
+    
+            const { error: storageError } = await supabase
+                .storage
+                .from('request-media')
+                .remove([filePath]);
+    
+            if (storageError) {
+                console.error('Storage deletion error:', storageError);
+                return;
+            }
+    
+            const { error: dbError } = await supabase
+                .from('event_photos')
+                .delete()
+                .match({ photo_url: photoUrl });
+    
+            if (dbError) {
+                console.error('Database deletion error:', dbError);
+                return;
+            }
+    
+            setFormData(prev => {
+                const updatedPhotos = prev.photos.filter(photo => photo.url !== photoUrl);
+                const newData = { ...prev, photos: updatedPhotos };
+                localStorage.setItem('photographyRequest', JSON.stringify(newData));
+                return newData;
+            });
+        } catch (error) {
+            console.error('Error in removal process:', error);
+        } finally {
+            setDeletingPhotoUrl(null);
+        }
+    };
+    
+    const renderRemoveButton = (photo) => {
+        return (
+            <div 
+                className="remove-photo-overlay" 
+                style={{color:'black'}}
+                onClick={() => handleRemovePhoto(photo.url)}
+            >
+                {deletingPhotoUrl === photo.url ? (
+                    <div>
+                        <Spinner />
+                    </div>
+                ) : (
+                    '×'
+                )}
+            </div>
+        );
+    };
+    
+    const renderPhotoUpload = () => {
         return (
             <div className="photo-upload-section">
                 <div className="photo-preview-container">
@@ -729,13 +814,39 @@ function PhotographyRequest() {
     };
 
     const handleSubmit = async () => {
+        setIsSubmitting(true);
+        setError(null);
+        
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                 setIsModalOpen(true);
                 return;
             }
-
+    
+            // Check if the coupon code is already used
+            if (appliedCoupon) {
+                const { data: existingRequest, error: checkError } = await supabase
+                    .from('photography_requests')
+                    .select('id')
+                    .eq('coupon_code', appliedCoupon.code)
+                    .single();
+    
+                if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows found
+                    throw checkError;
+                }
+    
+                if (existingRequest) {
+                    setError('This coupon code has already been used.');
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
+    
+            // Validate and convert integer fields
+            const numPeople = formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople, 10) : null;
+            const duration = formData.eventDetails.duration ? parseInt(formData.eventDetails.duration, 10) : null;
+    
             // Create the request with coupon_code as foreign key
             const requestData = {
                 profile_id: user.id,
@@ -745,59 +856,61 @@ function PhotographyRequest() {
                 start_date: formData.eventDetails.startDate,
                 end_date: formData.eventDetails.endDate || null,
                 time_of_day: formData.eventDetails.timeOfDay,
-                num_people: formData.eventDetails.numPeople,
-                duration: formData.eventDetails.duration,
+                num_people: numPeople,
+                duration: duration,
                 indoor_outdoor: formData.eventDetails.indoorOutdoor,
                 price_range: formData.eventDetails.priceRange,
                 additional_comments: formData.eventDetails.additionalComments,
+                date_type: formData.eventDetails.dateType, // Add date_type field
                 coupon_code: appliedCoupon ? appliedCoupon.code : null,  // Just store the code
                 status: 'open'
             };
-
-            const { data: request, error } = await supabase
+    
+            const { data: request, error: requestError } = await supabase
                 .from('photography_requests')
                 .insert([requestData])
                 .select()
                 .single();
-
-            if (error) throw error;
-
+    
+            if (requestError) throw requestError;
+    
             // Upload photos if there are any
             if (formData.photos.length > 0) {
                 const uploadPromises = formData.photos.map(async (photo) => {
                     const fileExt = photo.name.split('.').pop();
                     const fileName = `${uuidv4()}.${fileExt}`;
-                    const filePath = `request-media/${fileName}`;
-
+                    const filePath = `${user.id}/${request.id}/${fileName}`;
+    
                     // Upload the file
                     const { error: uploadError } = await supabase.storage
                         .from('request-media')
                         .upload(filePath, photo.file);
-
+    
                     if (uploadError) throw uploadError;
-
+    
                     // Get the public URL
                     const { data: { publicUrl } } = supabase.storage
                         .from('request-media')
                         .getPublicUrl(filePath);
-
+    
                     // Store the photo reference in the database
                     const { error: photoError } = await supabase
                         .from('event_photos')
                         .insert([{
                             request_id: request.id,
                             photo_url: publicUrl,
-                            file_path: filePath
+                            file_path: filePath,
+                            user_id: user.id // Add user_id field
                         }]);
-
+    
                     if (photoError) throw photoError;
-
+    
                     return publicUrl;
                 });
-
+    
                 await Promise.all(uploadPromises);
             }
-
+    
             // Clear form data and navigate to success page
             localStorage.removeItem('photographyRequest');
             navigate('/success-request', { 
@@ -806,12 +919,15 @@ function PhotographyRequest() {
                     message: 'Your photography request has been submitted successfully!'
                 }
             });
-
+    
         } catch (err) {
             setError('Failed to submit request. Please try again.');
             console.error('Error submitting request:', err);
+        } finally {
+            setIsSubmitting(false);
         }
     };
+    
 
     const checkAuthentication = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -912,11 +1028,11 @@ function PhotographyRequest() {
                 </div>
 
                 <div className="form-button-container">
-                    <button className="request-form-back-and-foward-btn" onClick={handleBack}>
+                    <button className="request-form-back-and-foward-btn" onClick={handleBack} disabled={isSubmitting}>
                         Back
                     </button>
-                    <button className="request-form-back-and-foward-btn" onClick={handleNext}>
-                        {currentStep === getSteps().length - 1 ? 'Submit' : 'Next'}
+                    <button className="request-form-back-and-foward-btn" onClick={handleNext} disabled={isSubmitting}>
+                        {isSubmitting ? <Spinner size="sm" /> : (currentStep === getSteps().length - 1 ? 'Submit' : 'Next')}
                     </button>
                 </div>
             </div>

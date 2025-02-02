@@ -15351,7 +15351,7 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 4px 8px 0px rgba(52, 
 
     .photo-upload-box {
       width: 90%;
-      height: 90%;
+      height: 55vh;
       flex-shrink: 0;
       border-radius: 1px;
       border: 1px dashed #FF008A;
