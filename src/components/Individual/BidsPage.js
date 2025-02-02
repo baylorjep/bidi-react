@@ -137,7 +137,8 @@ export default function BidsPage() {
                         id, 
                         membership_tier,
                         down_payment_type,
-                        amount
+                        amount,
+                        stripe_account_id
                     )
                 `)
                 .in('request_id', requestIds);
@@ -180,14 +181,54 @@ export default function BidsPage() {
     };
 
     const handlePayNow = (bid) => {
-        navigate('/checkout', { state: { bid } });
+        try {
+            if (!bid.business_profiles.stripe_account_id) {
+                alert('This business is not yet set up to receive payments. Please contact them directly.');
+                return;
+            }
+
+            const paymentData = {
+                bid_id: bid.id,
+                amount: bid.bid_amount,
+                stripe_account_id: bid.business_profiles.stripe_account_id,
+                payment_type: 'full',
+                business_name: bid.business_profiles.business_name,
+                description: bid.message || 'Service payment'
+            };
+            navigate('/checkout', { state: { paymentData } });
+        } catch (error) {
+            console.error('Error preparing payment:', error);
+            alert('There was an error processing your payment. Please try again.');
+        }
     };
 
     const handleDownPayNow = (bid) => {
-        const downPayment = calculateDownPayment(bid);
-        const amountToPay = downPayment ? downPayment.amount : bid.bid_amount;
-        navigate('/checkout', { state: { bid, amountToPay } });
+        try {
+            if (!bid.business_profiles.stripe_account_id) {
+                alert('This business is not yet set up to receive payments. Please contact them directly.');
+                return;
+            }
+
+            const downPayment = calculateDownPayment(bid);
+            if (!downPayment) {
+                throw new Error('Down payment calculation failed');
+            }
+
+            const paymentData = {
+                bid_id: bid.id,
+                amount: downPayment.amount,
+                stripe_account_id: bid.business_profiles.stripe_account_id,
+                payment_type: 'down_payment',
+                business_name: bid.business_profiles.business_name,
+                description: `Down payment for ${bid.message || 'service'}`
+            };
+            navigate('/checkout', { state: { paymentData } });
+        } catch (error) {
+            console.error('Error preparing down payment:', error);
+            alert('There was an error processing your down payment. Please try again.');
+        }
     };
+
     const handleMessageText = async (bid) => {
         const { data: userProfile, error: userProfileError } = await supabase
             .from('profiles')
