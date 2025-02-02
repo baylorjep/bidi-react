@@ -11,7 +11,7 @@ const SuccessPayment = () => {
 
     // Example: redirect to the dashboard after a few seconds
     const timer = setTimeout(() => {
-      navigate('/my-bids'); // Replace with the route you want to redirect to
+      navigate('/bids'); // Replace with the route you want to redirect to
     }, 5000); // 5-second delay
 
     return () => clearTimeout(timer); // Cleanup the timer on unmount

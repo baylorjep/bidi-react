@@ -121,7 +121,7 @@ function SuccessRequest() {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
-                        <Link to='/my-bids' className='success-page-button-secondary'>
+                        <Link to='/bids' className='success-page-button-secondary'>
                             Close
                         </Link>
                         <Link to='/request-categories' className='success-page-button-primary'>

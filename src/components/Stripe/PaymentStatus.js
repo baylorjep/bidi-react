@@ -9,7 +9,7 @@ const PaymentStatus = () => {
     // Add logic here to handle any additional post-payment processes
     // Example: Optionally redirect after a few seconds
     const timer = setTimeout(() => {
-      navigate('/my-bids'); // Replace with the route you want to redirect to
+      navigate('/bids'); // Replace with the route you want to redirect to
     }, 10000); // 10-second delay
 
     return () => clearTimeout(timer); // Cleanup the timer on unmount
