@@ -1,0 +1,505 @@
+.bids-page {
+    padding: 20px;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.tab {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 30px;
+    background: transparent;
+    color: black;
+    cursor: pointer;
+    font-family: Roboto;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid #A328F4;
+}
+
+.tab:hover {
+    background: linear-gradient(85deg, #A328F4 9.33%, rgba(255, 0, 138, 0.76) 68.51%);
+    color: white;
+}
+
+.tab.active {
+    background: linear-gradient(85deg, #A328F4 9.33%, rgba(255, 0, 138, 0.76) 68.51%);
+    color: white;
+}
+
+.bids-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px 0;
+    width: 100%;
+    max-width: 1000px; /* Increased from 800px */
+    margin: 0 auto; /* Center the container */
+}
+
+.approved-bid-card {
+    width: 100%;
+    min-width: 100%;
+    padding: 24px;
+    margin-bottom: 20px;
+    /* ...rest of existing styles... */
+}
+
+/* Remove the .bid-card styles since we're using BidDisplay */
+
+.request-swiper-container {
+    position: relative;
+    margin: 0 auto 30px;
+    padding: 0;
+    width: calc(100% - 80px); /* Slightly narrower container */
+    max-width: 1000px;
+    min-height: 300px;        /* Add minimum height */    /* Add padding at bottom for buttons */
+}
+
+.swiper {
+    height: 100%;            /* Ensure swiper takes full height */
+    padding-bottom: 60px;    /* Match container padding */
+}
+
+@media (max-width:768px) {
+    .swiper {
+        padding-bottom: 0; /* Remove padding on mobile */
+    }
+}
+
+.swiper-slide {
+    height: auto !important; /* Force all slides to adapt to content */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;  /* Align to top instead of center */
+    padding-bottom: 60px;     /* Space for buttons */
+}
+
+.request-slide {
+    padding: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.request-display-mini {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    min-height: fit-content;
+}
+
+/* Make both types of request displays consistent */
+.request-display {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.request-content {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-height: fit-content;
+}
+
+/* Ensure grids have consistent spacing */
+.details-grid,
+.request-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    width: 100%;
+    margin: 20px 0;
+}
+
+.detail-item,
+.request-info {
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.no-requests {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-size: 1.1em;
+}
+
+.request-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.request-nav-button {
+    background: transparent;
+    border: 1px solid #A328F4;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.request-nav-button:hover {
+    background: linear-gradient(85deg, #A328F4 9.33%, rgba(255, 0, 138, 0.76) 68.51%);
+    color: white;
+}
+
+/* Add these styles for the Swiper navigation */
+.request-swiper-container .swiper-button-prev,
+.request-swiper-container .swiper-button-next {
+    background-color: white;
+    width: 35px;  /* Smaller button size */
+    height: 35px; /* Smaller button size */
+    border-radius: 50%;
+    border: 1px solid #A328F4;
+    position: absolute;
+    top: 50%;
+    transform: translateY(0);
+    z-index: 1;
+}
+
+.request-swiper-container .swiper-button-prev::after,
+.request-swiper-container .swiper-button-next::after {
+    font-size: 18px;
+    color: #A328F4;
+    font-weight: bold;
+}
+
+.request-swiper-container .swiper-button-prev:hover,
+.request-swiper-container .swiper-button-next:hover {
+    background: linear-gradient(85deg, #A328F4 9.33%, rgba(255, 0, 138, 0.76) 68.51%);
+}
+
+.request-swiper-container .swiper-button-prev:hover::after,
+.request-swiper-container .swiper-button-next:hover::after {
+    color: white;
+}
+
+.request-swiper-container .swiper-button-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.request-swiper-container .swiper-button-prev {
+    left: -60px; /* Position outside the container */
+}
+
+.request-swiper-container .swiper-button-next {
+    right: -60px; /* Position outside the container */
+}
+
+.section-title {
+    color: var(--Black-900, #000);
+    font-family: Outfit;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    margin-bottom: 20px;
+}
+
+.section-description {
+    color: var(--Black-800, #404040);
+    text-align: center;
+    font-family: Outfit;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    opacity: 0.5;
+}
+
+.request-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+    width: 100%;
+    height: auto;
+}
+
+.request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.request-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    margin: 20px 0;
+}
+
+.detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.detail-label {
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.detail-value {
+    font-size: 1rem;
+    color: #333;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+/* Add swipe indicator styles */
+.swipe-indicator {
+    display: none;  /* Hidden by default on desktop */
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+    margin: 10px 0;
+    opacity: 0.7;
+    font-family: Outfit;
+    position: relative;  /* Add this */
+    z-index: 2;         /* Add this */
+}
+
+.swipe-indicator::before {
+    content: '←';
+    margin-right: 8px;
+}
+
+.swipe-indicator::after {
+    content: '→';
+    margin-left: 8px;
+}
+
+@media (max-width: 1200px) {
+    .request-swiper-container {
+        width: calc(100% - 80px);
+    }
+
+    .request-swiper-container .swiper-button-prev {
+        left: -40px;
+    }
+
+    .request-swiper-container .swiper-button-next {
+        right: -40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .tabs {
+        flex-direction: column;
+        overflow-x: auto;
+        padding-bottom: 10px;
+    }
+
+    .tab {
+        font-size: 14px;
+        padding: 8px 16px;
+        white-space: nowrap;
+    }
+
+    .bids-container {
+        grid-template-columns: 1fr; /* Single column on mobile */
+    }
+
+    .request-swiper-container {
+        width: 100%; /* Full width on mobile */
+        padding: 0 10px; /* Add some padding */
+        margin-bottom: 0; /* Reduce margin to bring indicator closer */
+    }
+
+    .request-swiper-container .swiper-button-prev,
+    .request-swiper-container .swiper-button-next {
+        display: none !important; /* Hide navigation buttons on mobile */
+    }
+
+    .swipe-indicator {
+        display: block; /* Show swipe indicator on mobile */
+        margin: 15px 0;
+        font-weight: 500;
+        padding: 10px 0;
+        margin: 0 0 20px 0;
+        background: white;  /* Add this */
+    }
+
+    .request-slide {
+        padding: 0; /* Remove padding since buttons are hidden */
+    }
+
+    .request-swiper-container {
+        width: calc(100% - 30px); /* Much narrower container on mobile */
+    }
+
+    .request-swiper-container .swiper-button-prev,
+    .request-swiper-container .swiper-button-next {
+        width: 15px;  /* Much smaller buttons */
+        height: 15px;
+        min-width: 15px; /* Prevent button growth */
+        min-height: 15px;
+    }
+
+    .request-swiper-container .swiper-button-prev {
+        left: -15px;
+    }
+
+    .request-swiper-container .swiper-button-next {
+        right: -15px;
+    }
+
+    .request-swiper-container .swiper-button-prev::after,
+    .request-swiper-container .swiper-button-next::after {
+        font-size: 8px; /* Much smaller arrows */
+        font-weight: 900; /* Make arrows bolder so they're more visible */
+    }
+
+    .request-slide {
+        padding: 0 5px; /* Reduce padding on mobile */
+    }
+
+    .request-swiper-container .swiper-button-prev,
+    .request-swiper-container .swiper-button-next {
+        width: 25px;  /* Even smaller on mobile */
+        height: 25px; /* Even smaller on mobile */
+    }
+
+    .request-swiper-container .swiper-button-prev {
+        left: -25px; /* Closer to content */
+    }
+
+    .request-swiper-container .swiper-button-next {
+        right: -25px; /* Closer to content */
+    }
+
+    .request-swiper-container .swiper-button-prev::after,
+    .request-swiper-container .swiper-button-next::after {
+        font-size: 12px; /* Smaller arrows */
+    }
+
+    .swipe-indicator {
+        display: block;  /* Show on mobile */
+    }   
+
+    .request-display-mini {
+        min-height: auto;
+    }
+
+    .details-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .detail-item {
+        min-height: auto;
+        padding: 10px 0;
+    }
+
+    .request-content {
+        padding: 15px;
+        height: auto;
+    }
+
+    .request-title {
+        font-size: 1.2rem;
+        line-height: 1.4;
+    }
+
+    .detail-value, 
+    .detail-label {
+        font-size: 0.9rem;
+    }
+
+    .section-title {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    .section-description {
+        font-size: 13px;
+        padding: 0 15px;
+    }
+
+    .request-card {
+        padding: 16px;
+    }
+
+    .request-header {
+        margin-bottom: 16px;
+    }
+
+    .request-details {
+        grid-template-columns: 1fr 1fr; /* Keep 2 columns even on mobile */
+        gap: 10px;
+    }
+
+    .detail-row {
+        padding: 8px;
+    }
+
+    .detail-label {
+        font-size: 0.8rem;
+    }
+
+    .detail-value {
+        font-size: 0.9rem;
+    }
+}
+
+.no-bids-message {
+    text-align: center;
+    padding: 30px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.no-bids-message p {
+    margin-bottom: 15px;
+    color: #666;
+    font-size: 1rem;
+}
+
+.no-bids-message button {
+    padding: 8px 20px;
+    border-radius: 20px;
+    background: white;
+    border: 1px solid #A328F4;
+    color: #A328F4;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.no-bids-message button:hover {
+    background: linear-gradient(85deg, #A328F4 9.33%, rgba(255, 0, 138, 0.76) 68.51%);
+    color: white;
+}
+
+

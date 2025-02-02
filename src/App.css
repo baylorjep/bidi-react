@@ -94,7 +94,12 @@ html, body {
   overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
-
+.gradient-badge {
+  background: linear-gradient(85deg, #A328F4 9.33%, rgba(255, 0, 138, 0.76) 68.51%);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
 
 @media (prefers-reduced-motion: no-preference) {
   :root {
@@ -3198,7 +3203,8 @@ background: linear-gradient(246deg, rgba(255, 0, 138, 0.79) 15.35%, #A328F4 85.5
     width: 80px;
   }
   .bid-button {
-    width: 80px !important;
+    max-width: 100px !important;
+    max-height: 48px !important;
   }
 
   .request-title {
@@ -14418,8 +14424,29 @@ line-height: normal;
   display: flex;
   flex-direction: row;
   gap: 8px;
-  word-break:break-word;
+  word-break: break-word;
   justify-content: space-evenly;
+  width: 100%;
+}
+
+.pay-and-message-container > * {
+  flex: 1;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .pay-and-message-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .pay-and-message-container > * {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .submit-bid-button {
@@ -16358,3 +16385,4 @@ label {
   color: #666;
   font-size: 14px;
 }
+

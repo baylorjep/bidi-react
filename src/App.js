@@ -7,7 +7,6 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './i18n';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-
 // Layout Imports
 import Navbar from './components/Layout/Navbar';
 import Footer from './components/Layout/Footer';
@@ -52,10 +51,9 @@ import UpdatePassword from './components/Profile/UpdatePassword';
 import ProfilePage from './components/Profile/Profile';
 
 // Individual Imports
-import MyBids from './components/Individual/MyBids';
-import ApprovedBids from './components/Individual/ApprovedBids';
 import MyDashboard from './components/Individual/MyDashboard'
-import DeniedBids from './components/Individual/DeniedBids';
+import MyRequests from './components/Individual/MyRequests';
+import EditRequest from './components/Individual/EditRequest';
 
 // Business Imports
 import BusinessDashboard from './components/Business/BusinessDashboard';
@@ -79,6 +77,10 @@ import PaymentStatus from './components/Stripe/PaymentStatus';
 
 // ScrollToTop import
 import ScrollToTop from './components/ScrollToTop';
+
+// Add this import
+import BidsPage from './components/Individual/BidsPage'
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
 
@@ -106,12 +108,10 @@ function App() {
                         <Route path="/request-categories" element={<RequestCategories />} />
                         <Route path="/request" element={<RequestForm />} />
                         <Route path="/success-request" element={<SuccessRequest />} />
-                        <Route path="/my-bids" element={<MyBids />} />
 
                         {/* New Staged Request Routes */}
                         <Route path="/request-form" element={<MultiStepRequestForm />} />
                         <Route path="/success-request" element={<SuccessRequest />} />
-                        <Route path="/my-bids" element={<MyBids />} />
 
                         {/* Event Routes */}
                         <Route path="/select-event" element={<SelectEvent setEventType={setEventType} />} />
@@ -133,9 +133,9 @@ function App() {
 
                         {/* Individual Routes */}
                         <Route path="/my-dashboard" element={<MyDashboard />} />
-                        <Route path="/approved-bids" element={<ApprovedBids />} />
-                        <Route path="/denied-bids" element={<DeniedBids />} />
-
+                        <Route path="/my-requests" element={<MyRequests />} />
+                        <Route path="/edit-request/:type/:id" element={<EditRequest />} />
+                        
                         {/* Test API Routes */}
                          <Route path="/test-email" element={<TestEmail />} />
                         
@@ -162,6 +162,13 @@ function App() {
 
                         {/* Admin Routes */}
                         <Route path="/admin-dashboard" element={<AdminDashboard />} />
+
+                        {/* Combined Bids Route */}
+                        <Route path="/bids" element={
+                            <PrivateRoute>
+                                <BidsPage />
+                            </PrivateRoute>
+                        } />
 
                     </Routes>
                 </div>

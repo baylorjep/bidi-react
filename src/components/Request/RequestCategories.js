@@ -12,9 +12,10 @@ function RequestCategories() {
         'Hair and Makeup Artist',
         'Florist',
         'Catering',
-        'Event Planner',
         'Wedding Planner',
         'Venue',
+        'Cake',
+        'Spray Tan',
         'Other'
     ];
 
