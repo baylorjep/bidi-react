@@ -4,7 +4,7 @@ import '../../App.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 
-function Signup() {
+const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop name to initialUserType
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -42,14 +42,18 @@ function Signup() {
     };
 
     useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const type = params.get('type');
-        if (type) {
-            setUserType(type);
+        if (initialUserType) {  // Use initialUserType instead
+            setUserType(initialUserType);
         } else {
-            navigate('/createaccount'); // Redirect if no user type is selected
+            const params = new URLSearchParams(location.search);
+            const type = params.get('type');
+            if (type) {
+                setUserType(type);
+            } else {
+                navigate('/createaccount'); // Redirect if no user type is selected
+            }
         }
-    }, [location, navigate]);
+    }, [location, navigate, initialUserType]);  // Updated dependency
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -141,6 +145,11 @@ function Signup() {
                 console.error('Individual profile insertion error:', individualError);
                 return;
             }
+
+            if (onSuccess) {
+                onSuccess(); // Call onSuccess callback if provided
+                return; // Add return to prevent additional navigation
+            }
         } else if (userType === 'business') {
             const { error: businessError } = await supabase
                 .from('business_profiles')
@@ -181,7 +190,10 @@ function Signup() {
             }
         }
 
-        navigate(redirectUrl || '/success-signup');
+        // Only navigate to success page if onSuccess wasn't called
+        if (!onSuccess) {
+            navigate(redirectUrl || '/success-signup');
+        }
     };
 
     return (

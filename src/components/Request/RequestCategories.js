@@ -20,34 +20,26 @@ function RequestCategories() {
     ];
 
     const handleSelection = () => {
-        // Only photography and videography are considered media services
-        const isMediaService = category === 'photography' || category === 'videography';
-        const serviceType = isMediaService ? 'photography' : category; // Changed from 'general' to category
-        
         // Store in localStorage
-        localStorage.setItem('serviceType', serviceType);
+        localStorage.setItem('serviceType', category);
         localStorage.setItem('specificService', category);
         
         // Store in request form data
         const requestFormData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
         localStorage.setItem('requestFormData', JSON.stringify({
             ...requestFormData,
-            serviceType: serviceType,
+            serviceType: category,
             specificService: category
         }));
         
-        if (isMediaService) {
-            navigate('/select-event', { 
-                state: { 
-                    serviceType,
-                    specificService: category 
-                } 
-            });
+        // Navigate based on category
+        if (category === 'photography') {
+            navigate('/request/photography');
         } else {
             navigate('/request-form', { 
                 state: { 
                     category,
-                    serviceType,
+                    serviceType: category,
                     specificService: category
                 } 
             });

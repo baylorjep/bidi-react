@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
-import { useIndividualUser } from '../Individual/getIndividualUser';
-import PhotoRequestDisplay from '../Request/PhotoRequestDisplay';
+import { supabase } from '../../../supabaseClient';
+import { useIndividualUser } from '../../Individual/getIndividualUser';
+import PhotoRequestDisplay from '../PhotoRequestDisplay';
 import { useLocation } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid'; // Add uuid import
 

@@ -23,9 +23,9 @@ import BidAccepted from './components/Bid/BidAccepted';
 
 // Request Imports
 import RequestCategories from './components/Request/RequestCategories';
-import RequestForm from './components/Request/RequestForm';
 import SuccessRequest from './components/Request/SuccessRequest';
 import OpenRequests from './components/Request/OpenRequests';
+import PhotographyRequest from './components/Request/Photography/PhotographyRequest';
 
 // New staged request imports
 import MultiStepRequestForm from './components/Request/general requests/MultiStepRequestForm';
@@ -34,11 +34,11 @@ import MultiStepRequestForm from './components/Request/general requests/MultiSte
 import TestEmail from './components/TestEmail';
 
 // Event Imports
-import SelectEvent from './components/Event/SelectEvent';
-import EventDetails from './components/Event/EventDetails';
-import EventPhotos from './components/Event/UploadPictures';
-import PersonalDetails from './components/Event/PersonalDetails';
-import EventSummary from './components/Event/EventSummary';
+import SelectEvent from './components/Request/Event/SelectEvent';
+import EventDetails from './components/Request/Event/EventDetails';
+import EventPhotos from './components/Request/Event/UploadPictures';
+import PersonalDetails from './components/Request/Event/PersonalDetails';
+import EventSummary from './components/Request/Event/EventSummary';
 
 // Profile Imports
 import Signup from './components/Profile/Signup';
@@ -106,7 +106,6 @@ function App() {
 
                         {/* Request Routes */}
                         <Route path="/request-categories" element={<RequestCategories />} />
-                        <Route path="/request" element={<RequestForm />} />
                         <Route path="/success-request" element={<SuccessRequest />} />
 
                         {/* New Staged Request Routes */}
@@ -169,6 +168,9 @@ function App() {
                                 <BidsPage />
                             </PrivateRoute>
                         } />
+
+                        {/* Photography Routes */}
+                        <Route path="/request/photography" element={<PhotographyRequest />} />
 
                     </Routes>
                 </div>

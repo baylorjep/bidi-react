@@ -1,0 +1,331 @@
+.package-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.package-card {
+    border: 2px solid #9F8AB3;
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.package-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.package-card.selected {
+    border-color: #a328f4;
+    background-color: rgba(163, 40, 244, 0.05);
+}
+
+.package-card h3 {
+    color: #a328f4;
+    margin-bottom: 10px;
+}
+
+.package-card .price {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.package-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.package-card li {
+    margin-bottom: 8px;
+    position: relative;
+    padding-left: 20px;
+}
+
+.package-card li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #a328f4;
+}
+
+.event-summary-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.summary-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.summary-section-title {
+    color: #333;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.summary-label {
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.summary-value {
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.summary-comments {
+    color: #333;
+    line-height: 1.6;
+}
+
+.coupon-container {
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.coupon-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.coupon-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.apply-coupon-btn {
+    padding: 10px 20px;
+    background-color: #a328f4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.apply-coupon-btn:hover {
+    background-color: #8a1cd9;
+}
+
+.apply-coupon-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.coupon-message {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.coupon-message.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.coupon-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.photo-grid {
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+    width: 100%;
+    justify-items: center;
+    align-items: center;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media screen and (max-width: 1024px) {
+    .photo-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+}
+
+/* For mobile devices */
+@media screen and (max-width: 576px) {
+    .photo-grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        padding: 5px;
+    }
+}
+
+.photo-grid-item {
+    position: relative;
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+}
+
+.photo-grid-item:hover {
+    transform: scale(1.05);
+}
+
+.photo-grid-item img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.photo-grid-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.photo-grid-image:hover {
+    transform: scale(1.05);
+}
+
+    .remove-photo-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: gray;
+      color: black;
+      border: none;
+      border-radius: 50%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      padding: 4px; 
+      gap: 10px;
+      flex-shrink: 0;
+      border-radius: 29px;
+      background: var(--Grey-Medium, #E5E5E5);
+      border:none;
+
+    }
+
+    .photo-grid-item:hover .remove-photo-button {
+        display: flex;
+      }
+  
+      .remove-photo-button:hover {
+        color:white;
+      }
+
+.add-more-photos-btn {
+    display: flex;
+    width: 200px;
+    height: 40px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border-radius: 100px;
+    border: 1px solid #FF008A;
+    background:transparent
+  }
+
+  .add-more-photos-btn:hover {
+    background-color: #FF008A;
+  }
+
+  .add-more-photos-btn:hover .add-more-text {
+    color: white;
+  }
+
+  .add-more-text {
+    color: #FF008A;
+    color: #FF008A;
+    text-align: center;
+    font-family: var(--Label-Large-Font, Roboto);
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
+    letter-spacing: var(--Label-Large-Tracking, 0.1px);
+  }
+
+  @media (max-width: 1350px) {
+    .remove-photo-button {
+        /* Always show on mobile */
+        display: flex;
+        /* Make button bigger for touch */
+        width: 32px;
+        height: 32px;
+        /* Increase contrast */
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+    }
+
+    .photo-grid {
+        gap: 16px; /* Increase gap for mobile */
+    }
+
+    .photo-grid-item {
+        /* Remove hover effect on mobile */
+        transform: none;
+    }
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content-photo {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content-photo img {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+}

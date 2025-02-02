@@ -4,8 +4,8 @@ import ServiceDetails from './ServiceDetails';
 import DateAndTime from './DateandTime';
 import LocationDetails from './Location';
 import AdditionalComments from './AdditionalComments';
-import PersonalDetails from '../../Event/PersonalDetails';  
-import EventPhotos from '../../Event/UploadPictures';
+import PersonalDetails from '../Event/PersonalDetails';  
+import EventPhotos from '../Event/UploadPictures';
 import SummaryPage from './ServiceSummary';
 
 
