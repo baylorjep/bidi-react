@@ -111,11 +111,12 @@ function Navbar() {
                         {userRole === 'individual' && (
                             <>
                                 <li className="nav-item">
-                                    <Link className="nav-link me-lg-3" to="/my-requests">My Requests</Link>
-                                </li>
-                                <li className="nav-item">
                                     <Link className="nav-link me-lg-3" to="/bids">View Bids</Link>
                                 </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link me-lg-3" to="/my-requests">My Requests</Link>
+                                </li>
+
                             </>
                         )}
 
