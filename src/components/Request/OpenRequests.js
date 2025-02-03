@@ -5,6 +5,20 @@ import PhotoRequestDisplayMini from './PhotoRequestDisplayMini.js';
 import '../../App.css';
 import SearchBar from '../SearchBar/SearchBar';
 
+const BUSINESS_TYPE_MAPPING = {
+    'cake': ['cakes'],
+    'wedding planner/coordinator': ['wedding planner', 'rental'],
+    'catering': ['catering'],
+    'florist': ['florist'],
+    'hair and makeup artist': ['hair and makeup artist'],
+    'photography': ['photo'],
+    'videography': ['photo'],
+    'dj': ['dj', 'DJ'], // Add both lowercase and uppercase variations
+    'venue': ['venue'],
+    'spray tan': ['spray tan'],
+
+};
+
 function OpenRequests() {
     const [openRequests, setOpenRequests] = useState([]);
     const [openPhotoRequests, setOpenPhotoRequests] = useState([]);
@@ -96,89 +110,38 @@ function OpenRequests() {
         if (!businessType) return;
 
         const fetchRequests = async () => {
-            let filteredRequests = [];
-            let filteredPhotoRequests = [];
-
             try {
-                // For specific business types
-                if (businessType === 'cake') {
-                    const { data: requests, error } = await supabase
-                        .from('requests')
-                        .select('*, created_at')
-                        .eq('open', true)
-                        .eq('service_category', 'cakes')
-                        .order('created_at', { ascending: false });
-                    if (error) throw error;
-                    setOpenRequests(requests || []);
-                    setOpenPhotoRequests([]);
-                    return; // Exit early for specific category
-                }
+                const isPhotoType = ['photography', 'videography'].includes(businessType.toLowerCase());
+                const categories = BUSINESS_TYPE_MAPPING[businessType.toLowerCase()] || [];
 
-                if (businessType === 'wedding planner/coordinator') {
-                    const { data: requests, error } = await supabase
-                        .from('requests')
-                        .select('*, created_at')
-                        .eq('open', true)
-                        .eq('service_category', 'wedding planner', { or: 'rental' })
-                        .order('created_at', { ascending: false });
-                    if (error) throw error;
-                    setOpenRequests(requests || []);
-                    setOpenPhotoRequests([]);
-                    return; // Exit early for specific category
-                }
-
-                if (businessType === 'catering') {
-                    const { data: requests, error } = await supabase
-                        .from('requests')
-                        .select('*, created_at')
-                        .eq('open', true)
-                        .eq('service_category', 'catering')
-                        .order('created_at', { ascending: false });
-                    if (error) throw error;
-                    setOpenRequests(requests || []);
-                    setOpenPhotoRequests([]);
-                    return; // Exit early for specific category
-                }
-
-                if (businessType === 'florist') {
-                    const { data: requests, error } = await supabase
-                        .from('requests')
-                        .select('*, created_at')
-                        .eq('open', true)
-                        .eq('service_category', 'florist')
-                        .order('created_at', { ascending: false });
-                    if (error) throw error;
-                    setOpenRequests(requests || []);
-                    setOpenPhotoRequests([]);
-                    return; // Exit early for specific category
-                }
-
-                if (businessType === 'hair and makeup artist') {
-                    const { data: requests, error } = await supabase
-                        .from('requests')
-                        .select('*, created_at')
-                        .eq('open', true)
-                        .eq('service_category', 'hair and makeup artist')
-                        .order('created_at', { ascending: false });
-                    if (error) throw error;
-                    setOpenRequests(requests || []);
-                    setOpenPhotoRequests([]);
-                    return; // Exit early for specific category
-                }
-
-                if (businessType === 'photography' || businessType === 'videography') {
-                    const { data: allPhotoRequests, error: allPhotoRequestsError } = await supabase
+                if (isPhotoType) {
+                    const { data: photoRequests, error } = await supabase
                         .from('photography_requests')
                         .select('*, created_at')
                         .eq('status', 'open')
                         .order('created_at', { ascending: false });
-                    if (allPhotoRequestsError) throw allPhotoRequestsError;
+                    
+                    if (error) throw error;
                     setOpenRequests([]);
-                    setOpenPhotoRequests(allPhotoRequests || []);
-                    return; // Exit early for specific category
+                    setOpenPhotoRequests(photoRequests || []);
+                    return;
                 }
 
-                // Default case: If no specific business type matches, fetch all requests and combine them
+                if (categories.length > 0) {
+                    const { data: requests, error } = await supabase
+                        .from('requests')
+                        .select('*, created_at')
+                        .eq('open', true)
+                        .in('service_category', categories)
+                        .order('created_at', { ascending: false });
+                    
+                    if (error) throw error;
+                    setOpenRequests(requests || []);
+                    setOpenPhotoRequests([]);
+                    return;
+                }
+
+                // Default case: fetch all requests
                 const { data: allRequests, error: allRequestsError } = await supabase
                     .from('requests')
                     .select('*, created_at')
@@ -189,25 +152,15 @@ function OpenRequests() {
                     .select('*, created_at')
                     .eq('status', 'open');
 
-                if (allRequestsError || allPhotoRequestsError) {
-                    throw new Error(
-                        `Error fetching all requests: ${allRequestsError?.message || ''} ${allPhotoRequestsError?.message || ''}`
-                    );
-                }
+                if (allRequestsError || allPhotoRequestsError) throw new Error(
+                    `Error fetching all requests: ${allRequestsError?.message || ''} ${allPhotoRequestsError?.message || ''}`
+                );
 
-                // For non-specific categories, combine and sort by new status and creation date
                 const allRequestsCombined = [
                     ...(allRequests || []).map(req => ({...req, requestType: 'regular'})),
                     ...(allPhotoRequests || []).map(req => ({...req, requestType: 'photo'}))
-                ].sort((a, b) => {
-                    const aIsNew = isNew(a.created_at);
-                    const bIsNew = isNew(b.created_at);
-                    if (aIsNew && !bIsNew) return -1;
-                    if (!aIsNew && bIsNew) return 1;
-                    return new Date(b.created_at) - new Date(a.created_at);
-                });
+                ].sort((a, b) => sortByNewAndDate(a, b));
 
-                // Separate back into respective arrays
                 setOpenRequests(allRequestsCombined.filter(req => req.requestType === 'regular'));
                 setOpenPhotoRequests(allRequestsCombined.filter(req => req.requestType === 'photo'));
 
@@ -220,62 +173,37 @@ function OpenRequests() {
         fetchRequests();
     }, [businessType]);
 
+    const sortByNewAndDate = (a, b) => {
+        const aIsNew = isNew(a.created_at);
+        const bIsNew = isNew(b.created_at);
+        if (aIsNew && !bIsNew) return -1;
+        if (!aIsNew && bIsNew) return 1;
+        return new Date(b.created_at) - new Date(a.created_at);
+    };
+
     return (
         <div className="request-grid-container">
             <div className="request-grid">
                 {error && <p>Error: {error}</p>}
-
-                {/* Render requests based on business type */}
-                {businessType && ['Cake', 'Catering'].includes(businessType) ? (
-                    // For specific categories, just show their requests
-                    openRequests
-                        .filter(request => !userBids.has(request.id)) // Filter out requests with existing bids
-                        .map(request => (
-                            <RequestDisplayMini 
-                                key={`regular-${request.id}`}
-                                request={request}
-                                checkPromotion={checkPromotion}
-                            />
-                        ))
-                ) : businessType === 'photography' || businessType === 'Videography' ? (
-                    // For photography/videography, just show photo requests
-                    openPhotoRequests
-                        .filter(request => !userBids.has(request.id)) // Filter out requests with existing bids
-                        .map(request => (
+                {[...openRequests, ...openPhotoRequests]
+                    .filter(request => !userBids.has(request.id))
+                    .sort(sortByNewAndDate)
+                    .map((request) => (
+                        request.event_title ? (
                             <PhotoRequestDisplayMini 
                                 key={`photo-${request.id}`}
                                 photoRequest={request}
                                 checkPromotion={checkPromotion}
                             />
-                        ))
-                ) : (
-                    // For default case, show combined and sorted requests
-                    [...openRequests, ...openPhotoRequests]
-                        .filter(request => !userBids.has(request.id)) // Filter out requests with existing bids
-                        .sort((a, b) => {
-                            const aIsNew = isNew(a.created_at);
-                            const bIsNew = isNew(b.created_at);
-                            if (aIsNew && !bIsNew) return -1;
-                            if (!aIsNew && bIsNew) return 1;
-                            return new Date(b.created_at) - new Date(a.created_at);
-                        })
-                        .map((request) => (
-                            request.event_title ? (
-                                <PhotoRequestDisplayMini 
-                                    key={`photo-${request.id}`}
-                                    photoRequest={request}
-                                    checkPromotion={checkPromotion}
-                                />
-                            ) : (
-                                <RequestDisplayMini 
-                                    key={`regular-${request.id}`}
-                                    request={request}
-                                    checkPromotion={checkPromotion}
-                                />
-                            )
-                        ))
-                )}
-
+                        ) : (
+                            <RequestDisplayMini 
+                                key={`regular-${request.id}`}
+                                request={request}
+                                checkPromotion={checkPromotion}
+                            />
+                        )
+                    ))
+                }
                 {openRequests.length === 0 && openPhotoRequests.length === 0 && (
                     <div>
                         <h2>No open requests found.</h2>
