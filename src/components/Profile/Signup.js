@@ -291,12 +291,7 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
                         </>
                     )}
                 {userType === 'individual' && (
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '20px',
-                        marginBottom: '20px'
-                    }}>
+                    <div className='sign-up-grid-container'>
                         <div>
                             <div className="sign-in-input-container">
                                 <label htmlFor="firstName">First Name</label>

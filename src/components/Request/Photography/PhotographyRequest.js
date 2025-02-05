@@ -1037,7 +1037,7 @@ function PhotographyRequest() {
                 </div>
 
                 <div className="form-button-container">
-                    <button className="request-form-back-and-foward-btn" onClick={handleBack} disabled={isSubmitting}>
+                    <button className="request-form-back-btn" onClick={handleBack} disabled={isSubmitting}>
                         Back
                     </button>
                     <button className="request-form-back-and-foward-btn" onClick={handleNext} disabled={isSubmitting}>
