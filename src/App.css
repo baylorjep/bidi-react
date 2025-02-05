@@ -14654,7 +14654,6 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 
   justify-content: center;
   width: 40px;
   height: 40px;
-  border: 2px solid #ccc;
   border-radius: 50%;
   color: #465668;
   font-weight: bold;
@@ -14662,12 +14661,10 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 
 }
 
 .status-check-container.active {
-  border: 2px solid #A328F4;
   color: #A328F4;
 }
 
 .status-check-container.completed {
-  border: 2px solid #A328F4;
   background-color: #A328F4;
   color: white;
 }
