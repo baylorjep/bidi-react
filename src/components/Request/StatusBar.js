@@ -1,7 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { ProgressBar } from 'react-step-progress-bar';
+import 'react-step-progress-bar/styles.css';
 import '../../styles/StatusBar.css';
 
 function StatusBar({ steps, currentStep }) {
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 1350);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 1350);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    if (isMobile) {
+        return (
+            <div className="mobile-status-bar">
+                <ProgressBar
+                    percent={(currentStep / (steps.length - 1)) * 100}
+                    filledBackground="#A328F4"
+                    height="12px"
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="status-bar-container">
             <div className="status-steps-container">

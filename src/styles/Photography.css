@@ -329,3 +329,21 @@
     max-height: 80vh;
     object-fit: contain;
 }
+
+.request-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+}
+
+@media screen and (max-width: 1024px) {
+    .request-summary-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .request-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}

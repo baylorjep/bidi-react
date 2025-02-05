@@ -198,29 +198,13 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
 
     return (
         <div className="sign-in-container" style={{marginBottom:'20px '}}>
-            <div className="sign-in-form-container" style={{height:'auto'}}>
+            <div className="sign-in-form-container" style={{height:'auto', padding:'20px'}}>
 
                 <h1 className="Sign-Up-Page-Header" style={{marginTop:'20px'}}>Create an Account</h1>
                 {errorMessage && <p className="text-danger">{errorMessage}</p>}
 
-                {/*<div className="mt-3 text-center">
-                    <button
-                        type="button"
-                        className="btn btn-google-signin"
-                        onClick={handleGoogleSignUp}
-                        
-                    >
-                        Sign Up with Google
-                    </button>
-                </div>
-
-                <div className="divider" style={{ display: 'flex', alignItems: 'center', margin: '20px 0' }}>
-                    <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ccc', margin: '0 10px' }} />
-                    <span style={{ fontSize: '14px', color: '#666' }}>OR</span>
-                    <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ccc', margin: '0 10px' }} />
-                </div>*/}
-
-                {userType === 'business' && (
+                <form onSubmit={handleSubmit}>
+                    {userType === 'business' && (
                         <>
                             <div className="sign-in-input-container">
                             <label htmlFor="businessName">Business Name</label>
@@ -307,88 +291,97 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
                         </>
                     )}
                 {userType === 'individual' && (
-                    <>
-                        <div className="sign-in-input-container">
-                            <label htmlFor="firstName">First Name</label>
-                            <input
-                                className="sign-in-form"
-                                id="firstName"
-                                name="firstName"
-                                type="text"
-                                placeholder="First Name"
-                                value={formData.firstName}
-                                onChange={handleChange}
-                                required
-                            />
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '20px',
+                        marginBottom: '20px'
+                    }}>
+                        <div>
+                            <div className="sign-in-input-container">
+                                <label htmlFor="firstName">First Name</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="firstName"
+                                    name="firstName"
+                                    type="text"
+                                    placeholder="First Name"
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="sign-in-input-container">
+                                <label htmlFor="lastName">Last Name</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="lastName"
+                                    name="lastName"
+                                    type="text"
+                                    placeholder="Last Name"
+                                    value={formData.lastName}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="sign-in-input-container">
+                                <label htmlFor="phone">Phone Number</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="phone"
+                                    name="phone"
+                                    type="tel"
+                                    placeholder="Phone Number"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
                         </div>
-                        <div className="sign-in-input-container">
-                            <label htmlFor="lastName">Last Name</label>
-                            <input
-                                className="sign-in-form"
-                                id="lastName"
-                                name="lastName"
-                                type="text"
-                                placeholder="Last Name"
-                                value={formData.lastName}
-                                onChange={handleChange}
-                                required
-                            />
+                        <div>
+                            <div className="sign-in-input-container">
+                                <label htmlFor="email">Email</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    placeholder="Email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="sign-in-input-container">
+                                <label htmlFor="password">Password</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    placeholder="Password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="sign-in-input-container">
+                                <label htmlFor="confirmPassword">Confirm Password</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    type="password"
+                                    placeholder="Confirm Password"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
                         </div>
-                    </>
+                    </div>
                 )}
-                    <div className="sign-in-input-container">
-                        <label htmlFor="phone">Phone Number</label>
-                        <input
-                            className="sign-in-form"
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            placeholder="Phone Number"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-                <form onSubmit={handleSubmit}>
-                <div className="sign-in-input-container">
-                        <label htmlFor="email">Email</label>
-                        <input
-                            className="sign-in-form"
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="Email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-                    <div className="sign-in-input-container">
-                        <label htmlFor="password">Password</label>
-                        <input
-                            className="sign-in-form"
-                            id="password"
-                            name="password"
-                            type="password"
-                            placeholder="Password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-                    <div className="sign-in-input-container" style={{marginBottom:'20px'}}>
-                        <label htmlFor="confirmPassword">Confirm Password</label>
-                        <input
-                            className="sign-in-form"
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            type="password"
-                            placeholder="Confirm Password"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
+
                     <div 
     className="notification-bar" 
     style={{

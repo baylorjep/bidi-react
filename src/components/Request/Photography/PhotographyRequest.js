@@ -651,8 +651,8 @@ function PhotographyRequest() {
     // Summary Component
     const renderSummary = () => {
         return (
-            <div className="event-summary-container">
-                <div className="request-grid">
+            <div className="event-summary-container" style={{padding:'0'}}>
+                <div className="request-summary-grid">
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Event Type</div>
                         <div className="request-info">{formData.eventType}</div>  
@@ -712,7 +712,6 @@ function PhotographyRequest() {
                         flexDirection: 'column', 
                         gap: '8px', 
                         alignItems:'flex-start',
-                        marginTop: '20px'
                     }}>
                         <div className="request-subtype">Additional Comments</div>
                         <div 
@@ -1013,16 +1012,26 @@ function PhotographyRequest() {
         <div className='request-form-overall-container'>
             {isAuthModalOpen && <AuthModal setIsModalOpen={setIsAuthModalOpen} onSuccess={handleAuthSuccess} />}
             {isModalOpen && <SignInModal setIsModalOpen={setIsModalOpen} />}
-            <div className="request-form-status-container">
+            <div className="request-form-status-container desktop-only" style={{ height: '75vh', padding:'40px' }}>
                 <div className="request-form-box">
                     <StatusBar steps={getSteps()} currentStep={currentStep} />
                 </div>
             </div>
-
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
-                <h2 className="request-form-header" style={{textAlign:'left',marginLeft:"20px"}}>
+                {/* Status bar container moved above title for desktop */}
+
+
+                <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
                     {getSteps()[currentStep]}
                 </h2>
+                
+                {/* Mobile status bar */}
+                <div className="request-form-status-container mobile-only">
+                    <div className="request-form-box">
+                        <StatusBar steps={getSteps()} currentStep={currentStep} />
+                    </div>
+                </div>
+
                 <div className="form-scrollable-content">
                     {getCurrentComponent()}
                 </div>
