@@ -82,6 +82,7 @@ import ScrollToTop from './components/ScrollToTop';
 import BidsPage from './components/Individual/BidsPage'
 import PrivateRoute from './components/PrivateRoute';
 import VideographyRequest from './components/Request/Videography/VideographyRequest';
+import DjRequest from './components/Request/DJ/DjRequest';
 
 function App() {
 
@@ -173,6 +174,7 @@ function App() {
                         {/* Photography Routes */}
                         <Route path="/request/photography" element={<PhotographyRequest />} />
                         <Route path="/request/videography" element={<VideographyRequest />} />
+                        <Route path="/request/dj" element={<DjRequest />} />
 
                     </Routes>
                 </div>

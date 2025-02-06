@@ -33,9 +33,11 @@ function RequestCategories() {
         }));
         
         // Dynamic navigation based on category
-        const dedicatedFormCategories = ['photography', 'videography'];
+        const dedicatedFormCategories = ['photography', 'videography', 'dj services']; // Added 'dj services'
         if (dedicatedFormCategories.includes(category)) {
-            navigate(`/request/${category}`);
+            // Convert 'dj services' to 'dj' in the URL
+            const routePath = category === 'dj services' ? 'dj' : category;
+            navigate(`/request/${routePath}`);
         } else {
             navigate('/request-form', { 
                 state: { 

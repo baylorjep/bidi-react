@@ -546,3 +546,83 @@
     background-color: #f5f5f5;
     cursor: not-allowed;
 }
+
+/* Add these new styles */
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.radio-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.radio-option label {
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0;
+}
+
+.start-end-time {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+@media screen and (max-width: 768px) {
+    .start-end-time {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+}
+
+/* ...existing styles... */
+
+.equipment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    padding: 10px 0;
+}
+
+.equipment-option-button {
+    padding: 15px 20px;
+    border: 2px solid #9F8AB3;
+    border-radius: 8px;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    font-size: 16px;
+    width: 100%;
+}
+
+.equipment-option-button:hover {
+    border-color: #a328f4;
+    background-color: rgba(163, 40, 244, 0.05);
+}
+
+.equipment-option-button.selected {
+    border-color: #a328f4;
+    background-color: rgba(163, 40, 244, 0.05);
+    color: #a328f4;
+}
+
+@media (max-width: 768px) {
+    .equipment-option-button {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+}
+

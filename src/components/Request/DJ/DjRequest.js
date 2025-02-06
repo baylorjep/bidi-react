@@ -45,7 +45,7 @@ const PhotoModal = ({ photo, onClose }) => {
     );
 };
 
-function VideographyRequest() {
+function DjRequest() {
     const navigate = useNavigate();
     const location = useLocation();
     const [currentStep, setCurrentStep] = useState(0);
@@ -68,12 +68,12 @@ function VideographyRequest() {
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
-        const saved = JSON.parse(localStorage.getItem('videographyRequest') || '{}');
+        const saved = JSON.parse(localStorage.getItem('djRequest') || '{}');
         const defaultWeddingDetails = {
             ceremony: false,    
+            cocktailHour: false,
             reception: false,
-            luncheon: false,
-            preCeremony: false
+            afterParty: false
         };
 
         return {
@@ -93,15 +93,15 @@ function VideographyRequest() {
                 weddingDetails: saved.eventDetails?.weddingDetails || defaultWeddingDetails,
                 startTime: saved.eventDetails?.startTime || '',
                 endTime: saved.eventDetails?.endTime || '',
-                secondPhotographer: saved.eventDetails?.secondPhotographer || '',
                 stylePreferences: saved.eventDetails?.stylePreferences || {},
-                deliverables: saved.eventDetails?.deliverables || {},
+                musicPreferences: saved.eventDetails?.musicPreferences || {},
+                equipment: saved.eventDetails?.equipment || {},
+                specialSongs: saved.eventDetails?.specialSongs || '',
                 additionalInfo: saved.eventDetails?.additionalInfo || '',
                 dateFlexibility: saved.eventDetails?.dateFlexibility || 'specific', // 'specific', 'range', 'flexible'
                 dateTimeframe: saved.eventDetails?.dateTimeframe || '', // '3months', '6months', '1year'
                 startTimeUnknown: saved.eventDetails?.startTimeUnknown || false,
                 endTimeUnknown: saved.eventDetails?.endTimeUnknown || false,
-                secondPhotographerUnknown: saved.eventDetails?.secondPhotographerUnknown || false,
                 durationUnknown: saved.eventDetails?.durationUnknown || false,
                 numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
                 pinterestBoard: saved.eventDetails?.pinterestBoard || '',
@@ -116,10 +116,10 @@ function VideographyRequest() {
     });
 
     const getSteps = () => [
-        'Videography Details',
+        'DJ Details',
         formData.eventType ? `${formData.eventType} Details` : 'Event Details',
         'Personal Details',
-        'Inspiration',
+        'Music Preferences',  // Changed from 'Music Preferences'
         'Review'
     ];
 
@@ -129,12 +129,12 @@ function VideographyRequest() {
                 return [
                     'Basic Details',
                     'Coverage',
-                    'Style & Deliverables',
+                    'Equipment & Add-ons',
                     'Budget & Additional Info'
                 ];
 
             default:
-                return ['Basic Info', 'Coverage', 'Style & Deliverables','Additional Details'];
+                return ['Basic Info', 'Coverage', 'Music & Equipment', 'Additional Details'];
         }
     };
 
@@ -145,7 +145,7 @@ function VideographyRequest() {
                 eventType: event
             };
             // Save to localStorage
-            localStorage.setItem('videographyRequest', JSON.stringify(newData));
+            localStorage.setItem('djRequest', JSON.stringify(newData));
             return newData;
         });
     };
@@ -153,7 +153,7 @@ function VideographyRequest() {
     const handleInputChange = (field, value) => {
         setFormData(prev => {
             const newData = { ...prev, [field]: value };
-            localStorage.setItem('videographyRequest', JSON.stringify(newData));
+            localStorage.setItem('djRequest', JSON.stringify(newData));
             return newData;
         });
     };
@@ -161,7 +161,7 @@ function VideographyRequest() {
     // Event Selection Component
     const renderEventSelection = () => {
         const eventOptions = [
-            'Wedding', 'Engagement', 'Birthday','Religious Ceremony', 'Event', 'Other'
+            'Wedding', 'Corporate Event', 'Birthday', 'School Dance', 'Club Event', 'Quinceñera', 'Other'
         ];
 
         return (
@@ -243,7 +243,7 @@ function VideographyRequest() {
                                     className="custom-input"
                                 />
                                 <label htmlFor="startDate" className="custom-label">
-                                    Wedding Date
+                                    Event Date
                                 </label>
                             </div>
                         )}
@@ -402,13 +402,13 @@ function VideographyRequest() {
                     <div className="wedding-details-container">
                         {formData.eventType === 'Wedding' && (
                             <div className="wedding-photo-options" style={{paddingTop:'0', paddingBottom:'0'}}>
-                                <div className='photo-options-header'>What moments do you want captured?</div>
+                                <div className='photo-options-header'>What parts of the event need DJ coverage?</div>
                                 <div className="photo-options-grid">
                                     {[
-                                        { key: 'preCeremony', label: 'Pre-Ceremony' },
                                         { key: 'ceremony', label: 'Ceremony' },
-                                        { key: 'luncheon', label: 'Luncheon' },
-                                        { key: 'reception', label: 'Reception' }
+                                        { key: 'cocktailHour', label: 'Cocktail Hour' },
+                                        { key: 'reception', label: 'Reception' },
+                                        { key: 'afterParty', label: 'After Party' }
                                     ].map(({ key, label }) => (
                                         <div key={key} className="photo-option-item">
                                             <input
@@ -495,82 +495,94 @@ function VideographyRequest() {
                                 Expected Number of People
                             </label>
                         </div>
-
-                        <div className="custom-input-container">
-                            <select
-                                name="secondPhotographer"
-                                value={formData.eventDetails.secondPhotographer}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    secondPhotographer: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                                <option value="undecided">Let photographer recommend</option>
-                            </select>
-                            <label htmlFor="secondPhotographer" className="custom-label">
-                                Second Photographer?
-                            </label>
-                        </div>
                     </div>
                 );
 
-            case 2: // Style & Deliverables
+            case 2: // Music & Equipment
                 return (
                     <div className="wedding-details-container">
                         <div className="wedding-photo-options">
-                            <div className='photo-options-header'>Preferred Videography Style</div>
-                            <div className="photo-options-grid">
-                                {[
-                                    { key: 'brightAiry', label: 'Bright & Airy' },
-                                    { key: 'darkMoody', label: 'Dark & Moody' },
-                                    { key: 'filmEmulation', label: 'Film-Like' },
-                                    { key: 'traditional', label: 'Traditional/Classic' },
-                                    { key: 'documentary', label: 'Documentary/Candid' },
-                                    { key: 'artistic', label: 'Artistic/Creative' },
-                                ].map(({ key, label }) => (
-                                    <div key={key} className="photo-option-item">
-                                        <input
-                                            type="checkbox"
-                                            id={key}
-                                            checked={formData.eventDetails.stylePreferences?.[key] || false}
-                                            onChange={(e) => handleInputChange('eventDetails', {
-                                                ...formData.eventDetails,
-                                                stylePreferences: {
-                                                    ...formData.eventDetails.stylePreferences,
-                                                    [key]: e.target.checked
-                                                }
-                                            })}
-                                        />
-                                        <label htmlFor={key}>{label}</label>
-                                    </div>
-                                ))}
+                            <div className='photo-options-header'>Equipment Requirements</div>
+                            <div className="equipment-options">
+                                <button
+                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'venueProvided' ? 'selected' : ''}`}
+                                    onClick={() => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        equipmentNeeded: 'venueProvided'
+                                    })}
+                                >
+                                    ✅ The venue provides sound and lighting equipment
+                                </button>
+                                <button
+                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'djBringsAll' ? 'selected' : ''}`}
+                                    onClick={() => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        equipmentNeeded: 'djBringsAll'
+                                    })}
+                                >
+                                    🎵 The DJ needs to bring all equipment
+                                </button>
+                                <button
+                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'djBringsSome' ? 'selected' : ''}`}
+                                    onClick={() => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        equipmentNeeded: 'djBringsSome'
+                                    })}
+                                >
+                                    🎛️ The DJ needs to bring some equipment
+                                </button>
+                                <button
+                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'unknown' ? 'selected' : ''}`}
+                                    onClick={() => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        equipmentNeeded: 'unknown'
+                                    })}
+                                >
+                                    ❓ I'm not sure about the equipment requirements
+                                </button>
                             </div>
+
+                            {formData.eventDetails.equipmentNeeded === 'djBringsSome' && (
+                                <div className="custom-input-container" style={{ marginTop: '20px' }}>
+                                    <ReactQuill
+                                        value={formData.eventDetails.equipmentNotes || ''}
+                                        onChange={(content) => handleInputChange('eventDetails', {
+                                            ...formData.eventDetails,
+                                            equipmentNotes: content
+                                        })}
+                                        modules={modules}
+                                        placeholder="Please specify what equipment the DJ needs to bring..."
+                                    />
+                                    <label htmlFor="equipmentNotes" className="custom-label">
+                                        Equipment Details
+                                    </label>
+                                </div>
+                            )}
                         </div>
 
                         <div className="wedding-photo-options">
-                            <div className='photo-options-header'>Desired Deliverables</div>
+                            <div className='photo-options-header'>Add-ons</div>
+                            <span className='photo-options-header' style={{color:'gray', fontSize:'12px'}}>(optional)</span>
                             <div className="photo-options-grid">
                                 {[
-                                    { key: 'digitalFiles', label: 'Digital Files' },
-                                    { key: 'printRelease', label: 'Print Release' },
-                                    { key: 'weddingAlbum', label: 'Wedding Album' },
-                                    { key: 'prints', label: 'Professional Prints' },
-                                    { key: 'rawFiles', label: 'RAW Footage' },
-                                    { key: 'engagement', label: 'Engagement Session' },
+                                    { key: 'mcServices', label: '🎤 MC Services' },
+                                    { key: 'liveMixing', label: '🎶 Live Mixing / Scratching' },
+                                    { key: 'uplighting', label: '🏮 Uplighting Package' },
+                                    { key: 'fogMachine', label: '🌫️ Fog Machine' },
+                                    { key: 'specialFx', label: '🎇 Cold Sparks / Special FX' },
+                                    { key: 'photoBooth', label: '📸 Photo Booth Service' },
+                                    { key: 'eventRecording', label: '🎥 Event Recording' },
+                                    { key: 'karaoke', label: '🎵 Karaoke Setup' },
                                 ].map(({ key, label }) => (
                                     <div key={key} className="photo-option-item">
                                         <input
                                             type="checkbox"
                                             id={key}
-                                            checked={formData.eventDetails.deliverables?.[key] || false}
+                                            checked={formData.eventDetails.additionalServices?.[key] || false}
                                             onChange={(e) => handleInputChange('eventDetails', {
                                                 ...formData.eventDetails,
-                                                deliverables: {
-                                                    ...formData.eventDetails.deliverables,
+                                                additionalServices: {
+                                                    ...formData.eventDetails.additionalServices,
                                                     [key]: e.target.checked
                                                 }
                                             })}
@@ -597,6 +609,7 @@ function VideographyRequest() {
                                 className="custom-input"
                             >
                                 <option value="">Select Budget Range</option>
+                                <option value="under1000">Under $1,000</option>
                                 <option value="1000-2000">$1,000 - $2,000</option>
                                 <option value="2000-3000">$2,000 - $3,000</option>
                                 <option value="3000-4000">$3,000 - $4,000</option>
@@ -616,7 +629,7 @@ function VideographyRequest() {
                                     additionalInfo: content
                                 })}
                                 modules={modules}
-                                placeholder="Any special requests or additional information photographers should know..."
+                                placeholder="Any special requests or additional information DJs should know..."
                             />
                             <label htmlFor="additionalInfo" className="custom-label">
                                 Additional Information
@@ -799,7 +812,7 @@ function VideographyRequest() {
             setFormData(prev => {
                 const updatedPhotos = [...prev.photos, ...newPhotos];
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('videographyRequest', JSON.stringify(newData));
+                localStorage.setItem('djRequest', JSON.stringify(newData));
                 return newData;
             });
             
@@ -846,7 +859,7 @@ function VideographyRequest() {
             setFormData(prev => {
                 const updatedPhotos = prev.photos.filter(photo => photo.url !== photoUrl);
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('videographyRequest', JSON.stringify(newData));
+                localStorage.setItem('djRequest', JSON.stringify(newData));
                 return newData;
             });
         } catch (error) {
@@ -876,81 +889,72 @@ function VideographyRequest() {
     
     const renderPhotoUpload = () => {
         return (
-            <div className="photo-upload-section">
-                <div className="photo-preview-container">
-                    {formData.photos.length === 0 ? (
-                        <div
-                            className="photo-upload-box"
-                            onClick={() => document.getElementById('file-input').click()}
-                        >
-                            <input
-                                type="file"
-                                id="file-input"
-                                multiple
-                                onChange={handleFileSelect}
-                                style={{ display: 'none' }}
-                            />
-                            <svg xmlns="http://www.w3.org/2000/svg" width="54" height="45" viewBox="0 0 54 45" fill="none">
-                                <path d="M40.6939 15.6916C40.7126 15.6915 40.7313 15.6915 40.75 15.6915C46.9632 15.6915 52 20.2889 52 25.9601C52 31.2456 47.6249 35.5984 42 36.166M40.6939 15.6916C40.731 15.3158 40.75 14.9352 40.75 14.5505C40.75 7.61906 34.5939 2 27 2C19.8081 2 13.9058 7.03987 13.3011 13.4614M40.6939 15.6916C40.4383 18.2803 39.3216 20.6423 37.6071 22.5372M13.3011 13.4614C6.95995 14.0121 2 18.8869 2 24.8191C2 30.339 6.2944 34.9433 12 36.0004M13.3011 13.4614C13.6956 13.4271 14.0956 13.4096 14.5 13.4096C17.3146 13.4096 19.9119 14.2586 22.0012 15.6915" stroke="#141B34" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M27 24.7783L27 43.0002M27 24.7783C25.2494 24.7783 21.9788 29.3208 20.75 30.4727M27 24.7783C28.7506 24.7783 32.0212 29.3208 33.25 30.4727" stroke="#141B34" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <div className="photo-upload-text">Drag & Drop to Upload or Click to Browse</div>
-                        </div>
-                    ) : (
-                        <>
-                            <PhotoGrid 
-                                photos={formData.photos}
-                                removePhoto={(index) => {
-                                    const newPhotos = formData.photos.filter((_, i) => i !== index);
-                                    handleInputChange('photos', newPhotos);
-                                }}
-                                openModal={(photo) => {
-                                    setSelectedPhoto(photo);
-                                    setIsPhotoModalOpen(true);
-                                }}
-                            />
-                            <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                                <button 
-                                    onClick={() => document.getElementById('file-input-more').click()}
-                                    className="add-more-photos-btn"
-                                >
-                                    <input
-                                        type="file"
-                                        id="file-input-more"
-                                        multiple
-                                        onChange={handleFileSelect}
-                                      
-                                        style={{ display: 'none' }}
-                                    />
-                                    <span className='add-more-text'>Add More Photos</span>
-                                </button>
+            <div className="wedding-details-container">
+                <div className="wedding-photo-options">
+                    <div className='photo-options-header'>Music Style Preferences</div>
+                    <div className="photo-options-grid">
+                        {[
+                            { key: 'top40', label: 'Top 40' },
+                            { key: 'hiphop', label: 'Hip Hop' },
+                            { key: 'house', label: 'House' },
+                            { key: 'latin', label: 'Latin' },
+                            { key: 'rock', label: 'Rock' },
+                            { key: 'classics', label: 'Classics' },
+                            { key: 'country', label: 'Country' },
+                            { key: 'jazz', label: 'Jazz' },
+                            { key: 'rb', label: 'R&B' },
+                            { key: 'edm', label: 'EDM' },
+                            { key: 'pop', label: 'Pop' },
+                            { key: 'international', label: 'International' },
+                        ].map(({ key, label }) => (
+                            <div key={key} className="photo-option-item">
+                                <input
+                                    type="checkbox"
+                                    id={key}
+                                    checked={formData.eventDetails.musicPreferences?.[key] || false}
+                                    onChange={(e) => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        musicPreferences: {
+                                            ...formData.eventDetails.musicPreferences,
+                                            [key]: e.target.checked
+                                        }
+                                    })}
+                                />
+                                <label htmlFor={key}>{label}</label>
                             </div>
-                        </>
-                    )}
+                        ))}
+                    </div>
                 </div>
-                {isPhotoModalOpen && (
-                    <PhotoModal 
-                        photo={selectedPhoto} 
-                        onClose={() => {
-                            setSelectedPhoto(null);
-                            setIsPhotoModalOpen(false);
-                        }} 
-                    />
-                )}
+
                 <div className="custom-input-container" style={{ marginTop: '20px' }}>
                     <input
                         type="url"
-                        name="pinterestBoard"
-                        value={formData.eventDetails.pinterestBoard || ''}
+                        name="playlist"
+                        value={formData.eventDetails.playlist || ''}
                         onChange={(e) => handleInputChange('eventDetails', {
                             ...formData.eventDetails,
-                            pinterestBoard: e.target.value
+                            playlist: e.target.value
                         })}
-                        placeholder="Paste your Pinterest board link here"
+                        placeholder="Paste your Spotify/Apple Music playlist link here"
                         className="custom-input"
                     />
-                    <label htmlFor="pinterestBoard" className="custom-label">
-                        Pinterest Board Link
+                    <label htmlFor="playlist" className="custom-label">
+                        Music Playlist Link
+                    </label>
+                </div>
+
+                <div className="custom-input-container">
+                    <ReactQuill
+                        value={formData.eventDetails.specialSongs || ''}
+                        onChange={(content) => handleInputChange('eventDetails', {
+                            ...formData.eventDetails,
+                            specialSongs: content
+                        })}
+                        modules={modules}
+                        placeholder="List any must-play songs or specific tracks for key moments..."
+                    />
+                    <label htmlFor="specialSongs" className="custom-label">
+                        Special Song Requests
                     </label>
                 </div>
             </div>
@@ -1035,8 +1039,8 @@ function VideographyRequest() {
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Pinterest Board Link</div>
-                        <div className="request-info">{formData.eventDetails.pinterestBoard}</div>
+                        <div className="request-subtype">Playlist Link</div>
+                        <div className="request-info">{formData.eventDetails.playlist || 'Not provided'}</div>
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -1050,18 +1054,13 @@ function VideographyRequest() {
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Second Photographer</div>
-                        <div className="request-info">{formData.eventDetails.secondPhotographer}</div>
+                        <div className="request-subtype">Music Preferences</div>
+                        <div className="request-info">{Object.keys(formData.eventDetails.musicPreferences).filter(key => formData.eventDetails.musicPreferences[key]).join(', ')}</div>
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Style Preferences</div>
-                        <div className="request-info">{Object.keys(formData.eventDetails.stylePreferences).filter(key => formData.eventDetails.stylePreferences[key]).join(', ')}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Deliverables</div>
-                        <div className="request-info">{Object.keys(formData.eventDetails.deliverables).filter(key => formData.eventDetails.deliverables[key]).join(', ')}</div>
+                        <div className="request-subtype">Equipment</div>
+                        <div className="request-info">{Object.keys(formData.eventDetails.equipment).filter(key => formData.eventDetails.equipment[key]).join(', ')}</div>
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -1070,6 +1069,58 @@ function VideographyRequest() {
                             {formData.eventDetails.startTime || 'Not specified'} - {formData.eventDetails.endTime || 'Not specified'}
                         </div>
                     </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Equipment Setup</div>
+                        <div className="request-info">
+                            {formData.eventDetails.equipmentNeeded === 'venueProvided' && 'Venue provides equipment'}
+                            {formData.eventDetails.equipmentNeeded === 'djBringsAll' && 'DJ brings all equipment'}
+                            {formData.eventDetails.equipmentNeeded === 'djBringsSome' && 'DJ brings some equipment'}
+                            {formData.eventDetails.equipmentNeeded === 'unknown' && 'Equipment requirements to be discussed'}
+                        </div>
+                    </div>
+
+                    {formData.eventDetails.equipmentNeeded === 'djBringsSome' && (
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                            <div className="request-subtype">Equipment Notes</div>
+                            <div className="request-info" dangerouslySetInnerHTML={{ __html: formData.eventDetails.equipmentNotes }} />
+                        </div>
+                    )}
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Additional Equipment</div>
+                        <div className="request-info">
+                            {Object.keys(formData.eventDetails.additionalEquipment || {})
+                                .filter(key => formData.eventDetails.additionalEquipment[key])
+                                .join(', ')}
+                        </div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Add-ons</div>
+                        <div className="request-info">
+                            {Object.entries(formData.eventDetails.additionalServices || {})
+                                .filter(([_, value]) => value)
+                                .map(([key, _]) => {
+                                    const service = {
+                                        mcServices: '🎤 MC Services',
+                                        extendedHours: '🎧 Extended Hours',
+                                        customPlaylist: '📀 Custom Playlist',
+                                        liveMixing: '🎶 Live Mixing',
+                                        uplighting: '🏮 Uplighting',
+                                        fogMachine: '🌫️ Fog Machine',
+                                        specialFx: '🎇 Special FX',
+                                        photoBooth: '📸 Photo Booth',
+                                        eventRecording: '🎥 Event Recording',
+                                        karaoke: '🎵 Karaoke',
+                                        extraSound: '🔊 Extra Sound'
+                                    }[key];
+                                    return service;
+                                })
+                                .join(', ')}
+                        </div>
+                    </div>
+
                 </div>
 
                 {formData.eventDetails.additionalComments && (
@@ -1195,7 +1246,7 @@ function VideographyRequest() {
 
             // Generate event title using first name from database
             const firstName = userData.first_name || 'Unknown';
-            const generatedEventTitle = `${firstName}'s ${formData.eventType} Video`;
+            const generatedEventTitle = `${firstName}'s ${formData.eventType} DJ`;
 
             // Create coverage object from wedding details
             const coverage = {
@@ -1225,16 +1276,16 @@ function VideographyRequest() {
                 indoor_outdoor: formData.eventDetails.indoorOutdoor,
                 price_range: formData.eventDetails.priceRange,
                 additional_comments: formData.eventDetails.additionalInfo || null,
-                style_preferences: formData.eventDetails.stylePreferences || {},
-                second_photographer: formData.eventDetails.secondPhotographer === 'yes',
-                deliverables: formData.eventDetails.deliverables || {},
+                style_preferences: formData.eventDetails.musicPreferences || {},
+                equipment_needs: formData.eventDetails.equipment || {},
+                special_songs: formData.eventDetails.specialSongs || null,
                 pinterest_link: formData.eventDetails.pinterestBoard || null,
                 coverage: coverage, // Add the coverage object
                 status: 'pending'
             };
 
             const { data: request, error: requestError } = await supabase
-                .from('videography_requests')
+                .from('dj_requests')
                 .insert([requestData])
                 .select()
                 .single();
@@ -1258,9 +1309,9 @@ function VideographyRequest() {
                         .from('request-media')
                         .getPublicUrl(filePath);
 
-                    // Store photo information in videography_photos table
+                    // Store photo information in dj_photos table
                     return supabase
-                        .from('videography_photos')
+                        .from('dj_photos')
                         .insert([{
                             request_id: request.id,
                             user_id: user.id,
@@ -1273,11 +1324,11 @@ function VideographyRequest() {
             }
 
             // Clear form data and navigate to success page
-            localStorage.removeItem('videographyRequest');
+            localStorage.removeItem('djRequest');
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
-                    message: 'Your videography request has been submitted successfully!'
+                    message: 'Your DJ request has been submitted successfully!'
                 }
             });
 
@@ -1431,4 +1482,4 @@ function VideographyRequest() {
     );
 }
 
-export default VideographyRequest;
+export default DjRequest;

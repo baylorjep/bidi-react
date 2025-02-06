@@ -228,9 +228,9 @@ function PhotographyRequest() {
                                 })}
                                 className="custom-input"
                             >
-                                <option value="specific">I have a specific date</option>
-                                <option value="range">I have a date range in mind</option>
-                                <option value="flexible">I'm flexible with the date</option>
+                                <option value="specific">Specific Date</option>
+                                <option value="range">Date Range</option>
+                                <option value="flexible">I'm Flexible</option>
                             </select>
                             <label htmlFor="dateFlexibility" className="custom-label">
                                 Date Flexibility
@@ -315,6 +315,7 @@ function PhotographyRequest() {
                         )}
 
                         {/* Rest of the time inputs */}
+                        <div className='start-end-time'>
                         <div className="custom-input-container">
                             <div className="input-with-unknown">
                                 <input
@@ -378,11 +379,11 @@ function PhotographyRequest() {
                                 End Time
                             </label>
                         </div>
+                        </div>
+                        
 
                         <div className="custom-input-container">
                             <select
-                                name="indoorOutdoor"
-                                value={formData.eventDetails.indoorOutdoor}
                                 onChange={(e) => handleInputChange('eventDetails', {
                                     ...formData.eventDetails,
                                     indoorOutdoor: e.target.value
@@ -516,7 +517,7 @@ function PhotographyRequest() {
                                 <option value="undecided">Let photographer recommend</option>
                             </select>
                             <label htmlFor="secondPhotographer" className="custom-label">
-                                Would you like a second photographer?
+                                Second Photographer?
                             </label>
                         </div>
                     </div>
@@ -963,6 +964,45 @@ function PhotographyRequest() {
 
     // Summary Component
     const renderSummary = () => {
+        // Helper function to render date info based on flexibility
+        const renderDateInfo = () => {
+            switch (formData.eventDetails.dateFlexibility) {
+                case 'specific':
+                    return (
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                            <div className="request-subtype">Date</div>
+                            <div className="request-info">
+                                {formData.eventDetails.startDate ? new Date(formData.eventDetails.startDate).toLocaleDateString() : 'Not specified'}
+                            </div>
+                        </div>
+                    );
+                case 'range':
+                    return (
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                            <div className="request-subtype">Date Range</div>
+                            <div className="request-info">
+                                {`${formData.eventDetails.startDate ? new Date(formData.eventDetails.startDate).toLocaleDateString() : 'Not specified'} - ${formData.eventDetails.endDate ? new Date(formData.eventDetails.endDate).toLocaleDateString() : 'Not specified'}`}
+                            </div>
+                        </div>
+                    );
+                case 'flexible':
+                    return (
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                            <div className="request-subtype">Date Preference</div>
+                            <div className="request-info">
+                                {formData.eventDetails.dateTimeframe === '3months' && 'Within 3 months'}
+                                {formData.eventDetails.dateTimeframe === '6months' && 'Within 6 months'}
+                                {formData.eventDetails.dateTimeframe === '1year' && 'Within 1 year'}
+                                {formData.eventDetails.dateTimeframe === 'more' && 'More than 1 year'}
+                                {!formData.eventDetails.dateTimeframe && 'Not specified'}
+                            </div>
+                        </div>
+                    );
+                default:
+                    return null;
+            }
+        };
+
         return (
             <div className="event-summary-container" style={{padding:'0'}}>
                 <div className="request-summary-grid">
@@ -971,18 +1011,9 @@ function PhotographyRequest() {
                         <div className="request-info">{formData.eventType}</div>  
                     </div>  
 
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">{formData.eventDetails.dateType === 'range' ? 'Start Date ' : 'Date '}</div>
-                        <div className="request-info">{formData.eventDetails.startDate ? new Date(formData.eventDetails.startDate).toLocaleDateString() : ''}</div>
-                    </div>
+                    {renderDateInfo()}
 
-                    {formData.eventDetails.dateType === 'range' && (
-                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                            <div className="request-subtype">End Date</div>
-                            <div className="request-info">{formData.eventDetails.endDate ? new Date(formData.eventDetails.endDate).toLocaleDateString() : ''}</div>
-                        </div>
-                    )}
-
+                    {/* Rest of the summary items */}
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Location</div>
                         <div className="request-info">{formData.eventDetails.location}</div>
@@ -1014,13 +1045,10 @@ function PhotographyRequest() {
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Start Time</div>
-                        <div className="request-info">{formData.eventDetails.startTime}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">End Time</div>
-                        <div className="request-info">{formData.eventDetails.endTime}</div>
+                        <div className="request-subtype">Time</div>
+                        <div className="request-info">
+                            {formData.eventDetails.startTime || 'Not specified'} - {formData.eventDetails.endTime || 'Not specified'}
+                        </div>
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -1133,9 +1161,13 @@ function PhotographyRequest() {
         setIsSubmitting(true);
         setError(null);
 
-        // Validate required fields
-        if (!formData.eventDetails.location || !formData.eventDetails.startDate || !formData.eventDetails.priceRange) {
-            setError('Please fill in all required fields: Location, Date, and Budget.');
+        // Modify validation to account for flexible dates
+        if (!formData.eventDetails.location || 
+            (formData.eventDetails.dateFlexibility === 'specific' && !formData.eventDetails.startDate) ||
+            (formData.eventDetails.dateFlexibility === 'range' && (!formData.eventDetails.startDate || !formData.eventDetails.endDate)) ||
+            (formData.eventDetails.dateFlexibility === 'flexible' && !formData.eventDetails.dateTimeframe) ||
+            !formData.eventDetails.priceRange) {
+            setError('Please fill in all required fields.');
             setIsSubmitting(false);
             return;
         }
@@ -1176,8 +1208,11 @@ function PhotographyRequest() {
                 event_type: formData.eventType,
                 event_title: formData.eventDetails.eventTitle,
                 location: formData.eventDetails.location,
-                start_date: formData.eventDetails.startDate,
-                end_date: formData.eventDetails.endDate || null,
+                // Only include dates if not flexible
+                start_date: formData.eventDetails.dateFlexibility !== 'flexible' ? formData.eventDetails.startDate : null,
+                end_date: formData.eventDetails.dateFlexibility === 'range' ? formData.eventDetails.endDate : null,
+                date_flexibility: formData.eventDetails.dateFlexibility,
+                date_timeframe: formData.eventDetails.dateFlexibility === 'flexible' ? formData.eventDetails.dateTimeframe : null,
                 time_of_day: formData.eventDetails.timeOfDay,
                 num_people: numPeople,
                 duration: duration,
@@ -1320,11 +1355,13 @@ function PhotographyRequest() {
             const subSteps = getDetailsSubSteps();
             if (detailsSubStep < subSteps.length - 1) {
                 // Validate required fields for sub-steps
-                if (detailsSubStep === 0 && (!formData.eventDetails.location || !formData.eventDetails.startDate)) {
-                    setError('Please fill in all required fields: Location and Date.');
+                if (detailsSubStep === 0 && 
+                    (!formData.eventDetails.location || 
+                    (formData.eventDetails.dateFlexibility === 'specific' && !formData.eventDetails.startDate) ||
+                    (formData.eventDetails.dateFlexibility === 'range' && (!formData.eventDetails.startDate || !formData.eventDetails.endDate)))) {
+                    setError('Please fill in all required fields: Location and Date information.');
                     return;
                 }
-                // Move to next sub-step
                 setDetailsSubStep(prev => prev + 1);
             } else {
                 // Validate budget before moving to next main step
