@@ -81,6 +81,7 @@ import ScrollToTop from './components/ScrollToTop';
 // Add this import
 import BidsPage from './components/Individual/BidsPage'
 import PrivateRoute from './components/PrivateRoute';
+import VideographyRequest from './components/Request/Videography/VideographyRequest';
 
 function App() {
 
@@ -171,6 +172,7 @@ function App() {
 
                         {/* Photography Routes */}
                         <Route path="/request/photography" element={<PhotographyRequest />} />
+                        <Route path="/request/videography" element={<VideographyRequest />} />
 
                     </Routes>
                 </div>

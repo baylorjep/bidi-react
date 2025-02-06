@@ -32,9 +32,10 @@ function RequestCategories() {
             specificService: category
         }));
         
-        // Navigate based on category
-        if (category === 'photography') {
-            navigate('/request/photography');
+        // Dynamic navigation based on category
+        const dedicatedFormCategories = ['photography', 'videography'];
+        if (dedicatedFormCategories.includes(category)) {
+            navigate(`/request/${category}`);
         } else {
             navigate('/request-form', { 
                 state: { 

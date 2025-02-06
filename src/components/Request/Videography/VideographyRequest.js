@@ -45,7 +45,7 @@ const PhotoModal = ({ photo, onClose }) => {
     );
 };
 
-function PhotographyRequest() {
+function VideographyRequest() {
     const navigate = useNavigate();
     const location = useLocation();
     const [currentStep, setCurrentStep] = useState(0);
@@ -64,52 +64,24 @@ function PhotographyRequest() {
     const [deletingPhotoUrl, setDeletingPhotoUrl] = useState(null);
     const [uploadingFiles, setUploadingFiles] = useState(0);
     const [addMoreLoading, setAddMoreLoading] = useState(false);
-    const [detailsSubStep, setDetailsSubStep] = useState(0);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
-        const saved = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
-        const defaultWeddingDetails = {
-            gettingReady: false,
-            firstLook: false,
-            ceremony: false,
-            familyPhotos: false,
-            reception: false,
-            danceFloor: false,
-            sendOff: false,
-            bridalParty: false,
-            groomParty: false,
-            decorDetails: false,
-        };
-
+        const saved = JSON.parse(localStorage.getItem('videographyRequest') || '{}');
         return {
             eventType: saved.eventType || '',
-            eventDetails: {
-                eventTitle: saved.eventDetails?.eventTitle || '',
-                location: saved.eventDetails?.location || '',
-                dateType: saved.eventDetails?.dateType || 'specific',
-                startDate: saved.eventDetails?.startDate || '',
-                endDate: saved.eventDetails?.endDate || '',
-                timeOfDay: saved.eventDetails?.timeOfDay || '',
-                numPeople: saved.eventDetails?.numPeople || '',
-                duration: saved.eventDetails?.duration || '',
-                indoorOutdoor: saved.eventDetails?.indoorOutdoor || '',
-                additionalComments: saved.eventDetails?.additionalComments || '',
-                priceRange: saved.eventDetails?.priceRange || '',
-                weddingDetails: saved.eventDetails?.weddingDetails || defaultWeddingDetails,
-                startTime: saved.eventDetails?.startTime || '',
-                endTime: saved.eventDetails?.endTime || '',
-                secondPhotographer: saved.eventDetails?.secondPhotographer || '',
-                stylePreferences: saved.eventDetails?.stylePreferences || {},
-                deliverables: saved.eventDetails?.deliverables || {},
-                additionalInfo: saved.eventDetails?.additionalInfo || '',
-                dateFlexibility: saved.eventDetails?.dateFlexibility || 'specific', // 'specific', 'range', 'flexible'
-                dateTimeframe: saved.eventDetails?.dateTimeframe || '', // '3months', '6months', '1year'
-                startTimeUnknown: saved.eventDetails?.startTimeUnknown || false,
-                endTimeUnknown: saved.eventDetails?.endTimeUnknown || false,
-                secondPhotographerUnknown: saved.eventDetails?.secondPhotographerUnknown || false,
-                durationUnknown: saved.eventDetails?.durationUnknown || false,
-                numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
+            eventDetails: saved.eventDetails || {
+                eventTitle: '',
+                location: '',
+                dateType: 'specific',
+                startDate: '',
+                endDate: '',
+                timeOfDay: '',
+                numPeople: '',
+                duration: '',
+                indoorOutdoor: '',
+                additionalComments: '',
+                priceRange: ''
             },
             personalDetails: saved.personalDetails || {
                 firstName: '',
@@ -121,34 +93,12 @@ function PhotographyRequest() {
     });
 
     const getSteps = () => [
-        'Photography Details',
+        'Videography Details',
         formData.eventType ? `${formData.eventType} Details` : 'Event Details',
         'Personal Details',
         'Add Photos',
         'Review'
     ];
-
-    const getDetailsSubSteps = () => {
-        switch (formData.eventType) {
-            case 'Wedding':
-                return [
-                    'Basic Details',
-                    'Coverage',
-                    'Style & Deliverables',
-                    'Budget & Additional Info'
-                ];
-            case 'Engagement':
-            case 'Couples Session':
-                return ['Basic Info', 'Date & Time', 'Location Details'];
-            case 'Family':
-            case 'Individual / Headshots':
-                return ['Basic Info', 'Date & Time', 'Session Details'];
-            case 'Large Group / Event':
-                return ['Basic Info', 'Date & Time', 'Guest Details', 'Venue Details'];
-            default:
-                return ['Basic Info', 'Date & Time', 'Additional Details'];
-        }
-    };
 
     const handleEventSelect = (event) => {
         setFormData(prev => {
@@ -157,7 +107,7 @@ function PhotographyRequest() {
                 eventType: event
             };
             // Save to localStorage
-            localStorage.setItem('photographyRequest', JSON.stringify(newData));
+            localStorage.setItem('videographyRequest', JSON.stringify(newData));
             return newData;
         });
     };
@@ -165,7 +115,7 @@ function PhotographyRequest() {
     const handleInputChange = (field, value) => {
         setFormData(prev => {
             const newData = { ...prev, [field]: value };
-            localStorage.setItem('photographyRequest', JSON.stringify(newData));
+            localStorage.setItem('videographyRequest', JSON.stringify(newData));
             return newData;
         });
     };
@@ -173,9 +123,8 @@ function PhotographyRequest() {
     // Event Selection Component
     const renderEventSelection = () => {
         const eventOptions = [
-            'Wedding', 'Engagement', 'Couples Session', 'Family',
-            'Individual / Headshots', 'Large Group / Event',
-            'Product', 'Maternity', 'Newborn', 'Boudoir Session'
+            'Entire Wedding', 'Engagement', 'Love Story', 'Ceremony',
+            'Reception', 'Drone Coverage', 'Short Film'
         ];
 
         return (
@@ -203,445 +152,215 @@ function PhotographyRequest() {
         ]
     };
 
-    const renderEventDetailsSubStep = () => {
-        switch (detailsSubStep) {
-            case 0: // Basic Wedding Details
-                return (
-                    <div className='form-grid'>
-                        <div className="custom-input-container">
-                            <input
-                                type="text"
-                                name="location"
-                                value={formData.eventDetails.location}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    location: e.target.value
-                                })}
-                                placeholder='Can be a city, county, address, or venue name'
-                                className="custom-input"
-                            />
-                            <label htmlFor="location" className="custom-label">
-                                Location
-                            </label>
-                        </div>
-
-                        <div className="custom-input-container">
-                            <select
-                                name="dateFlexibility"
-                                value={formData.eventDetails.dateFlexibility}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    dateFlexibility: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="specific">I have a specific date</option>
-                                <option value="range">I have a date range in mind</option>
-                                <option value="flexible">I'm flexible with the date</option>
-                            </select>
-                            <label htmlFor="dateFlexibility" className="custom-label">
-                                Date Flexibility
-                            </label>
-                        </div>
-
-                        {formData.eventDetails.dateFlexibility === 'specific' && (
-                            <div className="custom-input-container">
-                                <input
-                                    type="date"
-                                    name="startDate"
-                                    value={formData.eventDetails.startDate}
-                                    onChange={(e) => handleInputChange('eventDetails', {
-                                        ...formData.eventDetails,
-                                        startDate: e.target.value
-                                    })}
-                                    className="custom-input"
-                                />
-                                <label htmlFor="startDate" className="custom-label">
-                                    Wedding Date
-                                </label>
-                            </div>
-                        )}
-
-                        {formData.eventDetails.dateFlexibility === 'range' && (
-                            <>
-                                <div className="custom-input-container">
-                                    <input
-                                        type="date"
-                                        name="startDate"
-                                        value={formData.eventDetails.startDate}
-                                        onChange={(e) => handleInputChange('eventDetails', {
-                                            ...formData.eventDetails,
-                                            startDate: e.target.value
-                                        })}
-                                        className="custom-input"
-                                    />
-                                    <label htmlFor="startDate" className="custom-label">
-                                        Earliest Date
-                                    </label>
-                                </div>
-
-                                <div className="custom-input-container">
-                                    <input
-                                        type="date"
-                                        name="endDate"
-                                        value={formData.eventDetails.endDate}
-                                        onChange={(e) => handleInputChange('eventDetails', {
-                                            ...formData.eventDetails,
-                                            endDate: e.target.value
-                                        })}
-                                        className="custom-input"
-                                    />
-                                    <label htmlFor="endDate" className="custom-label">
-                                        Latest Date
-                                    </label>
-                                </div>
-                            </>
-                        )}
-
-                        {formData.eventDetails.dateFlexibility === 'flexible' && (
-                            <div className="custom-input-container">
-                                <select
-                                    name="dateTimeframe"
-                                    value={formData.eventDetails.dateTimeframe}
-                                    onChange={(e) => handleInputChange('eventDetails', {
-                                        ...formData.eventDetails,
-                                        dateTimeframe: e.target.value
-                                    })}
-                                    className="custom-input"
-                                >
-                                    <option value="">Select timeframe</option>
-                                    <option value="3months">Within 3 months</option>
-                                    <option value="6months">Within 6 months</option>
-                                    <option value="1year">Within 1 year</option>
-                                    <option value="more">More than 1 year</option>
-                                </select>
-                                <label htmlFor="dateTimeframe" className="custom-label">
-                                    Preferred Timeframe
-                                </label>
-                            </div>
-                        )}
-
-                        {/* Rest of the time inputs */}
-                        <div className="custom-input-container">
-                            <div className="input-with-unknown">
-                                <input
-                                    type="time"
-                                    name="startTime"
-                                    value={formData.eventDetails.startTime}
-                                    onChange={(e) => handleInputChange('eventDetails', {
-                                        ...formData.eventDetails,
-                                        startTime: e.target.value,
-                                        startTimeUnknown: false
-                                    })}
-                                    className="custom-input"
-                                    disabled={formData.eventDetails.startTimeUnknown}
-                                />
-                                <label className="unknown-checkbox-container">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.eventDetails.startTimeUnknown}
-                                        onChange={(e) => handleInputChange('eventDetails', {
-                                            ...formData.eventDetails,
-                                            startTime: '',
-                                            startTimeUnknown: e.target.checked
-                                        })}
-                                    />
-                                    <span className="unknown-checkbox-label">Not sure</span>
-                                </label>
-                            </div>
-                            <label htmlFor="startTime" className="custom-label">
-                                Start Time
-                            </label>
-                        </div>
-
-                        <div className="custom-input-container">
-                            <div className="input-with-unknown">
-                                <input
-                                    type="time"
-                                    name="endTime"
-                                    value={formData.eventDetails.endTime}
-                                    onChange={(e) => handleInputChange('eventDetails', {
-                                        ...formData.eventDetails,
-                                        endTime: e.target.value,
-                                        endTimeUnknown: false
-                                    })}
-                                    className="custom-input"
-                                    disabled={formData.eventDetails.endTimeUnknown}
-                                />
-                                <label className="unknown-checkbox-container">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.eventDetails.endTimeUnknown}
-                                        onChange={(e) => handleInputChange('eventDetails', {
-                                            ...formData.eventDetails,
-                                            endTime: '',
-                                            endTimeUnknown: e.target.checked
-                                        })}
-                                    />
-                                    <span className="unknown-checkbox-label">Not sure</span>
-                                </label>
-                            </div>
-                            <label htmlFor="endTime" className="custom-label">
-                                End Time
-                            </label>
-                        </div>
-                    </div>
-                );
-
-            case 1: // Coverage Preferences
-                return (
-                    <div className="wedding-details-container">
-                        {formData.eventType === 'Wedding' && (
-                            <div className="wedding-photo-options" style={{paddingTop:'0', paddingBottom:'0'}}>
-                                <div className='photo-options-header'>What moments do you want captured?</div>
-                                <div className="photo-options-grid">
-                                    {[
-                                        { key: 'preCeremony', label: 'Pre-Ceremony' },
-                                        { key: 'ceremony', label: 'Ceremony' },
-                                        { key: 'luncheon', label: 'Luncheon' },
-                                        { key: 'reception', label: 'Reception' }
-                                    ].map(({ key, label }) => (
-                                        <div key={key} className="photo-option-item">
-                                            <input
-                                                type="checkbox"
-                                                id={key}
-                                                checked={formData.eventDetails.weddingDetails?.[key] || false}
-                                                onChange={(e) => handleInputChange('eventDetails', {
-                                                    ...formData.eventDetails,
-                                                    weddingDetails: {
-                                                        ...formData.eventDetails.weddingDetails,
-                                                        [key]: e.target.checked
-                                                    }
-                                                })}
-                                            />
-                                            <label htmlFor={key}>{label}</label>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="custom-input-container">
-                            <div className="input-with-unknown">
-                                <input
-                                    type="number"
-                                    name="duration"
-                                    value={formData.eventDetails.duration}
-                                    onChange={(e) => handleInputChange('eventDetails', {
-                                        ...formData.eventDetails,
-                                        duration: e.target.value,
-                                        durationUnknown: false
-                                    })}
-                                    className="custom-input"
-                                    disabled={formData.eventDetails.durationUnknown}
-                                    min="1"
-                                />
-                                <label className="unknown-checkbox-container">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.eventDetails.durationUnknown}
-                                        onChange={(e) => handleInputChange('eventDetails', {
-                                            ...formData.eventDetails,
-                                            duration: '',
-                                            durationUnknown: e.target.checked
-                                        })}
-                                    />
-                                    <span className="unknown-checkbox-label">Not sure</span>
-                                </label>
-                            </div>
-                            <label htmlFor="duration" className="custom-label">
-                                Hours of Coverage Needed
-                            </label>
-                        </div>
-
-                        <div className="custom-input-container">
-                            <div className="input-with-unknown">
-                                <input
-                                    type="number"
-                                    name="numPeople"
-                                    value={formData.eventDetails.numPeople}
-                                    onChange={(e) => handleInputChange('eventDetails', {
-                                        ...formData.eventDetails,
-                                        numPeople: e.target.value,
-                                        numPeopleUnknown: false
-                                    })}
-                                    className="custom-input"
-                                    disabled={formData.eventDetails.numPeopleUnknown}
-                                    min="1"
-                                />
-                                <label className="unknown-checkbox-container">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.eventDetails.numPeopleUnknown}
-                                        onChange={(e) => handleInputChange('eventDetails', {
-                                            ...formData.eventDetails,
-                                            numPeople: '',
-                                            numPeopleUnknown: e.target.checked
-                                        })}
-                                    />
-                                    <span className="unknown-checkbox-label">Not sure</span>
-                                </label>
-                            </div>
-                            <label htmlFor="numPeople" className="custom-label">
-                                Expected Number of People
-                            </label>
-                        </div>
-
-                        <div className="custom-input-container">
-                            <select
-                                name="secondPhotographer"
-                                value={formData.eventDetails.secondPhotographer}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    secondPhotographer: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                                <option value="undecided">Let photographer recommend</option>
-                            </select>
-                            <label htmlFor="secondPhotographer" className="custom-label">
-                                Would you like a second photographer?
-                            </label>
-                        </div>
-                    </div>
-                );
-
-            case 2: // Style & Deliverables
-                return (
-                    <div className="wedding-details-container">
-                        <div className="wedding-photo-options">
-                            <div className='photo-options-header'>Preferred Photography Style</div>
-                            <div className="photo-options-grid">
-                                {[
-                                    { key: 'brightAiry', label: 'Bright & Airy' },
-                                    { key: 'darkMoody', label: 'Dark & Moody' },
-                                    { key: 'filmEmulation', label: 'Film-Like' },
-                                    { key: 'traditional', label: 'Traditional/Classic' },
-                                    { key: 'documentary', label: 'Documentary/Candid' },
-                                    { key: 'artistic', label: 'Artistic/Creative' },
-                                ].map(({ key, label }) => (
-                                    <div key={key} className="photo-option-item">
-                                        <input
-                                            type="checkbox"
-                                            id={key}
-                                            checked={formData.eventDetails.stylePreferences?.[key] || false}
-                                            onChange={(e) => handleInputChange('eventDetails', {
-                                                ...formData.eventDetails,
-                                                stylePreferences: {
-                                                    ...formData.eventDetails.stylePreferences,
-                                                    [key]: e.target.checked
-                                                }
-                                            })}
-                                        />
-                                        <label htmlFor={key}>{label}</label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="wedding-photo-options">
-                            <div className='photo-options-header'>Desired Deliverables</div>
-                            <div className="photo-options-grid">
-                                {[
-                                    { key: 'digitalFiles', label: 'Digital Files' },
-                                    { key: 'printRelease', label: 'Print Release' },
-                                    { key: 'weddingAlbum', label: 'Wedding Album' },
-                                    { key: 'prints', label: 'Professional Prints' },
-                                    { key: 'rawFiles', label: 'RAW Files' },
-                                    { key: 'engagement', label: 'Engagement Session' },
-                                ].map(({ key, label }) => (
-                                    <div key={key} className="photo-option-item">
-                                        <input
-                                            type="checkbox"
-                                            id={key}
-                                            checked={formData.eventDetails.deliverables?.[key] || false}
-                                            onChange={(e) => handleInputChange('eventDetails', {
-                                                ...formData.eventDetails,
-                                                deliverables: {
-                                                    ...formData.eventDetails.deliverables,
-                                                    [key]: e.target.checked
-                                                }
-                                            })}
-                                        />
-                                        <label htmlFor={key}>{label}</label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            case 3: // Budget & Additional Info
-                return (
-                    <div className='form-grid'>
-                        <div className="custom-input-container">
-                            <select
-                                name="priceRange"
-                                value={formData.eventDetails.priceRange}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    priceRange: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select Budget Range</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
-                            </select>
-                            <label htmlFor="priceRange" className="custom-label">
-                                Budget Range
-                            </label>
-                        </div>
-
-                        <div className="custom-input-container">
-                            <ReactQuill
-                                value={formData.eventDetails.additionalInfo || ''}
-                                onChange={(content) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    additionalInfo: content
-                                })}
-                                modules={modules}
-                                placeholder="Any special requests or additional information photographers should know..."
-                            />
-                            <label htmlFor="additionalInfo" className="custom-label">
-                                Additional Information
-                            </label>
-                        </div>
-                    </div>
-                );
-
-            default:
-                return null;
-        }
-    };
-
     // Event Details Component
     const renderEventDetails = () => {
-        const subSteps = getDetailsSubSteps();
-        
         return (
-            <div>
-                <div className="sub-steps-indicator">
-                    {subSteps.map((step, index) => (
-                        <div
-                            key={index}
-                            className={`sub-step ${index === detailsSubStep ? 'active' : ''} 
-                                      ${index < detailsSubStep ? 'completed' : ''}`}
-                            onClick={() => setDetailsSubStep(index)}
+            <form ref={formRef} style={{minWidth:'100%'}}>
+                <div className='form-grid'>
+                    <div className="custom-input-container">
+                        <input
+                            type="text"
+                            name="eventTitle"
+                            value={formData.eventDetails.eventTitle}
+                            onChange={(e) => handleInputChange('eventDetails', {
+                                ...formData.eventDetails,
+                                eventTitle: e.target.value
+                            })}
+                            className="custom-input"
+                            id="eventTitle"
+                        />
+                        <label htmlFor="eventTitle" className="custom-label">
+                            Title
+                        </label>
+                    </div>
+
+                    <div className="custom-input-container">
+                        <input
+                            type="text"
+                            name="location"
+                            value={formData.eventDetails.location}
+                            onChange={(e) => handleInputChange('eventDetails', {
+                                ...formData.eventDetails,
+                                location: e.target.value
+                            })}
+                            className="custom-input"
+                        />
+                        <label htmlFor="location" className="custom-label">
+                            Location
+                        </label>
+                    </div>
+
+                    <div className="custom-input-container">
+                        <select
+                            name="dateType"
+                            value={formData.eventDetails.dateType}
+                            onChange={(e) => handleInputChange('eventDetails', {
+                                ...formData.eventDetails,
+                                dateType: e.target.value
+                            })}
+                            className="custom-input"
+                            style={{height:'56px'}}
                         >
-                            {step}
+                            <option value="specific">Specific Date</option>
+                            <option value="range">Date Range</option>
+                        </select>
+                        <label htmlFor="dateType" className="custom-label">
+                            Date Type
+                        </label>
+                    </div>
+
+                    {/* Start Date */}
+                    <div className="custom-input-container">
+                        <input
+                            type="date"
+                            name="startDate"
+                            value={formData.eventDetails.startDate}
+                            onChange={(e) => handleInputChange('eventDetails', {
+                                ...formData.eventDetails,
+                                startDate: e.target.value
+                            })}
+                            className="custom-input"
+                        />
+                        <label htmlFor="startDate" className="custom-label">
+                            {formData.eventDetails.dateType === 'range' ? 'Start Date' : 'Date'}
+                        </label>
+                    </div>
+
+                    {/* End Date (conditional) */}
+                    {formData.eventDetails.dateType === 'range' && (
+                        <div className="custom-input-container">
+                            <input
+                                type="date"
+                                name="endDate"
+                                value={formData.eventDetails.endDate || ''}
+                                onChange={(e) => handleInputChange('eventDetails', {
+                                    ...formData.eventDetails,
+                                    endDate: e.target.value
+                                })}
+                                className="custom-input"
+                            />
+                            <label htmlFor="endDate" className="custom-label">
+                                End Date
+                            </label>
                         </div>
-                    ))}
+                    )}
+
+                    {/* Time of Day */}
+                    <div className="custom-input-container">
+                        <input
+                            type="time"
+                            name="timeOfDay"
+                            value={formData.eventDetails.timeOfDay}
+                            onChange={(e) => handleInputChange('eventDetails', {
+                                ...formData.eventDetails,
+                                timeOfDay: e.target.value
+                            })}
+                            className="custom-input"
+                        />
+                        <label htmlFor="timeOfDay" className="custom-label">
+                            Time of Day
+                        </label>
+                    </div>
+
+                    {/* Number of People */}
+                    <div className="custom-input-container">
+                        <input
+                            type="number"
+                            name="numPeople"
+                            value={formData.eventDetails.numPeople}
+                            onChange={(e) => handleInputChange('eventDetails', {
+                                ...formData.eventDetails,
+                                numPeople: e.target.value
+                            })}
+                            className="custom-input"
+                        />
+                        <label htmlFor="numPeople" className="custom-label">
+                            Number of People
+                        </label>
+                    </div>
+
+                    {/* Duration */}
+                    <div className="custom-input-container">
+                        <input
+                            type="number"
+                            name="duration"
+                            value={formData.eventDetails.duration}
+                            onChange={(e) => handleInputChange('eventDetails', {
+                                ...formData.eventDetails,
+                                duration: e.target.value
+                            })}
+                            className="custom-input"
+                        />
+                        <label htmlFor="duration" className="custom-label">
+                            Duration (in hours)
+                        </label>
+                    </div>
+
+                    {/* Indoor/Outdoor */}
+                    <div className="custom-input-container">
+                        <select
+                            name="indoorOutdoor"
+                            value={formData.eventDetails.indoorOutdoor}
+                            onChange={(e) => handleInputChange('eventDetails', {
+                                ...formData.eventDetails,
+                                indoorOutdoor: e.target.value
+                            })}
+                            className="custom-input"
+                        >
+                            <option value="">Select</option>
+                            <option value="indoor">Indoor</option>
+                            <option value="outdoor">Outdoor</option>
+                        </select>
+                        <label htmlFor="indoorOutdoor" className="custom-label">
+                            Indoor/Outdoor
+                        </label>
+                    </div>
+
+                    {/* Budget Range */}
+                    <div className="custom-input-container">
+                        <select
+                            name="priceRange"
+                            value={formData.eventDetails.priceRange}
+                            onChange={(e) => handleInputChange('eventDetails', {
+                                ...formData.eventDetails,
+                                priceRange: e.target.value
+                            })}
+                            className="custom-input"
+                        >
+                            <option value="">Select a Budget Range</option>
+                            <option value="0-$500">$0 - $500</option>
+                            <option value="501-$1000">$501 - $1,000</option>
+                            <option value="1001-$1500">$1,001 - $1,500</option>
+                            <option value="1501-$2000">$1,501 - $2,000</option>
+                            <option value="2001-$2500">$2,001 - $2,500</option>
+                            <option value="2501-$3000">$2,501 - $3,000</option>
+                            <option value="3001+">$3,001+</option>
+                        </select>
+                        <label htmlFor="priceRange" className="custom-label">
+                            Budget
+                        </label>
+                    </div>
                 </div>
-                
-                {renderEventDetailsSubStep()}
-            </div>
+
+                <div className="custom-input-container">
+                    <ReactQuill 
+                        theme="snow"
+                        value={formData.eventDetails.additionalComments}
+                        onChange={(content) => handleInputChange('eventDetails', {
+                            ...formData.eventDetails,
+                            additionalComments: content
+                        })}
+                        modules={modules}
+                        style={{
+                            height: '200px',
+                            marginBottom: '50px'
+                        }}
+                    />
+                    <label htmlFor="additionalComments" className="custom-label">
+                        Additional Comments
+                    </label>
+                </div>
+            </form>
         );
     };
 
@@ -786,7 +505,7 @@ function PhotographyRequest() {
             setFormData(prev => {
                 const updatedPhotos = [...prev.photos, ...newPhotos];
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('photographyRequest', JSON.stringify(newData));
+                localStorage.setItem('videographyRequest', JSON.stringify(newData));
                 return newData;
             });
             
@@ -833,7 +552,7 @@ function PhotographyRequest() {
             setFormData(prev => {
                 const updatedPhotos = prev.photos.filter(photo => photo.url !== photoUrl);
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('photographyRequest', JSON.stringify(newData));
+                localStorage.setItem('videographyRequest', JSON.stringify(newData));
                 return newData;
             });
         } catch (error) {
@@ -1106,7 +825,7 @@ function PhotographyRequest() {
             // Check if the coupon code is already used
             if (appliedCoupon) {
                 const { data: existingRequest, error: checkError } = await supabase
-                    .from('photography_requests')
+                    .from('videography_requests')  // Changed from photography_requests
                     .select('id')
                     .eq('coupon_code', appliedCoupon.code)
                     .single();
@@ -1146,7 +865,7 @@ function PhotographyRequest() {
             };
     
             const { data: request, error: requestError } = await supabase
-                .from('photography_requests')
+                .from('videography_requests')  // Changed from photography_requests
                 .insert([requestData])
                 .select()
                 .single();
@@ -1191,11 +910,11 @@ function PhotographyRequest() {
             }
     
             // Clear form data and navigate to success page
-            localStorage.removeItem('photographyRequest');
+            localStorage.removeItem('videographyRequest');
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
-                    message: 'Your photography request has been submitted successfully!'
+                    message: 'Your videography request has been submitted successfully!'
                 }
             });
     
@@ -1254,40 +973,32 @@ function PhotographyRequest() {
         }
     };
 
-    // Modify the handleBack function to handle sub-steps
-    const handleBack = () => {
-        if (currentStep === 0) {
-            navigate('/request-categories');
-        } else if (currentStep === 1 && detailsSubStep > 0) {
-            // Handle sub-step navigation
-            setDetailsSubStep(prev => prev - 1);
-        } else {
-            setCurrentStep(prev => prev - 1);
-            setDetailsSubStep(0); // Reset sub-step when going back to previous main step
-        }
-    };
-
-    // Modify the handleNext function to handle sub-steps
     const handleNext = async () => {
         if (currentStep === getSteps().length - 1) {
             handleSubmit();
-        } else if (currentStep === 1) {
-            const subSteps = getDetailsSubSteps();
-            if (detailsSubStep < subSteps.length - 1) {
-                // Move to next sub-step
-                setDetailsSubStep(prev => prev + 1);
-            } else {
-                // Move to next main step
-                const isAuthenticated = await checkAuthentication();
-                if (!isAuthenticated) {
-                    setIsAuthModalOpen(true);
-                    return;
-                }
-                setCurrentStep(prev => prev + 1);
-                setDetailsSubStep(0); // Reset sub-step
+        } else if (currentStep === 1) { // After event details
+            const isAuthenticated = await checkAuthentication();
+            if (!isAuthenticated) {
+                setIsAuthModalOpen(true);
+                return;
             }
+            setCurrentStep(prev => prev + 1);
+        } else if (currentStep === 2) { // After personal details
+            const success = await updateUserProfile();
+            if (success) {
+                setCurrentStep(prev => prev + 1);
+            }
+            // If not successful, the error will be shown via the error state
         } else {
             setCurrentStep(prev => prev + 1);
+        }
+    };
+
+    const handleBack = () => {
+        if (currentStep === 0) {
+            navigate('/request-categories');
+        } else {
+            setCurrentStep(prev => prev - 1);
         }
     };
 
@@ -1337,4 +1048,4 @@ function PhotographyRequest() {
     );
 }
 
-export default PhotographyRequest;
+export default VideographyRequest;
