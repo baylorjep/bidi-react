@@ -110,6 +110,7 @@ function PhotographyRequest() {
                 secondPhotographerUnknown: saved.eventDetails?.secondPhotographerUnknown || false,
                 durationUnknown: saved.eventDetails?.durationUnknown || false,
                 numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
+                pinterestBoard: saved.eventDetails?.pinterestBoard || '',
             },
             personalDetails: saved.personalDetails || {
                 firstName: '',
@@ -124,7 +125,7 @@ function PhotographyRequest() {
         'Photography Details',
         formData.eventType ? `${formData.eventType} Details` : 'Event Details',
         'Personal Details',
-        'Add Photos',
+        'Inspiration',
         'Review'
     ];
 
@@ -137,16 +138,8 @@ function PhotographyRequest() {
                     'Style & Deliverables',
                     'Budget & Additional Info'
                 ];
-            case 'Engagement':
-            case 'Couples Session':
-                return ['Basic Info', 'Date & Time', 'Location Details'];
-            case 'Family':
-            case 'Individual / Headshots':
-                return ['Basic Info', 'Date & Time', 'Session Details'];
-            case 'Large Group / Event':
-                return ['Basic Info', 'Date & Time', 'Guest Details', 'Venue Details'];
             default:
-                return ['Basic Info', 'Date & Time', 'Additional Details'];
+                return ['Basic Info', 'Coverage','Style & Deliverables', 'Additional Details'];
         }
     };
 
@@ -385,6 +378,26 @@ function PhotographyRequest() {
                                 End Time
                             </label>
                         </div>
+
+                        <div className="custom-input-container">
+                            <select
+                                name="indoorOutdoor"
+                                value={formData.eventDetails.indoorOutdoor}
+                                onChange={(e) => handleInputChange('eventDetails', {
+                                    ...formData.eventDetails,
+                                    indoorOutdoor: e.target.value
+                                })}
+                                className="custom-input"
+                            >
+                                <option value="">Select</option>
+                                <option value="indoor">Indoor</option>
+                                <option value="outdoor">Outdoor</option>
+                                <option value="both">Both</option>
+                            </select>
+                            <label htmlFor="indoorOutdoor" className="custom-label">
+                                Indoor or Outdoor
+                            </label>
+                        </div>
                     </div>
                 );
 
@@ -621,12 +634,16 @@ function PhotographyRequest() {
         }
     };
 
-    // Event Details Component
     const renderEventDetails = () => {
         const subSteps = getDetailsSubSteps();
         
         return (
             <div>
+                {error && (
+                    <div style={{ textAlign: 'center', color: 'red', padding: '10px' }}>
+                        {error}
+                    </div>
+                )}
                 <div className="sub-steps-indicator">
                     {subSteps.map((step, index) => (
                         <div
@@ -924,6 +941,22 @@ function PhotographyRequest() {
                         }} 
                     />
                 )}
+                <div className="custom-input-container" style={{ marginTop: '20px' }}>
+                    <input
+                        type="url"
+                        name="pinterestBoard"
+                        value={formData.eventDetails.pinterestBoard || ''}
+                        onChange={(e) => handleInputChange('eventDetails', {
+                            ...formData.eventDetails,
+                            pinterestBoard: e.target.value
+                        })}
+                        placeholder="Paste your Pinterest board link here"
+                        className="custom-input"
+                    />
+                    <label htmlFor="pinterestBoard" className="custom-label">
+                        Pinterest Board Link
+                    </label>
+                </div>
             </div>
         );
     };
@@ -939,11 +972,6 @@ function PhotographyRequest() {
                     </div>  
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Title</div>
-                        <div className="request-info">{formData.eventDetails.eventTitle}</div>  
-                    </div>  
-                    
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">{formData.eventDetails.dateType === 'range' ? 'Start Date ' : 'Date '}</div>
                         <div className="request-info">{formData.eventDetails.startDate ? new Date(formData.eventDetails.startDate).toLocaleDateString() : ''}</div>
                     </div>
@@ -958,11 +986,6 @@ function PhotographyRequest() {
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Location</div>
                         <div className="request-info">{formData.eventDetails.location}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Time of Day</div>
-                        <div className="request-info">{formData.eventDetails.timeOfDay}</div>
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -984,6 +1007,36 @@ function PhotographyRequest() {
                         <div className="request-subtype">Budget</div>
                         <div className="request-info">{formData.eventDetails.priceRange}</div>
                     </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Pinterest Board Link</div>
+                        <div className="request-info">{formData.eventDetails.pinterestBoard}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Start Time</div>
+                        <div className="request-info">{formData.eventDetails.startTime}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">End Time</div>
+                        <div className="request-info">{formData.eventDetails.endTime}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Second Photographer</div>
+                        <div className="request-info">{formData.eventDetails.secondPhotographer}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Style Preferences</div>
+                        <div className="request-info">{Object.keys(formData.eventDetails.stylePreferences).filter(key => formData.eventDetails.stylePreferences[key]).join(', ')}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Deliverables</div>
+                        <div className="request-info">{Object.keys(formData.eventDetails.deliverables).filter(key => formData.eventDetails.deliverables[key]).join(', ')}</div>
+                    </div>
                 </div>
 
                 {formData.eventDetails.additionalComments && (
@@ -1000,22 +1053,6 @@ function PhotographyRequest() {
                         />
                     </div>
                 )}
-
-                {/* {formData.photos.length > 0 && (
-                    <div className="photos-section" style={{overflowY:'auto', marginTop: '20px'}}>
-                        <div className="photo-grid">
-                            {formData.photos.map((photo, index) => (
-                                <div key={index} className="photo-grid-item">
-                                    <img
-                                        src={photo.url}
-                                        alt={`Inspiration ${index + 1}`}
-                                        className="photo"
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )} */}
 
                 <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px'}}>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent:'center' }}>
@@ -1095,7 +1132,14 @@ function PhotographyRequest() {
     const handleSubmit = async () => {
         setIsSubmitting(true);
         setError(null);
-        
+
+        // Validate required fields
+        if (!formData.eventDetails.location || !formData.eventDetails.startDate || !formData.eventDetails.priceRange) {
+            setError('Please fill in all required fields: Location, Date, and Budget.');
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
@@ -1142,6 +1186,7 @@ function PhotographyRequest() {
                 additional_comments: formData.eventDetails.additionalComments,
                 date_type: formData.eventDetails.dateType, // Add date_type field
                 coupon_code: appliedCoupon ? appliedCoupon.code : null,  // Just store the code
+                pinterest_link: formData.eventDetails.pinterestBoard, // Add pinterest_link field
                 status: 'open'
             };
     
@@ -1274,15 +1319,26 @@ function PhotographyRequest() {
         } else if (currentStep === 1) {
             const subSteps = getDetailsSubSteps();
             if (detailsSubStep < subSteps.length - 1) {
+                // Validate required fields for sub-steps
+                if (detailsSubStep === 0 && (!formData.eventDetails.location || !formData.eventDetails.startDate)) {
+                    setError('Please fill in all required fields: Location and Date.');
+                    return;
+                }
                 // Move to next sub-step
                 setDetailsSubStep(prev => prev + 1);
             } else {
+                // Validate budget before moving to next main step
+                if (!formData.eventDetails.priceRange) {
+                    setError('Please fill in the required field: Budget.');
+                    return;
+                }
                 // Move to next main step
                 const isAuthenticated = await checkAuthentication();
                 if (!isAuthenticated) {
                     setIsAuthModalOpen(true);
                     return;
                 }
+                setError(null); // Clear error message
                 setCurrentStep(prev => prev + 1);
                 setDetailsSubStep(0); // Reset sub-step
             }
