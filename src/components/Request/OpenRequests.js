@@ -6,7 +6,7 @@ import '../../App.css';
 import SearchBar from '../SearchBar/SearchBar';
 
 const BUSINESS_TYPE_MAPPING = {
-    'cake': ['cakes'],
+    'cake': ['cake'],
     'wedding planner/coordinator': ['wedding planner', 'rental'],
     'catering': ['catering'],
     'florist': ['florist'],
