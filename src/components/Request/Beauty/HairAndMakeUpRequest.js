@@ -125,9 +125,12 @@ function HairAndMakeUpRequest() {
                 lastName: '',
                 phoneNumber: ''
             },
-            photos: saved.photos || []
+            photos: saved.photos || [],
+            serviceType: saved.serviceType || 'both'
         };
     });
+
+    const [serviceType, setServiceType] = useState(formData.serviceType);
 
     const getSteps = () => [
         'Beauty Services',  // Changed from 'Videography Details'
@@ -164,6 +167,15 @@ function HairAndMakeUpRequest() {
         });
     };
 
+    const handleServiceTypeChange = (e) => {
+        setServiceType(e.target.value);
+        setFormData(prev => {
+            const newData = { ...prev, serviceType: e.target.value };
+            localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
+            return newData;
+        });
+    };
+
     // Event Selection Component
     const renderEventSelection = () => {
         const eventOptions = [
@@ -181,6 +193,21 @@ function HairAndMakeUpRequest() {
                         {event}
                     </button>
                 ))}
+                <div className="custom-input-container">
+                    <select
+                        name="serviceType"
+                        value={serviceType}
+                        onChange={handleServiceTypeChange}
+                        className="custom-input"
+                    >
+                        <option value="both">Both Hair and Makeup</option>
+                        <option value="hair">Hair Only</option>
+                        <option value="makeup">Makeup Only</option>
+                    </select>
+                    <label htmlFor="serviceType" className="custom-label">
+                        Service Type
+                    </label>
+                </div>
             </div>
         );
     };
@@ -381,6 +408,7 @@ function HairAndMakeUpRequest() {
                 );
 
             case 1: // Hair Services
+                if (serviceType === 'makeup') return null;
                 return (
                     <div className="form-grid">
                         <div className="custom-input-container">
@@ -455,6 +483,7 @@ function HairAndMakeUpRequest() {
                 );
 
             case 2: // Makeup Services
+                if (serviceType === 'hair') return null;
                 return (
                     <div className="form-grid">
                         <div className="custom-input-container">
@@ -1044,6 +1073,18 @@ function HairAndMakeUpRequest() {
                         <div className="request-subtype">Pinterest Board Link</div>
                         <div className="request-info">{formData.eventDetails.pinterestBoard}</div>
                     </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Specific Time Needed?</div>
+                        <div className="request-info">{formData.eventDetails.specificTimeNeeded}</div>
+                    </div>
+
+                    {formData.eventDetails.specificTimeNeeded === 'yes' && (
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                            <div className="request-subtype">Specific Time</div>
+                            <div className="request-info">{formData.eventDetails.specificTime}</div>
+                        </div>
+                    )}
                 </div>
 
                 {formData.eventDetails.additionalInfo && (
@@ -1169,7 +1210,7 @@ function HairAndMakeUpRequest() {
 
             // Generate event title using first name from database
             const firstName = userData.first_name || 'Unknown';
-            const generatedEventTitle = `${firstName}'s ${formData.eventType} Video`;
+            const generatedEventTitle = `${firstName}'s ${formData.eventType} Beauty Request`;
 
             // Create coverage object from wedding details
             const coverage = {
@@ -1190,8 +1231,8 @@ function HairAndMakeUpRequest() {
                 end_date: formData.eventDetails.dateFlexibility === 'range' ? formData.eventDetails.endDate : null,
                 date_flexibility: formData.eventDetails.dateFlexibility,
                 date_timeframe: formData.eventDetails.dateFlexibility === 'flexible' ? formData.eventDetails.dateTimeframe : null,
-                start_time: formData.eventDetails.startTimeUnknown ? null : formData.eventDetails.startTime,
-                end_time: formData.eventDetails.endTimeUnknown ? null : formData.eventDetails.endTime,
+                specific_time_needed: formData.eventDetails.specificTimeNeeded === 'yes',
+                specific_time: formData.eventDetails.specificTimeNeeded === 'yes' ? formData.eventDetails.specificTime : null,
                 num_people: formData.eventDetails.numPeopleUnknown ? null : 
                             formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople) : null,
                 duration: formData.eventDetails.durationUnknown ? null : 
@@ -1200,11 +1241,12 @@ function HairAndMakeUpRequest() {
                 price_range: formData.eventDetails.priceRange,
                 additional_comments: formData.eventDetails.additionalInfo || null,
                 style_preferences: formData.eventDetails.stylePreferences || {},
-                second_photographer: formData.eventDetails.secondPhotographer === 'yes',
                 services_needed: formData.eventDetails.servicesNeeded || {},  // Changed from deliverables
                 pinterest_link: formData.eventDetails.pinterestBoard || null,
                 coverage: coverage, // Add the coverage object
-                status: 'pending'
+                status: 'pending',
+                coupon_code: appliedCoupon ? appliedCoupon.code : null,
+                service_type: serviceType // Add service type
             };
 
             const { data: request, error: requestError } = await supabase
@@ -1332,7 +1374,7 @@ function HairAndMakeUpRequest() {
                 // Validate required fields for sub-steps
                 if (detailsSubStep === 0 && 
                     (!formData.eventDetails.location || 
-                    (formData.eventDetails.dateFlexibility === 'specific' && !formData.eventDetails.startDate) ||
+                    (formData.eventDetails.dateFlexibility === 'specific' && !formData.eventDetails.eventDateTime) ||
                     (formData.eventDetails.dateFlexibility === 'range' && (!formData.eventDetails.startDate || !formData.eventDetails.endDate)))) {
                     setError('Please fill in all required fields: Location and Date information.');
                     return;
