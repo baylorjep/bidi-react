@@ -45,7 +45,7 @@ const PhotoModal = ({ photo, onClose }) => {
     );
 };
 
-function VideographyRequest() {
+function HairAndMakeUpRequest() {
     const navigate = useNavigate();
     const location = useLocation();
     const [currentStep, setCurrentStep] = useState(0);
@@ -68,7 +68,7 @@ function VideographyRequest() {
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
-        const saved = JSON.parse(localStorage.getItem('videographyRequest') || '{}');
+        const saved = JSON.parse(localStorage.getItem('hairAndMakeupRequest') || '{}');
         const defaultWeddingDetails = {
             ceremony: false,    
             reception: false,
@@ -95,7 +95,7 @@ function VideographyRequest() {
                 endTime: saved.eventDetails?.endTime || '',
                 secondPhotographer: saved.eventDetails?.secondPhotographer || '',
                 stylePreferences: saved.eventDetails?.stylePreferences || {},
-                deliverables: saved.eventDetails?.deliverables || {},
+                servicesNeeded: saved.eventDetails?.servicesNeeded || {},  // Changed from deliverables
                 additionalInfo: saved.eventDetails?.additionalInfo || '',
                 dateFlexibility: saved.eventDetails?.dateFlexibility || 'specific', // 'specific', 'range', 'flexible'
                 dateTimeframe: saved.eventDetails?.dateTimeframe || '', // '3months', '6months', '1year'
@@ -116,7 +116,7 @@ function VideographyRequest() {
     });
 
     const getSteps = () => [
-        'Videography Details',
+        'Beauty Services',  // Changed from 'Videography Details'
         formData.eventType ? `${formData.eventType} Details` : 'Event Details',
         'Personal Details',
         'Inspiration',
@@ -128,13 +128,13 @@ function VideographyRequest() {
             case 'Wedding':
                 return [
                     'Basic Details',
-                    'Coverage',
-                    'Style & Deliverables',
+                    'Party Size',           // Changed from 'Coverage'
+                    'Style & Services',      // Changed from 'Style & Deliverables'
                     'Budget & Additional Info'
                 ];
 
             default:
-                return ['Basic Info', 'Coverage', 'Style & Deliverables','Additional Details'];
+                return ['Basic Info', 'Party Size', 'Style & Services', 'Additional Details'];
         }
     };
 
@@ -145,7 +145,7 @@ function VideographyRequest() {
                 eventType: event
             };
             // Save to localStorage
-            localStorage.setItem('videographyRequest', JSON.stringify(newData));
+            localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
             return newData;
         });
     };
@@ -153,7 +153,7 @@ function VideographyRequest() {
     const handleInputChange = (field, value) => {
         setFormData(prev => {
             const newData = { ...prev, [field]: value };
-            localStorage.setItem('videographyRequest', JSON.stringify(newData));
+            localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
             return newData;
         });
     };
@@ -161,7 +161,7 @@ function VideographyRequest() {
     // Event Selection Component
     const renderEventSelection = () => {
         const eventOptions = [
-            'Wedding', 'Engagement', 'Birthday','Religious Ceremony', 'Event', 'Other'
+            'Wedding', 'Prom', 'Birthday', 'Photo Shoot', 'Event', 'Other'  // Modified event types
         ];
 
         return (
@@ -518,19 +518,19 @@ function VideographyRequest() {
                     </div>
                 );
 
-            case 2: // Style & Deliverables
+            case 2: // Style & Services
                 return (
                     <div className="wedding-details-container">
                         <div className="wedding-photo-options">
-                            <div className='photo-options-header'>Preferred Videography Style</div>
+                            <div className='photo-options-header'>Preferred Beauty Style</div>
                             <div className="photo-options-grid">
                                 {[
-                                    { key: 'brightAiry', label: 'Bright & Airy' },
-                                    { key: 'darkMoody', label: 'Dark & Moody' },
-                                    { key: 'filmEmulation', label: 'Film-Like' },
-                                    { key: 'traditional', label: 'Traditional/Classic' },
-                                    { key: 'documentary', label: 'Documentary/Candid' },
-                                    { key: 'artistic', label: 'Artistic/Creative' },
+                                    { key: 'natural', label: 'Natural' },
+                                    { key: 'glamorous', label: 'Glamorous' },
+                                    { key: 'vintage', label: 'Vintage' },
+                                    { key: 'bohemian', label: 'Bohemian' },
+                                    { key: 'editorial', label: 'Editorial' },
+                                    { key: 'classic', label: 'Classic' },
                                 ].map(({ key, label }) => (
                                     <div key={key} className="photo-option-item">
                                         <input
@@ -552,25 +552,25 @@ function VideographyRequest() {
                         </div>
 
                         <div className="wedding-photo-options">
-                            <div className='photo-options-header'>Desired Deliverables</div>
+                            <div className='photo-options-header'>Services Needed</div>
                             <div className="photo-options-grid">
                                 {[
-                                    { key: 'digitalFiles', label: 'Digital Files' },
-                                    { key: 'printRelease', label: 'Print Release' },
-                                    { key: 'weddingAlbum', label: 'Wedding Album' },
-                                    { key: 'prints', label: 'Professional Prints' },
-                                    { key: 'rawFiles', label: 'RAW Footage' },
-                                    { key: 'engagement', label: 'Engagement Session' },
+                                    { key: 'hair', label: 'Hair Styling' },
+                                    { key: 'makeup', label: 'Makeup Application' },
+                                    { key: 'lashes', label: 'Lash Extensions' },
+                                    { key: 'trial', label: 'Trial Session' },
+                                    { key: 'touchup', label: 'Touch-up Service' },
+                                    { key: 'group', label: 'Group Services' },
                                 ].map(({ key, label }) => (
                                     <div key={key} className="photo-option-item">
                                         <input
                                             type="checkbox"
                                             id={key}
-                                            checked={formData.eventDetails.deliverables?.[key] || false}
+                                            checked={formData.eventDetails.servicesNeeded?.[key] || false}
                                             onChange={(e) => handleInputChange('eventDetails', {
                                                 ...formData.eventDetails,
-                                                deliverables: {
-                                                    ...formData.eventDetails.deliverables,
+                                                servicesNeeded: {
+                                                    ...formData.eventDetails.servicesNeeded,
                                                     [key]: e.target.checked
                                                 }
                                             })}
@@ -799,7 +799,7 @@ function VideographyRequest() {
             setFormData(prev => {
                 const updatedPhotos = [...prev.photos, ...newPhotos];
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('videographyRequest', JSON.stringify(newData));
+                localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
                 return newData;
             });
             
@@ -846,7 +846,7 @@ function VideographyRequest() {
             setFormData(prev => {
                 const updatedPhotos = prev.photos.filter(photo => photo.url !== photoUrl);
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('videographyRequest', JSON.stringify(newData));
+                localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
                 return newData;
             });
         } catch (error) {
@@ -1060,8 +1060,8 @@ function VideographyRequest() {
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Deliverables</div>
-                        <div className="request-info">{Object.keys(formData.eventDetails.deliverables).filter(key => formData.eventDetails.deliverables[key]).join(', ')}</div>
+                        <div className="request-subtype">Services Needed</div>
+                        <div className="request-info">{Object.keys(formData.eventDetails.servicesNeeded).filter(key => formData.eventDetails.servicesNeeded[key]).join(', ')}</div>
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -1227,14 +1227,14 @@ function VideographyRequest() {
                 additional_comments: formData.eventDetails.additionalInfo || null,
                 style_preferences: formData.eventDetails.stylePreferences || {},
                 second_photographer: formData.eventDetails.secondPhotographer === 'yes',
-                deliverables: formData.eventDetails.deliverables || {},
+                services_needed: formData.eventDetails.servicesNeeded || {},  // Changed from deliverables
                 pinterest_link: formData.eventDetails.pinterestBoard || null,
                 coverage: coverage, // Add the coverage object
                 status: 'pending'
             };
 
             const { data: request, error: requestError } = await supabase
-                .from('videography_requests')
+                .from('beauty_requests')          // Changed from videography_requests
                 .insert([requestData])
                 .select()
                 .single();
@@ -1258,9 +1258,9 @@ function VideographyRequest() {
                         .from('request-media')
                         .getPublicUrl(filePath);
 
-                    // Store photo information in videography_photos table
+                    // Store photo information in beauty_photos table
                     return supabase
-                        .from('videography_photos')
+                        .from('beauty_photos')               // Changed from videography_photos
                         .insert([{
                             request_id: request.id,
                             user_id: user.id,
@@ -1273,11 +1273,11 @@ function VideographyRequest() {
             }
 
             // Clear form data and navigate to success page
-            localStorage.removeItem('videographyRequest');
+            localStorage.removeItem('hairAndMakeupRequest');
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
-                    message: 'Your videography request has been submitted successfully!'
+                    message: 'Your hair and makeup request has been submitted successfully!'
                 }
             });
 
@@ -1431,4 +1431,4 @@ function VideographyRequest() {
     );
 }
 
-export default VideographyRequest;
+export default HairAndMakeUpRequest;

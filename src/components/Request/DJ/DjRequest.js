@@ -1062,10 +1062,20 @@ function DjRequest() {
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Equipment Setup</div>
                         <div className="request-info">
-                            {formData.eventDetails.equipmentNeeded === 'venueProvided' && 'Venue provides equipment'}
-                            {formData.eventDetails.equipmentNeeded === 'djBringsAll' && 'DJ brings all equipment'}
-                            {formData.eventDetails.equipmentNeeded === 'djBringsSome' && 'DJ brings some equipment'}
-                            {formData.eventDetails.equipmentNeeded === 'unknown' && 'Equipment requirements to be discussed'}
+                            {(() => {
+                                switch (formData.eventDetails.equipmentNeeded) {
+                                    case 'venueProvided':
+                                        return 'The venue provides sound and lighting equipment';
+                                    case 'djBringsAll':
+                                        return 'The DJ needs to bring all equipment';
+                                    case 'djBringsSome':
+                                        return formData.eventDetails.equipmentNotes || 'The DJ needs to bring some equipment';
+                                    case 'unknown':
+                                        return 'Equipment requirements to be discussed';
+                                    default:
+                                        return 'Not specified';
+                                }
+                            })()}
                         </div>
                     </div>
 
@@ -1153,7 +1163,36 @@ function DjRequest() {
 
                 {/* Coupon Section */}
                 <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px'}}>
-                    {/* ...existing coupon code section... */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent:'center' }}>
+                        <div className='custom-input-container' style={{marginBottom:'0'}}>
+                            <input
+                                type="text"
+                                value={couponCode}
+                                onChange={(e) => setCouponCode(e.target.value)}
+                                placeholder="Enter coupon code"
+                                className='custom-input'
+                                style={{
+                                    backgroundColor: appliedCoupon ? '#f0fff0' : 'white'
+                                }}
+                            />
+                            <label htmlFor="coupon" className="custom-label">
+                                Coupon
+                            </label>
+                        </div>
+                        <button
+                            onClick={handleApplyCoupon}
+                            className="request-form-back-and-foward-btn"
+                            style={{ padding: '8px 12px', fontSize: '16px' }}
+                            disabled={couponLoading}
+                        >
+                            {couponLoading ? <Spinner size="sm" /> : 'Verify'}
+                        </button>
+                    </div>
+                    {couponMessage && (
+                        <div className={`coupon-message ${appliedCoupon ? 'success' : 'error'}`}>
+                            {couponMessage}
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -1161,7 +1200,7 @@ function DjRequest() {
 
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) return;
-        
+
         setCouponLoading(true);
         try {
             const { data, error } = await supabase
@@ -1209,6 +1248,25 @@ function DjRequest() {
                 return;
             }
 
+            // Check if the coupon code is already used
+            if (appliedCoupon) {
+                const { data: existingRequest, error: checkError } = await supabase
+                    .from('dj_requests')
+                    .select('id')
+                    .eq('coupon_code', appliedCoupon.code)
+                    .single();
+
+                if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows found
+                    throw checkError;
+                }
+
+                if (existingRequest) {
+                    setError('This coupon code has already been used.');
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
+
             // Get user's first name for the title
             const { data: userData, error: userError } = await supabase
                 .from('individual_profiles')
@@ -1220,6 +1278,11 @@ function DjRequest() {
 
             // Create title
             const eventTitle = `${userData.first_name}'s ${formData.eventType} DJ Request`;
+
+            // Convert additional_services object to array
+            const additionalServicesArray = Object.entries(formData.eventDetails.additionalServices || {})
+                .filter(([_, value]) => value)
+                .map(([key, _]) => key);
 
             // Format data according to the table schema
             const requestData = {
@@ -1240,12 +1303,24 @@ function DjRequest() {
                     requests: formData.eventDetails.specialSongs || null
                 },
                 budget_range: formData.eventDetails.priceRange,
-                equipment_needed: formData.eventDetails.equipmentNeeded === 'djBringsAll' || 
-                                formData.eventDetails.equipmentNeeded === 'djBringsSome',
-                // Keep additional_services as an object
-                additional_services: formData.eventDetails.additionalServices || {},
+                equipment_needed: (() => {
+                    switch (formData.eventDetails.equipmentNeeded) {
+                        case 'venueProvided':
+                            return 'The venue provides sound and lighting equipment';
+                        case 'djBringsAll':
+                            return 'The DJ needs to bring all equipment';
+                        case 'djBringsSome':
+                            return formData.eventDetails.equipmentNotes || 'The DJ needs to bring some equipment';
+                        case 'unknown':
+                            return 'Equipment requirements to be discussed';
+                        default:
+                            return null;
+                    }
+                })(),
+                additional_services: additionalServicesArray, // Now it's an array
                 special_requests: formData.eventDetails.additionalInfo,
-                status: 'pending'
+                status: 'pending',
+                coupon_code: appliedCoupon ? appliedCoupon.code : null,  // Add coupon code
             };
 
             // Insert the request
@@ -1263,9 +1338,8 @@ function DjRequest() {
                 state: { 
                     requestId: request.id,
                     message: 'Your DJ request has been submitted successfully!'
-                }
+                } 
             });
-
         } catch (err) {
             setError('Failed to submit request. Please try again.');
             console.error('Error submitting request:', err);
@@ -1294,6 +1368,7 @@ function DjRequest() {
                 .eq('id', user.id);
 
             if (updateError) throw updateError;
+
             return true;
         } catch (err) {
             console.error('Error updating profile:', err);
@@ -1383,22 +1458,18 @@ function DjRequest() {
                 <div className="request-form-box">
                     <StatusBar steps={getSteps()} currentStep={currentStep} />
                 </div>
-            </div>
+            </div>  
+            {/* Mobile status bar */}
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
-                {/* Status bar container moved above title for desktop */}
-
-
-                <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
-                    {getSteps()[currentStep]}
-                </h2>
-                
-                {/* Mobile status bar */}
                 <div className="request-form-status-container mobile-only">
                     <div className="request-form-box">
                         <StatusBar steps={getSteps()} currentStep={currentStep} />
                     </div>
-                </div>
-
+                </div>  
+                {/* Status bar container moved above title for desktop */}
+                <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
+                    {getSteps()[currentStep]}
+                </h2>
                 <div className="form-scrollable-content">
                     {getCurrentComponent()}
                 </div>

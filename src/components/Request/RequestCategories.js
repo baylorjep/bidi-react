@@ -33,10 +33,16 @@ function RequestCategories() {
         }));
         
         // Dynamic navigation based on category
-        const dedicatedFormCategories = ['photography', 'videography', 'dj services']; // Added 'dj services'
+        const dedicatedFormCategories = ['photography', 'videography', 'dj services', 'hair and makeup artist']; // Added 'hair and makeup artist'
         if (dedicatedFormCategories.includes(category)) {
-            // Convert 'dj services' to 'dj' in the URL
-            const routePath = category === 'dj services' ? 'dj' : category;
+            // Convert category names to route paths
+            const routeMap = {
+                'photography': 'photography',
+                'videography': 'videography',
+                'dj services': 'dj',
+                'hair and makeup artist': 'beauty'
+            };
+            const routePath = routeMap[category];
             navigate(`/request/${routePath}`);
         } else {
             navigate('/request-form', { 

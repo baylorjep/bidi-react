@@ -83,6 +83,7 @@ import BidsPage from './components/Individual/BidsPage'
 import PrivateRoute from './components/PrivateRoute';
 import VideographyRequest from './components/Request/Videography/VideographyRequest';
 import DjRequest from './components/Request/DJ/DjRequest';
+import HairAndMakeUpRequest from './components/Request/Beauty/HairAndMakeUpRequest';
 
 function App() {
 
@@ -175,6 +176,7 @@ function App() {
                         <Route path="/request/photography" element={<PhotographyRequest />} />
                         <Route path="/request/videography" element={<VideographyRequest />} />
                         <Route path="/request/dj" element={<DjRequest />} />
+                        <Route path="/request/beauty" element={<HairAndMakeUpRequest />} />
 
                     </Routes>
                 </div>
