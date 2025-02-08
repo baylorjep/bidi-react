@@ -8,9 +8,23 @@ import "../App.css"; // Add custom styling
 import jennaferIcon from '../assets/images/Jennafer Profile.png';
 import jaronIcon from '../assets/images/Jaron Anderson.jpg';
 import starIcon from '../assets/images/Star.svg'
+import KaylaIcon from '../assets/images/Kayla Barnett.jpg'
+import JessicaIcon from '../assets/images/Jessica Williams.jpg'
 
 const UserReviews = () => {
   const reviews = [
+    {
+      avatar:KaylaIcon,
+      name: "Kayla B.",
+      date: "February 07th, 2025",
+      review:"I came across Bidi for the first time in its early days while planning my wedding and searching for an easier way to request bids from vendors aside from sending hundreds of blind emails. The team over at Bidi won me over by not only saving me precious time, but also with their exceptional customer service. Eager to grow and make the platform more user friendly, they took the recommendations I had to heart, and weeks later, I am beyond impressed with the improvements they've made. It's a thriving platform built truly optimized for the user experience. It's super cool seeing a young company grow so fast, all while filling a huge gap in the wedding industry. Super grateful for Bidi!"
+    },
+    {
+      avatar: JessicaIcon,
+      name: "Jessica W.",
+      date: "December 9th, 2024",
+      review: "I used it and was able to find a great photographer! It was nice to see options all in one place, and to know that they were available."
+    },
     {
       avatar: jennaferIcon, // Replace with actual avatar URL
       name: "Jennifer J.",
