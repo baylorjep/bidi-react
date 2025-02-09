@@ -4,11 +4,33 @@ import ReactQuill from 'react-quill';
 import { supabase } from '../../../supabaseClient';
 import { Spinner } from 'react-bootstrap';
 import SignInModal from '../Event/SignInModal';
-import StatusBar from '../StatusBar';  // Add this import
+import StatusBar from '../StatusBar';
 import { v4 as uuidv4 } from 'uuid';
 import 'react-quill/dist/quill.snow.css';
 import '../../../styles/Photography.css';
 import AuthModal from '../Authentication/AuthModal';
+import Roses from '../../../assets/images/flowers/roses.jpg';
+import Peonies from '../../../assets/images/flowers/peonies.jpg';
+import Hydrangeas from '../../../assets/images/flowers/hydrangeas.jpg';
+import Lilies from '../../../assets/images/flowers/lilies.jpg';
+import Tulips from '../../../assets/images/flowers/tulips.jpg';
+import Orchids from '../../../assets/images/flowers/orchids.jpg';
+import Daisies from '../../../assets/images/flowers/daises.jpg';
+import Ranunculus from '../../../assets/images/flowers/ranunculus.jpg';
+import Anemones from '../../../assets/images/flowers/anemones.jpg';
+import Scabiosa from '../../../assets/images/flowers/scabiosa.jpg';
+import Eucalyptus from '../../../assets/images/flowers/eucalyptus.jpg';
+import Sunflowers from '../../../assets/images/flowers/sunflowers.jpg';
+import BabysBreath from '../../../assets/images/flowers/babysBreath.jpg';
+import Lavender from '../../../assets/images/flowers/lavender.jpg';
+import Dahlia from '../../../assets/images/flowers/dahlia.jpg';
+import Zinnias from '../../../assets/images/flowers/zinnias.jpg';
+import Protea from '../../../assets/images/flowers/protea.jpg';
+import Amaranthus from '../../../assets/images/flowers/amaranthus.jpg';
+import Chrysanthemums from '../../../assets/images/flowers/chrysanthemums.jpg';
+import Ruscus from '../../../assets/images/flowers/ruscus.jpg';
+import Ivy from '../../../assets/images/flowers/ivy.jpg';
+import Ferns from '../../../assets/images/flowers/ferns.jpg';
 
 const PhotoGrid = ({ photos, removePhoto, openModal }) => {
     return (
@@ -45,7 +67,26 @@ const PhotoModal = ({ photo, onClose }) => {
     );
 };
 
-function HairAndMakeUpRequest() {
+const FlowerModal = ({ photo, onClose }) => {
+    if (!photo) return null;
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content-photo" onClick={e => e.stopPropagation()}>
+                <button 
+                    className="remove-photo-button" 
+                    style={{ position: 'absolute', right: '10px', top: '10px' }}
+                    onClick={onClose}
+                >
+                    X
+                </button>
+                <img src={photo.imgSrc} alt={photo.label} />
+            </div>
+        </div>
+    );
+};
+
+function FloristRequest() {
     const navigate = useNavigate();
     const location = useLocation();
     const [currentStep, setCurrentStep] = useState(0);
@@ -65,10 +106,12 @@ function HairAndMakeUpRequest() {
     const [uploadingFiles, setUploadingFiles] = useState(0);
     const [addMoreLoading, setAddMoreLoading] = useState(false);
     const [detailsSubStep, setDetailsSubStep] = useState(0);
+    const [selectedFlower, setSelectedFlower] = useState(null);
+    const [isFlowerModalOpen, setIsFlowerModalOpen] = useState(false);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
-        const saved = JSON.parse(localStorage.getItem('hairAndMakeupRequest') || '{}');
+        const saved = JSON.parse(localStorage.getItem('floristRequest') || '{}');
         const defaultWeddingDetails = {
             ceremony: false,    
             reception: false,
@@ -87,36 +130,22 @@ function HairAndMakeUpRequest() {
                 timeOfDay: saved.eventDetails?.timeOfDay || '',
                 numPeople: saved.eventDetails?.numPeople || '',
                 duration: saved.eventDetails?.duration || '',
-                indoorOutdoor: saved.eventDetails?.indoorOutdoor || '',
                 additionalComments: saved.eventDetails?.additionalComments || '',
                 priceRange: saved.eventDetails?.priceRange || '',
                 weddingDetails: saved.eventDetails?.weddingDetails || defaultWeddingDetails,
                 startTime: saved.eventDetails?.startTime || '',
                 endTime: saved.eventDetails?.endTime || '',
-                secondPhotographer: saved.eventDetails?.secondPhotographer || '',
-                stylePreferences: saved.eventDetails?.stylePreferences || {},
-                servicesNeeded: saved.eventDetails?.servicesNeeded || {},  // Changed from deliverables
                 additionalInfo: saved.eventDetails?.additionalInfo || '',
                 dateFlexibility: saved.eventDetails?.dateFlexibility || 'specific', // 'specific', 'range', 'flexible'
                 dateTimeframe: saved.eventDetails?.dateTimeframe || '', // '3months', '6months', '1year'
                 startTimeUnknown: saved.eventDetails?.startTimeUnknown || false,
                 endTimeUnknown: saved.eventDetails?.endTimeUnknown || false,
-                secondPhotographerUnknown: saved.eventDetails?.secondPhotographerUnknown || false,
                 durationUnknown: saved.eventDetails?.durationUnknown || false,
                 numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
                 pinterestBoard: saved.eventDetails?.pinterestBoard || '',
                 eventDateTime: saved.eventDetails?.eventDateTime || '',
-                hairstylePreferences: saved.eventDetails?.hairstylePreferences || '',
-                hairLengthType: saved.eventDetails?.hairLengthType || '',
-                extensionsNeeded: saved.eventDetails?.extensionsNeeded || '',
-                trialSessionHair: saved.eventDetails?.trialSessionHair || '',
-                makeupStylePreferences: saved.eventDetails?.makeupStylePreferences || '',
-                skinTypeConcerns: saved.eventDetails?.skinTypeConcerns || '',
-                preferredProductsAllergies: saved.eventDetails?.preferredProductsAllergies || '',
-                lashesIncluded: saved.eventDetails?.lashesIncluded || '',
-                trialSessionMakeup: saved.eventDetails?.trialSessionMakeup || '',
+                flowerPreferences: saved.eventDetails?.flowerPreferences || '',
                 groupDiscountInquiry: saved.eventDetails?.groupDiscountInquiry || '',
-                onSiteServiceNeeded: saved.eventDetails?.onSiteServiceNeeded || '',
                 specificTimeNeeded: saved.eventDetails?.specificTimeNeeded || '',
                 specificTime: saved.eventDetails?.specificTime || ''
             },
@@ -126,34 +155,25 @@ function HairAndMakeUpRequest() {
                 phoneNumber: ''
             },
             photos: saved.photos || [],
-            serviceType: saved.serviceType || 'both'
         };
     });
 
-    const [serviceType, setServiceType] = useState(formData.serviceType);
-
     const getSteps = () => [
-        'Beauty Services',  // Changed from 'Videography Details'
+        'Florist Services',
         formData.eventType ? `${formData.eventType} Details` : 'Event Details',
         'Personal Details',
         'Inspiration',
         'Review'
     ];
 
-    const getDetailsSubSteps = () => {
-        const subSteps = ['Basic Information'];
-
-        if (serviceType === 'both' || serviceType === 'hair') {
-            subSteps.push('Hair Services');
-        }
-
-        if (serviceType === 'both' || serviceType === 'makeup') {
-            subSteps.push('Makeup Services');
-        }
-
-        subSteps.push('Additional Details');
-        return subSteps;
-    };
+    const getDetailsSubSteps = () => [
+        'Event Details',
+        'Floral Arrangements Needed',
+        'Color Preferences', // New sub-step
+        'Flower Preferences & Greenery',
+        'Additional Services',
+        'Other Special Requests or Notes'
+    ];
 
     const handleEventSelect = (event) => {
         setFormData(prev => {
@@ -162,7 +182,7 @@ function HairAndMakeUpRequest() {
                 eventType: event
             };
             // Save to localStorage
-            localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
+            localStorage.setItem('floristRequest', JSON.stringify(newData));
             return newData;
         });
     };
@@ -170,16 +190,7 @@ function HairAndMakeUpRequest() {
     const handleInputChange = (field, value) => {
         setFormData(prev => {
             const newData = { ...prev, [field]: value };
-            localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
-            return newData;
-        });
-    };
-
-    const handleServiceTypeChange = (e) => {
-        setServiceType(e.target.value);
-        setFormData(prev => {
-            const newData = { ...prev, serviceType: e.target.value };
-            localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
+            localStorage.setItem('floristRequest', JSON.stringify(newData));
             return newData;
         });
     };
@@ -187,26 +198,11 @@ function HairAndMakeUpRequest() {
     // Event Selection Component
     const renderEventSelection = () => {
         const eventOptions = [
-            'Wedding', 'Prom', 'Birthday', 'Photo Shoot', 'Event', 'Other'  // Modified event types
+            'Wedding', 'Prom', 'Birthday', 'Photo Shoot', 'Event', 'Other'
         ];
 
         return (
             <div>
-                <div className="custom-input-container">
-                    <select
-                        name="serviceType"
-                        value={serviceType}
-                        onChange={handleServiceTypeChange}
-                        className="custom-input"
-                    >
-                        <option value="both">Both Hair and Makeup</option>
-                        <option value="hair">Hair Only</option>
-                        <option value="makeup">Makeup Only</option>
-                    </select>
-                    <label htmlFor="serviceType" className="custom-label">
-                        Service Type
-                    </label>
-                </div>
                 <div className="event-grid-container">
                     {eventOptions.map((event, index) => (
                         <button
@@ -237,7 +233,7 @@ function HairAndMakeUpRequest() {
         const actualSubStep = subSteps[detailsSubStep];
 
         switch (actualSubStep) {
-            case 'Basic Information':
+            case 'Event Details':
                 return (
                     <div className='form-grid'>
                         <div className="custom-input-container">
@@ -246,7 +242,7 @@ function HairAndMakeUpRequest() {
                                 name="eventType"
                                 value={formData.eventType}
                                 onChange={(e) => handleInputChange('eventType', e.target.value)}
-                                placeholder='Event Type (e.g., wedding, prom, photoshoot, party)'
+                                placeholder='Event Type (e.g., wedding, birthday, corporate event, funeral)'
                                 className="custom-input"
                             />
                             <label htmlFor="eventType" className="custom-label">
@@ -366,22 +362,6 @@ function HairAndMakeUpRequest() {
                             </label>
                         </div>
                         <div className="custom-input-container">
-                            <input
-                                type="number"
-                                name="numPeople"
-                                value={formData.eventDetails.numPeople}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    numPeople: e.target.value
-                                })}
-                                placeholder='Number of People Needing Services'
-                                className="custom-input"
-                            />
-                            <label htmlFor="numPeople" className="custom-label">
-                                Number of People Needing Services
-                            </label>
-                        </div>
-                        <div className="custom-input-container">
                             <select
                                 name="specificTimeNeeded"
                                 value={formData.eventDetails.specificTimeNeeded}
@@ -417,214 +397,6 @@ function HairAndMakeUpRequest() {
                                 </label>
                             </div>
                         )}
-                    </div>
-                );
-
-            case 'Hair Services':
-                if (serviceType === 'makeup') return null;
-                return (
-                    <div className="form-grid">
-                        <div className="custom-input-container">
-                            <input
-                                type="text"
-                                name="hairstylePreferences"
-                                value={formData.eventDetails.hairstylePreferences}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    hairstylePreferences: e.target.value
-                                })}
-                                placeholder='Hairstyle Preferences'
-                                className="custom-input"
-                            />
-                            <label htmlFor="hairstylePreferences" className="custom-label">
-                                Hairstyle Preferences
-                            </label>
-                        </div>
-                        <div className="custom-input-container">
-                            <input
-                                type="text"
-                                name="hairLengthType"
-                                value={formData.eventDetails.hairLengthType}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    hairLengthType: e.target.value
-                                })}
-                                placeholder='Hair Length & Type'
-                                className="custom-input"
-                            />
-                            <label htmlFor="hairLengthType" className="custom-label">
-                                Hair Length & Type
-                            </label>
-                        </div>
-                        <div className="custom-input-container">
-                            <select
-                                name="extensionsNeeded"
-                                value={formData.eventDetails.extensionsNeeded}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    extensionsNeeded: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </select>
-                            <label htmlFor="extensionsNeeded" className="custom-label">
-                                Extensions Needed?
-                            </label>
-                        </div>
-                        <div className="custom-input-container">
-                            <select
-                                name="trialSessionHair"
-                                value={formData.eventDetails.trialSessionHair}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    trialSessionHair: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </select>
-                            <label htmlFor="trialSessionHair" className="custom-label">
-                                Trial Session Requested?
-                            </label>
-                        </div>
-                    </div>
-                );
-
-            case 'Makeup Services':
-                if (serviceType === 'hair') return null;
-                return (
-                    <div className="form-grid">
-                        <div className="custom-input-container">
-                            <input
-                                type="text"
-                                name="makeupStylePreferences"
-                                value={formData.eventDetails.makeupStylePreferences}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    makeupStylePreferences: e.target.value
-                                })}
-                                placeholder='Makeup Style Preferences'
-                                className="custom-input"
-                            />
-                            <label htmlFor="makeupStylePreferences" className="custom-label">
-                                Makeup Style Preferences
-                            </label>
-                        </div>
-                        <div className="custom-input-container">
-                            <input
-                                type="text"
-                                name="skinTypeConcerns"
-                                value={formData.eventDetails.skinTypeConcerns}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    skinTypeConcerns: e.target.value
-                                })}
-                                placeholder='Skin Type & Concerns'
-                                className="custom-input"
-                            />
-                            <label htmlFor="skinTypeConcerns" className="custom-label">
-                                Skin Type & Concerns
-                            </label>
-                        </div>
-                        <div className="custom-input-container">
-                            <input
-                                type="text"
-                                name="preferredProductsAllergies"
-                                value={formData.eventDetails.preferredProductsAllergies}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    preferredProductsAllergies: e.target.value
-                                })}
-                                placeholder='Preferred Products or Allergies'
-                                className="custom-input"
-                            />
-                            <label htmlFor="preferredProductsAllergies" className="custom-label">
-                                Preferred Products or Allergies
-                            </label>
-                        </div>
-                        <div className="custom-input-container">
-                            <select
-                                name="lashesIncluded"
-                                value={formData.eventDetails.lashesIncluded}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    lashesIncluded: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </select>
-                            <label htmlFor="lashesIncluded" className="custom-label">
-                                Lashes Included?
-                            </label>
-                        </div>
-                        <div className="custom-input-container">
-                            <select
-                                name="trialSessionMakeup"
-                                value={formData.eventDetails.trialSessionMakeup}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    trialSessionMakeup: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </select>
-                            <label htmlFor="trialSessionMakeup" className="custom-label">
-                                Trial Session Requested?
-                            </label>
-                        </div>
-                    </div>
-                );
-
-            case 'Additional Details':
-                return (
-                    <div className="form-grid">
-                        <div className="custom-input-container">
-                            <select
-                                name="groupDiscountInquiry"
-                                value={formData.eventDetails.groupDiscountInquiry}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    groupDiscountInquiry: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </select>
-                            <label htmlFor="groupDiscountInquiry" className="custom-label">
-                                Group Discount Inquiry?
-                            </label>
-                        </div>
-                        <div className="custom-input-container">
-                            <select
-                                name="onSiteServiceNeeded"
-                                value={formData.eventDetails.onSiteServiceNeeded}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    onSiteServiceNeeded: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </select>
-                            <label htmlFor="onSiteServiceNeeded" className="custom-label">
-                                On-Site Service Needed?
-                            </label>
-                        </div>
                         <div className="custom-input-container">
                             <select
                                 name="priceRange"
@@ -637,7 +409,7 @@ function HairAndMakeUpRequest() {
                             >
                                 <option value="">Select Budget Range</option>
                                 <option value="0-500">$0 - $500</option>
-                                <option value="500-1000">$5 - $1,000</option>
+                                <option value="500-1000">$500 - $1,000</option>
                                 <option value="1000-2000">$1,000 - $2,000</option>
                                 <option value="2000-3000">$2,000 - $3,000</option>
                                 <option value="3000-4000">$3,000 - $4,000</option>
@@ -648,6 +420,322 @@ function HairAndMakeUpRequest() {
                                 Budget Range
                             </label>
                         </div>
+                    </div>
+                );
+
+            case 'Floral Arrangements Needed':
+                const handleCheckboxChange = (id, checked) => {
+                    handleInputChange('eventDetails', {
+                        ...formData.eventDetails,
+                        floralArrangements: {
+                            ...formData.eventDetails.floralArrangements,
+                            [id]: checked
+                        }
+                    });
+                };
+
+                const handleQuantityChange = (id, value) => {
+                    handleInputChange('eventDetails', {
+                        ...formData.eventDetails,
+                        floralArrangements: {
+                            ...formData.eventDetails.floralArrangements,
+                            [`${id}Quantity`]: value
+                        }
+                    });
+                };
+
+                return (
+                    <div className="form-grid">
+                        <div className="custom-input-container">
+                            <label className="photo-options-header">Floral Arrangements Needed</label>
+                            <div className="photo-options-grid">
+                                {[
+                                    { id: 'bridalBouquet', label: 'Bridal bouquet' },
+                                    { id: 'bridesmaidBouquets', label: 'Bridesmaid bouquets' },
+                                    { id: 'boutonnieres', label: 'Boutonnieres' },
+                                    { id: 'corsages', label: 'Corsages' },
+                                    { id: 'centerpieces', label: 'Centerpieces' },
+                                    { id: 'ceremonyArchFlowers', label: 'Ceremony arch flowers' },
+                                    { id: 'aisleDecorations', label: 'Aisle decorations' },
+                                    { id: 'floralInstallations', label: 'Floral installations (hanging, wall, etc.)' },
+                                    { id: 'cakeFlowers', label: 'Cake flowers' },
+                                    { id: 'loosePetals', label: 'Loose petals' },
+                                    { id: 'otherFloralArrangements', label: 'Other (please specify)' }
+                                ].map((item) => (
+                                    <div key={item.id} className="photo-option-item">
+                                        <input
+                                            type="checkbox"
+                                            id={item.id}
+                                            checked={formData.eventDetails.floralArrangements?.[item.id] || false}
+                                            onChange={(e) => handleCheckboxChange(item.id, e.target.checked)}
+                                        />
+                                        <label htmlFor={item.id}>{item.label}</label>
+                                        {item.id !== 'loosePetals' && formData.eventDetails.floralArrangements?.[item.id] && (
+                                            <div className="custom-input-container">
+                                                <input
+                                                    type="number"
+                                                    name={`${item.id}Quantity`}
+                                                    value={formData.eventDetails.floralArrangements?.[`${item.id}Quantity`] || ''}
+                                                    onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                                                    placeholder={`Quantity`}
+                                                    className="custom-input"
+                                                />
+                                                <label htmlFor={`${item.id}Quantity`} className="custom-label">
+                                                    Quantity
+                                                </label>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                                {formData.eventDetails.floralArrangements?.otherFloralArrangements && (
+                                    <div className="custom-input-container">
+                                        <input
+                                            type="text"
+                                            name="otherFloralArrangementsDetails"
+                                            value={formData.eventDetails.floralArrangements?.otherFloralArrangementsDetails || ''}
+                                            onChange={(e) => handleInputChange('eventDetails', {
+                                                ...formData.eventDetails,
+                                                floralArrangements: {
+                                                    ...formData.eventDetails.floralArrangements,
+                                                    otherFloralArrangementsDetails: e.target.value
+                                                }
+                                            })}
+                                            placeholder='Please specify other floral arrangements'
+                                            className="custom-input"
+                                        />
+                                        <label htmlFor="otherFloralArrangementsDetails" className="custom-label">
+                                            Details
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'Color Preferences':
+                const colorOptions = [
+                    'Red', 'Pink', 'Orange', 'Yellow', 'Green', 'Blue', 'Purple', 'White', 'Black', 'Gray', 'Brown'
+                ];
+
+                return (
+                    <div className="form-grid">
+                        <div className="custom-input-container">
+                            <label className="photo-options-header">Color Preferences</label>
+                            <div className="photo-options-grid">
+                                {colorOptions.map((color, index) => (
+                                    <div key={index} className="photo-option-item">
+                                        <input
+                                            type="checkbox"
+                                            id={color}
+                                            checked={formData.eventDetails.colorPreferences?.includes(color) || false}
+                                            onChange={(e) => {
+                                                const newColorPreferences = e.target.checked
+                                                    ? [...(formData.eventDetails.colorPreferences || []), color]
+                                                    : (formData.eventDetails.colorPreferences || []).filter(c => c !== color);
+                                                handleInputChange('eventDetails', {
+                                                    ...formData.eventDetails,
+                                                    colorPreferences: newColorPreferences
+                                                });
+                                            }}
+                                        />
+                                        <label htmlFor={color}>{color}</label>
+                                    </div>
+                                ))}
+                                <div className="custom-input-container">
+                                    <input
+                                        type="text"
+                                        name="otherColorPreferences"
+                                        value={formData.eventDetails.otherColorPreferences || ''}
+                                        onChange={(e) => handleInputChange('eventDetails', {
+                                            ...formData.eventDetails,
+                                            otherColorPreferences: e.target.value
+                                        })}
+                                        placeholder='Other (please specify)'
+                                        className="custom-input"
+                                    />
+                                    <label htmlFor="otherColorPreferences" className="custom-label">
+                                        Other Color Preferences
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'Flower Preferences & Greenery':
+                const flowerOptions = [
+                    { id: 'roses', label: 'Roses', imgSrc: Roses },
+                    { id: 'peonies', label: 'Peonies', imgSrc: Peonies },
+                    { id: 'hydrangeas', label: 'Hydrangeas', imgSrc: Hydrangeas },
+                    { id: 'lilies', label: 'Lilies', imgSrc: Lilies },
+                    { id: 'tulips', label: 'Tulips', imgSrc: Tulips },
+                    { id: 'orchids', label: 'Orchids', imgSrc: Orchids },
+                    { id: 'daisies', label: 'Daisies', imgSrc: Daisies },
+                    { id: 'ranunculus', label: 'Ranunculus', imgSrc: Ranunculus },
+                    { id: 'anemones', label: 'Anemones', imgSrc: Anemones },
+                    { id: 'scabiosa', label: 'Scabiosa', imgSrc: Scabiosa },
+                    { id: 'eucalyptus', label: 'Eucalyptus', imgSrc: Eucalyptus },
+                    { id: 'sunflowers', label: 'Sunflowers', imgSrc: Sunflowers },
+                    { id: 'babysBreath', label: 'Baby’s Breath', imgSrc: BabysBreath },
+                    { id: 'lavender', label: 'Lavender', imgSrc: Lavender },
+                    { id: 'dahlia', label: 'Dahlia', imgSrc: Dahlia },
+                    { id: 'zinnias', label: 'Zinnias', imgSrc: Zinnias },
+                    { id: 'protea', label: 'Protea', imgSrc: Protea },
+                    { id: 'amaranthus', label: 'Amaranthus', imgSrc: Amaranthus },
+                    { id: 'chrysanthemums', label: 'Chrysanthemums', imgSrc: Chrysanthemums },
+                    { id: 'ruscus', label: 'Ruscus', imgSrc: Ruscus },
+                    { id: 'ivy', label: 'Ivy', imgSrc: Ivy },
+                    { id: 'ferns', label: 'Ferns', imgSrc: Ferns }
+                ];
+
+                return (
+                    <div className="form-grid">
+                        <div className="custom-input-container">
+                            <label className="photo-options-header">Flower Preferences & Greenery</label>
+                            <div className="photo-options-grid">
+                                {flowerOptions.map((item) => (
+                                    <div key={item.id} className="photo-option-item">
+                                        <img 
+                                            src={item.imgSrc} 
+                                            alt={item.label} 
+                                            className="flower-image" 
+                                            onClick={() => {
+                                                setSelectedFlower(item);
+                                                setIsFlowerModalOpen(true);
+                                            }}
+                                        />
+                                        <input
+                                            type="checkbox"
+                                            id={item.id}
+                                            checked={formData.eventDetails.flowerPreferences?.[item.id] || false}
+                                            onChange={(e) => handleInputChange('eventDetails', {
+                                                ...formData.eventDetails,
+                                                flowerPreferences: {
+                                                    ...formData.eventDetails.flowerPreferences,
+                                                    [item.id]: e.target.checked
+                                                }
+                                            })}
+                                        />
+                                        <label htmlFor={item.id}>{item.label}</label>
+                                    </div>
+                                ))}
+                                <div className="custom-input-container">
+                                    <input
+                                        type="text"
+                                        name="otherFlowerPreferences"
+                                        value={formData.eventDetails.otherFlowerPreferences || ''}
+                                        onChange={(e) => handleInputChange('eventDetails', {
+                                            ...formData.eventDetails,
+                                            otherFlowerPreferences: e.target.value
+                                        })}
+                                        placeholder='Other (please specify)'
+                                        className="custom-input"
+                                    />
+                                    <label htmlFor="otherFlowerPreferences" className="custom-label">
+                                        Other Flower Preferences
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'Additional Services':
+                return (
+                    <div className="form-grid">
+                        <div className="custom-input-container">
+                            <label className="photo-options-header">Additional Services</label>
+                            <div className="photo-options-grid">
+                                <div className="photo-option-item">
+                                    <input
+                                        type="checkbox"
+                                        id="setupAndTakedown"
+                                        checked={formData.eventDetails.additionalServices?.setupAndTakedown || false}
+                                        onChange={(e) => handleInputChange('eventDetails', {
+                                            ...formData.eventDetails,
+                                            additionalServices: {
+                                                ...formData.eventDetails.additionalServices,
+                                                setupAndTakedown: e.target.checked
+                                            }
+                                        })}
+                                    />
+                                    <label htmlFor="setupAndTakedown">Setup and takedown</label>
+                                </div>
+                                <div className="photo-option-item">
+                                    <input
+                                        type="checkbox"
+                                        id="delivery"
+                                        checked={formData.eventDetails.additionalServices?.delivery || false}
+                                        onChange={(e) => handleInputChange('eventDetails', {
+                                            ...formData.eventDetails,
+                                            additionalServices: {
+                                                ...formData.eventDetails.additionalServices,
+                                                delivery: e.target.checked
+                                            }
+                                        })}
+                                    />
+                                    <label htmlFor="delivery">Delivery</label>
+                                </div>
+                                <div className="photo-option-item">
+                                    <input
+                                        type="checkbox"
+                                        id="floralPreservation"
+                                        checked={formData.eventDetails.additionalServices?.floralPreservation || false}
+                                        onChange={(e) => handleInputChange('eventDetails', {
+                                            ...formData.eventDetails,
+                                            additionalServices: {
+                                                ...formData.eventDetails.additionalServices,
+                                                floralPreservation: e.target.checked
+                                            }
+                                        })}
+                                    />
+                                    <label htmlFor="floralPreservation">Floral preservation</label>
+                                </div>
+                                <div className="photo-option-item">
+                                    <input
+                                        type="checkbox"
+                                        id="otherAdditionalServices"
+                                        checked={formData.eventDetails.additionalServices?.otherAdditionalServices || false}
+                                        onChange={(e) => handleInputChange('eventDetails', {
+                                            ...formData.eventDetails,
+                                            additionalServices: {
+                                                ...formData.eventDetails.additionalServices,
+                                                otherAdditionalServices: e.target.checked
+                                            }
+                                        })}
+                                    />
+                                    <label htmlFor="otherAdditionalServices">Other (please specify)</label>
+                                </div>
+                                {formData.eventDetails.additionalServices?.otherAdditionalServices && (
+                                    <div className="custom-input-container">
+                                        <input
+                                            type="text"
+                                            name="otherAdditionalServicesDetails"
+                                            value={formData.eventDetails.additionalServices?.otherAdditionalServicesDetails || ''}
+                                            onChange={(e) => handleInputChange('eventDetails', {
+                                                ...formData.eventDetails,
+                                                additionalServices: {
+                                                    ...formData.eventDetails.additionalServices,
+                                                    otherAdditionalServicesDetails: e.target.value
+                                                }
+                                            })}
+                                            placeholder='Please specify other additional services'
+                                            className="custom-input"
+                                        />
+                                        <label htmlFor="otherAdditionalServicesDetails" className="custom-label">
+                                            Other Additional Services Details
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'Other Special Requests or Notes':
+                return (
+                    <div className="form-grid">
                         <div className="custom-input-container">
                             <ReactQuill
                                 value={formData.eventDetails.additionalInfo || ''}
@@ -839,7 +927,7 @@ function HairAndMakeUpRequest() {
             setFormData(prev => {
                 const updatedPhotos = [...prev.photos, ...newPhotos];
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
+                localStorage.setItem('floristRequest', JSON.stringify(newData));
                 return newData;
             });
             
@@ -886,7 +974,7 @@ function HairAndMakeUpRequest() {
             setFormData(prev => {
                 const updatedPhotos = prev.photos.filter(photo => photo.url !== photoUrl);
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
+                localStorage.setItem('floristRequest', JSON.stringify(newData));
                 return newData;
             });
         } catch (error) {
@@ -1037,6 +1125,38 @@ function HairAndMakeUpRequest() {
             }
         };
 
+        const renderFloralArrangements = () => {
+            const arrangements = formData.eventDetails.floralArrangements || {};
+            return Object.keys(arrangements).filter(key => arrangements[key] && !key.endsWith('Quantity')).map(key => (
+                <div key={key} style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">{key.replace(/([A-Z])/g, ' $1')}</div>
+                    <div className="request-info">
+                        Yes {formData.eventDetails.floralArrangements[`${key}Quantity`] ? `(${formData.eventDetails.floralArrangements[`${key}Quantity`]})` : ''}
+                    </div>
+                </div>
+            ));
+        };
+
+        const renderFlowerPreferences = () => {
+            const preferences = formData.eventDetails.flowerPreferences || {};
+            return Object.keys(preferences).filter(key => preferences[key]).map(key => (
+                <div key={key} style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">{key.replace(/([A-Z])/g, ' $1')}</div>
+                    <div className="request-info">Yes</div>
+                </div>
+            ));
+        };
+
+        const renderAdditionalServices = () => {
+            const services = formData.eventDetails.additionalServices || {};
+            return Object.keys(services).filter(key => services[key]).map(key => (
+                <div key={key} style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">{key.replace(/([A-Z])/g, ' $1')}</div>
+                    <div className="request-info">Yes</div>
+                </div>
+            ));
+        };
+
         return (
             <div className="event-summary-container" style={{padding:'0'}}>
                 <div className="request-summary-grid">
@@ -1050,74 +1170,6 @@ function HairAndMakeUpRequest() {
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Location</div>
                         <div className="request-info">{formData.eventDetails.location}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Number of People Needing Services</div>
-                        <div className="request-info">{formData.eventDetails.numPeople}</div>
-                    </div>
-
-                    {serviceType !== 'makeup' && (
-                        <>
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                                <div className="request-subtype">Hairstyle Preferences</div>
-                                <div className="request-info">{formData.eventDetails.hairstylePreferences}</div>
-                            </div>
-
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                                <div className="request-subtype">Hair Length & Type</div>
-                                <div className="request-info">{formData.eventDetails.hairLengthType}</div>
-                            </div>
-
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                                <div className="request-subtype">Extensions Needed?</div>
-                                <div className="request-info">{formData.eventDetails.extensionsNeeded}</div>
-                            </div>
-
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                                <div className="request-subtype">Trial Session for Hair?</div>
-                                <div className="request-info">{formData.eventDetails.trialSessionHair}</div>
-                            </div>
-                        </>
-                    )}
-
-                    {serviceType !== 'hair' && (
-                        <>
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                                <div className="request-subtype">Makeup Style Preferences</div>
-                                <div className="request-info">{formData.eventDetails.makeupStylePreferences}</div>
-                            </div>
-
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                                <div className="request-subtype">Skin Type & Concerns</div>
-                                <div className="request-info">{formData.eventDetails.skinTypeConcerns}</div>
-                            </div>
-
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                                <div className="request-subtype">Preferred Products or Allergies</div>
-                                <div className="request-info">{formData.eventDetails.preferredProductsAllergies}</div>
-                            </div>
-
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                                <div className="request-subtype">Lashes Included?</div>
-                                <div className="request-info">{formData.eventDetails.lashesIncluded}</div>
-                            </div>
-
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                                <div className="request-subtype">Trial Session for Makeup?</div>
-                                <div className="request-info">{formData.eventDetails.trialSessionMakeup}</div>
-                            </div>
-                        </>
-                    )}
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Group Discount Inquiry?</div>
-                        <div className="request-info">{formData.eventDetails.groupDiscountInquiry}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">On-Site Service Needed?</div>
-                        <div className="request-info">{formData.eventDetails.onSiteServiceNeeded}</div>
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -1141,6 +1193,22 @@ function HairAndMakeUpRequest() {
                             <div className="request-info">{formData.eventDetails.specificTime}</div>
                         </div>
                     )}
+
+                    {renderFloralArrangements()}
+
+                    {renderFlowerPreferences()}
+
+                    {renderAdditionalServices()}
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Other Color Preferences</div>
+                        <div className="request-info">{formData.eventDetails.otherColorPreferences}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Other Flower Preferences</div>
+                        <div className="request-info">{formData.eventDetails.otherFlowerPreferences}</div>
+                    </div>
                 </div>
 
                 {formData.eventDetails.additionalInfo && (
@@ -1237,14 +1305,6 @@ function HairAndMakeUpRequest() {
         setIsSubmitting(true);
         setError(null);
 
-        // Debug logs for validation
-        console.log('Location:', formData.eventDetails.location);
-        console.log('Date Flexibility:', formData.eventDetails.dateFlexibility);
-        console.log('Start Date:', formData.eventDetails.startDate);
-        console.log('End Date:', formData.eventDetails.endDate);
-        console.log('Date Timeframe:', formData.eventDetails.dateTimeframe);
-        console.log('Price Range:', formData.eventDetails.priceRange);
-
         // Existing validation
         if (!formData.eventDetails.location || 
             (formData.eventDetails.dateFlexibility === 'specific' && !formData.eventDetails.startDate) ||
@@ -1274,16 +1334,7 @@ function HairAndMakeUpRequest() {
 
             // Generate event title using first name from database
             const firstName = userData.first_name || 'Unknown';
-            const generatedEventTitle = `${firstName}'s ${formData.eventType} Beauty Request`;
-
-            // Create coverage object from wedding details
-            const coverage = {
-                ...(formData.eventType === 'Wedding' ? formData.eventDetails.weddingDetails : {}),
-                duration: formData.eventDetails.durationUnknown ? null : 
-                         formData.eventDetails.duration ? parseInt(formData.eventDetails.duration) : null,
-                numPeople: formData.eventDetails.numPeopleUnknown ? null : 
-                          formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople) : null,
-            };
+            const generatedEventTitle = `${firstName}'s ${formData.eventType} Florist Request`;
 
             // Create request data matching the table schema
             const requestData = {
@@ -1297,35 +1348,19 @@ function HairAndMakeUpRequest() {
                 date_timeframe: formData.eventDetails.dateFlexibility === 'flexible' ? formData.eventDetails.dateTimeframe : null,
                 specific_time_needed: formData.eventDetails.specificTimeNeeded === 'yes',
                 specific_time: formData.eventDetails.specificTimeNeeded === 'yes' ? formData.eventDetails.specificTime : null,
-                num_people: formData.eventDetails.numPeopleUnknown ? null : 
-                            formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople) : null,
-                duration: formData.eventDetails.durationUnknown ? null : 
-                         formData.eventDetails.duration ? parseInt(formData.eventDetails.duration) : null,
-                indoor_outdoor: formData.eventDetails.indoorOutdoor,
                 price_range: formData.eventDetails.priceRange,
                 additional_comments: formData.eventDetails.additionalInfo || null,
-                style_preferences: formData.eventDetails.stylePreferences || {}, // JSON object
-                services_needed: formData.eventDetails.servicesNeeded || {},  // JSON object
                 pinterest_link: formData.eventDetails.pinterestBoard || null,
-                coverage: coverage, // Add the coverage object
                 status: 'pending',
                 coupon_code: appliedCoupon ? appliedCoupon.code : null,
-                service_type: serviceType, // Add service type
-                hairstyle_preferences: formData.eventDetails.hairstylePreferences || '',
-                hair_length_type: formData.eventDetails.hairLengthType || '',
-                extensions_needed: formData.eventDetails.extensionsNeeded || '',
-                trial_session_hair: formData.eventDetails.trialSessionHair || '',
-                makeup_style_preferences: formData.eventDetails.makeupStylePreferences || '',
-                skin_type_concerns: formData.eventDetails.skinTypeConcerns || '',
-                preferred_products_allergies: formData.eventDetails.preferredProductsAllergies || '',
-                lashes_included: formData.eventDetails.lashesIncluded || '',
-                trial_session_makeup: formData.eventDetails.trialSessionMakeup || '',
-                group_discount_inquiry: formData.eventDetails.groupDiscountInquiry || '',
-                on_site_service_needed: formData.eventDetails.onSiteServiceNeeded || ''
+                flower_preferences: formData.eventDetails.flowerPreferences || {},
+                floral_arrangements: formData.eventDetails.floralArrangements || {},
+                colors: formData.eventDetails.colorPreferences || [],
+                additional_services: formData.eventDetails.additionalServices || {} // Add additional services
             };
 
             const { data: request, error: requestError } = await supabase
-                .from('beauty_requests')          // Changed from videography_requests
+                .from('florist_requests')
                 .insert([requestData])
                 .select()
                 .single();
@@ -1349,9 +1384,9 @@ function HairAndMakeUpRequest() {
                         .from('request-media')
                         .getPublicUrl(filePath);
 
-                    // Store photo information in beauty_photos table
+                    // Store photo information in florist_photos table
                     return supabase
-                        .from('beauty_photos')               // Changed from videography_photos
+                        .from('florist_photos')
                         .insert([{
                             request_id: request.id,
                             user_id: user.id,
@@ -1364,11 +1399,11 @@ function HairAndMakeUpRequest() {
             }
 
             // Clear form data and navigate to success page
-            localStorage.removeItem('hairAndMakeupRequest');
+            localStorage.removeItem('floristRequest');
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
-                    message: 'Your hair and makeup request has been submitted successfully!'
+                    message: 'Your florist request has been submitted successfully!'
                 }
             });
 
@@ -1447,12 +1482,14 @@ function HairAndMakeUpRequest() {
             const subSteps = getDetailsSubSteps();
             if (detailsSubStep < subSteps.length - 1) {
                 // Validate required fields for sub-steps
-                if (detailsSubStep === 0 && 
-                    (!formData.eventDetails.location || 
-                    (formData.eventDetails.dateFlexibility === 'specific' && !formData.eventDetails.eventDateTime) ||
-                    (formData.eventDetails.dateFlexibility === 'range' && (!formData.eventDetails.startDate || !formData.eventDetails.endDate)))) {
-                    setError('Please fill in all required fields: Location and Date information.');
-                    return;
+                if (detailsSubStep === 0) {
+                    if (!formData.eventDetails.location || 
+                        (formData.eventDetails.dateFlexibility === 'specific' && !formData.eventDetails.startDate) ||
+                        (formData.eventDetails.dateFlexibility === 'range' && (!formData.eventDetails.startDate || !formData.eventDetails.endDate)) ||
+                        (formData.eventDetails.dateFlexibility === 'flexible' && !formData.eventDetails.dateTimeframe)) {
+                        setError('Please fill in all required fields: Location and Date information.');
+                        return;
+                    }
                 }
                 setDetailsSubStep(prev => prev + 1);
             } else {
@@ -1485,6 +1522,7 @@ function HairAndMakeUpRequest() {
         <div className='request-form-overall-container'>
             {isAuthModalOpen && <AuthModal setIsModalOpen={setIsAuthModalOpen} onSuccess={handleAuthSuccess} />}
             {isModalOpen && <SignInModal setIsModalOpen={setIsModalOpen} />}
+            {isFlowerModalOpen && <FlowerModal photo={selectedFlower} onClose={() => setIsFlowerModalOpen(false)} />}
             <div className="request-form-status-container desktop-only" style={{ height: '75vh', padding:'40px' }}>
                 <div className="request-form-box">
                     <StatusBar steps={getSteps()} currentStep={currentStep} />
@@ -1522,4 +1560,4 @@ function HairAndMakeUpRequest() {
     );
 }
 
-export default HairAndMakeUpRequest;
+export default FloristRequest;

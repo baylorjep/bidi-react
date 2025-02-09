@@ -84,6 +84,7 @@ import PrivateRoute from './components/PrivateRoute';
 import VideographyRequest from './components/Request/Videography/VideographyRequest';
 import DjRequest from './components/Request/DJ/DjRequest';
 import HairAndMakeUpRequest from './components/Request/Beauty/HairAndMakeUpRequest';
+import FloristRequest from './components/Request/Florist/FloristRequest'; // Add this import
 
 function App() {
 
@@ -177,6 +178,7 @@ function App() {
                         <Route path="/request/videography" element={<VideographyRequest />} />
                         <Route path="/request/dj" element={<DjRequest />} />
                         <Route path="/request/beauty" element={<HairAndMakeUpRequest />} />
+                        <Route path="/request/florist" element={<FloristRequest />} /> {/* Add this route */}
 
                     </Routes>
                 </div>

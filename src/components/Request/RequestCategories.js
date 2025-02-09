@@ -10,7 +10,7 @@ function RequestCategories() {
         'Videography',
         'DJ Services',
         'Hair and Makeup Artist',
-        'Florist',
+        'Florist',  // Added Florist
         'Catering',
         'Wedding Planner',
         'Venue',
@@ -33,14 +33,15 @@ function RequestCategories() {
         }));
         
         // Dynamic navigation based on category
-        const dedicatedFormCategories = ['photography', 'videography', 'dj services', 'hair and makeup artist']; // Added 'hair and makeup artist'
+        const dedicatedFormCategories = ['photography', 'videography', 'dj services', 'hair and makeup artist', 'florist']; // Added 'florist'
         if (dedicatedFormCategories.includes(category)) {
             // Convert category names to route paths
             const routeMap = {
                 'photography': 'photography',
                 'videography': 'videography',
                 'dj services': 'dj',
-                'hair and makeup artist': 'beauty'
+                'hair and makeup artist': 'beauty',
+                'florist': 'florist'  // Added 'florist'
             };
             const routePath = routeMap[category];
             navigate(`/request/${routePath}`);
@@ -54,7 +55,6 @@ function RequestCategories() {
             });
         }
     };
-
 
     const handleBack = () => {
         navigate('/createaccount');  // Adjust the route for going back
