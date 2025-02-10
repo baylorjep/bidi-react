@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { listenForMessages } from "../../utils/supabaseRealtime";
-
+import { listenForMessages } from "../utils/supabaseRealtime";
 
 const ChatBox = ({ senderId, receiverId }) => {
   const [messages, setMessages] = useState([]);
