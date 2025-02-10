@@ -63,6 +63,9 @@ import Homepage from './components/Homepage';
 import ContactForm from './components/ContactForm';
 import AboutUs from './components/AboutUs';
 
+// Messaging imports
+import ChatBox from './components/Messaging/ChatBox';
+
 // Spanish imports
 import HomepageES from './components/HomepageES'
 import ContactFormES from './components/ContactFormES';
@@ -144,9 +147,13 @@ function App() {
                         <Route path="/dashboard" element={<BusinessDashboard />} />
                         <Route path="/edit-bid/:requestId/:bidId" element={<EditBid />} /> {/* Dynamic URL for editing bids */}
 
+
                         {/* Misc Routes */}
                         <Route path="/contact-us" element={<ContactForm />} />
                         <Route path="/about-us" element={<AboutUs />} />
+                        
+                        {/* Messaging Routes */}
+                        <Route path="/chat" element={<ChatBox />} />
 
                         {/* Spanish Routes */}
                         <Route path="/inicio" element={<HomepageES />} />
