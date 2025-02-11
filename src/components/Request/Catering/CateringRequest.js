@@ -45,7 +45,7 @@ const PhotoModal = ({ photo, onClose }) => {
     );
 };
 
-function DjRequest() {
+function CateringRequest() {  // Changed function name
     const navigate = useNavigate();
     const location = useLocation();
     const [currentStep, setCurrentStep] = useState(0);
@@ -68,12 +68,12 @@ function DjRequest() {
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
-        const saved = JSON.parse(localStorage.getItem('djRequest') || '{}');
-        const defaultWeddingDetails = {
-            ceremony: false,    
-            cocktailHour: false,
-            reception: false,
-            afterParty: false
+        const saved = JSON.parse(localStorage.getItem('cateringRequest') || '{}');  // Changed key
+        const defaultEventDetails = {
+            appetizers: false,    
+            mainCourse: false,
+            desserts: false,
+            drinks: false
         };
 
         return {
@@ -90,13 +90,13 @@ function DjRequest() {
                 indoorOutdoor: saved.eventDetails?.indoorOutdoor || '',
                 additionalComments: saved.eventDetails?.additionalComments || '',
                 priceRange: saved.eventDetails?.priceRange || '',
-                weddingDetails: saved.eventDetails?.weddingDetails || defaultWeddingDetails,
+                eventDetails: saved.eventDetails?.eventDetails || defaultEventDetails,
                 startTime: saved.eventDetails?.startTime || '',
                 endTime: saved.eventDetails?.endTime || '',
                 stylePreferences: saved.eventDetails?.stylePreferences || {},
-                musicPreferences: saved.eventDetails?.musicPreferences || {},
+                foodPreferences: saved.eventDetails?.foodPreferences || {},  // Changed to foodPreferences
                 equipment: saved.eventDetails?.equipment || {},
-                specialSongs: saved.eventDetails?.specialSongs || '',
+                specialRequests: saved.eventDetails?.specialRequests || '',  // Changed to specialRequests
                 additionalInfo: saved.eventDetails?.additionalInfo || '',
                 dateFlexibility: saved.eventDetails?.dateFlexibility || 'specific', // 'specific', 'range', 'flexible'
                 dateTimeframe: saved.eventDetails?.dateTimeframe || '', // '3months', '6months', '1year'
@@ -116,10 +116,10 @@ function DjRequest() {
     });
 
     const getSteps = () => [
-        'DJ Details',
+        'Catering Details',
         formData.eventType ? `${formData.eventType} Details` : 'Event Details',
         'Personal Details',
-        'Music Preferences',  // Changed from 'Music Preferences'
+        'Food Preferences',  // Changed from 'Music Preferences'
         'Review'
     ];
 
@@ -128,13 +128,13 @@ function DjRequest() {
             case 'Wedding':
                 return [
                     'Basic Details',
-                    'Coverage',
-                    'Equipment & Add-ons',
+                    'Menu',
+                    'Logistics & Extra',
                     'Budget & Additional Info'
                 ];
 
             default:
-                return ['Basic Info', 'Coverage', 'Music & Equipment', 'Additional Details'];
+                return ['Basic Info', 'Coverage', 'Food & Equipment', 'Additional Details'];  // Changed to Food & Equipment
         }
     };
 
@@ -145,7 +145,7 @@ function DjRequest() {
                 eventType: event
             };
             // Save to localStorage
-            localStorage.setItem('djRequest', JSON.stringify(newData));
+            localStorage.setItem('cateringRequest', JSON.stringify(newData));  // Changed key
             return newData;
         });
     };
@@ -153,7 +153,7 @@ function DjRequest() {
     const handleInputChange = (field, value) => {
         setFormData(prev => {
             const newData = { ...prev, [field]: value };
-            localStorage.setItem('djRequest', JSON.stringify(newData));
+            localStorage.setItem('cateringRequest', JSON.stringify(newData));  // Changed key
             return newData;
         });
     };
@@ -161,7 +161,7 @@ function DjRequest() {
     // Event Selection Component
     const renderEventSelection = () => {
         const eventOptions = [
-            'Wedding', 'Corporate Event', 'Birthday', 'School Dance', 'Club Event', 'Quinceñera', 'Other'
+            'Wedding', 'Corporate Event', 'Birthday', 'School Event', 'Private Party', 'Other'  // Changed options
         ];
 
         return (
@@ -191,7 +191,7 @@ function DjRequest() {
 
     const renderEventDetailsSubStep = () => {
         switch (detailsSubStep) {
-            case 0: // Basic Wedding Details
+            case 0: // Basic Event Details
                 return (
                     <div className='form-grid'>
                         <div className="custom-input-container">
@@ -394,31 +394,222 @@ function DjRequest() {
                                 Indoor or Outdoor
                             </label>
                         </div>
+
+                        <div className="custom-input-container">
+                            <input
+                                type="number"
+                                name="numPeople"
+                                value={formData.eventDetails.numPeople}
+                                onChange={(e) => handleInputChange('eventDetails', {
+                                    ...formData.eventDetails,
+                                    numPeople: e.target.value
+                                })}
+                                placeholder='Number of guests'
+                                className="custom-input"
+                            />
+                            <label htmlFor="numPeople" className="custom-label">
+                                Number of Guests
+                            </label>
+                        </div>
                     </div>
                 );
 
-            case 1: // Coverage Preferences
+            case 1: // Menu
                 return (
-                    <div className="wedding-details-container">
+                    <div className="event-details-container" style={{paddingBottom:'0', gap:'20px', display:'flex', flexDirection:'column'}}>
+                        <div className="custom-input-container">
+                            <select
+                                name="serviceStyle"
+                                value={formData.eventDetails.serviceStyle || ''}
+                                onChange={(e) => handleInputChange('eventDetails', {
+                                    ...formData.eventDetails,
+                                    serviceStyle: e.target.value
+                                })}
+                                className="custom-input"
+                            >
+                                <option value="">Select Type of Catering Service</option>
+                                <option value="buffet">Buffet</option>
+                                <option value="platedDinner">Plated Dinner</option>
+                                <option value="familyStyle">Family-Style</option>
+                                <option value="foodStations">Food Stations</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <label htmlFor="serviceStyle" className="custom-label">
+                                Type of Catering Service
+                            </label>
+                        </div>
+
+                        <div className="custom-input-container">
+                            <select
+                                name="cuisinePreferences"
+                                value={formData.eventDetails.cuisinePreferences || ''}
+                                onChange={(e) => handleInputChange('eventDetails', {
+                                    ...formData.eventDetails,
+                                    cuisinePreferences: e.target.value
+                                })}
+                                className="custom-input"
+                            >
+                                <option value="">Select Cuisine Preferences</option>
+                                <option value="bbq">BBQ</option>
+                                <option value="italian">Italian</option>
+                                <option value="mexican">Mexican</option>
+                                <option value="vegetarian">Vegetarian</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <label htmlFor="cuisinePreferences" className="custom-label">
+                                Cuisine Preferences
+                            </label>
+                        </div>
+
+                        <div className="custom-input-container">
+                            <ReactQuill
+                                value={formData.eventDetails.dietaryRestrictions || ''}
+                                onChange={(content) => handleInputChange('eventDetails', {
+                                    ...formData.eventDetails,
+                                    dietaryRestrictions: content
+                                })}
+                                modules={modules}
+                                placeholder="List any dietary restrictions or allergies..."
+                            />
+                            <label htmlFor="dietaryRestrictions" className="custom-label">
+                                Dietary Restrictions & Allergies
+                            </label>
+                        </div>
+
+                        <div className="event-photo-options">
+                            <div className='photo-options-header'>Appetizers Needed?</div>
+                            <div className="photo-options-grid">
+                                {[
+                                    { key: 'yes', label: 'Yes' },
+                                    { key: 'no', label: 'No' }
+                                ].map(({ key, label }) => (
+                                    <div key={key} className="photo-option-item">
+                                        <input
+                                            type="radio"
+                                            id={key}
+                                            name="appetizersNeeded"
+                                            checked={formData.eventDetails.appetizersNeeded === key}
+                                            onChange={(e) => handleInputChange('eventDetails', {
+                                                ...formData.eventDetails,
+                                                appetizersNeeded: key
+                                            })}
+                                        />
+                                        <label htmlFor={key}>{label}</label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {formData.eventDetails.appetizersNeeded === 'yes' && (
+                            <div className="custom-input-container">
+                                <ReactQuill
+                                    value={formData.eventDetails.appetizerOptions || ''}
+                                    onChange={(content) => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        appetizerOptions: content
+                                    })}
+                                    modules={modules}
+                                    placeholder="Select or describe appetizer options..."
+                                />
+                                <label htmlFor="appetizerOptions" className="custom-label">
+                                    Appetizer Options
+                                </label>
+                            </div>
+                        )}
+
+                        <div className="event-photo-options">
+                            <div className='photo-options-header'>Desserts Needed?</div>
+                            <div className="photo-options-grid">
+                                {[
+                                    { key: 'yes', label: 'Yes' },
+                                    { key: 'no', label: 'No' }
+                                ].map(({ key, label }) => (
+                                    <div key={key} className="photo-option-item">
+                                        <input
+                                            type="radio"
+                                            id={key}
+                                            name="dessertsNeeded"
+                                            checked={formData.eventDetails.dessertsNeeded === key}
+                                            onChange={(e) => handleInputChange('eventDetails', {
+                                                ...formData.eventDetails,
+                                                dessertsNeeded: key
+                                            })}
+                                        />
+                                        <label htmlFor={key}>{label}</label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {formData.eventDetails.dessertsNeeded === 'yes' && (
+                            <div className="custom-input-container">
+                                <ReactQuill
+                                    value={formData.eventDetails.dessertOptions || ''}
+                                    onChange={(content) => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        dessertOptions: content
+                                    })}
+                                    modules={modules}
+                                    placeholder="Select or describe dessert options..."
+                                />
+                                <label htmlFor="dessertOptions" className="custom-label">
+                                    Dessert Options
+                                </label>
+                            </div>
+                        )}
+
+                        <div className="event-photo-options">
+                            <div className='photo-options-header'>Beverages Needed?</div>
+                            <div className="photo-options-grid">
+                                {[
+                                    { key: 'nonAlcoholic', label: 'Non-Alcoholic' },
+                                    { key: 'coffeeTea', label: 'Coffee/Tea' },
+                                    { key: 'alcoholic', label: 'Alcoholic' },
+                                    { key: 'custom', label: 'Custom' }
+                                ].map(({ key, label }) => (
+                                    <div key={key} className="photo-option-item">
+                                        <input
+                                            type="checkbox"
+                                            id={key}
+                                            checked={formData.eventDetails.beveragesNeeded?.[key] || false}
+                                            onChange={(e) => handleInputChange('eventDetails', {
+                                                ...formData.eventDetails,
+                                                beveragesNeeded: {
+                                                    ...formData.eventDetails.beveragesNeeded,
+                                                    [key]: e.target.checked
+                                                }
+                                            })}
+                                        />
+                                        <label htmlFor={key}>{label}</label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 2: // Coverage Preferences
+                return (
+                    <div className="event-details-container">
                         {formData.eventType === 'Wedding' && (
-                            <div className="wedding-photo-options" style={{paddingTop:'0', paddingBottom:'0'}}>
-                                <div className='photo-options-header'>What parts of the event need DJ coverage?</div>
+                            <div className="event-photo-options" style={{paddingTop:'0', paddingBottom:'0'}}>
+                                <div className='photo-options-header'>What parts of the event need catering coverage?</div>
                                 <div className="photo-options-grid">
                                     {[
-                                        { key: 'ceremony', label: 'Ceremony' },
-                                        { key: 'cocktailHour', label: 'Cocktail Hour' },
-                                        { key: 'reception', label: 'Reception' },
-                                        { key: 'afterParty', label: 'After Party' }
+                                        { key: 'appetizers', label: 'Appetizers' },
+                                        { key: 'mainCourse', label: 'Main Course' },
+                                        { key: 'desserts', label: 'Desserts' },
+                                        { key: 'drinks', label: 'Drinks' }
                                     ].map(({ key, label }) => (
                                         <div key={key} className="photo-option-item">
                                             <input
                                                 type="checkbox"
                                                 id={key}
-                                                checked={formData.eventDetails.weddingDetails?.[key] || false}
+                                                checked={formData.eventDetails.eventDetails?.[key] || false}
                                                 onChange={(e) => handleInputChange('eventDetails', {
                                                     ...formData.eventDetails,
-                                                    weddingDetails: {
-                                                        ...formData.eventDetails.weddingDetails,
+                                                    eventDetails: {
+                                                        ...formData.eventDetails.eventDetails,
                                                         [key]: e.target.checked
                                                     }
                                                 })}
@@ -498,10 +689,10 @@ function DjRequest() {
                     </div>
                 );
 
-            case 2: // Music & Equipment
+            case 3: // Food & Equipment
                 return (
-                    <div className="wedding-details-container">
-                        <div className="wedding-photo-options">
+                    <div className="event-details-container">
+                        <div className="event-photo-options">
                             <div className='photo-options-header'>Equipment Requirements</div>
                             <div className="equipment-options">
                                 <button
@@ -514,22 +705,22 @@ function DjRequest() {
                                     ✅ The venue provides sound and lighting equipment
                                 </button>
                                 <button
-                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'djBringsAll' ? 'selected' : ''}`}
+                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'catererBringsAll' ? 'selected' : ''}`}
                                     onClick={() => handleInputChange('eventDetails', {
                                         ...formData.eventDetails,
-                                        equipmentNeeded: 'djBringsAll'
+                                        equipmentNeeded: 'catererBringsAll'
                                     })}
                                 >
-                                    🎵 The DJ needs to bring all equipment
+                                    🍽️ The caterer needs to bring all equipment
                                 </button>
                                 <button
-                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'djBringsSome' ? 'selected' : ''}`}
+                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'catererBringsSome' ? 'selected' : ''}`}
                                     onClick={() => handleInputChange('eventDetails', {
                                         ...formData.eventDetails,
-                                        equipmentNeeded: 'djBringsSome'
+                                        equipmentNeeded: 'catererBringsSome'
                                     })}
                                 >
-                                    🎛️ The DJ needs to bring some equipment
+                                    🍴 The caterer needs to bring some equipment
                                 </button>
                                 <button
                                     className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'unknown' ? 'selected' : ''}`}
@@ -542,7 +733,7 @@ function DjRequest() {
                                 </button>
                             </div>
 
-                            {formData.eventDetails.equipmentNeeded === 'djBringsSome' && (
+                            {formData.eventDetails.equipmentNeeded === 'catererBringsSome' && (
                                 <div className="custom-input-container" style={{ marginTop: '20px' }}>
                                     <ReactQuill
                                         value={formData.eventDetails.equipmentNotes || ''}
@@ -551,7 +742,7 @@ function DjRequest() {
                                             equipmentNotes: content
                                         })}
                                         modules={modules}
-                                        placeholder="Please specify what equipment the DJ needs to bring..."
+                                        placeholder="Please specify what equipment the caterer needs to bring..."
                                     />
                                     <label htmlFor="equipmentNotes" className="custom-label">
                                         Equipment Details
@@ -560,19 +751,19 @@ function DjRequest() {
                             )}
                         </div>
 
-                        <div className="wedding-photo-options">
+                        <div className="event-photo-options">
                             <div className='photo-options-header'>Add-ons</div>
                             <span className='photo-options-header' style={{color:'gray', fontSize:'12px'}}>(optional)</span>
                             <div className="photo-options-grid">
                                 {[
-                                    { key: 'mcServices', label: '🎤 MC Services' },
-                                    { key: 'liveMixing', label: '🎶 Live Mixing / Scratching' },
-                                    { key: 'uplighting', label: '🏮 Uplighting Package' },
-                                    { key: 'fogMachine', label: '🌫️ Fog Machine' },
-                                    { key: 'specialFx', label: '🎇 Cold Sparks / Special FX' },
-                                    { key: 'photoBooth', label: '📸 Photo Booth Service' },
-                                    { key: 'eventRecording', label: '🎥 Event Recording' },
-                                    { key: 'karaoke', label: '🎵 Karaoke Setup' },
+                                    { key: 'waitStaff', label: '👨‍🍳 Wait Staff' },
+                                    { key: 'bartender', label: '🍸 Bartender' },
+                                    { key: 'tableware', label: '🍽️ Tableware' },
+                                    { key: 'linens', label: '🧺 Linens' },
+                                    { key: 'decor', label: '🎀 Decor' },
+                                    { key: 'cake', label: '🍰 Cake' },
+                                    { key: 'beverageService', label: '🥤 Beverage Service' },
+                                    { key: 'cleanup', label: '🧹 Cleanup Service' },
                                 ].map(({ key, label }) => (
                                     <div key={key} className="photo-option-item">
                                         <input
@@ -595,7 +786,7 @@ function DjRequest() {
                     </div>
                 );
 
-            case 3: // Budget & Additional Info
+            case 4: // Budget & Additional Info
                 return (
                     <div className='form-grid'>
                         <div className="custom-input-container">
@@ -629,7 +820,7 @@ function DjRequest() {
                                     additionalInfo: content
                                 })}
                                 modules={modules}
-                                placeholder="Any special requests or additional information DJs should know..."
+                                placeholder="Any special requests or additional information caterers should know..."
                             />
                             <label htmlFor="additionalInfo" className="custom-label">
                                 Additional Information
@@ -812,7 +1003,7 @@ function DjRequest() {
             setFormData(prev => {
                 const updatedPhotos = [...prev.photos, ...newPhotos];
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('djRequest', JSON.stringify(newData));
+                localStorage.setItem('cateringRequest', JSON.stringify(newData));
                 return newData;
             });
             
@@ -859,7 +1050,7 @@ function DjRequest() {
             setFormData(prev => {
                 const updatedPhotos = prev.photos.filter(photo => photo.url !== photoUrl);
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('djRequest', JSON.stringify(newData));
+                localStorage.setItem('cateringRequest', JSON.stringify(newData));
                 return newData;
             });
         } catch (error) {
@@ -889,33 +1080,33 @@ function DjRequest() {
     
     const renderPhotoUpload = () => {
         return (
-            <div className="wedding-details-container">
-                <div className="wedding-photo-options">
-                    <div className='photo-options-header'>Music Style Preferences</div>
+            <div className="event-details-container">
+                <div className="event-photo-options">
+                    <div className='photo-options-header'>Food Style Preferences</div>
                     <div className="photo-options-grid">
                         {[
-                            { key: 'top40', label: 'Top 40' },
-                            { key: 'hiphop', label: 'Hip Hop' },
-                            { key: 'house', label: 'House' },
-                            { key: 'latin', label: 'Latin' },
-                            { key: 'rock', label: 'Rock' },
-                            { key: 'classics', label: 'Classics' },
-                            { key: 'country', label: 'Country' },
-                            { key: 'jazz', label: 'Jazz' },
-                            { key: 'rb', label: 'R&B' },
-                            { key: 'edm', label: 'EDM' },
-                            { key: 'pop', label: 'Pop' },
-                            { key: 'international', label: 'International' },
+                            { key: 'italian', label: 'Italian' },
+                            { key: 'mexican', label: 'Mexican' },
+                            { key: 'chinese', label: 'Chinese' },
+                            { key: 'indian', label: 'Indian' },
+                            { key: 'american', label: 'American' },
+                            { key: 'mediterranean', label: 'Mediterranean' },
+                            { key: 'japanese', label: 'Japanese' },
+                            { key: 'french', label: 'French' },
+                            { key: 'thai', label: 'Thai' },
+                            { key: 'greek', label: 'Greek' },
+                            { key: 'spanish', label: 'Spanish' },
+                            { key: 'other', label: 'Other' },
                         ].map(({ key, label }) => (
                             <div key={key} className="photo-option-item">
                                 <input
                                     type="checkbox"
                                     id={key}
-                                    checked={formData.eventDetails.musicPreferences?.[key] || false}
+                                    checked={formData.eventDetails.foodPreferences?.[key] || false}
                                     onChange={(e) => handleInputChange('eventDetails', {
                                         ...formData.eventDetails,
-                                        musicPreferences: {
-                                            ...formData.eventDetails.musicPreferences,
+                                        foodPreferences: {
+                                            ...formData.eventDetails.foodPreferences,
                                             [key]: e.target.checked
                                         }
                                     })}
@@ -929,32 +1120,32 @@ function DjRequest() {
                 <div className="custom-input-container" style={{ marginTop: '20px' }}>
                     <input
                         type="url"
-                        name="playlist"
-                        value={formData.eventDetails.playlist || ''}
+                        name="menu"
+                        value={formData.eventDetails.menu || ''}
                         onChange={(e) => handleInputChange('eventDetails', {
                             ...formData.eventDetails,
-                            playlist: e.target.value
+                            menu: e.target.value
                         })}
-                        placeholder="Paste your Spotify/Apple Music playlist link here"
+                        placeholder="Paste your menu link here"
                         className="custom-input"
                     />
-                    <label htmlFor="playlist" className="custom-label">
-                        Music Playlist Link
+                    <label htmlFor="menu" className="custom-label">
+                        Menu Link
                     </label>
                 </div>
 
                 <div className="custom-input-container">
                     <ReactQuill
-                        value={formData.eventDetails.specialSongs || ''}
+                        value={formData.eventDetails.specialRequests || ''}
                         onChange={(content) => handleInputChange('eventDetails', {
                             ...formData.eventDetails,
-                            specialSongs: content
+                            specialRequests: content
                         })}
                         modules={modules}
-                        placeholder="List any must-play songs or specific tracks for key moments..."
+                        placeholder="List any special dietary requirements or specific requests..."
                     />
-                    <label htmlFor="specialSongs" className="custom-label">
-                        Special Song Requests
+                    <label htmlFor="specialRequests" className="custom-label">
+                        Special Requests
                     </label>
                 </div>
             </div>
@@ -1066,10 +1257,10 @@ function DjRequest() {
                                 switch (formData.eventDetails.equipmentNeeded) {
                                     case 'venueProvided':
                                         return 'The venue provides sound and lighting equipment';
-                                    case 'djBringsAll':
-                                        return 'The DJ needs to bring all equipment';
-                                    case 'djBringsSome':
-                                        return formData.eventDetails.equipmentNotes || 'The DJ needs to bring some equipment';
+                                    case 'catererBringsAll':
+                                        return 'The caterer needs to bring all equipment';
+                                    case 'catererBringsSome':
+                                        return formData.eventDetails.equipmentNotes || 'The caterer needs to bring some equipment';
                                     case 'unknown':
                                         return 'Equipment requirements to be discussed';
                                     default:
@@ -1079,27 +1270,27 @@ function DjRequest() {
                         </div>
                     </div>
 
-                    {formData.eventDetails.equipmentNeeded === 'djBringsSome' && (
+                    {formData.eventDetails.equipmentNeeded === 'catererBringsSome' && (
                         <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                             <div className="request-subtype">Equipment Details</div>
-                            <div className="request-info" dangerouslySetInnerHTML={{ __html: formData.eventDetails.equipmentNotes }} />
+                            <div class="request-info" dangerouslySetInnerHTML={{ __html: formData.eventDetails.equipmentNotes }} />
                         </div>
                     )}
 
-                    {/* Music Preferences */}
+                    {/* Food Preferences */}
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Music Preferences</div>
+                        <div className="request-subtype">Food Preferences</div>
                         <div className="request-info">
-                            {Object.keys(formData.eventDetails.musicPreferences || {})
-                                .filter(key => formData.eventDetails.musicPreferences[key])
+                            {Object.keys(formData.eventDetails.foodPreferences || {})
+                                .filter(key => formData.eventDetails.foodPreferences[key])
                                 .join(', ') || 'No preferences specified'}
                         </div>
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Playlist Link</div>
+                        <div className="request-subtype">Menu Link</div>
                         <div className="request-info">
-                            {formData.eventDetails.playlist || 'Not provided'}
+                            {formData.eventDetails.menu || 'Not provided'}
                         </div>
                     </div>
 
@@ -1111,14 +1302,14 @@ function DjRequest() {
                                 .filter(([_, value]) => value)
                                 .map(([key, _]) => {
                                     const service = {
-                                        mcServices: '🎤 MC Services',
-                                        liveMixing: '🎶 Live Mixing',
-                                        uplighting: '🏮 Uplighting',
-                                        fogMachine: '🌫️ Fog Machine',
-                                        specialFx: '🎇 Special FX',
-                                        photoBooth: '📸 Photo Booth',
-                                        eventRecording: '🎥 Event Recording',
-                                        karaoke: '🎵 Karaoke'
+                                        waitStaff: '👨‍🍳 Wait Staff',
+                                        bartender: '🍸 Bartender',
+                                        tableware: '🍽️ Tableware',
+                                        linens: '🧺 Linens',
+                                        decor: '🎀 Decor',
+                                        cake: '🍰 Cake',
+                                        beverageService: '🥤 Beverage Service',
+                                        cleanup: '🧹 Cleanup Service'
                                     }[key];
                                     return service;
                                 })
@@ -1132,12 +1323,12 @@ function DjRequest() {
                         <div className="request-info">{formData.eventDetails.priceRange || 'Not specified'}</div>
                     </div>
 
-                    {/* Wedding-specific details if applicable */}
+                    {/* Event-specific details if applicable */}
                     {formData.eventType === 'Wedding' && (
                         <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                            <div className="request-subtype">Wedding Coverage</div>
+                            <div className="request-subtype">Event Coverage</div>
                             <div className="request-info">
-                                {Object.entries(formData.eventDetails.weddingDetails || {})
+                                {Object.entries(formData.eventDetails.eventDetails || {})
                                     .filter(([_, value]) => value)
                                     .map(([key, _]) => key.charAt(0).toUpperCase() + key.slice(1))
                                     .join(', ') || 'No specific coverage selected'}
@@ -1147,10 +1338,10 @@ function DjRequest() {
                 </div>
 
                 {/* Additional Information */}
-                {formData.eventDetails.specialSongs && (
+                {formData.eventDetails.specialRequests && (
                     <div style={{marginTop: '20px'}}>
-                        <div className="request-subtype">Special Song Requests</div>
-                        <div className="request-info" dangerouslySetInnerHTML={{ __html: formData.eventDetails.specialSongs }} />
+                        <div className="request-subtype">Special Requests</div>
+                        <div className="request-info" dangerouslySetInnerHTML={{ __html: formData.eventDetails.specialRequests }} />
                     </div>
                 )}
 
@@ -1251,7 +1442,7 @@ function DjRequest() {
             // Check if the coupon code is already used
             if (appliedCoupon) {
                 const { data: existingRequest, error: checkError } = await supabase
-                    .from('dj_requests')
+                    .from('catering_requests')
                     .select('id')
                     .eq('coupon_code', appliedCoupon.code)
                     .single();
@@ -1277,7 +1468,7 @@ function DjRequest() {
             if (userError) throw userError;
 
             // Create title
-            const eventTitle = `${userData.first_name}'s ${formData.eventType} DJ Request`;
+            const eventTitle = `${userData.first_name}'s ${formData.eventType} Catering Request`;
 
             // Convert additional_services object to array
             const additionalServicesArray = Object.entries(formData.eventDetails.additionalServices || {})
@@ -1297,20 +1488,20 @@ function DjRequest() {
                 estimated_guests: formData.eventDetails.numPeopleUnknown ? null : 
                                 formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople) : null,
                 location: formData.eventDetails.location,
-                music_preferences: formData.eventDetails.musicPreferences || {},
-                special_songs: {
-                    playlist: formData.eventDetails.playlist || null,
-                    requests: formData.eventDetails.specialSongs || null
+                food_preferences: formData.eventDetails.foodPreferences || {},  // Changed to food_preferences
+                special_requests: {
+                    menu: formData.eventDetails.menu || null,
+                    requests: formData.eventDetails.specialRequests || null  // Changed to specialRequests
                 },
                 budget_range: formData.eventDetails.priceRange,
                 equipment_needed: (() => {
                     switch (formData.eventDetails.equipmentNeeded) {
                         case 'venueProvided':
                             return 'The venue provides sound and lighting equipment';
-                        case 'djBringsAll':
-                            return 'The DJ needs to bring all equipment';
-                        case 'djBringsSome':
-                            return formData.eventDetails.equipmentNotes || 'The DJ needs to bring some equipment';
+                        case 'catererBringsAll':
+                            return 'The caterer needs to bring all equipment';
+                        case 'catererBringsSome':
+                            return formData.eventDetails.equipmentNotes || 'The caterer needs to bring some equipment';
                         case 'unknown':
                             return 'Equipment requirements to be discussed';
                         default:
@@ -1325,7 +1516,7 @@ function DjRequest() {
 
             // Insert the request
             const { data: request, error: requestError } = await supabase
-                .from('dj_requests')
+                .from('catering_requests')
                 .insert([requestData])
                 .select()
                 .single();
@@ -1333,11 +1524,11 @@ function DjRequest() {
             if (requestError) throw requestError;
 
             // Clear form data and navigate to success page
-            localStorage.removeItem('djRequest');
+            localStorage.removeItem('cateringRequest');
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
-                    message: 'Your DJ request has been submitted successfully!'
+                    message: 'Your catering request has been submitted successfully!'
                 } 
             });
         } catch (err) {
@@ -1487,4 +1678,4 @@ function DjRequest() {
     );
 }
 
-export default DjRequest;
+export default CateringRequest;
