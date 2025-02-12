@@ -510,6 +510,67 @@ function CateringRequest() {  // Changed function name
                             </div>
                         )}
 
+                        {/* Add this new equipment section before the food service type */}
+                        <div className="event-photo-options">
+                            <div className='photo-options-header'>Kitchen Equipment Requirements</div>
+                            <div className="equipment-options">
+                                <button
+                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'venueProvided' ? 'selected' : ''}`}
+                                    onClick={() => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails, 
+                                        equipmentNeeded: 'venueProvided'
+                                    })}
+                                >
+                                    ✅ The venue provides kitchen equipment
+                                </button>
+                                <button
+                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'catererBringsAll' ? 'selected' : ''}`}
+                                    onClick={() => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        equipmentNeeded: 'catererBringsAll'
+                                    })}
+                                >
+                                    🍳 The caterer needs to bring all equipment
+                                </button>
+                                <button
+                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'catererBringsSome' ? 'selected' : ''}`}
+                                    onClick={() => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        equipmentNeeded: 'catererBringsSome'
+                                    })}
+                                >
+                                    🔪 The caterer needs to bring some equipment
+                                </button>
+                                <button
+                                    className={`equipment-option-button ${formData.eventDetails.equipmentNeeded === 'unknown' ? 'selected' : ''}`}
+                                    onClick={() => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        equipmentNeeded: 'unknown'
+                                    })}
+                                >
+                                    ❓ I'm not sure about the equipment requirements
+                                </button>
+                            </div>
+
+                            {formData.eventDetails.equipmentNeeded === 'catererBringsSome' && (
+                                <div className="custom-input-container" style={{ marginTop: '20px' }}>
+                                    <ReactQuill
+                                        value={formData.eventDetails.equipmentNotes || ''}
+                                        onChange={(content) => handleInputChange('eventDetails', {
+                                            ...formData.eventDetails,
+                                            equipmentNotes: content
+                                        })}
+                                        modules={modules}
+                                        placeholder="Please specify what equipment the caterer needs to bring..."
+                                    />
+                                    <label htmlFor="equipmentNotes" className="custom-label">
+                                        Equipment Details
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Existing food service type section */}
                         <div className="event-photo-options">
                             <div className='photo-options-header'>Food Service Type</div>
                             <div className="photo-options-grid">
@@ -1042,6 +1103,34 @@ function CateringRequest() {  // Changed function name
                         </div>
                     </div>
 
+                    {/* Equipment Setup */}
+                    <div className="summary-item">
+                        <div className="request-subtype">Kitchen Equipment</div>
+                        <div className="request-info">
+                            {(() => {
+                                switch (formData.eventDetails.equipmentNeeded) {
+                                    case 'venueProvided':
+                                        return 'The venue provides kitchen equipment';
+                                    case 'catererBringsAll':
+                                        return 'The caterer needs to bring all equipment';
+                                    case 'catererBringsSome':
+                                        return formData.eventDetails.equipmentNotes || 'The caterer needs to bring some equipment';
+                                    case 'unknown':
+                                        return 'Equipment requirements to be discussed';
+                                    default:
+                                        return 'Not specified';
+                                }
+                            })()}
+                        </div>
+                    </div>
+
+                    {formData.eventDetails.equipmentNeeded === 'catererBringsSome' && formData.eventDetails.equipmentNotes && (
+                        <div className="summary-item">
+                            <div className="request-subtype">Equipment Details</div>
+                            <div className="request-info" dangerouslySetInnerHTML={{ __html: formData.eventDetails.equipmentNotes }} />
+                        </div>
+                    )}
+
                     {/* Timing Information */}
                     <div className="summary-item">
                         <div className="request-subtype">Event Time</div>
@@ -1049,17 +1138,6 @@ function CateringRequest() {  // Changed function name
                             {formData.eventDetails.startTimeUnknown ? 'Start time TBD' : `From: ${formData.eventDetails.startTime || 'Not specified'}`}
                             <br />
                             {formData.eventDetails.endTimeUnknown ? 'End time TBD' : `To: ${formData.eventDetails.endTime || 'Not specified'}`}
-                        </div>
-                    </div>
-
-                    <div className="summary-item">
-                        <div className="request-subtype">Duration</div>
-                        <div className="request-info">
-                            {formData.eventDetails.durationUnknown ? 
-                                'To be determined' : 
-                                formData.eventDetails.duration ? 
-                                    `${formData.eventDetails.duration} hours` : 
-                                    'Not specified'}
                         </div>
                     </div>
 
@@ -1255,6 +1333,7 @@ function CateringRequest() {  // Changed function name
                 title: eventTitle,
                 event_type: formData.eventType,
                 date_flexibility: formData.eventDetails.dateFlexibility,
+                date_timeframe: formData.eventDetails.dateFlexibility === 'flexible' ? formData.eventDetails.dateTimeframe : null,
                 start_date: formData.eventDetails.dateFlexibility !== 'flexible' ? formData.eventDetails.startDate : null,
                 end_date: formData.eventDetails.dateFlexibility === 'range' ? formData.eventDetails.endDate : null,
                 event_duration: formData.eventDetails.durationUnknown ? null : 
@@ -1262,16 +1341,19 @@ function CateringRequest() {  // Changed function name
                 estimated_guests: formData.eventDetails.numPeopleUnknown ? null : 
                                 formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople) : null,
                 location: formData.eventDetails.location,
-                food_preferences: formData.eventDetails.foodPreferences || {},  // Changed to food_preferences
-                special_requests: {
-                    menu: formData.eventDetails.menu || null,
-                    requests: formData.eventDetails.specialRequests || null  // Changed to specialRequests
-                },
+                food_preferences: formData.eventDetails.foodPreferences || {},
+                setup_cleanup: formData.eventDetails.setupCleanup || null,
+                food_service_type: formData.eventDetails.foodService || null,
+                serving_staff: formData.eventDetails.servingStaff || null,
+                dining_items: formData.eventDetails.diningItems || null,
+                dining_items_notes: formData.eventDetails.diningItemsNotes || null,
+                special_requests: formData.eventDetails.specialRequests || null,
+                additional_info: formData.eventDetails.additionalInfo || null,
                 budget_range: formData.eventDetails.priceRange,
-                equipment_needed: (() => {
+                equipment_needed: formData.eventDetails.equipmentNeeded ? (() => {
                     switch (formData.eventDetails.equipmentNeeded) {
                         case 'venueProvided':
-                            return 'The venue provides sound and lighting equipment';
+                            return 'The venue provides kitchen equipment';
                         case 'catererBringsAll':
                             return 'The caterer needs to bring all equipment';
                         case 'catererBringsSome':
@@ -1281,11 +1363,9 @@ function CateringRequest() {  // Changed function name
                         default:
                             return null;
                     }
-                })(),
-                additional_services: additionalServicesArray, // Now it's an array
-                special_requests: formData.eventDetails.additionalInfo,
+                })() : null,
                 status: 'pending',
-                coupon_code: appliedCoupon ? appliedCoupon.code : null,  // Add coupon code
+                coupon_code: appliedCoupon ? appliedCoupon.code : null
             };
 
             // Insert the request
@@ -1415,6 +1495,25 @@ function CateringRequest() {  // Changed function name
         setCurrentStep(prev => prev + 1);
     };
 
+    // Add this useEffect to test the connection
+    useEffect(() => {
+        const testConnection = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('catering_requests')
+                    .select('id')
+                    .limit(1);
+                
+                if (error) throw error;
+                console.log('Supabase connection successful', data);
+            } catch (err) {
+                console.error('Supabase connection error:', err);
+            }
+        };
+
+        testConnection();
+    }, []);
+
     return (
         <div className='request-form-overall-container'>
             {isAuthModalOpen && <AuthModal setIsModalOpen={setIsAuthModalOpen} onSuccess={handleAuthSuccess} />}
@@ -1430,7 +1529,12 @@ function CateringRequest() {  // Changed function name
                         <StatusBar steps={getSteps()} currentStep={currentStep} />
                     </div>
                 </div>  
-    
+                
+                {/* Added header here */}
+                <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
+                    {getSteps()[currentStep]}
+                </h2>
+
                 <div className="form-scrollable-content">
                     {getCurrentComponent()}
                 </div>
