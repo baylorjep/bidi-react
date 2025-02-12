@@ -635,7 +635,7 @@ function HairAndMakeUpRequest() {
                             >
                                 <option value="">Select Budget Range</option>
                                 <option value="0-500">$0 - $500</option>
-                                <option value="500-1000">$5 - $1,000</option>
+                                <option value="500-1000">$500 - $1,000</option>
                                 <option value="1000-2000">$1,000 - $2,000</option>
                                 <option value="2000-3000">$2,000 - $3,000</option>
                                 <option value="3000-4000">$3,000 - $4,000</option>

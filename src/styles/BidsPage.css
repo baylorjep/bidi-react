@@ -386,11 +386,6 @@
         min-height: auto;
     }
 
-    .details-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-
     .detail-item {
         min-height: auto;
         padding: 10px 0;
