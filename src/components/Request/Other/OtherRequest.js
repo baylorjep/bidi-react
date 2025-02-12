@@ -45,7 +45,7 @@ const PhotoModal = ({ photo, onClose }) => {
     );
 };
 
-function CateringRequest() {  // Changed function name
+function PhotographyRequest() {
     const navigate = useNavigate();
     const location = useLocation();
     const [currentStep, setCurrentStep] = useState(0);
@@ -68,12 +68,18 @@ function CateringRequest() {  // Changed function name
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
-        const saved = JSON.parse(localStorage.getItem('cateringRequest') || '{}');  // Changed key
-        const defaultEventDetails = {
-            appetizers: false,    
-            mainCourse: false,
-            desserts: false,
-            drinks: false
+        const saved = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
+        const defaultWeddingDetails = {
+            gettingReady: false,
+            firstLook: false,
+            ceremony: false,
+            familyPhotos: false,
+            reception: false,
+            danceFloor: false,
+            sendOff: false,
+            bridalParty: false,
+            groomParty: false,
+            decorDetails: false,
         };
 
         return {
@@ -90,18 +96,18 @@ function CateringRequest() {  // Changed function name
                 indoorOutdoor: saved.eventDetails?.indoorOutdoor || '',
                 additionalComments: saved.eventDetails?.additionalComments || '',
                 priceRange: saved.eventDetails?.priceRange || '',
-                eventDetails: saved.eventDetails?.eventDetails || defaultEventDetails,
+                weddingDetails: saved.eventDetails?.weddingDetails || defaultWeddingDetails,
                 startTime: saved.eventDetails?.startTime || '',
                 endTime: saved.eventDetails?.endTime || '',
+                secondPhotographer: saved.eventDetails?.secondPhotographer || '',
                 stylePreferences: saved.eventDetails?.stylePreferences || {},
-                foodPreferences: saved.eventDetails?.foodPreferences || {},  // Changed to foodPreferences
-                equipment: saved.eventDetails?.equipment || {},
-                specialRequests: saved.eventDetails?.specialRequests || '',  // Changed to specialRequests
+                deliverables: saved.eventDetails?.deliverables || {},
                 additionalInfo: saved.eventDetails?.additionalInfo || '',
                 dateFlexibility: saved.eventDetails?.dateFlexibility || 'specific', // 'specific', 'range', 'flexible'
                 dateTimeframe: saved.eventDetails?.dateTimeframe || '', // '3months', '6months', '1year'
                 startTimeUnknown: saved.eventDetails?.startTimeUnknown || false,
                 endTimeUnknown: saved.eventDetails?.endTimeUnknown || false,
+                secondPhotographerUnknown: saved.eventDetails?.secondPhotographerUnknown || false,
                 durationUnknown: saved.eventDetails?.durationUnknown || false,
                 numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
                 pinterestBoard: saved.eventDetails?.pinterestBoard || '',
@@ -116,10 +122,10 @@ function CateringRequest() {  // Changed function name
     });
 
     const getSteps = () => [
-        'Catering Details',
+        'Photography Details',
         formData.eventType ? `${formData.eventType} Details` : 'Event Details',
         'Personal Details',
-        'Food Preferences',  // Changed from 'Music Preferences'
+        'Inspiration',
         'Review'
     ];
 
@@ -128,12 +134,12 @@ function CateringRequest() {  // Changed function name
             case 'Wedding':
                 return [
                     'Basic Details',
-                    'Logistics & Extra',
+                    'Coverage',
+                    'Style & Deliverables',
                     'Budget & Additional Info'
                 ];
-
             default:
-                return ['Basic Info', 'Coverage', 'Food & Equipment', 'Additional Details'];  // Changed to Food & Equipment
+                return ['Basic Info', 'Coverage','Style & Deliverables', 'Additional Details'];
         }
     };
 
@@ -144,7 +150,7 @@ function CateringRequest() {  // Changed function name
                 eventType: event
             };
             // Save to localStorage
-            localStorage.setItem('cateringRequest', JSON.stringify(newData));  // Changed key
+            localStorage.setItem('photographyRequest', JSON.stringify(newData));
             return newData;
         });
     };
@@ -152,7 +158,7 @@ function CateringRequest() {  // Changed function name
     const handleInputChange = (field, value) => {
         setFormData(prev => {
             const newData = { ...prev, [field]: value };
-            localStorage.setItem('cateringRequest', JSON.stringify(newData));  // Changed key
+            localStorage.setItem('photographyRequest', JSON.stringify(newData));
             return newData;
         });
     };
@@ -160,7 +166,9 @@ function CateringRequest() {  // Changed function name
     // Event Selection Component
     const renderEventSelection = () => {
         const eventOptions = [
-            'Wedding', 'Corporate Event', 'Birthday', 'School Event', 'Private Party', 'Other'  // Changed options
+            'Wedding', 'Engagement', 'Couples Session', 'Family',
+            'Individual / Headshots', 'Large Group / Event',
+            'Product', 'Maternity', 'Newborn', 'Boudoir Session'
         ];
 
         return (
@@ -190,7 +198,7 @@ function CateringRequest() {  // Changed function name
 
     const renderEventDetailsSubStep = () => {
         switch (detailsSubStep) {
-            case 0: // Basic Event Details
+            case 0: // Basic Wedding Details
                 return (
                     <div className='form-grid'>
                         <div className="custom-input-container">
@@ -242,7 +250,7 @@ function CateringRequest() {  // Changed function name
                                     className="custom-input"
                                 />
                                 <label htmlFor="startDate" className="custom-label">
-                                    Event Date
+                                    Wedding Date
                                 </label>
                             </div>
                         )}
@@ -307,7 +315,7 @@ function CateringRequest() {  // Changed function name
                         )}
 
                         {/* Rest of the time inputs */}
-                        <div style={{display:'flex', justifyContent:'space-between', gap:'8px'}}>
+                        <div className='start-end-time'>
                         <div className="custom-input-container">
                             <div className="input-with-unknown">
                                 <input
@@ -372,12 +380,10 @@ function CateringRequest() {  // Changed function name
                             </label>
                         </div>
                         </div>
-
+                        
 
                         <div className="custom-input-container">
                             <select
-                                name="indoorOutdoor"
-                                value={formData.eventDetails.indoorOutdoor}
                                 onChange={(e) => handleInputChange('eventDetails', {
                                     ...formData.eventDetails,
                                     indoorOutdoor: e.target.value
@@ -393,144 +399,188 @@ function CateringRequest() {  // Changed function name
                                 Indoor or Outdoor
                             </label>
                         </div>
+                    </div>
+                );
+
+            case 1: // Coverage Preferences
+                return (
+                    <div className="wedding-details-container">
+                        {formData.eventType === 'Wedding' && (
+                            <div className="wedding-photo-options" style={{paddingTop:'0', paddingBottom:'0'}}>
+                                <div className='photo-options-header'>What moments do you want captured?</div>
+                                <div className="photo-options-grid">
+                                    {[
+                                        { key: 'preCeremony', label: 'Pre-Ceremony' },
+                                        { key: 'ceremony', label: 'Ceremony' },
+                                        { key: 'luncheon', label: 'Luncheon' },
+                                        { key: 'reception', label: 'Reception' }
+                                    ].map(({ key, label }) => (
+                                        <div key={key} className="photo-option-item">
+                                            <input
+                                                type="checkbox"
+                                                id={key}
+                                                checked={formData.eventDetails.weddingDetails?.[key] || false}
+                                                onChange={(e) => handleInputChange('eventDetails', {
+                                                    ...formData.eventDetails,
+                                                    weddingDetails: {
+                                                        ...formData.eventDetails.weddingDetails,
+                                                        [key]: e.target.checked
+                                                    }
+                                                })}
+                                            />
+                                            <label htmlFor={key}>{label}</label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="custom-input-container">
-                            <input
-                                type="number"
-                                name="numPeople"
-                                value={formData.eventDetails.numPeople}
+                            <div className="input-with-unknown">
+                                <input
+                                    type="number"
+                                    name="duration"
+                                    value={formData.eventDetails.duration}
+                                    onChange={(e) => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        duration: e.target.value,
+                                        durationUnknown: false
+                                    })}
+                                    className="custom-input"
+                                    disabled={formData.eventDetails.durationUnknown}
+                                    min="1"
+                                />
+                                <label className="unknown-checkbox-container">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.eventDetails.durationUnknown}
+                                        onChange={(e) => handleInputChange('eventDetails', {
+                                            ...formData.eventDetails,
+                                            duration: '',
+                                            durationUnknown: e.target.checked
+                                        })}
+                                    />
+                                    <span className="unknown-checkbox-label">Not sure</span>
+                                </label>
+                            </div>
+                            <label htmlFor="duration" className="custom-label">
+                                Hours of Coverage Needed
+                            </label>
+                        </div>
+
+                        <div className="custom-input-container">
+                            <div className="input-with-unknown">
+                                <input
+                                    type="number"
+                                    name="numPeople"
+                                    value={formData.eventDetails.numPeople}
+                                    onChange={(e) => handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        numPeople: e.target.value,
+                                        numPeopleUnknown: false
+                                    })}
+                                    className="custom-input"
+                                    disabled={formData.eventDetails.numPeopleUnknown}
+                                    min="1"
+                                />
+                                <label className="unknown-checkbox-container">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.eventDetails.numPeopleUnknown}
+                                        onChange={(e) => handleInputChange('eventDetails', {
+                                            ...formData.eventDetails,
+                                            numPeople: '',
+                                            numPeopleUnknown: e.target.checked
+                                        })}
+                                    />
+                                    <span className="unknown-checkbox-label">Not sure</span>
+                                </label>
+                            </div>
+                            <label htmlFor="numPeople" className="custom-label">
+                                Expected Number of People
+                            </label>
+                        </div>
+
+                        <div className="custom-input-container">
+                            <select
+                                name="secondPhotographer"
+                                value={formData.eventDetails.secondPhotographer}
                                 onChange={(e) => handleInputChange('eventDetails', {
                                     ...formData.eventDetails,
-                                    numPeople: e.target.value
+                                    secondPhotographer: e.target.value
                                 })}
-                                placeholder='Number of guests'
                                 className="custom-input"
-                            />
-                            <label htmlFor="numPeople" className="custom-label">
-                                Number of Guests
+                            >
+                                <option value="">Select</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                                <option value="undecided">Let photographer recommend</option>
+                            </select>
+                            <label htmlFor="secondPhotographer" className="custom-label">
+                                Second Photographer?
                             </label>
                         </div>
                     </div>
                 );
 
-      case 1: // Logistics & Extra
+            case 2: // Style & Deliverables
                 return (
-                    <div className="event-details-container" style={{display:'flex', flexDirection:'column', gap:'20px'}}>
-                        <div className="event-photo-options">
-                            <div className='photo-options-header'>Setup & Cleanup Required?</div>
+                    <div className="wedding-details-container">
+                        <div className="wedding-photo-options">
+                            <div className='photo-options-header'>Preferred Photography Style</div>
                             <div className="photo-options-grid">
                                 {[
-                                    { key: 'setupOnly', label: 'Setup Only' },
-                                    { key: 'cleanupOnly', label: 'Cleanup Only' },
-                                    { key: 'both', label: 'Both Setup & Cleanup' },
-                                    { key: 'neither', label: 'Neither' }
+                                    { key: 'brightAiry', label: 'Bright & Airy' },
+                                    { key: 'darkMoody', label: 'Dark & Moody' },
+                                    { key: 'filmEmulation', label: 'Film-Like' },
+                                    { key: 'traditional', label: 'Traditional/Classic' },
+                                    { key: 'documentary', label: 'Documentary/Candid' },
+                                    { key: 'artistic', label: 'Artistic/Creative' },
                                 ].map(({ key, label }) => (
                                     <div key={key} className="photo-option-item">
                                         <input
-                                            type="radio"
-                                            id={`setup_${key}`}
-                                            name="setupCleanup"
-                                            checked={formData.eventDetails.setupCleanup === key}
-                                            onChange={() => handleInputChange('eventDetails', {
+                                            type="checkbox"
+                                            id={key}
+                                            checked={formData.eventDetails.stylePreferences?.[key] || false}
+                                            onChange={(e) => handleInputChange('eventDetails', {
                                                 ...formData.eventDetails,
-                                                setupCleanup: key
+                                                stylePreferences: {
+                                                    ...formData.eventDetails.stylePreferences,
+                                                    [key]: e.target.checked
+                                                }
                                             })}
                                         />
-                                        <label htmlFor={`setup_${key}`}>{label}</label>
+                                        <label htmlFor={key}>{label}</label>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="event-photo-options">
-                            <div className='photo-options-header'>Serving Staff Needed?</div>
+                        <div className="wedding-photo-options">
+                            <div className='photo-options-header'>Desired Deliverables</div>
                             <div className="photo-options-grid">
                                 {[
-                                    { key: 'fullService', label: 'Full Service Staff' },
-                                    { key: 'partialService', label: 'Partial Service' },
-                                    { key: 'noService', label: 'No Staff Needed' },
-                                    { key: 'unsure', label: 'Not Sure' }
+                                    { key: 'digitalFiles', label: 'Digital Files' },
+                                    { key: 'printRelease', label: 'Print Release' },
+                                    { key: 'weddingAlbum', label: 'Wedding Album' },
+                                    { key: 'prints', label: 'Professional Prints' },
+                                    { key: 'rawFiles', label: 'RAW Files' },
+                                    { key: 'engagement', label: 'Engagement Session' },
                                 ].map(({ key, label }) => (
                                     <div key={key} className="photo-option-item">
                                         <input
-                                            type="radio"
-                                            id={`staff_${key}`}
-                                            name="servingStaff"
-                                            checked={formData.eventDetails.servingStaff === key}
-                                            onChange={() => handleInputChange('eventDetails', {
+                                            type="checkbox"
+                                            id={key}
+                                            checked={formData.eventDetails.deliverables?.[key] || false}
+                                            onChange={(e) => handleInputChange('eventDetails', {
                                                 ...formData.eventDetails,
-                                                servingStaff: key
+                                                deliverables: {
+                                                    ...formData.eventDetails.deliverables,
+                                                    [key]: e.target.checked
+                                                }
                                             })}
                                         />
-                                        <label htmlFor={`staff_${key}`}>{label}</label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="event-photo-options">
-                            <div className='photo-options-header'>Dinnerware, Utensils, and Linens</div>
-                            <div className="photo-options-grid">
-                                {[
-                                    { key: 'provided', label: 'Provided by Caterer' },
-                                    { key: 'notProvided', label: 'Not Needed' },
-                                    { key: 'partial', label: 'Partial (Specify Below)' }
-                                ].map(({ key, label }) => (
-                                    <div key={key} className="photo-option-item">
-                                        <input
-                                            type="radio"
-                                            id={`items_${key}`}
-                                            name="diningItems"
-                                            checked={formData.eventDetails.diningItems === key}
-                                            onChange={() => handleInputChange('eventDetails', {
-                                                ...formData.eventDetails,
-                                                diningItems: key
-                                            })}
-                                        />
-                                        <label htmlFor={`items_${key}`}>{label}</label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {formData.eventDetails.diningItems === 'partial' && (
-                            <div className="custom-input-container">
-                                <ReactQuill
-                                    value={formData.eventDetails.diningItemsNotes || ''}
-                                    onChange={(content) => handleInputChange('eventDetails', {
-                                        ...formData.eventDetails,
-                                        diningItemsNotes: content
-                                    })}
-                                    modules={modules}
-                                    placeholder="Please specify which items you need the caterer to provide..."
-                                />
-                                <label htmlFor="diningItemsNotes" className="custom-label">
-                                    Dining Items Details
-                                </label>
-                            </div>
-                        )}
-
-                        <div className="event-photo-options">
-                            <div className='photo-options-header'>Food Service Type</div>
-                            <div className="photo-options-grid">
-                                {[
-                                    { key: 'onSite', label: 'Cooking On-Site' },
-                                    { key: 'delivered', label: 'Delivered Ready-to-Serve' },
-                                    { key: 'both', label: 'Combination' },
-                                    { key: 'flexible', label: 'Flexible' }
-                                ].map(({ key, label }) => (
-                                    <div key={key} className="photo-option-item">
-                                        <input
-                                            type="radio"
-                                            id={`service_${key}`}
-                                            name="foodService"
-                                            checked={formData.eventDetails.foodService === key}
-                                            onChange={() => handleInputChange('eventDetails', {
-                                                ...formData.eventDetails,
-                                                foodService: key
-                                            })}
-                                        />
-                                        <label htmlFor={`service_${key}`}>{label}</label>
+                                        <label htmlFor={key}>{label}</label>
                                     </div>
                                 ))}
                             </div>
@@ -538,7 +588,7 @@ function CateringRequest() {  // Changed function name
                     </div>
                 );
 
-            case 2: // Budget & Additional Info
+            case 3: // Budget & Additional Info
                 return (
                     <div className='form-grid'>
                         <div className="custom-input-container">
@@ -552,7 +602,6 @@ function CateringRequest() {  // Changed function name
                                 className="custom-input"
                             >
                                 <option value="">Select Budget Range</option>
-                                <option value="under1000">Under $1,000</option>
                                 <option value="1000-2000">$1,000 - $2,000</option>
                                 <option value="2000-3000">$2,000 - $3,000</option>
                                 <option value="3000-4000">$3,000 - $4,000</option>
@@ -572,7 +621,7 @@ function CateringRequest() {  // Changed function name
                                     additionalInfo: content
                                 })}
                                 modules={modules}
-                                placeholder="Any special requests or additional information caterers should know..."
+                                placeholder="Any special requests or additional information photographers should know..."
                             />
                             <label htmlFor="additionalInfo" className="custom-label">
                                 Additional Information
@@ -755,7 +804,7 @@ function CateringRequest() {  // Changed function name
             setFormData(prev => {
                 const updatedPhotos = [...prev.photos, ...newPhotos];
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('cateringRequest', JSON.stringify(newData));
+                localStorage.setItem('photographyRequest', JSON.stringify(newData));
                 return newData;
             });
             
@@ -802,7 +851,7 @@ function CateringRequest() {  // Changed function name
             setFormData(prev => {
                 const updatedPhotos = prev.photos.filter(photo => photo.url !== photoUrl);
                 const newData = { ...prev, photos: updatedPhotos };
-                localStorage.setItem('cateringRequest', JSON.stringify(newData));
+                localStorage.setItem('photographyRequest', JSON.stringify(newData));
                 return newData;
             });
         } catch (error) {
@@ -832,74 +881,81 @@ function CateringRequest() {  // Changed function name
     
     const renderPhotoUpload = () => {
         return (
-            <div className="event-details-container">
-                <div className="event-photo-options">
-                    <div className='photo-options-header'>Food Style Preferences</div>
-                    <div className="photo-options-grid">
-                        {[
-                            { key: 'american', label: 'American' },
-                            { key: 'mexican', label: 'Mexican' },
-                            { key: 'italian', label: 'Italian' },
-                            { key: 'chinese', label: 'Chinese' },
-                            { key: 'japanese', label: 'Japanese' },
-                            { key: 'thai', label: 'Thai' },
-                            { key: 'korean', label: 'Korean' },
-                            { key: 'vietnamese', label: 'Vietnamese' },
-                            { key: 'indian', label: 'Indian' },
-                            { key: 'mediterranean', label: 'Mediterranean' },
-                            { key: 'greek', label: 'Greek' },
-                            { key: 'french', label: 'French' },
-                            { key: 'spanish', label: 'Spanish' },
-                            { key: 'caribbean', label: 'Caribbean' },
-                            { key: 'cajunCreole', label: 'Cajun/Creole' },
-                            { key: 'hawaiian', label: 'Hawaiian' },
-                            { key: 'middleEastern', label: 'Middle Eastern' },
-                            { key: 'turkish', label: 'Turkish' },
-                            { key: 'persian', label: 'Persian' },
-                            { key: 'african', label: 'African' },
-                            { key: 'brazilian', label: 'Brazilian' },
-                            { key: 'argentinian', label: 'Argentinian' },
-                            { key: 'peruvian', label: 'Peruvian' },
-                            { key: 'filipino', label: 'Filipino' },
-                            { key: 'german', label: 'German' },
-                            { key: 'russian', label: 'Russian' },
-                            { key: 'easternEuropean', label: 'Eastern European' },
-                            { key: 'veganPlantBased', label: 'Vegan/Plant-Based' },
-                            { key: 'bbqSmoked', label: 'BBQ/Smoked Meats' },
-                            { key: 'fusion', label: 'Fusion' },
-                            { key: 'other', label: 'Other' }
-                        ].map(({ key, label }) => (
-                            <div key={key} className="photo-option-item">
-                                <input
-                                    type="checkbox"
-                                    id={key}
-                                    checked={formData.eventDetails.foodPreferences?.[key] || false}
-                                    onChange={(e) => handleInputChange('eventDetails', {
-                                        ...formData.eventDetails,
-                                        foodPreferences: {
-                                            ...formData.eventDetails.foodPreferences,
-                                            [key]: e.target.checked
-                                        }
-                                    })}
-                                />
-                                <label htmlFor={key}>{label}</label>
+            <div className="photo-upload-section">
+                <div className="photo-preview-container">
+                    {formData.photos.length === 0 ? (
+                        <div
+                            className="photo-upload-box"
+                            onClick={() => document.getElementById('file-input').click()}
+                        >
+                            <input
+                                type="file"
+                                id="file-input"
+                                multiple
+                                onChange={handleFileSelect}
+                                style={{ display: 'none' }}
+                            />
+                            <svg xmlns="http://www.w3.org/2000/svg" width="54" height="45" viewBox="0 0 54 45" fill="none">
+                                <path d="M40.6939 15.6916C40.7126 15.6915 40.7313 15.6915 40.75 15.6915C46.9632 15.6915 52 20.2889 52 25.9601C52 31.2456 47.6249 35.5984 42 36.166M40.6939 15.6916C40.731 15.3158 40.75 14.9352 40.75 14.5505C40.75 7.61906 34.5939 2 27 2C19.8081 2 13.9058 7.03987 13.3011 13.4614M40.6939 15.6916C40.4383 18.2803 39.3216 20.6423 37.6071 22.5372M13.3011 13.4614C6.95995 14.0121 2 18.8869 2 24.8191C2 30.339 6.2944 34.9433 12 36.0004M13.3011 13.4614C13.6956 13.4271 14.0956 13.4096 14.5 13.4096C17.3146 13.4096 19.9119 14.2586 22.0012 15.6915" stroke="#141B34" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M27 24.7783L27 43.0002M27 24.7783C25.2494 24.7783 21.9788 29.3208 20.75 30.4727M27 24.7783C28.7506 24.7783 32.0212 29.3208 33.25 30.4727" stroke="#141B34" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <div className="photo-upload-text">Drag & Drop to Upload or Click to Browse</div>
+                        </div>
+                    ) : (
+                        <>
+                            <PhotoGrid 
+                                photos={formData.photos}
+                                removePhoto={(index) => {
+                                    const newPhotos = formData.photos.filter((_, i) => i !== index);
+                                    handleInputChange('photos', newPhotos);
+                                }}
+                                openModal={(photo) => {
+                                    setSelectedPhoto(photo);
+                                    setIsPhotoModalOpen(true);
+                                }}
+                            />
+                            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                                <button 
+                                    onClick={() => document.getElementById('file-input-more').click()}
+                                    className="add-more-photos-btn"
+                                >
+                                    <input
+                                        type="file"
+                                        id="file-input-more"
+                                        multiple
+                                        onChange={handleFileSelect}
+                                      
+                                        style={{ display: 'none' }}
+                                    />
+                                    <span className='add-more-text'>Add More Photos</span>
+                                </button>
                             </div>
-                        ))}
-                    </div>
+                        </>
+                    )}
                 </div>
-
-                <div className="custom-input-container">
-                    <ReactQuill
-                        value={formData.eventDetails.specialRequests || ''}
-                        onChange={(content) => handleInputChange('eventDetails', {
-                            ...formData.eventDetails,
-                            specialRequests: content
-                        })}
-                        modules={modules}
-                        placeholder="List any special dietary requirements or specific requests..."
+                {isPhotoModalOpen && (
+                    <PhotoModal 
+                        photo={selectedPhoto} 
+                        onClose={() => {
+                            setSelectedPhoto(null);
+                            setIsPhotoModalOpen(false);
+                        }} 
                     />
-                    <label htmlFor="specialRequests" className="custom-label">
-                        Special Requests
+                )}
+                <div className="custom-input-container" style={{ marginTop: '20px' }}>
+                    <input
+                        type="url"
+                        name="pinterestBoard"
+                        value={formData.eventDetails.pinterestBoard || ''}
+                        onChange={(e) => handleInputChange('eventDetails', {
+                            ...formData.eventDetails,
+                            pinterestBoard: e.target.value
+                        })}
+                        placeholder="Paste your Pinterest board link here"
+                        className="custom-input"
+                    />
+                    <label htmlFor="pinterestBoard" className="custom-label">
+                        Pinterest Board Link
                     </label>
                 </div>
             </div>
@@ -914,7 +970,7 @@ function CateringRequest() {  // Changed function name
                 case 'specific':
                     return (
                         <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                            <div className="request-subtype">Event Date</div>
+                            <div className="request-subtype">Date</div>
                             <div className="request-info">
                                 {formData.eventDetails.startDate ? new Date(formData.eventDetails.startDate).toLocaleDateString() : 'Not specified'}
                             </div>
@@ -925,9 +981,7 @@ function CateringRequest() {  // Changed function name
                         <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                             <div className="request-subtype">Date Range</div>
                             <div className="request-info">
-                                From: {formData.eventDetails.startDate ? new Date(formData.eventDetails.startDate).toLocaleDateString() : 'Not specified'}
-                                <br />
-                                To: {formData.eventDetails.endDate ? new Date(formData.eventDetails.endDate).toLocaleDateString() : 'Not specified'}
+                                {`${formData.eventDetails.startDate ? new Date(formData.eventDetails.startDate).toLocaleDateString() : 'Not specified'} - ${formData.eventDetails.endDate ? new Date(formData.eventDetails.endDate).toLocaleDateString() : 'Not specified'}`}
                             </div>
                         </div>
                     );
@@ -951,182 +1005,83 @@ function CateringRequest() {  // Changed function name
 
         return (
             <div className="event-summary-container" style={{padding:'0'}}>
-                <h2 className='photo-options-header'>Summary</h2>
                 <div className="request-summary-grid">
-                    
-                    {/* Basic Event Information */}
-                    <div className="summary-item">
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Event Type</div>
-                        <div className="request-info">{formData.eventType}</div>
-                    </div>
-
-                    <div className="summary-item">
-                        <div className="request-subtype">Location</div>
-                        <div className="request-info">{formData.eventDetails.location || 'Not specified'}</div>
-                    </div>
+                        <div className="request-info">{formData.eventType}</div>  
+                    </div>  
 
                     {renderDateInfo()}
 
-                    <div className="summary-item">
+                    {/* Rest of the summary items */}
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Location</div>
+                        <div className="request-info">{formData.eventDetails.location}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Number of People</div>
+                        <div className="request-info">{formData.eventDetails.numPeople}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Duration (in hours)</div>
+                        <div className="request-info">{formData.eventDetails.duration}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Indoor/Outdoor</div>
-                        <div className="request-info">{formData.eventDetails.indoorOutdoor || 'Not specified'}</div>
+                        <div className="request-info">{formData.eventDetails.indoorOutdoor}</div>
                     </div>
 
-                    {/* Setup & Cleanup */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Setup & Cleanup</div>
-                        <div className="request-info">
-                            {(() => {
-                                switch (formData.eventDetails.setupCleanup) {
-                                    case 'setupOnly': return 'Setup Only';
-                                    case 'cleanupOnly': return 'Cleanup Only';
-                                    case 'both': return 'Both Setup & Cleanup';
-                                    case 'neither': return 'Neither';
-                                    default: return 'Not specified';
-                                }
-                            })()}
-                        </div>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Budget</div>
+                        <div className="request-info">{formData.eventDetails.priceRange}</div>
                     </div>
 
-                    {/* Serving Staff */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Serving Staff</div>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Pinterest Board Link</div>
+                        <div className="request-info">{formData.eventDetails.pinterestBoard}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Time</div>
                         <div className="request-info">
-                            {(() => {
-                                switch (formData.eventDetails.servingStaff) {
-                                    case 'fullService': return 'Full Service Staff';
-                                    case 'partialService': return 'Partial Service';
-                                    case 'noService': return 'No Staff Needed';
-                                    case 'unsure': return 'Not Sure';
-                                    default: return 'Not specified';
-                                }
-                            })()}
+                            {formData.eventDetails.startTime || 'Not specified'} - {formData.eventDetails.endTime || 'Not specified'}
                         </div>
                     </div>
 
-                    {/* Dining Items */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Dinnerware, Utensils & Linens</div>
-                        <div className="request-info">
-                            {(() => {
-                                switch (formData.eventDetails.diningItems) {
-                                    case 'provided': return 'Provided by Caterer';
-                                    case 'notProvided': return 'Not Needed';
-                                    case 'partial': return 'Partial (See Details Below)';
-                                    default: return 'Not specified';
-                                }
-                            })()}
-                        </div>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Second Photographer</div>
+                        <div className="request-info">{formData.eventDetails.secondPhotographer}</div>
                     </div>
 
-                    {formData.eventDetails.diningItemsNotes && (
-                        <div className="summary-item">
-                            <div className="request-subtype">Dining Items Details</div>
-                            <div className="request-info" dangerouslySetInnerHTML={{ __html: formData.eventDetails.diningItemsNotes }} />
-                        </div>
-                    )}
-
-                    {/* Food Service Type */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Food Service Type</div>
-                        <div className="request-info">
-                            {(() => {
-                                switch (formData.eventDetails.foodService) {
-                                    case 'onSite': return 'Cooking On-Site';
-                                    case 'delivered': return 'Delivered Ready-to-Serve';
-                                    case 'both': return 'Combination';
-                                    case 'flexible': return 'Flexible';
-                                    default: return 'Not specified';
-                                }
-                            })()}
-                        </div>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Style Preferences</div>
+                        <div className="request-info">{Object.keys(formData.eventDetails.stylePreferences).filter(key => formData.eventDetails.stylePreferences[key]).join(', ')}</div>
                     </div>
 
-                    {/* Timing Information */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Event Time</div>
-                        <div className="request-info">
-                            {formData.eventDetails.startTimeUnknown ? 'Start time TBD' : `From: ${formData.eventDetails.startTime || 'Not specified'}`}
-                            <br />
-                            {formData.eventDetails.endTimeUnknown ? 'End time TBD' : `To: ${formData.eventDetails.endTime || 'Not specified'}`}
-                        </div>
-                    </div>
-
-                    <div className="summary-item">
-                        <div className="request-subtype">Duration</div>
-                        <div className="request-info">
-                            {formData.eventDetails.durationUnknown ? 
-                                'To be determined' : 
-                                formData.eventDetails.duration ? 
-                                    `${formData.eventDetails.duration} hours` : 
-                                    'Not specified'}
-                        </div>
-                    </div>
-
-                    {/* Guest Count */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Expected Guests</div>
-                        <div className="request-info">
-                            {formData.eventDetails.numPeopleUnknown ? 
-                                'To be determined' : 
-                                formData.eventDetails.numPeople ? 
-                                    `${formData.eventDetails.numPeople} people` : 
-                                    'Not specified'}
-                        </div>
-                    </div>
-
-                    {/* Food Preferences */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Food Preferences</div>
-                        <div className="request-info">
-                            {Object.entries(formData.eventDetails.foodPreferences || {})
-                                .filter(([_, value]) => value)
-                                .map(([key, _]) => {
-                                    // Convert key to proper case (e.g., "middleEastern" to "Middle Eastern")
-                                    return key
-                                        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-                                        .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
-                                })
-                                .join(', ') || 'No preferences specified'}
-                        </div>
-                    </div>
-
-                    {/* Budget */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Budget Range</div>
-                        <div className="request-info">
-                            {(() => {
-                                switch (formData.eventDetails.priceRange) {
-                                    case 'under1000': return 'Under $1,000';
-                                    case '1000-2000': return '$1,000 - $2,000';
-                                    case '2000-3000': return '$2,000 - $3,000';
-                                    case '3000-4000': return '$3,000 - $4,000';
-                                    case '4000-5000': return '$4,000 - $5,000';
-                                    case '5000+': return '$5,000+';
-                                    default: return 'Not specified';
-                                }
-                            })()}
-                        </div>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Deliverables</div>
+                        <div className="request-info">{Object.keys(formData.eventDetails.deliverables).filter(key => formData.eventDetails.deliverables[key]).join(', ')}</div>
                     </div>
                 </div>
 
-                {/* Special Requests Section */}
-                {formData.eventDetails.specialRequests && (
-                    <div className="summary-section" style={{marginTop: '20px'}}>
-                        <div className="request-subtype">Special Requests</div>
-                        <div className="request-info" dangerouslySetInnerHTML={{ __html: formData.eventDetails.specialRequests }} />
+                {formData.eventDetails.additionalComments && (
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column', 
+                        gap: '8px', 
+                        alignItems:'flex-start',
+                    }}>
+                        <div className="request-subtype">Additional Comments</div>
+                        <div 
+                            className="quill-content"
+                            dangerouslySetInnerHTML={{ __html: formData.eventDetails.additionalComments }}
+                        />
                     </div>
                 )}
 
-                {/* Additional Information Section */}
-                {formData.eventDetails.additionalInfo && (
-                    <div className="summary-section" style={{marginTop: '20px'}}>
-                        <div className="request-subtype">Additional Information</div>
-                        <div className="request-info" dangerouslySetInnerHTML={{ __html: formData.eventDetails.additionalInfo }} />
-                    </div>
-                )}
-
-                {/* Coupon Section */}
                 <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px'}}>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent:'center' }}>
                         <div className='custom-input-container' style={{marginBottom:'0'}}>
@@ -1165,7 +1120,7 @@ function CateringRequest() {  // Changed function name
 
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) return;
-
+        
         setCouponLoading(true);
         try {
             const { data, error } = await supabase
@@ -1206,105 +1161,124 @@ function CateringRequest() {  // Changed function name
         setIsSubmitting(true);
         setError(null);
 
+        // Modify validation to account for flexible dates
+        if (!formData.eventDetails.location || 
+            (formData.eventDetails.dateFlexibility === 'specific' && !formData.eventDetails.startDate) ||
+            (formData.eventDetails.dateFlexibility === 'range' && (!formData.eventDetails.startDate || !formData.eventDetails.endDate)) ||
+            (formData.eventDetails.dateFlexibility === 'flexible' && !formData.eventDetails.dateTimeframe) ||
+            !formData.eventDetails.priceRange) {
+            setError('Please fill in all required fields.');
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                 setIsModalOpen(true);
                 return;
             }
-
+    
             // Check if the coupon code is already used
             if (appliedCoupon) {
                 const { data: existingRequest, error: checkError } = await supabase
-                    .from('catering_requests')
+                    .from('photography_requests')
                     .select('id')
                     .eq('coupon_code', appliedCoupon.code)
                     .single();
-
+    
                 if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows found
                     throw checkError;
                 }
-
+    
                 if (existingRequest) {
                     setError('This coupon code has already been used.');
                     setIsSubmitting(false);
                     return;
                 }
             }
-
-            // Get user's first name for the title
-            const { data: userData, error: userError } = await supabase
-                .from('individual_profiles')
-                .select('first_name')
-                .eq('id', user.id)
-                .single();
-
-            if (userError) throw userError;
-
-            // Create title
-            const eventTitle = `${userData.first_name}'s ${formData.eventType} Catering Request`;
-
-            // Convert additional_services object to array
-            const additionalServicesArray = Object.entries(formData.eventDetails.additionalServices || {})
-                .filter(([_, value]) => value)
-                .map(([key, _]) => key);
-
-            // Format data according to the table schema
+    
+            // Validate and convert integer fields
+            const numPeople = formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople, 10) : null;
+            const duration = formData.eventDetails.duration ? parseInt(formData.eventDetails.duration, 10) : null;
+    
+            // Create the request with coupon_code as foreign key
             const requestData = {
-                user_id: user.id,
-                title: eventTitle,
+                profile_id: user.id,
                 event_type: formData.eventType,
-                date_flexibility: formData.eventDetails.dateFlexibility,
+                event_title: formData.eventDetails.eventTitle,
+                location: formData.eventDetails.location,
+                // Only include dates if not flexible
                 start_date: formData.eventDetails.dateFlexibility !== 'flexible' ? formData.eventDetails.startDate : null,
                 end_date: formData.eventDetails.dateFlexibility === 'range' ? formData.eventDetails.endDate : null,
-                event_duration: formData.eventDetails.durationUnknown ? null : 
-                              formData.eventDetails.duration ? parseInt(formData.eventDetails.duration) : null,
-                estimated_guests: formData.eventDetails.numPeopleUnknown ? null : 
-                                formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople) : null,
-                location: formData.eventDetails.location,
-                food_preferences: formData.eventDetails.foodPreferences || {},  // Changed to food_preferences
-                special_requests: {
-                    menu: formData.eventDetails.menu || null,
-                    requests: formData.eventDetails.specialRequests || null  // Changed to specialRequests
-                },
-                budget_range: formData.eventDetails.priceRange,
-                equipment_needed: (() => {
-                    switch (formData.eventDetails.equipmentNeeded) {
-                        case 'venueProvided':
-                            return 'The venue provides sound and lighting equipment';
-                        case 'catererBringsAll':
-                            return 'The caterer needs to bring all equipment';
-                        case 'catererBringsSome':
-                            return formData.eventDetails.equipmentNotes || 'The caterer needs to bring some equipment';
-                        case 'unknown':
-                            return 'Equipment requirements to be discussed';
-                        default:
-                            return null;
-                    }
-                })(),
-                additional_services: additionalServicesArray, // Now it's an array
-                special_requests: formData.eventDetails.additionalInfo,
-                status: 'pending',
-                coupon_code: appliedCoupon ? appliedCoupon.code : null,  // Add coupon code
+                date_flexibility: formData.eventDetails.dateFlexibility,
+                date_timeframe: formData.eventDetails.dateFlexibility === 'flexible' ? formData.eventDetails.dateTimeframe : null,
+                time_of_day: formData.eventDetails.timeOfDay,
+                num_people: numPeople,
+                duration: duration,
+                indoor_outdoor: formData.eventDetails.indoorOutdoor,
+                price_range: formData.eventDetails.priceRange,
+                additional_comments: formData.eventDetails.additionalComments,
+                date_type: formData.eventDetails.dateType, // Add date_type field
+                coupon_code: appliedCoupon ? appliedCoupon.code : null,  // Just store the code
+                pinterest_link: formData.eventDetails.pinterestBoard, // Add pinterest_link field
+                status: 'open'
             };
-
-            // Insert the request
+    
             const { data: request, error: requestError } = await supabase
-                .from('catering_requests')
+                .from('photography_requests')
                 .insert([requestData])
                 .select()
                 .single();
-
+    
             if (requestError) throw requestError;
-
+    
+            // Upload photos if there are any
+            if (formData.photos.length > 0) {
+                const uploadPromises = formData.photos.map(async (photo) => {
+                    const fileExt = photo.name.split('.').pop();
+                    const fileName = `${uuidv4()}.${fileExt}`;
+                    const filePath = `${user.id}/${request.id}/${fileName}`;
+    
+                    // Upload the file
+                    const { error: uploadError } = await supabase.storage
+                        .from('request-media')
+                        .upload(filePath, photo.file);
+    
+                    if (uploadError) throw uploadError;
+    
+                    // Get the public URL
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('request-media')
+                        .getPublicUrl(filePath);
+    
+                    // Store the photo reference in the database
+                    const { error: photoError } = await supabase
+                        .from('event_photos')
+                        .insert([{
+                            request_id: request.id,
+                            photo_url: publicUrl,
+                            file_path: filePath,
+                            user_id: user.id // Add user_id field
+                        }]);
+    
+                    if (photoError) throw photoError;
+    
+                    return publicUrl;
+                });
+    
+                await Promise.all(uploadPromises);
+            }
+    
             // Clear form data and navigate to success page
-            localStorage.removeItem('cateringRequest');
+            localStorage.removeItem('photographyRequest');
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
-                    message: 'Your catering request has been submitted successfully!'
-                } 
+                    message: 'Your photography request has been submitted successfully!'
+                }
             });
+    
         } catch (err) {
             setError('Failed to submit request. Please try again.');
             console.error('Error submitting request:', err);
@@ -1312,6 +1286,7 @@ function CateringRequest() {  // Changed function name
             setIsSubmitting(false);
         }
     };
+    
 
     const checkAuthentication = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -1333,7 +1308,6 @@ function CateringRequest() {  // Changed function name
                 .eq('id', user.id);
 
             if (updateError) throw updateError;
-
             return true;
         } catch (err) {
             console.error('Error updating profile:', err);
@@ -1423,17 +1397,26 @@ function CateringRequest() {  // Changed function name
                 <div className="request-form-box">
                     <StatusBar steps={getSteps()} currentStep={currentStep} />
                 </div>
-            </div>  
+            </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
+                {/* Status bar container moved above title for desktop */}
+
+
+                <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
+                    {getSteps()[currentStep]}
+                </h2>
+                
+                {/* Mobile status bar */}
                 <div className="request-form-status-container mobile-only">
                     <div className="request-form-box">
                         <StatusBar steps={getSteps()} currentStep={currentStep} />
                     </div>
-                </div>  
-    
+                </div>
+
                 <div className="form-scrollable-content">
                     {getCurrentComponent()}
                 </div>
+
                 <div className="form-button-container">
                     <button className="request-form-back-btn" onClick={handleBack} disabled={isSubmitting}>
                         Back
@@ -1447,4 +1430,4 @@ function CateringRequest() {  // Changed function name
     );
 }
 
-export default CateringRequest;
+export default PhotographyRequest;

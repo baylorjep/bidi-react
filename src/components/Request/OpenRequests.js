@@ -159,7 +159,7 @@ function OpenRequests() {
                         .select('*, created_at')
                         .eq('open', true)
                         .eq('service_category', 'hair and makeup artist')
-                        .order('created_at', { ascending: false });
+                        .order('created_at', { ascending: false }); 
                     if (error) throw error;
                     setOpenRequests(requests || []);
                     setOpenPhotoRequests([]);

@@ -11,12 +11,7 @@ function RequestCategories() {
         'DJ Services',
         'Hair and Makeup Artist',
         'Florist',
-        'Catering', // Add Catering
-        'Wedding Planner',
-        'Venue',
-        'Cake',
-        'Spray Tan',
-        'Other'
+        'Catering'
     ];
 
     const handleSelection = () => {
