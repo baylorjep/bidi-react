@@ -2,58 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../../App.css';
 
-function RequestDisplayMini({ request, hideBidButton }) {
+function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false }) {
     const [timeLeft, setTimeLeft] = useState('');
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
 
     const isNew = (createdAt) => {
-        console.log('Checking if new:', createdAt); // Add logging
-        if (!createdAt) {
-            console.log('No created_at timestamp');
-            return false;
-        }
+        if (!createdAt) return false;
         const now = new Date();
         const created = new Date(createdAt);
         const diffInDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
-        console.log('Days difference:', diffInDays);
         return diffInDays < 7;
     };
 
     const checkPromotion = (createdAt) => {
         if (!createdAt) return null;
 
-        // Parse PostgreSQL timestamp string to get UTC milliseconds
-        const createdParts = createdAt.split(/[^0-9]/);
-        const created = Date.UTC(
-            parseInt(createdParts[0]),
-            parseInt(createdParts[1]) - 1,
-            parseInt(createdParts[2]),
-            parseInt(createdParts[3]),
-            parseInt(createdParts[4]),
-            parseInt(createdParts[5]),
-            parseInt(createdParts[6].substr(0, 3))
-        );
-        const now = Date.now();
-
-        // Date comparison in local time
         const localCreated = new Date(createdAt);
         const createdDate = localCreated.toLocaleDateString('en-CA');
         const specialDates = ['2025-01-11', '2025-01-25'];
 
         if (!specialDates.includes(createdDate)) return null;
 
-        // Get milliseconds since creation
-        const msSinceCreation = now - created;
-        const minutesSinceCreation = msSinceCreation / (1000 * 60);
+        const now = Date.now();
+        const created = new Date(createdAt).getTime();
+        const minutesSinceCreation = (now - created) / (1000 * 60);
 
         if (minutesSinceCreation < 30) {
             return {
-                message: "⚡Save 2%",  // Removed space after emoji
+                message: "⚡Save 2%",
                 endTime: new Date(created + (30 * 60 * 1000))
             };
         }
         if (minutesSinceCreation < 60) {
             return {
-                message: "⏳Save 1%",  // Removed space after emoji
+                message: "⏳Save 1%",
                 endTime: new Date(created + (60 * 60 * 1000))
             };
         }
@@ -84,11 +66,30 @@ function RequestDisplayMini({ request, hideBidButton }) {
         return () => clearInterval(timer);
     }, [request.created_at]);
 
+    const handleCloseModal = () => {
+        setSelectedPhoto(null);
+    };
+
+    const getTitle = () => {
+        if (isPhotoRequest) {
+            return request.event_title || 'Untitled Event';
+        }
+        return request.service_title;
+    };
+
+    const getDate = () => {
+        const startDate = isPhotoRequest ? request.start_date : request.service_date;
+        if (request.end_date) {
+            return `${new Date(startDate).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
+        }
+        return new Date(startDate).toLocaleDateString();
+    };
+
     return (
         <div className="request-display-mini text-center mb-4">
             <div className="request-content p-3">
                 <div style={{textAlign:'left', width: '100%', padding: '0 20px', marginBottom: '20px'}}>
-                    <h2 className="request-title">{request.service_title}</h2>
+                    <h2 className="request-title">{getTitle()}</h2>
                     <div style={{display: 'flex', gap: '10px'}}>
                         {isNew(request.created_at) && (
                             <div className="request-status">New</div>
@@ -101,35 +102,33 @@ function RequestDisplayMini({ request, hideBidButton }) {
                         )}
                     </div>
                 </div>
-                
+
                 <div className="details-grid">
                     <div className="detail-item">
-                        <span className="detail-label">Location</span>
-                        <span className="detail-value">{request.location}</span>
+                        <span className="detail-label">Event Type</span>
+                        <span className="detail-value">{request.event_type || 'Not specified'}</span>
                     </div>
                     <div className="detail-item">
-                        <span className="detail-label">Category</span>
-                        <span className="detail-value">{request.service_category}</span>
+                        <span className="detail-label">Location</span>
+                        <span className="detail-value">{request.location || 'Not specified'}</span>
                     </div>
                     <div className="detail-item">
                         <span className="detail-label">Date of Service</span>
-                        <span className="detail-value-long">
-                            {request.end_date 
-                                ? `${new Date(request.service_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
-                                : new Date(request.service_date).toLocaleDateString()
-                            }
-                        </span>
+                        <span className="detail-value-long">{getDate()}</span>
                     </div>
                     <div className="detail-item">
                         <span className="detail-label">Budget</span>
-                        <span className="detail-value">${request.price_range}</span>
+                        <span className="detail-value">${request.price_range || request.budget_range}</span>
                     </div>
                 </div>
 
-                
                 {!hideBidButton && (
                     <div style={{marginTop: '20px', display: 'flex', justifyContent: 'center'}}>
-                        <Link className="submit-bid-button" to={`/submit-bid/${request.id}`} style={{textDecoration:'none'}}>
+                        <Link 
+                            className="submit-bid-button" 
+                            to={`/submit-bid/${request.id}`} 
+                            style={{textDecoration:'none'}}
+                        >
                             <span className="bid-button-text">
                                 <span>View More</span>
                             </span>
@@ -137,6 +136,18 @@ function RequestDisplayMini({ request, hideBidButton }) {
                     </div>
                 )}
             </div>
+
+            {selectedPhoto && (
+                <div className="modal-overlay" onClick={handleCloseModal}>
+                    <div className="modal-content">
+                        <img 
+                            src={selectedPhoto.url} 
+                            onClick={(e) => e.stopPropagation()} 
+                            alt="Selected" 
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

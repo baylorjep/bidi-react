@@ -94,8 +94,6 @@ function HairAndMakeUpRequest() {
                 startTime: saved.eventDetails?.startTime || '',
                 endTime: saved.eventDetails?.endTime || '',
                 secondPhotographer: saved.eventDetails?.secondPhotographer || '',
-                stylePreferences: saved.eventDetails?.stylePreferences || {},
-                servicesNeeded: saved.eventDetails?.servicesNeeded || {},  // Changed from deliverables
                 additionalInfo: saved.eventDetails?.additionalInfo || '',
                 dateFlexibility: saved.eventDetails?.dateFlexibility || 'specific', // 'specific', 'range', 'flexible'
                 dateTimeframe: saved.eventDetails?.dateTimeframe || '', // '3months', '6months', '1year'
@@ -1304,10 +1302,7 @@ function HairAndMakeUpRequest() {
                 indoor_outdoor: formData.eventDetails.indoorOutdoor,
                 price_range: formData.eventDetails.priceRange,
                 additional_comments: formData.eventDetails.additionalInfo || null,
-                style_preferences: formData.eventDetails.stylePreferences || {}, // JSON object
-                services_needed: formData.eventDetails.servicesNeeded || {},  // JSON object
-                pinterest_link: formData.eventDetails.pinterestBoard || null,
-                coverage: coverage, // Add the coverage object
+                pinterest_link: formData.eventDetails.pinterestBoard || null,   
                 status: 'pending',
                 coupon_code: appliedCoupon ? appliedCoupon.code : null,
                 service_type: serviceType, // Add service type
@@ -1446,11 +1441,12 @@ function HairAndMakeUpRequest() {
         } else if (currentStep === 1) {
             const subSteps = getDetailsSubSteps();
             if (detailsSubStep < subSteps.length - 1) {
-                // Validate required fields for sub-steps
+                // Fix the validation check here
                 if (detailsSubStep === 0 && 
                     (!formData.eventDetails.location || 
-                    (formData.eventDetails.dateFlexibility === 'specific' && !formData.eventDetails.eventDateTime) ||
-                    (formData.eventDetails.dateFlexibility === 'range' && (!formData.eventDetails.startDate || !formData.eventDetails.endDate)))) {
+                    (formData.eventDetails.dateFlexibility === 'specific' && !formData.eventDetails.startDate) ||
+                    (formData.eventDetails.dateFlexibility === 'range' && (!formData.eventDetails.startDate || !formData.eventDetails.endDate)) ||
+                    (formData.eventDetails.dateFlexibility === 'flexible' && !formData.eventDetails.dateTimeframe))) {
                     setError('Please fill in all required fields: Location and Date information.');
                     return;
                 }
