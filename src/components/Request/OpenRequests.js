@@ -109,12 +109,12 @@ function OpenRequests() {
                 ] = await Promise.all([
                     supabase
                         .from('photography_requests')
-                        .select('*, created_at')
+                        .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
                         .in('status', ['pending', 'open'])
                         .order('created_at', { ascending: false }),
                     supabase
                         .from('dj_requests')
-                        .select('*, created_at')
+                        .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
                         // Remove all filters temporarily
                         .order('created_at', { ascending: false })
                         .then(result => {
@@ -126,7 +126,8 @@ function OpenRequests() {
                         }),
                     supabase
                         .from('catering_requests')
-                        .select('*, created_at')
+
+                        .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
                         // Remove all filters temporarily
                         .order('created_at', { ascending: false })
                         .then(result => {
@@ -138,22 +139,22 @@ function OpenRequests() {
                         }),
                     supabase
                         .from('beauty_requests')
-                        .select('*, created_at')
+                        .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
                         .in('status', ['pending', 'open'])
                         .order('created_at', { ascending: false }),
                     supabase
                         .from('videography_requests')
-                        .select('*, created_at')
+                        .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
                         .in('status', ['pending', 'open'])
                         .order('created_at', { ascending: false }),
                     supabase
                         .from('florist_requests')
-                        .select('*, created_at')
+                        .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
                         .in('status', ['pending', 'open'])
                         .order('created_at', { ascending: false }),
                     supabase
                         .from('requests')
-                        .select('*, created_at')
+                        .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
                         .eq('open', true)
                         .order('created_at', { ascending: false })
                 ]);
@@ -188,21 +189,21 @@ function OpenRequests() {
                         ...req,
                         table_name: 'beauty_requests',
                         service_title: req.event_title || `${req.event_type} Beauty Request`,
-                        price_range: req.budget_range,
+                        price_range: req.price_range,
                         service_date: req.start_date
                     })) || [],
                     'videography': videoRequests?.map(req => ({
                         ...req,
                         table_name: 'videography_requests',
                         service_title: req.event_title || `${req.event_type} Video Request`,
-                        price_range: req.budget_range,
+                        price_range: req.price_range,
                         service_date: req.start_date
                     })) || [],
                     'florist': floristRequests?.map(req => ({
                         ...req,
                         table_name: 'florist_requests',
                         service_title: req.event_title || `${req.event_type} Florist Request`,
-                        price_range: req.budget_range,
+                        price_range: req.price_range,
                         service_date: req.start_date
                     })) || [],
                     'photography': photoRequests || [],

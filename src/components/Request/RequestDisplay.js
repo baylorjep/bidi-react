@@ -297,14 +297,28 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 <div className="request-info">{request.location}</div>
             </div>
 
+            {/* Time Information */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Time</div>
+                <div className="request-info">
+                    {request.start_time_unknown ? 'Start time TBD' : request.start_time}
+                    {' - '}
+                    {request.end_time_unknown ? 'End time TBD' : request.end_time}
+                </div>
+            </div>
+
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Number of People</div>
-                <div className="request-info">{request.num_people || 'Not specified'}</div>
+                <div className="request-info">
+                    {request.num_people_unknown ? 'TBD' : request.num_people || 'Not specified'}
+                </div>
             </div>
 
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Duration (in hours)</div>
-                <div className="request-info">{request.duration || 'Not specified'}</div>
+                <div className="request-info">
+                    {request.duration_unknown ? 'TBD' : request.duration || 'Not specified'}
+                </div>
             </div>
 
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -329,41 +343,81 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
             )}
 
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Time</div>
+                <div className="request-subtype">Second Photographer</div>
                 <div className="request-info">
-                    {request.start_time || 'Not specified'} - {request.end_time || 'Not specified'}
+                    {request.second_photographer_unknown ? 'TBD' : 
+                     request.second_photographer || 'Not specified'}
                 </div>
             </div>
 
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Second Photographer</div>
-                <div className="request-info">{request.second_photographer}</div>
-            </div>
-
-            {request.style_preferences && Object.keys(request.style_preferences).length > 0 && (
+            {/* Wedding Details if applicable */}
+            {request.wedding_details && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Style Preferences</div>
+                    <div className="request-subtype">Wedding Coverage</div>
                     <div className="request-info">
-                        {Object.entries(request.style_preferences)
-                            .filter(([_, value]) => value)
-                            .map(([key]) => key.replace(/([A-Z])/g, ' $1')
-                                .toLowerCase()
-                                .replace(/^./, str => str.toUpperCase()))
-                            .join(', ')}
+                        {typeof request.wedding_details === 'string' 
+                            ? Object.entries(JSON.parse(request.wedding_details))
+                                .filter(([_, value]) => value)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ')
+                            : Object.entries(request.wedding_details)
+                                .filter(([_, value]) => value)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ')}
                     </div>
                 </div>
             )}
 
-            {request.deliverables && Object.keys(request.deliverables).length > 0 && (
+            {/* Style Preferences */}
+            {request.style_preferences && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Style Preferences</div>
+                    <div className="request-info">
+                        {typeof request.style_preferences === 'string'
+                            ? Object.entries(JSON.parse(request.style_preferences))
+                                .filter(([_, value]) => value)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ')
+                            : Object.entries(request.style_preferences)
+                                .filter(([_, value]) => value)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ')}
+                    </div>
+                </div>
+            )}
+
+            {/* Deliverables */}
+            {request.deliverables && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                     <div className="request-subtype">Deliverables</div>
                     <div className="request-info">
-                        {Object.entries(request.deliverables)
-                            .filter(([_, value]) => value)
-                            .map(([key]) => key.replace(/([A-Z])/g, ' $1')
-                                .toLowerCase()
-                                .replace(/^./, str => str.toUpperCase()))
-                            .join(', ')}
+                        {typeof request.deliverables === 'string'
+                            ? Object.entries(JSON.parse(request.deliverables))
+                                .filter(([_, value]) => value)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ')
+                            : Object.entries(request.deliverables)
+                                .filter(([_, value]) => value)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ')}
                     </div>
                 </div>
             )}
@@ -1013,7 +1067,8 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 <div className="request-subtype">Second Videographer</div>
                 <div className="request-info">{request.second_photographer ? 'Yes' : 'No'}</div>
             </div>
-                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Budget Range</div>
                 <div className="request-info">${request.price_range}</div>
             </div>
@@ -1097,7 +1152,6 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         </div>
     );
 
-    // Add this new function before renderRequestDetails
     const renderDefaultRequest = () => (
         <div className="request-summary-grid">
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -1257,9 +1311,10 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
 
             switch (type) {
                 case 'photography_requests':
-                    if (servicePhotos) {
-                        photos = servicePhotos.filter(photo => photo.request_id === request.id.toString());
-                    }
+                    ({ data: photos, error } = await supabase
+                        .from('event_photos')
+                        .select('*')
+                        .eq('request_id', request.id));
                     break;
 
                 case 'videography_requests':
@@ -1293,7 +1348,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         };
 
         fetchPhotos();
-    }, [request, servicePhotos]);
+    }, [request]);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -1341,26 +1396,25 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                     {renderRequestDetails()}
                 </div>
             </div>
-
-            {/* Add this modal */}
-            {selectedPhoto && (
-                <div className="modal-overlay" onClick={handleCloseModal}>
-                    <div className="modal-content-photo" onClick={e => e.stopPropagation()}>
-                        <button 
-                            className="remove-photo-button"
-                            style={{ position: 'absolute', right: '10px', top: '10px' }}
-                            onClick={handleCloseModal}
-                        >
-                            X
-                        </button>
-                        <img 
-                            src={getPublicUrl(selectedPhoto.file_path) || selectedPhoto.photo_url} 
-                            alt="Full size" 
-                            style={{ maxWidth: '100%', maxHeight: '90vh' }}
-                        />
-                    </div>
-                </div>
-            )}
+{/* Add this modal */}
+{selectedPhoto && (
+    <div className="modal-overlay" onClick={handleCloseModal}>
+        <div className="modal-content-photo" onClick={e => e.stopPropagation()}>
+            <button 
+                className="remove-photo-button"
+                style={{ position: 'absolute', right: '10px', top: '10px' }}
+                onClick={handleCloseModal}
+            >
+                X
+            </button>
+            <img 
+                src={getPublicUrl(selectedPhoto.file_path) || selectedPhoto.photo_url} 
+                alt="Full size" 
+                style={{ maxWidth: '100%', maxHeight: '90vh' }}
+            />
+        </div>
+    </div>
+)}
         </div>
     );
 }

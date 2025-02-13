@@ -79,10 +79,14 @@ function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false }) 
 
     const getDate = () => {
         const startDate = isPhotoRequest ? request.start_date : request.service_date;
-        if (request.end_date) {
+        if (request.date_flexibility === 'specific') {
+            return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
+        } else if (request.date_flexibility === 'range') {
             return `${new Date(startDate).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
+        } else if (request.date_flexibility === 'flexible') {
+            return `Flexible within ${request.date_timeframe}`;
         }
-        return new Date(startDate).toLocaleDateString();
+        return 'Date not specified';
     };
 
     return (

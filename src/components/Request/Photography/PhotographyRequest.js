@@ -69,48 +69,35 @@ function PhotographyRequest() {
     // Consolidated state
     const [formData, setFormData] = useState(() => {
         const saved = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
-        const defaultWeddingDetails = {
-            gettingReady: false,
-            firstLook: false,
-            ceremony: false,
-            familyPhotos: false,
-            reception: false,
-            danceFloor: false,
-            sendOff: false,
-            bridalParty: false,
-            groomParty: false,
-            decorDetails: false,
-        };
-
         return {
             eventType: saved.eventType || '',
             eventDetails: {
                 eventTitle: saved.eventDetails?.eventTitle || '',
-                location: saved.eventDetails?.location || '',
                 dateType: saved.eventDetails?.dateType || 'specific',
+                location: saved.eventDetails?.location || '',
+                dateFlexibility: saved.eventDetails?.dateFlexibility || 'specific',
                 startDate: saved.eventDetails?.startDate || '',
                 endDate: saved.eventDetails?.endDate || '',
+                dateTimeframe: saved.eventDetails?.dateTimeframe || '',
                 timeOfDay: saved.eventDetails?.timeOfDay || '',
-                numPeople: saved.eventDetails?.numPeople || '',
-                duration: saved.eventDetails?.duration || '',
-                indoorOutdoor: saved.eventDetails?.indoorOutdoor || '',
-                additionalComments: saved.eventDetails?.additionalComments || '',
-                priceRange: saved.eventDetails?.priceRange || '',
-                weddingDetails: saved.eventDetails?.weddingDetails || defaultWeddingDetails,
                 startTime: saved.eventDetails?.startTime || '',
                 endTime: saved.eventDetails?.endTime || '',
-                secondPhotographer: saved.eventDetails?.secondPhotographer || '',
-                stylePreferences: saved.eventDetails?.stylePreferences || {},
-                deliverables: saved.eventDetails?.deliverables || {},
-                additionalInfo: saved.eventDetails?.additionalInfo || '',
-                dateFlexibility: saved.eventDetails?.dateFlexibility || 'specific', // 'specific', 'range', 'flexible'
-                dateTimeframe: saved.eventDetails?.dateTimeframe || '', // '3months', '6months', '1year'
                 startTimeUnknown: saved.eventDetails?.startTimeUnknown || false,
                 endTimeUnknown: saved.eventDetails?.endTimeUnknown || false,
-                secondPhotographerUnknown: saved.eventDetails?.secondPhotographerUnknown || false,
-                durationUnknown: saved.eventDetails?.durationUnknown || false,
+                numPeople: saved.eventDetails?.numPeople || '',
                 numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
+                duration: saved.eventDetails?.duration || '',
+                durationUnknown: saved.eventDetails?.durationUnknown || false,
+                indoorOutdoor: saved.eventDetails?.indoorOutdoor || '',
+                secondPhotographer: saved.eventDetails?.secondPhotographer || '',
+                secondPhotographerUnknown: saved.eventDetails?.secondPhotographerUnknown || false,
+                stylePreferences: saved.eventDetails?.stylePreferences || {},
+                deliverables: saved.eventDetails?.deliverables || {},
+                weddingDetails: saved.eventDetails?.weddingDetails || {},
+                priceRange: saved.eventDetails?.priceRange || '',
                 pinterestBoard: saved.eventDetails?.pinterestBoard || '',
+                additionalInfo: saved.eventDetails?.additionalInfo || '',
+                extras: saved.eventDetails?.extras || {}  // Add this field
             },
             personalDetails: saved.personalDetails || {
                 firstName: '',
@@ -1161,7 +1148,7 @@ function PhotographyRequest() {
         setIsSubmitting(true);
         setError(null);
 
-        // Modify validation to account for flexible dates
+        // Validation remains the same
         if (!formData.eventDetails.location || 
             (formData.eventDetails.dateFlexibility === 'specific' && !formData.eventDetails.startDate) ||
             (formData.eventDetails.dateFlexibility === 'range' && (!formData.eventDetails.startDate || !formData.eventDetails.endDate)) ||
@@ -1178,99 +1165,119 @@ function PhotographyRequest() {
                 setIsModalOpen(true);
                 return;
             }
-    
-            // Check if the coupon code is already used
+
+            // Add this section to get user's first name
+            const { data: userData, error: userError } = await supabase
+                .from('individual_profiles')
+                .select('first_name')
+                .eq('id', user.id)
+                .single();
+
+            if (userError) throw userError;
+
+            // Create title
+            const eventTitle = `${userData.first_name}'s ${formData.eventType} Photography Request`;
+
+            // Coupon check remains the same
             if (appliedCoupon) {
                 const { data: existingRequest, error: checkError } = await supabase
                     .from('photography_requests')
                     .select('id')
                     .eq('coupon_code', appliedCoupon.code)
                     .single();
-    
-                if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows found
-                    throw checkError;
-                }
-    
+
+                if (checkError && checkError.code !== 'PGRST116') throw checkError;
+
                 if (existingRequest) {
                     setError('This coupon code has already been used.');
                     setIsSubmitting(false);
                     return;
                 }
             }
-    
-            // Validate and convert integer fields
-            const numPeople = formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople, 10) : null;
-            const duration = formData.eventDetails.duration ? parseInt(formData.eventDetails.duration, 10) : null;
-    
-            // Create the request with coupon_code as foreign key
+
+            // Base request data
             const requestData = {
                 profile_id: user.id,
                 event_type: formData.eventType,
-                event_title: formData.eventDetails.eventTitle,
+                event_title: eventTitle, // Add the generated title here
                 location: formData.eventDetails.location,
-                // Only include dates if not flexible
                 start_date: formData.eventDetails.dateFlexibility !== 'flexible' ? formData.eventDetails.startDate : null,
                 end_date: formData.eventDetails.dateFlexibility === 'range' ? formData.eventDetails.endDate : null,
                 date_flexibility: formData.eventDetails.dateFlexibility,
                 date_timeframe: formData.eventDetails.dateFlexibility === 'flexible' ? formData.eventDetails.dateTimeframe : null,
                 time_of_day: formData.eventDetails.timeOfDay,
-                num_people: numPeople,
-                duration: duration,
+                start_time: formData.eventDetails.startTime || null,
+                end_time: formData.eventDetails.endTime || null,
+                num_people: formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople, 10) : null,
+                duration: formData.eventDetails.duration ? parseInt(formData.eventDetails.duration, 10) : null,
                 indoor_outdoor: formData.eventDetails.indoorOutdoor,
                 price_range: formData.eventDetails.priceRange,
-                additional_comments: formData.eventDetails.additionalComments,
-                date_type: formData.eventDetails.dateType, // Add date_type field
-                coupon_code: appliedCoupon ? appliedCoupon.code : null,  // Just store the code
-                pinterest_link: formData.eventDetails.pinterestBoard, // Add pinterest_link field
+                additional_info: formData.eventDetails.additionalInfo,
+                date_type: formData.eventDetails.dateType,
+                coupon_code: appliedCoupon ? appliedCoupon.code : null,
+                pinterest_link: formData.eventDetails.pinterestBoard,
                 status: 'open'
             };
-    
+
+            // Additional fields including unknown flags and JSONB data
+            const finalRequestData = {
+                ...requestData,
+                start_time_unknown: formData.eventDetails.startTimeUnknown ?? false,
+                end_time_unknown: formData.eventDetails.endTimeUnknown ?? false,
+                second_photographer: formData.eventDetails.secondPhotographer || null,
+                second_photographer_unknown: formData.eventDetails.secondPhotographerUnknown ?? false,
+                duration_unknown: formData.eventDetails.durationUnknown ?? false,
+                num_people_unknown: formData.eventDetails.numPeopleUnknown ?? false,
+                extras: formData.eventDetails.extras || null,
+                // Ensure JSONB fields are properly stringified
+                style_preferences: JSON.stringify(formData.eventDetails.stylePreferences || {}),
+                deliverables: JSON.stringify(formData.eventDetails.deliverables || {}),
+                wedding_details: JSON.stringify(formData.eventDetails.weddingDetails || null)
+            };
+
+            // Insert the request with all fields
             const { data: request, error: requestError } = await supabase
                 .from('photography_requests')
-                .insert([requestData])
+                .insert([finalRequestData])
                 .select()
                 .single();
-    
+
             if (requestError) throw requestError;
-    
-            // Upload photos if there are any
+
+            // Photo upload logic remains the same
             if (formData.photos.length > 0) {
                 const uploadPromises = formData.photos.map(async (photo) => {
                     const fileExt = photo.name.split('.').pop();
                     const fileName = `${uuidv4()}.${fileExt}`;
                     const filePath = `${user.id}/${request.id}/${fileName}`;
-    
-                    // Upload the file
+
                     const { error: uploadError } = await supabase.storage
                         .from('request-media')
                         .upload(filePath, photo.file);
-    
+
                     if (uploadError) throw uploadError;
-    
-                    // Get the public URL
+
                     const { data: { publicUrl } } = supabase.storage
                         .from('request-media')
                         .getPublicUrl(filePath);
-    
-                    // Store the photo reference in the database
+
                     const { error: photoError } = await supabase
                         .from('event_photos')
                         .insert([{
                             request_id: request.id,
                             photo_url: publicUrl,
                             file_path: filePath,
-                            user_id: user.id // Add user_id field
+                            user_id: user.id
                         }]);
-    
+
                     if (photoError) throw photoError;
-    
                     return publicUrl;
                 });
-    
+
                 await Promise.all(uploadPromises);
             }
-    
-            // Clear form data and navigate to success page
+
+            // Success navigation remains the same
             localStorage.removeItem('photographyRequest');
             navigate('/success-request', { 
                 state: { 
@@ -1278,7 +1285,7 @@ function PhotographyRequest() {
                     message: 'Your photography request has been submitted successfully!'
                 }
             });
-    
+
         } catch (err) {
             setError('Failed to submit request. Please try again.');
             console.error('Error submitting request:', err);
@@ -1286,7 +1293,6 @@ function PhotographyRequest() {
             setIsSubmitting(false);
         }
     };
-    
 
     const checkAuthentication = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -1369,7 +1375,7 @@ function PhotographyRequest() {
                     setError('Please fill in the required field: Budget.');
                     return;
                 }
-                // Move to next main step
+                // Move to next main steps
                 const isAuthenticated = await checkAuthentication();
                 if (!isAuthenticated) {
                     setIsAuthModalOpen(true);
@@ -1400,8 +1406,6 @@ function PhotographyRequest() {
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
                 {/* Status bar container moved above title for desktop */}
-
-
                 <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
                     {getSteps()[currentStep]}
                 </h2>

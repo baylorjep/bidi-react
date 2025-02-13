@@ -116,65 +116,58 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
         // Check if user has stripe account or Bidi Plus
         if (!connectedAccountId && !Bidi_Plus) {
             setShowModal(true);
-            return; // Prevent form submission
+            return;
         }
 
         setIsLoading(true);
 
-        const {
-            data: { user },
-            error: userError,
-        } = await supabase.auth.getUser();
+        try {
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            
+            if (authError || !user) {
+                setError('You need to be signed in to place a bid.');
+                setIsLoading(false);
+                return;
+            }
 
-        if (userError || !user) {
-            setError('You need to be signed in to place a bid.');
-            setIsLoading(false);
-            return;
-        }
+            // Map request type to category
+            const categoryMap = {
+                'requests': 'General',
+                'photography_requests': 'Photography',
+                'dj_requests': 'DJ',
+                'catering_requests': 'Catering',
+                'videography_requests': 'Videography',
+                'florist_requests': 'Florist',
+                'beauty_requests': 'Beauty'
+            };
 
-        let insertError;
-        const subject = 'New Bid Received';
-        const htmlContent = `<p>A new bid has been placed on your request.</p>
-                              <p><strong>Bid Amount:</strong> ${bidAmount}</p>
-                              <p><strong>Description:</strong> ${bidDescription}</p>`;
-    
-        if (requestType === 'requests') {
-            const { error } = await supabase
+            const category = categoryMap[requestType] || 'General';
+
+            const { error: insertError } = await supabase
                 .from('bids')
-                .insert([
-                    {
-                        request_id: requestId,
-                        user_id: user.id,
-                        bid_amount: bidAmount,
-                        bid_description: bidDescription,
-                        category: 'General',
-                    },
-                ]);
-            insertError = error;
-        } else if (requestType === 'photography_requests') {
-            const { error } = await supabase
-                .from('bids')
-                .insert([
-                    {
-                        request_id: requestId,
-                        user_id: user.id,
-                        bid_amount: bidAmount,
-                        bid_description: bidDescription,
-                        category: 'Photography',
-                    },
-                ]);
-            insertError = error;
-        }
-    
-        if (!insertError) {
-            await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent); // Send to user email
+                .insert([{
+                    request_id: requestId,
+                    user_id: user.id,
+                    bid_amount: bidAmount,
+                    bid_description: bidDescription,
+                    category: category,
+                }]);
+
+            if (insertError) throw insertError;
+
+            const subject = 'New Bid Received';
+            const htmlContent = `<p>A new bid has been placed on your request.</p>
+                                  <p><strong>Bid Amount:</strong> ${bidAmount}</p>
+                                  <p><strong>Description:</strong> ${bidDescription}</p>`;
+
+            await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent);
             setSuccess('Bid successfully placed!');
             navigate('/bid-success');
-        } else {
-            setError(`Error placing bid: ${insertError.message}`);
+        } catch (err) {
+            setError(`Error placing bid: ${err.message}`);
         }
-    
-        setIsLoading(false); // End loading
+
+        setIsLoading(false);
     };
 
     const handleBack = () => {
