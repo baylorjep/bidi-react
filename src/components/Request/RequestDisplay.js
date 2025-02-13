@@ -254,6 +254,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                     </div>
                 </>
             )}
+
+            {request.additional_comments && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                    <div className="request-subtype">Additional Comments</div>
+                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
+                </div>
+            )}
         </div>
     );
 
@@ -458,6 +465,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                     </div>
                 </>
             )}
+
+            {request.additional_comments && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                    <div className="request-subtype">Additional Comments</div>
+                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
+                </div>
+            )}
         </div>
     );
 
@@ -601,7 +615,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
                     <div className="request-subtype">Special Song Requests</div>
                     <div className="request-info">
-                        {request.special_songs.requests}
+                        <ReactQuill value={request.special_songs.requests} readOnly={true} theme="bubble" />
                     </div>
                 </div>
             )}
@@ -617,6 +631,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
                     <div className="request-subtype">Additional Information</div>
                     <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_info }} />
+                </div>
+            )}
+
+            {request.additional_comments && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                    <div className="request-subtype">Additional Comments</div>
+                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
                 </div>
             )}
         </div>
@@ -831,6 +852,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                         })}
                     </div>
                 </>
+            )}
+
+            {request.additional_comments && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                    <div className="request-subtype">Additional Comments</div>
+                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
+                </div>
             )}
         </div>
     );
@@ -1149,6 +1177,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                     </div>
                 </>
             )}
+
+            {request.additional_comments && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                    <div className="request-subtype">Additional Comments</div>
+                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
+                </div>
+            )}
         </div>
     );
 
@@ -1176,6 +1211,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 <div className="request-subtype">Budget Range</div>
                 <div className="request-info">${request.price_range || request.budget_range}</div>
             </div>
+
+            {request.additional_comments && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                    <div className="request-subtype">Additional Comments</div>
+                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
+                </div>
+            )}
         </div>
     );
 

@@ -115,28 +115,13 @@ function OpenRequests() {
                     supabase
                         .from('dj_requests')
                         .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
-                        // Remove all filters temporarily
-                        .order('created_at', { ascending: false })
-                        .then(result => {
-                            console.log('DJ requests without filters:', result);
-                            // Try a direct count query
-                            supabase.from('dj_requests').select('*', { count: 'exact' })
-                                .then(countResult => console.log('DJ total count:', countResult));
-                            return result;
-                        }),
+                        .in('status', ['pending', 'open']) // Ensure status filter is correct
+                        .order('created_at', { ascending: false }),
                     supabase
                         .from('catering_requests')
-
                         .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
-                        // Remove all filters temporarily
-                        .order('created_at', { ascending: false })
-                        .then(result => {
-                            console.log('Catering requests without filters:', result);
-                            // Try a direct count query
-                            supabase.from('catering_requests').select('*', { count: 'exact' })
-                                .then(countResult => console.log('Catering total count:', countResult));
-                            return result;
-                        }),
+                        .in('status', ['pending', 'open'])
+                        .order('created_at', { ascending: false }),
                     supabase
                         .from('beauty_requests')
                         .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
@@ -154,15 +139,19 @@ function OpenRequests() {
                         .order('created_at', { ascending: false }),
                     supabase
                         .from('requests')
-                        .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
+                        .select('*, created_at, service_date as start_date, service_date as end_date')
                         .eq('open', true)
                         .order('created_at', { ascending: false })
                 ]);
 
                 // Add error logging for new tables
+                if (photoError) console.error('Photo request error:', photoError);
+                if (djError) console.error('DJ request error:', djError);
+                if (cateringError) console.error('Catering request error:', cateringError);
                 if (beautyError) console.error('Beauty request error:', beautyError);
                 if (videoError) console.error('Video request error:', videoError);
                 if (floristError) console.error('Florist request error:', floristError);
+                if (legacyError) console.error('Legacy request error:', legacyError);
 
                 // Log the fetched data
                 console.log('Fetched DJ Requests:', djRequests);
