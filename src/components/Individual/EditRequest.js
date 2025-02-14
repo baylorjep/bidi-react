@@ -8,11 +8,6 @@ function EditRequest() {
     const { type, id } = useParams();
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        // Common fields
-        location: '',
-        price_range: '',
-        time_of_day: '',
-        additional_comments: '',
 
         // Regular request fields
         service_type: '',
@@ -111,8 +106,49 @@ function EditRequest() {
                     service_date: data.service_date?.split('T')[0],
                     end_date: data.end_date?.split('T')[0],
                     start_date: data.start_date?.split('T')[0],
-                    special_songs: data.special_songs || { playlists: '', requests: '' }
                 };
+                
+                // Parse JSON strings if they exist
+                if (type === 'photography') {
+                    formattedData.style_preferences = typeof data.style_preferences === 'string' 
+                        ? JSON.parse(data.style_preferences)
+                        : data.style_preferences || {};
+                    formattedData.deliverables = typeof data.deliverables === 'string'
+                        ? JSON.parse(data.deliverables)
+                        : data.deliverables || {};
+                    formattedData.wedding_details = typeof data.wedding_details === 'string'
+                        ? JSON.parse(data.wedding_details)
+                        : data.wedding_details || {};
+                } else if (type === 'florist') {
+                    formattedData.floral_arrangements = typeof data.floral_arrangements === 'string'
+                        ? JSON.parse(data.floral_arrangements)
+                        : data.floral_arrangements || {};
+                    formattedData.flower_preferences = typeof data.flower_preferences === 'string'
+                        ? JSON.parse(data.flower_preferences)
+                        : data.flower_preferences || {};
+                    formattedData.additional_services = typeof data.additional_services === 'string'
+                        ? JSON.parse(data.additional_services)
+                        : data.additional_services || {};
+                    formattedData.colors = typeof data.colors === 'string'
+                        ? JSON.parse(data.colors)
+                        : data.colors || [];
+                } else if (type === 'catering') {
+                    formattedData.food_preferences = typeof data.food_preferences === 'string' 
+                        ? JSON.parse(data.food_preferences)
+                        : data.food_preferences || {};
+                        
+                    // Don't parse these as JSON, just use the values directly
+                    formattedData.dining_items = data.dining_items || null;
+                    formattedData.setup_cleanup = data.setup_cleanup || null;
+                    formattedData.food_service_type = data.food_service_type || null;
+                    formattedData.serving_staff = data.serving_staff || null;
+                }
+                
+                // Only set special_songs for DJ requests
+                if (type === 'dj') {
+                    formattedData.special_songs = data.special_songs || { playlists: '', requests: '' };
+                }
+                
                 setFormData(formattedData);
             }
         };
@@ -172,6 +208,16 @@ function EditRequest() {
 
         let updateData = { ...formData };
 
+        // Convert JSON objects to strings for photography requests
+        if (type === 'photography') {
+            updateData = {
+                ...updateData,
+                style_preferences: JSON.stringify(formData.style_preferences),
+                deliverables: JSON.stringify(formData.deliverables),
+                wedding_details: JSON.stringify(formData.wedding_details)
+            };
+        }
+
         if (type === 'beauty') {
             updateData = {
                 ...formData,
@@ -199,6 +245,52 @@ function EditRequest() {
                 price_range: formData.price_range,
                 location: formData.location,
                 additional_comments: formData.additional_comments
+            };
+        }
+
+        if (type === 'florist') {
+            updateData = {
+                ...updateData,
+                floral_arrangements: JSON.stringify(formData.floral_arrangements),
+                flower_preferences: JSON.stringify(formData.flower_preferences),
+                additional_services: JSON.stringify(formData.additional_services),
+                colors: JSON.stringify(formData.colors),
+                location: formData.location,
+                price_range: formData.price_range,
+                event_type: formData.event_type,
+                event_title: formData.event_title,
+                date_flexibility: formData.date_flexibility,
+                start_date: formData.start_date,
+                end_date: formData.end_date,
+                date_timeframe: formData.date_timeframe,
+                specific_time_needed: formData.specific_time_needed === 'yes',
+                specific_time: formData.specific_time,
+                pinterest_link: formData.pinterest_link,
+                additional_info: formData.additional_info
+            };
+        }
+
+        if (type === 'catering') {
+            updateData = {
+                ...updateData,
+                food_preferences: JSON.stringify(formData.food_preferences),
+                dining_items: JSON.stringify(formData.dining_items),
+                setup_cleanup: formData.setup_cleanup,
+                food_service_type: formData.food_service_type,
+                serving_staff: formData.serving_staff,
+                dining_items_notes: formData.dining_items_notes,
+                special_requests: formData.special_requests,
+                additional_info: formData.additional_info,
+                budget_range: formData.price_range,
+                equipment_needed: formData.equipment_needed,
+                equipment_notes: formData.equipment_notes,
+                location: formData.location,
+                event_type: formData.event_type,
+                event_title: formData.event_title,
+                date_flexibility: formData.date_flexibility,
+                start_date: formData.start_date,
+                end_date: formData.end_date,
+                date_timeframe: formData.date_timeframe
             };
         }
 
@@ -233,7 +325,6 @@ function EditRequest() {
                                 name="event_title"
                                 value={formData.event_title}
                                 onChange={handleInputChange}
-                                required
                             />
                         </div>
                         <div className="mb-3">
@@ -244,8 +335,37 @@ function EditRequest() {
                                 name="event_type"
                                 value={formData.event_type}
                                 onChange={handleInputChange}
-                                required
                             />
+                        </div>
+                        <div className="mb-3">
+                            <label className="form-label">Location</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="custom-input-container">
+                            <label htmlFor="priceRange" className="form-label">
+                                Budget Range
+                            </label>
+                            <select
+                                name="priceRange"
+                                value={formData.price_range}
+                                onChange={handleInputChange}
+                                className="form-control custom-select"
+                            >
+                                <option value="">Select Budget Range</option>
+                                <option value="0-1000">Under $1,000</option>
+                                <option value="1000-2000">$1,000 - $2,000</option>
+                                <option value="2000-3000">$2,000 - $3,000</option>
+                                <option value="3000-4000">$3,000 - $4,000</option>
+                                <option value="4000-5000">$4,000 - $5,000</option>
+                                <option value="5000+">$5,000+</option>
+                            </select>
+
                         </div>
                         <div className="mb-3">
                             <label className="form-label">Number of People</label>
@@ -255,7 +375,6 @@ function EditRequest() {
                                 name="num_people"
                                 value={formData.num_people}
                                 onChange={handleInputChange}
-                                required
                             />
                         </div>
                         <div className="mb-3">
@@ -266,7 +385,6 @@ function EditRequest() {
                                 name="duration"
                                 value={formData.duration}
                                 onChange={handleInputChange}
-                                required
                             />
                         </div>
                         <div className="mb-3">
@@ -276,7 +394,6 @@ function EditRequest() {
                                 name="indoor_outdoor"
                                 value={formData.indoor_outdoor}
                                 onChange={handleInputChange}
-                                required
                             >
                                 <option value="">Select...</option>
                                 <option value="Indoor">Indoor</option>
@@ -291,7 +408,6 @@ function EditRequest() {
                                 name="date_type"
                                 value={formData.date_type}
                                 onChange={handleInputChange}
-                                required
                             >
                                 <option value="specific">Specific Date</option>
                                 <option value="range">Date Range</option>
@@ -307,7 +423,6 @@ function EditRequest() {
                                     name="start_date"
                                     value={formData.start_date}
                                     onChange={handleInputChange}
-                                    required
                                 />
                             </div>
                         )}
@@ -321,7 +436,6 @@ function EditRequest() {
                                         name="start_date"
                                         value={formData.start_date}
                                         onChange={handleInputChange}
-                                        required
                                     />
                                 </div>
                                 <div className="mb-3">
@@ -332,7 +446,6 @@ function EditRequest() {
                                         name="end_date"
                                         value={formData.end_date}
                                         onChange={handleInputChange}
-                                        required
                                     />
                                 </div>
                             </>
@@ -345,7 +458,6 @@ function EditRequest() {
                                     name="date_timeframe"
                                     value={formData.date_timeframe}
                                     onChange={handleInputChange}
-                                    required
                                 >
                                     <option value="">Select timeframe</option>
                                     <option value="3months">Within 3 months</option>
@@ -364,7 +476,6 @@ function EditRequest() {
                                 value={formData.start_time}
                                 onChange={handleInputChange}
                                 disabled={formData.start_time_unknown}
-                                required
                             />
                             <div className="form-check">
                                 <input
@@ -386,7 +497,6 @@ function EditRequest() {
                                 value={formData.end_time}
                                 onChange={handleInputChange}
                                 disabled={formData.end_time_unknown}
-                                required
                             />
                             <div className="form-check">
                                 <input
@@ -406,7 +516,6 @@ function EditRequest() {
                                 name="second_photographer"
                                 value={formData.second_photographer}
                                 onChange={handleInputChange}
-                                required
                             >
                                 <option value="">Select</option>
                                 <option value="yes">Yes</option>
@@ -654,7 +763,6 @@ function EditRequest() {
                                 name="event_type"
                                 value={formData.event_type}
                                 onChange={handleInputChange}
-                                required
                             />
                         </div>
                         <div className="mb-3">
@@ -665,8 +773,37 @@ function EditRequest() {
                                 name="event_title"
                                 value={formData.title}
                                 onChange={handleInputChange}
-                                required
                             />
+                        </div>
+                        <div className="mb-3">
+                            <label className="form-label">Location</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="custom-input-container">
+                            <label htmlFor="priceRange" className="form-label">
+                                Budget Range
+                            </label>
+                            <select
+                                name="priceRange"
+                                value={formData.budget_range}
+                                onChange={handleInputChange}
+                                className="form-control custom-select"
+                            >
+                                <option value="">Select Budget Range</option>
+                                <option value="under1000">Under $1,000</option>
+                                <option value="1000-2000">$1,000 - $2,000</option>
+                                <option value="2000-3000">$2,000 - $3,000</option>
+                                <option value="3000-4000">$3,000 - $4,000</option>
+                                <option value="4000-5000">$4,000 - $5,000</option>
+                                <option value="5000+">$5,000+</option>
+                            </select>
+
                         </div>
                         <div className="mb-3">
                             <label className="form-label">Date Flexibility</label>
@@ -675,7 +812,6 @@ function EditRequest() {
                                 name="date_flexibility"
                                 value={formData.date_flexibility}
                                 onChange={handleInputChange}
-                                required
                             >
                                 <option value="specific">Specific Date</option>
                                 <option value="range">Date Range</option>
@@ -691,7 +827,6 @@ function EditRequest() {
                                     name="start_date"
                                     value={formData.start_date}
                                     onChange={handleInputChange}
-                                    required
                                 />
                             </div>
                         )}
@@ -705,7 +840,6 @@ function EditRequest() {
                                         name="start_date"
                                         value={formData.start_date}
                                         onChange={handleInputChange}
-                                        required
                                     />
                                 </div>
                                 <div className="mb-3">
@@ -716,7 +850,6 @@ function EditRequest() {
                                         name="end_date"
                                         value={formData.end_date}
                                         onChange={handleInputChange}
-                                        required
                                     />
                                 </div>
                             </>
@@ -729,7 +862,6 @@ function EditRequest() {
                                     name="date_timeframe"
                                     value={formData.date_timeframe}
                                     onChange={handleInputChange}
-                                    required
                                 >
                                     <option value="">Select timeframe</option>
                                     <option value="3months">Within 3 months</option>
@@ -747,7 +879,6 @@ function EditRequest() {
                                 name="start_time"
                                 value={formData.start_time}
                                 onChange={handleInputChange}
-                                required
                             />
                         </div>
                         <div className="mb-3">
@@ -758,7 +889,6 @@ function EditRequest() {
                                 name="end_time"
                                 value={formData.end_time}
                                 onChange={handleInputChange}
-                                required
                             />
                         </div>
                         <div className="mb-3">
@@ -769,7 +899,6 @@ function EditRequest() {
                                 name="duration"
                                 value={formData.event_duration}
                                 onChange={handleInputChange}
-                                required
                             />
                         </div>
                         <div className="mb-3">
@@ -780,7 +909,6 @@ function EditRequest() {
                                 name="num_people"
                                 value={formData.estimated_guests}
                                 onChange={handleInputChange}
-                                required
                             />
                         </div>
                         <div className="mb-3">
@@ -790,7 +918,6 @@ function EditRequest() {
                                 name="indoor_outdoor"
                                 value={formData.indoor_outdoor}
                                 onChange={handleInputChange}
-                                required
                             >
                                 <option value="">Select...</option>
                                 <option value="Indoor">Indoor</option>
@@ -1055,7 +1182,6 @@ function EditRequest() {
                                 name="equipment_needed"
                                 value={formData.equipment_needed}
                                 onChange={handleInputChange}
-                                required
                             >
                                 <option value="venueProvided">The venue provides sound and lighting equipment</option>
                                 <option value="djBringsAll">The DJ needs to bring all equipment</option>
@@ -1234,54 +1360,12 @@ function EditRequest() {
                                 }))}
                             />
                         </div>
+
                     </>
                 )}
 
                 {type === 'catering' && (
                     <>
-                        <div className="mb-3">
-                            <label className="form-label">Catering Title</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="catering_title"
-                                value={formData.catering_title}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Catering Description</label>
-                            <textarea
-                                className="form-control"
-                                name="catering_description"
-                                value={formData.catering_description}
-                                onChange={handleInputChange}
-                                rows="5"
-                                required
-                            />
-                        </div>
-                    </>
-                )}
-
-                {type === 'beauty' && (
-                    <>
-                        <div className="mb-3">
-                            <label className="form-label">Service Type</label>
-                            <select
-                                className="form-control"
-                                name="service_type"
-                                value={formData.service_type}
-                                onChange={handleInputChange}
-                                required
-                            >
-                                <option value="">Select Service Type</option>
-                                <option value="both">Both Hair and Makeup</option>
-                                <option value="hair">Hair Only</option>
-                                <option value="makeup">Makeup Only</option>
-                            </select>
-                        </div>
-
                         <div className="mb-3">
                             <label className="form-label">Event Type</label>
                             <input
@@ -1290,8 +1374,47 @@ function EditRequest() {
                                 name="event_type"
                                 value={formData.event_type}
                                 onChange={handleInputChange}
-                                required
                             />
+                        </div>
+                        
+                        <div className="mb-3">
+                            <label className="form-label">Event Title</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="title"
+                                value={formData.title}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Location</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Budget Range</label>
+                            <select
+                                className="form-control"
+                                name="budget_range"
+                                value={formData.budget_range}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select Budget Range</option>
+                                <option value="under1000">Under $1,000</option>
+                                <option value="1000-2000">$1,000 - $2,000</option>
+                                <option value="2000-3000">$2,000 - $3,000</option>
+                                <option value="3000-4000">$3,000 - $4,000</option>
+                                <option value="4000-5000">$4,000 - $5,000</option>
+                                <option value="5000+">$5,000+</option>
+                            </select>
                         </div>
 
                         <div className="mb-3">
@@ -1301,7 +1424,6 @@ function EditRequest() {
                                 name="date_flexibility"
                                 value={formData.date_flexibility}
                                 onChange={handleInputChange}
-                                required
                             >
                                 <option value="specific">Specific Date</option>
                                 <option value="range">Date Range</option>
@@ -1318,7 +1440,6 @@ function EditRequest() {
                                     name="start_date"
                                     value={formData.start_date}
                                     onChange={handleInputChange}
-                                    required
                                 />
                             </div>
                         )}
@@ -1333,7 +1454,6 @@ function EditRequest() {
                                         name="start_date"
                                         value={formData.start_date}
                                         onChange={handleInputChange}
-                                        required
                                     />
                                 </div>
                                 <div className="mb-3">
@@ -1344,11 +1464,409 @@ function EditRequest() {
                                         name="end_date"
                                         value={formData.end_date}
                                         onChange={handleInputChange}
-                                        required
                                     />
                                 </div>
                             </>
                         )}
+
+                        {formData.date_flexibility === 'flexible' && (
+                            <div className="mb-3">
+                                <label className="form-label">Preferred Timeframe</label>
+                                <select
+                                    className="form-control"
+                                    name="date_timeframe"
+                                    value={formData.date_timeframe}
+                                    onChange={handleInputChange}
+                                >
+                                    <option value="">Select timeframe</option>
+                                    <option value="3months">Within 3 months</option>
+                                    <option value="6months">Within 6 months</option>
+                                    <option value="1year">Within 1 year</option>
+                                    <option value="more">More than 1 year</option>
+                                </select>
+                            </div>
+                        )}
+
+                        <div className="mb-3">
+                            <label className="form-label">Start Time</label>
+                            <input
+                                type="time"
+                                className="form-control"
+                                name="start_time"
+                                value={formData.start_time}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">End Time</label>
+                            <input
+                                type="time"
+                                className="form-control"
+                                name="end_time"
+                                value={formData.end_time}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Estimated Guests</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                name="num_people"
+                                value={formData.num_people}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Indoor/Outdoor</label>
+                            <select
+                                className="form-control"
+                                name="indoor_outdoor"
+                                value={formData.indoor_outdoor}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select...</option>
+                                <option value="indoor">Indoor</option>
+                                <option value="outdoor">Outdoor</option>
+                                <option value="both">Both</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Setup & Cleanup</label>
+                            <select
+                                className="form-control"
+                                name="setup_cleanup"
+                                value={formData.setup_cleanup}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select...</option>
+                                <option value="setupOnly">Setup Only</option>
+                                <option value="cleanupOnly">Cleanup Only</option>
+                                <option value="both">Both Setup & Cleanup</option>
+                                <option value="neither">Neither</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Serving Staff</label>
+                            <select
+                                className="form-control"
+                                name="serving_staff"
+                                value={formData.serving_staff}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select...</option>
+                                <option value="fullService">Full Service Staff</option>
+                                <option value="partialService">Partial Service</option>
+                                <option value="noService">No Staff Needed</option>
+                                <option value="unsure">Not Sure</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Dinnerware, Utensils & Linens</label>
+                            <select
+                                className="form-control"
+                                name="dining_items"
+                                value={formData.dining_items}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select...</option>
+                                <option value="provided">Provided by Caterer</option>
+                                <option value="notProvided">Not Needed</option>
+                                <option value="partial">Partial (Specify Below)</option>
+                            </select>
+                        </div>
+
+                        {formData.dining_items === 'partial' && (
+                            <div className="mb-3">
+                                <label className="form-label">Dining Items Details</label>
+                                <ReactQuill
+                                    theme="snow"
+                                    value={formData.dining_items_notes || ''}
+                                    onChange={(content) => handleInputChange({
+                                        target: {
+                                            name: 'dining_items_notes',
+                                            value: content
+                                        }
+                                    })}
+                                />
+                            </div>
+                        )}
+
+                        <div className="mb-3">
+                            <label className="form-label">Food Service Type</label>
+                            <select
+                                className="form-control"
+                                name="food_service_type"
+                                value={formData.food_service_type}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select...</option>
+                                <option value="onSite">Cooking On-Site</option>
+                                <option value="delivered">Delivered Ready-to-Serve</option>
+                                <option value="both">Combination</option>
+                                <option value="flexible">Flexible</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Kitchen Equipment</label>
+                            <select
+                                className="form-control"
+                                name="equipment_needed"
+                                value={formData.equipment_needed}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select...</option>
+                                <option value="venueProvided">The venue provides kitchen equipment</option>
+                                <option value="catererBringsAll">The caterer needs to bring all equipment</option>
+                                <option value="catererBringsSome">The caterer needs to bring some equipment</option>
+                                <option value="unknown">Not sure about equipment requirements</option>
+                            </select>
+                        </div>
+
+                        {formData.equipment_needed === 'catererBringsSome' && (
+                            <div className="mb-3">
+                                <label className="form-label">Equipment Details</label>
+                                <ReactQuill
+                                    theme="snow"
+                                    value={formData.equipment_notes || ''}
+                                    onChange={(content) => handleInputChange({
+                                        target: {
+                                            name: 'equipment_notes',
+                                            value: content
+                                        }
+                                    })}
+                                />
+                            </div>
+                        )}
+
+                        <div className="mb-3">
+                            <label className="form-label">Food Style Preferences</label>
+                            <div className="form-check-group">
+                                {['american', 'mexican', 'italian', 'chinese', 'japanese',
+                                    'thai', 'korean', 'vietnamese', 'indian', 'mediterranean',
+                                    'greek', 'french', 'spanish', 'caribbean', 'cajunCreole',
+                                    'hawaiian', 'middleEastern', 'turkish', 'persian', 'african',
+                                    'brazilian', 'argentinian', 'peruvian', 'filipino', 'german',
+                                    'russian', 'easternEuropean', 'veganPlantBased', 'bbqSmoked',
+                                    'fusion'].map(cuisine => (
+                                    <div key={cuisine} className="form-check">
+                                        <input
+                                            type="checkbox"
+                                            className="form-check-input"
+                                            checked={formData.food_preferences?.[cuisine] || false}
+                                            onChange={(e) => handleJsonChange('food_preferences', cuisine, e.target.checked)}
+                                        />
+                                        <label className="form-check-label">
+                                            {cuisine.charAt(0).toUpperCase() + cuisine.slice(1).replace(/([A-Z])/g, ' $1')}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Special Requests</label>
+                            <ReactQuill
+                                theme="snow"
+                                value={formData.special_requests || ''}
+                                onChange={(content) => handleInputChange({
+                                    target: {
+                                        name: 'special_requests',
+                                        value: content
+                                    }
+                                })}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Additional Information</label>
+                            <ReactQuill
+                                theme="snow"
+                                value={formData.additional_info || ''}
+                                onChange={(content) => handleInputChange({
+                                    target: {
+                                        name: 'additional_info',
+                                        value: content
+                                    }
+                                })}
+                            />
+                        </div>
+                    </>
+                )}
+
+                {type === 'beauty' && (
+                    <>
+                        <div className="mb-3">
+                            <label className="form-label">Title</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="event_title"
+                                value={formData.event_title}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="mb-3">
+                            <label className="form-label">Location</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="custom-input-container">
+                            <label htmlFor="priceRange" className="form-label">
+                                Budget Range
+                            </label>
+                            <select
+                                name="priceRange"
+                                value={formData.price_range}
+                                onChange={handleInputChange}
+                                className="form-control custom-select"
+                            >
+                                <option value="">Select Budget Range</option>
+                                <option value="under1000">Under $1,000</option>
+                                <option value="1000-2000">$1,000 - $2,000</option>
+                                <option value="2000-3000">$2,000 - $3,000</option>
+                                <option value="3000-4000">$3,000 - $4,000</option>
+                                <option value="4000-5000">$4,000 - $5,000</option>
+                                <option value="5000+">$5,000+</option>
+                            </select>
+
+                        </div>
+                        <div className="mb-3">
+                            <label className="form-label">Service Type</label>
+                            <select
+                                className="form-control"
+                                name="service_type"
+                                value={formData.service_type}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select Service Type</option>
+                                <option value="both">Both Hair and Makeup</option>
+                                <option value="hair">Hair Only</option>
+                                <option value="makeup">Makeup Only</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Event Type</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="event_type"
+                                value={formData.event_type}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Date Flexibility</label>
+                            <select
+                                className="form-control"
+                                name="date_flexibility"
+                                value={formData.date_flexibility}
+                                onChange={handleInputChange}
+                            >
+                                <option value="specific">Specific Date</option>
+                                <option value="range">Date Range</option>
+                                <option value="flexible">I'm Flexible</option>
+                            </select>
+                        </div>
+
+                        {formData.date_flexibility === 'specific' && (
+                            <div className="mb-3">
+                                <label className="form-label">Event Date</label>
+                                <input
+                                    type="date"
+                                    className="form-control"
+                                    name="start_date"
+                                    value={formData.start_date}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                        )}
+
+                        {formData.date_flexibility === 'range' && (
+                            <>
+                                <div className="mb-3">
+                                    <label className="form-label">Start Date</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        name="start_date"
+                                        value={formData.start_date}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">End Date</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        name="end_date"
+                                        value={formData.end_date}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                            </>
+                        )}
+                        {formData.date_flexibility === 'flexible' && (
+                            <>
+                                <div className="mb-3">
+                                    <label className="form-label">Preferred Timeframe</label>
+                                    <select
+                                        className="form-control"
+                                        name="date_timeframe"
+                                        value={formData.date_timeframe}
+                                        onChange={handleInputChange}
+                                    >
+                                        <option value="">Select timeframe</option>
+                                        <option value="3months">Within 3 months</option>
+                                        <option value="6months">Within 6 months</option>
+                                        <option value="1year">Within 1 year</option>
+                                        <option value="more">More than 1 year</option>
+                                    </select>
+                                </div>
+                            </>
+                        )}
+
+                        <div className="mb-3">
+                                    <label className="form-label">Specific Time Needed</label>
+                                    <select
+                                        className="form-control"
+                                        name="specific_time_needed"
+                                        value={formData.specific_time_needed}
+                                        onChange={handleInputChange}
+                                    >
+                                        <option value="">Select</option>
+                                        <option value="yes">Yes</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                </div>
+
+                                {formData.specific_time_needed === 'yes' && (
+                                    <div className="mb-3">
+                                        <label className="form-label">Specific Time</label>
+                                        <input
+                                            type="time"
+                                            className="form-control"
+                                            name="specific_time"
+                                            value={formData.specific_time}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+        )}
+
 
                         <div className="mb-3">
                             <label className="form-label">Number of People</label>
@@ -1386,32 +1904,40 @@ function EditRequest() {
                                 </div>
 
                                 <div className="mb-3">
-                                    <label className="form-label">Extensions Needed</label>
-                                    <select
-                                        className="form-control"
-                                        name="extensions_needed"
-                                        value={formData.extensions_needed}
-                                        onChange={handleInputChange}
-                                    >
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
+                                    <div className="form-check">
+                                        <input
+                                            className="form-check-input"
+                                            type="checkbox"
+                                            name="extensions_needed"
+                                            checked={formData.extensions_needed === 'yes'}
+                                            onChange={(e) => handleInputChange({
+                                                target: {
+                                                    name: 'extensions_needed',
+                                                    value: e.target.checked ? 'yes' : 'no'
+                                                }
+                                            })}
+                                        />
+                                        <label className="form-check-label">Extensions Needed</label>
+                                    </div>
                                 </div>
 
                                 <div className="mb-3">
-                                    <label className="form-label">Trial Session for Hair</label>
-                                    <select
-                                        className="form-control"
+                                <div className="form-check">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
                                         name="trial_session_hair"
-                                        value={formData.trial_session_hair}
-                                        onChange={handleInputChange}
-                                    >
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
+                                        checked={formData.trial_session_hair === 'yes'}
+                                        onChange={(e) => handleInputChange({
+                                            target: {
+                                                name: 'trial_session_hair',
+                                                value: e.target.checked ? 'yes' : 'no'
+                                            }
+                                        })}
+                                    />
+                                    <label className="form-check-label">Trial Session for Hair</label>
                                 </div>
+                            </div>
                             </>
                         )}
 
@@ -1451,31 +1977,39 @@ function EditRequest() {
                                 </div>
 
                                 <div className="mb-3">
-                                    <label className="form-label">Lashes Included</label>
-                                    <select
-                                        className="form-control"
-                                        name="lashes_included"
-                                        value={formData.lashes_included}
-                                        onChange={handleInputChange}
-                                    >
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
+                                    <div className="form-check">
+                                        <input
+                                            className="form-check-input"
+                                            type="checkbox"
+                                            name="lashes_included"
+                                            checked={formData.lashes_included === 'yes'}
+                                            onChange={(e) => handleInputChange({
+                                                target: {
+                                                    name: 'lashes_included',
+                                                    value: e.target.checked ? 'yes' : 'no'
+                                                }
+                                            })}
+                                        />
+                                        <label className="form-check-label">Lashes Included</label>
+                                    </div>
                                 </div>
 
                                 <div className="mb-3">
-                                    <label className="form-label">Trial Session for Makeup</label>
-                                    <select
-                                        className="form-control"
-                                        name="trial_session_makeup"
-                                        value={formData.trial_session_makeup}
-                                        onChange={handleInputChange}
-                                    >
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
+                                    <div className="form-check">
+                                        <input
+                                            className="form-check-input"
+                                            type="checkbox"
+                                            name="trial_session_makeup"
+                                            checked={formData.trial_session_makeup === 'yes'}
+                                            onChange={(e) => handleInputChange({
+                                                target: {
+                                                    name: 'trial_session_makeup',
+                                                    value: e.target.checked ? 'yes' : 'no'
+                                                }
+                                            })}
+                                        />
+                                        <label className="form-check-label">Trial Session for Makeup</label>
+                                    </div>
                                 </div>
                             </>
                         )}
@@ -1521,49 +2055,305 @@ function EditRequest() {
                     </>
                 )}
 
-                {/* Common Fields */}
-                <div className="mb-3">
-                    <label className="form-label">Location</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        name="location"
-                        value={formData.location}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </div>
+                {type === 'florist' && (
+                    <>
+                        <div className="mb-3">
+                            <label className="form-label">Event Type</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="event_type"
+                                value={formData.event_type}
+                                onChange={handleInputChange}
+                            />
+                        </div>
 
-                <div className="mb-3">
-                    <label className="form-label">Budget</label>
-                    <select
-                        name="price_range"
-                        value={formData.price_range || formData.budget_range || ''}
-                        onChange={handleInputChange}
-                        className="form-control"
-                        required
-                    >
-                        <option value="">Select a Budget Range</option>
-                        <option value="0-$500">$0 - $500</option>
-                        <option value="501-$1000">$501 - $1,000</option>
-                        <option value="1001-$1500">$1,001 - $1,500</option>
-                        <option value="1501-$2000">$1,501 - $2,000</option>
-                        <option value="2001-$2500">$2,001 - $2,500</option>
-                        <option value="2501-$3000">$2,501 - $3,000</option>
-                        <option value="3001+">$3,001+</option>
-                    </select>
-                </div>
-                <div className="mb-3">
-                    <label className="form-label">Additional Comments</label>
-                    <ReactQuill
-                        theme="snow"
-                        value={formData.additional_comments || ''}
-                        onChange={(content) => setFormData(prev => ({
-                            ...prev,
-                            additional_comments: content
-                        }))}
-                    />
-                </div>
+                        <div className="mb-3">
+                            <label className="form-label">Event Title</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="event_title"
+                                value={formData.event_title}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Location</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Budget Range</label>
+                            <select
+                                className="form-control"
+                                name="price_range"
+                                value={formData.price_range}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select Budget Range</option>
+                                <option value="0-500">$0 - $500</option>
+                                <option value="500-1000">$500 - $1,000</option>
+                                <option value="1000-2000">$1,000 - $2,000</option>
+                                <option value="2000-3000">$2,000 - $3,000</option>
+                                <option value="3000-4000">$3,000 - $4,000</option>
+                                <option value="4000-5000">$4,000 - $5,000</option>
+                                <option value="5000+">$5,000+</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Date Flexibility</label>
+                            <select
+                                className="form-control"
+                                name="date_flexibility"
+                                value={formData.date_flexibility}
+                                onChange={handleInputChange}
+                            >
+                                <option value="specific">Specific Date</option>
+                                <option value="range">Date Range</option>
+                                <option value="flexible">I'm Flexible</option>
+                            </select>
+                        </div>
+
+                        {formData.date_flexibility === 'specific' && (
+                            <div className="mb-3">
+                                <label className="form-label">Event Date</label>
+                                <input
+                                    type="date"
+                                    className="form-control"
+                                    name="start_date"
+                                    value={formData.start_date}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                        )}
+
+                        {formData.date_flexibility === 'range' && (
+                            <>
+                                <div className="mb-3">
+                                    <label className="form-label">Earliest Date</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        name="start_date"
+                                        value={formData.start_date}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Latest Date</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        name="end_date"
+                                        value={formData.end_date}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        {formData.date_flexibility === 'flexible' && (
+                            <div className="mb-3">
+                                <label className="form-label">Preferred Timeframe</label>
+                                <select
+                                    className="form-control"
+                                    name="date_timeframe"
+                                    value={formData.date_timeframe}
+                                    onChange={handleInputChange}
+                                >
+                                    <option value="">Select timeframe</option>
+                                    <option value="3months">Within 3 months</option>
+                                    <option value="6months">Within 6 months</option>
+                                    <option value="1year">Within 1 year</option>
+                                    <option value="more">More than 1 year</option>
+                                </select>
+                            </div>
+                        )}
+
+                        <div className="mb-3">
+                            <label className="form-label">Specific Time Needed</label>
+                            <select
+                                className="form-control"
+                                name="specific_time_needed"
+                                value={formData.specific_time_needed}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+
+                        {formData.specific_time_needed === 'yes' && (
+                            <div className="mb-3">
+                                <label className="form-label">Specific Time</label>
+                                <input
+                                    type="time"
+                                    className="form-control"
+                                    name="specific_time"
+                                    value={formData.specific_time}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                        )}
+
+                        {/* Floral Arrangements Section */}
+                        <div className="mb-3">
+                            <label className="form-label">Floral Arrangements</label>
+                            {[
+                                { id: 'bridalBouquet', label: 'Bridal bouquet' },
+                                { id: 'bridesmaidBouquets', label: 'Bridesmaid bouquets' },
+                                { id: 'boutonnieres', label: 'Boutonnieres' },
+                                { id: 'corsages', label: 'Corsages' },
+                                { id: 'centerpieces', label: 'Centerpieces' },
+                                { id: 'ceremonyArchFlowers', label: 'Ceremony arch flowers' },
+                                { id: 'aisleDecorations', label: 'Aisle decorations' },
+                                { id: 'floralInstallations', label: 'Floral installations' },
+                                { id: 'cakeFlowers', label: 'Cake flowers' },
+                                { id: 'loosePetals', label: 'Loose petals' }
+                            ].map(item => (
+                                <div key={item.id} className="form-check">
+                                    <input
+                                        type="checkbox"
+                                        className="form-check-input"
+                                        checked={formData.floral_arrangements?.[item.id] || false}
+                                        onChange={(e) => handleJsonChange('floral_arrangements', item.id, e.target.checked)}
+                                    />
+                                    <label className="form-check-label">{item.label}</label>
+                                    {formData.floral_arrangements?.[item.id] && item.id !== 'loosePetals' && (
+                                        <input
+                                            type="number"
+                                            className="form-control mt-2"
+                                            value={formData.floral_arrangements[`${item.id}Quantity`] || ''}
+                                            onChange={(e) => handleJsonChange('floral_arrangements', `${item.id}Quantity`, e.target.value)}
+                                            placeholder="Quantity"
+                                        />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Additional Services Section */}
+                        <div className="mb-3">
+                            <label className="form-label">Additional Services</label>
+                            {[
+                                { id: 'setupAndTakedown', label: 'Setup and takedown' },
+                                { id: 'delivery', label: 'Delivery' },
+                                { id: 'floralPreservation', label: 'Floral preservation' }
+                            ].map(service => (
+                                <div key={service.id} className="form-check">
+                                    <input
+                                        type="checkbox"
+                                        className="form-check-input"
+                                        checked={formData.additional_services?.[service.id] || false}
+                                        onChange={(e) => handleJsonChange('additional_services', service.id, e.target.checked)}
+                                    />
+                                    <label className="form-check-label">{service.label}</label>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Color Preferences Section */}
+                        <div className="mb-3">
+                            <label className="form-label">Color Preferences</label>
+                            {[
+                                'Red', 'Pink', 'Orange', 'Yellow', 'Green',
+                                'Blue', 'Purple', 'White', 'Black', 'Gray', 'Brown'
+                            ].map(color => (
+                                <div key={color} className="form-check">
+                                    <input
+                                        type="checkbox"
+                                        className="form-check-input"
+                                        checked={formData.colors?.includes(color) || false}
+                                        onChange={(e) => {
+                                            const newColors = e.target.checked
+                                                ? [...(formData.colors || []), color]
+                                                : (formData.colors || []).filter(c => c !== color);
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                colors: newColors
+                                            }));
+                                        }}
+                                    />
+                                    <label className="form-check-label">{color}</label>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Flower Types Section */}
+                        <div className="mb-3">
+                            <label className="form-label">Flower Preferences</label>
+                            {[
+                                { id: 'roses', label: 'Roses' },
+                                { id: 'peonies', label: 'Peonies' },
+                                { id: 'hydrangeas', label: 'Hydrangeas' },
+                                { id: 'lilies', label: 'Lilies' },
+                                { id: 'tulips', label: 'Tulips' },
+                                { id: 'orchids', label: 'Orchids' },
+                                { id: 'daisies', label: 'Daisies' },
+                                { id: 'ranunculus', label: 'Ranunculus' },
+                                { id: 'anemones', label: 'Anemones' },
+                                { id: 'scabiosa', label: 'Scabiosa' },
+                                { id: 'eucalyptus', label: 'Eucalyptus' },
+                                { id: 'sunflowers', label: 'Sunflowers' },
+                                { id: 'babysBreath', label: "Baby's Breath" },
+                                { id: 'lavender', label: 'Lavender' },
+                                { id: 'dahlia', label: 'Dahlia' },
+                                { id: 'zinnias', label: 'Zinnias' },
+                                { id: 'protea', label: 'Protea' },
+                                { id: 'amaranthus', label: 'Amaranthus' },
+                                { id: 'chrysanthemums', label: 'Chrysanthemums' },
+                                { id: 'ruscus', label: 'Ruscus' },
+                                { id: 'ivy', label: 'Ivy' },
+                                { id: 'ferns', label: 'Ferns' }
+                            ].map(flower => (
+                                <div key={flower.id} className="form-check">
+                                    <input
+                                        type="checkbox"
+                                        className="form-check-input"
+                                        checked={formData.flower_preferences?.[flower.id] || false}
+                                        onChange={(e) => handleJsonChange('flower_preferences', flower.id, e.target.checked)}
+                                    />
+                                    <label className="form-check-label">{flower.label}</label>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Pinterest Link</label>
+                            <input
+                                type="url"
+                                className="form-control"
+                                name="pinterest_link"
+                                value={formData.pinterest_link}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Additional Information</label>
+                            <ReactQuill
+                                theme="snow"
+                                value={formData.additional_comments || ''}
+                                onChange={(content) => handleInputChange({
+                                    target: {
+                                        name: 'additional_comments',
+                                        value: content
+                                    }
+                                })}
+                            />
+                        </div>
+                    </>
+                )}
 
                 <div className="d-flex gap-2 mt-4">
                     <button type="submit" className="btn-primary" style={{width: '100%'}}>Save Changes</button>
