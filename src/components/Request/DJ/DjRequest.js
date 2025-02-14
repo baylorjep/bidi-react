@@ -1321,6 +1321,7 @@ function DjRequest() {
                 special_requests: formData.eventDetails.additionalInfo,
                 status: 'pending',
                 coupon_code: appliedCoupon ? appliedCoupon.code : null,  // Add coupon code
+                indoor_outdoor: formData.eventDetails.indoorOutdoor // Ensure indoor_outdoor is included
             };
 
             // Insert the request

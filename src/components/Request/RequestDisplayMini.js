@@ -74,7 +74,7 @@ function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false }) 
         if (isPhotoRequest) {
             return request.event_title || 'Untitled Event';
         }
-        return request.service_title;
+        return request.service_title || request.title || request.event_title || 'Untitled Service';
     };
 
     const getDate = () => {
@@ -86,7 +86,8 @@ function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false }) 
         } else if (request.date_flexibility === 'flexible') {
             return `Flexible within ${request.date_timeframe}`;
         }
-        return 'Date not specified';
+        // Handle legacy requests without date_flexibility
+        return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
     };
 
     return (

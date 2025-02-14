@@ -139,7 +139,7 @@ function OpenRequests() {
                         .order('created_at', { ascending: false }),
                     supabase
                         .from('requests')
-                        .select('*, created_at, service_date as start_date, service_date as end_date')
+                        .select('*, created_at, service_date')
                         .eq('open', true)
                         .order('created_at', { ascending: false })
                 ]);

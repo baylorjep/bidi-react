@@ -1284,7 +1284,15 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         if (diffInDays < 0) return 'Past event';
         if (diffInDays === 0) return 'Today';
         if (diffInDays === 1) return 'Tomorrow';
-        return `In ${diffInDays} days`;
+        return '';
+    };
+
+    const isNew = (createdAt) => {
+        if (!createdAt) return false;
+        const now = new Date();
+        const created = new Date(createdAt);
+        const diffInDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+        return diffInDays < 7;
     };
 
     const checkPromotion = (createdAt) => {
@@ -1422,9 +1430,9 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
             <div className="request-content p-3">
                 <h2 className="request-title">{getTitle()}</h2>
                 
-                <div className='status-request-container'>
+                <div className='status-request-container' style={{marginBottom:'16px'}}>
                     <div className="request-status">
-                        {getDateDistance(getRequestType() === 'photography_requests' ? request.start_date : request.service_date)}
+                        {isNew(request.created_at) && 'New'}
                     </div>
                     {checkPromotion(request.created_at) && (
                         <div className="promotion-status">
