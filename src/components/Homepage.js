@@ -89,6 +89,33 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                 <title>Affordable Wedding Vendors for Stress-Free Planning | Bidi</title>
                 <meta name="description" content="Bidi simplifies wedding planning with vetted wedding vendors. Post your needs and receive tailored bids from trusted pros. Start planning your perfect day!" />
                 <meta name="keywords" content="wedding services, wedding vendors, affordable weddings, wedding photography, wedding DJ, catering services, florist, wedding planning" />
+                <script type="application/ld+json">
+                    {`
+                    
+                        "@context": "https://schema.org",
+                        "@graph": [
+                            {
+                                "@type": "WebSite",
+                                "url": "https://www.savewithbidi.com/",
+                                "name": "Bidi",
+                                "description": "Bidi is a bidding platform where you request wedding and local services, and pre-screened professionals bid to provide personalized service. It simplifies finding the perfect wedding vendors, saving you time and effort."
+                            },
+                            {
+                                "@type": "Organization",
+                                "name": "Bidi",
+                                "url": "https://www.savewithbidi.com/",
+                                "contactPoint": {
+                                    "@type": "ContactPoint",
+                                    "telephone": "385-216-9587",
+                                    "contactType": "customer service",
+                                    "email": "savewithbidi@gmail.com"
+                                },
+                                "description": "Bidi connects users with pre-screened, professional wedding vendors and other service providers through a smart bidding system that ensures competitive pricing and reliable service."
+                            }
+                        ]
+                    
+                    `}
+                </script>
             </Helmet>
             
             <div ref={mastheadRef} className={`masthead-index fade-in-section ${mastheadVisible ? 'is-visible' : ''}`}>
