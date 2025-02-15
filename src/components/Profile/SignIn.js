@@ -73,8 +73,8 @@ function SignIn() {
 
         <div className="sign-in-container">
                     <Helmet>
-        <title>Sign In - Bidi</title>
-        <meta name="description" content="Sign in to Bidi to access your account and connect with top wedding vendors." />
+        <title>Sign In to Bidi: Request Services with Our Bidding Platform</title>
+        <meta name="description" content="Sign in to Bidi for a smart bidding platform that connects you with top professionals. Request services with ease and simplify your search today." />
         <meta name="keywords" content="wedding vendors, wedding services, sign in, Bidi, login, photography, DJs, hair and makeup, florists, catering" />
         <script type="application/ld+json">
         {`

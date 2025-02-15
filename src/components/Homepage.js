@@ -86,8 +86,8 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
   return (
         <>
             <Helmet>
-                <title>Affordable Wedding Vendors Near You | Bidi</title>
-                <meta name="description" content="Find affordable wedding vendors for photography, DJs, florists, and more with Bidi. Get competitive bids and book top services easily." />
+                <title>Affordable Wedding Vendors for Stress-Free Planning | Bidi</title>
+                <meta name="description" content="Bidi simplifies wedding planning with vetted wedding vendors. Post your needs and receive tailored bids from trusted pros. Start planning your perfect day!" />
                 <meta name="keywords" content="wedding services, wedding vendors, affordable weddings, wedding photography, wedding DJ, catering services, florist, wedding planning" />
             </Helmet>
             
