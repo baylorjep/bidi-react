@@ -15,6 +15,7 @@ import WhyBidiPhoto3 from '../../src/assets/images/Icons/cash-coin.svg';
 import UserReviews from './UserReviews';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import '../styles/animations.css';
+import { Helmet } from 'react-helmet';
 
 // Initialize PostHog for client-side tracking
 posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
@@ -84,6 +85,11 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
 
   return (
         <>
+            <Helmet>
+                <title>Affordable Wedding Vendors Near You | Bidi</title>
+                <meta name="description" content="Find affordable wedding vendors for photography, DJs, florists, and more with Bidi. Get competitive bids and book top services easily." />
+                <meta name="keywords" content="wedding services, wedding vendors, affordable weddings, wedding photography, wedding DJ, catering services, florist, wedding planning" />
+            </Helmet>
             
             <div ref={mastheadRef} className={`masthead-index fade-in-section ${mastheadVisible ? 'is-visible' : ''}`}>
                 <div className='text-section' >

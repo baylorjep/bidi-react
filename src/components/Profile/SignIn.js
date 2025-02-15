@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../../App.css';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 
 function SignIn() {
     const [email, setEmail] = useState('');
@@ -69,7 +70,34 @@ function SignIn() {
     };
 
     return (
+
         <div className="sign-in-container">
+                    <Helmet>
+        <title>Sign In - Bidi</title>
+        <meta name="description" content="Sign in to Bidi to access your account and connect with top wedding vendors." />
+        <meta name="keywords" content="wedding vendors, wedding services, sign in, Bidi, login, photography, DJs, hair and makeup, florists, catering" />
+        <script type="application/ld+json">
+        {`
+{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Sign In - Bidi",
+    "url": "https://www.savewithbidi.com/signin",
+    "description": "Bidi - A bidding platform where you request services, and businesses come to you. Stop searching and start finding with Bidi.",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Bidi",
+        "url": "https://www.savewithbidi.com",
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "385-216-9587",
+            "email": "savewithbidi@gmail.com"
+        }
+    }
+}
+        `}
+        </script>
+        </Helmet>
                 <div className="sign-in-form-container">
                     <br />
                     <h1 className="Sign-Up-Page-Header">Sign In</h1>
