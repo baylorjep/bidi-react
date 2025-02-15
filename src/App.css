@@ -11801,6 +11801,11 @@ footer a:hover, footer a:active, footer a:focus {
   }
 }
 
+.heading-reset {
+  all: unset; /* This resets all properties */
+  display: block; /* Restore block display since 'all: unset' makes it inline */
+}
+
 .landing-page-title {
   color: #0B1215;
   font-family: Outfit;
@@ -12212,13 +12217,13 @@ line-height: normal;
 
 .how-to-text {
   background: #FCE8FF;
-  height: 960px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 80%;
   border-radius: 20px;
+  padding: 20px;
 }
 
 @media (max-width:860) {
@@ -13269,14 +13274,14 @@ line-height: normal;
 
 @media (max-width:450px) {
   .rotating-text {
-    font-size: 24px;
+    font-size: 32px;
   }
   .rotating-image {
     width: 30px;
     height: 30px;
   }
   .landing-page-title {
-    font-size: 24px;
+    font-size: 32px;
   }
   .landing-page-subtitle {
     font-size: 16px;
@@ -16089,16 +16094,18 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 4px 8px 0px rgba(52, 
   display: flex;
   flex-direction: row;
   align-items: center;
-  height: 60vh;
   background-color: #fce8ff;
   padding: 20px;
-  justify-content: space-around;
+  justify-content: space-between;
+  padding: 120px 40px;
+  gap: 20px;
 }
 
 @media (max-width:860px) {
   .connect-section {
     flex-direction: column;
-    height: 800px;
+    gap: 20px;
+    padding: 40px;
   }
 }
 
@@ -16384,5 +16391,57 @@ label {
   padding: 0 10px;
   color: #666;
   font-size: 14px;
+}
+
+.faq-container {
+  padding: 20px; /* Add padding around the container */
+  border-radius: 10px; /* Rounded corners */
+  margin: 20px 0; /* Margin for spacing */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.faq-title {
+  font-size: 32px; /* Title size */
+  font-weight: bold; /* Bold title */
+  color: #333; /* Dark color for title */
+  margin-bottom: 15px; /* Space below title */
+  text-align: center; /* Center align title */
+  width: 100%;
+  font-family: Outfit;
+  margin-bottom: 40px;
+}
+
+.faq-item {
+  margin-bottom: 10px; /* Space between FAQ items */
+  padding: 15px; /* Padding inside each item */
+  background-color:white; /* White background for items */
+  border-radius: 8px; /* Rounded corners for items */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.13); /* More pronounced shadow for items */
+  width: 70%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.faq-question {
+  font-size: 18px; /* Question size */
+  font-weight: 600; /* Bold question */
+  font-family: Outfit;
+  color:#4a4459;
+}
+
+.faq-answer {
+  font-size: 16px; /* Answer size */
+  color: darkgray; /* Dark gray for answers */
+  margin-top: 5px; /* Space above answers */
+  font-family: Outfit;
+}
+
+.faq-item {
+  cursor: pointer; /* Change cursor to pointer on hover */
 }
 

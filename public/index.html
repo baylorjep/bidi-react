@@ -2,98 +2,88 @@
 <html lang="en">
   <head>
     <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-K44X4RLL');</script>
-  <!-- End Google Tag Manager -->
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=AW-16690782587">
-</script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <script>
+      (function(w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+        var f = d.getElementsByTagName(s)[0],
+            j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+        j.async = true;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, 'script', 'dataLayer', 'GTM-K44X4RLL');
+    </script>
+    <!-- End Google Tag Manager -->
 
-  gtag('config', 'AW-16690782587');
-</script>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16690782587"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){ dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', 'AW-16690782587');
+    </script>
 
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-<script>
-  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-  posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {api_host: 'https://us.i.posthog.com', person_profiles: 'identified_only'})
-</script>
-
-
+    <!-- PostHog Analytics -->
+    <script>
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){
+        function g(t,e){var o=e.split(".");
+          2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){
+            t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",
+          p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",
+          (r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);
+        var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){
+          var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},
+          o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetGroupPropertiesForFlags resetPersonPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),
+          n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {api_host: 'https://us.i.posthog.com', person_profiles: 'identified_only'});
+    </script>
 
     <meta charset="utf-8" />
-    <link rel="icon" href="Bidi-Favicon.png" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
+
+    <!-- SEO Meta Tags -->
+    <title>Bidi – Affordable Wedding Vendors & Services Near You</title>
+    <meta name="description" content="Find affordable wedding vendors for photography, DJs, hair & makeup, florists, catering, and more with Bidi. Get competitive bids and book top services easily.">
+    <meta name="keywords" content="wedding services, wedding vendors, affordable weddings, wedding planning, local wedding vendors, wedding photography, wedding DJ, catering services, florist, hair and makeup">
+    <meta name="author" content="Bidi">
+    <link rel="canonical" href="https://savewithbidi.com">
     
-    <link rel="apple-touch-icon" href="Bidi-Favicon.png" type="image/png"/>
-        <!-- <link
-      href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0/css/bootstrap.min.css"
-      rel="stylesheet"
-    /> -->
-    <!-- <link href="src/App.css" rel="stylesheet"> -->
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Open Graph Meta Tags (For Social Media Sharing) -->
+    <meta property="og:title" content="Bidi - Affordable Wedding Vendors & Services Near You">
+    <meta property="og:description" content="Find affordable wedding vendors for photography, DJs, hair & makeup, florists, catering, and more with Bidi. Get competitive bids and book top services easily.">
+    <meta property="og:image" content="https://savewithbidi.com/images/og-image.jpg">
+    <meta property="og:url" content="https://savewithbidi.com">
+    <meta property="og:type" content="website">
 
-    <!-- Bootstrap Bundle JS (includes Popper.js) -->
-    <!-- <script
-      src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0/js/bootstrap.bundle.min.js"
-      defer
-    ></script> -->
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="Bidi-Favicon.png" type="image/png">
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>Bidi</title>
-        <!-- Description shown when you share your link on social media or messaging platforms -->
-    <meta name="description" content="Bidi helps you find local services like photography, DJs, and more by allowing providers to bid, ensuring you get competitive prices with less hassle.">
-
-    <!-- Open Graph meta tags for sharing on social platforms like Facebook -->
-    <meta property="og:title" content="Bidi - Affordable Local Services for Your Needs" />
-    <meta property="og:description" content="Make a request, get bids, and find the best service providers near you easily with Bidi." />
-    <meta property="og:image" content="%PUBLIC_URL%/images/og-image.jpg" />
-    <meta property="og:url" content="https://savewithbidi.com" />
-
-
-    <!-- Twitter Card tags for Twitter sharing -->
-    <meta name="twitter:title" content="Bidi - Affordable Local Services for Your Needs">
-    <meta name="twitter:description" content="Find local businesses that bid on your requests, making your search hassle-free and affordable.">
-    <meta name="twitter:image" content="%PUBLIC_URL%/images/twitter-image.jpg">
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:title" content="Bidi - Affordable Wedding Vendors & Services Near You">
+    <meta name="twitter:description" content="Find affordable wedding vendors for photography, DJs, hair & makeup, florists, catering, and more with Bidi. Get competitive bids and book top services easily.">
+    <meta name="twitter:image" content="https://savewithbidi.com/images/og-image.jpg">
     <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Favicon -->
+    <link rel="icon" href="Bidi-Favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="Bidi-Favicon.png" type="image/png">
+
+    <!-- Font Imports -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Manifest for PWA -->
+    <link rel="manifest" href="/manifest.json">
+
   </head>
   <body>
     <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K44X4RLL"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
+    <noscript>
+      <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K44X4RLL" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    </noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
   </body>
 </html>
