@@ -1,30 +1,26 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import StatusBar from './StatusBar';  // Add this import
 
 function SuccessRequest() {
     const [emailStatus, setEmailStatus] = useState(null);
     const location = useLocation();
-    const formData = location.state?.formData || {};
+    const { category, message } = location.state || {};
 
     const steps = ['Service Details', 'Event Details', 'Personal Details', 'Preferences', 'Submit'];
 
     useEffect(() => {
-        const sendEmail = async () => {
-            const category = formData.serviceType || formData.category || "General";
-            console.log("Retrieved category:", category);
-            if (!category) {
-                setEmailStatus('No category found. Email not sent.');
-                return;
-            }
+        if (!category) {
+            setEmailStatus('No category found. Email not sent.');
+            return;
+        }
 
+        const sendEmail = async () => {
             try {
                 const emailPayload = { category };
                 const response = await fetch('https://bidi-express.vercel.app/send-resend-email', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(emailPayload),
                 });
 
@@ -33,7 +29,7 @@ function SuccessRequest() {
                     console.error('Failed to send email:', errorDetails);
                     setEmailStatus('Failed to send email notifications.');
                 } else {
-                    console.log('Emails sent successfully! ');
+                    console.log('Emails sent successfully!');
                     setEmailStatus('Vendors successfully contacted! You will receive an email or texts as vendors send in bids.');
                     localStorage.removeItem("requestFormData");
                     localStorage.removeItem('submittedCategory'); // Clear localStorage after success
@@ -45,7 +41,7 @@ function SuccessRequest() {
         };
 
         sendEmail();
-    }, []);
+    }, [category]);
 
     return (
         <div className='request-form-overall-container'>
@@ -74,12 +70,16 @@ function SuccessRequest() {
                     <div className='successfully-submitted-subheader'
                     role="status"
                     aria-live="polite">
-                    {emailStatus || "You will receive an email or texts as vendors send in bids. You're done! Just relax and let the bids roll in."}
+                    {message || "Your request has been received! Vendors will start sending bids soon."}
+                    </div>
+
+                    <div className='successfully-submitted-subheader' role="status" aria-live="polite">
+                        {emailStatus || "You will receive an email or texts as vendors send in bids. Just relax and let the bids roll in!"}
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
                         <Link to='/bids' className='success-page-button-secondary'>
-                            Close
+                            View Bids
                         </Link>
                         <Link to='/request-categories' className='success-page-button-primary'>
                             Make Another Request
