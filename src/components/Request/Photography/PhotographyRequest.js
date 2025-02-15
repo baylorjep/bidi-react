@@ -1283,6 +1283,7 @@ function PhotographyRequest() {
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
+                    category: 'photography',
                     message: 'Your photography request has been submitted successfully!'
                 }
             });

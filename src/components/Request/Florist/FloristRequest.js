@@ -1403,6 +1403,7 @@ function FloristRequest() {
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
+                    category: 'florist',
                     message: 'Your florist request has been submitted successfully!'
                 }
             });
