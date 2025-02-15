@@ -22,6 +22,28 @@ function UserRequestDisplay({ request }) {
         }
     };
 
+    const getDateDisplay = (request) => {
+        if (request.date_flexibility === 'specific') {
+            return request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Not specified';
+        } else if (request.date_flexibility === 'range') {
+            return `${request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Not specified'} - ${request.end_date ? new Date(request.end_date).toLocaleDateString() : 'Not specified'}`;
+        } else if (request.date_flexibility === 'flexible') {
+            switch (request.date_timeframe) {
+                case '3months':
+                    return 'Within 3 months';
+                case '6months':
+                    return 'Within 6 months';
+                case '1year':
+                    return 'Within 1 year';
+                case 'more':
+                    return 'More than 1 year';
+                default:
+                    return 'Flexible';
+            }
+        }
+        return 'Not specified';
+    };
+
     const getRequestDetails = () => {
         switch (request.type) {
             case 'regular':
@@ -35,7 +57,7 @@ function UserRequestDisplay({ request }) {
             case 'videography':
                 return [
                     { label: 'Event Type', value: request.event_type },
-                    { label: 'Date', value: request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Not specified' },
+                    { label: 'Date', value: getDateDisplay(request) },
                     { label: 'Location', value: request.location || 'Not specified' },
                     { label: 'Budget', value: request.price_range || 'Not specified' },
                     { label: 'Duration', value: request.duration ? `${request.duration} hours` : 'Not specified' },
@@ -44,30 +66,30 @@ function UserRequestDisplay({ request }) {
             case 'dj':
                 return [
                     { label: 'Event Type', value: request.event_type },
-                    { label: 'Date', value: request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Not specified' },
-                    { label: 'Duration', value: request.duration ? `${request.duration} hours` : 'Not specified' },
-                    { label: 'Budget', value: request.price_range || 'Not specified' }
+                    { label: 'Date', value: getDateDisplay(request) },
+                    { label: 'Duration', value: request.event_duration ? `${request.event_duration} hours` : 'Not specified' },
+                    { label: 'Budget', value: request.budget_range || 'Not specified' }
                 ];
             case 'catering':
                 return [
                     { label: 'Event Type', value: request.event_type },
-                    { label: 'Date', value: request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Not specified' },
+                    { label: 'Date', value: getDateDisplay(request) },
                     { label: 'Location', value: request.location || 'Not specified' },
-                    { label: 'Budget', value: request.price_range || 'Not specified' },
-                    { label: 'Number of People', value: request.num_people || 'Not specified' },
+                    { label: 'Budget', value: request.budget_range || 'Not specified' },
+                    { label: 'Number of People', value: request.estimated_guests || 'Not specified' },
                     { label: 'Service Type', value: request.food_service_type || 'Not specified' }
                 ];
             case 'beauty':
                 return [
                     { label: 'Event Type', value: request.event_type },
-                    { label: 'Date', value: request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Not specified' },
+                    { label: 'Date', value: getDateDisplay(request) },
                     { label: 'Service Type', value: request.service_type || 'Not specified' },
                     { label: 'Location', value: request.location || 'Not specified' }
                 ];
             case 'florist':
                 return [
                     { label: 'Event Type', value: request.event_type },
-                    { label: 'Date', value: request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Not specified' },
+                    { label: 'Date', value: getDateDisplay(request) },
                     { label: 'Location', value: request.location || 'Not specified' },
                     { label: 'Budget', value: request.price_range || 'Not specified' }
                 ];

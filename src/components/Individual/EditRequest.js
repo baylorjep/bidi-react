@@ -48,9 +48,10 @@ function EditRequest() {
         date_flexibility: '',
         start_date: '',
         end_date: '',
+        date_timeframe: '',
         start_time: '',
         end_time: '',
-        duration: '',
+        event_duration: '',
         num_people: '',
         indoor_outdoor: '',
         music_preferences: {},
@@ -58,7 +59,7 @@ function EditRequest() {
         equipment_needed: '',
         additional_services: [],
         additional_info: '',
-        price_range: '',
+        budget_range: '',
 
         // Beauty request fields
         serviceType: '',
@@ -396,9 +397,9 @@ function EditRequest() {
                                 onChange={handleInputChange}
                             >
                                 <option value="">Select...</option>
-                                <option value="Indoor">Indoor</option>
-                                <option value="Outdoor">Outdoor</option>
-                                <option value="Both">Both</option>
+                                <option value="indoor">Indoor</option>
+                                <option value="outdoor">Outdoor</option>
+                                <option value="both">Both</option>
                             </select>
                         </div>
                         <div className="mb-3">
@@ -700,33 +701,11 @@ function EditRequest() {
                                     className="form-check-input"
                                     type="checkbox"
                                     name="wedding_details"
-                                    value="postCeremony"
-                                    checked={formData.wedding_details.postCeremony || false}
-                                    onChange={(e) => handleJsonChange('wedding_details', 'postCeremony', e.target.checked)}
-                                />
-                                <label className="form-check-label">Post-Ceremony</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="wedding_details"
                                     value="reception"
                                     checked={formData.wedding_details.reception || false}
                                     onChange={(e) => handleJsonChange('wedding_details', 'reception', e.target.checked)}
                                 />
                                 <label className="form-check-label">Reception</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="wedding_details"
-                                    value="other"
-                                    checked={formData.wedding_details.other || false}
-                                    onChange={(e) => handleJsonChange('wedding_details', 'other', e.target.checked)}
-                                />
-                                <label className="form-check-label">Other</label>
                             </div>
                         </div>
                         <div className="mb-3">
@@ -796,7 +775,7 @@ function EditRequest() {
                                 className="form-control custom-select"
                             >
                                 <option value="">Select Budget Range</option>
-                                <option value="under1000">Under $1,000</option>
+                                <option value="0-1000">$0 - $1,000</option>
                                 <option value="1000-2000">$1,000 - $2,000</option>
                                 <option value="2000-3000">$2,000 - $3,000</option>
                                 <option value="3000-4000">$3,000 - $4,000</option>
@@ -896,7 +875,7 @@ function EditRequest() {
                             <input
                                 type="number"
                                 className="form-control"
-                                name="duration"
+                                name="event_duration"
                                 value={formData.event_duration}
                                 onChange={handleInputChange}
                             />
@@ -920,9 +899,9 @@ function EditRequest() {
                                 onChange={handleInputChange}
                             >
                                 <option value="">Select...</option>
-                                <option value="Indoor">Indoor</option>
-                                <option value="Outdoor">Outdoor</option>
-                                <option value="Both">Both</option>
+                                <option value="indoor">Indoor</option>
+                                <option value="outdoor">Outdoor</option>
+                                <option value="both">Both</option>
                             </select>
                         </div>
                         <div className="mb-3">
@@ -1408,7 +1387,7 @@ function EditRequest() {
                                 onChange={handleInputChange}
                             >
                                 <option value="">Select Budget Range</option>
-                                <option value="under1000">Under $1,000</option>
+                                <option value="0-1000">$0 - $1,000</option>
                                 <option value="1000-2000">$1,000 - $2,000</option>
                                 <option value="2000-3000">$2,000 - $3,000</option>
                                 <option value="3000-4000">$3,000 - $4,000</option>
@@ -1623,10 +1602,10 @@ function EditRequest() {
                                 onChange={handleInputChange}
                             >
                                 <option value="">Select...</option>
-                                <option value="venueProvided">The venue provides kitchen equipment</option>
-                                <option value="catererBringsAll">The caterer needs to bring all equipment</option>
-                                <option value="catererBringsSome">The caterer needs to bring some equipment</option>
-                                <option value="unknown">Not sure about equipment requirements</option>
+                                <option value="The venue provides kitchen equipment">The venue provides kitchen equipment</option>
+                                <option value="The caterer needs to bring all equipment">The caterer needs to bring all equipment</option>
+                                <option value="The caterer needs to bring some equipment">The caterer needs to bring some equipment</option>
+                                <option value="Equipment requirements to be discussed">Not sure about equipment requirements</option>
                             </select>
                         </div>
 
@@ -1734,7 +1713,8 @@ function EditRequest() {
                                 className="form-control custom-select"
                             >
                                 <option value="">Select Budget Range</option>
-                                <option value="under1000">Under $1,000</option>
+                                <option value="0-500">$0 - $500</option>
+                                <option value="500-1000">$500 - $1,000</option>
                                 <option value="1000-2000">$1,000 - $2,000</option>
                                 <option value="2000-3000">$2,000 - $3,000</option>
                                 <option value="3000-4000">$3,000 - $4,000</option>
@@ -2181,19 +2161,24 @@ function EditRequest() {
 
                         <div className="mb-3">
                             <label className="form-label">Specific Time Needed</label>
-                            <select
-                                className="form-control"
-                                name="specific_time_needed"
-                                value={formData.specific_time_needed}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </select>
+                            <div className="form-check">
+                                <input
+                                    type="checkbox"
+                                    className="form-check-input"
+                                    name="specific_time_needed"
+                                    checked={formData.specific_time_needed || false}
+                                    onChange={(e) => handleInputChange({
+                                        target: {
+                                            name: 'specific_time_needed',
+                                            value: e.target.checked
+                                        }
+                                    })}
+                                />
+                                <label className="form-check-label">I need a specific time</label>
+                            </div>
                         </div>
 
-                        {formData.specific_time_needed === 'yes' && (
+                        {formData.specific_time_needed === true && (
                             <div className="mb-3">
                                 <label className="form-label">Specific Time</label>
                                 <input
@@ -2432,9 +2417,9 @@ function EditRequest() {
                                 onChange={handleInputChange}
                             >
                                 <option value="">Select...</option>
-                                <option value="Indoor">Indoor</option>
-                                <option value="Outdoor">Outdoor</option>
-                                <option value="Both">Both</option>
+                                <option value="indoor">Indoor</option>
+                                <option value="outdoor">Outdoor</option>
+                                <option value="both">Both</option>
                             </select>
                         </div>
 
@@ -2484,6 +2469,39 @@ function EditRequest() {
                                     }
                                 })}
                             />
+                        </div>
+
+                        {/* Add this new coverage section */}
+                        <div className="mb-3">
+                            <label className="form-label">Coverage Options</label>
+                            <div className="form-check-group">
+                                {[
+                                    { key: 'preCeremony', label: 'Pre-Ceremony' },
+                                    { key: 'ceremony', label: 'Ceremony' },
+                                    { key: 'luncheon', label: 'Luncheon' },
+                                    { key: 'reception', label: 'Reception' },
+
+                                ].map(({ key, label }) => (
+                                    <div key={key} className="form-check">
+                                        <input
+                                            type="checkbox"
+                                            className="form-check-input"
+                                            checked={formData.coverage?.[key] || false}
+                                            onChange={(e) => {
+                                                const newCoverage = {
+                                                    ...formData.coverage,
+                                                    [key]: e.target.checked
+                                                };
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    coverage: newCoverage
+                                                }));
+                                            }}
+                                        />
+                                        <label className="form-check-label">{label}</label>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </>
                 )}

@@ -1539,7 +1539,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
             <div className="request-content p-3">
                 <h2 className="request-title">{getTitle()}</h2>
                 
-                <div className='status-request-container' style={{marginBottom:'16px'}}>
+                <div className='status-request-container' style={{marginBottom:'16px', display: isNew(request.created_at) ? 'flex' : 'none'}}>
                     <div className="request-status">
                         {isNew(request.created_at) && 'New'}
                     </div>
