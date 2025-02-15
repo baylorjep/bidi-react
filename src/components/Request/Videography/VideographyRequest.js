@@ -1278,6 +1278,7 @@ function VideographyRequest() {
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
+                    category: 'videography',
                     message: 'Your videography request has been submitted successfully!'
                 }
             });

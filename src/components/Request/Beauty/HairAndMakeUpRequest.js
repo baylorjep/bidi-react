@@ -1357,6 +1357,7 @@ function HairAndMakeUpRequest() {
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
+                    category: 'beauty',
                     message: 'Your hair and makeup request has been submitted successfully!'
                 }
             });

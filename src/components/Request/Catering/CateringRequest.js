@@ -1382,6 +1382,7 @@ function CateringRequest() {  // Changed function name
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
+                    category: 'catering',
                     message: 'Your catering request has been submitted successfully!'
                 } 
             });
