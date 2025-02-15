@@ -154,7 +154,7 @@ function PhotographyRequest() {
     const renderEventSelection = () => {
         const eventOptions = [
             'Wedding', 'Engagement', 'Couples Session', 'Family',
-            'Individual / Headshots', 'Large Group / Event',
+            'Headshots', 'Event',
             'Product', 'Maternity', 'Newborn', 'Boudoir Session'
         ];
 

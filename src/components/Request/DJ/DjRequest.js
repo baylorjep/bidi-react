@@ -1292,6 +1292,7 @@ function DjRequest() {
                 date_flexibility: formData.eventDetails.dateFlexibility,
                 start_date: formData.eventDetails.dateFlexibility !== 'flexible' ? formData.eventDetails.startDate : null,
                 end_date: formData.eventDetails.dateFlexibility === 'range' ? formData.eventDetails.endDate : null,
+                date_timeframe: formData.eventDetails.dateFlexibility === 'flexible' ? formData.eventDetails.dateTimeframe : null,
                 event_duration: formData.eventDetails.durationUnknown ? null : 
                               formData.eventDetails.duration ? parseInt(formData.eventDetails.duration) : null,
                 estimated_guests: formData.eventDetails.numPeopleUnknown ? null : 

@@ -172,11 +172,21 @@ function MyRequests() {
             };
 
             const tableName = tableMap[request.type];
-            const newStatus = request.status === 'open' ? 'closed' : 'open';
+            
+            // Handle both legacy and new request formats
+            let updateData;
+            if (request.hasOwnProperty('open')) {
+                // Legacy request using 'open' column
+                updateData = { open: request.open ? false : true };
+            } else {
+                // New request using 'status' column
+                const newStatus = request.status === 'open' ? 'closed' : 'open';
+                updateData = { status: newStatus };
+            }
 
             const { error } = await supabase
                 .from(tableName)
-                .update({ status: newStatus })
+                .update(updateData)
                 .eq('id', request.id);
 
             if (error) throw error;
@@ -184,11 +194,21 @@ function MyRequests() {
             // Update local state
             setRequests(requests.map(req => {
                 if (req.id === request.id) {
-                    return {
-                        ...req,
-                        status: newStatus,
-                        open: !req.open
-                    };
+                    if (req.hasOwnProperty('open')) {
+                        // Legacy request
+                        return {
+                            ...req,
+                            open: !req.open,
+                            status: !req.open ? 'open' : 'closed' // Update status for UI consistency
+                        };
+                    } else {
+                        // New request
+                        const newStatus = req.status === 'open' ? 'closed' : 'open';
+                        return {
+                            ...req,
+                            status: newStatus
+                        };
+                    }
                 }
                 return req;
             }));
