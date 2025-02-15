@@ -711,7 +711,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                                 .replace(/([A-Z])/g, ' $1')
                                 .toLowerCase()
                                 .replace(/^./, str => str.toUpperCase()))
-                            .join(', ') 
+                                .join(', ') 
                         : request.food_preferences || 'Not specified'}
                 </div>
             </div>
@@ -868,7 +868,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
             {/* Basic Event Information */}
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Event Type</div>
-                <div class="request-info">{request.event_type || 'Not specified'}</div>
+                <div className="request-info">{request.event_type || 'Not specified'}</div>
             </div>
 
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -904,13 +904,12 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 </div>
             )}
 
-                        {/* Budget */}
-                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+            {/* Budget */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Budget Range</div>
                 <div className="request-info">${request.price_range}</div>
             </div>
 
-            
             {/* Pinterest Link */}
             {request.pinterest_link && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -923,98 +922,98 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 </div>
             )}
 
-                        {/* Additional Services */}
-                        {request.additional_services && Object.keys(request.additional_services).length > 0 && (
+            {/* Additional Services */}
+            {request.additional_services && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                     <div className="request-subtype">Additional Services</div>
                     <div className="request-info">
-                        {Object.entries(request.additional_services)
-                            .filter(([key, value]) => value && key !== 'otherAdditionalServicesDetails')
-                            .map(([key]) => {
-                                const label = key.replace(/([A-Z])/g, ' $1')
+                        {typeof request.additional_services === 'string'
+                            ? Object.entries(JSON.parse(request.additional_services))
+                                .filter(([_, value]) => value === true)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
                                     .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase());
-                                return label;
-                            })
-                            .join(', ') || 'Not specified'}
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ')
+                            : Object.entries(request.additional_services)
+                                .filter(([_, value]) => value === true)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ') || 'Not specified'}
+                    </div>
+                </div>
+            )}
+            {/* Update Colors Display */}
+            {request.colors && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                    <div className="request-subtype">Color Preferences</div>
+                    <div className="request-info">
+                        {typeof request.colors === 'string' 
+                            ? JSON.parse(request.colors).join(', ')
+                            : Array.isArray(request.colors) 
+                                ? request.colors.join(', ')
+                                : 'Not specified'}
                     </div>
                 </div>
             )}
 
-            {/* Floral Arrangements */}
-            {request.floral_arrangements && Object.keys(request.floral_arrangements).length > 0 && (
+            {/* Update Floral Arrangements Display */}
+            {request.floral_arrangements && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
                     <div className="request-subtype">Floral Arrangements</div>
                     <div className="request-info">
-                        {Object.entries(request.floral_arrangements)
-                            .filter(([key, value]) => value && !key.endsWith('Quantity'))
-                            .map(([key]) => {
-                                const quantity = request.floral_arrangements[`${key}Quantity`];
-                                const label = key.replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase());
-                                return quantity ? `${label} (${quantity})` : label;
-                            })
-                            .join(', ') || 'Not specified'}
+                        {typeof request.floral_arrangements === 'string'
+                            ? Object.entries(JSON.parse(request.floral_arrangements))
+                                .filter(([key, value]) => value === true && !key.endsWith('Quantity'))
+                                .map(([key]) => {
+                                    const arrangements = JSON.parse(request.floral_arrangements);
+                                    const quantity = arrangements[`${key}Quantity`];
+                                    const label = key
+                                        .replace(/([A-Z])/g, ' $1')
+                                        .toLowerCase()
+                                        .replace(/^./, str => str.toUpperCase());
+                                    return quantity ? `${label} (${quantity})` : label;
+                                })
+                                .join(', ')
+                            : Object.entries(request.floral_arrangements)
+                                .filter(([key, value]) => value === true && !key.endsWith('Quantity'))
+                                .map(([key]) => {
+                                    const quantity = request.floral_arrangements[`${key}Quantity`];
+                                    const label = key
+                                        .replace(/([A-Z])/g, ' $1')
+                                        .toLowerCase()
+                                        .replace(/^./, str => str.toUpperCase());
+                                    return quantity ? `${label} (${quantity})` : label;
+                                })
+                                .join(', ') || 'Not specified'}
                     </div>
                 </div>
             )}
 
-            {/* Colors */}
-            {request.colors && request.colors.length > 0 && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Color Preferences</div>
-                    <div className="request-info">{request.colors.join(', ')}</div>
-                </div>
-            )}
-
-            {/* Flower Preferences */}
-            {request.flower_preferences && Object.keys(request.flower_preferences).length > 0 && (
+            {/* Update Flower Preferences Display */}
+            {request.flower_preferences && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
                     <div className="request-subtype">Flower Preferences</div>
                     <div className="request-info">
-                        {Object.entries(request.flower_preferences)
-                            .filter(([_, value]) => value)
-                            .map(([key]) => key.replace(/([A-Z])/g, ' $1')
-                                .toLowerCase()
-                                .replace(/^./, str => str.toUpperCase()))
-                            .join(', ') || 'Not specified'}
+                        {typeof request.flower_preferences === 'string'
+                            ? Object.entries(JSON.parse(request.flower_preferences))
+                                .filter(([_, value]) => value === true)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                    .join(', ')
+                            : Object.entries(request.flower_preferences)
+                                .filter(([_, value]) => value === true)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                    .join(', ') || 'Not specified'}
                     </div>
                 </div>
-            )}
-
-            {/* Add this section after the existing fields */}
-            {filteredPhotos && filteredPhotos.length > 0 && (
-                <>
-                    <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
-                        Inspiration Photos
-                    </div>
-                    <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
-                        {filteredPhotos.map((photo, index) => {
-                            const publicUrl = getPublicUrl(photo.file_path);
-                            console.log("Generated public URL:", publicUrl);
-                            
-                            return (
-                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
-                                    <img
-                                        src={publicUrl || photo.photo_url}
-                                        className="photo"
-                                        alt={`Photo ${index + 1}`}
-                                        onError={(e) => {
-                                            console.error('Image failed to load:', {
-                                                publicUrl,
-                                                originalUrl: photo.photo_url,
-                                                filePath: photo.file_path
-                                            });
-                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
-                                        }}
-                                        loading="lazy"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </>
             )}
 
             {/* Additional Comments */}
@@ -1142,8 +1141,6 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 </div>
             )}
 
-
-
             {request.additional_info && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
                     <div className="request-subtype">Additional Information</div>
@@ -1189,34 +1186,146 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
 
     const renderDefaultRequest = () => (
         <div className="request-summary-grid">
+            {/* Basic Info */}
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Event Type</div>
                 <div className="request-info">{request.event_type || request.service_type || 'Not specified'}</div>
             </div>
+
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Location</div>
-                <div className="request-info">{request.location}</div>
+                <div className="request-info">{request.location || 'Not specified'}</div>
             </div>
+
+            {/* Service Details */}
+            {request.service_title && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Service Title</div>
+                    <div className="request-info">{request.service_title}</div>
+                </div>
+            )}
+
+            {request.service_description && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Service Description</div>
+                    <div className="request-info">{request.service_description}</div>
+                </div>
+            )}
+
+            {request.service_category && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Service Category</div>
+                    <div className="request-info">{request.service_category}</div>
+                </div>
+            )}
+
+            {/* Date and Time */}
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Date of Service</div>
                 <div className="request-info">{getDate()}</div>
             </div>
+
             {request.time_of_day && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                     <div className="request-subtype">Time of Day</div>
                     <div className="request-info">{request.time_of_day}</div>
                 </div>
             )}
+
+            {request.end_date && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">End Date</div>
+                    <div className="request-info">{new Date(request.end_date).toLocaleDateString()}</div>
+                </div>
+            )}
+
+            {/* Additional Details */}
+            {request.additional_details && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                    <div className="request-subtype">Additional Details</div>
+                    <div className="request-info">{request.additional_details}</div>
+                </div>
+            )}
+
+            {/* Budget */}
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Budget Range</div>
-                <div className="request-info">${request.price_range || request.budget_range}</div>
+                <div className="request-info">${request.price_range || request.budget_range || 'Not specified'}</div>
             </div>
 
+            {/* Customer Info */}
+            {request.customer_location && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Customer Location</div>
+                    <div className="request-info">{request.customer_location}</div>
+                </div>
+            )}
+
+            {/* Media */}
+            {request.media_url && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Media</div>
+                    <div className="request-info">
+                        <a href={request.media_url} target="_blank" rel="noopener noreferrer">
+                            View Media
+                        </a>
+                    </div>
+                </div>
+            )}
+
+            {/* Pinterest Link */}
+            {request.pinterest_link && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Pinterest Board</div>
+                    <div className="request-info">
+                        <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
+                            View Board
+                        </a>
+                    </div>
+                </div>
+            )}
+
+            {/* Coupon Code */}
+            {request.coupon_code && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Coupon Code</div>
+                    <div className="request-info">{request.coupon_code}</div>
+                </div>
+            )}
+
+            {/* Additional Comments */}
             {request.additional_comments && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
                     <div className="request-subtype">Additional Comments</div>
                     <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
                 </div>
+            )}
+
+            {/* Inspiration Photos */}
+            {filteredPhotos && filteredPhotos.length > 0 && (
+                <>
+                    <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
+                        Inspiration Photos
+                    </div>
+                    <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
+                        {filteredPhotos.map((photo, index) => {
+                            const publicUrl = getPublicUrl(photo.file_path);
+                            return (
+                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
+                                    <img
+                                        src={publicUrl || photo.photo_url}
+                                        className="photo"
+                                        alt={`Photo ${index + 1}`}
+                                        onError={(e) => {
+                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
+                                        }}
+                                        loading="lazy"
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+                </>
             )}
         </div>
     );
@@ -1470,3 +1579,4 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
 }
 
 export default RequestDisplay;
+

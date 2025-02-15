@@ -597,6 +597,7 @@ function VideographyRequest() {
                                 className="custom-input"
                             >
                                 <option value="">Select Budget Range</option>
+                                <option value="0-1000">$0 - $1,000</option>
                                 <option value="1000-2000">$1,000 - $2,000</option>
                                 <option value="2000-3000">$2,000 - $3,000</option>
                                 <option value="3000-4000">$3,000 - $4,000</option>

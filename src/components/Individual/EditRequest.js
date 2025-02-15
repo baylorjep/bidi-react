@@ -402,11 +402,11 @@ function EditRequest() {
                             </select>
                         </div>
                         <div className="mb-3">
-                            <label className="form-label">Date Type</label>
+                            <label className="form-label">Date Flexibility</label>
                             <select
                                 className="form-control"
-                                name="date_type"
-                                value={formData.date_type}
+                                name="date_flexibility"
+                                value={formData.date_flexibility}
                                 onChange={handleInputChange}
                             >
                                 <option value="specific">Specific Date</option>
@@ -414,7 +414,7 @@ function EditRequest() {
                                 <option value="flexible">I'm Flexible</option>
                             </select>
                         </div>
-                        {formData.date_type === 'specific' && (
+                        {formData.date_flexibility === 'specific' && (
                             <div className="mb-3">
                                 <label className="form-label">Event Date</label>
                                 <input
@@ -426,7 +426,7 @@ function EditRequest() {
                                 />
                             </div>
                         )}
-                        {formData.date_type === 'range' && (
+                        {formData.date_flexibility === 'range' && (
                             <>
                                 <div className="mb-3">
                                     <label className="form-label">Earliest Date</label>
@@ -450,7 +450,7 @@ function EditRequest() {
                                 </div>
                             </>
                         )}
-                        {formData.date_type === 'flexible' && (
+                        {formData.date_flexibility === 'flexible' && (
                             <div className="mb-3">
                                 <label className="form-label">Preferred Timeframe</label>
                                 <select
@@ -1515,7 +1515,7 @@ function EditRequest() {
                                 type="number"
                                 className="form-control"
                                 name="num_people"
-                                value={formData.num_people}
+                                value={formData.estimated_guests}
                                 onChange={handleInputChange}
                             />
                         </div>
@@ -2351,6 +2351,244 @@ function EditRequest() {
                                     }
                                 })}
                             />
+                        </div>
+                    </>
+                )}
+
+                {type === 'videography' && (
+                    <>
+                        <div className="mb-3">
+                            <label className="form-label">Event Title</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="event_title"
+                                value={formData.event_title}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Event Type</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="event_type"
+                                value={formData.event_type}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Location</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Time of Day</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="time_of_day"
+                                value={formData.time_of_day}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Number of People</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                name="num_people"
+                                value={formData.num_people}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Duration (hours)</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                name="duration"
+                                value={formData.duration}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Indoor/Outdoor</label>
+                            <select
+                                className="form-control"
+                                name="indoor_outdoor"
+                                value={formData.indoor_outdoor}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select...</option>
+                                <option value="Indoor">Indoor</option>
+                                <option value="Outdoor">Outdoor</option>
+                                <option value="Both">Both</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Second Photographer</label>
+                            <select
+                                className="form-control"
+                                name="second_photographer"
+                                value={formData.second_photographer}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                                <option value="undecided">Let photographer recommend</option>
+                            </select>
+                        </div>
+
+                        {/* Existing videography fields */}
+                        <div className="mb-3">
+                            <label className="form-label">Budget Range</label>
+                            <select
+                                className="form-control"
+                                name="price_range"
+                                value={formData.price_range}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select Budget Range</option>
+                                <option value="0-1000">$0 - $1,000</option>
+                                <option value="1000-2000">$1,000 - $2,000</option>
+                                <option value="2000-3000">$2,000 - $3,000</option>
+                                <option value="3000-4000">$3,000 - $4,000</option>
+                                <option value="4000-5000">$4,000 - $5,000</option>
+                                <option value="5000+">$5,000+</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Additional Information</label>
+                            <ReactQuill
+                                theme="snow"
+                                value={formData.additional_comments || ''}
+                                onChange={(content) => handleInputChange({
+                                    target: {
+                                        name: 'additional_comments',
+                                        value: content
+                                    }
+                                })}
+                            />
+                        </div>
+                    </>
+                )}
+
+                {type === 'regular' && (
+                    <>
+                        <div className="mb-3">
+                            <label className="form-label">Service Type</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="service_type"
+                                value={formData.service_type}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Service Title</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="service_title"
+                                value={formData.service_title}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Service Description</label>
+                            <ReactQuill
+                                theme="snow"
+                                value={formData.service_description || ''}
+                                onChange={(content) => handleInputChange({
+                                    target: {
+                                        name: 'service_description',
+                                        value: content
+                                    }
+                                })}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Service Date</label>
+                            <input
+                                type="date"
+                                className="form-control"
+                                name="service_date"
+                                value={formData.service_date}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">End Date</label>
+                            <input
+                                type="date"
+                                className="form-control"
+                                name="end_date"
+                                value={formData.end_date}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Additional Comments</label>
+                            <ReactQuill
+                                theme="snow"
+                                value={formData.additional_comments || ''}
+                                onChange={(content) => handleInputChange({
+                                    target: {
+                                        name: 'additional_comments',
+                                        value: content
+                                    }
+                                })}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Location</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Budget Range</label>
+                            <select
+                                className="form-control"
+                                name="price_range"
+                                value={formData.price_range}
+                                onChange={handleInputChange}
+                            >
+                                <option value="">Select Budget Range</option>
+                                <option value="0-1000">Under $1,000</option>
+                                <option value="1000-2000">$1,000 - $2,000</option>
+                                <option value="2000-3000">$2,000 - $3,000</option>
+                                <option value="3000-4000">$3,000 - $4,000</option>
+                                <option value="4000-5000">$4,000 - $5,000</option>
+                                <option value="5000+">$5,000+</option>
+                            </select>
                         </div>
                     </>
                 )}

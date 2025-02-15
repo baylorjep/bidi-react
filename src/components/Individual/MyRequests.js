@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../App.css';
-import RequestDisplayMini from '../Request/RequestDisplayMini';
+import UserRequestDisplay from '../Request/UserRequestDisplay';
 
 function MyRequests() {
     const [requests, setRequests] = useState([]);
@@ -112,43 +112,43 @@ function MyRequests() {
                 ...regularRequests.map(req => ({
                     ...req,
                     type: 'regular',
-                    status: req.status || (req.open ? 'open' : 'closed'),
+                    status: req.status || 'pending',
                     date: new Date(req.created_at).toLocaleDateString()
                 })),
                 ...photoRequests.map(req => ({
                     ...req,
                     type: 'photography',
-                    status: req.status || (req.open ? 'open' : 'closed'),
+                    status: req.status || 'pending',
                     date: new Date(req.created_at).toLocaleDateString()
                 })),
                 ...djRequests.map(req => ({
                     ...req,
                     type: 'dj',
-                    status: req.status || (req.open ? 'open' : 'closed'),
+                    status: req.status || 'pending',
                     date: new Date(req.created_at).toLocaleDateString()
                 })),
                 ...cateringRequests.map(req => ({
                     ...req,
                     type: 'catering',
-                    status: req.status || (req.open ? 'open' : 'closed'),
+                    status: req.status || 'pending',
                     date: new Date(req.created_at).toLocaleDateString()
                 })),
                 ...beautyRequests.map(req => ({
                     ...req,
                     type: 'beauty',
-                    status: req.status || (req.open ? 'open' : 'closed'),
+                    status: req.status || 'pending',
                     date: new Date(req.created_at).toLocaleDateString()
                 })),
                 ...videoRequests.map(req => ({
                     ...req,
                     type: 'videography',
-                    status: req.status || (req.open ? 'open' : 'closed'),
+                    status: req.status || 'pending',
                     date: new Date(req.created_at).toLocaleDateString()
                 })),
                 ...floristRequests.map(req => ({
                     ...req,
                     type: 'florist',
-                    status: req.status || (req.open ? 'open' : 'closed'),
+                    status: req.status || 'pending',
                     date: new Date(req.created_at).toLocaleDateString()
                 }))
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -212,27 +212,23 @@ function MyRequests() {
             {requests.length > 0 ? (
                 <div className="w-100">
                     {requests.map((request, index) => (
-                        <div key={index} className="card mb-3">
-                            <div className="card-body">
-                                <RequestDisplayMini 
-                                    request={request} 
-                                    hideBidButton={true} 
-                                    isPhotoRequest={request.type === 'photography'} 
-                                />
-                                <div className="d-flex gap-2 mt-3">
-                                    <button 
-                                        className="btn-danger flex-fill"
-                                        onClick={() => handleEdit(request)}
-                                    >
-                                        Edit Request
-                                    </button>
-                                    <button 
-                                        className="btn-success flex-fill"
-                                        onClick={() => toggleRequestStatus(request)}
-                                    >
-                                        {request.status === 'open' ? 'Close Request' : 'Reopen Request'}
-                                    </button>
-                                </div>
+                        <div key={index}>
+                            <UserRequestDisplay request={request} />
+                            <div className="d-flex gap-5 mt-2 mb-3" style={{width: '100%', alignItems: 'center', justifyContent: 'center'}}>
+                                <button 
+                                    className="btn-danger flex-fill"
+                                    style={{maxWidth: '400px'}}
+                                    onClick={() => handleEdit(request)}
+                                >
+                                    Edit
+                                </button>
+                                <button 
+                                    className="btn-success flex-fill"
+                                    style={{maxWidth: '400px'}}
+                                    onClick={() => toggleRequestStatus(request)}
+                                >
+                                    {request.status === 'open' || request.status === 'pending' ? 'Close' : 'Reopen'}
+                                </button>
                             </div>
                         </div>
                     ))}

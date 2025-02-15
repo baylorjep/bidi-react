@@ -86,8 +86,7 @@ function HairAndMakeUpRequest() {
                 endDate: saved.eventDetails?.endDate || '',
                 timeOfDay: saved.eventDetails?.timeOfDay || '',
                 numPeople: saved.eventDetails?.numPeople || '',
-                duration: saved.eventDetails?.duration || '',
-                indoorOutdoor: saved.eventDetails?.indoorOutdoor || '',
+
                 additionalComments: saved.eventDetails?.additionalComments || '',
                 priceRange: saved.eventDetails?.priceRange || '',
                 weddingDetails: saved.eventDetails?.weddingDetails || defaultWeddingDetails,
@@ -100,7 +99,6 @@ function HairAndMakeUpRequest() {
                 startTimeUnknown: saved.eventDetails?.startTimeUnknown || false,
                 endTimeUnknown: saved.eventDetails?.endTimeUnknown || false,
                 secondPhotographerUnknown: saved.eventDetails?.secondPhotographerUnknown || false,
-                durationUnknown: saved.eventDetails?.durationUnknown || false,
                 numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
                 pinterestBoard: saved.eventDetails?.pinterestBoard || '',
                 eventDateTime: saved.eventDetails?.eventDateTime || '',
@@ -1277,8 +1275,6 @@ function HairAndMakeUpRequest() {
             // Create coverage object from wedding details
             const coverage = {
                 ...(formData.eventType === 'Wedding' ? formData.eventDetails.weddingDetails : {}),
-                duration: formData.eventDetails.durationUnknown ? null : 
-                         formData.eventDetails.duration ? parseInt(formData.eventDetails.duration) : null,
                 numPeople: formData.eventDetails.numPeopleUnknown ? null : 
                           formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople) : null,
             };
@@ -1297,9 +1293,7 @@ function HairAndMakeUpRequest() {
                 specific_time: formData.eventDetails.specificTimeNeeded === 'yes' ? formData.eventDetails.specificTime : null,
                 num_people: formData.eventDetails.numPeopleUnknown ? null : 
                             formData.eventDetails.numPeople ? parseInt(formData.eventDetails.numPeople) : null,
-                duration: formData.eventDetails.durationUnknown ? null : 
-                         formData.eventDetails.duration ? parseInt(formData.eventDetails.duration) : null,
-                indoor_outdoor: formData.eventDetails.indoorOutdoor,
+
                 price_range: formData.eventDetails.priceRange,
                 additional_comments: formData.eventDetails.additionalInfo || null,
                 pinterest_link: formData.eventDetails.pinterestBoard || null,   
