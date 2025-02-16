@@ -1,14 +1,14 @@
 import React from 'react';
 import './Articles.css'
-import budgetphoto from '../../assets/articles/budget.jpg'
-import photographer from '../../assets/articles/photographer.webp'
-import location from '../../assets/articles/location.jpg'
-import weddingphotographer from '../../assets/articles/wedding photographer.jpg'
-import payment from '../../assets/articles/payment.webp'
-import weddingInWater from '../../assets/articles/wedding in water.jpeg'
-import hiddencost from '../../assets/articles/hidden cost.webp'
-import choose from '../../assets/articles/choose.webp'
-import saveMoney from '../../assets/articles/save money.webp'
+import budgetphoto from '../../assets/articles/WeddingPhotographyCostGuide/budget.jpg'
+import photographer from '../../assets/articles/WeddingPhotographyCostGuide/photographer.webp'
+import location from '../../assets/articles/WeddingPhotographyCostGuide/location.jpg'
+import weddingphotographer from '../../assets/articles/WeddingPhotographyCostGuide/wedding photographer.jpg'
+import payment from '../../assets/articles/WeddingPhotographyCostGuide/payment.webp'
+import weddingInWater from '../../assets/articles/WeddingPhotographyCostGuide/wedding in water.jpeg'
+import hiddencost from '../../assets/articles/WeddingPhotographyCostGuide/hidden cost.webp'
+import choose from '../../assets/articles/WeddingPhotographyCostGuide/choose.webp'
+import saveMoney from '../../assets/articles/WeddingPhotographyCostGuide/save money.webp'
 import Helmet from 'react-helmet';
 
 const WeddingPhotographerCostGuide = () => {
@@ -42,6 +42,7 @@ const WeddingPhotographerCostGuide = () => {
                 <meta name="twitter:title" content="Wedding Photographer Cost Guide: What You'll Actually Pay in 2025" />
                 <meta name="twitter:description" content="Explore the comprehensive guide on wedding photography costs in 2025, featuring insights from real couples." />
                 <meta name="twitter:image" content={budgetphoto} />
+
             </Helmet>
             <header>
                 <h1>Wedding Photographer Cost Guide: What You'll Actually Pay in 2025 [From Real Couples]</h1>

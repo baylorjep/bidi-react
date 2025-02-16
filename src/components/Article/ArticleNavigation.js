@@ -11,15 +11,26 @@ const Articles = () => {
                 <meta name="description" content="Explore our collection of articles on wedding photography, including cost guides, budgeting tips, and insights from real couples." />
                 <meta name="keywords" content="wedding photography, articles, guides, budgeting, wedding planning" />
             </Helmet>
-          <h1 className="articles-navigation-title">Articles</h1>
+            <h1 className="articles-navigation-title">Articles</h1>
             <ul className="articles-navigation-list">
                 <li className="article-navigation-item">
                     <Link to="/articles/wedding-photographer-cost-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <div className="article-preview">
-                            <img src={require('../../assets/articles/budget.jpg')} alt="Wedding Photographer Cost Guide" className="article-image" />
+                            <img src={require('../../assets/articles/WeddingPhotographyCostGuide/photographer.webp')} alt="Wedding Photographer Cost Guide" className="article-image" />
                             <div className="article-content">
                                 <h2>Wedding Photographer Cost Guide: What You'll Actually Pay in 2025 [From Real Couples]</h2>
                                 <p>Explore the comprehensive guide on wedding photography costs in 2025, featuring insights from real couples. This article breaks down average prices, package options, and tips for budgeting effectively.</p>
+                            </div>
+                        </div>
+                    </Link>
+                </li>
+                <li className="article-navigation-item">
+                    <Link to="/articles/wedding-videographer-cost-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <div className="article-preview">
+                            <img src={require('../../assets/articles/VideographyCostGuide/videographer.webp')} alt="Wedding Videographer Cost Guide" className="article-image" />
+                            <div className="article-content">
+                                <h2>Wedding Videographer Cost Guide: What You'll Actually Pay in 2025</h2>
+                                <p>Discover the true costs of wedding videography in 2025, including average prices, hidden fees, and tips for budgeting effectively.</p>
                             </div>
                         </div>
                     </Link>

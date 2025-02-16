@@ -87,6 +87,7 @@ import PrivateRoute from './components/PrivateRoute';
 import ArticleNavigation from './components/Article/ArticleNavigation';
 import ArticleDetail from './components/Article/ArticleDetail';
 import WeddingPhotographerCostGuide from './components/Article/WeddingPhotographerCostGuide';
+import WeddingVideographerCostGuide from './components/Article/WeddingVideographerCostGuide';
 
 function App() {
 
@@ -184,6 +185,7 @@ function App() {
                         <Route path="/articles" element={<ArticleNavigation />} />
                         <Route path="/articles/:articleId" element={<ArticleDetail />} />
                         <Route path="/articles/wedding-photographer-cost-guide" element={<WeddingPhotographerCostGuide />} />
+                        <Route path="/articles/wedding-videographer-cost-guide" element={<WeddingVideographerCostGuide />} />
 
                     </Routes>
                 </div>
