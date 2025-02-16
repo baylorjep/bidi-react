@@ -84,6 +84,9 @@ import ScrollToTop from './components/ScrollToTop';
 // Add this import
 import BidsPage from './components/Individual/BidsPage'
 import PrivateRoute from './components/PrivateRoute';
+import ArticleNavigation from './components/Article/ArticleNavigation';
+import ArticleDetail from './components/Article/ArticleDetail';
+import WeddingPhotographerCostGuide from './components/Article/WeddingPhotographerCostGuide';
 
 function App() {
 
@@ -176,6 +179,11 @@ function App() {
                                 <BidsPage />
                             </PrivateRoute>
                         } />
+
+                        {/* Articles Route */}
+                        <Route path="/articles" element={<ArticleNavigation />} />
+                        <Route path="/articles/:articleId" element={<ArticleDetail />} />
+                        <Route path="/articles/wedding-photographer-cost-guide" element={<WeddingPhotographerCostGuide />} />
 
                     </Routes>
                 </div>
