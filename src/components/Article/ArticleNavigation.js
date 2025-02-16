@@ -1,11 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom'; // Import Link from react-router-dom
 import './Articles.css'; // Import the CSS file
+import Helmet from 'react-helmet'; // Import Helmet for SEO
 
 const Articles = () => {
     return (
         <div className="articles-navigation-container">
-            <h1 className="articles-navigation-title">Articles</h1>
+            <Helmet>
+                <title>Articles - Wedding Guides and Tips</title>
+                <meta name="description" content="Explore our collection of articles on wedding photography, including cost guides, budgeting tips, and insights from real couples." />
+                <meta name="keywords" content="wedding photography, articles, guides, budgeting, wedding planning" />
+            </Helmet>
+          <h1 className="articles-navigation-title">Articles</h1>
             <ul className="articles-navigation-list">
                 <li className="article-navigation-item">
                     <Link to="/articles/wedding-photographer-cost-guide" style={{ textDecoration: 'none', color: 'inherit' }}>

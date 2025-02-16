@@ -28,6 +28,7 @@
     border: 1px solid #ddd; /* Optional border */
     border-radius: 8px; /* Rounded corners */
     overflow: hidden; /* Prevent overflow */
+    padding: 20px;
 }
 
 .article-image {
@@ -144,7 +145,7 @@
     }
 
     .article-preview {
-        flex-direction: row; /* Stack image and text vertically */
+        flex-direction: column; /* Stack image and text vertically */
         align-items: center; /* Center align items */
     }
 
