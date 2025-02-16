@@ -11,6 +11,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { Helmet } from 'react-helmet';
 
 export default function BidsPage() {
     const [requests, setRequests] = useState([]);
@@ -614,79 +615,86 @@ export default function BidsPage() {
     };
 
     return (
-        <div className="bids-page">
-            <h1 className="section-title">Your Service Requests</h1>
-            <p className="section-description">
-                Browse through your service requests using the arrows. Below, you'll find all bids received for the currently displayed request.
-            </p>
+        <>
+            <Helmet>
+                <title>Bids - Bidi</title>
+                <meta name="description" content="View and manage your bids on Bidi. Compare offers from various vendors and choose the best for your needs." />
+                <meta name="keywords" content="bids, wedding vendors, Bidi, manage bids" />
+            </Helmet>
+            <div className="bids-page">
+                <h1 className="section-title">Your Service Requests</h1>
+                <p className="section-description">
+                    Browse through your service requests using the arrows. Below, you'll find all bids received for the currently displayed request.
+                </p>
 
-            {requests.length > 0 ? (
-                <>
-                    <div className="request-swiper-container">
-                        <div className="swipe-indicator">
-                            Swipe to view more requests
-                        </div>
-                        <Swiper
-                            modules={[Navigation]}
-                            navigation={true}
-                            onSlideChange={(swiper) => setCurrentRequestIndex(swiper.activeIndex)}
-                            spaceBetween={30}
-                            slidesPerView={1}
-                        >
-                            {requests.map((request, index) => (
-                                <SwiperSlide key={request.id}>
-                                    <div className="request-slide">
-                                        {renderRequestCard(request)}
-                                    </div>
-                                </SwiperSlide>
-                            ))}
-                        </Swiper>
-                    </div>
-
-                </>
-            ) : (
-                <div className="no-requests">
-                    No active requests found
-                </div>
-            )}
-
-            <h2 className="section-title" style={{ marginTop: '40px', textAlign:'center' }}>Bids for Selected Request</h2>
-            <p className="section-description">
-                Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
-            </p>
-
-            <div className="tabs">
-                <button 
-                    className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('pending')}
-                >
-                    Pending Bids
-                </button>
-                <button 
-                    className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('approved')}
-                >
-                    Approved Bids
-                </button>
-                <button 
-                    className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('denied')}
-                >
-                    Denied Bids
-                </button>
-            </div>
-
-            <div className="bids-container">
-                {requests.length > 0 && currentRequestIndex >= 0 ? (
+                {requests.length > 0 ? (
                     <>
-                        {bids.filter(bid => bid.request_id === requests[currentRequestIndex].id)
-                            .map(bid => renderBidCard(bid))}
-                        {renderNoBidsMessage()}
+                        <div className="request-swiper-container">
+                            <div className="swipe-indicator">
+                                Swipe to view more requests
+                            </div>
+                            <Swiper
+                                modules={[Navigation]}
+                                navigation={true}
+                                onSlideChange={(swiper) => setCurrentRequestIndex(swiper.activeIndex)}
+                                spaceBetween={30}
+                                slidesPerView={1}
+                            >
+                                {requests.map((request, index) => (
+                                    <SwiperSlide key={request.id}>
+                                        <div className="request-slide">
+                                            {renderRequestCard(request)}
+                                        </div>
+                                    </SwiperSlide>
+                                ))}
+                            </Swiper>
+                        </div>
+
                     </>
                 ) : (
-                    <p className="no-bids">No bids to display</p>
+                    <div className="no-requests">
+                        No active requests found
+                    </div>
                 )}
+
+                <h2 className="section-title" style={{ marginTop: '40px', textAlign:'center' }}>Bids for Selected Request</h2>
+                <p className="section-description">
+                    Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
+                </p>
+
+                <div className="tabs">
+                    <button 
+                        className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('pending')}
+                    >
+                        Pending Bids
+                    </button>
+                    <button 
+                        className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('approved')}
+                    >
+                        Approved Bids
+                    </button>
+                    <button 
+                        className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('denied')}
+                    >
+                        Denied Bids
+                    </button>
+                </div>
+
+                <div className="bids-container">
+                    {requests.length > 0 && currentRequestIndex >= 0 ? (
+                        <>
+                            {bids.filter(bid => bid.request_id === requests[currentRequestIndex].id)
+                                .map(bid => renderBidCard(bid))}
+                            {renderNoBidsMessage()}
+                        </>
+                    ) : (
+                        <p className="no-bids">No bids to display</p>
+                    )}
+                </div>
             </div>
-        </div>
+        </>
     );
 }
