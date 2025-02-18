@@ -209,7 +209,7 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
 
                     <h1 className="Sign-Up-Page-Header" style={{marginTop:'20px'}}>Create an Account</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
-
+                    <form onSubmit={handleSubmit}>
                     {/*<div className="mt-3 text-center">
                         <button
                             type="button"
