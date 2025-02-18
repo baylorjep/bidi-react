@@ -71,13 +71,6 @@ const UserReviews = () => {
                     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap:'8px' }}>
                         <div className="review-name">{review.name}</div>
                         <div className="review-text">{review.review}</div>
-                        <div style={{display:'flex', alignItems:'center', justifyContent:'center'}}>
-                        <img className="star-icon" src={starIcon} alt="star icon" />
-                        <img className="star-icon" src={starIcon} alt="star icon" />
-                        <img className="star-icon" src={starIcon} alt="star icon" />
-                        <img className="star-icon" src={starIcon} alt="star icon" />
-                        <img className="star-icon" src={starIcon} alt="star icon" />
-                        </div>
                         <div className="review-date">{review.date}</div>
                     </div>
                 </div>
