@@ -23,9 +23,9 @@ import BidAccepted from './components/Bid/BidAccepted';
 
 // Request Imports
 import RequestCategories from './components/Request/RequestCategories';
-import RequestForm from './components/Request/RequestForm';
 import SuccessRequest from './components/Request/SuccessRequest';
 import OpenRequests from './components/Request/OpenRequests';
+import PhotographyRequest from './components/Request/Photography/PhotographyRequest';
 
 // New staged request imports
 import MultiStepRequestForm from './components/Request/general requests/MultiStepRequestForm';
@@ -34,11 +34,11 @@ import MultiStepRequestForm from './components/Request/general requests/MultiSte
 import TestEmail from './components/TestEmail';
 
 // Event Imports
-import SelectEvent from './components/Event/SelectEvent';
-import EventDetails from './components/Event/EventDetails';
-import EventPhotos from './components/Event/UploadPictures';
-import PersonalDetails from './components/Event/PersonalDetails';
-import EventSummary from './components/Event/EventSummary';
+import SelectEvent from './components/Request/Event/SelectEvent';
+import EventDetails from './components/Request/Event/EventDetails';
+import EventPhotos from './components/Request/Event/UploadPictures';
+import PersonalDetails from './components/Request/Event/PersonalDetails';
+import EventSummary from './components/Request/Event/EventSummary';
 
 // Profile Imports
 import Signup from './components/Profile/Signup';
@@ -88,6 +88,11 @@ import ArticleNavigation from './components/Article/ArticleNavigation';
 import ArticleDetail from './components/Article/ArticleDetail';
 import WeddingPhotographerCostGuide from './components/Article/WeddingPhotographerCostGuide';
 import WeddingVideographerCostGuide from './components/Article/WeddingVideographerCostGuide';
+import VideographyRequest from './components/Request/Videography/VideographyRequest';
+import DjRequest from './components/Request/DJ/DjRequest';
+import HairAndMakeUpRequest from './components/Request/Beauty/HairAndMakeUpRequest';
+import FloristRequest from './components/Request/Florist/FloristRequest'; // Add this import
+import CateringRequest from './components/Request/Catering/CateringRequest'; // Add this import
 
 function App() {
 
@@ -113,7 +118,6 @@ function App() {
 
                         {/* Request Routes */}
                         <Route path="/request-categories" element={<RequestCategories />} />
-                        <Route path="/request" element={<RequestForm />} />
                         <Route path="/success-request" element={<SuccessRequest />} />
 
                         {/* New Staged Request Routes */}
@@ -186,6 +190,14 @@ function App() {
                         <Route path="/articles/:articleId" element={<ArticleDetail />} />
                         <Route path="/articles/wedding-photographer-cost-guide" element={<WeddingPhotographerCostGuide />} />
                         <Route path="/articles/wedding-videographer-cost-guide" element={<WeddingVideographerCostGuide />} />
+
+                        {/* Photography Routes */}
+                        <Route path="/request/photography" element={<PhotographyRequest />} />
+                        <Route path="/request/videography" element={<VideographyRequest />} />
+                        <Route path="/request/dj" element={<DjRequest />} />
+                        <Route path="/request/beauty" element={<HairAndMakeUpRequest />} />
+                        <Route path="/request/florist" element={<FloristRequest />} /> {/* Add this route */}
+                        <Route path="/request/catering" element={<CateringRequest />} /> {/* Add this route */}
 
                     </Routes>
                 </div>

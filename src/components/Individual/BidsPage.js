@@ -53,30 +53,62 @@ export default function BidsPage() {
         try {
             console.log('Loading requests for user:', userId);
 
-            // Fetch regular requests with service_photos
-            const { data: regularRequests, error: regularError } = await supabase
-                .from('requests')
-                .select(`
-                    *,
-                    service_photos(*)
-                `)
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false });
-
-            // Fetch photography requests with event_photos
-            const { data: photoRequests, error: photoError } = await supabase
-                .from('photography_requests')
-                .select(`
-                    *,
-                    event_photos(*)
-                `)
-                .eq('profile_id', userId)
-                .order('created_at', { ascending: false });
+            // Fetch requests from all tables
+            const [
+                { data: regularRequests, error: regularError },
+                { data: photoRequests, error: photoError },
+                { data: djRequests, error: djError },
+                { data: cateringRequests, error: cateringError },
+                { data: beautyRequests, error: beautyError },
+                { data: videoRequests, error: videoError },
+                { data: floristRequests, error: floristError }
+            ] = await Promise.all([
+                supabase
+                    .from('requests')
+                    .select('*, service_photos(*)')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false }),
+                supabase
+                    .from('photography_requests')
+                    .select('*, event_photos(*)')
+                    .eq('profile_id', userId)
+                    .order('created_at', { ascending: false }),
+                supabase
+                    .from('dj_requests')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false }),
+                supabase
+                    .from('catering_requests')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false }),
+                supabase
+                    .from('beauty_requests')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false }),
+                supabase
+                    .from('videography_requests')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false }),
+                supabase
+                    .from('florist_requests')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false })
+            ]);
 
             if (regularError) throw regularError;
             if (photoError) throw photoError;
+            if (djError) throw djError;
+            if (cateringError) throw cateringError;
+            if (beautyError) throw beautyError;
+            if (videoError) throw videoError;
+            if (floristError) throw floristError;
 
-            // Transform photoRequests to match the same structure
+            // Transform requests to match the same structure
             const transformedPhotoRequests = (photoRequests || []).map(request => ({
                 ...request,
                 service_photos: request.event_photos // Map event_photos to service_photos for consistency
@@ -84,7 +116,22 @@ export default function BidsPage() {
 
             const allRequests = [
                 ...(regularRequests || []),
-                ...transformedPhotoRequests
+                ...transformedPhotoRequests,
+                ...(djRequests || []).map(req => ({
+                    ...req,
+                    service_title: req.title || req.event_title || `${req.event_type} DJ Request`,
+                    price_range: req.budget_range,
+                    service_date: req.start_date
+                })),
+                ...(cateringRequests || []).map(req => ({
+                    ...req,
+                    service_title: req.title || req.event_title || `${req.event_type} Catering Request`,
+                    price_range: req.budget_range || req.price_range,
+                    service_date: req.start_date || req.date
+                })),
+                ...(beautyRequests || []),
+                ...(videoRequests || []),
+                ...(floristRequests || [])
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
             console.log('All requests loaded:', allRequests);
@@ -104,25 +151,62 @@ export default function BidsPage() {
 
         try {
             // First fetch the user's requests
-            const { data: requests, error: requestError } = await supabase
-                .from('requests')
-                .select('id, coupon_code')
-                .eq('user_id', user.id);
+            const [
+                { data: requests, error: requestError },
+                { data: photoRequests, error: photoRequestError },
+                { data: djRequests, error: djRequestError },
+                { data: cateringRequests, error: cateringRequestError },
+                { data: beautyRequests, error: beautyRequestError },
+                { data: videoRequests, error: videoRequestError },
+                { data: floristRequests, error: floristRequestError }
+            ] = await Promise.all([
+                supabase
+                    .from('requests')
+                    .select('id, coupon_code')
+                    .eq('user_id', user.id),
+                supabase
+                    .from('photography_requests')
+                    .select('id, coupon_code')
+                    .eq('profile_id', user.id),
+                supabase
+                    .from('dj_requests')
+                    .select('id, coupon_code')
+                    .eq('user_id', user.id),
+                supabase
+                    .from('catering_requests')
+                    .select('id, coupon_code')
+                    .eq('user_id', user.id),
+                supabase
+                    .from('beauty_requests')
+                    .select('id, coupon_code')
+                    .eq('user_id', user.id),
+                supabase
+                    .from('videography_requests')
+                    .select('id, coupon_code')
+                    .eq('user_id', user.id),
+                supabase
+                    .from('florist_requests')
+                    .select('id, coupon_code')
+                    .eq('user_id', user.id)
+            ]);
 
-            const { data: photoRequests, error: photoRequestError } = await supabase
-                .from('photography_requests')
-                .select('id, coupon_code')
-                .eq('profile_id', user.id);
-
-            if (requestError || photoRequestError) {
-                console.error('Failed to fetch requests:', requestError || photoRequestError);
-                return;
-            }
+            if (requestError) throw requestError;
+            if (photoRequestError) throw photoRequestError;
+            if (djRequestError) throw djRequestError;
+            if (cateringRequestError) throw cateringRequestError;
+            if (beautyRequestError) throw beautyRequestError;
+            if (videoRequestError) throw videoRequestError;
+            if (floristRequestError) throw floristRequestError;
 
             // Get all request IDs
             const requestIds = [
                 ...(requests || []).map(r => r.id),
-                ...(photoRequests || []).map(r => r.id)
+                ...(photoRequests || []).map(r => r.id),
+                ...(djRequests || []).map(r => r.id),
+                ...(cateringRequests || []).map(r => r.id),
+                ...(beautyRequests || []).map(r => r.id),
+                ...(videoRequests || []).map(r => r.id),
+                ...(floristRequests || []).map(r => r.id)
             ];
 
             // Fetch all bids for these requests
@@ -500,13 +584,26 @@ export default function BidsPage() {
         );
     };
 
+    const getDate = (request) => {
+        const startDate = request.start_date || request.service_date;
+        if (request.date_flexibility === 'specific') {
+            return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
+        } else if (request.date_flexibility === 'range') {
+            return `${new Date(startDate).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
+        } else if (request.date_flexibility === 'flexible') {
+            return `Flexible within ${request.date_timeframe}`;
+        }
+        return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
+    };
+
     const renderRequestCard = (request) => {
+        const requestTitle = request.event_title || request.title || 'Untitled Request';
         if (request.event_type) {
             // Photo request card
             return (
                 <div className="request-card">
                     <div className="request-header">
-                        <h2 className="request-title">{request.event_title}</h2>
+                        <h2 className="request-title">{requestTitle}</h2>
                         {isNew(request.created_at) && (
                             <div className="request-status">New</div>
                         )}
@@ -518,12 +615,7 @@ export default function BidsPage() {
                         </div>
                         <div className="detail-row">
                             <span className="detail-label">Date:</span>
-                            <span className="detail-value">
-                                {request.end_date 
-                                    ? `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
-                                    : new Date(request.start_date).toLocaleDateString()
-                                }
-                            </span>
+                            <span className="detail-value">{getDate(request)}</span>
                         </div>
                         <div className="detail-row">
                             <span className="detail-label">Location:</span>
@@ -542,7 +634,7 @@ export default function BidsPage() {
         return (
             <div className="request-card">
                 <div className="request-header">
-                    <h2 className="request-title">{request.service_title}</h2>
+                    <h2 className="request-title">{requestTitle}</h2>
                     {isNew(request.created_at) && (
                         <div className="request-status">New</div>
                     )}
@@ -554,12 +646,7 @@ export default function BidsPage() {
                     </div>
                     <div className="detail-row">
                         <span className="detail-label">Date:</span>
-                        <span className="detail-value">
-                            {request.end_date 
-                                ? `${new Date(request.service_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
-                                : new Date(request.service_date).toLocaleDateString()
-                            }
-                        </span>
+                        <span className="detail-value">{getDate(request)}</span>
                     </div>
                     <div className="detail-row">
                         <span className="detail-label">Location:</span>

@@ -11,49 +11,46 @@ function RequestCategories() {
         'DJ Services',
         'Hair and Makeup Artist',
         'Florist',
-        'Catering',
-        'Wedding Planner',
-        'Venue',
-        'Cake',
-        'Spray Tan',
-        'Other'
+        'Catering'
     ];
 
     const handleSelection = () => {
-        // Only photography and videography are considered media services
-        const isMediaService = category === 'photography' || category === 'videography';
-        const serviceType = isMediaService ? 'photography' : category; // Changed from 'general' to category
-        
         // Store in localStorage
-        localStorage.setItem('serviceType', serviceType);
+        localStorage.setItem('serviceType', category);
         localStorage.setItem('specificService', category);
         
         // Store in request form data
         const requestFormData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
         localStorage.setItem('requestFormData', JSON.stringify({
             ...requestFormData,
-            serviceType: serviceType,
+            serviceType: category,
             specificService: category
         }));
         
-        if (isMediaService) {
-            navigate('/select-event', { 
-                state: { 
-                    serviceType,
-                    specificService: category 
-                } 
-            });
+        // Dynamic navigation based on category
+        const dedicatedFormCategories = ['photography', 'videography', 'dj services', 'hair and makeup artist', 'florist', 'catering']; // Add 'catering'
+        if (dedicatedFormCategories.includes(category)) {
+            // Convert category names to route paths
+            const routeMap = {
+                'photography': 'photography',
+                'videography': 'videography',
+                'dj services': 'dj',
+                'hair and makeup artist': 'beauty',
+                'florist': 'florist',
+                'catering': 'catering' // Add 'catering'
+            };
+            const routePath = routeMap[category];
+            navigate(`/request/${routePath}`);
         } else {
             navigate('/request-form', { 
                 state: { 
                     category,
-                    serviceType,
+                    serviceType: category,
                     specificService: category
                 } 
             });
         }
     };
-
 
     const handleBack = () => {
         navigate('/createaccount');  // Adjust the route for going back

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../../src/supabaseClient';
+import { supabase } from '../../../supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { Spinner } from 'react-bootstrap';
-import scrollBtn from '../../assets/images/Icons/scroll button.png';
+import scrollBtn from '../../../assets/images/Icons/scroll button.png';
 import { useLocation } from 'react-router-dom';
 
 const PhotoGrid = ({ photos, removePhoto, openModal }) => {

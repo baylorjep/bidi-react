@@ -5,7 +5,7 @@ import '../../App.css';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
-function SignIn() {
+const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -46,13 +46,17 @@ function SignIn() {
         }
 
         if (profile.role === 'individual') {
-            // Include source in navigation state
-            navigate(redirectTo, {
-                state: { 
-                    source: requestSource || requestFormData.source || 'general',
-                    from: 'signin'
-                }
-            });
+            if (onSuccess) {
+                onSuccess(); // Call the success callback if provided
+            } else {
+                // Default navigation behavior
+                navigate(redirectTo, {
+                    state: { 
+                        source: requestSource || requestFormData.source || 'general',
+                        from: 'signin'
+                    }
+                });
+            }
         } else if (profile.role === 'business') {
             navigate('/dashboard');
         }
@@ -174,4 +178,4 @@ function SignIn() {
     );
 }
 
-export default SignIn;
+export default SignIn;  // Make sure this export exists

@@ -31,7 +31,7 @@ const BusinessDashboard = () => {
   
         if (profileError) {
           console.error('Error fetching profile:', profileError);
-          return; // Exit early if there is an error fetching the profile
+          return;
         }
   
         if (profile) {
@@ -48,9 +48,9 @@ const BusinessDashboard = () => {
           // Fetch current bids for this business
           const { data: bidsData, error: bidsError } = await supabase
             .from('bids')
-            .select('bid_amount, id, status, bid_description, request_id, hidden') // Get the request_id for each bid
-            .eq('user_id', profile.id) // Only fetch bids for the current business
-            .or('hidden.is.false,hidden.is.null'); // This will check for both false and null
+            .select('bid_amount, id, status, bid_description, request_id, hidden')
+            .eq('user_id', profile.id)
+            .or('hidden.is.false,hidden.is.null');
   
           if (bidsError) {
             console.error('Error fetching bids:', bidsError);
@@ -60,39 +60,151 @@ const BusinessDashboard = () => {
           // Process each bid and fetch its associated request details
           const bidsWithRequestData = await Promise.all(
             bidsData.map(async (bid) => {
+              console.log('Processing bid:', bid); // Debug log
+              console.log('Request ID:', bid.request_id); // Debug log
+
               try {
-                // Fetch normal request details
-                const { data: request, error: requestError } = await supabase
-                  .from('requests')
-                  .select('service_title, service_description, service_date, location, additional_comments, price_range, end_date')
+                // Try DJ requests
+                const { data: djRequest, error: djError } = await supabase
+                  .from('dj_requests')
+                  .select('*')
                   .eq('id', bid.request_id)
-                  .single(); // Assuming one-to-one relation
-  
-                // Fetch photography request details
-                const { data: photographyRequest, error: photographyRequestError } = await supabase
-                  .from('photography_requests')
-                  .select('event_title, event_type, start_date, end_date, location, num_people, duration, indoor_outdoor, additional_comments')
-                  .eq('id', bid.request_id) // Assuming the `request_id` is the link
-                  .single(); // Assuming one-to-one relation
-  
-                if (requestError && photographyRequestError) {
-                  console.error('Error fetching requests:', requestError, photographyRequestError);
+                  .single();
+                
+                console.log('DJ request search result:', { data: djRequest, error: djError }); // Debug log
+                
+                if (djRequest) {
+                  return {
+                    ...bid,
+                    service_title: djRequest.title || 'No Title',
+                    request_type: 'DJ Request',
+                    request_data: djRequest,
+                    isDescriptionExpanded: false,
+                  };
                 }
-  
-                // Add the relevant request data to the bid
+
+                // Try Catering requests
+                const { data: cateringRequest, error: cateringError } = await supabase
+                  .from('catering_requests')
+                  .select('*')
+                  .eq('id', bid.request_id)
+                  .single();
+                
+                if (cateringRequest) {
+                  return {
+                    ...bid,
+                    service_title: cateringRequest.title || 'No Title',
+                    request_type: 'Catering Request',
+                    request_data: cateringRequest,
+                    isDescriptionExpanded: false,
+                  };
+                }
+
+                // Try Beauty requests
+                const { data: beautyRequest, error: beautyError } = await supabase
+                  .from('beauty_requests')
+                  .select('*')
+                  .eq('id', bid.request_id)
+                  .single();
+                
+                if (beautyRequest) {
+                  return {
+                    ...bid,
+                    service_title: beautyRequest.event_title || 'No Title',
+                    request_type: 'Hair and Makeup Request',
+                    request_data: beautyRequest,
+                    isDescriptionExpanded: false,
+                  };
+                }
+
+                // Try Florist requests
+                const { data: floristRequest, error: floristError } = await supabase
+                  .from('florist_requests')
+                  .select('*')
+                  .eq('id', bid.request_id)
+                  .single();
+                
+                if (floristRequest) {
+                  return {
+                    ...bid,
+                    service_title: floristRequest.event_title || 'No Title',
+                    request_type: 'Florist Request',
+                    request_data: floristRequest,
+                    isDescriptionExpanded: false,
+                  };
+                }
+
+                // Try Photography requests
+                const { data: photoRequest, error: photoError } = await supabase
+                  .from('photography_requests')
+                  .select('*')
+                  .eq('id', bid.request_id)
+                  .single();
+                
+                if (photoRequest) {
+                  return {
+                    ...bid,
+                    service_title: photoRequest.event_title || 'No Title',
+                    request_type: 'Photography Request',
+                    request_data: photoRequest,
+                    isDescriptionExpanded: false,
+                  };
+                }
+
+                // Try Videography requests
+                const { data: videoRequest, error: videoError } = await supabase
+                  .from('videography_requests')
+                  .select('*')
+                  .eq('id', bid.request_id)
+                  .single();
+                
+                if (videoRequest) {
+                  return {
+                    ...bid,
+                    service_title: videoRequest.event_title || 'No Title',
+                    request_type: 'Videography Request',
+                    request_data: videoRequest,
+                    isDescriptionExpanded: false,
+                  };
+                }
+
+                // Try legacy/normal requests
+                const { data: normalRequest, error: normalError } = await supabase
+                  .from('requests')
+                  .select('*')
+                  .eq('id', bid.request_id)
+                  .single();
+                
+                if (normalRequest) {
+                  return {
+                    ...bid,
+                    service_title: normalRequest.service_title || 'No Title',
+                    request_type: 'Normal Request',
+                    request_data: normalRequest,
+                    isDescriptionExpanded: false,
+                  };
+                }
+
+                // If no request found in any table
+                console.log('No matching request found for bid:', bid.id);
+                console.log('Searched tables: dj_requests, catering_requests, beauty_requests, florist_requests, photography_requests, videography_requests, requests');
                 return {
                   ...bid,
-                  service_title: request?.service_title || photographyRequest?.event_title || 'No title',
-                  request_type: request ? 'Normal Request' : 'Photography Request', // Indicate the type of request
-                  request_data: {
-                    // All request data from either the normal request or photography request
-                    ...(request || photographyRequest), // This merges the fields from either request type
-                  },
-                  isDescriptionExpanded: false, // Add description expansion state
+                  service_title: 'Unknown Request',
+                  request_type: 'Unknown',
+                  request_data: {},
+                  isDescriptionExpanded: false,
                 };
+
               } catch (error) {
                 console.error('Error processing bid:', error);
-                return bid; // Return the bid as is if there is an error
+                return {
+                  ...bid,
+                  service_title: 'Error Processing Request',
+                  request_type: 'Unknown',
+                  request_data: {},
+                  isDescriptionExpanded: false,
+                };
               }
             })
           );
@@ -109,12 +221,14 @@ const BusinessDashboard = () => {
   
   // Shorten description to a certain length
   const truncateDescription = (description, length) => {
+    if (!description) return ''; // Return empty string if description is null/undefined
     if (description.length <= length) return description;
     return description.slice(0, length) + "...";
   };
 
   // Check if there's more content to view
   const hasMoreContent = (description, length) => {
+    if (!description) return false; // Return false if description is null/undefined
     return description.length > length;
   };
 
@@ -300,7 +414,7 @@ const BusinessDashboard = () => {
             <div className="card-body">
               {/* Request Details */}
               <h5 className="card-title">
-                Request Title: {bid.service_title}
+                Request Title: {bid.service_title || bid.request_data?.event_title || bid.title || 'Untitled'}
               </h5>
               {bid.request_type === "Normal Request" ? (
                 <div>
@@ -310,53 +424,156 @@ const BusinessDashboard = () => {
                     <p><strong>End Date:</strong> {bid.request_data?.end_date}</p>
                   )}
                   <p><strong>Price Range: </strong>{bid.request_data?.price_range}</p>
-                  <p className="card-text">
-                    {bid.isDescriptionExpanded ? (
-                      bid.request_data?.service_description || bid.request_data?.additional_comments
-                    ) : (
-                      truncateDescription(bid.request_data?.service_description || bid.request_data?.additional_comments, 80)
-                    )}
-                  </p>
-                  {hasMoreContent(bid.request_data?.service_description || bid.request_data?.additional_comments, 80) && (
-                    <button
-                      className="btn"
-                      style={{border:'black solid 1px', borderRadius:'20px'}}
-                      onClick={() => handleViewMore(index)}
-                    >
-                      {bid.isDescriptionExpanded ? "View Less" : "View More"}
-                    </button>
-                  )}
                     
                 </div>
-              ) : (
+              ) : bid.request_type === "Photography Request" ? (
                 <div>
                   <p><strong>Event Type: </strong>{bid.request_data?.event_type}</p>
-                  <p><strong>{bid.request_data?.end_date ? 'Start Date' : 'Date'}:</strong> {bid.request_data?.start_date}</p>
-                   {/* Conditionally render End Date */}
-                  {bid.request_data?.end_date && (
-                    <p><strong>End Date: </strong>{bid.request_data?.end_date}</p>
+                  {bid.request_data?.date_flexibility === 'specific' ? (
+                    <p>
+                      <strong>Event Date: </strong>
+                      {new Date(bid.request_data?.start_date).toLocaleDateString()}
+                    </p>
+                  ) : bid.request_data?.date_flexibility === 'range' ? (
+                    <p>
+                      <strong>Date Range: </strong>
+                      {`${new Date(bid.request_data?.start_date).toLocaleDateString()} - ${new Date(bid.request_data?.end_date).toLocaleDateString()}`}
+                    </p>
+                  ) : (
+                    <p>
+                      <strong>Date Preference: </strong>
+                      {bid.request_data?.date_timeframe === '3months' ? 'Within 3 months' :
+                       bid.request_data?.date_timeframe === '6months' ? 'Within 6 months' :
+                       bid.request_data?.date_timeframe === '1year' ? 'Within 1 year' :
+                       bid.request_data?.date_timeframe === 'more' ? 'More than 1 year' :
+                       'Not specified'}
+                    </p>
                   )}
                   <p><strong>Location: </strong>{bid.request_data?.location}</p>
                   <p><strong>Number of People:</strong> {bid.request_data?.num_people}</p>
                   <p><strong>Duration: </strong>{bid.request_data?.duration}</p>
-                  <p className="card-text">
-                    {bid.isDescriptionExpanded ? (
-                      bid.request_data?.service_description || bid.request_data?.additional_comments
-                    ) : (
-                      truncateDescription(bid.request_data?.service_description || bid.request_data?.additional_comments, 80)
-                    )}
-                  </p>
-                  {hasMoreContent(bid.request_data?.service_description || bid.request_data?.additional_comments, 80) && (
-                    <button
-                      className="btn"
-                      style={{border:'black solid 1px', borderRadius:'20px'}}
-                      onClick={() => handleViewMore(index)}
-                    >
-                      {bid.isDescriptionExpanded ? "View Less" : "View More"}
-                    </button>
-                  )}
                 </div>
-              )}
+              ) : bid.request_type === "Videography Request" ? (
+                <div>
+                  <p><strong>Event Type: </strong>{bid.request_data?.event_type}</p>
+                  {bid.request_data?.date_flexibility === 'specific' ? (
+                    <p>
+                      <strong>Event Date: </strong>
+                      {new Date(bid.request_data?.start_date).toLocaleDateString()}
+                    </p>
+                  ) : bid.request_data?.date_flexibility === 'range' ? (
+                    <p>
+                      <strong>Date Range: </strong>
+                      {`${new Date(bid.request_data?.start_date).toLocaleDateString()} - ${new Date(bid.request_data?.end_date).toLocaleDateString()}`}
+                    </p>
+                  ) : (
+                    <p>
+                      <strong>Date Preference: </strong>
+                      {bid.request_data?.date_timeframe === '3months' ? 'Within 3 months' :
+                       bid.request_data?.date_timeframe === '6months' ? 'Within 6 months' :
+                       bid.request_data?.date_timeframe === '1year' ? 'Within 1 year' :
+                       bid.request_data?.date_timeframe === 'more' ? 'More than 1 year' :
+                       'Not specified'}
+                    </p>
+                  )}
+                  <p><strong>Location: </strong>{bid.request_data?.location}</p>
+                  <p><strong>Number of People:</strong> {bid.request_data?.num_people}</p>
+                  <p><strong>Duration: </strong>{bid.request_data?.duration}</p>
+                </div>
+              ) : bid.request_type === "Florist Request" ? (
+                <div>
+                  <p><strong>Event Type: </strong>{bid.request_data?.event_type}</p>
+                  <p><strong>Start Date: </strong>{bid.request_data?.start_date}</p>
+                  {bid.request_data?.end_date && (
+                    <p><strong>End Date: </strong>{bid.request_data?.end_date}</p>
+                  )}
+                  <p><strong>Location: </strong>{bid.request_data?.location}</p>
+                  <p><strong>Flower Types: </strong>{Array.isArray(bid.request_data?.flower_preferences) ? bid.request_data?.flower_preferences.join(', ') : bid.request_data?.flower_preferences}</p>
+                  <p><strong>Color Scheme: </strong>{Array.isArray(bid.request_data?.colors) ? bid.request_data?.colors.join(', ') : bid.request_data?.colors}</p>
+                </div>
+              ) : bid.request_type === "DJ Request" ? (
+                <div>
+                  <p><strong>Event Type: </strong>{bid.request_data?.event_type}</p>
+                  {bid.request_data?.date_flexibility === 'specific' ? (
+                    <p>
+                      <strong>Event Date: </strong>
+                      {new Date(bid.request_data?.start_date).toLocaleDateString()}
+                    </p>
+                  ) : bid.request_data?.date_flexibility === 'range' ? (
+                    <p>
+                      <strong>Date Range: </strong>
+                      {`${new Date(bid.request_data?.start_date).toLocaleDateString()} - ${new Date(bid.request_data?.end_date).toLocaleDateString()}`}
+                    </p>
+                  ) : (
+                    <p>
+                      <strong>Date Preference: </strong>
+                      {bid.request_data?.date_timeframe === '3months' ? 'Within 3 months' :
+                       bid.request_data?.date_timeframe === '6months' ? 'Within 6 months' :
+                       bid.request_data?.date_timeframe === '1year' ? 'Within 1 year' :
+                       bid.request_data?.date_timeframe === 'more' ? 'More than 1 year' :
+                       'Not specified'}
+                    </p>
+                  )}
+                  <p><strong>Location: </strong>{bid.request_data?.location}</p>
+                  <p><strong>Music Genre: </strong>{typeof bid.request_data?.music_preferences === 'object' ? Object.keys(bid.request_data?.music_preferences).join(', ') : bid.request_data?.music_preferences}</p>
+                  <p><strong>Equipment Needed: </strong>{bid.request_data?.equipment_needed ? 'Yes' : 'No'}</p>
+                  <p><strong>Duration: </strong>{bid.request_data?.event_duration} hours</p>
+                </div>
+              ) : bid.request_type === "Catering Request" ? (
+                <div>
+                  <p><strong>Event Type: </strong>{bid.request_data?.event_type}</p>
+                  {bid.request_data?.date_flexibility === 'specific' ? (
+                    <p>
+                      <strong>Event Date: </strong>
+                      {new Date(bid.request_data?.start_date).toLocaleDateString()}
+                    </p>
+                  ) : bid.request_data?.date_flexibility === 'range' ? (
+                    <p>
+                      <strong>Date Range: </strong>
+                      {`${new Date(bid.request_data?.start_date).toLocaleDateString()} - ${new Date(bid.request_data?.end_date).toLocaleDateString()}`}
+                    </p>
+                  ) : (
+                    <p>
+                      <strong>Date Preference: </strong>
+                      {bid.request_data?.date_timeframe === '3months' ? 'Within 3 months' :
+                       bid.request_data?.date_timeframe === '6months' ? 'Within 6 months' :
+                       bid.request_data?.date_timeframe === '1year' ? 'Within 1 year' :
+                       bid.request_data?.date_timeframe === 'more' ? 'More than 1 year' :
+                       'Not specified'}
+                    </p>
+                  )}
+                  <p><strong>Location: </strong>{bid.request_data?.location}</p>
+                  <p><strong>Number of Guests: </strong>{bid.request_data?.estimated_guests}</p>
+                  <p><strong>Cuisine Type: </strong>{Array.isArray(bid.request_data?.food_preferences) ? bid.request_data?.food_preferences.join(', ') : typeof bid.request_data?.food_preferences === 'object' ? Object.keys(bid.request_data?.food_preferences).join(', ') : bid.request_data?.food_preferences}</p>
+                </div>
+              ) : bid.request_type === "Hair and Makeup Request" ? (
+                <div>
+                  <p><strong>Event Type: </strong>{bid.request_data?.event_type}</p>
+                  {bid.request_data?.date_flexibility === 'specific' ? (
+                    <p>
+                      <strong>Event Date: </strong>
+                      {new Date(bid.request_data?.start_date).toLocaleDateString()}
+                    </p>
+                  ) : bid.request_data?.date_flexibility === 'range' ? (
+                    <p>
+                      <strong>Date Range: </strong>
+                      {`${new Date(bid.request_data?.start_date).toLocaleDateString()} - ${new Date(bid.request_data?.end_date).toLocaleDateString()}`}
+                    </p>
+                  ) : (
+                    <p>
+                      <strong>Date Preference: </strong>
+                      {bid.request_data?.date_timeframe === '3months' ? 'Within 3 months' :
+                       bid.request_data?.date_timeframe === '6months' ? 'Within 6 months' :
+                       bid.request_data?.date_timeframe === '1year' ? 'Within 1 year' :
+                       bid.request_data?.date_timeframe === 'more' ? 'More than 1 year' :
+                       'Not specified'}
+                    </p>
+                  )}
+                  <p><strong>Location: </strong>{bid.request_data?.location}</p>
+                  <p><strong>Number of People: </strong>{bid.request_data?.num_people}</p>
+                  <p><strong>Service Type: </strong>{bid.request_data?.service_type}</p>
+                </div>
+              ) : null}
 
               {/* Bid Details */}
               <div className="bid-details-dashboard">
