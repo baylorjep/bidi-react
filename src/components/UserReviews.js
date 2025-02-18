@@ -11,9 +11,16 @@ import starIcon from '../assets/images/Star.svg'
 import KaylaIcon from '../assets/images/Kayla Barnett.jpg'
 import JessicaIcon from '../assets/images/Jessica Williams.jpg'
 import ChandraIcon from '../assets/images/Chandra cropped.png'
+import Jessica from '../assets/images/Jessica Williams Cropped.jpg'
 
 const UserReviews = () => {
   const reviews = [
+    {
+      avatar: Jessica,
+      name: "Jessica W.",
+      date: "February 17th, 2025",
+      review: "Bidi has been awesome. It's super helpful to have multiple vendors come to you and be able to review them side by side. We found a great deal on our videographer! 10/10 recommend."
+    },
     {
       avatar: ChandraIcon,
       name: "Chandra W.",
