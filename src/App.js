@@ -88,11 +88,13 @@ import ArticleNavigation from './components/Article/ArticleNavigation';
 import ArticleDetail from './components/Article/ArticleDetail';
 import WeddingPhotographerCostGuide from './components/Article/WeddingPhotographerCostGuide';
 import WeddingVideographerCostGuide from './components/Article/WeddingVideographerCostGuide';
+import WeddingCateringCostGuide from './components/Article/WeddingCateringCostGuide';
 import VideographyRequest from './components/Request/Videography/VideographyRequest';
 import DjRequest from './components/Request/DJ/DjRequest';
 import HairAndMakeUpRequest from './components/Request/Beauty/HairAndMakeUpRequest';
 import FloristRequest from './components/Request/Florist/FloristRequest'; // Add this import
 import CateringRequest from './components/Request/Catering/CateringRequest'; // Add this import
+import WeddingFloristCostGuide from './components/Article/WeddingFloristCostGuide';
 
 function App() {
 
@@ -190,6 +192,8 @@ function App() {
                         <Route path="/articles/:articleId" element={<ArticleDetail />} />
                         <Route path="/articles/wedding-photographer-cost-guide" element={<WeddingPhotographerCostGuide />} />
                         <Route path="/articles/wedding-videographer-cost-guide" element={<WeddingVideographerCostGuide />} />
+                        <Route path="/articles/wedding-catering-cost-guide" element={<WeddingCateringCostGuide />} />
+                        <Route path="/articles/wedding-florist-cost-guide" element={<WeddingFloristCostGuide />} />
 
                         {/* Photography Routes */}
                         <Route path="/request/photography" element={<PhotographyRequest />} />

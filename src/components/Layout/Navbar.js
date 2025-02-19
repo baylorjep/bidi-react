@@ -131,7 +131,7 @@ function Navbar() {
                             </>
                         )}
                         <li className="nav-item">
-                            <Link className="nav-link me-lg-3" to="/articles">Articles</Link>
+                            <Link className="nav-link me-lg-3" to="/articles">Wedding Guides</Link>
                         </li>
 
                         <li className="nav-item">

@@ -35,6 +35,7 @@
     width: 300px; /* Set a fixed width for the image */
     height: 300px; /* Maintain aspect ratio */
     object-fit: cover;
+    border-radius: 8px;
 }
 
 .article-content {
