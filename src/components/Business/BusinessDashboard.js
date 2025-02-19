@@ -32,22 +32,19 @@ const BusinessDashboard = () => {
   const [approvedCount, setApprovedCount] = useState(0);
   const [deniedCount, setDeniedCount] = useState(0);
   const [requests, setRequests] = useState([]); // Stores service requests
-  
+  const [BidiPlus, setBidiPlus] = useState(null);  // New state for storing profile
+
   useEffect(() => {
     const fetchBusinessDetailsRequestsAndBids = async () => {
         console.log("Fetching Business Details, Requests, and Bids...");
 
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-            console.error("Error fetching user:", userError);
-            return;
-        }
 
         if (user) {
             // Fetch business profile details
             const { data: profile, error: profileError } = await supabase
                 .from('business_profiles')
-                .select('business_name')
+                .select('business_name, business_category, stripe_account_id, id, down_payment_type, amount, Bidi_Plus')
                 .eq('id', user.id)
                 .single();
 
@@ -55,27 +52,21 @@ const BusinessDashboard = () => {
                 console.error("Error fetching profile:", profileError);
                 return;
             }
-
-            console.log("Fetched Business Name:", profile?.business_name);
-            setBusinessName(profile?.business_name || "Business Name Not Found");
-
-            // Fetch service requests including time_of_day
-            const { data: requestsData, error: requestsError } = await supabase
-                .from("requests")
-                .select("*");
-
-            if (requestsError) {
-                console.error("Error fetching requests:", requestsError);
-                return;
+            if (profile.Bidi_Plus)
+            {
+              setBidiPlus(true)
+            }
+            else {
+              setBidiPlus(false)
             }
 
-            setRequests(requestsData); // Store requests in state
-
+            setBusinessName(profile?.business_name || "Business Name Not Found");
             // Fetch bids and count Pending, Approved, Denied
             const { data: bidsData, error: bidsError } = await supabase
-                .from("bids")
-                .select("status")
-                .eq("user_id", user.id);
+              .from('bids')
+              .select('bid_amount, id, status, bid_description, request_id, hidden') // Get the request_id for each bid
+              .eq('user_id', profile.id) // Only fetch bids for the current business
+              .or('hidden.is.false,hidden.is.null'); // This will check for both false and null
 
             if (bidsError) {
                 console.error("Error fetching bids:", bidsError);
@@ -85,14 +76,27 @@ const BusinessDashboard = () => {
             // Count bid statuses dynamically
             const counts = { pending: 0, approved: 0, denied: 0 };
             bidsData.forEach((bid) => {
-                if (bid.status === "Pending") counts.pending += 1;
-                else if (bid.status === "Approved") counts.approved += 1;
-                else if (bid.status === "Denied") counts.denied += 1;
+                if (bid.status === "pending") counts.pending += 1;
+                else if (bid.status === "approved") counts.approved += 1;
+                else if (bid.status === "denied") counts.denied += 1;
             });
 
             setPendingCount(counts.pending);
             setApprovedCount(counts.approved);
             setDeniedCount(counts.denied);
+
+            // Fetch service requests including time_of_day
+            const { data: requestsData, error: requestsError } = await supabase
+                .from("requests")
+                .select("*")
+                .eq('service_category', profile.business_category);
+
+            if (requestsError) {
+                console.error("Error fetching requests:", requestsError);
+                return;
+            }
+
+            setRequests(requestsData); // Store requests in state
         }
     };
 
@@ -112,10 +116,22 @@ const formatDate = (dateString) => {
   
   
   // Shorten description to a certain length
-  const truncateText = (text, maxLength) => {
+  const truncateText = (text, maxLength, linelength) => {
     if (!text) return "N/A";
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-  };
+
+    if (text.length <= maxLength) return text;
+
+    // Find the last space within the linelength limit
+    let spaceIndex = text.lastIndexOf(' ', linelength);
+
+    // If there's no space within linelength, cut at linelength
+    if (spaceIndex === -1) {
+        return text.substring(0, linelength) + "...";
+    }
+
+    return text.substring(0, maxLength) + "...";
+};
+
 
   // Check if there's more content to view
   const hasMoreContent = (description, length) => {
@@ -247,6 +263,48 @@ const formatDate = (dateString) => {
     }
   };
 
+  const formatBusinessName = (name) => {
+    if (!name) return "Your Business";
+
+    const maxLength = 20;
+    if (name.length > maxLength) {
+        const words = name.split(" ");
+        let currentLine = "";
+        let formattedName = [];
+
+        words.forEach((word) => {
+            if ((currentLine + word).length > maxLength) {
+                formattedName.push(currentLine.trim());
+                currentLine = word + " ";
+            } else {
+                currentLine += word + " ";
+            }
+        });
+
+        formattedName.push(currentLine.trim());
+        let sVisible = ""
+        if (!BidiPlus) {
+          sVisible = "hidden"; // Hide if false or null
+        }
+        return (
+          <span>
+          {formattedName.map((line, index) => (
+            <span key={index}>
+              {line} {index === formattedName.length - 1 && BidiPlus && (
+                <img src={verifiedCheckIcon} alt="Verified Check" className="verified-icon" />
+              )}
+              <br />
+            </span>
+          ))}
+        </span>
+        );
+    }
+
+    return name;
+};
+
+
+
   return (
     <div className="business-dashboard text-left">
       <div className="dashboard-container">
@@ -254,10 +312,9 @@ const formatDate = (dateString) => {
         <aside className="sidebar">
           <div className="profile-section">
             <img src={profilePic} alt="Profile" className="profile-pic" />
-            <div className="verified-badge">Verified</div>
+            {BidiPlus && <div className="verified-badge">Verified</div>}
             <h4 className="profile-name">
-            {businessName || "Your Business"} 
-              <img src={verifiedCheckIcon} alt="Verified Check" className="verified-icon" />
+              <span className="business-name-under-picture">{formatBusinessName(businessName)}</span>
             </h4>
           </div>
           <ul className="sidebar-links">
@@ -283,9 +340,9 @@ const formatDate = (dateString) => {
             </li>
           </ul>
           <br></br><br></br>
-          <div className="upgrade-box">
+          {!BidiPlus && <div className="upgrade-box">
             <p>Upgrade to <strong>PRO</strong> to get access to all features!</p>
-          </div>
+          </div>}
         </aside>
 
         {/* Main Dashboard */}
@@ -361,7 +418,7 @@ const formatDate = (dateString) => {
                       <div className="job-location-hours">
                         <div className="job-info-container">
                           <span className="job-label">Location</span>
-                          <span className="job-value">{truncateText(request.location, 30)}</span>
+                          <span className="job-value">{truncateText(request.location, 30, 6)}</span>
                         </div>
                         <div className="job-info-container">
                           <span className="job-label">Hours Needed</span>
@@ -372,10 +429,11 @@ const formatDate = (dateString) => {
                       {/* Description */}
                       <div className="job-description">
                         <span className="job-label">Description</span>
-                        <p className="job-value">{truncateText(request.additional_comments, 50)}</p>
+                        <p className="job-value">{truncateText(request.additional_comments, 50, 15)}</p>
                       </div>
-
-                    <button className="view-btn">View</button>
+                                            <Link to={`/submit-bid/${request.id}`} style={{textDecoration:'none'}}>
+                                              <button className="view-btn">View</button>
+                                            </Link>
                   </div>
                   ))
               ) : (
