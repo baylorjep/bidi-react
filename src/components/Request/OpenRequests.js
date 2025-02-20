@@ -18,6 +18,16 @@ const BUSINESS_TYPE_MAPPING = {
 
 };
 
+const SERVICE_CATEGORY_MAPPING = {
+    'photography': { table: 'photography_requests', legacy: 'photography' },
+    'dj': { table: 'dj_requests', legacy: 'dj' },
+    'catering': { table: 'catering_requests', legacy: 'catering' },
+    'hair and makeup artist': { table: 'beauty_requests', legacy: 'hair and makeup artist' },
+    'beauty': { table: 'beauty_requests', legacy: 'beauty' },
+    'videography': { table: 'videography_requests', legacy: 'videography' },
+    'florist': { table: 'florist_requests', legacy: 'florist' }
+};
+
 function OpenRequests() {
     const [openRequests, setOpenRequests] = useState([]);
     const [openPhotoRequests, setOpenPhotoRequests] = useState([]);
@@ -119,52 +129,40 @@ function OpenRequests() {
                 const isValidCategory = validCategories.includes(businessType.toLowerCase());
 
                 if (isValidCategory) {
-                    // Existing logic for specific categories
-                    const serviceCategory = {
-                        'photography': 'photography',
-                        'dj': 'dj',
-                        'catering': 'catering',
-                        'hair and makeup artist': 'beauty',
-                        'beauty': 'beauty',
-                        'videography': 'videography',
-                        'florist': 'florist'
-                    }[businessType?.toLowerCase()];
-
+                    const categoryInfo = SERVICE_CATEGORY_MAPPING[businessType.toLowerCase()];
+                    
                     const [specificTableData, legacyRequestsData] = await Promise.all([
                         supabase
-                            .from(`${serviceCategory}_requests`)
-                            .select('*, created_at, date_flexibility, date_timeframe, start_date, end_date')
+                            .from(categoryInfo.table)
+                            .select('*')
                             .in('status', ['pending', 'open'])
                             .order('created_at', { ascending: false }),
                         supabase
                             .from('requests')
-                            .select('*, created_at, service_date')
-                            .eq('service_category', serviceCategory)
+                            .select('*')
+                            .eq('service_category', categoryInfo.legacy)
                             .eq('open', true)
                             .order('created_at', { ascending: false })
                     ]);
 
-                    if (specificTableData.error) {
-                        console.error(`${serviceCategory} request error:`, specificTableData.error);
-                    }
-                    if (legacyRequestsData.error) {
-                        console.error('Legacy request error:', legacyRequestsData.error);
-                    }
+                    console.log('Fetching requests for:', businessType);
+                    console.log('From specific table:', categoryInfo.table);
+                    console.log('Legacy category:', categoryInfo.legacy);
+                    console.log('Specific table results:', specificTableData.data?.length);
+                    console.log('Legacy table results:', legacyRequestsData.data?.length);
 
                     const combinedRequests = [
                         ...(specificTableData.data?.map(req => ({
                             ...req,
-                            table_name: `${serviceCategory}_requests`,
+                            table_name: categoryInfo.table,
                             service_title: req.title || req.event_title || `${req.event_type} ${businessType} Request`,
-                            price_range: req.budget_range || req.price_range,
-                            service_date: req.start_date || req.date
+                            service_category: categoryInfo.legacy
                         })) || []),
                         ...(legacyRequestsData.data?.map(req => ({
                             ...req,
                             table_name: 'requests',
                             service_title: req.service_title || req.title || `${businessType} Request`,
-                            price_range: req.budget || req.price_range,
-                            service_date: req.service_date
+                            service_category: categoryInfo.legacy
                         })) || [])
                     ];
 
@@ -219,7 +217,7 @@ function OpenRequests() {
                         supabase
                             .from('requests')
                             .select('*')
-                            .eq('open', true)
+                            .eq('open', true)  // Keep using boolean for legacy table
                             .order('created_at', { ascending: false })
                     ]);
 
