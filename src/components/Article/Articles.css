@@ -43,12 +43,6 @@
     max-width: 1000px;
 }
 
-.article-content h2 {
-    font-size: 16px; /* Adjust title size */
-    margin: 0; /* Remove default margin */
-    text-wrap: balance;
-}
-
 .article-content p {
     font-size: 14px; /* Adjust description size */
     color: #555; /* Change text color */

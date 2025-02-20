@@ -57,10 +57,23 @@ const Articles = () => {
                         </div>
                     </Link>
                 </li>
+                <li className="article-navigation-item">
+                    <Link to="/articles/wedding-dj-cost-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <div className="article-preview">
+                            <img src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/f21fe181-8769-4701-a632-01f7e061d239.png" 
+                                 alt="Wedding DJ Cost Guide" 
+                                 className="article-image" />
+                            <div className="article-content">
+                                <h2>How to Find a Wedding DJ Near Me: Expert Guide to Prices & Booking</h2>
+                                <p>Find the perfect wedding DJ with our comprehensive guide on costs, services, and what to look for when booking. Get expert insights on prices and packages for 2025.</p>
+                            </div>
+                        </div>
+                    </Link>
+                </li>
                 {/* Add more articles here */}
             </ul>
         </div>
     );
 };
 
-export default Articles; 
+export default Articles;
