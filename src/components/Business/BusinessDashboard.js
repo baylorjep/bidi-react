@@ -15,6 +15,7 @@ import messageIcon from '../../assets/images/Icons/message.svg';
 import paymentIcon from '../../assets/images/Icons/payment.svg';
 import settingsIcon from '../../assets/images/Icons/settings.svg';
 import { format } from "date-fns";
+import MessagingView from "../Messaging/MessagingView";
 
 const BusinessDashboard = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -33,6 +34,7 @@ const BusinessDashboard = () => {
   const [deniedCount, setDeniedCount] = useState(0);
   const [requests, setRequests] = useState([]); // Stores service requests
   const [BidiPlus, setBidiPlus] = useState(null);  // New state for storing profile
+  const [activeSection, setActiveSection] = useState("dashboard");
 
   useEffect(() => {
     const fetchBusinessDetailsRequestsAndBids = async () => {
@@ -343,7 +345,7 @@ const formatDate = (dateString) => {
               <img src={bidsIcon} alt="Bids" />
               <span>Bids</span>
             </li>
-            <li onClick={() => navigate("/messages")} style={{ cursor: "pointer" }}>
+            <li onClick={() => setActiveSection("messages")} style={{ cursor: "pointer" }}>
               <img src={messageIcon} alt="Message" />
               <span>Message</span>
             </li>
@@ -370,6 +372,11 @@ const formatDate = (dateString) => {
 
         {/* Main Dashboard */}
         <main className="dashboard-main">
+        
+          {activeSection === "messages" ? <MessagingView /> : (
+            <>
+            
+        
           <section className="dashboard-header">
             {/* Left Section */}
             <div className="dashboard-header-left">
@@ -465,6 +472,9 @@ const formatDate = (dateString) => {
             </div>
 
           </section>
+          
+          </>
+        )}
         </main>
       </div>
 
