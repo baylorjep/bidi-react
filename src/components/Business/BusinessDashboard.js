@@ -40,33 +40,43 @@ const BusinessDashboard = () => {
 
         const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-        if (user) {
-            // Fetch business profile details
-            const { data: profile, error: profileError } = await supabase
-                .from('business_profiles')
-                .select('business_name, business_category, stripe_account_id, id, down_payment_type, amount, Bidi_Plus')
-                .eq('id', user.id)
-                .single();
+        if (userError) {
+            console.error("Error fetching user:", userError);
+            return;
+        }
 
-            if (profileError) {
-                console.error("Error fetching profile:", profileError);
-                return;
-            }
-            if (profile.Bidi_Plus)
-            {
-              setBidiPlus(true)
-            }
-            else {
-              setBidiPlus(false)
+        if (!user) {
+            console.error("No user found.");
+            return;
+        }
+
+        // Fetch business profile details
+        const { data: profile, error: profileError } = await supabase
+            .from('business_profiles')
+            .select('business_name, business_category, stripe_account_id, id, down_payment_type, amount, Bidi_Plus')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError) {
+            console.error("Error fetching profile:", profileError);
+            return;
+        }
+
+        if (profile) {
+            setBusinessName(profile.business_name || "Business Name Not Found");
+
+            if (profile.stripe_account_id) {
+                setConnectedAccountId(profile.stripe_account_id);
             }
 
-            setBusinessName(profile?.business_name || "Business Name Not Found");
+            setBidiPlus(profile.Bidi_Plus ? true : false);
+
             // Fetch bids and count Pending, Approved, Denied
             const { data: bidsData, error: bidsError } = await supabase
-              .from('bids')
-              .select('bid_amount, id, status, bid_description, request_id, hidden') // Get the request_id for each bid
-              .eq('user_id', profile.id) // Only fetch bids for the current business
-              .or('hidden.is.false,hidden.is.null'); // This will check for both false and null
+                .from('bids')
+                .select('bid_amount, id, status, bid_description, request_id, hidden') // Get the request_id for each bid
+                .eq('user_id', profile.id) // Only fetch bids for the current business
+                .or('hidden.is.false,hidden.is.null'); // This will check for both false and null
 
             if (bidsError) {
                 console.error("Error fetching bids:", bidsError);
@@ -77,31 +87,38 @@ const BusinessDashboard = () => {
             const counts = { pending: 0, approved: 0, denied: 0 };
             bidsData.forEach((bid) => {
                 if (bid.status === "pending") counts.pending += 1;
-                else if (bid.status === "approved") counts.approved += 1;
+                else if (bid.status === "accepted") counts.approved += 1;
                 else if (bid.status === "denied") counts.denied += 1;
             });
+            console.log(counts)
 
             setPendingCount(counts.pending);
             setApprovedCount(counts.approved);
             setDeniedCount(counts.denied);
 
             // Fetch service requests including time_of_day
-            const { data: requestsData, error: requestsError } = await supabase
-                .from("requests")
-                .select("*")
-                .eq('service_category', profile.business_category);
+            if (profile.business_category) {
+                const { data: requestsData, error: requestsError } = await supabase
+                    .from("requests")
+                    .select("*")
+                    .eq('service_category', profile.business_category);
 
-            if (requestsError) {
-                console.error("Error fetching requests:", requestsError);
-                return;
+                if (requestsError) {
+                    console.error("Error fetching requests:", requestsError);
+                    return;
+                }
+
+                setRequests(requestsData); // Store requests in state
+            } else {
+                console.warn("No business category found for this profile.");
+                setRequests([]); // Ensure no stale requests remain
             }
-
-            setRequests(requestsData); // Store requests in state
         }
     };
 
     fetchBusinessDetailsRequestsAndBids();
 }, []);
+
 
 
 const formatDate = (dateString) => {
@@ -330,9 +347,15 @@ const formatDate = (dateString) => {
               <img src={messageIcon} alt="Message" />
               <span>Message</span>
             </li>
-            <li onClick={() => navigate("/onboarding")} style={{ cursor: "pointer" }}>
-              <img src={paymentIcon} alt="Payment" />
-              <span>Payment</span>
+            <li style={{ cursor: connectedAccountId ? "default" : "pointer" }}>
+              {connectedAccountId ? (
+                <StripeDashboardButton accountId={connectedAccountId} />
+              ) : (
+                <button onClick={() => navigate("/onboarding")} style={{ background: "none", border: "none", cursor: "pointer" }}>
+                  <img src={paymentIcon} alt="Payment" />
+                  <span>Payment</span>
+                </button>
+              )}
             </li>
             <li onClick={() => navigate("/profile")} style={{ cursor: "pointer" }}>
               <img src={settingsIcon} alt="Settings" />

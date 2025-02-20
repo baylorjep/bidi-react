@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import paymentIcon from '../../assets/images/Icons/payment.svg';
 
 const StripeDashboardButton = ({ accountId }) => {
   const [error, setError] = useState(null);
@@ -28,7 +29,7 @@ const StripeDashboardButton = ({ accountId }) => {
   return (
     <div>
       {error && <p>{error}</p>}
-      <button className="btn-secondary flex-fill"  style={{fontWeight:'bold'}}onClick={handleViewDashboard}>Payment Dashboard</button>
+      <span onClick={handleViewDashboard}><img src={paymentIcon} alt="Payment" />Payment</span>
     </div>
   );
 };

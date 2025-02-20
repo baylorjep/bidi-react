@@ -16398,7 +16398,6 @@ label {
 .profile-section {
   position: relative;
   text-align: center;
-  margin-bottom: 2vh;
 }
 .profile-pic {
   width: 6vw;
@@ -16427,7 +16426,7 @@ label {
   max-width: 12vw;
   line-height: 1.2;
   font-size: 0.9vw;
-  margin-top: 1vw;
+  margin-top: 1.3vw;
 }
 
 .business-name-under-picture {
@@ -16459,7 +16458,7 @@ label {
 .sidebar-links li {
   display: flex;
   align-items: center;
-  padding: 1vh 0;
+  padding: .8vh 0;
   font-size: 1.2vw;
 }
 .sidebar-links li img {
