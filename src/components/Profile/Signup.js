@@ -228,78 +228,87 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
                     </div>*/}
 
                     {userType === 'business' && (
-                            <>
-                                <div className="sign-in-input-container">
+                        <div className='sign-up-single-column'>
+                            <div className="sign-in-input-container">
                                 <label htmlFor="businessName">Business Name</label>
-                                    <input
-                                        className="sign-in-form"
-                                        id="businessName"
-                                        name="businessName"
-                                        type="text"
-                                        placeholder="Business Name"
-                                        value={formData.businessName}
-                                        onChange={handleChange}
-                                        required
-                                    />
-
-                                </div>
-                                <div className="sign-in-input-container">
-                                <label htmlFor="businessCategory">Business Category</label>
-                                    <select
-                                        className="sign-in-form"
-                                        id="businessCategory"
-                                        name="businessCategory"
-                                        value={formData.businessCategory}
-                                        onChange={handleChange}
-                                        required
-                                    >
-                                        <option value="">Select a category...</option>
-                                        <option value="photography">Photography</option>
-                                        <option value="videography">Videography</option>
-                                        <option value="dj">DJ</option>
-                                        <option value="cake">Cake Making</option>
-                                        <option value="catering">Catering</option>
-                                        <option value="hair and makeup artist">Hair and Makeup Artist</option>
-                                        <option value="wedding planner/coordinator">Wedding/Event Planner</option>
-                                        <option value="florist">Florist</option>
-                                        <option value="rental">Rentals</option>
-                                        <option value="venue">Venue</option>
-                                        <option value="other">Other</option>
-                                    </select>
-
-                                </div>
-                                {formData.businessCategory === 'other' && (
-                                    <div className="sign-in-input-container">
-                                        <label htmlFor="otherBusinessCategory">Please specify your business category</label>
-                                        <input
-                                            className="sign-in-form"
-                                            id="otherBusinessCategory"
-                                            name="otherBusinessCategory"
-                                            type="text"
-                                            placeholder="Specify your business category"
-                                            value={formData.otherBusinessCategory}
-                                            onChange={handleChange}
-                                            required
-                                            
-                                        />
-                                    </div>
-                                )}
-                                <div className="sign-in-input-container">
-                                <label htmlFor="businessAddress">Business Address</label>
-                                    <input
-                                        className="sign-in-form"
-                                        id="businessAddress"
-                                        name="businessAddress"
-                                        type="text"
-                                        placeholder="Business Address"
-                                        value={formData.businessAddress}
-                                        onChange={handleChange}
-                                        required
-                                    />
-
+                                <input
+                                    className="sign-in-form"
+                                    id="businessName"
+                                    name="businessName"
+                                    type="text"
+                                    placeholder="Business Name"
+                                    value={formData.businessName}
+                                    onChange={handleChange}
+                                    required
+                                />
                             </div>
                             <div className="sign-in-input-container">
-                            <label htmlFor="website">Website (Optional)</label>
+                                <label htmlFor="businessCategory">Business Category</label>
+                                <select
+                                    className="sign-in-form"
+                                    id="businessCategory"
+                                    name="businessCategory"
+                                    value={formData.businessCategory}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="">Select a category...</option>
+                                    <option value="photography">Photography</option>
+                                    <option value="videography">Videography</option>
+                                    <option value="dj">DJ</option>
+                                    <option value="cake">Cake Making</option>
+                                    <option value="catering">Catering</option>
+                                    <option value="hair and makeup artist">Hair and Makeup Artist</option>
+                                    <option value="wedding planner/coordinator">Wedding/Event Planner</option>
+                                    <option value="florist">Florist</option>
+                                    <option value="rental">Rentals</option>
+                                    <option value="venue">Venue</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            {formData.businessCategory === 'other' && (
+                                <div className="sign-in-input-container">
+                                    <label htmlFor="otherBusinessCategory">Please specify your business category</label>
+                                    <input
+                                        className="sign-in-form"
+                                        id="otherBusinessCategory"
+                                        name="otherBusinessCategory"
+                                        type="text"
+                                        placeholder="Specify your business category"
+                                        value={formData.otherBusinessCategory}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </div>
+                            )}
+                            <div className="sign-in-input-container">
+                                <label htmlFor="phone">Phone Number</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="phone"
+                                    name="phone"
+                                    type="tel"
+                                    placeholder="Phone Number"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="sign-in-input-container">
+                                <label htmlFor="businessAddress">Business Address</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="businessAddress"
+                                    name="businessAddress"
+                                    type="text"
+                                    placeholder="Business Address"
+                                    value={formData.businessAddress}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="sign-in-input-container">
+                                <label htmlFor="website">Website (Optional)</label>
                                 <input
                                     className="sign-in-form"
                                     id="website"
@@ -308,10 +317,48 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
                                     placeholder="Business Website"
                                     value={formData.website}
                                     onChange={handleChange}
-                                    
                                 />
                             </div>
-                        </>
+                            <div className="sign-in-input-container">
+                                <label htmlFor="email">Email</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    placeholder="Email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="sign-in-input-container">
+                                <label htmlFor="password">Password</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    placeholder="Password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="sign-in-input-container">
+                                <label htmlFor="confirmPassword">Confirm Password</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    type="password"
+                                    placeholder="Confirm Password"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                        </div>
                     )}
                 {userType === 'individual' && (
                     <div className='sign-up-grid-container'>

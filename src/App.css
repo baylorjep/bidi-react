@@ -16498,3 +16498,12 @@ label {
   cursor: pointer; /* Change cursor to pointer on hover */
 }
 
+.sign-up-single-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
