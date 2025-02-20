@@ -96,6 +96,7 @@ import FloristRequest from './components/Request/Florist/FloristRequest'; // Add
 import CateringRequest from './components/Request/Catering/CateringRequest'; // Add this import
 import WeddingFloristCostGuide from './components/Article/WeddingFloristCostGuide';
 import WeddingDJCostGuide from './components/Article/WeddingDJCostGuide';
+import WeddingHairMakeupCostGuide from './components/Article/WeddingHairMakeupCostGuide';
 
 function App() {
 
@@ -196,6 +197,7 @@ function App() {
                         <Route path="/articles/wedding-catering-cost-guide" element={<WeddingCateringCostGuide />} />
                         <Route path="/articles/wedding-florist-cost-guide" element={<WeddingFloristCostGuide />} />
                         <Route path="/articles/wedding-dj-cost-guide" element={<WeddingDJCostGuide />} />
+                        <Route path="/articles/wedding-hair-makeup-cost-guide" element={<WeddingHairMakeupCostGuide />} />
 
                         {/* Photography Routes */}
                         <Route path="/request/photography" element={<PhotographyRequest />} />

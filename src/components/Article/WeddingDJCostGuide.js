@@ -4,15 +4,22 @@ import './Articles.css';
 
 const WeddingDJCostGuide = () => {
     return (
-        <div className="article-container">
+        <article className="article-container">
             <Helmet>
                 <title>How to Find a Wedding DJ Near Me: Expert Guide to Prices & Booking</title>
                 <meta name="description" content="Comprehensive guide on finding and booking a wedding DJ, including average costs, services, and essential questions to ask. Learn what to expect in 2025." />
                 <meta name="keywords" content="wedding DJ, wedding entertainment, DJ costs, wedding planning, wedding budget" />
             </Helmet>
-            
+            <header>
+            <h1>How to Find a Wedding DJ Near Me: Expert Guide to Prices & Booking</h1>
+                <h2 style={{ fontSize: '24px', color: '#555', textAlign: 'center', marginBottom: '20px' }}>
+                    A Comprehensive Overview of Wedding Entertainment Expenses and Insights
+                </h2>
+                <p style={{ fontSize: '16px', color: '#777', textAlign: 'center', marginBottom: '20px' }}>
+                    By Weston Burnett, CEO of Bidi | Published on February 19, 2025
+                </p>
+            </header>
             <div className="article-content">
-                <h1>How to Find a Wedding DJ Near Me: Expert Guide to Prices & Booking</h1>
                 <div className='article-container-image'>
                     <img 
                         src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/f21fe181-8769-4701-a632-01f7e061d239.png"
@@ -204,7 +211,7 @@ const WeddingDJCostGuide = () => {
 
                 <p>Ready to find the perfect DJ for your wedding? Let Bidi help you compare local DJs and get accurate pricing for your special day. Our platform makes it easy to find experienced professionals within your budget.</p>
             </div>
-        </div>
+        </article>
     );
 };
 

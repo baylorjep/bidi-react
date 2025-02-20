@@ -22,7 +22,15 @@ const WeddingCateringCostGuide = () => {
                 <meta name="twitter:description" content="Explore the comprehensive guide on wedding catering costs in 2025, featuring insights from real couples." />
                 <meta name="twitter:image" content="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/0feae650-b696-4124-89a5-b76f27157ab1.jpeg?st=2025-02-19T02%3A06%3A41Z&amp;se=2025-02-26T02%3A06%3A41Z&amp;sp=r&amp;sv=2025-01-05&amp;sr=b&amp;sig=Jy71E/0w%2BQV8h2IHqoywSMKqClC0oF6qX/e83pKliTI%3D" />
             </Helmet>
-        
+            <header>
+                <h1>Wedding Catering Cost Guide: What You'll Actually Pay in 2025</h1>
+                <h2 style={{ fontSize: '24px', color: '#555', textAlign: 'center', marginBottom: '20px' }}>
+                    A Comprehensive Overview of Wedding Catering Expenses and Insights
+                </h2>
+                <p style={{ fontSize: '16px', color: '#777', textAlign: 'center', marginBottom: '20px' }}>
+                    By Weston Burnett, CEO of Bidi | Published on February 18, 2025
+                </p>
+            </header>
             <h1>Wedding Catering Costs Revealed: What You'll Actually Pay in 2025 [Expert Data]</h1>
             <div className="article-container-image">
                 <img src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/0feae650-b696-4124-89a5-b76f27157ab1.jpeg?st=2025-02-19T02%3A06%3A41Z&amp;se=2025-02-26T02%3A06%3A41Z&amp;sp=r&amp;sv=2025-01-05&amp;sr=b&amp;sig=Jy71E/0w%2BQV8h2IHqoywSMKqClC0oF6qX/e83pKliTI%3D" data-width="100%" height="400px" data-align="center" alt="Hero Image for Wedding Catering Costs Revealed: What You'll Actually Pay in 2025 [Expert Data]" />     
@@ -131,4 +139,4 @@ const WeddingCateringCostGuide = () => {
     );
 };
 
-export default WeddingCateringCostGuide; 
+export default WeddingCateringCostGuide;

@@ -50,7 +50,7 @@ const WeddingPhotographerCostGuide = () => {
                     A Comprehensive Overview of Wedding Photography Expenses and Insights
                 </h2>
                 <p style={{ fontSize: '16px', color: '#777', textAlign: 'center', marginBottom: '20px' }}>
-                    By Weston Burnett, CEO of Bidi | Published on {new Date().toLocaleDateString()}
+                    By Weston Burnett, CEO of Bidi | Published on February 13, 2025
                 </p>
             </header>
             <div className="article-container-image">

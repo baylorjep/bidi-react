@@ -42,12 +42,12 @@ const WeddingVideographerCostGuide = () => {
 
             </Helmet>
             <header>
-                <h1>How Much Does a Wedding Videographer Really Cost? Hidden Fees Exposed (2025 Guide)</h1>
+                <h1>Wedding Videographer Cost Guide: What You'll Actually Pay in 2025</h1>
                 <h2 style={{ fontSize: '24px', color: '#555', textAlign: 'center', marginBottom: '20px' }}>
-                    Understanding the Real Costs of Wedding Videography
+                    A Comprehensive Overview of Wedding Videography Expenses and Insights
                 </h2>
                 <p style={{ fontSize: '16px', color: '#777', textAlign: 'center', marginBottom: '20px' }}>
-                    By Weston Burnett, CEO of Bidi | Published on {new Date().toLocaleDateString()}
+                    By Weston Burnett, CEO of Bidi | Published on February 15, 2025
                 </p>
             </header>
             <div className="article-container-image">
