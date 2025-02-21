@@ -12,7 +12,23 @@ const Articles = () => {
                 <meta name="keywords" content="wedding photography, articles, guides, budgeting, wedding planning" />
             </Helmet>
             <h1 className="articles-navigation-title">Wedding Guides</h1>
+
             <ul className="articles-navigation-list">
+                <li className="article-navigation-item">
+                    <Link to="/articles/utah-photography-cost-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <div className="article-preview">
+                            <img 
+                                src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/61bd4058-aa6f-4844-84b8-444afcf7fe9a.png?st=2025-02-21T02%3A03%3A37Z&se=2025-02-28T02%3A03%3A37Z&sp=r&sv=2025-01-05&sr=b&sig=eMyrsu3%2B9zDuzEoC/D/6vc/iY/qlGH7cjGS5M5gOwB0%3D"
+                                alt="Utah Photography Cost Guide" 
+                                className="article-image" 
+                            />
+                            <div className="article-content">
+                                <h2>Utah Photography Pricing Guide: What You'll Actually Pay in 2025</h2>
+                                <p>Get real pricing data for photographers across Utah, from Salt Lake City to St. George. Compare rates by region, experience level, and specialty. Includes tips for maximizing your photography budget in popular locations like Park City and Moab.</p>
+                            </div>
+                        </div>
+                    </Link>
+                </li>
                 <li className="article-navigation-item">
                     <Link to="/articles/wedding-photographer-cost-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <div className="article-preview">
@@ -85,6 +101,7 @@ const Articles = () => {
                         </div>
                     </Link>
                 </li>
+
                 {/* Add more articles here */}
             </ul>
         </div>
