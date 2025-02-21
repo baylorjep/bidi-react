@@ -16710,15 +16710,20 @@ label {
   flex-direction: column;
   text-align: left; /* Left-align content */
 }
-
-/* Adjusted Widths to Ensure Price Range Fits */
-.job-info-container.price-range {
-  width: 45%; /* Make it wider so it stays on one line */
+/* Job Info Grid Layout */
+.job-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  gap: 1vw; /* Adds spacing between items */
+  margin-bottom: 1.5vh;
+  width: 100%;
 }
 
-.job-info-container.date,
-.job-info-container.time {
-  width: 25%; /* Reduce width to balance spacing */
+/* Individual Job Info Items */
+.job-info-item {
+  display: flex;
+  flex-direction: column;
+  text-align: left; /* Align text to the left */
 }
 
 /* Job Labels (Price Range, Date, Time) */
@@ -16733,17 +16738,6 @@ label {
   font-size: 0.75vw;
   font-weight: normal;
   color: black;
-}
-
-/* Location & Hours Needed Row */
-.job-location-hours {
-  display: flex;
-  justify-content: flex-start; /* Aligns to the left */
-  gap: 4.5vw; /* Adds spacing between Location and Hours Needed */
-  font-size: 0.75vw;
-  font-weight: 600;
-  color: #999;
-  margin-bottom: 1.5vh;
 }
 
 /* Location & Hours Needed Values */

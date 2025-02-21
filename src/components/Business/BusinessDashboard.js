@@ -14,7 +14,7 @@ import bidsIcon from '../../assets/images/Icons/bids.svg';
 import messageIcon from '../../assets/images/Icons/message.svg';
 import paymentIcon from '../../assets/images/Icons/payment.svg';
 import settingsIcon from '../../assets/images/Icons/settings.svg';
-import { format } from "date-fns";
+import PlacedBidDisplay from "./PlacedBids";
 
 const BusinessDashboard = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -100,8 +100,9 @@ const BusinessDashboard = () => {
             if (profile.business_category) {
                 const { data: requestsData, error: requestsError } = await supabase
                     .from("requests")
-                    .select("*")
-                    .eq('service_category', profile.business_category);
+                    .select("id")
+                    .eq('service_category', profile.business_category)
+                    .eq('user_id', profile.id);
 
                 if (requestsError) {
                     console.error("Error fetching requests:", requestsError);
@@ -121,33 +122,10 @@ const BusinessDashboard = () => {
 
 
 
-const formatDate = (dateString) => {
-  if (!dateString) return "TBD"; // Handle missing date
-  try {
-    return format(new Date(dateString), "MMM d, yyyy"); // "MMM" gives short month
-  } catch (error) {
-    console.error("Invalid date format:", dateString);
-    return "Invalid Date";
-  }
-};
+
   
   
-  // Shorten description to a certain length
-  const truncateText = (text, maxLength, linelength) => {
-    if (!text) return "N/A";
 
-    if (text.length <= maxLength) return text;
-
-    // Find the last space within the linelength limit
-    let spaceIndex = text.lastIndexOf(' ', linelength);
-
-    // If there's no space within linelength, cut at linelength
-    if (spaceIndex === -1) {
-        return text.substring(0, linelength) + "...";
-    }
-
-    return text.substring(0, maxLength) + "...";
-};
 
 
   // Check if there's more content to view
@@ -418,47 +396,8 @@ const formatDate = (dateString) => {
             <div className="job-cards">
               {requests.length > 0 ? (
                 requests.map((request, index) => (
-                  <div key={index} className="job-card">
-                    <h3 className="truncate">{truncateText(request.service_title, 20)}</h3>
-
-                    {/* Price, Date, Time */}
-                      <div className="job-info-row">
-                        <div className="job-info-container price-range">
-                          <span className="job-label">Price Range</span>
-                          <span className="job-value">{truncateText(request.price_range, 20)}</span>
-                        </div>
-                        <div className="job-info-container date">
-                          <span className="job-label">Date</span>
-                          <span className="job-value">{formatDate(request.service_date)}</span>
-                        </div>
-                        <div className="job-info-container time">
-                          <span className="job-label">Time</span>
-                          <span className="job-value">{truncateText(request.time_of_day, 15)}</span>
-                        </div>
-                      </div>
-
-                      {/* Location & Hours Needed */}
-                      <div className="job-location-hours">
-                        <div className="job-info-container">
-                          <span className="job-label">Location</span>
-                          <span className="job-value">{truncateText(request.location, 30, 6)}</span>
-                        </div>
-                        <div className="job-info-container">
-                          <span className="job-label">Hours Needed</span>
-                          <span className="job-value">{request.hours_needed || "Unknown"}</span>
-                        </div>
-                      </div>
-
-                      {/* Description */}
-                      <div className="job-description">
-                        <span className="job-label">Description</span>
-                        <p className="job-value">{truncateText(request.additional_comments, 50, 15)}</p>
-                      </div>
-                                            <Link to={`/submit-bid/${request.id}`} style={{textDecoration:'none'}}>
-                                              <button className="view-btn">View</button>
-                                            </Link>
-                  </div>
-                  ))
+                  <PlacedBidDisplay key={request.id} requestId={request.id} />
+                ))
               ) : (
                 <p className="no-jobs">No available jobs at this time.</p>
               )}
