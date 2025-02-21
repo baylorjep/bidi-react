@@ -14,7 +14,8 @@ import bidsIcon from '../../assets/images/Icons/bids.svg';
 import messageIcon from '../../assets/images/Icons/message.svg';
 import paymentIcon from '../../assets/images/Icons/payment.svg';
 import settingsIcon from '../../assets/images/Icons/settings.svg';
-import PlacedBidDisplay from "./PlacedBids";
+import { format } from "date-fns";
+import MessagingView from "../Messaging/MessagingView";
 
 const BusinessDashboard = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -33,6 +34,7 @@ const BusinessDashboard = () => {
   const [deniedCount, setDeniedCount] = useState(0);
   const [requests, setRequests] = useState([]); // Stores service requests
   const [BidiPlus, setBidiPlus] = useState(null);  // New state for storing profile
+  const [activeSection, setActiveSection] = useState("dashboard");
 
   useEffect(() => {
     const fetchBusinessDetailsRequestsAndBids = async () => {
@@ -100,9 +102,8 @@ const BusinessDashboard = () => {
             if (profile.business_category) {
                 const { data: requestsData, error: requestsError } = await supabase
                     .from("requests")
-                    .select("id")
-                    .eq('service_category', profile.business_category)
-                    .eq('user_id', profile.id);
+                    .select("*")
+                    .eq('service_category', profile.business_category);
 
                 if (requestsError) {
                     console.error("Error fetching requests:", requestsError);
@@ -122,10 +123,33 @@ const BusinessDashboard = () => {
 
 
 
-
+const formatDate = (dateString) => {
+  if (!dateString) return "TBD"; // Handle missing date
+  try {
+    return format(new Date(dateString), "MMM d, yyyy"); // "MMM" gives short month
+  } catch (error) {
+    console.error("Invalid date format:", dateString);
+    return "Invalid Date";
+  }
+};
   
   
+  // Shorten description to a certain length
+  const truncateText = (text, maxLength, linelength) => {
+    if (!text) return "N/A";
 
+    if (text.length <= maxLength) return text;
+
+    // Find the last space within the linelength limit
+    let spaceIndex = text.lastIndexOf(' ', linelength);
+
+    // If there's no space within linelength, cut at linelength
+    if (spaceIndex === -1) {
+        return text.substring(0, linelength) + "...";
+    }
+
+    return text.substring(0, maxLength) + "...";
+};
 
 
   // Check if there's more content to view
@@ -321,7 +345,7 @@ const BusinessDashboard = () => {
               <img src={bidsIcon} alt="Bids" />
               <span>Bids</span>
             </li>
-            <li onClick={() => navigate("/messages")} style={{ cursor: "pointer" }}>
+            <li onClick={() => setActiveSection("messages")} style={{ cursor: "pointer" }}>
               <img src={messageIcon} alt="Message" />
               <span>Message</span>
             </li>
@@ -348,6 +372,11 @@ const BusinessDashboard = () => {
 
         {/* Main Dashboard */}
         <main className="dashboard-main">
+        
+          {activeSection === "messages" ? <MessagingView /> : (
+            <>
+            
+        
           <section className="dashboard-header">
             {/* Left Section */}
             <div className="dashboard-header-left">
@@ -396,14 +425,56 @@ const BusinessDashboard = () => {
             <div className="job-cards">
               {requests.length > 0 ? (
                 requests.map((request, index) => (
-                  <PlacedBidDisplay key={request.id} requestId={request.id} />
-                ))
+                  <div key={index} className="job-card">
+                    <h3 className="truncate">{truncateText(request.service_title, 20)}</h3>
+
+                    {/* Price, Date, Time */}
+                      <div className="job-info-row">
+                        <div className="job-info-container price-range">
+                          <span className="job-label">Price Range</span>
+                          <span className="job-value">{truncateText(request.price_range, 20)}</span>
+                        </div>
+                        <div className="job-info-container date">
+                          <span className="job-label">Date</span>
+                          <span className="job-value">{formatDate(request.service_date)}</span>
+                        </div>
+                        <div className="job-info-container time">
+                          <span className="job-label">Time</span>
+                          <span className="job-value">{truncateText(request.time_of_day, 15)}</span>
+                        </div>
+                      </div>
+
+                      {/* Location & Hours Needed */}
+                      <div className="job-location-hours">
+                        <div className="job-info-container">
+                          <span className="job-label">Location</span>
+                          <span className="job-value">{truncateText(request.location, 30, 6)}</span>
+                        </div>
+                        <div className="job-info-container">
+                          <span className="job-label">Hours Needed</span>
+                          <span className="job-value">{request.hours_needed || "Unknown"}</span>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div className="job-description">
+                        <span className="job-label">Description</span>
+                        <p className="job-value">{truncateText(request.additional_comments, 50, 15)}</p>
+                      </div>
+                                            <Link to={`/submit-bid/${request.id}`} style={{textDecoration:'none'}}>
+                                              <button className="view-btn">View</button>
+                                            </Link>
+                  </div>
+                  ))
               ) : (
                 <p className="no-jobs">No available jobs at this time.</p>
               )}
             </div>
 
           </section>
+          
+          </>
+        )}
         </main>
       </div>
 
