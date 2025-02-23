@@ -19,6 +19,8 @@ export default function BidsPage() {
     const [bids, setBids] = useState([]);
     const [activeTab, setActiveTab] = useState('pending');
     const [user, setUser] = useState(null);
+    const [showAcceptModal, setShowAcceptModal] = useState(false);
+    const [selectedBid, setSelectedBid] = useState(null);
     const navigate = useNavigate();
 
     const isNew = (createdAt) => {
@@ -429,6 +431,20 @@ export default function BidsPage() {
         }
     };
 
+    const handleAcceptBidClick = (bid) => {
+        setSelectedBid(bid);
+        setShowAcceptModal(true);
+    };
+
+    const handleConfirmAccept = async () => {
+        if (selectedBid) {
+            await handleMoveToAccepted(selectedBid);
+            setShowAcceptModal(false);
+            setSelectedBid(null);
+            setActiveTab('approved'); // Add this line to switch to the approved tab
+        }
+    };
+
     const calculateDownPayment = (bid) => {
         if (!bid.business_profiles.down_payment_type || bid.business_profiles.amount === null) {
             return null;
@@ -455,8 +471,8 @@ export default function BidsPage() {
                 <BidDisplay
                     key={bid.id}
                     bid={bid}
-                    handleApprove={() => handleMoveToAccepted(bid)}
-                    handleDeny={() => handleMoveToDenied(bid)}
+                    handleApprove={() => handleAcceptBidClick(bid)}
+                    handleDeny={() => handleMoveToDenied(bid)} // Direct denial without modal
                     showActions={true}
                 />
             );
@@ -578,7 +594,7 @@ export default function BidsPage() {
                         <button 
                             className="btn-success flex-fill"
                             style={{width: '100%'}}
-                            onClick={() => handleMoveToAccepted(bid)}
+                            onClick={() => handleAcceptBidClick(bid)} // Use the modal when accepting from denied tab
                         >
                             Accept
                         </button>
@@ -801,6 +817,39 @@ export default function BidsPage() {
                     )}
                 </div>
             </div>
+
+            {showAcceptModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Accept Bid Confirmation</h3>
+                        <p>Are you sure you want to accept this bid from {selectedBid?.business_profiles?.business_name}?</p>
+                        <p>By accepting this bid:</p>
+                        <ul>
+                            <li>Your contact information will be shared with the business</li>
+                            <li>The business will be notified and can reach out to you directly</li>
+                        </ul>
+                        <div className="modal-buttons">
+                            <button 
+                                className="btn-danger"
+                                style={{borderRadius:'40px'}}
+                                onClick={() => {
+                                    setShowAcceptModal(false);
+                                    setSelectedBid(null);
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                className="btn-success"
+                                style={{borderRadius:'40px'}}
+                                onClick={handleConfirmAccept}
+                            >
+                                Accept Bid
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
