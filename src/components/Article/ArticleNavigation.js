@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom'; // Import Link from react-router-dom
 import './Articles.css'; // Import the CSS file
 import Helmet from 'react-helmet'; // Import Helmet for SEO
+import weddingPlanning from '../../assets/articles/weddingplanning.jpg'
 
 const Articles = () => {
     return (
@@ -14,6 +15,21 @@ const Articles = () => {
             <h1 className="articles-navigation-title">Wedding Guides</h1>
 
             <ul className="articles-navigation-list">
+            <li className="article-navigation-item">
+                    <Link to="/articles/utah-wedding-planning-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <div className="article-preview">
+                            <img 
+                                src={weddingPlanning} 
+                                alt="Utah Wedding Planning Guide" 
+                                className="article-image" 
+                            />
+                            <div className="article-content">
+                                <h2>How to Plan Your Dream Utah Wedding: A Wedding Planner's Step-by-Step Guide</h2>
+                                <p>Navigate Utah wedding planning with confidence. From temple ceremonies to mountain venues, discover everything you need to know about creating your perfect celebration in the Beehive State, including costs, traditions, and seasonal considerations.</p>
+                            </div>
+                        </div>
+                    </Link>
+                </li>
                 <li className="article-navigation-item">
                     <Link to="/articles/utah-photography-cost-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <div className="article-preview">

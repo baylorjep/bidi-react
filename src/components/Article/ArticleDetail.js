@@ -12,6 +12,7 @@ import WeddingCateringCostGuide from '../Article/WeddingCateringCostGuide';
 import WeddingFloristCostGuide from '../Article/WeddingFloristCostGuide';
 import WeddingDJCostGuide from '../Article/WeddingDJCostGuide';
 import WeddingHairMakeupCostGuide from '../Article/WeddingHairMakeupCostGuide';
+import UtahWeddingPlanningGuide from '../Article/UtahWeddingPlanningGuide';
 
 const articleComponents = {
     'utah-photography-cost-guide': UtahPhotographyCostGuide,
@@ -20,7 +21,8 @@ const articleComponents = {
     'wedding-catering-cost-guide': WeddingCateringCostGuide,
     'wedding-florist-cost-guide': WeddingFloristCostGuide,
     'wedding-dj-cost-guide': WeddingDJCostGuide,
-    'wedding-hair-makeup-cost-guide': WeddingHairMakeupCostGuide
+    'wedding-hair-makeup-cost-guide': WeddingHairMakeupCostGuide,
+    'utah-wedding-planning-guide': UtahWeddingPlanningGuide
 };
 
 const ArticleDetail = () => {
