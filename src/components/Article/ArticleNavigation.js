@@ -23,7 +23,7 @@ const Articles = () => {
                                 className="article-image" 
                             />
                             <div className="article-content">
-                                <h2>Utah Photography Pricing Guide: What You'll Actually Pay in 2025</h2>
+                                <h2>Utah Wedding Photographer Guide 2025: Costs, Styles & Expert Tips</h2>
                                 <p>Get real pricing data for photographers across Utah, from Salt Lake City to St. George. Compare rates by region, experience level, and specialty. Includes tips for maximizing your photography budget in popular locations like Park City and Moab.</p>
                             </div>
                         </div>
@@ -34,7 +34,7 @@ const Articles = () => {
                         <div className="article-preview">
                             <img src={require('../../assets/articles/WeddingPhotographyCostGuide/photographer.webp')} alt="Wedding Photographer Cost Guide" className="article-image" />
                             <div className="article-content">
-                                <h2>Wedding Photographer Cost Guide: What You'll Actually Pay in 2025</h2>
+                                <h2>Wedding Photographer Cost Guide: What You'll Actually Pay in 2025 [From Real Couples]</h2>
                                 <p>Planning your wedding photography budget? Discover what real couples are paying in 2025, from basic packages starting at $2,000 to luxury services exceeding $10,000. Learn about hidden costs, essential questions to ask photographers, and smart ways to maximize your photography investment. Plus, get expert tips on choosing the right photographer for your style and budget.</p>
                             </div>
                         </div>
@@ -56,7 +56,7 @@ const Articles = () => {
                         <div className="article-preview">
                         <img src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/0feae650-b696-4124-89a5-b76f27157ab1.jpeg?st=2025-02-19T02%3A06%3A41Z&amp;se=2025-02-26T02%3A06%3A41Z&amp;sp=r&amp;sv=2025-01-05&amp;sr=b&amp;sig=Jy71E/0w%2BQV8h2IHqoywSMKqClC0oF6qX/e83pKliTI%3D" className='article-image' alt="Hero Image for Wedding Catering Costs Revealed: What You'll Actually Pay in 2025 [Expert Data]" />
                             <div className="article-content">
-                                <h2>Wedding Catering Cost Guide: What You'll Actually Pay in 2025</h2>
+                                <h2>Wedding Catering Costs Revealed: What You'll Actually Pay in 2025</h2>
                                 <p>Navigate wedding catering costs with confidence. From per-person pricing ($30-$270) to service styles affecting your budget, learn what drives catering costs in 2025. Discover how to choose between buffet, plated, and family-style service, plus tips for handling dietary restrictions without breaking the bank. Includes real examples of catering budgets from $2,000 to $30,000.</p>
                             </div>
                         </div>

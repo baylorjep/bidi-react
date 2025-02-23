@@ -1,39 +1,98 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import EmailCaptureModal from '../EmailCaptureModal/EmailCaptureModal';
+import { Helmet } from 'react-helmet';
+import { supabase } from '../../supabaseClient';
+
+// Import all article components
+import UtahPhotographyCostGuide from '../Article/UtahPhotographyCostGuide';
+import WeddingPhotographerCostGuide from '../Article/WeddingPhotographerCostGuide';
+import WeddingVideographerCostGuide from '../Article/WeddingVideographerCostGuide';
+import WeddingCateringCostGuide from '../Article/WeddingCateringCostGuide';
+import WeddingFloristCostGuide from '../Article/WeddingFloristCostGuide';
+import WeddingDJCostGuide from '../Article/WeddingDJCostGuide';
+import WeddingHairMakeupCostGuide from '../Article/WeddingHairMakeupCostGuide';
+
+const articleComponents = {
+    'utah-photography-cost-guide': UtahPhotographyCostGuide,
+    'wedding-photographer-cost-guide': WeddingPhotographerCostGuide,
+    'wedding-videographer-cost-guide': WeddingVideographerCostGuide,
+    'wedding-catering-cost-guide': WeddingCateringCostGuide,
+    'wedding-florist-cost-guide': WeddingFloristCostGuide,
+    'wedding-dj-cost-guide': WeddingDJCostGuide,
+    'wedding-hair-makeup-cost-guide': WeddingHairMakeupCostGuide
+};
 
 const ArticleDetail = () => {
     const { articleId } = useParams();
+    const navigate = useNavigate();
+    const [showModal, setShowModal] = useState(false);
+    
+    const ArticleComponent = articleComponents[articleId];
 
-    // Example static content based on articleId
-    const articles = {
-        "wedding-photographer-cost-guide": {
-            title: "Wedding Photographer Cost Guide: What You'll Actually Pay in 2025 [From Real Couples]",
-            content: "This article provides insights into the costs associated with hiring a wedding photographer in 2025, featuring real experiences from couples."
-        },
-        "understanding-state-management": {
-            title: "Understanding State Management",
-            content: "Exploring state management in React applications."
-        },
-        "building-full-stack-application": {
-            title: "Building a Full-Stack Application",
-            content: "Step-by-step guide to building a full-stack app."
+    useEffect(() => {
+        if (!ArticleComponent) {
+            navigate('/articles');
+            return;
+        }
+
+        const hasSeenModal = localStorage.getItem('hasSeenModal');
+        const hasSubscribed = localStorage.getItem('hasSubscribed');
+
+        if (!hasSeenModal && !hasSubscribed) {
+            const timer = setTimeout(() => {
+                setShowModal(true);
+                localStorage.setItem('hasSeenModal', Date.now());
+            }, 30000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [ArticleComponent, navigate]);
+
+    const handleEmailSubmit = async (email) => {
+        try {
+            // Add to Supabase
+            const { data, error } = await supabase
+                .from('email_subscribers')
+                .insert([
+                    { 
+                        email,
+                        article_id: articleId, // Track which article they subscribed from
+                    }
+                ]);
+
+            if (error) throw error;
+
+            // Set local storage to prevent showing modal again
+            localStorage.setItem('hasSubscribed', 'true');
+            setShowModal(false);
+            
+            // Show success message
+            alert('Thank you for subscribing! You\'ll receive our wedding planning tips soon.');
+        } catch (error) {
+            console.error('Error saving email:', error);
+            
+            // Check if it's a unique constraint error
+            if (error.code === '23505') {
+                alert('This email is already subscribed!');
+            } else {
+                alert('There was an error. Please try again.');
+            }
         }
     };
 
-    const article = articles[articleId];
+    if (!ArticleComponent) return null;
 
     return (
         <div>
-            {article ? (
-                <>
-                    <h1>{article.title}</h1>
-                    <p>{article.content}</p>
-                </>
-            ) : (
-                <h1>Article not found</h1>
-            )}
+            <ArticleComponent />
+            <EmailCaptureModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                onSubmit={handleEmailSubmit}
+            />
         </div>
     );
 };
 
-export default ArticleDetail; 
+export default ArticleDetail;

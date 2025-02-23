@@ -193,13 +193,6 @@ function App() {
                         {/* Articles Route */}
                         <Route path="/articles" element={<ArticleNavigation />} />
                         <Route path="/articles/:articleId" element={<ArticleDetail />} />
-                        <Route path="/articles/wedding-photographer-cost-guide" element={<WeddingPhotographerCostGuide />} />
-                        <Route path="/articles/wedding-videographer-cost-guide" element={<WeddingVideographerCostGuide />} />
-                        <Route path="/articles/wedding-catering-cost-guide" element={<WeddingCateringCostGuide />} />
-                        <Route path="/articles/wedding-florist-cost-guide" element={<WeddingFloristCostGuide />} />
-                        <Route path="/articles/wedding-dj-cost-guide" element={<WeddingDJCostGuide />} />
-                        <Route path="/articles/wedding-hair-makeup-cost-guide" element={<WeddingHairMakeupCostGuide />} />
-                        <Route path="/articles/utah-photography-cost-guide" element={<UtahPhotographyCostGuide />} />
 
                         {/* Photography Routes */}
                         <Route path="/request/photography" element={<PhotographyRequest />} />

@@ -11,15 +11,16 @@ const WeddingFloristCostGuide = () => {
                 <meta name="keywords" content="wedding florist, costs, guide" />
             </Helmet>
             <header>
-                <h1>Wedding Florist Cost Guide: What You'll Actually Pay in 2025</h1>
-                <h2 style={{ fontSize: '24px', color: '#555', textAlign: 'center', marginBottom: '20px' }}>
+            <h1>Wedding Florist Costs Revealed: What You'll Actually Pay in 2025 [Expert Data]</h1>
+            <h2 style={{ fontSize: '24px', color: '#555', textAlign: 'center', marginBottom: '20px' }}>
                     A Comprehensive Overview of Wedding Floral Expenses and Insights
                 </h2>
-                <p style={{ fontSize: '16px', color: '#777', textAlign: 'center', marginBottom: '20px' }}>
+            <p style={{ fontSize: '16px', color: '#777', textAlign: 'center', marginBottom: '20px' }}>
                     By Weston Burnett, CEO of Bidi | Published on February 17, 2025
                 </p>
             </header>
-            <h1>Wedding Florist Costs Revealed: What You'll Actually Pay in 2025 [Expert Data]</h1>
+
+
             <div className="article-container-image">
                 <img src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/3daa149f-80bd-4a7c-8cbf-ac0954d3b2fe.png?st=2025-02-19T02%3A49%3A14Z&amp;se=2025-02-26T02%3A49%3A14Z&amp;sp=r&amp;sv=2025-01-05&amp;sr=b&amp;sig=1/5iFN4stZoW184lDUyxFAHF%2BXwDE3QxCM9DZtEoqnY%3D" data-width="100%" height="400px" data-align="center" alt="Hero Image for How to Budget Wedding Flowers Cost: What Real Couples Actually Pay" />
             </div>

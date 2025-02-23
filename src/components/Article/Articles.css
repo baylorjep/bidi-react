@@ -3,6 +3,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
 }
 
 .articles-navigation-title {
@@ -16,19 +17,23 @@
 .articles-navigation-list {
     list-style-type: none;
     padding: 0;
+    width: 100%;
+    max-width: 1200px; /* Add max-width to contain list */
 }
 
 .article-navigation-item {
     margin-bottom: 20px; /* Space between articles */
     font-family: 'Outfit', sans-serif;
+    width: 100%; /* Ensure item takes full width */
 }
 
 .article-preview {
     display: flex; /* Align image and text side by side */
     border: 1px solid #ddd; /* Optional border */
     border-radius: 8px; /* Rounded corners */
-    overflow: hidden; /* Prevent overflow */
     padding: 20px;
+    width: 100%; /* Ensure preview takes full width */
+
 }
 
 .article-image {
@@ -39,19 +44,32 @@
 }
 
 .article-content {
-    padding: 10px; /* Space around text */
-    max-width: 1000px;
+    padding: 10px;
+    flex: 1;
+    min-width: 0; /* This prevents flex items from overflowing */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    -ms-word-break: break-word;
+    word-break: break-word;
 }
 
 .article-content p {
     font-size: 14px; /* Adjust description size */
     color: #555; /* Change text color */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
 }
 
 .article-navigation-item h2 {
     font-size: 32px;
     color: #333;
     font-family: 'Outfit', sans-serif;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    margin-bottom: 15px;
 }
 
 .article-navigation-item p {
@@ -190,13 +208,16 @@ td {
 }
 
 
-@media (max-width: 768px) {
+@media (max-width: 1300px) {
     .articles-navigation-container {
         padding: 10px; /* Reduce padding on mobile */
+        margin: 0;
     }
 
     .articles-navigation-title {
         font-size: 2rem; /* Smaller title size */
+        font-size: 1.8rem;
+        margin-bottom: 15px;
     }
 
     .articles-navigation-list {
@@ -210,19 +231,39 @@ td {
     .article-preview {
         flex-direction: column; /* Stack image and text vertically */
         align-items: center; /* Center align items */
+        padding: 15px;
+        gap: 15px;
+    }
+
+    .article-image {
+        width: 100%;
+        height: 200px;
+        margin-bottom: 10px;
     }
 
     .article-content {
         text-align: center; /* Center text on mobile */
         padding: 10px; /* Space around text */
+        padding: 0;
+
     }
 
     .article-content h2 {
-        font-size: 1.2rem; /* Smaller title size */
+        font-size: 24px;
+        margin-bottom: 10px;
+        line-height: 1.3;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
     }
 
     .article-content p {
         font-size: 0.9rem; /* Smaller description size */
+        font-size: 16px;
+        line-height: 1.5;
+        margin: 0;
     }
 
     .article-container {
@@ -245,6 +286,83 @@ td {
     }
     .article-container li {
         font-size: 16px;
+    }
+}
+
+/* Add smaller screen size adjustments */
+@media (max-width: 480px) {
+    .articles-navigation-container {
+        padding: 8px;
+    }
+
+    .articles-navigation-title {
+        font-size: 1.5rem;
+    }
+
+    .article-preview {
+        padding: 10px;
+    }
+
+    .article-image {
+        height: 180px;
+    }
+
+    .article-content h2 {
+        font-size: 20px;
+    }
+
+    .article-content p {
+        font-size: 14px;
+    }
+}
+
+/* Add touch-friendly improvements */
+@media (hover: none) {
+    .article-navigation-item {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .article-preview {
+        transition: transform 0.2s;
+    }
+
+    .article-preview:active {
+        transform: scale(0.98);
+    }
+}
+
+@media (max-width: 768px) {
+    .article-preview {
+        flex-direction: column;
+        padding: 15px;
+        gap: 15px;
+        margin: 0 auto; /* Center the preview */
+        width: 95%; /* Slightly less than full width */
+    }
+
+    .article-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        margin: 0; /* Remove any margin */
+    }
+
+    .article-content {
+        width: 100%;
+        padding: 0;
+    }
+
+    .article-content h2 {
+        font-size: 24px;
+        margin: 10px 0;
+        text-align: left; /* Keep text left-aligned */
+    }
+
+    .article-content p {
+        font-size: 16px;
+        text-align: left;
+        margin: 0;
+        width: 100%;
     }
 }
 
