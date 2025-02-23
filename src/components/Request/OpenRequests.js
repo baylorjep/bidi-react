@@ -127,51 +127,98 @@ function OpenRequests() {
 
                 // Check if current business type is in valid categories
                 const isValidCategory = validCategories.includes(businessType.toLowerCase());
+                const isPhotoVideo = ['photography', 'videography'].includes(businessType.toLowerCase());
 
                 if (isValidCategory) {
-                    const categoryInfo = SERVICE_CATEGORY_MAPPING[businessType.toLowerCase()];
-                    
-                    const [specificTableData, legacyRequestsData] = await Promise.all([
-                        supabase
-                            .from(categoryInfo.table)
-                            .select('*')
-                            .in('status', ['pending', 'open'])
-                            .order('created_at', { ascending: false }),
-                        supabase
-                            .from('requests')
-                            .select('*')
-                            .eq('service_category', categoryInfo.legacy)
-                            .eq('open', true)
-                            .order('created_at', { ascending: false })
-                    ]);
+                    if (isPhotoVideo) {
+                        // Fetch both photography and videography requests
+                        const [photoTableData, videoTableData, legacyRequestsData] = await Promise.all([
+                            supabase
+                                .from('photography_requests')
+                                .select('*')
+                                .in('status', ['pending', 'open'])
+                                .order('created_at', { ascending: false }),
+                            supabase
+                                .from('videography_requests')
+                                .select('*')
+                                .in('status', ['pending', 'open'])
+                                .order('created_at', { ascending: false }),
+                            supabase
+                                .from('requests')
+                                .select('*')
+                                .in('service_category', ['photography', 'videography'])
+                                .eq('open', true)
+                                .order('created_at', { ascending: false })
+                        ]);
 
-                    console.log('Fetching requests for:', businessType);
-                    console.log('From specific table:', categoryInfo.table);
-                    console.log('Legacy category:', categoryInfo.legacy);
-                    console.log('Specific table results:', specificTableData.data?.length);
-                    console.log('Legacy table results:', legacyRequestsData.data?.length);
+                        const combinedRequests = [
+                            ...(photoTableData.data?.map(req => ({
+                                ...req,
+                                table_name: 'photography_requests',
+                                service_title: req.title || req.event_title || 'Photography Request',
+                                service_category: 'photography'
+                            })) || []),
+                            ...(videoTableData.data?.map(req => ({
+                                ...req,
+                                table_name: 'videography_requests',
+                                service_title: req.title || req.event_title || 'Videography Request',
+                                service_category: 'videography'
+                            })) || []),
+                            ...(legacyRequestsData.data?.map(req => ({
+                                ...req,
+                                table_name: 'requests',
+                                service_title: req.service_title || req.title || `${req.service_category} Request`
+                            })) || [])
+                        ];
 
-                    const combinedRequests = [
-                        ...(specificTableData.data?.map(req => ({
-                            ...req,
-                            table_name: categoryInfo.table,
-                            service_title: req.title || req.event_title || `${req.event_type} ${businessType} Request`,
-                            service_category: categoryInfo.legacy
-                        })) || []),
-                        ...(legacyRequestsData.data?.map(req => ({
-                            ...req,
-                            table_name: 'requests',
-                            service_title: req.service_title || req.title || `${businessType} Request`,
-                            service_category: categoryInfo.legacy
-                        })) || [])
-                    ];
-
-                    if (businessType.toLowerCase() === 'photography') {
                         setOpenPhotoRequests(combinedRequests);
                         setOpenRequests([]);
                     } else {
-                        setOpenRequests(combinedRequests);
-                        setOpenPhotoRequests([]);
+                        // Original logic for other categories
+                        const categoryInfo = SERVICE_CATEGORY_MAPPING[businessType.toLowerCase()];
+                        
+                        const [specificTableData, legacyRequestsData] = await Promise.all([
+                            supabase
+                                .from(categoryInfo.table)
+                                .select('*')
+                                .in('status', ['pending', 'open'])
+                                .order('created_at', { ascending: false }),
+                            supabase
+                                .from('requests')
+                                .select('*')
+                                .eq('service_category', categoryInfo.legacy)
+                                .eq('open', true)
+                                .order('created_at', { ascending: false })
+                        ]);
+
+                        console.log('Fetching requests for:', businessType);
+                        console.log('From specific table:', categoryInfo.table);
+                        console.log('Legacy category:', categoryInfo.legacy);
+                        console.log('Specific table results:', specificTableData.data?.length);
+                        console.log('Legacy table results:', legacyRequestsData.data?.length);
+
+                        const combinedRequests = [
+                            ...(specificTableData.data?.map(req => ({
+                                ...req,
+                                table_name: categoryInfo.table,
+                                service_title: req.title || req.event_title || `${req.event_type} ${businessType} Request`,
+                                service_category: categoryInfo.legacy
+                            })) || []),
+                            ...(legacyRequestsData.data?.map(req => ({
+                                ...req,
+                                table_name: 'requests',
+                                service_title: req.service_title || req.title || `${businessType} Request`,
+                                service_category: categoryInfo.legacy
+                            })) || [])
+                        ];
+
+                        if (businessType.toLowerCase() === 'photography') {
+                            setOpenPhotoRequests(combinedRequests);
+                            setOpenRequests([]);
+                        } else {
+                            setOpenRequests(combinedRequests);
+                            setOpenPhotoRequests([]);
+                        }
                     }
                 } else {
                     // Fetch ALL requests when business type is not in valid categories
@@ -287,20 +334,21 @@ function OpenRequests() {
             <div className="request-grid">
                 {error && <p>Error: {error}</p>}
 
-                {businessType?.toLowerCase() === 'photography' ? (
+                {['photography', 'videography'].includes(businessType?.toLowerCase()) ? (
                     openPhotoRequests
                         .filter(request => !userBids.has(request.id))
+                        .sort(sortByNewAndDate)
                         .map(request => (
                             <RequestDisplayMini 
-                                key={`photo-${request.id}`}
+                                key={`photo-video-${request.id}`}
                                 request={request}
-                                isPhotoRequest={true}
+                                isPhotoRequest={request.service_category === 'photography'}
                             />
                         ))
                 ) : (
-                    // Show all requests for any business type (including non-matching ones)
                     openRequests
                         .filter(request => !userBids.has(request.id))
+                        .sort(sortByNewAndDate)
                         .map(request => (
                             <RequestDisplayMini 
                                 key={`regular-${request.id}`}
