@@ -233,33 +233,52 @@ export default function BidsPage() {
                 return;
             }
 
-            // Modified bid data formatting
-            const filteredBids = bidsData
-                .filter(bid => {
-                    if (activeTab === 'pending') {
-                        return bid.status?.toLowerCase() === 'pending';
-                    } else if (activeTab === 'approved') {
-                        return bid.status?.toLowerCase() === 'accepted'; // Note: 'accepted' not 'approved'
-                    } else if (activeTab === 'denied') {
-                        return bid.status?.toLowerCase() === 'denied';
-                    }
-                    return false;
-                })
-                .map(bid => ({
-                    ...bid,
-                    id: bid.id,
-                    bid_amount: bid.bid_amount || bid.amount, // Handle both field names
-                    message: bid.message || bid.bid_description, // Handle both field names
-                    business_profiles: {
-                        ...bid.business_profiles,
-                        business_name: bid.business_profiles?.business_name || 'Unknown Business',
-                        down_payment_type: bid.business_profiles?.down_payment_type,
-                        amount: bid.business_profiles?.amount
-                    }
-                }));
+            if (bidsData) {
+                // Mark bids as viewed when they're loaded
+                const unviewedBids = bidsData.filter(bid => !bid.viewed);
+                if (unviewedBids.length > 0) {
+                    const { error } = await supabase
+                        .from('bids')
+                        .update({ 
+                            viewed: true,
+                            viewed_at: new Date().toISOString()
+                        })
+                        .in('id', unviewedBids.map(bid => bid.id));
 
-            console.log('Filtered bids:', filteredBids);
-            setBids(filteredBids);
+                    if (error) {
+                        console.error('Error marking bids as viewed:', error);
+                    }
+                }
+
+                // Continue with existing bid filtering and processing
+                const filteredBids = bidsData
+                    .filter(bid => {
+                        if (activeTab === 'pending') {
+                            return bid.status?.toLowerCase() === 'pending';
+                        } else if (activeTab === 'approved') {
+                            return bid.status?.toLowerCase() === 'accepted'; // Note: 'accepted' not 'approved'
+                        } else if (activeTab === 'denied') {
+                            return bid.status?.toLowerCase() === 'denied';
+                        }
+                        return false;
+                    })
+                    .map(bid => ({
+                        ...bid,
+                        id: bid.id,
+                        bid_amount: bid.bid_amount || bid.amount, // Handle both field names
+                        message: bid.message || bid.bid_description, // Handle both field names
+                        business_profiles: {
+                            ...bid.business_profiles,
+                            business_name: bid.business_profiles?.business_name || 'Unknown Business',
+                            down_payment_type: bid.business_profiles?.down_payment_type,
+                            amount: bid.business_profiles?.amount
+                        },
+                        viewed: bid.viewed,
+                        viewed_at: bid.viewed_at
+                    }));
+
+                setBids(filteredBids);
+            }
         } catch (error) {
             console.error("Error loading bids:", error);
         }

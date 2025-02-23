@@ -16507,3 +16507,20 @@ label {
   margin: 0 auto;
 }
 
+.viewed-status {
+  color: var(--bidi-primary-color);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+}
+
+.not-viewed-status {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.check-icon {
+  margin-left: 4px;
+}
+

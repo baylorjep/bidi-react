@@ -48,7 +48,11 @@ const BusinessDashboard = () => {
           // Fetch current bids for this business
           const { data: bidsData, error: bidsError } = await supabase
             .from('bids')
-            .select('bid_amount, id, status, bid_description, request_id, hidden')
+            .select(`
+              *,
+              viewed,
+              viewed_at
+            `)
             .eq('user_id', profile.id)
             .or('hidden.is.false,hidden.is.null');
   
@@ -581,6 +585,18 @@ const BusinessDashboard = () => {
                 <p className="card-text">Amount: ${bid.bid_amount}</p>
                 <p className="card-text">Description: {bid.bid_description}</p>
                 <p className="card-text">Status: {bid.status}</p>
+                <p className="card-text">
+                  {bid.viewed ? (
+                    <span className="viewed-status">
+                      Viewed {bid.viewed_at && `on ${new Date(bid.viewed_at).toLocaleDateString()}`}
+                      <svg width="16" height="16" viewBox="0 0 16 16" className="check-icon">
+                        <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z" fill="currentColor"/>
+                      </svg>
+                    </span>
+                  ) : (
+                    <span className="not-viewed-status">Not viewed yet</span>
+                  )}
+                </p>
                 <div style={{display:'flex',flexDirection:'row',gap:'10px', justifyContent:'center'}}>
                     <button
                       className="btn-primary"
