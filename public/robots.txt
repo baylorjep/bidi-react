@@ -1,5 +1,22 @@
-# https://www.robotstxt.org/robotstxt.html
-User-agent: *
-Disallow:
+# Robots.txt file for savewithbidi.com
+# Last updated: 2025-02-24
 
+# Allow all crawlers
+User-agent: *
+Allow: /
+Allow: /articles/
+Allow: /about
+Allow: /contact
+
+# Prevent crawling of authentication pages
+Disallow: /signin
+Disallow: /signup
+Disallow: /dashboard
+Disallow: /admin/
+Disallow: /api/
+
+# Add delay between requests
+Crawl-delay: 10
+
+# Sitemap location
 Sitemap: https://www.savewithbidi.com/sitemap.xml

@@ -7,9 +7,36 @@ const WeddingHairMakeupCostGuide = () => {
     return (
         <article className="article-container">
             <Helmet>
-                <title>Wedding Hair and Makeup Guide 2025</title>
+                <title>Wedding Hair and Makeup Guide: What You'll Actually Pay in 2025</title>
                 <meta name="description" content="Expert guide on wedding hair and makeup costs, including professional tips and real pricing insights for 2025." />
-                <meta name="keywords" content="wedding hair, wedding makeup, bridal beauty costs, wedding beauty guide" />
+                <meta name="keywords" content="wedding hair, wedding makeup, bridal beauty costs, wedding beauty prices 2025" />
+                
+                <script type="application/ld+json">
+                    {`
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "Article",
+                      "headline": "Wedding Hair and Makeup Guide: What You'll Actually Pay in 2025",
+                      "author": {
+                        "@type": "Person",
+                        "name": "Weston Burnett"
+                      },
+                      "datePublished": "2025-02-24",
+                      "image": "${HairStylist}",
+                      "articleBody": "The content of your article goes here."
+                    }
+                    `}
+                </script>
+            
+                <meta property="og:title" content="Wedding Hair and Makeup Guide: What You'll Actually Pay in 2025" />
+                <meta property="og:description" content="Expert guide on wedding hair and makeup costs, including professional tips and real pricing insights for 2025." />
+                <meta property="og:image" content={HairStylist} />
+                <meta property="og:url" content="https://savewithbidi.com/articles/wedding-hair-makeup-cost-guide" />
+                
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="Wedding Hair and Makeup Guide: What You'll Actually Pay in 2025" />
+                <meta name="twitter:description" content="Expert guide on wedding hair and makeup costs, including professional tips and real pricing insights for 2025." />
+                <meta name="twitter:image" content={HairStylist} />
             </Helmet>
             <header>
                 <h1>Wedding Hair and Makeup Cost Guide: What You'll Actually Pay in 2025</h1>

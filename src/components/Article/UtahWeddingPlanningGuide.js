@@ -9,19 +9,49 @@ const UtahWeddingPlanningGuide = () => {
             <Helmet>
                 <title>How to Plan Your Dream Utah Wedding: A Wedding Planner's Step-by-Step Guide</title>
                 <meta name="description" content="Discover everything you need to know about planning a wedding in Utah, from budgeting and venues to seasonal considerations and local traditions." />
-                <meta name="keywords" content="utah wedding planning, utah wedding venues, utah wedding costs, wedding planner utah, temple wedding, utah wedding guide" />
+                <meta name="keywords" content="utah wedding planning, utah wedding venues, utah wedding costs, wedding planner utah, temple wedding, utah wedding guide, lds wedding, salt lake city wedding, park city wedding, utah mountain wedding" />
                 
+                {/* Schema.org Markup */}
+                <script type="application/ld+json">
+                    {`
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "Article",
+                        "headline": "How to Plan Your Dream Utah Wedding: A Wedding Planner's Step-by-Step Guide",
+                        "author": {
+                            "@type": "Person",
+                            "name": "Weston Burnett"
+                        },
+                        "datePublished": "2025-02-23",
+                        "dateModified": "2025-02-23",
+                        "image": "${weddingPlanning}",
+                        "publisher": {
+                            "@type": "Organization",
+                            "name": "Bidi",
+                            "url": "https://www.savewithbidi.com"
+                        },
+                        "mainEntityOfPage": {
+                            "@type": "WebPage",
+                            "@id": "https://www.savewithbidi.com/articles/utah-wedding-planning-guide"
+                        },
+                        "articleBody": "Discover everything you need to know about planning a wedding in Utah, from budgeting and venues to seasonal considerations and local traditions."
+                    }
+                    `}
+                </script>
+            
                 {/* Open Graph Tags */}
                 <meta property="og:title" content="How to Plan Your Dream Utah Wedding: A Wedding Planner's Step-by-Step Guide" />
                 <meta property="og:description" content="Your comprehensive guide to planning a Utah wedding, featuring expert advice and local insights." />
-                <meta property="og:image" content="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/59aa5091-ffee-4079-b23f-2fb44146c9a1.png" />
-                <meta property="og:url" content="https://yourwebsite.com/articles/utah-wedding-planning-guide" />
-
+                <meta property="og:image" content={weddingPlanning} />
+                <meta property="og:url" content="https://savewithbidi.com/articles/utah-wedding-planning-guide" />
+                <meta property="og:type" content="article" />
+                <meta property="og:site_name" content="Bidi" />
+            
                 {/* Twitter Card Tags */}
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="How to Plan Your Dream Utah Wedding: A Wedding Planner's Step-by-Step Guide" />
                 <meta name="twitter:description" content="Your comprehensive guide to planning a Utah wedding, featuring expert advice and local insights." />
-                <meta name="twitter:image" content="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/59aa5091-ffee-4079-b23f-2fb44146c9a1.png" />
+                <meta name="twitter:image" content={weddingPlanning} />
             </Helmet>
 
             <header>
