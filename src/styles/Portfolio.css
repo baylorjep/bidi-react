@@ -1,0 +1,122 @@
+.portfolio-container {
+  max-width: 900px;
+  margin: 50px auto;
+  padding: 20px;
+  text-align: left;
+}
+*/
+
+/* Business Header */
+.business-header {
+  display: flex;
+  flex-direction: column; /* stacks items vertically */
+  align-items: flex-start; /* left-aligns all content */
+  gap: 8px;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 15px;
+}
+
+.business-info {
+  flex: 1;
+}
+
+.business-name {
+  font-size: 2cqb;
+  font-weight: bold;
+  margin: 0;
+  text-align: left;
+}
+
+.business-location,
+.business-price2 {
+  font-size: 1rem !important;
+  color: #666;
+  text-align: left;
+  margin: 0;
+}
+
+/* Vendor Section */
+.vendor-section {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-top: 2px solid #ddd;
+  margin-top: 30px;
+}
+
+.vendor-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 25px;
+}
+
+.vendor-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px; /* Tight spacing between elements */
+}
+
+.vendor-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  margin-top: 5px;
+}
+
+.vendor-description {
+  flex: 1;
+  font-size: 1rem;
+  text-align: left;
+  margin: 0;
+}
+
+.vendor-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid #a328f4;
+}
+
+.vendor-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0;
+  text-align: center;
+}
+
+.vendor-role {
+  font-size: 1rem;
+  color: #666;
+  margin: 0;
+  text-align: center;
+}
+
+/* Selections Section */
+.selections-section {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-top: 2px solid #ddd;
+  margin-top: 30px;
+}
+
+.selections-list {
+  columns: 2;
+  list-style: none;
+  padding: 0;
+}
+
+.selections-list li {
+  font-size: 1rem;
+  margin-bottom: 5px;
+  padding-left: 15px;
+  position: relative;
+}
+
+.selections-list li::before {
+  content: "•";
+  color: #a328f4;
+  position: absolute;
+  left: 0;
+  font-size: 1.2rem;
+}
