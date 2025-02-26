@@ -1339,7 +1339,7 @@ function DjRequest() {
             navigate('/success-request', { 
                 state: { 
                     requestId: request.id,
-                    category: 'DJ',
+                    category: 'dj',
                     message: 'Your DJ request has been submitted successfully!'
                 } 
             });
