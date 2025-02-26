@@ -116,6 +116,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                     
                     `}
                 </script>
+                <meta name="p:domain_verify" content="a66ee7dfca93ec32807ee19ea2319dca"/>
             </Helmet>
             
             <div ref={mastheadRef} className={`masthead-index fade-in-section ${mastheadVisible ? 'is-visible' : ''}`}>
