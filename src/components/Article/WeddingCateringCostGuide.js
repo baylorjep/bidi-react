@@ -1,26 +1,52 @@
 import React from 'react';
 import './Articles.css'
 import Helmet from 'react-helmet';
+import catering from '../../assets/articles/Catering/pexels-fu-zhichao-176355-587741.jpg'
 
 const WeddingCateringCostGuide = () => {
     return (
         <article className="article-container">
             <Helmet>
-                <title>Wedding Catering Costs Revealed: What You'll Actually Pay in 2025</title>
-                <meta name="description" content="Discover the true costs of wedding catering in 2025, including average prices, package options, and budgeting tips for your special day." />
-                <meta name="keywords" content="wedding catering, catering costs, wedding budget, wedding planning, wedding catering guide" />
+                <title>Utah Wedding Catering Costs 2025 | Salt Lake City & Beyond</title>
+                <meta name="description" content="Discover wedding catering costs in Utah for 2025. Find average prices in Salt Lake City, Park City, Provo and across Utah. Local insights and budget tips." />
+                <meta name="keywords" content="Utah wedding catering, Salt Lake City wedding catering costs, Park City wedding caterers, Utah wedding budget, wedding planning Utah" />
                 
                 {/* Open Graph Tags */}
-                <meta property="og:title" content="Wedding Catering Costs Revealed: What You'll Actually Pay in 2025" />
-                <meta property="og:description" content="Explore the comprehensive guide on wedding catering costs in 2025, featuring insights from real couples." />
+                <meta property="og:title" content="Utah Wedding Catering Costs 2025 | Local Pricing Guide" />
+                <meta property="og:description" content="Complete guide to wedding catering costs in Utah, featuring local pricing data and insights from Utah wedding professionals." />
                 <meta property="og:image" content="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/0feae650-b696-4124-89a5-b76f27157ab1.jpeg?st=2025-02-19T02%3A06%3A41Z&amp;se=2025-02-26T02%3A06%3A41Z&amp;sp=r&amp;sv=2025-01-05&amp;sr=b&amp;sig=Jy71E/0w%2BQV8h2IHqoywSMKqClC0oF6qX/e83pKliTI%3D" />
-                <meta property="og:url" content="https://yourwebsite.com/articles/wedding-catering-cost-guide" />
+                <meta property="og:url" content="https://savewithbidi.com/articles/wedding-catering-cost-guide" />
 
                 {/* Twitter Card Tags */}
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="Wedding Catering Costs Revealed: What You'll Actually Pay in 2025" />
                 <meta name="twitter:description" content="Explore the comprehensive guide on wedding catering costs in 2025, featuring insights from real couples." />
                 <meta name="twitter:image" content="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/0feae650-b696-4124-89a5-b76f27157ab1.jpeg?st=2025-02-19T02%3A06%3A41Z&amp;se=2025-02-26T02%3A06%3A41Z&amp;sp=r&amp;sv=2025-01-05&amp;sr=b&amp;sig=Jy71E/0w%2BQV8h2IHqoywSMKqClC0oF6qX/e83pKliTI%3D" />
+                <script type="application/ld+json">
+                {`
+                    "@context": "https://schema.org",
+                    "@type": "Article",
+                    "headline": "Utah Wedding Catering Costs Guide 2025",
+                    "author": {
+                        "@type": "Person",
+                        "name": "Weston Burnett"
+                    },
+                    "datePublished": "2025-02-18",
+                    "publisher": {
+                        "@type": "Organization",
+                        "name": "Bidi",
+                        "url": "https://savewithbidi.com"
+                    },
+                    "about": {
+                        "@type": "Thing",
+                        "name": "Wedding Catering in Utah"
+                    },
+                    "contentLocation": {
+                        "@type": "State",
+                        "name": "Utah"
+                    }
+                `}
+                </script>
             </Helmet>
             <header>
             <h1>Wedding Catering Costs Revealed: What You'll Actually Pay in 2025 [Expert Data]</h1>
@@ -33,7 +59,7 @@ const WeddingCateringCostGuide = () => {
             </header>
 
             <div className="article-container-image">
-                <img src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/0feae650-b696-4124-89a5-b76f27157ab1.jpeg?st=2025-02-19T02%3A06%3A41Z&amp;se=2025-02-26T02%3A06%3A41Z&amp;sp=r&amp;sv=2025-01-05&amp;sr=b&amp;sig=Jy71E/0w%2BQV8h2IHqoywSMKqClC0oF6qX/e83pKliTI%3D" data-width="100%" height="400px" data-align="center" alt="Hero Image for Wedding Catering Costs Revealed: What You'll Actually Pay in 2025 [Expert Data]" />     
+                <img src={catering} data-width="100%" height="400px" data-align="center" alt="Hero Image for Wedding Catering Costs Revealed: What You'll Actually Pay in 2025 [Expert Data]" />     
             </div>
             <p>
                 Wedding catering costs have jumped significantly, with the <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.theknot.com/content/average-cost-wedding-catering">average wedding catering cost rising from $75 to $85 per person</a> between 2022 and 2023. While this $10 increase might seem concerning, understanding the real costs can help you plan more effectively.
@@ -71,6 +97,24 @@ const WeddingCateringCostGuide = () => {
                 <li><p>Additional permit requirements</p></li>
                 <li><p>Increased transportation fees</p></li>
             </ul>
+            <h2>Wedding Catering Costs in Utah</h2>
+            <p>
+                Utah wedding catering costs vary significantly between regions. Salt Lake City couples typically spend between $35-75 per person, while Park City celebrations can range from $75-150 per person. Mountain resort venues in areas like Deer Valley or Snowbird often see higher catering costs due to logistics and exclusive vendor arrangements.
+            </p>
+            
+            <h3>Popular Utah Wedding Catering Styles</h3>
+            <ul>
+                <li>Traditional Mormon reception buffets: $25-40 per person</li>
+                <li>Salt Lake City luxury plated service: $85-120 per person</li>
+                <li>Park City resort catering: $100-200 per person</li>
+                <li>Utah Valley casual dining: $30-50 per person</li>
+                <li>Food truck options in urban Utah: $20-35 per person</li>
+            </ul>
+            
+            <h3>Utah Wedding Venue Considerations</h3>
+            <p>
+                Many Utah venues, especially in Salt Lake City and Park City, have preferred caterer lists or in-house catering. Temple-adjacent venues often have specific requirements for reception timing and service style that can impact catering costs.
+            </p>
             <h2>What Affects Your Catering Bill</h2>
             <figure data-type="blockquoteFigure">
                 <div>
