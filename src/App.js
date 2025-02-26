@@ -98,6 +98,7 @@ import WeddingFloristCostGuide from './components/Article/WeddingFloristCostGuid
 import WeddingDJCostGuide from './components/Article/WeddingDJCostGuide';
 import WeddingHairMakeupCostGuide from './components/Article/WeddingHairMakeupCostGuide';
 import UtahPhotographyCostGuide from './components/Article/UtahPhotographyCostGuide';
+import NewsletterLanding from './components/NewsletterLanding';
 
 function App() {
 
@@ -201,6 +202,7 @@ function App() {
                         <Route path="/request/beauty" element={<HairAndMakeUpRequest />} />
                         <Route path="/request/florist" element={<FloristRequest />} /> {/* Add this route */}
                         <Route path="/request/catering" element={<CateringRequest />} /> {/* Add this route */}
+                        <Route path="/welcome" element={<NewsletterLanding />} />
 
                     </Routes>
                 </div>

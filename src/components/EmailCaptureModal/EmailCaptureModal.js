@@ -18,8 +18,7 @@ const EmailCaptureModal = ({ isOpen, onClose, onSubmit }) => {
         <div className="value-props">
           <p className="main-offer">Get Our FREE Wedding Budget Guide</p>
           <ul className="benefits-list">
-            <li>✓ Real pricing from 1000+ Utah weddings</li>
-            <li>✓ Money-saving negotiation scripts</li>
+            <li>✓ Save up to 30% on your wedding</li>
             <li>✓ Hidden fees to watch out for</li>
             <li>✓ Exclusive vendor discounts</li>
           </ul>

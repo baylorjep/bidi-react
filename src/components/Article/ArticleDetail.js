@@ -53,28 +53,25 @@ const ArticleDetail = () => {
 
     const handleEmailSubmit = async (email) => {
         try {
-            // Add to Supabase
             const { data, error } = await supabase
                 .from('email_subscribers')
                 .insert([
                     { 
                         email,
-                        article_id: articleId, // Track which article they subscribed from
+                        article_id: articleId,
                     }
                 ]);
 
             if (error) throw error;
 
-            // Set local storage to prevent showing modal again
             localStorage.setItem('hasSubscribed', 'true');
             setShowModal(false);
             
-            // Show success message
-            alert('Thank you for subscribing! You\'ll receive our wedding planning tips soon.');
+            // Redirect to welcome page instead of showing alert
+            navigate('/welcome', { state: { email } });
         } catch (error) {
             console.error('Error saving email:', error);
             
-            // Check if it's a unique constraint error
             if (error.code === '23505') {
                 alert('This email is already subscribed!');
             } else {
