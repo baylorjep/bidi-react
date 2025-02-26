@@ -10,6 +10,13 @@
     text-align: center;
   }
   
+  .landing-content h1 {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    word-wrap: break-word;
+  }
+  
   .newsletter-landing h1 {
     font-family: Outfit;
     font-size: 48px;
