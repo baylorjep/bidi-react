@@ -99,6 +99,7 @@ import WeddingDJCostGuide from './components/Article/WeddingDJCostGuide';
 import WeddingHairMakeupCostGuide from './components/Article/WeddingHairMakeupCostGuide';
 import UtahPhotographyCostGuide from './components/Article/UtahPhotographyCostGuide';
 import NewsletterLanding from './components/NewsletterLanding';
+import Unsubscribe from './components/Unsubscribe';
 
 function App() {
 
@@ -203,6 +204,7 @@ function App() {
                         <Route path="/request/florist" element={<FloristRequest />} /> {/* Add this route */}
                         <Route path="/request/catering" element={<CateringRequest />} /> {/* Add this route */}
                         <Route path="/welcome" element={<NewsletterLanding />} />
+                        <Route path="/unsubscribe" element={<Unsubscribe />} />
 
                     </Routes>
                 </div>
