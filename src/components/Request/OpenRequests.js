@@ -35,6 +35,7 @@ function OpenRequests() {
     const [error, setError] = useState('');
     const [businessType, setBusinessType] = useState('');
     const [userBids, setUserBids] = useState(new Set()); // Add this new state
+    const [minimumPrice, setMinimumPrice] = useState(null);
 
     // Add this new function to fetch user's bids
     const fetchUserBids = async (userId) => {
@@ -67,7 +68,7 @@ function OpenRequests() {
 
             const { data: profileData, error: profileError } = await supabase
                 .from('business_profiles')
-                .select('business_category')
+                .select('business_category, minimum_price')
                 .eq('id', userData.user.id)
                 .single();
 
@@ -78,6 +79,7 @@ function OpenRequests() {
             }
 
             setBusinessType(profileData.business_category);
+            setMinimumPrice(profileData.minimum_price);
         };
 
         fetchUserBusinessType();
@@ -321,6 +323,47 @@ function OpenRequests() {
         fetchRequests();
     }, [businessType]);
 
+    const meetsMinimumPrice = (request) => {
+        if (!minimumPrice) return true; // If no minimum price set, show all requests
+        
+        // Handle different price range formats
+        let budget = request.price_range || request.budget;
+        if (!budget) return true; // If no budget specified, show the request
+        
+        console.log('Processing budget:', budget); // Debug log
+        
+        // Convert price range string to minimum value
+        if (typeof budget === 'string') {
+            // Remove any spaces, dollar signs, and convert to lowercase
+            budget = budget.toLowerCase().replace(/\s+/g, '').replace(/\$/g, '');
+            
+            // Handle format like "0-1000" or "500-1000"
+            if (budget.includes('-')) {
+                const [min, max] = budget.split('-');
+                // Use the maximum value for comparison
+                const maxBudget = parseInt(max);
+                console.log('Range format detected:', budget, 'max value:', maxBudget); // Debug log
+                return !isNaN(maxBudget) && maxBudget >= minimumPrice;
+            }
+            
+            // Handle single number or other formats
+            const numbers = budget.match(/\d+/);
+            if (numbers) {
+                const budgetValue = parseInt(numbers[0]);
+                console.log('Single number format detected:', budget, 'value:', budgetValue); // Debug log
+                return !isNaN(budgetValue) && budgetValue >= minimumPrice;
+            }
+        }
+        
+        // Handle numeric budget values
+        if (typeof budget === 'number') {
+            console.log('Numeric budget:', budget); // Debug log
+            return budget >= minimumPrice;
+        }
+
+        return true; // Default to showing the request if format is unknown
+    };
+
     const sortByNewAndDate = (a, b) => {
         const aIsNew = isNew(a.created_at);
         const bIsNew = isNew(b.created_at);
@@ -337,6 +380,7 @@ function OpenRequests() {
                 {['photography', 'videography'].includes(businessType?.toLowerCase()) ? (
                     openPhotoRequests
                         .filter(request => !userBids.has(request.id))
+                        .filter(meetsMinimumPrice) // Add minimum price filter
                         .sort(sortByNewAndDate)
                         .map(request => (
                             <RequestDisplayMini 
@@ -348,6 +392,7 @@ function OpenRequests() {
                 ) : (
                     openRequests
                         .filter(request => !userBids.has(request.id))
+                        .filter(meetsMinimumPrice) // Add minimum price filter
                         .sort(sortByNewAndDate)
                         .map(request => (
                             <RequestDisplayMini 

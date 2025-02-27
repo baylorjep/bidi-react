@@ -17,6 +17,9 @@ const BusinessDashboard = () => {
   const [downPaymentAmount, setDownPaymentAmount] = useState(0);
   const [requestData, setRequestData] = useState(null);
   const [photographyRequestData, setPhotographyRequestData] = useState(null);
+  const [showMinPriceModal, setShowMinPriceModal] = useState(false);
+  const [minimumPrice, setMinimumPrice] = useState("");
+  const [currentMinPrice, setCurrentMinPrice] = useState(null);
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
@@ -25,7 +28,7 @@ const BusinessDashboard = () => {
         // Fetch business profile details
         const { data: profile, error: profileError } = await supabase
           .from('business_profiles')
-          .select('business_name, stripe_account_id, id, down_payment_type, amount')
+          .select('business_name, stripe_account_id, id, down_payment_type, amount, minimum_price')
           .eq('id', user.id)
           .single();
   
@@ -215,6 +218,7 @@ const BusinessDashboard = () => {
   
           // Update state with the bids that now have associated request data
           setBids(bidsWithRequestData);
+          setCurrentMinPrice(profile.minimum_price);
         }
       }
     };
@@ -361,6 +365,36 @@ const BusinessDashboard = () => {
     }
   };
 
+  const handleMinPriceSubmit = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("User not found. Please log in again.");
+      return;
+    }
+
+    if (minimumPrice === "" || isNaN(minimumPrice) || Number(minimumPrice) < 0) {
+      alert("Please enter a valid minimum price.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .update({
+        minimum_price: Number(minimumPrice)
+      })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error("Error updating minimum price:", error);
+      alert("An error occurred while updating your minimum price.");
+    } else {
+      setCurrentMinPrice(Number(minimumPrice));
+      setShowMinPriceModal(false);
+      setMinimumPrice("");
+    }
+  };
+
   return (
     <div className="business-dashboard text-center">
       <h1 className="dashboard-title">Welcome, {businessName}!</h1>
@@ -402,6 +436,15 @@ const BusinessDashboard = () => {
               onClick={() => setShowModal(true)}
             >
               Set Up Down Payment
+            </button>
+          </div>
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
+            <button
+              style={{fontWeight:'bold'}}
+              className="btn-secondary flex-fill"
+              onClick={() => setShowMinPriceModal(true)}
+            >
+              Set Minimum Price {currentMinPrice ? `($${currentMinPrice})` : ''}
             </button>
           </div>
         </div>
@@ -677,12 +720,43 @@ const BusinessDashboard = () => {
             </div>
           )}
         </Modal.Body>
-
         <Modal.Footer>
           <div style={{display:'flex', flexDirection:'row', gap:'20px', justifyContent:'center'}}>
           <button  style={{maxHeight:'32px'}}className="btn-primary"onClick={() => setShowModal(false)}>Close</button>
           <button  style={{maxHeight:'32px'}}className="btn-secondary" onClick={handleDownPaymentSubmit}>Submit</button>
           </div>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal for Minimum Price Setup */}
+      <Modal show={showMinPriceModal} onHide={() => setShowMinPriceModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Set Minimum Price</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <label htmlFor="minimumPrice" className="form-label">Enter your minimum price:</label>
+            <input
+              type="number"
+              className="form-control"
+              id="minimumPrice"
+              value={minimumPrice}
+              onChange={(e) => setMinimumPrice(e.target.value)}
+              placeholder="Enter amount"
+              min="0"
+            />
+          </div>
+          <p className="text-muted">
+            You will only see requests with budgets above this amount.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <button className="btn-danger" onClick={() => setShowMinPriceModal(false)}>
+            Close
+          </button>
+          <button className="btn-success" onClick={handleMinPriceSubmit}>
+            Save
+          </button>
         </Modal.Footer>
       </Modal>
     </div>
