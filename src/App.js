@@ -100,6 +100,7 @@ import WeddingHairMakeupCostGuide from './components/Article/WeddingHairMakeupCo
 import UtahPhotographyCostGuide from './components/Article/UtahPhotographyCostGuide';
 import NewsletterLanding from './components/NewsletterLanding';
 import Unsubscribe from './components/Unsubscribe';
+import LocationBanner from './components/LocationBanner/LocationBanner';
 
 function App() {
 
@@ -110,6 +111,7 @@ function App() {
         <Router>
             <ScrollToTop />
             <div className="app-container">
+                <LocationBanner />
                 <Navbar />
                 <div className='content'>
                     <Routes>

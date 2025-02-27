@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'; // Import Link from react-router-dom
 import './Articles.css'; // Import the CSS file
 import Helmet from 'react-helmet'; // Import Helmet for SEO
 import weddingPlanning from '../../assets/articles/weddingplanning.jpg'
+import florist from '../../assets/articles/Florist/pexels-digitle-pixels-1775950082-30891131.jpg'
+import catering from '../../assets/articles/Catering/pexels-fu-zhichao-176355-587741.jpg'
 
 const Articles = () => {
     return (
@@ -70,7 +72,7 @@ const Articles = () => {
                 <li className="article-navigation-item">
                     <Link to="/articles/wedding-catering-cost-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <div className="article-preview">
-                        <img src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/0feae650-b696-4124-89a5-b76f27157ab1.jpeg?st=2025-02-19T02%3A06%3A41Z&amp;se=2025-02-26T02%3A06%3A41Z&amp;sp=r&amp;sv=2025-01-05&amp;sr=b&amp;sig=Jy71E/0w%2BQV8h2IHqoywSMKqClC0oF6qX/e83pKliTI%3D" className='article-image' alt="Hero Image for Wedding Catering Costs Revealed: What You'll Actually Pay in 2025 [Expert Data]" />
+                        <img src={catering} className='article-image' alt="Hero Image for Wedding Catering Costs Revealed: What You'll Actually Pay in 2025 [Expert Data]" />
                             <div className="article-content">
                                 <h2>Wedding Catering Costs Revealed: What You'll Actually Pay in 2025</h2>
                                 <p>Navigate wedding catering costs with confidence. From per-person pricing ($30-$270) to service styles affecting your budget, learn what drives catering costs in 2025. Discover how to choose between buffet, plated, and family-style service, plus tips for handling dietary restrictions without breaking the bank. Includes real examples of catering budgets from $2,000 to $30,000.</p>
@@ -81,7 +83,7 @@ const Articles = () => {
                 <li className="article-navigation-item">
                     <Link to="/articles/wedding-florist-cost-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <div className="article-preview">
-                        <img src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/3daa149f-80bd-4a7c-8cbf-ac0954d3b2fe.png?st=2025-02-19T02%3A49%3A14Z&amp;se=2025-02-26T02%3A49%3A14Z&amp;sp=r&amp;sv=2025-01-05&amp;sr=b&amp;sig=1/5iFN4stZoW184lDUyxFAHF%2BXwDE3QxCM9DZtEoqnY%3D" className='article-image' alt="Hero Image for How to Budget Wedding Flowers Cost: What Real Couples Actually Pay" />
+                        <img src={florist} className='article-image' alt="Hero Image for How to Budget Wedding Flowers Cost: What Real Couples Actually Pay" />
                             <div className="article-content">
                                 <h2>Wedding Florist Cost Guide: What You'll Actually Pay in 2025</h2>
                                 <p>Master your floral budget with our detailed 2025 pricing guide. Learn why flower costs have risen 22% since 2021 and what that means for your wedding. From bridal bouquets ($150-$350) to complete floral designs ($1,500-$15,000), understand what drives costs and how to get the most beauty for your budget. Includes seasonal pricing tips and money-saving strategies from expert florists.</p>
