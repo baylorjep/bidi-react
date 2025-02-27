@@ -16,6 +16,7 @@
 
 .business-info {
   flex: 1;
+  gap: 25px;
 }
 
 .business-name {
@@ -42,15 +43,16 @@
 
 .vendor-info {
   display: flex;
-  align-items: flex-start;
-  gap: 25px;
+  align-items: center;
+  gap: 75px;
 }
 
 .vendor-profile {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 18px;
+  text-align: center;
 }
 
 .vendor-details {
@@ -66,11 +68,13 @@
   font-size: 1rem;
   text-align: left;
   margin: 0;
+  word-spacing: 3px;
+  line-height: 1.65;
 }
 
 .vendor-image {
-  width: 80px;
-  height: 80px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   border: 2px solid #a328f4;
 }
@@ -97,7 +101,12 @@
 }
 
 .selections-list {
-  columns: 2;
+  display: grid;
+  grid-template-columns: repeat(
+    3,
+    minmax(100px, 1fr)
+  ); /* 3 columns, adjust width as needed */
+  gap: 5px 1px; /* Controls row and column spacing */
   list-style: none;
   padding: 0;
 }
