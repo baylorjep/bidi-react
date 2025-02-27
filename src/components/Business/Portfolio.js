@@ -20,7 +20,7 @@ const Portfolio = () => {
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [profileImage, setProfileImage] = useState(null);
+  // const [profileImage, setProfileImage] = useState(null);
 
   useEffect(() => {
     const fetchBusinessPortfolio = async () => {
@@ -35,7 +35,7 @@ const Portfolio = () => {
         console.error(error);
       } else {
         setBusiness(data);
-        setProfileImage(data.profile_image || null);
+        // setProfileImage(data.profile_image || null);
       }
       setLoading(false);
     };
@@ -43,33 +43,33 @@ const Portfolio = () => {
     fetchBusinessPortfolio();
   }, [businessId]);
 
-  const handleImageUpload = async (event) => {
-    const file = event.target.files[0];
+  // const handleImageUpload = async (event) => {
+  //   const file = event.target.files[0];
 
-    if (!file) return;
+  //   if (!file) return;
 
-    const filePath = `business_profiles/${businessId}/profile_image_${Date.now()}`;
-    const { error } = await supabase.storage
-      .from("profile_images") // Ensure this matches your Supabase storage bucket
-      .upload(filePath, file);
+  //   const filePath = `business_profiles/${businessId}/profile_image_${Date.now()}`;
+  //   const { error } = await supabase.storage
+  //     .from("profile_images") // Ensure this matches your Supabase storage bucket
+  //     .upload(filePath, file);
 
-    if (error) {
-      console.error("Image upload failed:", error);
-      return;
-    }
+  //   if (error) {
+  //     console.error("Image upload failed:", error);
+  //     return;
+  //   }
 
-    const publicUrl = supabase.storage
-      .from("profile_images")
-      .getPublicUrl(filePath).data.publicUrl;
+  //   const publicUrl = supabase.storage
+  //     .from("profile_images")
+  //     .getPublicUrl(filePath).data.publicUrl;
 
-    // Update the business profile with new image
-    await supabase
-      .from("business_profiles")
-      .update({ profile_image: publicUrl })
-      .eq("id", businessId);
+  //   // Update the business profile with new image
+  //   await supabase
+  //     .from("business_profiles")
+  //     .update({ profile_image: publicUrl })
+  //     .eq("id", businessId);
 
-    setProfileImage(publicUrl);
-  };
+  //   setProfileImage(publicUrl);
+  // };
 
   if (loading) return <p>Loading portfolio...</p>;
   if (error) return <p>{error}</p>;

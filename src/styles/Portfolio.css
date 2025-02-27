@@ -4,13 +4,11 @@
   padding: 20px;
   text-align: left;
 }
-*/
 
-/* Business Header */
 .business-header {
   display: flex;
-  flex-direction: column; /* stacks items vertically */
-  align-items: flex-start; /* left-aligns all content */
+  flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
   border-bottom: 2px solid #ddd;
   padding-bottom: 15px;
@@ -21,7 +19,7 @@
 }
 
 .business-name {
-  font-size: 2cqb;
+  font-size: 2rem;
   font-weight: bold;
   margin: 0;
   text-align: left;
@@ -35,7 +33,6 @@
   margin: 0;
 }
 
-/* Vendor Section */
 .vendor-section {
   padding-top: 20px;
   padding-bottom: 20px;
@@ -53,7 +50,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px; /* Tight spacing between elements */
+  gap: 5px;
 }
 
 .vendor-details {
@@ -92,7 +89,6 @@
   text-align: center;
 }
 
-/* Selections Section */
 .selections-section {
   padding-top: 20px;
   padding-bottom: 20px;
