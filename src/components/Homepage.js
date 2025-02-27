@@ -156,15 +156,15 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                     <div className='stat-container'>
                             <div className='stat-box' >
                                 <div className='stat-title'>Requests</div>
-                                <div className='stat'>115+</div>
+                                <div className='stat'>140+</div>
                             </div>
                             <div className='stat-box'>
                                 <div className='stat-title'>Users</div>
-                                <div className='stat'>350+</div>
+                                <div className='stat'>390+</div>
                             </div>
                             <div className='stat-box final'>
                                 <div className='stat-title'>Bids</div>
-                                <div className='stat'>800+</div>
+                                <div className='stat'>930+</div>
                             </div>
 
                     </div>
@@ -324,7 +324,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
         <div ref={tryNowRef} className={`try-now-container fade-in-section ${tryNowVisible ? 'is-visible' : ''}`}>
           <div className='try-now-box'>
             <div className='try-now-title'>Ready to Save Time and Money? <span className='try-now-highlight'>Join Bidi Today</span></div>
-            <div className='try-now-subtitle'>Over 330 users are already finding their perfect wedding vendors. Don't miss out on stress-free hiring.</div>
+            <div className='try-now-subtitle'>Over 390 users are already finding their perfect wedding vendors. Don't miss out on stress-free hiring.</div>
             <Link to="/request-categories" style={{textDecoration:'none'}}>
             <button className='try-now-button'>Get Started Free</button>
             </Link>
