@@ -20,6 +20,7 @@ const Portfolio = () => {
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
 
   useEffect(() => {
@@ -37,6 +38,15 @@ const Portfolio = () => {
         setBusiness(data);
         setProfileImage(data.profile_image || null);
       }
+
+      // Get profile information for first name of user
+      const { profileData, profileError } = await supabase
+        .from('individual_profiles')
+        .select('first_name, last_name')
+        .eq('id', businessId)  // Assuming 'id' is the primary key for users
+        .single();
+
+      setProfile(profileData)
       setLoading(false);
     };
 
@@ -96,13 +106,10 @@ const Portfolio = () => {
         <div className="vendor-info">
           <div className="vendor-profile">
             <img src={vendorProfile} alt="Vendor" className="vendor-image" />
-            <p className="vendor-name">MaryAnna</p>
-            <p className="vendor-role">Owner</p>
+            <p className="vendor-name">{profile.first_name}</p>
           </div>
           <p className="vendor-description">
-            We specialize in weddings, dances, and more. We love to help our
-            customers feel comfortable and create beautiful moments they cherish
-            forever.
+            {business.business_description || "No description available"}
           </p>
         </div>
       </div>
