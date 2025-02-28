@@ -119,7 +119,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                 <meta name="p:domain_verify" content="a66ee7dfca93ec32807ee19ea2319dca"/>
             </Helmet>
             
-            <div ref={mastheadRef} className={`masthead-index fade-in-section ${mastheadVisible ? 'is-visible' : ''}`} style={{height:'120vh'}}>
+            <div ref={mastheadRef} className={`masthead-index fade-in-section ${mastheadVisible ? 'is-visible' : ''}`}>
                 <div className='text-section' >
                     <h1 className='landing-page-title heading-reset'>
                         Tired of Looking for the Perfect <RotatingText />
