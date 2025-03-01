@@ -9,13 +9,13 @@ const BUSINESS_TYPE_MAPPING = {
     'wedding planner/coordinator': ['wedding planner', 'rental'],
     'catering': ['catering'],
     'florist': ['florist'],
-    'hair and makeup artist': ['hair and makeup artist'],
+    'hair and makeup artist': ['hair and makeup artist', 'beauty'],
     'photography': ['photo'],
     'videography': ['photo'],
     'dj': ['dj', 'DJ'], // Add both lowercase and uppercase variations
     'venue': ['venue'],
     'spray tan': ['spray tan'],
-
+    'beauty': ['beauty', 'hair and makeup artist'],
 };
 
 const SERVICE_CATEGORY_MAPPING = {
@@ -23,7 +23,7 @@ const SERVICE_CATEGORY_MAPPING = {
     'dj': { table: 'dj_requests', legacy: 'dj' },
     'catering': { table: 'catering_requests', legacy: 'catering' },
     'hair and makeup artist': { table: 'beauty_requests', legacy: 'hair and makeup artist' },
-    'beauty': { table: 'beauty_requests', legacy: 'beauty' },
+    'beauty': { table: 'beauty_requests', legacy: 'hair and makeup artist' },
     'videography': { table: 'videography_requests', legacy: 'videography' },
     'florist': { table: 'florist_requests', legacy: 'florist' }
 };
