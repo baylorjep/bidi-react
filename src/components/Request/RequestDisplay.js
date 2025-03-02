@@ -99,19 +99,37 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
     };
 
     const getDate = () => {
+        // Add debug logging
+        console.log('getDate - Request:', request);
+        console.log('getDate - Date fields:', {
+            service_date: request.service_date,
+            date: request.date,
+            event_date: request.event_date,
+            start_date: request.start_date
+        });
+
         const type = getRequestType();
+        console.log('getDate - Request type:', type);
+
+        // For beauty requests, prioritize start_date
+        if (type === 'beauty_requests') {
+            return request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Date not specified';
+        }
+
+        // For other requests, keep existing logic
         const startDate = ['photography_requests', 'dj_requests', 'catering_requests'].includes(type) 
             ? request.start_date 
-            : request.service_date;
+            : request.service_date || request.date || request.event_date || request.start_date;
         
         if (request.end_date) {
             return `${new Date(startDate).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
         }
-        return new Date(startDate).toLocaleDateString();
+        return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
     };
 
     const renderBeautyRequest = () => (
         <div className="request-summary-grid">
+
             {/* Basic Event Information */}
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Event Type</div>
@@ -125,7 +143,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
 
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Event Date</div>
-                <div className="request-info">{getDate()}</div>
+                <div className="request-info">{request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Date not specified'}</div>
             </div>
 
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -868,7 +886,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
             {/* Basic Event Information */}
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Event Type</div>
-                <div className="request-info">{request.event_type || 'Not specified'}</div>
+                <div class="request-info">{request.event_type || 'Not specified'}</div>
             </div>
 
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
