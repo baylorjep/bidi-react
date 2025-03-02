@@ -20,6 +20,11 @@ const BusinessDashboard = () => {
   const [showMinPriceModal, setShowMinPriceModal] = useState(false);
   const [minimumPrice, setMinimumPrice] = useState("");
   const [currentMinPrice, setCurrentMinPrice] = useState(null);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [affiliateCoupons, setAffiliateCoupons] = useState([]);
+  const [newCouponCode, setNewCouponCode] = useState('');
+  const [activeCoupon, setActiveCoupon] = useState(null);
+  const [calculatorAmount, setCalculatorAmount] = useState('');
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
@@ -224,8 +229,113 @@ const BusinessDashboard = () => {
     };
   
     fetchBusinessDetails();
+    fetchAffiliateCoupons();
   }, []);
   
+  const fetchAffiliateCoupons = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      // Get all coupons for this business
+      const { data: coupons, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('business_id', user.id)
+        .eq('valid', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching coupons:', error);
+      } else if (coupons && coupons.length > 0) {
+        // Find the most recent non-expired coupon
+        const now = new Date();
+        const validCoupon = coupons.find(coupon => 
+          new Date(coupon.expiration_date) > now
+        );
+
+        if (validCoupon) {
+          setActiveCoupon(validCoupon);
+          setNewCouponCode(validCoupon.code);
+        } else {
+          setActiveCoupon(null);
+          setNewCouponCode('');
+        }
+      }
+    }
+  };
+
+  const generateCouponCode = () => {
+    // Remove spaces and take first 6 characters of business name (or pad with X if shorter)
+    let prefix = businessName.replace(/\s+/g, '').substring(0, 6).toUpperCase();
+    prefix = prefix.padEnd(6, 'X');
+    
+    // Add the year (25)
+    return `${prefix}25`;
+  };
+
+  const handleGenerateCoupon = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // First check for existing valid coupons
+    const { data: existingCoupons, error: fetchError } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('business_id', user.id)
+      .eq('valid', true);
+
+    if (fetchError) {
+      console.error('Error checking existing coupons:', fetchError);
+      return;
+    }
+
+    // Find if there's a non-expired coupon
+    const now = new Date();
+    const validCoupon = existingCoupons?.find(coupon => 
+      new Date(coupon.expiration_date) > now
+    );
+
+    if (validCoupon) {
+      setActiveCoupon(validCoupon);
+      setNewCouponCode(validCoupon.code);
+      setShowCouponModal(true);
+      return;
+    }
+
+    // If no valid coupon exists, generate a new one
+    const code = generateCouponCode();
+    const expirationDate = new Date();
+    expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+
+    // Invalidate any existing coupons first
+    if (existingCoupons?.length > 0) {
+      await supabase
+        .from('coupons')
+        .update({ valid: false })
+        .eq('business_id', user.id);
+    }
+
+    // Create new coupon
+    const { data: newCoupon, error: insertError } = await supabase
+      .from('coupons')
+      .insert([{
+        business_id: user.id,
+        code: code,
+        discount_amount: 10,
+        expiration_date: expirationDate.toISOString(),
+        valid: true
+      }])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error generating coupon:', insertError);
+      alert('Error generating coupon. Please try again.');
+    } else {
+      setNewCouponCode(code);
+      setActiveCoupon(newCoupon);
+      setShowCouponModal(true);
+    }
+  };
   
   // Shorten description to a certain length
   const truncateDescription = (description, length) => {
@@ -395,6 +505,16 @@ const BusinessDashboard = () => {
     }
   };
 
+  const getButtonText = () => {
+    if (!activeCoupon) return "Generate Affiliate Coupon";
+    return "View Affiliate Coupon";
+  };
+
+  const calculateEarnings = (amount) => {
+    if (!amount || isNaN(amount)) return 0;
+    return (parseFloat(amount) * 0.05).toFixed(2);
+  };
+
   return (
     <div className="business-dashboard text-center">
       <h1 className="dashboard-title">Welcome, {businessName}!</h1>
@@ -445,6 +565,15 @@ const BusinessDashboard = () => {
               onClick={() => setShowMinPriceModal(true)}
             >
               Set Minimum Price {currentMinPrice ? `($${currentMinPrice})` : ''}
+            </button>
+          </div>
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
+            <button
+              style={{fontWeight:'bold'}}
+              className="btn-secondary flex-fill"
+              onClick={handleGenerateCoupon}
+            >
+              {getButtonText()}
             </button>
           </div>
         </div>
@@ -722,8 +851,8 @@ const BusinessDashboard = () => {
         </Modal.Body>
         <Modal.Footer>
           <div style={{display:'flex', flexDirection:'row', gap:'20px', justifyContent:'center'}}>
-          <button  style={{maxHeight:'32px'}}className="btn-primary"onClick={() => setShowModal(false)}>Close</button>
-          <button  style={{maxHeight:'32px'}}className="btn-secondary" onClick={handleDownPaymentSubmit}>Submit</button>
+          <button  style={{maxHeight:'32px'}}className="btn-danger"onClick={() => setShowModal(false)}>Close</button>
+          <button  style={{maxHeight:'32px'}}className="btn-success" onClick={handleDownPaymentSubmit}>Submit</button>
           </div>
         </Modal.Footer>
       </Modal>
@@ -759,6 +888,57 @@ const BusinessDashboard = () => {
           </button>
         </Modal.Footer>
       </Modal>
+
+      {/* Modal for Coupon Generation */}
+      <Modal show={showCouponModal} onHide={() => setShowCouponModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{activeCoupon ? 'Your Affiliate Coupon' : 'New Affiliate Coupon Generated'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="text-center">
+            <h4>Your coupon code is:</h4>
+            <div className="p-3 mb-3 bg-light rounded">
+              <strong>{newCouponCode}</strong>
+            </div>
+            <p>This coupon gives customers $10 off their purchase</p>
+            <p>Valid until: {activeCoupon ? new Date(activeCoupon.expiration_date).toLocaleDateString() : ''}</p>
+            <p>Share this code with your network to earn 5% of the bid amount when your lead pays through Bidi</p>
+            
+            {/* Add Calculator Section */}
+            <div className="mt-4 p-3 bg-light rounded">
+              <h5>Earnings Calculator</h5>
+              <div className="input-group mb-3">
+                <span className="input-group-text">$</span>
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="Enter bid amount"
+                  value={calculatorAmount}
+                  onChange={(e) => setCalculatorAmount(e.target.value)}
+                />
+              </div>
+              <p className="mt-2">
+                You would earn: <strong>${calculateEarnings(calculatorAmount)}</strong>
+              </p>
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <button className="btn-danger" onClick={() => setShowCouponModal(false)}>
+            Close
+          </button>
+          <button 
+            className="btn-success"
+            onClick={() => {
+              navigator.clipboard.writeText(newCouponCode);
+              alert('Coupon code copied to clipboard!');
+            }}
+          >
+            Copy
+          </button>
+        </Modal.Footer>
+      </Modal>
+      
     </div>
   );
 };
