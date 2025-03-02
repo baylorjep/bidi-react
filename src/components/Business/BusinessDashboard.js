@@ -25,23 +25,41 @@ const BusinessDashboard = () => {
   const [newCouponCode, setNewCouponCode] = useState('');
   const [activeCoupon, setActiveCoupon] = useState(null);
   const [calculatorAmount, setCalculatorAmount] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setError("No user found. Please log in again.");
+          setIsLoading(false);
+          return;
+        }
+
         // Fetch business profile details
         const { data: profile, error: profileError } = await supabase
           .from('business_profiles')
           .select('business_name, stripe_account_id, id, down_payment_type, amount, minimum_price')
           .eq('id', user.id)
           .single();
-  
+
         if (profileError) {
           console.error('Error fetching profile:', profileError);
+          setError("Error loading business profile");
+          setIsLoading(false);
           return;
         }
-  
+
+        if (!profile) {
+          setError("Business profile not found");
+          setIsLoading(false);
+          return;
+        }
+
         if (profile) {
           setBusinessName(profile.business_name);
           if (profile.stripe_account_id) {
@@ -225,6 +243,11 @@ const BusinessDashboard = () => {
           setBids(bidsWithRequestData);
           setCurrentMinPrice(profile.minimum_price);
         }
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Error in fetchBusinessDetails:", err);
+        setError("An unexpected error occurred");
+        setIsLoading(false);
       }
     };
   
@@ -514,6 +537,29 @@ const BusinessDashboard = () => {
     if (!amount || isNaN(amount)) return 0;
     return (parseFloat(amount) * 0.05).toFixed(2);
   };
+
+  if (isLoading) {
+    return (
+      <div className="business-dashboard text-center">
+        <h2>Loading...</h2>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="business-dashboard text-center">
+        <h2>Error</h2>
+        <p>{error}</p>
+        <button 
+          className="btn-primary" 
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="business-dashboard text-center">
