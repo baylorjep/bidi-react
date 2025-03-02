@@ -36,7 +36,7 @@ const Articles = () => {
                     <Link to="/articles/utah-photography-cost-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <div className="article-preview">
                             <img 
-                                src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/61bd4058-aa6f-4844-84b8-444afcf7fe9a.png?st=2025-02-21T02%3A03%3A37Z&se=2025-02-28T02%3A03%3A37Z&sp=r&sv=2025-01-05&sr=b&sig=eMyrsu3%2B9zDuzEoC/D/6vc/iY/qlGH7cjGS5M5gOwB0%3D"
+                                src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/61bd4058-aa6f-4844-84b8-444afcf7fe9a.png"
                                 alt="Utah Photography Cost Guide" 
                                 className="article-image" 
                             />
@@ -119,8 +119,21 @@ const Articles = () => {
                         </div>
                     </Link>
                 </li>
-
-                {/* Add more articles here */}
+                <li className="article-navigation-item">
+                    <Link to="/articles/utah-wedding-videographer-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <div className="article-preview">
+                            <img 
+                                src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/77bcb9b6-4c3e-4211-90c8-0d38283a4b73.png"
+                                alt="Utah Wedding Videographer Guide" 
+                                className="article-image" 
+                            />
+                            <div className="article-content">
+                                <h2>How to Choose Your Utah Wedding Videographer: A Stress-Free Guide</h2>
+                                <p>Navigate the process of finding and hiring the perfect wedding videographer in Utah. Compare styles, packages, and prices while learning what questions to ask potential videographers. Includes insights on local venues, permits, and latest filming trends across Salt Lake City, Park City, and beyond.</p>
+                            </div>
+                        </div>
+                    </Link>
+                </li>
             </ul>
         </div>
     );

@@ -101,6 +101,7 @@ import UtahPhotographyCostGuide from './components/Article/UtahPhotographyCostGu
 import NewsletterLanding from './components/NewsletterLanding';
 import Unsubscribe from './components/Unsubscribe';
 import LocationBanner from './components/LocationBanner/LocationBanner';
+import UtahWeddingVideographerGuide from './components/Article/UtahWeddingVideographerGuide';
 
 function App() {
 
@@ -197,6 +198,7 @@ function App() {
                         {/* Articles Route */}
                         <Route path="/articles" element={<ArticleNavigation />} />
                         <Route path="/articles/:articleId" element={<ArticleDetail />} />
+                        <Route path="/articles/utah-wedding-videographer-guide" element={<UtahWeddingVideographerGuide />} />
 
                         {/* Photography Routes */}
                         <Route path="/request/photography" element={<PhotographyRequest />} />
