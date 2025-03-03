@@ -16550,8 +16550,8 @@ label {
   color: #007bff;
   cursor: pointer;
   text-decoration: underline;
-  margin-top: 10px;
   font-size: 14px;
+  margin-top: 5px;
 }
 
 .edit-profile-link:hover {
