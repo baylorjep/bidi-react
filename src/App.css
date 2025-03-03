@@ -16531,7 +16531,14 @@ label {
   margin-bottom: 20px;
 }
 
-.profile-picture {
+.profile-pic-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-pic {
   width: 120px;
   height: 120px;
   border-radius: 50%;
@@ -16543,7 +16550,8 @@ label {
   color: #007bff;
   cursor: pointer;
   text-decoration: underline;
-  margin-top: 5px;
+  margin-top: 10px;
+  font-size: 14px;
 }
 
 .edit-profile-link:hover {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
@@ -17,6 +17,7 @@ const ProfilePage = () => {
   const [uploadingPortfolio, setUploadingPortfolio] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(null);
+  const profileFileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -103,105 +104,108 @@ const ProfilePage = () => {
     });
   };
 
-  const handleFileChange = (event, type) => {
-    if (type === 'profile') {
-        setProfilePic(event.target.files[0]);
+  const handleFileChange = async (event, type) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (type === "profile") {
+        setProfilePic(URL.createObjectURL(file)); // Show preview immediately
     } else {
-        setPortfolioPic(event.target.files[0]);
-    }
-    setUploadSuccess(null);
-    setUploadError(null);
-  };
-
-  const handleUpload = async (type) => {
-    const file = type === 'profile' ? profilePic : portfolioPic;
-    if (!file) {
-        setUploadError(`Please select a ${type} picture first.`);
-        return;
+        setPortfolioPic([...portfolioPic, URL.createObjectURL(file)]);
     }
 
-    type === 'profile' ? setUploadingProfile(true) : setUploadingPortfolio(true);
-    setUploadError(null);
-    setUploadSuccess(null);
+    // 🔹 Pass the actual file to `handleUpload`
+    await handleUpload(file, type);
+};
 
-    try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) throw new Error("User not authenticated");
+const handleUpload = async (file, type) => {
+  if (!file) {
+      setUploadError(`Please select a ${type} picture first.`);
+      return;
+  }
 
-        const userId = user.id;
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${uuidv4()}.${fileExt}`;
-        const filePath = `${userId}/${fileName}`;
+  type === "profile" ? setUploadingProfile(true) : setUploadingPortfolio(true);
+  setUploadError(null);
+  setUploadSuccess(null);
 
-        if (type === "profile") {
-            // 🔹 1. Fetch the old profile picture's file path
-            const { data: existingProfilePic, error: fetchError } = await supabase
-                .from("profile_photos")
-                .select("file_path")
-                .eq("user_id", userId)
-                .eq("photo_type", "profile")
-                .single();
+  try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error("User not authenticated");
 
-            if (fetchError && fetchError.code !== "PGRST116") { // Ignore "no rows found" error
-                throw fetchError;
-            }
+      const userId = user.id;
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `${userId}/${fileName}`;
 
-            if (existingProfilePic) {
-                // 🔹 2. Delete the old profile picture from Supabase Storage
-                const { error: deleteError } = await supabase.storage
-                    .from("profile-photos")
-                    .remove([existingProfilePic.file_path]);
+      if (type === "profile") {
+          // 🔹 1. Fetch the old profile picture file path
+          const { data: existingProfilePic, error: fetchError } = await supabase
+              .from("profile_photos")
+              .select("file_path")
+              .eq("user_id", userId)
+              .eq("photo_type", "profile")
+              .single();
 
-                if (deleteError) {
-                    console.error("Error deleting old profile picture:", deleteError);
-                }
+          if (fetchError && fetchError.code !== "PGRST116") { // Ignore "no rows found" error
+              throw fetchError;
+          }
 
-                // 🔹 3. Delete the old entry from the database
-                await supabase
-                    .from("profile_photos")
-                    .delete()
-                    .eq("user_id", userId)
-                    .eq("photo_type", "profile");
-            }
-        }
+          if (existingProfilePic) {
+              // 🔹 2. Delete the old profile picture from Supabase Storage
+              const { error: deleteError } = await supabase.storage
+                  .from("profile-photos")
+                  .remove([existingProfilePic.file_path]);
 
-        // 🔹 4. Upload new profile picture
-        const { error: uploadError } = await supabase
-            .storage
-            .from('profile-photos')
-            .upload(filePath, file, { upsert: true });
+              if (deleteError) {
+                  console.error("Error deleting old profile picture:", deleteError);
+              }
 
-        if (uploadError) throw uploadError;
+              // 🔹 3. Delete the old entry from the database
+              await supabase
+                  .from("profile_photos")
+                  .delete()
+                  .eq("user_id", userId)
+                  .eq("photo_type", "profile");
+          }
+      }
 
-        // 🔹 5. Get public URL of new profile picture
-        const { data } = supabase.storage
-            .from('profile-photos')
-            .getPublicUrl(filePath);
+      // 🔹 4. Upload new profile picture
+      const { error: uploadError } = await supabase
+          .storage
+          .from('profile-photos')
+          .upload(filePath, file, { upsert: true });
 
-        const photoUrl = data.publicUrl;
+      if (uploadError) throw uploadError;
 
-        // 🔹 6. Save new profile picture in the database
-        const { error: dbError } = await supabase
-            .from('profile_photos')
-            .insert([
-                {
-                    user_id: userId,
-                    photo_url: photoUrl,
-                    file_path: filePath,
-                    photo_type: type
-                }
-            ]);
+      // 🔹 5. Get public URL of new profile picture
+      const { data } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(filePath);
 
-        if (dbError) throw dbError;
+      const photoUrl = data.publicUrl;
 
-        setUploadSuccess(`${type.charAt(0).toUpperCase() + type.slice(1)} picture uploaded successfully!`);
-        if (type === "profile") setProfilePic(photoUrl); // Update UI immediately
-    } catch (error) {
-        console.error(error);
-        setUploadError(`Failed to upload ${type} picture. Please try again.`);
-    } finally {
-        type === 'profile' ? setUploadingProfile(false) : setUploadingPortfolio(false);
-    }
+      // 🔹 6. Save new profile picture in the database
+      const { error: dbError } = await supabase
+          .from('profile_photos')
+          .insert([
+              {
+                  user_id: userId,
+                  photo_url: photoUrl,
+                  file_path: filePath,
+                  photo_type: type
+              }
+          ]);
+
+      if (dbError) throw dbError;
+
+      setUploadSuccess(`${type.charAt(0).toUpperCase() + type.slice(1)} picture uploaded successfully!`);
+      if (type === "profile") setProfilePic(photoUrl); // Update UI immediately
+  } catch (error) {
+      console.error(error);
+      setUploadError(`Failed to upload ${type} picture. Please try again.`);
+  } finally {
+      type === "profile" ? setUploadingProfile(false) : setUploadingPortfolio(false);
+  }
 };
 
   const handleSave = async () => {
@@ -266,27 +270,30 @@ const ProfilePage = () => {
       {errorMessage && <p className="text-danger">{errorMessage}</p>}
       {successMessage && <p className="text-success">{successMessage}</p>}
 
-          {/* Profile Picture Display */}
-    <div className="profile-picture-container">
+          {/* Profile Picture Section */}
+          <div className="profile-picture-container">
+    <label>Profile Picture</label>
+    <div className="profile-pic-wrapper">
         <img 
-            src={profilePic || "/default-profile.png"} 
-            alt="Profile" 
-            className="profile-picture"
+            src={profilePic || "/default-profile.png"} // Default image if no profile pic
+            alt="Profile"
+            className="profile-pic"
         />
-        <p 
-            className="edit-profile-link"
-            onClick={() => document.getElementById("profilePicInput").click()}
-        >
-            Edit Profile Picture
-        </p>
         <input 
             type="file" 
-            id="profilePicInput" 
             accept="image/*" 
+            ref={profileFileInputRef} 
             style={{ display: "none" }} 
             onChange={(e) => handleFileChange(e, "profile")}
         />
+        <button 
+            className="edit-profile-button" 
+            onClick={() => profileFileInputRef.current.click()}
+        >
+            Edit Profile Picture
+        </button>
     </div>
+</div>
 
       <div className="form-group mt-4">
         <label>Email</label>
@@ -352,31 +359,31 @@ const ProfilePage = () => {
             />
           </div>
           {/* Portfolio Images Display */}
-            <div className="portfolio-container">
-                <p>Portfolio Images</p>
-                <div className="portfolio-images">
-                    {portfolioPic && portfolioPic.length > 0 ? (
-                        portfolioPic.map((img, index) => (
-                            <img key={index} src={img} alt={`Portfolio ${index}`} className="portfolio-image" />
-                        ))
-                    ) : (
-                        <img src="/default-portfolio.png" alt="Default Portfolio" className="portfolio-image" />
-                    )}
-                </div>
-                <p 
-                    className="edit-profile-link"
-                    onClick={() => document.getElementById("portfolioPicInput").click()}
-                >
-                    Add Portfolio Image
-                </p>
-                <input 
-                    type="file" 
-                    id="portfolioPicInput" 
-                    accept="image/*" 
-                    style={{ display: "none" }} 
-                    onChange={(e) => handleFileChange(e, "portfolio")}
-                />
-            </div>
+          <div className="portfolio-container">
+              <p>Portfolio Images</p>
+              <div className="portfolio-images">
+                  {portfolioPic && portfolioPic.length > 0 ? (
+                      portfolioPic.map((img, index) => (
+                          <img key={index} src={img} alt={`Portfolio ${index}`} className="portfolio-image" />
+                      ))
+                  ) : (
+                      <img src="/default-portfolio.png" alt="Default Portfolio" className="portfolio-image" />
+                  )}
+              </div>
+              <input 
+                  type="file" 
+                  id="portfolioPicInput" 
+                  accept="image/*" 
+                  style={{ display: "none" }} 
+                  onChange={(e) => handleFileChange(e, "portfolio")}
+              />
+              <button 
+                  className="edit-profile-button"
+                  onClick={() => document.getElementById("portfolioPicInput").click()}
+              >
+                  Add Portfolio Image
+              </button>
+          </div>
         </>
       ) : (
         <>
