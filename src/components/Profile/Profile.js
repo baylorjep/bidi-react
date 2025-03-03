@@ -275,7 +275,7 @@ const handleUpload = async (file, type) => {
             <label>Profile Picture</label>
             <div className="profile-pic-wrapper">
                   <img 
-                      src={profilePic || "/default-profile.png"} // Default image if no profile pic
+                      src={profilePic || "/images/default.jpg"} // Default image if no profile pic
                       alt="Profile"
                       className="profile-pic"
                   />
@@ -367,7 +367,7 @@ const handleUpload = async (file, type) => {
                           <img key={index} src={img} alt={`Portfolio ${index}`} className="portfolio-image" />
                       ))
                   ) : (
-                      <img src="/default-portfolio.png" alt="Default Portfolio" className="portfolio-image" />
+                      <img src="/images/portfolio.jpeg" alt="Default Portfolio" className="portfolio-image" />
                   )}
               </div>
               <input 
@@ -381,7 +381,7 @@ const handleUpload = async (file, type) => {
                   className="edit-profile-button"
                   onClick={() => document.getElementById("portfolioPicInput").click()}
               >
-                  Add Portfolio Image
+                  Add Portfolio Images
               </button>
           </div>
         </>
