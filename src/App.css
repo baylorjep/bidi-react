@@ -16558,6 +16558,20 @@ label {
   color: #0056b3;
 }
 
+.edit-profile-button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+  padding: 0;
+}
+
+.edit-profile-button:hover {
+  color: #0056b3;
+}
+
 .portfolio-container {
   display: flex;
   flex-direction: column;

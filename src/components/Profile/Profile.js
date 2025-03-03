@@ -274,26 +274,26 @@ const handleUpload = async (file, type) => {
           <div className="profile-picture-container">
             <label>Profile Picture</label>
             <div className="profile-pic-wrapper">
-                <img 
-                    src={profilePic || "/default-profile.png"} // Default image if no profile pic
-                    alt="Profile"
-                    className="profile-pic"
-                />
-                <input 
-                    type="file" 
-                    accept="image/*" 
-                    ref={profileFileInputRef} 
-                    style={{ display: "none" }} 
-                    onChange={(e) => handleFileChange(e, "profile")}
-                />
-                <p 
-                    className="edit-profile-link" 
-                    onClick={() => profileFileInputRef.current.click()}
-                >
-                    Edit Profile Picture
-                </p>
-            </div>
-        </div>
+                  <img 
+                      src={profilePic || "/default-profile.png"} // Default image if no profile pic
+                      alt="Profile"
+                      className="profile-pic"
+                  />
+                  <input 
+                      type="file" 
+                      accept="image/*" 
+                      ref={profileFileInputRef} 
+                      style={{ display: "none" }} 
+                      onChange={(e) => handleFileChange(e, "profile")}
+                  />
+                  <button 
+                      className="edit-profile-button" 
+                      onClick={() => profileFileInputRef.current.click()}
+                  >
+                      Edit Profile Picture
+                  </button>
+              </div>
+          </div>
 
       <div className="form-group mt-4">
         <label>Email</label>
