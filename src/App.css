@@ -16524,3 +16524,49 @@ label {
   margin-left: 4px;
 }
 
+.profile-picture-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.profile-picture {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid #ff69b4; /* Pink border */
+  object-fit: cover;
+}
+
+.edit-profile-link {
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 5px;
+}
+
+.edit-profile-link:hover {
+  color: #0056b3;
+}
+
+.portfolio-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.portfolio-images {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.portfolio-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 2px solid #ddd;
+}
