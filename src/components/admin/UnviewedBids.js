@@ -396,21 +396,7 @@ function UnviewedBids() {
                 </button>
             </div>
             <p className="section-description">These bids are grouped by customer for more efficient communication.</p>
-            
-            {debugInfo && (
-                <div className="debug-info">
-                    <h6>Debug Information:</h6>
-                    <p>Total bids: {debugInfo.total}</p>
-                    <p>contacted=true: {debugInfo.true}</p>
-                    <p>contacted=false: {debugInfo.false}</p>
-                    <p>contacted=null: {debugInfo.null}</p>
-                    <p>contacted=undefined: {debugInfo.undefined}</p>
-                    <small>
-                        Most bids have contacted=null. Using OR query: 
-                        contacted.is.null, contacted.eq.false
-                    </small>
-                </div>
-            )}
+        
             
             {successMessage && <Alert variant="success" className="mobile-alert">{successMessage}</Alert>}
             {error && <Alert variant="danger" className="mobile-alert">{error}</Alert>}
