@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
-import logo from '../../assets/images/Bidi Logo.png';
+import logo from '../../assets/images/Bidi-Logo.svg';
 import '../../App.css';
 
 function Navbar() {
@@ -86,7 +86,7 @@ function Navbar() {
         <nav className="navbar navbar-expand-lg" id="mainNav" ref={navbarRef}>
             <div className="container">
                 <Link className="navbar-brand fw-bold" to="/">
-                    <div className='bidi-logo'>Bidi</div>
+                    <img src={logo} alt="Bidi Logo" className="bidi-img-logo" />
                 </Link>
                 <button
                     className="navbar-toggler"

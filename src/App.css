@@ -16336,6 +16336,18 @@ a .try-now-button {
   line-height: normal;
 }
 
+.bidi-img-logo {
+  height: 64px;
+  width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+  .bidi-img-logo {
+    height: 48px;
+  }
+  
+}
+
 
 
 .sign-in-form-container {
