@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import { Alert, Badge, Accordion } from 'react-bootstrap';
 import './UnviewedBids.css';
 
+
 function UnviewedBids() {
     const [unviewedBids, setUnviewedBids] = useState([]);
     const [groupedBids, setGroupedBids] = useState({});

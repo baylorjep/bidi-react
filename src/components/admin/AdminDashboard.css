@@ -8,13 +8,29 @@
   .container.px-5 {
     padding-left: 0 !important;
     padding-right: 0 !important;
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
   }
   
   .col-lg-12 {
     padding: 0;
+    width: 100%;
+    max-width: 100%;
   }
   
   h2 {
     padding: 0 15px;
+    text-align: center;
+  }
+  
+  .grey-bg {
+    background-color: #f8f9fa;
+    width: 100%;
+  }
+  
+  .content {
+    width: 100%;
+    padding: 0;
   }
 }
