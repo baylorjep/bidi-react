@@ -186,7 +186,11 @@ function App() {
                         <Route path="/payment-status" element={<PaymentStatus />} />
 
                         {/* Admin Routes */}
-                        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+                        <Route path="/admin-dashboard" element={
+                            <PrivateRoute>
+                                <AdminDashboard />
+                            </PrivateRoute>
+                        } />
 
                         {/* Combined Bids Route */}
                         <Route path="/bids" element={
