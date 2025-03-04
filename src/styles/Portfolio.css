@@ -1,0 +1,127 @@
+.portfolio-container {
+  max-width: 900px;
+  margin: 50px auto;
+  padding: 20px;
+  text-align: left;
+}
+
+.business-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding-bottom: 15px;
+  border-bottom: none; /* Remove this border */
+}
+
+.business-info {
+  flex: 1;
+  gap: 25px;
+}
+
+.business-name {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+  text-align: left;
+}
+
+.business-location,
+.business-price2 {
+  font-size: 1rem !important;
+  color: #666;
+  text-align: left;
+  margin: 0;
+}
+
+.vendor-section {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-top: 2px solid #ddd;
+  margin-top: 30px;
+}
+
+.vendor-info {
+  display: flex;
+  align-items: center;
+  gap: 75px;
+}
+
+.vendor-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.vendor-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  margin-top: 5px;
+}
+
+.vendor-description {
+  flex: 1;
+  font-size: 1rem;
+  text-align: left;
+  margin: 0;
+  word-spacing: 3px;
+  line-height: 1.65;
+}
+
+.vendor-image {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 2px solid #a328f4;
+}
+
+.vendor-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0;
+  text-align: center;
+}
+
+.vendor-role {
+  font-size: 1rem;
+  color: #666;
+  margin: 0;
+  text-align: center;
+}
+
+.selections-section {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-top: 2px solid #ddd;
+  margin-top: 30px;
+}
+
+.selections-list {
+  display: grid;
+  grid-template-columns: repeat(
+    3,
+    minmax(100px, 1fr)
+  ); /* 3 columns, adjust width as needed */
+  gap: 5px 1px; /* Controls row and column spacing */
+  list-style: none;
+  padding: 0;
+}
+
+.selections-list li {
+  font-size: 1rem;
+  margin-bottom: 5px;
+  padding-left: 15px;
+  position: relative;
+}
+
+.selections-list li::before {
+  content: "•";
+  color: #a328f4;
+  position: absolute;
+  left: 0;
+  font-size: 1.2rem;
+}
