@@ -23,12 +23,15 @@ function UnviewedBids() {
             setDebugInfo(null);
             console.log("Fetching unviewed bids...");
             
-            // First get all bids without filters to see what's in the database
-            const { data: allBids, error: allBidsError } = await supabase
+            // First query to get all bids for debugging
+            let { data: allBids, error: allBidsError } = await supabase
                 .from('bids')
                 .select('id, contacted')
-                .order('created_at', { ascending: false })
                 .limit(50);
+                
+            if (allBidsError) {
+                console.error("Error with debugging query:", allBidsError);
+            }
                 
             console.log("All bids (first 50):", allBids);
             
@@ -45,13 +48,13 @@ function UnviewedBids() {
                 setDebugInfo(contactedCounts);
             }
             
-            // Based on the debug information, we see most bids have contacted=null
-            // This is the correct query to use:
-            console.log("Using query to get bids with contacted=null or contacted=false");
+            // This is the updated query to exclude bids with "denied" or "accepted" status
+            console.log("Using query to get uncontacted bids that aren't denied or accepted");
             let { data: bids, error: bidsError } = await supabase
                 .from('bids')
                 .select('id, bid_amount, bid_description, status, created_at, request_id, category, viewed, contacted, user_id')
                 .or('contacted.is.null, contacted.eq.false')  // This gets both null and false values
+                .not('status', 'in', '("denied","accepted")')  // Exclude denied or accepted bids
                 .order('created_at', { ascending: false });
 
             if (bidsError) {
@@ -59,7 +62,7 @@ function UnviewedBids() {
                 throw bidsError;
             }
             
-            console.log(`Retrieved ${bids?.length || 0} uncontacted bids`);
+            console.log(`Retrieved ${bids?.length || 0} uncontacted bids (excluding denied/accepted)`);
 
             // Get associated request details
             const bidsWithDetails = await Promise.all(bids.map(async (bid) => { 
@@ -90,21 +93,106 @@ function UnviewedBids() {
                             console.log(`Generic request user_id: ${userId}`);
                         }
                     } 
-                    else if (category === 'photography') {
-                        const { data: photoData, error: photoError } = await supabase
-                            .from('photography_requests')
-                            .select('event_title, user_id')
+                    // Add support for the legacy "general" category
+                    else if (category === 'general') {
+                        const { data: requestData, error: requestError } = await supabase
+                            .from('requests')
+                            .select('service_title, user_id')
                             .eq('id', bid.request_id)
                             .single();
                         
-                        console.log("Photography request data:", photoData);
+                        console.log("Legacy general request data:", requestData);
+                        
+                        if (!requestError && requestData) {
+                            requestTitle = requestData.service_title;
+                            userId = requestData.user_id;
+                            console.log(`Legacy general request user_id: ${userId}`);
+                        }
+                    }
+                    else if (category === 'photography') {
+                        console.log(`Fetching photography request with id: ${bid.request_id}`);
+                        
+                        // Debug the bid itself more thoroughly
+                        console.log("Bid details:", {
+                            id: bid.id,
+                            amount: bid.bid_amount,
+                            category: bid.category,
+                            request_id: bid.request_id,
+                            user_id: bid.user_id
+                        });
+                        
+                        // Only try approaches that look in the photography_requests table
+                        let foundRequest = false;
+                        
+                        // Using the correct field names from the photography_requests table:
+                        // - profile_id instead of user_id
+                        // - event_title and/or event_type instead of title
+                        
+                        // First try: Standard approach
+                        const { data: photoData, error: photoError } = await supabase
+                            .from('photography_requests')
+                            .select('id, event_title, event_type, profile_id')
+                            .eq('id', bid.request_id)
+                            .single();
+                            
+                        console.log("Photography request (standard approach):", {
+                            data: photoData,
+                            error: photoError
+                        });
                         
                         if (!photoError && photoData) {
-                            requestTitle = photoData.event_title;
-                            userId = photoData.user_id;
-                            console.log(`Photography request user_id: ${userId}`);
+                            foundRequest = true;
+                            // Use event_title if available, fallback to event_type
+                            requestTitle = photoData.event_title || photoData.event_type || 'Photography Event';
+                            // Use profile_id instead of user_id
+                            userId = photoData.profile_id;
+                            console.log(`Found photography request: title="${requestTitle}", profile_id=${userId}`);
                         }
-                    } 
+                        
+                        // Second try: Without single(), getting array
+                        if (!foundRequest) {
+                            const { data: photoArrayData, error: photoArrayError } = await supabase
+                                .from('photography_requests')
+                                .select('id, event_title, event_type, profile_id')
+                                .eq('id', bid.request_id);
+                                
+                            console.log("Photography request (array approach):", {
+                                data: photoArrayData,
+                                count: photoArrayData?.length,
+                                error: photoArrayError
+                            });
+                            
+                            if (!photoArrayError && photoArrayData && photoArrayData.length > 0) {
+                                foundRequest = true;
+                                const requestData = photoArrayData[0];
+                                requestTitle = requestData.event_title || requestData.event_type || 'Photography Event';
+                                userId = requestData.profile_id;
+                                console.log(`Found photography request (array): title="${requestTitle}", profile_id=${userId}`);
+                            }
+                        }
+                        
+                        // Final try: Show sample of available photography requests
+                        if (!foundRequest) {
+                            const { data: sampleRequests, error: sampleError } = await supabase
+                                .from('photography_requests')
+                                .select('id, event_title, event_type, profile_id')
+                                .limit(5);
+                                
+                            console.log("Sample photography requests:", {
+                                count: sampleRequests?.length,
+                                samples: sampleRequests,
+                                error: sampleError,
+                                bidRequestId: bid.request_id
+                            });
+                        }
+                        
+                        if (!foundRequest) {
+                            console.log("⚠️ CRITICAL: Could not find photography request for bid", {
+                                bid_id: bid.id,
+                                request_id: bid.request_id
+                            });
+                        }
+                    }
                     else if (category === 'videography') {
                         const { data: videoData, error: videoError } = await supabase
                             .from('videography_requests')
@@ -226,10 +314,14 @@ function UnviewedBids() {
 
                 return {
                     ...bid,
-                    request_title: requestTitle,
+                    request_title: requestTitle || `Request (${bid.category})`,
                     customer_email: customerEmail,
                     customer_phone: customerPhone,
-                    user_id_debug: userId // Add this for debugging
+                    user_id_debug: userId || bid.user_id, // Fallback to the bid's user_id if available
+                    debug_info: {
+                        category: bid.category,
+                        request_id: bid.request_id
+                    }
                 };
             }));
 
@@ -265,7 +357,7 @@ function UnviewedBids() {
         }
     };
 
-    // Updated to ensure contacted status is properly set
+    // Updated to ensure contacted status is properly set without automatic refresh
     const markBidsAsContacted = async (bids) => {
         try {
             const now = new Date().toISOString();
@@ -324,10 +416,10 @@ function UnviewedBids() {
             setGroupedBids(updatedGroupedBids);
             setSuccessMessage('Bids marked as contacted successfully!');
             
-            // Force a refresh of the data after a short delay
-            setTimeout(() => {
-                fetchUnviewedBids();
-            }, 1000);
+            // Remove the auto-refresh code
+            // setTimeout(() => {
+            //     fetchUnviewedBids();
+            // }, 1000);
             
             // Clear success message after 3 seconds
             setTimeout(() => {
@@ -371,13 +463,23 @@ function UnviewedBids() {
         fetchUnviewedBids();
     };
 
-    // Format number for badge display
+    // Format number for badge display - only show 99+ if actually over 99
     const formatBidCount = (count) => {
-        if (count > 99) return '99+'; // Show 99+ if count exceeds 99
+        if (count > 99) return '99+';
         return count;
     };
 
+    // Calculate the total number of bids across all users
+    const getTotalBidCount = () => {
+        return Object.values(groupedBids).reduce((total, userGroup) => {
+            return total + userGroup.bids.length;
+        }, 0);
+    };
+
     if (loading) return <div>Loading unviewed bids...</div>;
+
+    // Get the total count for the badge
+    const totalBidCount = getTotalBidCount();
 
     return (
         <div className="unviewed-bids-container">
@@ -385,7 +487,7 @@ function UnviewedBids() {
                 <h3 className="section-title">
                     Uncontacted Bids by Customer 
                     <Badge bg="danger" className="count-badge">
-                        {formatBidCount(unviewedBids.length)}
+                        {formatBidCount(totalBidCount)}
                     </Badge>
                 </h3>
                 <button 
