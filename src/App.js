@@ -23,9 +23,9 @@ import BidAccepted from "./components/Bid/BidAccepted";
 
 // Request Imports
 import RequestCategories from "./components/Request/RequestCategories";
-import RequestForm from "./components/Request/RequestForm";
 import SuccessRequest from "./components/Request/SuccessRequest";
 import OpenRequests from "./components/Request/OpenRequests";
+import PhotographyRequest from "./components/Request/Photography/PhotographyRequest";
 
 // New staged request imports
 import MultiStepRequestForm from "./components/Request/general requests/MultiStepRequestForm";
@@ -34,11 +34,11 @@ import MultiStepRequestForm from "./components/Request/general requests/MultiSte
 import TestEmail from "./components/TestEmail";
 
 // Event Imports
-import SelectEvent from "./components/Event/SelectEvent";
-import EventDetails from "./components/Event/EventDetails";
-import EventPhotos from "./components/Event/UploadPictures";
-import PersonalDetails from "./components/Event/PersonalDetails";
-import EventSummary from "./components/Event/EventSummary";
+import SelectEvent from "./components/Request/Event/SelectEvent";
+import EventDetails from "./components/Request/Event/EventDetails";
+import EventPhotos from "./components/Request/Event/UploadPictures";
+import PersonalDetails from "./components/Request/Event/PersonalDetails";
+import EventSummary from "./components/Request/Event/EventSummary";
 
 // Profile Imports
 import Signup from "./components/Profile/Signup";
@@ -65,6 +65,8 @@ import Homepage from "./components/Homepage";
 import ContactForm from "./components/ContactForm";
 import AboutUs from "./components/AboutUs";
 
+// Messaging imports
+
 // Spanish imports
 import HomepageES from "./components/HomepageES";
 import ContactFormES from "./components/ContactFormES";
@@ -83,6 +85,24 @@ import ScrollToTop from "./components/ScrollToTop";
 // Add this import
 import BidsPage from "./components/Individual/BidsPage";
 import PrivateRoute from "./components/PrivateRoute";
+import ArticleNavigation from "./components/Article/ArticleNavigation";
+import ArticleDetail from "./components/Article/ArticleDetail";
+import WeddingPhotographerCostGuide from "./components/Article/WeddingPhotographerCostGuide";
+import WeddingVideographerCostGuide from "./components/Article/WeddingVideographerCostGuide";
+import WeddingCateringCostGuide from "./components/Article/WeddingCateringCostGuide";
+import VideographyRequest from "./components/Request/Videography/VideographyRequest";
+import DjRequest from "./components/Request/DJ/DjRequest";
+import HairAndMakeUpRequest from "./components/Request/Beauty/HairAndMakeUpRequest";
+import FloristRequest from "./components/Request/Florist/FloristRequest"; // Add this import
+import CateringRequest from "./components/Request/Catering/CateringRequest"; // Add this import
+import WeddingFloristCostGuide from "./components/Article/WeddingFloristCostGuide";
+import WeddingDJCostGuide from "./components/Article/WeddingDJCostGuide";
+import WeddingHairMakeupCostGuide from "./components/Article/WeddingHairMakeupCostGuide";
+import UtahPhotographyCostGuide from "./components/Article/UtahPhotographyCostGuide";
+import NewsletterLanding from "./components/NewsletterLanding";
+import Unsubscribe from "./components/Unsubscribe";
+import LocationBanner from "./components/LocationBanner/LocationBanner";
+import UtahWeddingVideographerGuide from "./components/Article/UtahWeddingVideographerGuide";
 
 function App() {
   const [eventType, setEventType] = useState("");
@@ -92,6 +112,7 @@ function App() {
     <Router>
       <ScrollToTop />
       <div className="app-container">
+        <LocationBanner />
         <Navbar />
         <div className="content">
           <Routes>
@@ -105,7 +126,6 @@ function App() {
             <Route path="/bid-success" element={<BidSuccess />} />
             {/* Request Routes */}
             <Route path="/request-categories" element={<RequestCategories />} />
-            <Route path="/request" element={<RequestForm />} />
             <Route path="/success-request" element={<SuccessRequest />} />
             {/* New Staged Request Routes */}
             <Route path="/request-form" element={<MultiStepRequestForm />} />
@@ -178,10 +198,10 @@ function App() {
               element={<EditBid />}
             />{" "}
             {/* Dynamic URL for editing bids */}
-            <Route path="/portfolio/:businessId" element={<Portfolio />} />
             {/* Misc Routes */}
             <Route path="/contact-us" element={<ContactForm />} />
             <Route path="/about-us" element={<AboutUs />} />
+            {/* Messaging Routes */}
             {/* Spanish Routes */}
             <Route path="/inicio" element={<HomepageES />} />
             <Route path="/contactenos" element={<ContactFormES />} />
@@ -203,6 +223,33 @@ function App() {
                 </PrivateRoute>
               }
             />
+            {/* Articles Route */}
+            <Route path="/articles" element={<ArticleNavigation />} />
+            <Route path="/articles/:articleId" element={<ArticleDetail />} />
+            <Route
+              path="/articles/utah-wedding-videographer-guide"
+              element={<UtahWeddingVideographerGuide />}
+            />
+            {/* Photography Routes */}
+            <Route
+              path="/request/photography"
+              element={<PhotographyRequest />}
+            />
+            <Route
+              path="/request/videography"
+              element={<VideographyRequest />}
+            />
+            <Route path="/request/dj" element={<DjRequest />} />
+            <Route path="/request/beauty" element={<HairAndMakeUpRequest />} />
+            <Route path="/request/florist" element={<FloristRequest />} />{" "}
+            {/* Add this route */}
+            <Route
+              path="/request/catering"
+              element={<CateringRequest />}
+            />{" "}
+            {/* Add this route */}
+            <Route path="/welcome" element={<NewsletterLanding />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
           </Routes>
         </div>
         <Footer />

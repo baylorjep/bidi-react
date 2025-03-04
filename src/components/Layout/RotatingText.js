@@ -14,7 +14,6 @@ function RotatingText() {
         'Videographer',
         'Caterer',
         'Florist',
-        'Venue',
     ];
 
     const [currentIndex, setCurrentIndex] = useState(0);

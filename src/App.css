@@ -11801,6 +11801,11 @@ footer a:hover, footer a:active, footer a:focus {
   }
 }
 
+.heading-reset {
+  all: unset; /* This resets all properties */
+  display: block; /* Restore block display since 'all: unset' makes it inline */
+}
+
 .landing-page-title {
   color: #0B1215;
   font-family: Outfit;
@@ -12212,13 +12217,13 @@ line-height: normal;
 
 .how-to-text {
   background: #FCE8FF;
-  height: 960px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 80%;
   border-radius: 20px;
+  padding: 20px;
 }
 
 @media (max-width:860) {
@@ -12998,8 +13003,7 @@ line-height: normal;
 .details-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin: 16px 0;
+  margin:0;
 }
 
 .detail-item {
@@ -13269,14 +13273,14 @@ line-height: normal;
 
 @media (max-width:450px) {
   .rotating-text {
-    font-size: 24px;
+    font-size: 32px;
   }
   .rotating-image {
     width: 30px;
     height: 30px;
   }
   .landing-page-title {
-    font-size: 24px;
+    font-size: 32px;
   }
   .landing-page-subtitle {
     font-size: 16px;
@@ -14512,7 +14516,7 @@ line-height: normal;
 
 .event-grid-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   justify-items: center;
   max-height: 700px;
@@ -14581,6 +14585,31 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 
 .request-form-back-and-foward-btn:hover {
   scale: 1.05;
   box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 4px 8px 0px rgba(52, 60, 68, 0.16);
+}
+
+.request-form-back-btn {
+  display: inline-flex;
+  padding: 8px 32px;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: 100px;
+  background: #FFFFFF;
+  color: #A328F4;
+  text-align: center;
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 24px;
+  border: 2px solid #A328F4;
+  transition: all 0.3s ease;
+  box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 60, 68, 0.16);
+}
+
+.request-form-back-btn:hover {
+  background: #f5e6ff;
+  cursor: pointer;
+  scale: 1.05;
 }
 
 .request-form-selector {
@@ -14654,7 +14683,6 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 
   justify-content: center;
   width: 40px;
   height: 40px;
-  border: 2px solid #ccc;
   border-radius: 50%;
   color: #465668;
   font-weight: bold;
@@ -14662,12 +14690,10 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 
 }
 
 .status-check-container.active {
-  border: 2px solid #A328F4;
   color: #A328F4;
 }
 
 .status-check-container.completed {
-  border: 2px solid #A328F4;
   background-color: #A328F4;
   color: white;
 }
@@ -14709,20 +14735,23 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 
 
 .request-form-box {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  justify-content: space-evenly;
 }
 
 @media screen and (max-width: 1350px) {
   .request-form-overall-container {
     flex-direction: column;
     height: auto;
+    gap:0;
   }
 
   .request-form-status-container {
     flex-direction: row;
     width: 90%;
-    height: 80px;
-    padding: 20px;
+    height: 120px;
+    padding: 0px;
+    background-color: white;
   }
 
   .request-form-status-container.success {
@@ -14740,10 +14769,23 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 
 
   .status-bar-container {
     flex-direction: row;
-    gap: 10px;
-    align-items: center;
-    height: auto;
-  }
+    justify-content: space-between;
+    padding:0px;
+    overflow-x: auto;
+}
+
+.status-bar-step {
+    flex: 0 0 auto;
+    min-width: auto;
+    text-align: center;
+    font-size: 12px;
+}
+
+.status-bar-line {
+    width: 20px;
+    height: 2px;
+    margin: 0 8px;
+}
 
   .status-text-container {
     flex-direction: row;
@@ -14774,7 +14816,7 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
 
@@ -15351,7 +15393,7 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 4px 8px 0px rgba(52, 
 
     .photo-upload-box {
       width: 90%;
-      height: 90%;
+      height: 45vh;
       flex-shrink: 0;
       border-radius: 1px;
       border: 1px dashed #FF008A;
@@ -16089,16 +16131,18 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 4px 8px 0px rgba(52, 
   display: flex;
   flex-direction: row;
   align-items: center;
-  height: 60vh;
   background-color: #fce8ff;
   padding: 20px;
-  justify-content: space-around;
+  justify-content: space-between;
+  padding: 120px 40px;
+  gap: 20px;
 }
 
 @media (max-width:860px) {
   .connect-section {
     flex-direction: column;
-    height: 800px;
+    gap: 20px;
+    padding: 40px;
   }
 }
 
@@ -16356,6 +16400,22 @@ a .try-now-button {
   width: 100%;
 }
 
+.sign-up-grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+@media screen and (max-width: 768px) {
+  .sign-up-grid-container {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+    max-height: 50vh;
+  }
+  
+}
+
 label {
   color: var(--Black-900, #000);
   font-family: Outfit;
@@ -16386,3 +16446,150 @@ label {
   font-size: 14px;
 }
 
+.faq-container {
+  padding: 20px; /* Add padding around the container */
+  border-radius: 10px; /* Rounded corners */
+  margin: 20px 0; /* Margin for spacing */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.faq-title {
+  font-size: 32px; /* Title size */
+  font-weight: bold; /* Bold title */
+  color: #333; /* Dark color for title */
+  margin-bottom: 15px; /* Space below title */
+  text-align: center; /* Center align title */
+  width: 100%;
+  font-family: Outfit;
+  margin-bottom: 40px;
+}
+
+.faq-item {
+  margin-bottom: 10px; /* Space between FAQ items */
+  padding: 15px; /* Padding inside each item */
+  background-color:white; /* White background for items */
+  border-radius: 8px; /* Rounded corners for items */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.13); /* More pronounced shadow for items */
+  width: 70%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.faq-question {
+  font-size: 18px; /* Question size */
+  font-weight: 600; /* Bold question */
+  font-family: Outfit;
+  color:#4a4459;
+}
+
+.faq-answer {
+  font-size: 16px; /* Answer size */
+  color: darkgray; /* Dark gray for answers */
+  margin-top: 5px; /* Space above answers */
+  font-family: Outfit;
+}
+
+.faq-item {
+  cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+.sign-up-single-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.viewed-status {
+  color: var(--bidi-primary-color);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+}
+
+.not-viewed-status {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.check-icon {
+  margin-left: 4px;
+}
+
+.profile-picture-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.profile-pic-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-pic {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid #ff69b4; /* Pink border */
+  object-fit: cover;
+}
+
+.edit-profile-link {
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.edit-profile-link:hover {
+  color: #0056b3;
+}
+
+.edit-profile-button {
+  background: none;
+  border: none;
+  color: black;  /* Standard black text */
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 5px;
+  font-size: 14px;
+  padding: 0;
+}
+
+.edit-profile-button:hover {
+  color: #0056b3;
+}
+
+.portfolio-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.portfolio-images {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.portfolio-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 2px solid #ddd;
+}

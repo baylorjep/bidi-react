@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 function TestEmail() {
     const [formData, setFormData] = useState({
-        category: '', // Add a category field to specify the business category
+        request_id: '',
     });
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -14,50 +14,48 @@ function TestEmail() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const { category } = formData;
-
         try {
-            const response = await fetch('https://bidi-express.vercel.app/send-resend-email', {
+            const response = await fetch('https://bidi-express.vercel.app/trigger-autobid', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    category, // Send the business category to the backend
+                    request_id: formData.request_id, // Send request ID
                 }),
             });
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Failed to send the email.');
+                throw new Error(error.error || 'Failed to trigger auto-bidding.');
             }
 
-            setSuccessMessage(`Emails successfully sent to ${category} users!`);
-            setFormData({ category: '' }); // Clear the form after success
+            setSuccessMessage(`Auto-bidding triggered successfully for Request ID: ${formData.request_id}`);
+            setFormData({ request_id: '' }); // Clear the form after success
         } catch (error) {
-            setErrorMessage(`Error sending emails: ${error.message}`);
+            setErrorMessage(`Error triggering auto-bidding: ${error.message}`);
         }
     };
 
     return (
         <div className="container px-5 d-flex align-items-center justify-content-center">
             <div className="col-lg-6">
-                <h2 className="text-center">Send Emails by Category</h2>
+                <h2 className="text-center">Trigger Auto-Bid by Request ID</h2>
                 {successMessage && <p className="text-success">{successMessage}</p>}
                 {errorMessage && <p className="text-danger">{errorMessage}</p>}
                 <form onSubmit={handleSubmit}>
                     <div className="form-floating mb-3">
                         <input
                             className="form-control"
-                            id="category"
-                            name="category"
+                            id="request_id"
+                            name="request_id"
                             type="text"
-                            placeholder="Business Category (e.g., Photographer)"
-                            value={formData.category}
+                            placeholder="Enter Request ID"
+                            value={formData.request_id}
                             onChange={handleChange}
                             required
                         />
-                        <label htmlFor="category">Business Category (e.g., Photographer)</label>
+                        <label htmlFor="request_id">Enter Request ID</label>
                     </div>
-                    <button type="submit" className="btn btn-primary w-100">Send Emails</button>
+                    <button type="submit" className="btn btn-primary w-100">Trigger Auto-Bid</button>
                 </form>
             </div>
         </div>
