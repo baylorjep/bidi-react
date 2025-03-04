@@ -1,0 +1,270 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../supabaseClient';
+import BidDisplay from '../Bid/BidDisplay';
+import '../../App.css';
+import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+
+function MyBids() {
+    const [bids, setBids] = useState([]);
+    const [error, setError] = useState('');
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [pendingApproval, setPendingApproval] = useState(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchUserAndBids = async () => {
+            const { data: userData, error: userError } = await supabase.auth.getUser();
+            
+            if (userError) {
+                setError('Failed to fetch user.');
+                console.error(userError);
+                return;
+            }
+
+            // Fetch requests with coupon codes
+            const { data: requests, error: requestError } = await supabase
+                .from('requests')
+                .select('id, coupon_code')
+                .eq('user_id', userData.user.id);
+
+            const { data: photoRequests, error: photoRequestError } = await supabase
+                .from('photography_requests')
+                .select('id, coupon_code')
+                .eq('profile_id', userData.user.id);
+
+            if (requestError || photoRequestError) {
+                setError('Failed to fetch requests.');
+                console.error(requestError || photoRequestError);
+                return;
+            }
+
+            // Fetch all unique coupon codes
+            const allCouponCodes = [...new Set([
+                ...requests.filter(r => r.coupon_code).map(r => r.coupon_code),
+                ...photoRequests.filter(r => r.coupon_code).map(r => r.coupon_code)
+            ])];
+
+            // Fetch coupon details from coupons table
+            const { data: couponsData, error: couponsError } = await supabase
+                .from('coupons')
+                .select('code, discount_amount')
+                .in('code', allCouponCodes);
+
+            if (couponsError) {
+                console.error('Failed to fetch coupons:', couponsError);
+                return;
+            }
+
+            // Create maps for quick lookup
+            const couponDetailsMap = new Map(
+                couponsData.map(coupon => [coupon.code, coupon.discount_amount])
+            );
+
+            const requestCouponMap = new Map([
+                ...requests.map(request => [request.id, request.coupon_code]),
+                ...photoRequests.map(request => [request.id, request.coupon_code])
+            ]);
+
+            // Fetch bids with business profiles
+            const { data: bidsData, error: bidsError } = await supabase
+                .from('bids')
+                .select('*, business_profiles(business_name, business_category, phone, website, id,membership_tier)')
+                .in('request_id', [...requests.map(r => r.id), ...photoRequests.map(r => r.id)]);
+
+            if (bidsError) {
+                setError('Failed to fetch bids.');
+                console.error(bidsError);
+                return;
+            }
+
+            // Apply coupon discounts to bids
+            const bidsWithDiscount = bidsData.map(bid => {
+                const couponCode = requestCouponMap.get(bid.request_id);
+                const discountAmount = couponDetailsMap.get(couponCode) || 0;
+                
+                if (couponCode && discountAmount && bid.bid_amount) {
+                    const discountedAmount = Math.max(0, Number(bid.bid_amount) - Number(discountAmount));
+                    return {
+                        ...bid,
+                        original_amount: Number(bid.bid_amount),
+                        bid_amount: discountedAmount,
+                        coupon_applied: true,
+                        coupon_code: couponCode,
+                        discount_amount: Number(discountAmount)
+                    };
+                }
+                return {
+                    ...bid,
+                    bid_amount: Number(bid.bid_amount) || 0
+                };
+            });
+
+            // Sort bids by verification status
+            const sortedBids = bidsWithDiscount.sort((a, b) => {
+                const aIsVerified = a.business_profiles?.membership_tier === "Plus" || a.business_profiles?.membership_tier === "Verified";
+                const bIsVerified = b.business_profiles?.membership_tier === "Plus" || b.business_profiles?.membership_tier === "Verified";
+                return bIsVerified - aIsVerified; // Verified bids will appear first
+            });
+
+            setBids(sortedBids);
+        };
+
+        fetchUserAndBids();
+    }, []);
+
+    const handleApprove = async (bidId, requestId, category) => {
+        console.log('Bid ID:', bidId); // Confirm the Bid ID
+        console.log('Request ID:', requestId); // Confirm the Request ID
+        console.log('Category:', category); // Confirm the Category
+    
+        // Attempt to update the status of the bid to 'accepted'
+        const { error: bidError } = await supabase
+            .from('bids')
+            .update({ status: 'accepted' })
+            .eq('id', bidId);
+    
+        if (bidError) {
+            console.error('Error approving bid:', bidError.message); // Log the actual error
+            setError(`Error approving bid: ${bidError.message}`);
+            return;
+        }
+    
+        let requestError;
+    
+        if (category === 'requests') {
+            // Attempt to update the open status of the request in the 'requests' table to false
+            const { error } = await supabase
+                .from('requests')
+                .update({ open: false })
+                .eq('id', requestId);
+            requestError = error;
+        } else if (category === 'photography_requests') {
+            // Attempt to update the status of the photography request in the 'photography_requests' table to 'closed'
+            const { error } = await supabase
+                .from('photography_requests')
+                .update({ status: 'closed' })
+                .eq('id', requestId);
+            requestError = error;
+        }
+    
+        if (requestError) {
+            console.error('Error updating request status:', requestError.message); // Log the actual error
+            setError(`Error updating request status: ${requestError.message}`);
+            return;
+        }
+    
+        console.log('Bid approved and request status updated successfully.');
+        navigate('/bid-accepted');
+    };
+    
+    
+    
+    
+    const handleDeny = async (bidId) => {
+        // Update the status of the bid to 'denied'
+        const { error: bidError } = await supabase
+            .from('bids')
+            .update({ status: 'denied' })
+            .eq('id', bidId);
+    
+        if (bidError) {
+            setError(`Error denying bid: ${bidError.message}`);
+            console.error('Error denying bid:', bidError);
+            return;
+        }
+    
+        // Remove the bid from the state so it no longer shows on the page
+        setBids(bids.filter(bid => bid.id !== bidId));
+    };
+    
+    const handleApproveClick = (bid) => {
+        setPendingApproval(bid);
+        setShowConfirmModal(true);
+    };
+
+    const handleConfirmApprove = async () => {
+        if (!pendingApproval) return;
+        
+        await handleApprove(
+            pendingApproval.id,
+            pendingApproval.request_id,
+            pendingApproval.category
+        );
+        setShowConfirmModal(false);
+        setPendingApproval(null);
+    };
+
+    const ConfirmationModal = () => (
+        <div className="modal" tabIndex="-1" role="dialog" style={{
+            display: showConfirmModal ? 'block' : 'none',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1000
+        }}>
+            <div className='modal-dialog'role="document" style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '80%',
+            }}>
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">Confirm</h5>
+                        <button type="button" className="sign-up-modal-X" onClick={() => setShowConfirmModal(false)}>
+                            <span>X</span>
+                        </button>
+                    </div>
+                    <div className="modal-body">
+                        <p>Are you sure you want to accept this bid? The business will be notified and will reach out to you shortly.</p>
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="modal-btn-primary" onClick={() => setShowConfirmModal(false)}>Cancel</button>
+                        <button type="button" className="modal-btn-secondary" onClick={handleConfirmApprove}>Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const pendingBids = bids.filter(bid => bid.status === 'pending');
+
+    return (
+        <div className="container px-5 d-flex align-items-center justify-content-center" style={{flexDirection:'column', minHeight:'80vh'}}>
+                <div className='Sign-Up-Page-Header'>My Bids</div>
+                {error ? (
+                    <p className="text-danger">{error}</p>
+                ) : pendingBids.length > 0 ? (
+                    pendingBids.map((bid) => (
+                        <BidDisplay key={bid.id} bid={bid} handleApprove={() => handleApproveClick(bid)} handleDeny={handleDeny} />
+                    ))
+                ) : (
+                    <div className='submit-form-2nd-header' style={{padding:"20px"}}>
+                        <div style={{borderBottom:"1px solid black", padding:"20px"}} >You don't have any pending bids at the moment. <br ></br> Please check back later, or look out for notifications.</div>
+                        <div className='Sign-Up-Page-Header' style={{padding:"32px"}}>New to Bidi?</div>
+                        <Link to="/request-categories">
+                            <button className='landing-page-button'>Make a Request</button>
+                        </Link>
+                    </div>
+                )}
+            <ConfirmationModal />
+            {/*
+            <div className="d-flex justify-content-center mt-4">
+                <button
+                    className="btn btn-secondary"
+                    onClick={() => navigate('/denied-bids')}
+                >
+                    View Denied Bids
+                </button>
+            </div>
+            */}
+        </div>
+    );
+}
+
+export default MyBids;

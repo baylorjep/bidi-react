@@ -3,9 +3,8 @@ import { supabase } from '../../supabaseClient';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../../App.css';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 
-const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
+function SignIn() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -46,17 +45,13 @@ const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
         }
 
         if (profile.role === 'individual') {
-            if (onSuccess) {
-                onSuccess(); // Call the success callback if provided
-            } else {
-                // Default navigation behavior
-                navigate(redirectTo, {
-                    state: { 
-                        source: requestSource || requestFormData.source || 'general',
-                        from: 'signin'
-                    }
-                });
-            }
+            // Include source in navigation state
+            navigate(redirectTo, {
+                state: { 
+                    source: requestSource || requestFormData.source || 'general',
+                    from: 'signin'
+                }
+            });
         } else if (profile.role === 'business') {
             navigate('/dashboard');
         }
@@ -74,44 +69,7 @@ const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
     };
 
     return (
-
         <div className="sign-in-container">
-                    <Helmet>
-        <title>Sign In to Bidi: Request Services with Our Bidding Platform</title>
-        <meta name="description" content="Sign in to Bidi for a smart bidding platform that connects you with top professionals. Request services with ease and simplify your search today." />
-        <meta name="keywords" content="wedding vendors, wedding services, sign in, Bidi, login, photography, DJs, hair and makeup, florists, catering" />
-        <script type="application/ld+json">
-                    {`
-                        
-                        "@context": "https://schema.org",
-                        "@type": "WebPage",
-                        "name": "Sign In - Bidi",
-                        "url": "https://www.savewithbidi.com/signin",
-                        "description": "Sign in to your Bidi account. A bidding platform where you request services, and businesses come to you. Stop searching and start finding with Bidi.",
-                        "publisher": {
-                        "@type": "Organization",
-                        "name": "Bidi",
-                        "contactPoint": {
-                        "@type": "ContactPoint",
-                        "telephone": "385-216-9587",
-                        "email": "savewithbidi@gmail.com",
-                        "contactType": "customer service"
-                        }
-                        "sameAs": [
-                        "https://www.facebook.com",
-                        "https://www.instagram.com",
-                        "https://www.linkedin.com"
-                        ]
-                        }
-                        "potentialAction": {
-                        "@type": "SignInAction",
-                        "name": "Sign In",
-                        "target": "https://www.savewithbidi.com/signin"
-                        }
-                        
-                    `}
-                </script>
-        </Helmet>
                 <div className="sign-in-form-container">
                     <br />
                     <h1 className="Sign-Up-Page-Header">Sign In</h1>
@@ -178,4 +136,4 @@ const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
     );
 }
 
-export default SignIn;  // Make sure this export exists
+export default SignIn;

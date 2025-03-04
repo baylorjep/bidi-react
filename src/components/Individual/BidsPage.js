@@ -11,7 +11,6 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
-import { Helmet } from 'react-helmet';
 
 export default function BidsPage() {
     const [requests, setRequests] = useState([]);
@@ -19,8 +18,6 @@ export default function BidsPage() {
     const [bids, setBids] = useState([]);
     const [activeTab, setActiveTab] = useState('pending');
     const [user, setUser] = useState(null);
-    const [showAcceptModal, setShowAcceptModal] = useState(false);
-    const [selectedBid, setSelectedBid] = useState(null);
     const navigate = useNavigate();
 
     const isNew = (createdAt) => {
@@ -55,62 +52,30 @@ export default function BidsPage() {
         try {
             console.log('Loading requests for user:', userId);
 
-            // Fetch requests from all tables
-            const [
-                { data: regularRequests, error: regularError },
-                { data: photoRequests, error: photoError },
-                { data: djRequests, error: djError },
-                { data: cateringRequests, error: cateringError },
-                { data: beautyRequests, error: beautyError },
-                { data: videoRequests, error: videoError },
-                { data: floristRequests, error: floristError }
-            ] = await Promise.all([
-                supabase
-                    .from('requests')
-                    .select('*, service_photos(*)')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('photography_requests')
-                    .select('*, event_photos(*)')
-                    .eq('profile_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('dj_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('catering_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('beauty_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('videography_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('florist_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false })
-            ]);
+            // Fetch regular requests with service_photos
+            const { data: regularRequests, error: regularError } = await supabase
+                .from('requests')
+                .select(`
+                    *,
+                    service_photos(*)
+                `)
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+
+            // Fetch photography requests with event_photos
+            const { data: photoRequests, error: photoError } = await supabase
+                .from('photography_requests')
+                .select(`
+                    *,
+                    event_photos(*)
+                `)
+                .eq('profile_id', userId)
+                .order('created_at', { ascending: false });
 
             if (regularError) throw regularError;
             if (photoError) throw photoError;
-            if (djError) throw djError;
-            if (cateringError) throw cateringError;
-            if (beautyError) throw beautyError;
-            if (videoError) throw videoError;
-            if (floristError) throw floristError;
 
-            // Transform requests to match the same structure
+            // Transform photoRequests to match the same structure
             const transformedPhotoRequests = (photoRequests || []).map(request => ({
                 ...request,
                 service_photos: request.event_photos // Map event_photos to service_photos for consistency
@@ -118,22 +83,7 @@ export default function BidsPage() {
 
             const allRequests = [
                 ...(regularRequests || []),
-                ...transformedPhotoRequests,
-                ...(djRequests || []).map(req => ({
-                    ...req,
-                    service_title: req.title || req.event_title || `${req.event_type} DJ Request`,
-                    price_range: req.budget_range,
-                    service_date: req.start_date
-                })),
-                ...(cateringRequests || []).map(req => ({
-                    ...req,
-                    service_title: req.title || req.event_title || `${req.event_type} Catering Request`,
-                    price_range: req.budget_range || req.price_range,
-                    service_date: req.start_date || req.date
-                })),
-                ...(beautyRequests || []),
-                ...(videoRequests || []),
-                ...(floristRequests || [])
+                ...transformedPhotoRequests
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
             console.log('All requests loaded:', allRequests);
@@ -153,62 +103,25 @@ export default function BidsPage() {
 
         try {
             // First fetch the user's requests
-            const [
-                { data: requests, error: requestError },
-                { data: photoRequests, error: photoRequestError },
-                { data: djRequests, error: djRequestError },
-                { data: cateringRequests, error: cateringRequestError },
-                { data: beautyRequests, error: beautyRequestError },
-                { data: videoRequests, error: videoRequestError },
-                { data: floristRequests, error: floristRequestError }
-            ] = await Promise.all([
-                supabase
-                    .from('requests')
-                    .select('id, coupon_code')
-                    .eq('user_id', user.id),
-                supabase
-                    .from('photography_requests')
-                    .select('id, coupon_code')
-                    .eq('profile_id', user.id),
-                supabase
-                    .from('dj_requests')
-                    .select('id, coupon_code')
-                    .eq('user_id', user.id),
-                supabase
-                    .from('catering_requests')
-                    .select('id, coupon_code')
-                    .eq('user_id', user.id),
-                supabase
-                    .from('beauty_requests')
-                    .select('id, coupon_code')
-                    .eq('user_id', user.id),
-                supabase
-                    .from('videography_requests')
-                    .select('id, coupon_code')
-                    .eq('user_id', user.id),
-                supabase
-                    .from('florist_requests')
-                    .select('id, coupon_code')
-                    .eq('user_id', user.id)
-            ]);
+            const { data: requests, error: requestError } = await supabase
+                .from('requests')
+                .select('id, coupon_code')
+                .eq('user_id', user.id);
 
-            if (requestError) throw requestError;
-            if (photoRequestError) throw photoRequestError;
-            if (djRequestError) throw djRequestError;
-            if (cateringRequestError) throw cateringRequestError;
-            if (beautyRequestError) throw beautyRequestError;
-            if (videoRequestError) throw videoRequestError;
-            if (floristRequestError) throw floristRequestError;
+            const { data: photoRequests, error: photoRequestError } = await supabase
+                .from('photography_requests')
+                .select('id, coupon_code')
+                .eq('profile_id', user.id);
+
+            if (requestError || photoRequestError) {
+                console.error('Failed to fetch requests:', requestError || photoRequestError);
+                return;
+            }
 
             // Get all request IDs
             const requestIds = [
                 ...(requests || []).map(r => r.id),
-                ...(photoRequests || []).map(r => r.id),
-                ...(djRequests || []).map(r => r.id),
-                ...(cateringRequests || []).map(r => r.id),
-                ...(beautyRequests || []).map(r => r.id),
-                ...(videoRequests || []).map(r => r.id),
-                ...(floristRequests || []).map(r => r.id)
+                ...(photoRequests || []).map(r => r.id)
             ];
 
             // Fetch all bids for these requests
@@ -235,52 +148,33 @@ export default function BidsPage() {
                 return;
             }
 
-            if (bidsData) {
-                // Mark bids as viewed when they're loaded
-                const unviewedBids = bidsData.filter(bid => !bid.viewed);
-                if (unviewedBids.length > 0) {
-                    const { error } = await supabase
-                        .from('bids')
-                        .update({ 
-                            viewed: true,
-                            viewed_at: new Date().toISOString()
-                        })
-                        .in('id', unviewedBids.map(bid => bid.id));
-
-                    if (error) {
-                        console.error('Error marking bids as viewed:', error);
+            // Modified bid data formatting
+            const filteredBids = bidsData
+                .filter(bid => {
+                    if (activeTab === 'pending') {
+                        return bid.status?.toLowerCase() === 'pending';
+                    } else if (activeTab === 'approved') {
+                        return bid.status?.toLowerCase() === 'accepted'; // Note: 'accepted' not 'approved'
+                    } else if (activeTab === 'denied') {
+                        return bid.status?.toLowerCase() === 'denied';
                     }
-                }
+                    return false;
+                })
+                .map(bid => ({
+                    ...bid,
+                    id: bid.id,
+                    bid_amount: bid.bid_amount || bid.amount, // Handle both field names
+                    message: bid.message || bid.bid_description, // Handle both field names
+                    business_profiles: {
+                        ...bid.business_profiles,
+                        business_name: bid.business_profiles?.business_name || 'Unknown Business',
+                        down_payment_type: bid.business_profiles?.down_payment_type,
+                        amount: bid.business_profiles?.amount
+                    }
+                }));
 
-                // Continue with existing bid filtering and processing
-                const filteredBids = bidsData
-                    .filter(bid => {
-                        if (activeTab === 'pending') {
-                            return bid.status?.toLowerCase() === 'pending';
-                        } else if (activeTab === 'approved') {
-                            return bid.status?.toLowerCase() === 'accepted'; // Note: 'accepted' not 'approved'
-                        } else if (activeTab === 'denied') {
-                            return bid.status?.toLowerCase() === 'denied';
-                        }
-                        return false;
-                    })
-                    .map(bid => ({
-                        ...bid,
-                        id: bid.id,
-                        bid_amount: bid.bid_amount || bid.amount, // Handle both field names
-                        message: bid.message || bid.bid_description, // Handle both field names
-                        business_profiles: {
-                            ...bid.business_profiles,
-                            business_name: bid.business_profiles?.business_name || 'Unknown Business',
-                            down_payment_type: bid.business_profiles?.down_payment_type,
-                            amount: bid.business_profiles?.amount
-                        },
-                        viewed: bid.viewed,
-                        viewed_at: bid.viewed_at
-                    }));
-
-                setBids(filteredBids);
-            }
+            console.log('Filtered bids:', filteredBids);
+            setBids(filteredBids);
         } catch (error) {
             console.error("Error loading bids:", error);
         }
@@ -431,20 +325,6 @@ export default function BidsPage() {
         }
     };
 
-    const handleAcceptBidClick = (bid) => {
-        setSelectedBid(bid);
-        setShowAcceptModal(true);
-    };
-
-    const handleConfirmAccept = async () => {
-        if (selectedBid) {
-            await handleMoveToAccepted(selectedBid);
-            setShowAcceptModal(false);
-            setSelectedBid(null);
-            setActiveTab('approved'); // Add this line to switch to the approved tab
-        }
-    };
-
     const calculateDownPayment = (bid) => {
         if (!bid.business_profiles.down_payment_type || bid.business_profiles.amount === null) {
             return null;
@@ -471,8 +351,8 @@ export default function BidsPage() {
                 <BidDisplay
                     key={bid.id}
                     bid={bid}
-                    handleApprove={() => handleAcceptBidClick(bid)}
-                    handleDeny={() => handleMoveToDenied(bid)} // Direct denial without modal
+                    handleApprove={() => handleMoveToAccepted(bid)}
+                    handleDeny={() => handleMoveToDenied(bid)}
                     showActions={true}
                 />
             );
@@ -594,7 +474,7 @@ export default function BidsPage() {
                         <button 
                             className="btn-success flex-fill"
                             style={{width: '100%'}}
-                            onClick={() => handleAcceptBidClick(bid)} // Use the modal when accepting from denied tab
+                            onClick={() => handleMoveToAccepted(bid)}
                         >
                             Accept
                         </button>
@@ -619,26 +499,13 @@ export default function BidsPage() {
         );
     };
 
-    const getDate = (request) => {
-        const startDate = request.start_date || request.service_date;
-        if (request.date_flexibility === 'specific') {
-            return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
-        } else if (request.date_flexibility === 'range') {
-            return `${new Date(startDate).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
-        } else if (request.date_flexibility === 'flexible') {
-            return `Flexible within ${request.date_timeframe}`;
-        }
-        return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
-    };
-
     const renderRequestCard = (request) => {
-        const requestTitle = request.event_title || request.title || 'Untitled Request';
         if (request.event_type) {
             // Photo request card
             return (
                 <div className="request-card">
                     <div className="request-header">
-                        <h2 className="request-title">{requestTitle}</h2>
+                        <h2 className="request-title">{request.event_title}</h2>
                         {isNew(request.created_at) && (
                             <div className="request-status">New</div>
                         )}
@@ -650,7 +517,12 @@ export default function BidsPage() {
                         </div>
                         <div className="detail-row">
                             <span className="detail-label">Date:</span>
-                            <span className="detail-value">{getDate(request)}</span>
+                            <span className="detail-value">
+                                {request.end_date 
+                                    ? `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                                    : new Date(request.start_date).toLocaleDateString()
+                                }
+                            </span>
                         </div>
                         <div className="detail-row">
                             <span className="detail-label">Location:</span>
@@ -669,7 +541,7 @@ export default function BidsPage() {
         return (
             <div className="request-card">
                 <div className="request-header">
-                    <h2 className="request-title">{requestTitle}</h2>
+                    <h2 className="request-title">{request.service_title}</h2>
                     {isNew(request.created_at) && (
                         <div className="request-status">New</div>
                     )}
@@ -681,7 +553,12 @@ export default function BidsPage() {
                     </div>
                     <div className="detail-row">
                         <span className="detail-label">Date:</span>
-                        <span className="detail-value">{getDate(request)}</span>
+                        <span className="detail-value">
+                            {request.end_date 
+                                ? `${new Date(request.service_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                                : new Date(request.service_date).toLocaleDateString()
+                            }
+                        </span>
                     </div>
                     <div className="detail-row">
                         <span className="detail-label">Location:</span>
@@ -737,119 +614,79 @@ export default function BidsPage() {
     };
 
     return (
-        <>
-            <Helmet>
-                <title>Bids - Bidi</title>
-                <meta name="description" content="View and manage your bids on Bidi. Compare offers from various vendors and choose the best for your needs." />
-                <meta name="keywords" content="bids, wedding vendors, Bidi, manage bids" />
-            </Helmet>
-            <div className="bids-page">
-                <h1 className="section-title">Your Service Requests</h1>
-                <p className="section-description">
-                    Browse through your service requests using the arrows. Below, you'll find all bids received for the currently displayed request.
-                </p>
+        <div className="bids-page">
+            <h1 className="section-title">Your Service Requests</h1>
+            <p className="section-description">
+                Browse through your service requests using the arrows. Below, you'll find all bids received for the currently displayed request.
+            </p>
 
-                {requests.length > 0 ? (
-                    <>
-                        <div className="request-swiper-container">
-                            <div className="swipe-indicator">
-                                Swipe to view more requests
-                            </div>
-                            <Swiper
-                                modules={[Navigation]}
-                                navigation={true}
-                                onSlideChange={(swiper) => setCurrentRequestIndex(swiper.activeIndex)}
-                                spaceBetween={30}
-                                slidesPerView={1}
-                            >
-                                {requests.map((request, index) => (
-                                    <SwiperSlide key={request.id}>
-                                        <div className="request-slide">
-                                            {renderRequestCard(request)}
-                                        </div>
-                                    </SwiperSlide>
-                                ))}
-                            </Swiper>
+            {requests.length > 0 ? (
+                <>
+                    <div className="request-swiper-container">
+                        <div className="swipe-indicator">
+                            Swipe to view more requests
                         </div>
-
-                    </>
-                ) : (
-                    <div className="no-requests">
-                        No active requests found
+                        <Swiper
+                            modules={[Navigation]}
+                            navigation={true}
+                            onSlideChange={(swiper) => setCurrentRequestIndex(swiper.activeIndex)}
+                            spaceBetween={30}
+                            slidesPerView={1}
+                        >
+                            {requests.map((request, index) => (
+                                <SwiperSlide key={request.id}>
+                                    <div className="request-slide">
+                                        {renderRequestCard(request)}
+                                    </div>
+                                </SwiperSlide>
+                            ))}
+                        </Swiper>
                     </div>
-                )}
 
-                <h2 className="section-title" style={{ marginTop: '40px', textAlign:'center' }}>Bids for Selected Request</h2>
-                <p className="section-description">
-                    Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
-                </p>
-
-                <div className="tabs">
-                    <button 
-                        className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('pending')}
-                    >
-                        Pending Bids
-                    </button>
-                    <button 
-                        className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('approved')}
-                    >
-                        Approved Bids
-                    </button>
-                    <button 
-                        className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('denied')}
-                    >
-                        Denied Bids
-                    </button>
-                </div>
-
-                <div className="bids-container">
-                    {requests.length > 0 && currentRequestIndex >= 0 ? (
-                        <>
-                            {bids.filter(bid => bid.request_id === requests[currentRequestIndex].id)
-                                .map(bid => renderBidCard(bid))}
-                            {renderNoBidsMessage()}
-                        </>
-                    ) : (
-                        <p className="no-bids">No bids to display</p>
-                    )}
-                </div>
-            </div>
-
-            {showAcceptModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>Accept Bid Confirmation</h3>
-                        <p>Are you sure you want to accept this bid from {selectedBid?.business_profiles?.business_name}?</p>
-                        <p>By accepting this bid:</p>
-                        <ul>
-                            <li>Your contact information will be shared with the business</li>
-                            <li>The business will be notified and can reach out to you directly</li>
-                        </ul>
-                        <div className="modal-buttons">
-                            <button 
-                                className="btn-danger"
-                                style={{borderRadius:'40px'}}
-                                onClick={() => {
-                                    setShowAcceptModal(false);
-                                    setSelectedBid(null);
-                                }}
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                className="btn-success"
-                                style={{borderRadius:'40px'}}
-                                onClick={handleConfirmAccept}
-                            >
-                                Accept Bid
-                            </button>
-                        </div>
-                    </div>
+                </>
+            ) : (
+                <div className="no-requests">
+                    No active requests found
                 </div>
             )}
-        </>
+
+            <h2 className="section-title" style={{ marginTop: '40px', textAlign:'center' }}>Bids for Selected Request</h2>
+            <p className="section-description">
+                Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
+            </p>
+
+            <div className="tabs">
+                <button 
+                    className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('pending')}
+                >
+                    Pending Bids
+                </button>
+                <button 
+                    className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('approved')}
+                >
+                    Approved Bids
+                </button>
+                <button 
+                    className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('denied')}
+                >
+                    Denied Bids
+                </button>
+            </div>
+
+            <div className="bids-container">
+                {requests.length > 0 && currentRequestIndex >= 0 ? (
+                    <>
+                        {bids.filter(bid => bid.request_id === requests[currentRequestIndex].id)
+                            .map(bid => renderBidCard(bid))}
+                        {renderNoBidsMessage()}
+                    </>
+                ) : (
+                    <p className="no-bids">No bids to display</p>
+                )}
+            </div>
+        </div>
     );
 }

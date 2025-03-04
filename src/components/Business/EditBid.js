@@ -2,64 +2,72 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import RequestDisplay from "../Request/RequestDisplay";
+import PhotoRequestDisplay from "../Request/PhotoRequestDisplay";
 
 const EditBid = () => {
-  const { bidId, requestId } = useParams();
+  const { bidId, requestId } = useParams(); // Get the bidId and requestId from the URL
   const [bidDetails, setBidDetails] = useState(null);
   const [bidAmount, setBidAmount] = useState("");
   const [bidDescription, setBidDescription] = useState("");
   const navigate = useNavigate();
   const [requestDetails, setRequestDetails] = useState(null);
-  const [requestType, setRequestType] = useState('');
+  const [requestType, setRequestType] = useState(''); // To track the request type
   const [error, setError] = useState('');
 
-  // Fetch bid details and request details
+  // Fetch bid details
   useEffect(() => {
-    const fetchDetails = async () => {
-      // Fetch bid details
-      const { data: bidData, error: bidError } = await supabase
+    const fetchBidDetails = async () => {
+      const { data: bidData, error } = await supabase
         .from("bids")
-        .select("*")
+        .select("bid_amount, bid_description")
         .eq("id", bidId)
         .single();
 
-      if (bidError) {
-        console.error("Error fetching bid details:", bidError);
+      if (error) {
+        console.error("Error fetching bid details:", error);
         return;
       }
 
       setBidDetails(bidData);
       setBidAmount(bidData.bid_amount);
       setBidDescription(bidData.bid_description);
+    };
 
-      // Try to fetch from each request table
-      const tables = [
-        { name: 'dj_requests', type: 'dj_requests' },
-        { name: 'catering_requests', type: 'catering_requests' },
-        { name: 'beauty_requests', type: 'beauty_requests' },
-        { name: 'florist_requests', type: 'florist_requests' },
-        { name: 'photography_requests', type: 'photography_requests' },
-        { name: 'videography_requests', type: 'videography_requests' },
-        { name: 'requests', type: 'regular' }
-      ];
+    fetchBidDetails();
+  }, [bidId]);
 
-      for (const table of tables) {
-        const { data, error } = await supabase
-          .from(table.name)
+  // Fetch request details
+  useEffect(() => {
+    if (!requestId) return; // Don't fetch if no requestId
+    const fetchRequestDetails = async () => {
+      let { data, error } = await supabase
+        .from('requests')
+        .select('*')
+        .eq('id', requestId)
+        .single();
+
+      if (error) {
+        const { data: photoData, error: photoError } = await supabase
+          .from('photography_requests')
           .select('*')
           .eq('id', requestId)
           .single();
 
-        if (data) {
-          setRequestDetails(data);
-          setRequestType(table.type);
-          break;
+        if (photoError) {
+          setError('Error fetching request details');
+          return;
         }
+
+        setRequestDetails(photoData);
+        setRequestType('photography_requests');
+      } else {
+        setRequestDetails(data);
+        setRequestType('requests');
       }
     };
 
-    fetchDetails();
-  }, [bidId, requestId]);
+    fetchRequestDetails();
+  }, [requestId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,6 +77,7 @@ const EditBid = () => {
       return;
     }
 
+    // Update the bid in the database
     const { error } = await supabase
       .from("bids")
       .update({ bid_amount: bidAmount, bid_description: bidDescription })
@@ -79,40 +88,42 @@ const EditBid = () => {
       alert("An error occurred while updating the bid.");
     } else {
       alert("Bid updated successfully!");
-      navigate(`/dashboard`);
+      navigate(`/dashboard`); // Redirect to the business dashboard after update
     }
   };
 
   const handleBackClick = () => {
-    navigate(-1);
+    navigate(-1); // Go back to the previous page
   };
 
   return (
     <div className="container">
       <h2 className="dashboard-title">Edit Bid</h2>
-      {requestDetails && (
-        <RequestDisplay 
-          request={requestDetails} 
-          requestType={requestType}
-          hideBidButton={true} 
-        />
+      {requestDetails ? (
+        <>
+          {requestType === 'requests' && <RequestDisplay request={requestDetails} hideBidButton={true} />}
+          {requestType === 'photography_requests' && <PhotoRequestDisplay photoRequest={requestDetails} hideBidButton={true} />}
+        </>
+      ) : (
+        <p>Loading request details...</p>
       )}
 
       {bidDetails ? (
         <form onSubmit={handleSubmit}>
           <div className="custom-input-container">
             <input
-              type="number"
-              id="bidAmount"
-              className="custom-input"
-              value={bidAmount}
-              onChange={(e) => setBidAmount(e.target.value)}
-              min="0"
+                type="number"
+                id="bidAmount"
+                className="custom-input"
+                value={bidAmount}
+                onChange={(e) => setBidAmount(e.target.value)}
+                min="0" // Optional: Ensure no negative numbers are input
             />
-            <label className='custom-label' htmlFor="bidAmount">Bid Amount</label>
-          </div>
+            <label className='custom-label'htmlFor="bidAmount">Bid Amount</label>
+            </div>
 
           <div className="custom-input-container">
+            
             <textarea
               id="bidDescription"
               className="custom-input"
@@ -120,25 +131,21 @@ const EditBid = () => {
               style={{ height: "120px" }}
               onChange={(e) => setBidDescription(e.target.value)}
             />
-            <label className="custom-label" htmlFor="bidDescription">Bid Description</label>
+            <label className="custom-label"htmlFor="bidDescription">Bid Description</label>
           </div>
 
           <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
-            <button
-              className="btn-primary"
-              style={{ marginTop: "20px", textAlign: "center", width: '100%' }}
-              onClick={(e) => {
-                e.preventDefault();
-                handleBackClick();
-              }}
-            >
-              Back
-            </button>
-            <button 
-              type="submit" 
-              className="btn-secondary" 
-              style={{ marginTop: "20px", textAlign: "center" }}
-            >
+          <button
+                className="btn-primary"
+                style={{ marginTop: "20px", textAlign: "center", width:'100%' }}
+                onClick={(e) => {
+                    e.preventDefault(); // Prevent form submission
+                    handleBackClick();
+                }}
+                >
+                Back
+                </button>
+            <button type="submit" className="btn-secondary" style={{ marginTop: "20px", textAlign: "center" }}>
               Update Bid
             </button>
           </div>

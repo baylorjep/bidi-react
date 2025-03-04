@@ -1,20 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import scrollBtn from '../../assets/images/Icons/scroll button.png';
 import '../../App.css';
 
-function RequestDisplayMini({ request, hideBidButton }) {
+function PhotoRequestDisplay({ photoRequest, hideBidButton }) {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
     const [timeLeft, setTimeLeft] = useState('');
 
+    // Add debugging log
+    useEffect(() => {
+        console.log("PhotoRequest photos:", photoRequest.photos);
+    }, [photoRequest]);
+
+    const handleNext = () => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % photoRequest.photos.length);
+    };
+
+    const handlePrevious = () => {
+        setCurrentIndex((prevIndex) =>
+            prevIndex === 0 ? photoRequest.photos.length - 1 : prevIndex - 1
+        );
+    };
+
+    const handlePhotoClick = (photo) => {
+        setSelectedPhoto(photo);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedPhoto(null);
+    };
+
+    const getTimeDifference = (createdAt) => {
+        const now = new Date();
+        const created = new Date(createdAt);
+        const diffInHours = Math.floor((now - created) / (1000 * 60 * 60));
+        const diffInDays = Math.floor(diffInHours / 24);
+        
+        if (diffInDays < 7) return 'New';
+        return `${diffInDays}d ago`;
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString();
+    };
+
     const isNew = (createdAt) => {
-        console.log('Checking if new:', createdAt); // Add logging
+        console.log('Checking if photo request is new:', createdAt); // Add logging
         if (!createdAt) {
-            console.log('No created_at timestamp');
+            console.log('No created_at timestamp for photo request');
             return false;
         }
         const now = new Date();
         const created = new Date(createdAt);
         const diffInDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
-        console.log('Days difference:', diffInDays);
+        console.log('Days difference for photo request:', diffInDays);
         return diffInDays < 7;
     };
 
@@ -63,7 +104,7 @@ function RequestDisplayMini({ request, hideBidButton }) {
 
     useEffect(() => {
         const timer = setInterval(() => {
-            const promotion = checkPromotion(request.created_at);
+            const promotion = checkPromotion(photoRequest.created_at);
             if (promotion && promotion.endTime) {
                 const now = new Date();
                 const timeRemaining = promotion.endTime.getTime() - now.getTime();
@@ -82,63 +123,75 @@ function RequestDisplayMini({ request, hideBidButton }) {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [request.created_at]);
+    }, [photoRequest.created_at]);
 
     return (
         <div className="request-display-mini text-center mb-4">
-            <div className="request-content p-3">
+            <div className="request-content p-3 ">
                 <div style={{textAlign:'left', width: '100%', padding: '0 20px', marginBottom: '20px'}}>
-                    <h2 className="request-title">{request.service_title}</h2>
+                    <h2 className="request-title">{photoRequest.event_title || 'Untitled Event'}</h2>
                     <div style={{display: 'flex', gap: '10px'}}>
-                        {isNew(request.created_at) && (
+                        {isNew(photoRequest.created_at) && (
                             <div className="request-status">New</div>
                         )}
-                        {checkPromotion(request.created_at) && (
+                        {checkPromotion(photoRequest.created_at) && (
                             <div className="promotion-status">
-                                {checkPromotion(request.created_at).message}
+                                {checkPromotion(photoRequest.created_at).message}
                                 {timeLeft && <span> ({timeLeft})</span>}
                             </div>
                         )}
                     </div>
                 </div>
-                
+
                 <div className="details-grid">
-                    <div className="detail-item">
-                        <span className="detail-label">Location</span>
-                        <span className="detail-value">{request.location}</span>
+                   
+                    <div className='detail-item'>
+                        <div className="request-subtype">Event Type</div>
+                        <div className="detail-value">{photoRequest.event_type || 'Not specified'}</div>
                     </div>
-                    <div className="detail-item">
-                        <span className="detail-label">Category</span>
-                        <span className="detail-value">{request.service_category}</span>
-                    </div>
+
                     <div className="detail-item">
                         <span className="detail-label">Date of Service</span>
                         <span className="detail-value-long">
-                            {request.end_date 
-                                ? `${new Date(request.service_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
-                                : new Date(request.service_date).toLocaleDateString()
+                            {photoRequest.end_date 
+                                ? `${new Date(photoRequest.start_date).toLocaleDateString()} - ${new Date(photoRequest.end_date).toLocaleDateString()}`
+                                : new Date(photoRequest.start_date).toLocaleDateString()
                             }
                         </span>
                     </div>
-                    <div className="detail-item">
-                        <span className="detail-label">Budget</span>
-                        <span className="detail-value">${request.price_range}</span>
+
+                    <div className='detail-item'>
+                        <div className="request-subtype">Location</div>
+                        <div className="detail-value">{photoRequest.location || 'Not specified'}</div>
                     </div>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Budget</div>
+                        <div className="request-info">${photoRequest.price_range}</div>
+                    </div>
+                
                 </div>
 
                 
                 {!hideBidButton && (
                     <div style={{marginTop: '20px', display: 'flex', justifyContent: 'center'}}>
-                        <Link className="submit-bid-button" to={`/submit-bid/${request.id}`} style={{textDecoration:'none'}}>
+                        <Link className="submit-bid-button" to={`/submit-bid/${photoRequest.id}`} style={{textDecoration:'none'}}>
                             <span className="bid-button-text">
                                 <span>View More</span>
                             </span>
                         </Link>
                     </div>
+
                 )}
             </div>
+            {selectedPhoto && (
+                <div className="modal-overlay" onClick={handleCloseModal}>
+                    <div className="modal-content" >
+                        <img src={selectedPhoto.url} onClick={(e) => e.stopPropagation()} alt="Selected" />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
-export default RequestDisplayMini;
+export default PhotoRequestDisplay;

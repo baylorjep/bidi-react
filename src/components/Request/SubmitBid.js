@@ -39,48 +39,58 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
 
     useEffect(() => {
         const fetchRequestDetails = async () => {
-            // Array of all possible request tables
-            const requestTables = [
-                { name: 'beauty_requests', type: 'beauty' },  // Move beauty_requests to the top
-                { name: 'requests', type: 'regular' },
-                { name: 'photography_requests', type: 'photography' },
-                { name: 'dj_requests', type: 'dj' },
-                { name: 'catering_requests', type: 'catering' },
-                { name: 'videography_requests', type: 'videography' },
-                { name: 'florist_requests', type: 'florist' }
-            ];
+            // First, try fetching from the `requests` table
+            let { data, error } = await supabase    
+                .from('requests')
+                .select('*')
+                .eq('id', requestId)
+                .single();
 
-            // Try each table until we find the request
-            for (const table of requestTables) {
-                const { data, error } = await supabase
-                    .from(table.name)
+            if (error) {
+                // If not found, try the `photography_requests` table
+                const { data: photoData, error: photoError } = await supabase
+                    .from('photography_requests')
                     .select('*')
                     .eq('id', requestId)
                     .single();
 
-                if (data && !error) {
-                    console.log('Found request in table:', table.name);
-                    console.log('Request data:', data);
-                    
-                    // Add table_name to the request data
-                    setRequestDetails({ ...data, table_name: table.name });
-                    setRequestType(table.name); // Use table.name instead of table.type
-                    break;
+                if (photoError) {
+                    setError('Error fetching request details');
+                    return;
                 }
-            }
 
-            // Add photo fetching for videography requests
-            if (requestType === 'videography_requests') {
-                const { data: photos, error } = await supabase
-                    .from('videography_photos')
+                // Fetch associated event photos
+                const { data: photos, error: photosError } = await supabase
+                    .from('event_photos')
                     .select('*')
-                    .eq('request_id', requestId);
+                    .eq('request_id', photoData.id); // Use the photo request's ID directly
 
-                if (photos && !error) {
+                if (!photosError) {
+                    console.log("Fetched photos:", photos);
+                    console.log("Request ID:", requestId);
+                    setEventPhotos(photos);
+                } else {
+                    console.error("Error fetching photos:", photosError);
+                }
+
+                setRequestDetails(photoData);
+                setRequestType('photography_requests');
+            } else {
+                // Fetch associated service photos
+                const { data: photos, error: photosError } = await supabase
+                    .from('service_photos')
+                    .select('*')
+                    .eq('request_id', data.id);
+
+                if (!photosError) {
+                    console.log("Fetched service photos:", photos);
                     setServicePhotos(photos);
                 } else {
-                    console.error('Error fetching videography photos:', error);
+                    console.error("Error fetching service photos:", photosError);
                 }
+
+                setRequestDetails(data);
+                setRequestType('requests');
             }
         };
 
@@ -108,7 +118,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
 
         fetchRequestDetails();
         fetchStripeStatus();
-    }, [requestId, requestType]);
+    }, [requestId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -116,58 +126,65 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
         // Check if user has stripe account or Bidi Plus
         if (!connectedAccountId && !Bidi_Plus) {
             setShowModal(true);
-            return;
+            return; // Prevent form submission
         }
 
         setIsLoading(true);
 
-        try {
-            const { data: { user }, error: authError } = await supabase.auth.getUser();
-            
-            if (authError || !user) {
-                setError('You need to be signed in to place a bid.');
-                setIsLoading(false);
-                return;
-            }
+        const {
+            data: { user },
+            error: userError,
+        } = await supabase.auth.getUser();
 
-            // Map request type to category
-            const categoryMap = {
-                'requests': 'General',
-                'photography_requests': 'Photography',
-                'dj_requests': 'DJ',
-                'catering_requests': 'Catering',
-                'videography_requests': 'Videography',
-                'florist_requests': 'Florist',
-                'beauty_requests': 'Beauty'
-            };
-
-            const category = categoryMap[requestType] || 'General';
-
-            const { error: insertError } = await supabase
-                .from('bids')
-                .insert([{
-                    request_id: requestId,
-                    user_id: user.id,
-                    bid_amount: bidAmount,
-                    bid_description: bidDescription,
-                    category: category,
-                }]);
-
-            if (insertError) throw insertError;
-
-            const subject = 'New Bid Received';
-            const htmlContent = `<p>A new bid has been placed on your request.</p>
-                                  <p><strong>Bid Amount:</strong> ${bidAmount}</p>
-                                  <p><strong>Description:</strong> ${bidDescription}</p>`;
-
-            await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent);
-            setSuccess('Bid successfully placed!');
-            navigate('/bid-success');
-        } catch (err) {
-            setError(`Error placing bid: ${err.message}`);
+        if (userError || !user) {
+            setError('You need to be signed in to place a bid.');
+            setIsLoading(false);
+            return;
         }
 
-        setIsLoading(false);
+        let insertError;
+        const subject = 'New Bid Received';
+        const htmlContent = `<p>A new bid has been placed on your request.</p>
+                              <p><strong>Bid Amount:</strong> ${bidAmount}</p>
+                              <p><strong>Description:</strong> ${bidDescription}</p>`;
+    
+        if (requestType === 'requests') {
+            const { error } = await supabase
+                .from('bids')
+                .insert([
+                    {
+                        request_id: requestId,
+                        user_id: user.id,
+                        bid_amount: bidAmount,
+                        bid_description: bidDescription,
+                        category: 'General',
+                    },
+                ]);
+            insertError = error;
+        } else if (requestType === 'photography_requests') {
+            const { error } = await supabase
+                .from('bids')
+                .insert([
+                    {
+                        request_id: requestId,
+                        user_id: user.id,
+                        bid_amount: bidAmount,
+                        bid_description: bidDescription,
+                        category: 'Photography',
+                    },
+                ]);
+            insertError = error;
+        }
+    
+        if (!insertError) {
+            await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent); // Send to user email
+            setSuccess('Bid successfully placed!');
+            navigate('/bid-success');
+        } else {
+            setError(`Error placing bid: ${insertError.message}`);
+        }
+    
+        setIsLoading(false); // End loading
     };
 
     const handleBack = () => {
@@ -191,12 +208,16 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                 maxWidth:'1000px'
             }}>
                 {requestDetails && (
-                    <RequestDisplay 
-                        request={requestDetails}
-                        servicePhotos={servicePhotos}
-                        hideBidButton={true}
-                        requestType={requestType}
-                    />
+                    <>
+                        {requestType === 'requests' && <RequestDisplay request={requestDetails} servicePhotos={servicePhotos} hideBidButton={true} created_at={requestDetails.created_at} />}
+                        {requestType === 'photography_requests' && (
+                            <PhotoRequestDisplay 
+                                photoRequest={requestDetails} 
+                                event_photos={eventPhotos}
+                                hideBidButton={true} 
+                            />
+                        )}
+                    </>
                 )}
             </div>
                 

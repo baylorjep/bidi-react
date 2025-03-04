@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import ReactQuill from 'react-quill';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../supabaseClient';
-import SignInModal from '../Event/SignInModal';
+import SignInModal from '../../Event/SignInModal';
 
 function AdditionalComments({ formData, setAdditionalComments, nextStep, prevStep, currentStep }) {
     const navigate = useNavigate();
