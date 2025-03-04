@@ -27,11 +27,12 @@ const AuthModal = ({ setIsModalOpen, onSuccess }) => {
                         <div className="sign-up-modal-title">Sign In to Continue</div>
                         <div className="sign-up-modal-subtitle">*You must have an account to continue</div>
                         <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', justifyContent: 'center', alignItems: 'center' }}>
-                            <button className="sign-up-modal-button-primary" onClick={() => setCurrentView('signup')}>
-                                Create an Account
-                            </button>
-                            <button className="sign-up-modal-button-secondary" onClick={() => setCurrentView('signin')}>
+
+                            <button className="sign-up-modal-button-primary" onClick={() => setCurrentView('signin')}>
                                 Sign In
+                            </button>
+                            <button className="sign-up-modal-button-secondary" onClick={() => setCurrentView('signup')}>
+                                Create an Account
                             </button>
                         </div>
                     </div>

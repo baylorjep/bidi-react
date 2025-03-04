@@ -44,11 +44,12 @@ const SignInModal = ({ setIsModalOpen }) => {
                 <div className="sign-up-modal-subtitle">*You must have an account to complete the form</div>
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', justifyContent: 'center', alignItems: 'center' }}>
                     {/* Pass the type 'individual' as a query parameter */}
-                    <Link to={`/signup?type=individual&redirect=${encodeURIComponent('/personal-details')}`}>
-                        <button className="sign-up-modal-button-primary">Create an Account</button>
-                    </Link>
+
                     <Link to="/signin" state={{ from: '/personal-details' }}>
-                        <button className="sign-up-modal-button-secondary" onClick={handleSignInClick}>Sign In</button>
+                        <button className="sign-up-modal-button-primary" onClick={handleSignInClick}>Sign In</button>
+                    </Link>
+                    <Link to={`/signup?type=individual&redirect=${encodeURIComponent('/personal-details')}`}>
+                        <button className="sign-up-modal-button-secondary">Create an Account</button>
                     </Link>
                 </div>
             </div>
