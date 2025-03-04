@@ -1,0 +1,277 @@
+/* Container styles */
+.unviewed-bids-container {
+  padding: 10px;
+  max-width: 100%;
+}
+
+/* Title styles */
+.section-title {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.count-badge {
+  font-size: 1rem;
+  padding: 0.35em 0.65em;
+  margin-left: 10px;
+}
+
+.section-description {
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  color: #6c757d;
+}
+
+/* Card styles */
+.customer-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.customer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.customer-email {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 70%;
+}
+
+.bid-count {
+  font-size: 0.8rem;
+  padding: 0.35em 0.65em;
+}
+
+.customer-body {
+  padding: 15px;
+}
+
+.customer-info {
+  margin-bottom: 15px;
+}
+
+.info-title {
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.contact-detail {
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+  word-break: break-all;
+}
+
+/* Button styles */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.sms-button, .mark-button {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 6px;
+  border: none;
+  font-weight: 500;
+  font-size: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  transition: all 0.3s ease;
+}
+
+.sms-button {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.sms-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.mark-button {
+  background-color: #198754;
+  color: white;
+}
+
+.help-text {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 5px;
+}
+
+.icon-space {
+  margin-right: 8px;
+  font-size: 1rem;
+}
+
+/* Accordion styles */
+.bids-accordion .accordion-header {
+  padding: 0;
+}
+
+.bids-accordion .accordion-header button {
+  padding: 12px 15px;
+  width: 100%;
+  text-align: left;
+  background-color: #f8f9fa;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.view-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.accordion-body {
+  padding: 10px 0;
+}
+
+.bid-item {
+  background-color: #f9f9f9;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+}
+
+.bid-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.bid-title {
+  font-size: 0.9rem;
+  margin: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bid-amount {
+  background-color: #17a2b8;
+  color: white;
+  padding: 0.25em 0.65em;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.bid-description, .bid-detail {
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+/* Alert styles */
+.mobile-alert {
+  font-size: 0.9rem;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+/* Loading indicator */
+.loading {
+  text-align: center;
+  padding: 20px;
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+/* Media queries for responsive design */
+@media (min-width: 768px) {
+  .unviewed-bids-container {
+    padding: 20px;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+  }
+  
+  .sms-button, .mark-button {
+    width: 50%;
+  }
+  
+  .customer-email {
+    font-size: 1.2rem;
+  }
+}
+
+/* Add new styles for the header with refresh button */
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.refresh-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.refresh-button:hover {
+  background-color: #5a6268;
+}
+
+.refresh-button i {
+  font-size: 0.8rem;
+}
+
+/* Debug info styles */
+.debug-info {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.debug-info h6 {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.debug-info p {
+  margin-bottom: 3px;
+}

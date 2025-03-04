@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Alert, Badge, Accordion } from 'react-bootstrap';
+import './UnviewedBids.css';
 
 function UnviewedBids() {
     const [unviewedBids, setUnviewedBids] = useState([]);
@@ -8,6 +9,8 @@ function UnviewedBids() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [lastMarkedBids, setLastMarkedBids] = useState([]);
+    const [debugInfo, setDebugInfo] = useState(null);
 
     useEffect(() => {
         fetchUnviewedBids();
@@ -16,35 +19,46 @@ function UnviewedBids() {
     const fetchUnviewedBids = async () => {
         try {
             setLoading(true);
+            setDebugInfo(null);
             console.log("Fetching unviewed bids...");
             
-            // First, try to fetch bids with both viewed=false and contacted=false
+            // First get all bids without filters to see what's in the database
+            const { data: allBids, error: allBidsError } = await supabase
+                .from('bids')
+                .select('id, contacted')
+                .order('created_at', { ascending: false })
+                .limit(50);
+                
+            console.log("All bids (first 50):", allBids);
+            
+            // Count bids by contacted status to see distribution
+            if (allBids) {
+                const contactedCounts = {
+                    'true': allBids.filter(b => b.contacted === true).length,
+                    'false': allBids.filter(b => b.contacted === false).length,
+                    'null': allBids.filter(b => b.contacted === null).length,
+                    'undefined': allBids.filter(b => b.contacted === undefined).length,
+                    'total': allBids.length
+                };
+                console.log("Contacted status counts:", contactedCounts);
+                setDebugInfo(contactedCounts);
+            }
+            
+            // Based on the debug information, we see most bids have contacted=null
+            // This is the correct query to use:
+            console.log("Using query to get bids with contacted=null or contacted=false");
             let { data: bids, error: bidsError } = await supabase
                 .from('bids')
                 .select('id, bid_amount, bid_description, status, created_at, request_id, category, viewed, contacted, user_id')
-                .eq('viewed', false)
-                .eq('contacted', false)
+                .or('contacted.is.null, contacted.eq.false')  // This gets both null and false values
                 .order('created_at', { ascending: false });
 
-            // If we didn't get any bids, the contacted field might not exist or be null
-            // Try again with just viewed=false
-            if (!bidsError && (!bids || bids.length === 0)) {
-                console.log("No bids found with both viewed=false and contacted=false. Trying with just viewed=false...");
-                
-                const { data: viewedOnlyBids, error: viewedOnlyError } = await supabase
-                    .from('bids')
-                    .select('id, bid_amount, bid_description, status, created_at, request_id, category, viewed, contacted, user_id')
-                    .eq('viewed', false)
-                    .order('created_at', { ascending: false });
-                
-                if (!viewedOnlyError) {
-                    bids = viewedOnlyBids;
-                    bidsError = viewedOnlyError;
-                }
+            if (bidsError) {
+                console.error("Error with main query:", bidsError);
+                throw bidsError;
             }
-
-            if (bidsError) throw bidsError;
-            console.log(`Retrieved ${bids?.length || 0} unviewed bids`);
+            
+            console.log(`Retrieved ${bids?.length || 0} uncontacted bids`);
 
             // Get associated request details
             const bidsWithDetails = await Promise.all(bids.map(async (bid) => { 
@@ -250,27 +264,46 @@ function UnviewedBids() {
         }
     };
 
-    // Updated to mark multiple bids as contacted only (not viewed)
+    // Updated to ensure contacted status is properly set
     const markBidsAsContacted = async (bids) => {
         try {
             const now = new Date().toISOString();
-            
-            // Update all bids for this user - only set contacted fields, not viewed
-            const updatePromises = bids.map(bid => 
-                supabase
-                    .from('bids')
-                    .update({ 
-                        contacted: true,    // Set contacted to true
-                        contacted_at: now   // Set contacted_at timestamp
-                        // No longer setting viewed or viewed_at
-                    })
-                    .eq('id', bid.id)
-            );
-            
-            await Promise.all(updatePromises);
-            
-            // Update local state - remove all marked bids
             const bidIds = bids.map(bid => bid.id);
+            
+            console.log("Marking bids as contacted:", bidIds);
+            
+            // Store the bid IDs that we're marking
+            setLastMarkedBids(bidIds);
+            
+            // Make sure to explicitly set contacted to true (not null)
+            const { data, error } = await supabase
+                .from('bids')
+                .update({ 
+                    contacted: true,    // This needs to be explicitly set to true
+                    contacted_at: now   
+                })
+                .in('id', bidIds);
+            
+            if (error) {
+                console.error("Error updating bids:", error);
+                throw error;
+            }
+            
+            console.log("Update response:", data);
+            
+            // Verify the update
+            const { data: verifyData, error: verifyError } = await supabase
+                .from('bids')
+                .select('id, contacted')
+                .in('id', bidIds);
+                
+            if (verifyError) {
+                console.error("Error verifying update:", verifyError);
+            } else {
+                console.log("Verification of update:", verifyData);
+            }
+
+            // Update local state
             setUnviewedBids(unviewedBids.filter(bid => !bidIds.includes(bid.id)));
             
             // Update grouped bids
@@ -289,6 +322,11 @@ function UnviewedBids() {
             
             setGroupedBids(updatedGroupedBids);
             setSuccessMessage('Bids marked as contacted successfully!');
+            
+            // Force a refresh of the data after a short delay
+            setTimeout(() => {
+                fetchUnviewedBids();
+            }, 1000);
             
             // Clear success message after 3 seconds
             setTimeout(() => {
@@ -327,71 +365,108 @@ function UnviewedBids() {
         window.open(smsLink, '_blank');
     };
 
+    // Add refresh button
+    const handleRefresh = () => {
+        fetchUnviewedBids();
+    };
+
+    // Format number for badge display
+    const formatBidCount = (count) => {
+        if (count > 99) return '99+'; // Show 99+ if count exceeds 99
+        return count;
+    };
+
     if (loading) return <div>Loading unviewed bids...</div>;
 
     return (
-        <div>
-            <h3>Uncontacted Bids by Customer <Badge bg="danger">{unviewedBids.length}</Badge></h3>
-            <p>These bids are grouped by customer for more efficient communication.</p>
+        <div className="unviewed-bids-container">
+            <div className="header-actions">
+                <h3 className="section-title">
+                    Uncontacted Bids by Customer 
+                    <Badge bg="danger" className="count-badge">
+                        {formatBidCount(unviewedBids.length)}
+                    </Badge>
+                </h3>
+                <button 
+                    className="refresh-button" 
+                    onClick={handleRefresh}
+                >
+                    <i className="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <p className="section-description">These bids are grouped by customer for more efficient communication.</p>
             
-            {successMessage && <Alert variant="success">{successMessage}</Alert>}
-            {error && <Alert variant="danger">{error}</Alert>}
+            {debugInfo && (
+                <div className="debug-info">
+                    <h6>Debug Information:</h6>
+                    <p>Total bids: {debugInfo.total}</p>
+                    <p>contacted=true: {debugInfo.true}</p>
+                    <p>contacted=false: {debugInfo.false}</p>
+                    <p>contacted=null: {debugInfo.null}</p>
+                    <p>contacted=undefined: {debugInfo.undefined}</p>
+                    <small>
+                        Most bids have contacted=null. Using OR query: 
+                        contacted.is.null, contacted.eq.false
+                    </small>
+                </div>
+            )}
+            
+            {successMessage && <Alert variant="success" className="mobile-alert">{successMessage}</Alert>}
+            {error && <Alert variant="danger" className="mobile-alert">{error}</Alert>}
             
             {Object.keys(groupedBids).length === 0 && !loading && (
-                <div className="alert alert-info">
+                <div className="alert alert-info mobile-alert">
                     No uncontacted bids at the moment.
                 </div>
             )}
             
             {Object.entries(groupedBids).map(([userId, userGroup]) => (
-                <div className="card mb-4 shadow-sm" key={userId}>
-                    <div className="card-header d-flex justify-content-between align-items-center bg-light">
-                        <h5 className="mb-0">Customer: {userGroup.userData.email}</h5>
-                        <Badge bg="primary">{userGroup.bids.length} Bid{userGroup.bids.length > 1 ? 's' : ''}</Badge>
+                <div className="customer-card" key={userId}>
+                    <div className="customer-header">
+                        <h5 className="customer-email">{userGroup.userData.email}</h5>
+                        <Badge bg="primary" className="bid-count">{userGroup.bids.length} Bid{userGroup.bids.length > 1 ? 's' : ''}</Badge>
                     </div>
-                    <div className="card-body">
-                        <div className="row mb-3">
-                            <div className="col-md-8">
-                                <h6>Customer Contact:</h6>
-                                <p><strong>Email:</strong> {userGroup.userData.email}</p>
-                                <p><strong>Phone:</strong> {userGroup.userData.phone}</p>
-                            </div>
-                            <div className="col-md-4 d-flex flex-column justify-content-center align-items-center">
-                                <button 
-                                    className="btn btn-primary btn-lg mb-2 w-100"
-                                    onClick={() => handleSendGroupSMS(userGroup.userData, userGroup.bids)}
-                                    disabled={!userGroup.userData.phone || userGroup.userData.phone === 'Not provided' || userGroup.userData.phone === 'Unknown'}
-                                >
-                                    <i className="fas fa-sms mr-2"></i> Send Text ({userGroup.bids.length})
-                                </button>
-                                
-                                <button 
-                                    className="btn btn-success btn-lg mb-2 w-100"
-                                    onClick={() => markBidsAsContacted(userGroup.bids)}
-                                >
-                                    Mark as Contacted
-                                </button>
-                                <small className="text-muted text-center">
-                                    Click after sending the text to customer
-                                </small>
-                            </div>
+                    <div className="customer-body">
+                        <div className="customer-info">
+                            <h6 className="info-title">Customer Contact:</h6>
+                            <p className="contact-detail"><strong>Email:</strong> {userGroup.userData.email}</p>
+                            <p className="contact-detail"><strong>Phone:</strong> {userGroup.userData.phone}</p>
+                        </div>
+                        <div className="action-buttons">
+                            <button 
+                                className="sms-button"
+                                onClick={() => handleSendGroupSMS(userGroup.userData, userGroup.bids)}
+                                disabled={!userGroup.userData.phone || userGroup.userData.phone === 'Not provided' || userGroup.userData.phone === 'Unknown'}
+                            >
+                                <i className="fas fa-sms icon-space"></i> Send Text ({userGroup.bids.length})
+                            </button>
+                            
+                            <button 
+                                className="mark-button"
+                                onClick={() => markBidsAsContacted(userGroup.bids)}
+                            >
+                                Mark as Contacted
+                            </button>
+                            <small className="help-text">
+                                Click after sending the text to customer
+                            </small>
                         </div>
                         
-                        <Accordion defaultActiveKey="0">
+                        <Accordion defaultActiveKey="0" className="bids-accordion">
                             <Accordion.Item eventKey="0">
-                                <Accordion.Header>
-                                    View All {userGroup.bids.length} Bids
+                                <Accordion.Header className="accordion-header">
+                                    <span className="view-text">View All {userGroup.bids.length} Bids</span>
                                 </Accordion.Header>
-                                <Accordion.Body>
+                                <Accordion.Body className="accordion-body">
                                     {userGroup.bids.map((bid, index) => (
-                                        <div className="bid-item p-3 mb-3 bg-light rounded" key={bid.id}>
-                                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                                <h6>{bid.request_title}</h6>
-                                                <span className="badge bg-info">${bid.bid_amount}</span>
+                                        <div className="bid-item" key={bid.id}>
+                                            <div className="bid-header">
+                                                <h6 className="bid-title">{bid.request_title}</h6>
+                                                <span className="bid-amount">${bid.bid_amount}</span>
                                             </div>
-                                            <p><strong>Description:</strong> {bid.bid_description}</p>
-                                            <p><strong>Category:</strong> {bid.category}</p>
-                                            <p><strong>Date:</strong> {new Date(bid.created_at).toLocaleString()}</p>
+                                            <p className="bid-description"><strong>Description:</strong> {bid.bid_description}</p>
+                                            <p className="bid-detail"><strong>Category:</strong> {bid.category}</p>
+                                            <p className="bid-detail"><strong>Date:</strong> {new Date(bid.created_at).toLocaleString()}</p>
                                         </div>
                                     ))}
                                 </Accordion.Body>
