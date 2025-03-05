@@ -86,7 +86,11 @@ const ProfilePage = () => {
             const profileImage = data.find(photo => photo.photo_type === "profile");
             const portfolioImages = data.filter(photo => photo.photo_type === "portfolio");
 
-            if (profileImage) setProfilePic(profileImage.photo_url);
+            if (profileImage) {
+              setProfilePic(profileImage.photo_url);
+          } else {
+              setProfilePic("/images/default.jpg"); // Ensures a default is used if no profile picture exists
+          }
             if (portfolioImages.length > 0) setPortfolioPic(portfolioImages.map(img => img.photo_url));
         } catch (err) {
             console.error("Error fetching profile images:", err);
@@ -109,7 +113,10 @@ const ProfilePage = () => {
     if (!file) return;
 
     if (type === "profile") {
-        setProfilePic(URL.createObjectURL(file)); // Show preview immediately
+      const uploadedUrl = await handleUpload(file, type);
+      if (uploadedUrl && type === "profile") {
+          setProfilePic(uploadedUrl); // Ensure the UI updates with the new image URL
+      }
     } else {
         // Only add preview URL before upload, but update state properly after upload
         const previewURL = URL.createObjectURL(file);
@@ -155,8 +162,24 @@ const handleUpload = async (file, type) => {
 
       const photoUrl = data.publicUrl;
 
-      // 🔹 Save new portfolio picture in the database
-      const { error: dbError } = await supabase
+      // 🔹 Check if a profile picture already exists
+      const { data: existingProfile, error: fetchError } = await supabase
+      .from('profile_photos')
+      .select("id")
+      .eq("user_id", userId)
+      .eq("photo_type", type)
+      .single();
+
+      // 🔹 If a profile picture exists, update it, otherwise insert a new one
+      if (existingProfile) {
+      const { error: updateError } = await supabase
+          .from('profile_photos')
+          .update({ photo_url: photoUrl, file_path: filePath })
+          .eq("id", existingProfile.id);
+
+      if (updateError) throw updateError;
+      } else {
+      const { error: insertError } = await supabase
           .from('profile_photos')
           .insert([
               {
@@ -167,7 +190,8 @@ const handleUpload = async (file, type) => {
               }
           ]);
 
-      if (dbError) throw dbError;
+      if (insertError) throw insertError;
+      }
 
       setUploadSuccess(`${type.charAt(0).toUpperCase() + type.slice(1)} picture uploaded successfully!`);
 
