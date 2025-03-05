@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import { supabase } from "../../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 import "../../App.css"; // Include this for custom styles
