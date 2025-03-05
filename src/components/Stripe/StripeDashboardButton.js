@@ -5,13 +5,16 @@ const StripeDashboardButton = ({ accountId }) => {
 
   const handleViewDashboard = async () => {
     try {
-      const response = await fetch("https://bidi-express.vercel.app/create-login-link", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ accountId }), // Send the connected account ID
-      });
+      const response = await fetch(
+        "https://bidi-express.vercel.app/create-login-link",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ accountId }), // Send the connected account ID
+        }
+      );
 
       const data = await response.json();
       if (response.ok) {
@@ -28,7 +31,7 @@ const StripeDashboardButton = ({ accountId }) => {
   return (
     <div>
       {error && <p>{error}</p>}
-      <button className="btn-secondary flex-fill"  style={{fontWeight:'bold'}}onClick={handleViewDashboard}>Payment Dashboard</button>
+      <span onClick={handleViewDashboard}>Payment Dashboard</span>
     </div>
   );
 };
