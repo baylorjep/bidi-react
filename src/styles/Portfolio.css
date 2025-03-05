@@ -1,0 +1,329 @@
+/* 🔹 General Layout */
+.portfolio-container {
+  max-width: 900px;
+  margin: 50px auto;
+  padding: 20px;
+  text-align: left;
+}
+
+/* 🔹 Business Header */
+.business-header {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  text-align: left;
+}
+
+.business-name {
+  color: #000;
+  font-family: Roboto;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: normal;
+  margin-bottom: 5px;
+  text-align: left;
+}
+
+.business-oneliner {
+  color: #000;
+  font-family: Outfit;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: normal;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+/* 🔹 Section Divider (SVG Line) */
+.section-divider {
+  width: 100%;
+  height: 2px;
+  background-color: #D1D1D1;
+  margin: 20px 0;
+}
+
+/* 🔹 Details Section */
+
+.detail-title {
+  color: #83748D;
+  font-family: Outfit;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+  text-align: left;
+}
+
+.detail-text {
+  color: #000;
+  font-family: Outfit;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: normal;
+  text-align: left;
+}
+
+/* 🔹 Vendor Section */
+.vendor-section {
+  text-align: left;
+}
+
+.vendor-title {
+  color: #000;
+  font-family: Outfit;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: normal;
+  
+}
+
+.vendor-info {
+  display: flex;
+  align-items: left;
+  justify-content: left;
+  gap: 20px;
+}
+
+.vendor-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+}
+
+.vendor-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: lightgray 50% / cover no-repeat;
+  align-items: left;
+  object-fit: cover; /* Prevents stretching, ensures the image is cropped properly */
+  border: 3px solid black; /* Adds the themed purple border */
+  display: block;
+}
+
+.vendor-name {
+  color: #A328F4;
+  font-family: Outfit;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 5px;
+}
+
+.vendor-role {
+  color: #000;
+  font-family: Outfit;
+  font-size: 14px;
+  font-weight: 400;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.vendor-description {
+  color: #000;
+  font-family: Outfit;
+  font-size: 16px;
+  font-weight: 400;
+  max-width: 600px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* 🔹 Meet the Vendor Button */
+.message-vendor-button {
+  display: flex;
+  width: 188px;
+  height: 43px;
+  padding: 18px 32px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 30px;
+  border: 3px solid #A328F4;
+  box-shadow: 0px 4px 15px 0px rgba(46, 46, 46, 0.15);
+  cursor: pointer;
+  margin: 20px auto;
+  background: none;
+}
+
+.message-vendor-button span {
+  font-family: Roboto;
+  font-size: 14px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #A328F4 13.13%, #FF008A 84.83%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.message-vendor-button:hover {
+  background: rgba(162, 40, 244, 0.1);
+}
+
+/* 🔹 Specialties Section */
+.specialties-section {
+  text-align: center;
+  margin-top: 30px;
+}
+
+/* 🔹 Specialties Title */
+.specialties-title {
+  color: #000;
+  font-family: Outfit;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: normal;
+  text-align: left;
+}
+
+/* 🔹 Bullet-Pointed List */
+.specialties-list {
+  list-style: none; /* Removes default bullets */
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+
+/* 🔹 Individual List Items */
+.specialty-item {
+  font-family: Roboto;
+  font-size: 16px;
+  font-weight: 400;
+  color: #000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 🔹 Custom Bullet Point */
+.bullet-point {
+  color: #A328F4; /* Matches your theme color */
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* 🔹 Portfolio Grid */
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+  max-height: 400px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 🔹 Wrapper for each image (to position "See All" button) */
+.portfolio-image-wrapper {
+  position: relative;
+}
+
+/* 🔹 Portfolio Images */
+.portfolio-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* 🔹 "See All" Button (Overlay) */
+.see-all-button {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+/* 🔹 "See All" Button */
+.see-all-buttons {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 130px;
+  height: 39px;
+  padding: 17px 32px;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+  border-radius: 30px;
+  background: #A328F4;
+  color: white;
+  font-family: Roboto;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+}
+
+.see-all-button:hover {
+  background: #8c1ecc;
+}
+
+.see-all-overlay:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* 🔹 "Hide" Button (Toggle Back) */
+.see-all-toggle {
+  background: #A328F4;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 14px;
+  display: block;
+  margin: 10px auto;
+}
+
+.see-all-toggle:hover {
+  background: #8c1ecc;
+}
+
+/* 🔹 Business Details */
+
+.business-details {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+/* 🔹 Individual Business Detail Row */
+.business-detail {
+  display: flex;
+  align-items: center; /* Align icon and text in a row */
+  gap: 10px; /* Space between icon and text */
+  text-align: left;
+  width: fit-content; /* Prevents stretching */
+}
+
+/* 🔹 Icons for Location & Price */
+.detail-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  position: relative;
+  top: 5px; /* Moves the icons down slightly */
+}
+
+.location-icon {
+  width: 31px;
+  height: 31px;
+}
+
+.price-icon {
+  width: 24px;
+  height: 24px;
+  top: 10px;
+}
