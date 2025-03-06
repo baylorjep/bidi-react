@@ -96,6 +96,10 @@
   text-decoration: none;
   color: inherit;
 }
+.select {
+  background: #f6eafe; /* Updated color */
+  border-radius: 0.5vw;
+}
 /* Upgrade to PRO Box */
 .upgrade-box {
   background: #f6eafe; /* Updated color */
