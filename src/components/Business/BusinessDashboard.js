@@ -12,15 +12,17 @@ import messageIcon from "../../assets/images/Icons/message.svg";
 import paymentIcon from "../../assets/images/Icons/payment.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
 import MessagingView from "../Messaging/MessagingView";
+import PlacedBidDisplay from "./PlacedBids.js";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
   const [businessName, setBusinessName] = useState("");
   const [BidiPlus, setBidiPlus] = useState(false);
-  const navigate = useNavigate();
+  const [requests, setRequests] = useState([]); // Stores service requests
   const [activeSection, setActiveSection] = useState("dashboard");
   const [profileImage, setProfileImage] = useState("/images/default.jpg");
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
@@ -51,6 +53,7 @@ const BusinessDashSidebar = () => {
         setBusinessName(profile.business_name || "Business Name Not Found");
         setConnectedAccountId(profile.stripe_account_id || null);
         setBidiPlus(!!profile.Bidi_Plus);
+        setProfile(profile);
       }
     };
 
@@ -71,6 +74,24 @@ const BusinessDashSidebar = () => {
         }
       }
     };
+
+    // Fetch service requests including time_of_day
+    if (profile.business_category) {
+      const { data: requestsData, error: requestsError } = supabase
+        .from("requests")
+        .select("*")
+        .eq("service_category", profile.business_category);
+
+      if (requestsError) {
+        console.error("Error fetching requests:", requestsError);
+        return;
+      }
+
+      setRequests(requestsData); // Store requests in state
+    } else {
+      console.warn("No business category found for this profile.");
+      setRequests([]); // Ensure no stale requests remain
+    }
 
     fetchBusinessDetails();
     fetchProfilePic();
@@ -190,9 +211,28 @@ const BusinessDashSidebar = () => {
           <DashboardBanner />
           {/* find active sections */}
           {activeSection === "dashboard" ? (
-            <div>Dashboard Filler</div>
+            <section className="job-listings">
+              {/* Section Header */}
+              <div className="job-listings-header">
+                <span className="job-title">Jobs for you</span>
+                <span className="job-subtext">
+                  See the requests that you haven't bid on!
+                </span>
+              </div>
+
+              {/* Job Cards Grid */}
+              <div className="job-cards">
+                {requests.length > 0 ? (
+                  requests.map((request) => (
+                    <PlacedBidDisplay key={request.id} RequestId={request.id} />
+                  ))
+                ) : (
+                  <p className="no-jobs">No available jobs at this time.</p>
+                )}
+              </div>
+            </section>
           ) : activeSection === "messages" ? (
-            <div>Messages filler</div>
+            <MessagingView />
           ) : activeSection === "bids" ? (
             <div>Bids Filler</div>
           ) : activeSection === "onboarding" ? (
