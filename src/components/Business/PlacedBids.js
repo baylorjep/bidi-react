@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 
 function PlacedBidDisplay({ requestId }) {
+  console.log(requestId);
   // Ensure requestId is properly destructured
   const [BidInfo, setBidInfo] = useState(null);
 

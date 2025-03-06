@@ -25,76 +25,78 @@ const BusinessDashSidebar = () => {
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
-    const fetchBusinessDetails = async () => {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      setUser(user);
-
-      if (userError || !user) {
-        console.error("Error fetching user:", userError || "No user found.");
-        return;
-      }
-
-      // Only fetch business details if user is valid
-      const { data: profile, error: profileError } = await supabase
-        .from("business_profiles")
-        .select("business_name, stripe_account_id, Bidi_Plus")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-        return;
-      }
-
-      if (profile) {
-        setBusinessName(profile.business_name || "Business Name Not Found");
-        setConnectedAccountId(profile.stripe_account_id || null);
-        setBidiPlus(!!profile.Bidi_Plus);
-        setProfile(profile);
-      }
-    };
-
-    // Fetch profile picture only if user is available
-    const fetchProfilePic = async () => {
-      if (user && user.id) {
-        const { data: profilePicData, error: profilePicError } = await supabase
-          .from("profile_photos")
-          .select("photo_url")
-          .eq("user_id", user.id)
-          .eq("photo_type", "profile")
-          .single();
-
-        if (profilePicData) {
-          setProfileImage(profilePicData.photo_url);
-        } else if (profilePicError) {
-          console.error("Error fetching profile picture:", profilePicError);
+    const fetchData = async () => {
+      try {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+        if (userError || !user) {
+          console.error("Error fetching user:", userError || "No user found.");
+          return;
         }
+        setUser(user);
+
+        // Fetch business details and profile picture concurrently
+        const [profileRes, profilePicRes] = await Promise.all([
+          supabase
+            .from("business_profiles")
+            .select(
+              "business_name, stripe_account_id, Bidi_Plus, business_category"
+            )
+            .eq("id", user.id)
+            .single(),
+          supabase
+            .from("profile_photos")
+            .select("photo_url")
+            .eq("user_id", user.id)
+            .eq("photo_type", "profile")
+            .single(),
+        ]);
+
+        if (profileRes.error) {
+          console.error("Error fetching business profile:", profileRes.error);
+          return;
+        }
+
+        if (profileRes.data) {
+          setBusinessName(
+            profileRes.data.business_name || "Business Name Not Found"
+          );
+          setConnectedAccountId(profileRes.data.stripe_account_id || null);
+          setBidiPlus(!!profileRes.data.Bidi_Plus);
+          setProfile(profileRes.data);
+        }
+
+        if (profilePicRes.data) {
+          setProfileImage(profilePicRes.data.photo_url);
+        } else if (profilePicRes.error) {
+          console.error("Error fetching profile picture:", profilePicRes.error);
+        }
+
+        // Fetch service requests based on business category
+        if (profileRes.data.business_category) {
+          const { data: requestsData, error: requestsError } = await supabase
+            .from("requests")
+            .select("*")
+            .eq("service_category", profileRes.data.business_category);
+
+          if (requestsError) {
+            console.error("Error fetching requests:", requestsError);
+            return;
+          }
+
+          setRequests(requestsData); // Store requests in state
+        } else {
+          console.warn("No business category found for this profile.");
+          setRequests([]); // Ensure no stale requests remain
+        }
+      } catch (error) {
+        console.error("An error occurred while fetching data:", error);
       }
     };
 
-    // Fetch service requests including time_of_day
-    if (profile.business_category) {
-      const { data: requestsData, error: requestsError } = supabase
-        .from("requests")
-        .select("*")
-        .eq("service_category", profile.business_category);
-
-      if (requestsError) {
-        console.error("Error fetching requests:", requestsError);
-        return;
-      }
-
-      setRequests(requestsData); // Store requests in state
-    } else {
-      console.warn("No business category found for this profile.");
-      setRequests([]); // Ensure no stale requests remain
-    }
-
-    fetchBusinessDetails();
-    fetchProfilePic();
+    fetchData();
   }, [user]);
 
   const formatBusinessName = (name) => {
@@ -172,8 +174,6 @@ const BusinessDashSidebar = () => {
               <span>Dashboard</span>
             </li>
             <li onClick={() => setActiveSection("bids")}>
-              {" "}
-              {/* open-requests */}
               <img src={bidsIcon} alt="Bids" />
               <span>Bids</span>
             </li>
@@ -224,7 +224,7 @@ const BusinessDashSidebar = () => {
               <div className="job-cards">
                 {requests.length > 0 ? (
                   requests.map((request) => (
-                    <PlacedBidDisplay key={request.id} RequestId={request.id} />
+                    <PlacedBidDisplay key={request.id} requestId={request.id} />
                   ))
                 ) : (
                   <p className="no-jobs">No available jobs at this time.</p>
