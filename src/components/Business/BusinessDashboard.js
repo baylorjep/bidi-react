@@ -188,6 +188,8 @@ const BusinessDashSidebar = () => {
         <main className="dashboard-main">
           <DashboardBanner />
         </main>
+
+        {/* If it is the main dashbaord */}
       </div>
     </div>
   );
