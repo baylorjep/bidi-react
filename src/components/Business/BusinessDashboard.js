@@ -145,48 +145,31 @@ const BusinessDashSidebar = () => {
 
           {/* Sidebar Links */}
           <ul className="sidebar-links">
-            <li
-              onClick={() => navigate("/Dashboard")}
-              style={{ cursor: "pointer" }}
-            >
+            <li onClick={() => setActiveSection("dashboard")}>
               <img src={dashboardIcon} alt="Dashboard" />
               <span>Dashboard</span>
             </li>
-            <li
-              onClick={() => navigate("/Open-Requests")}
-              style={{ cursor: "pointer" }}
-            >
+            <li onClick={() => setActiveSection("bids")}>
+              {" "}
+              {/* open-requests */}
               <img src={bidsIcon} alt="Bids" />
               <span>Bids</span>
             </li>
-            <li
-              onClick={() => setActiveSection("messages")}
-              style={{ cursor: "pointer" }}
-            >
+            <li onClick={() => setActiveSection("messages")}>
               <img src={messageIcon} alt="Message" />
               <span>Message</span>
             </li>
-            <li style={{ cursor: connectedAccountId ? "default" : "pointer" }}>
+            <li>
               {connectedAccountId ? (
                 <StripeDashboardButton accountId={connectedAccountId} />
               ) : (
-                <button
-                  onClick={() => navigate("/onboarding")}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                  }}
-                >
+                <button onClick={() => setActiveSection("onboarding")}>
                   <img src={paymentIcon} alt="Payment" />
                   <span>Payment</span>
                 </button>
               )}
             </li>
-            <li
-              onClick={() => navigate("/profile")}
-              style={{ cursor: "pointer" }}
-            >
+            <li onClick={() => setActiveSection("profile")}>
               <img src={settingsIcon} alt="Settings" />
               <span>Settings</span>
             </li>

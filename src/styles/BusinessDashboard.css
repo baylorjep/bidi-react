@@ -87,6 +87,7 @@
   padding: 0.3vh 0;
   font-size: 1.2vw;
   margin-left: 2.5vw;
+  cursor: pointer;
 }
 .sidebar-links li img {
   width: 1.5vw;
