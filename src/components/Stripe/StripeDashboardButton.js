@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import paymentIcon from "../../assets/images/Icons/payment.svg";
 
 const StripeDashboardButton = ({ accountId }) => {
   const [error, setError] = useState(null);
@@ -31,7 +32,8 @@ const StripeDashboardButton = ({ accountId }) => {
   return (
     <div>
       {error && <p>{error}</p>}
-      <span onClick={handleViewDashboard}>Payment Dashboard</span>
+      <img src={paymentIcon} alt="Payment" />
+      <span onClick={handleViewDashboard}>Payment</span>
     </div>
   );
 };

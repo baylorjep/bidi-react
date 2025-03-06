@@ -3,7 +3,6 @@ import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import { supabase } from "../../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import "../../App.css";
-import profilePic from "../../assets/images/Profile-Picture.svg";
 import verifiedCheckIcon from "../../assets/images/Icons/verified-check.svg";
 import dashboardIcon from "../../assets/images/Icons/dashboard.svg";
 import bidsIcon from "../../assets/images/Icons/bids.svg";
@@ -17,6 +16,8 @@ const BusinessDashSidebar = () => {
   const [BidiPlus, setBidiPlus] = useState(false);
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("dashboard");
+  const [profileImage, setProfileImage] = useState("/images/default.jpg");
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
@@ -24,12 +25,14 @@ const BusinessDashSidebar = () => {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
+      setUser(user);
 
       if (userError || !user) {
         console.error("Error fetching user:", userError || "No user found.");
         return;
       }
 
+      // Only fetch business details if user is valid
       const { data: profile, error: profileError } = await supabase
         .from("business_profiles")
         .select("business_name, stripe_account_id, Bidi_Plus")
@@ -48,8 +51,27 @@ const BusinessDashSidebar = () => {
       }
     };
 
+    // Fetch profile picture only if user is available
+    const fetchProfilePic = async () => {
+      if (user && user.id) {
+        const { data: profilePicData, error: profilePicError } = await supabase
+          .from("profile_photos")
+          .select("photo_url")
+          .eq("user_id", user.id)
+          .eq("photo_type", "profile")
+          .single();
+
+        if (profilePicData) {
+          setProfileImage(profilePicData.photo_url);
+        } else if (profilePicError) {
+          console.error("Error fetching profile picture:", profilePicError);
+        }
+      }
+    };
+
     fetchBusinessDetails();
-  }, []);
+    fetchProfilePic();
+  }, [user]);
 
   const formatBusinessName = (name) => {
     if (!name) return "Your Business";
@@ -108,7 +130,7 @@ const BusinessDashSidebar = () => {
     <aside className="sidebar">
       {/* Profile Section */}
       <div className="profile-section">
-        <img src={profilePic} alt="Profile" className="profile-pic" />
+        <img src={profileImage} alt="Vendor" className="profile-pic" />
         {BidiPlus && <div className="verified-badge">Verified</div>}
         <h4 className="profile-name">
           <span className="business-name-under-picture">

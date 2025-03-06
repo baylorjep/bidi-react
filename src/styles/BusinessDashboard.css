@@ -1,3 +1,127 @@
+/* General Dashboard Styles */
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 20%; /* Adjusts dynamically with screen size */
+  background-color: #fff;
+  padding: 2vw;
+  border-right: 0.2vw solid #ddd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.profile-section {
+  position: relative;
+  text-align: center;
+}
+.profile-pic {
+  width: 6vw;
+  height: 6vw;
+  border-radius: 50%;
+  background: lightgray 50% / cover no-repeat;
+  object-fit: cover; /* Prevents stretching, ensures the image is cropped properly */
+  display: block;
+  margin: 0 auto; /* Centers the image horizontally */
+  border-radius: 50%;
+  object-fit: cover;
+  border: none;
+}
+.verified-badge {
+  position: absolute;
+  margin-top: -5px;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%);
+  background-color: #a328f4;
+  color: white;
+  font-size: 0.8vw;
+  font-weight: 400;
+  padding: 0.1vw 0.8vw;
+}
+.profile-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 12vw;
+  line-height: 1.2;
+  font-size: 0.9vw;
+  margin-top: 1.3vw;
+}
+
+.business-name-under-picture {
+  display: inline-block;
+  max-width: 100%;
+  text-align: center;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.verified-wrapper {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px; /* Keeps icon to the right */
+}
+
+.verified-icon {
+  width: 1vw;
+  height: auto;
+  position: relative;
+  transform: translateY(2%); /* Slightly adjusts alignment */
+}
+.sidebar-links {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+  text-align: center;
+}
+.sidebar-links li {
+  display: flex;
+  align-items: center;
+  padding: 0.3vh 0;
+  font-size: 1.2vw;
+  margin-left: 2.5vw;
+}
+.sidebar-links li img {
+  width: 1.5vw;
+  margin-right: 1vw;
+}
+.sidebar-links li a {
+  text-decoration: none;
+  color: inherit;
+}
+/* Upgrade to PRO Box */
+.upgrade-box {
+  background: #f6eafe; /* Updated color */
+  border-radius: 0.5vw;
+  padding: 1.25vw 0.5vw; /* Increase padding to make the box larger */
+  text-align: center;
+  width: 85%; /* Slightly increase width */
+  margin: 3vh auto; /* Add more vertical margin */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+
+  /* Center content vertically */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: auto; /* Allow it to grow dynamically */
+}
+
+/* Force Small Text */
+.upgrade-box p {
+  font-size: 0.6vw !important; /* Keep small text */
+  line-height: 1.3; /* Slightly increase line spacing */
+  color: black !important;
+  margin: 0; /* Remove default margin */
+  font-weight: 600 !important;
+}
+
 /* Main Dashboard */
 .dashboard-main {
   flex-grow: 1;
@@ -8,7 +132,7 @@
 .dashboard-header {
   background: #a328f4;
   color: white;
-  padding: 3vh 5.1vw; /* Reduce padding to make it shorter */
+  padding: 2.5vh 5.1vw; /* Reduce padding to make it shorter */
   border-radius: 1vw;
   display: flex;
   justify-content: space-between;
@@ -34,14 +158,14 @@
   color: white;
 }
 .dashboard-subtext {
-  font-size: 0.75vw;
+  font-size: 0.85vw;
   opacity: 0.9;
   margin-bottom: 1.5vh;
   max-width: 80%;
 }
 .see-all-btn {
   background: white;
-  padding: 1vh 1.5vw;
+  padding: 0.5vh 2.5vw;
   border-radius: 2vw;
   border: none;
   font-size: 0.75vw;
@@ -57,7 +181,6 @@
   align-items: center;
   gap: 2vw; /* Reduce spacing between stats */
   margin-top: -4vh; /* Moves it further up */
-  margin-right: -2vw; /* Moves it further to the right */
   position: relative;
   transform: scale(1.3); /* Scale down the entire section */
   transform-origin: center;
