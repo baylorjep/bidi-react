@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 import "../../App.css"; // Include this for custom styles
-import DashboardBanner from "./DashboardBanner";
-import Sidebar from "./Sidebar";
+import "../../styles/BusinessDashboard.css";
+import DashboardBanner from "./DashboardBanner.js";
+import Sidebar from "./Sidebar.js";
 
 const BusinessDashboard = () => {
   return (
