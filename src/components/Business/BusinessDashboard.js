@@ -11,6 +11,7 @@ import bidsIcon from "../../assets/images/Icons/bids.svg";
 import messageIcon from "../../assets/images/Icons/message.svg";
 import paymentIcon from "../../assets/images/Icons/payment.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
+import MessagingView from "../Messaging/MessagingView";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
