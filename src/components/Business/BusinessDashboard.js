@@ -187,9 +187,19 @@ const BusinessDashSidebar = () => {
         {/* Main Dashboard */}
         <main className="dashboard-main">
           <DashboardBanner />
+          {/* find active sections */}
+          {activeSection === "dashboard" ? (
+            <div>Dashboard Filler</div>
+          ) : activeSection === "messages" ? (
+            <div>Messages filler</div>
+          ) : activeSection === "bids" ? (
+            <div>Bids Filler</div>
+          ) : activeSection === "onboarding" ? (
+            <div>onboarding filler</div>
+          ) : (
+            <div>onboarding filler</div>
+          )}
         </main>
-
-        {/* If it is the main dashbaord */}
       </div>
     </div>
   );
