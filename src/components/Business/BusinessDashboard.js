@@ -13,6 +13,7 @@ import paymentIcon from "../../assets/images/Icons/payment.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
 import MessagingView from "../Messaging/MessagingView";
 import PlacedBidDisplay from "./PlacedBids.js";
+import BusinessBids from "./BusinessBids.js";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -23,10 +24,12 @@ const BusinessDashSidebar = () => {
   const [profileImage, setProfileImage] = useState("/images/default.jpg");
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [bids, setBids] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Get the logged-in user
         const {
           data: { user },
           error: userError,
@@ -38,7 +41,7 @@ const BusinessDashSidebar = () => {
         setUser(user);
 
         // Fetch business details and profile picture concurrently
-        const [profileRes, profilePicRes] = await Promise.all([
+        const [profileRes, profilePicRes, bidsRes] = await Promise.all([
           supabase
             .from("business_profiles")
             .select(
@@ -52,6 +55,25 @@ const BusinessDashSidebar = () => {
             .eq("user_id", user.id)
             .eq("photo_type", "profile")
             .single(),
+          supabase
+            .from("bids")
+            .select(
+              `
+                        *,
+                        business_profiles(
+                            business_name, 
+                            business_category, 
+                            phone, 
+                            website, 
+                            id, 
+                            membership_tier,
+                            down_payment_type,
+                            amount,
+                            stripe_account_id
+                        )
+                    `
+            )
+            .eq("user_id", user.id), // Fetch all bids for this business
         ]);
 
         if (profileRes.error) {
@@ -59,6 +81,7 @@ const BusinessDashSidebar = () => {
           return;
         }
 
+        // Set business profile data
         if (profileRes.data) {
           setBusinessName(
             profileRes.data.business_name || "Business Name Not Found"
@@ -68,6 +91,7 @@ const BusinessDashSidebar = () => {
           setProfile(profileRes.data);
         }
 
+        // Set profile picture
         if (profilePicRes.data) {
           setProfileImage(profilePicRes.data.photo_url);
         } else if (profilePicRes.error) {
@@ -86,10 +110,18 @@ const BusinessDashSidebar = () => {
             return;
           }
 
-          setRequests(requestsData); // Store requests in state
+          setRequests(requestsData);
         } else {
           console.warn("No business category found for this profile.");
-          setRequests([]); // Ensure no stale requests remain
+          setRequests([]); // Clear any stale requests
+        }
+
+        // Set fetched bids
+        if (bidsRes.error) {
+          console.error("Error fetching bids:", bidsRes.error);
+        } else {
+          console.log("Fetched Bids:", bidsRes.data);
+          setBids(bidsRes.data);
         }
       } catch (error) {
         console.error("An error occurred while fetching data:", error);
@@ -97,7 +129,7 @@ const BusinessDashSidebar = () => {
     };
 
     fetchData();
-  }, [user]);
+  }, []);
 
   const formatBusinessName = (name) => {
     if (!name) return "Your Business";
@@ -234,7 +266,7 @@ const BusinessDashSidebar = () => {
           ) : activeSection === "messages" ? (
             <MessagingView />
           ) : activeSection === "bids" ? (
-            <div>Bids Filler</div>
+            <BusinessBids bids={bids} />
           ) : activeSection === "onboarding" ? (
             <div>onboarding filler</div>
           ) : (
