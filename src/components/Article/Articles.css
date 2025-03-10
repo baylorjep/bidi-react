@@ -207,86 +207,273 @@ td {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
+/* Add these styles for the featured guide section */
+
+.featured-guide {
+  background: linear-gradient(135deg, #f7f4ff 0%, #fff1f9 100%);
+  border-radius: 16px;
+  margin-bottom: 40px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(163, 40, 244, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.featured-guide:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(163, 40, 244, 0.15);
+}
+
+.featured-guide-content {
+  display: flex;
+  align-items: center;
+  padding: 30px;
+  width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.featured-guide-text {
+  flex: 1;
+  padding-right: 30px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.featured-guide-image {
+  flex: 0 0 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.featured-guide-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.featured-label {
+  display: inline-block;
+  background: linear-gradient(91deg, #A328F4 34.17%, #FF008A 86.83%);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  margin-bottom: 15px;
+}
+
+.featured-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #0B1215;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.featured-description {
+  color: #4a4459;
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.download-guide-button {
+  background: linear-gradient(91deg, #A328F4 34.17%, #FF008A 86.83%);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+  box-shadow: 0 4px 10px rgba(163, 40, 244, 0.25);
+}
+
+.download-guide-button:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+
+.section-title {
+  font-size: 24px;
+  margin-bottom: 25px;
+  color: #0B1215;
+  font-weight: 600;
+}
+
+/* Responsive styles for featured guide */
+@media (max-width: 900px) {
+  .featured-guide-content {
+    flex-direction: column-reverse;
+    padding: 20px;
+  }
+
+  .featured-guide-text {
+    padding-right: 0;
+    padding-top: 20px;
+    text-align: center;
+  }
+
+  .featured-guide-image {
+    flex: 0 0 auto;
+    margin-bottom: 20px;
+    max-width: 250px;
+    margin: 0 auto;
+  }
+
+  .featured-title {
+    font-size: 24px;
+  }
+  
+  .download-guide-button {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+    padding: 10px 20px;
+  }
+  
+  .button-container {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .featured-guide {
+    margin-bottom: 30px;
+  }
+  
+  .featured-guide-content {
+    padding: 15px;
+  }
+  
+  .featured-label {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+  
+  .featured-title {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  
+  .featured-description {
+    font-size: 14px;
+    margin-bottom: 15px;
+  }
+  
+  .featured-guide-image {
+    max-width: 200px;
+  }
+  
+  .download-guide-button {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+  
+  .section-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+}
 
 @media (max-width: 1300px) {
-    .articles-navigation-container {
-        padding: 10px; /* Reduce padding on mobile */
-        margin: 0;
-    }
+  .articles-navigation-container {
+    padding: 10px; /* Reduce padding on mobile */
+    margin: 0;
+  }
 
-    .articles-navigation-title {
-        font-size: 2rem; /* Smaller title size */
-        font-size: 1.8rem;
-        margin-bottom: 15px;
-    }
+  .articles-navigation-title {
+    font-size: 1.8rem; /* Smaller title size */
+    margin-bottom: 15px;
+  }
 
-    .articles-navigation-list {
-        padding: 0; /* Remove padding */
-    }
+  .articles-navigation-list {
+    padding: 0; /* Remove padding */
+  }
 
-    .article-navigation-item {
-        margin-bottom: 15px; /* Space between articles */
-    }
+  .article-navigation-item {
+    margin-bottom: 15px; /* Space between articles */
+  }
 
-    .article-preview {
-        flex-direction: column; /* Stack image and text vertically */
-        align-items: center; /* Center align items */
-        padding: 15px;
-        gap: 15px;
-    }
+  .article-preview {
+    flex-direction: column; /* Stack image and text vertically */
+    align-items: center; /* Center align items */
+    padding: 15px;
+    gap: 15px;
+  }
 
-    .article-image {
-        width: 100%;
-        height: 200px;
-        margin-bottom: 10px;
-    }
+  .article-image {
+    width: 100%;
+    height: 200px;
+    margin-bottom: 10px;
+  }
 
-    .article-content {
-        text-align: center; /* Center text on mobile */
-        padding: 10px; /* Space around text */
-        padding: 0;
+  .article-content {
+    text-align: center; /* Center text on mobile */
+    padding: 0;
+  }
 
-    }
+  .article-content h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
 
-    .article-content h2 {
-        font-size: 24px;
-        margin-bottom: 10px;
-        line-height: 1.3;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        white-space: normal;
-        overflow: visible;
-        text-overflow: clip;
-    }
+  .article-content p {
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0;
+  }
 
-    .article-content p {
-        font-size: 0.9rem; /* Smaller description size */
-        font-size: 16px;
-        line-height: 1.5;
-        margin: 0;
-    }
+  .article-container {
+    padding: 20px 10%;
+  }
+  
+  .article-container h1 {
+    font-size: 36px;
+  }
+  
+  .article-container h2 {
+    font-size: 24px;
+  }
+  
+  .article-container h3 {
+    font-size: 20px;
+  }
+  
+  .article-container h4 { 
+    font-size: 18px;
+  }
+  
+  .article-container p {
+    font-size: 16px;
+  }
+  
+  .article-container li {
+    font-size: 16px;
+  }
+}
 
-    .article-container {
-        padding: 20px 10%;
-    }
-    .article-container h1 {
-        font-size: 36px;
-    }
-    .article-container h2 {
-        font-size: 24px;
-    }
-    .article-container h3 {
-        font-size: 20px;
-    }
-    .article-container h4 { 
-        font-size: 18px;
-    }
-    .article-container p {
-        font-size: 16px;
-    }
-    .article-container li {
-        font-size: 16px;
-    }
+/* Add button container styles */
+.button-container {
+  display: flex;
+  justify-content: flex-start;
 }
 
 /* Add smaller screen size adjustments */
@@ -309,10 +496,16 @@ td {
 
     .article-content h2 {
         font-size: 20px;
+        line-height: 1.3;
+        margin: 0;
     }
 
     .article-content p {
         font-size: 14px;
+    }
+
+    .article-container {
+        padding: 20px 10%;
     }
 }
 
@@ -364,6 +557,263 @@ td {
         margin: 0;
         width: 100%;
     }
+}
+
+/* Add extra small screen size adjustments (down to 300px) */
+@media (max-width: 480px) {
+  .featured-guide-content {
+    padding: 24px;
+  }
+  
+  .featured-guide-image {
+    max-width: 180px;
+  }
+  
+  .featured-title {
+    font-size: 18px;
+    margin-bottom: 8px;
+    padding: 0 20px;
+  }
+  
+  .featured-description {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  
+  .download-guide-button {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .article-content h2 {
+    font-size: 18px;
+  }
+  
+  .article-content p {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 400px) {
+  .articles-navigation-container {
+    padding: 6px;
+  }
+  
+  .articles-navigation-title {
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+  
+  .featured-label {
+    font-size: 11px;
+    padding: 3px 8px;
+    margin-bottom: 10px;
+  }
+  
+  .section-title {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+  
+  .article-preview {
+    padding: 8px;
+    gap: 10px;
+  }
+  
+  .article-image {
+    height: 160px;
+  }
+  
+  .featured-guide-image {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 380px) {
+  .articles-navigation-title {
+    font-size: 1.2rem;
+  }
+  
+  .featured-title {
+    font-size: 16px;
+  }
+  
+  .featured-description {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .download-guide-button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .article-content h2 {
+    font-size: 16px;
+  }
+  
+  .article-content p {
+    font-size: 12px;
+  }
+  
+  .article-image {
+    height: 140px;
+  }
+  
+  .featured-guide-image {
+    max-width: 120px;
+  }
+  
+  .featured-guide-content {
+    padding: 10px 8px;
+    width: auto;
+    flex-direction: column-reverse;
+  }
+  
+  .featured-title {
+    font-size: 15px;
+    margin-bottom: 8px;
+    padding: 0;
+    width: 100%;
+  }
+  
+  .featured-description {
+    font-size: 11px;
+    line-height: 1.3;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+  
+  .featured-guide-text {
+    width: 100%;
+    padding-right: 0;
+  }
+}
+
+/* Improve mobile support for extremely narrow screens */
+@media (max-width: 320px) {
+  .articles-navigation-title {
+    font-size: 1.1rem;
+    word-wrap: break-word;
+    max-width: 100%;
+    padding: 0 5px;
+  }
+  
+  .featured-guide {
+    margin: 0 2px 25px 2px;
+  }
+  
+  .featured-guide-content {
+    padding: 10px 8px;
+  }
+  
+  .featured-label {
+    font-size: 10px;
+    padding: 2px 6px;
+    margin-bottom: 6px;
+  }
+  
+  .featured-title {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  
+  .featured-description {
+    font-size: 10px;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+  
+  .download-guide-button {
+    padding: 4px 6px;
+    font-size: 10px;
+    max-width: 95%;
+  }
+  
+  .featured-guide-image {
+    max-width: 80px;
+  }
+  
+  .article-preview {
+    padding: 5px;
+    border-width: 1px;
+  }
+  
+  .article-image {
+    height: 100px;
+  }
+  
+  .article-content {
+    padding: 0;
+  }
+  
+  .article-content h2 {
+    font-size: 13px;
+    margin: 5px 0;
+  }
+  
+  .article-content p {
+    font-size: 10px;
+  }
+  
+  .articles-navigation-list {
+    width: calc(100% - 10px);
+  }
+}
+
+/* Fix any extreme edge cases below 300px */
+@media (max-width: 300px) {
+  .featured-guide-content {
+    padding: 8px 5px;
+  }
+  
+  .featured-label {
+    font-size: 10px;
+    padding: 2px 6px;
+    margin-bottom: 6px;
+  }
+  
+  .featured-title {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  
+  .featured-description {
+    font-size: 10px;
+    margin-bottom: 8px;
+  }
+  
+  .download-guide-button {
+    padding: 4px 6px;
+    font-size: 10px;
+    max-width: 95%;
+  }
+  
+  .featured-guide-image {
+    max-width: 80px;
+  }
+  
+  .article-preview {
+    padding: 5px;
+    border-width: 1px;
+  }
+  
+  .article-image {
+    height: 100px;
+  }
+  
+  .article-content {
+    padding: 0;
+  }
+  
+  .article-content h2 {
+    font-size: 13px;
+    margin: 5px 0;
+  }
+  
+  .article-content p {
+    font-size: 10px;
+  }
 }
 
 

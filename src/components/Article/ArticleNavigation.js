@@ -5,6 +5,7 @@ import Helmet from 'react-helmet'; // Import Helmet for SEO
 import weddingPlanning from '../../assets/articles/weddingplanning.jpg'
 import florist from '../../assets/articles/Florist/pexels-digitle-pixels-1775950082-30891131.jpg'
 import catering from '../../assets/articles/Catering/pexels-fu-zhichao-176355-587741.jpg'
+import weddingMarketGuide from '../../assets/images/State of the Utah Wedding Markets.png'
 
 const Articles = () => {
     return (
@@ -16,6 +17,32 @@ const Articles = () => {
             </Helmet>
             <h1 className="articles-navigation-title">Wedding Guides</h1>
 
+            {/* Featured Guide Section - now with better mobile layout */}
+            <div className="featured-guide">
+                <Link to="/wedding-market-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="featured-guide-content">
+                        <div className="featured-guide-text">
+                            <span className="featured-label">NEW & EXCLUSIVE</span>
+                            <h2 className="featured-title">2024 State of Utah Wedding Markets Guide</h2>
+                            <p className="featured-description">
+                                Get exclusive data on real wedding costs in Utah based on thousands of actual vendor bids. 
+                                Compare prices across different regions and vendor categories.
+                            </p>
+                            <div className="button-container">
+                                <button className="download-guide-button">Download Free Guide</button>
+                            </div>
+                        </div>
+                        <div className="featured-guide-image">
+                            <img 
+                                src={weddingMarketGuide} 
+                                alt="State of Utah Wedding Markets Guide" 
+                            />
+                        </div>
+                    </div>
+                </Link>
+            </div>
+
+            <h2 className="section-title">All Guides</h2>
             <ul className="articles-navigation-list">
             <li className="article-navigation-item">
                     <Link to="/articles/utah-wedding-planning-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
