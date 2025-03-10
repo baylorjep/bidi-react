@@ -13,6 +13,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import "../../styles/Portfolio.css";
+import PortfolioBidDisplay from "../Bid/PortfolioBidDisplay";
 
 const Portfolio = () => {
   const { businessId } = useParams(); 
@@ -106,7 +107,7 @@ const Portfolio = () => {
           {business.business_description || "No description available"}
         </h3>
       </div>
-
+      {/*<PortfolioBidDisplay businessId={businessId} /> */}
       <div className="section-divider"></div>
 
       <div className="business-details">
@@ -155,14 +156,14 @@ const Portfolio = () => {
               {business.business_description || "No description available"}
             </p>
           </div>
-          <button className="message-vendor-button">
+          {/*<button className="message-vendor-button">
             <span className="message-vendor-button-text">Message the Vendor</span>
-          </button>
+      </button>*/}
         </div>
 
-        <div className="section-divider"></div>
+       {/*  <div className="section-divider"></div> */}
 
-        {/* 🔹 Specialties Section */}
+        {/* 🔹 Specialties Section */}{/* 
         <div className="specialties-section">
           <h2 className="specialties-title">Specialties</h2>
           <ul className="specialties-list">
@@ -186,6 +187,7 @@ const Portfolio = () => {
             ))}
           </ul>
         </div>
+        */}
     </div>
   );
 };

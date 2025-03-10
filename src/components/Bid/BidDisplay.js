@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient'; // Import your Supabase client
 import bidiCheck from '../../assets/images/Bidi-Favicon.png';
+import { Link } from "react-router-dom";
 
 function BidDisplay({ bid, handleApprove, handleDeny }) {
     const [isBidiVerified, setIsBidiVerified] = useState(false);
@@ -50,8 +51,12 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
             <div className="d-flex justify-content-between align-items-center">
                 {/* Left Aligned: Business Name */}
                 <div className="request-title" style={{ marginBottom: '0', textAlign: 'left' }}>
-
-                    {bid.business_profiles.business_name}
+                    <Link 
+                        to={`/portfolio/${bid.business_profiles.id}`} 
+                        style={{ textDecoration: "none", color: "inherit", fontWeight: "bold" }}
+                    >
+                        {bid.business_profiles.business_name}
+                    </Link>
                     {isBidiVerified && (
                         <img src={bidiCheck} style={{ height: '40px', width: 'auto', padding:"0px", marginLeft:"4px " }} alt="Bidi Verified Icon" />
                     )}
@@ -125,7 +130,7 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                     onClick={() => handleDeny(bid.id)}
                 >
                     Deny
-                </button>
+                </button >
                 <button
                     className="btn-success"
                     onClick={() => handleApprove(bid.id, bid.request_id)} // Pass both bidId and requestId

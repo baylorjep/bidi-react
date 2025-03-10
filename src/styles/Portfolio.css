@@ -327,3 +327,105 @@
   height: 24px;
   top: 10px;
 }
+
+.portfolio-bid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.portfolio-bid-display {
+  width: 494px;
+  height: 419px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid #A328F4;
+  padding: 20px;
+  background: #fff;
+}
+
+.bid-title {
+  color: #A328F4;
+  text-align: left;
+  font-family: Outfit;
+  font-size: 24px;
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+
+.bid-amount {
+  color: #000;
+  text-align: center;
+  font-family: Outfit;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.down-payment-label {
+  color: #A328F4;
+  font-family: Outfit;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.down-payment-value {
+  color: #A328F4;
+  font-family: Outfit;
+  font-size: 16px;
+  font-weight: 400;
+  margin-bottom: 15px;
+}
+
+.bid-description-label {
+  color: #79747E;
+  font-family: Outfit;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.bid-description {
+  color: #000;
+  font-family: Outfit;
+  font-size: 16px;
+  font-weight: 400;
+  margin-bottom: 20px;
+}
+
+.bid-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.bid-deny-button {
+  display: flex;
+  width: 130px;
+  height: 39px;
+  padding: 17px 32px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 30px;
+  border: 1px solid #A328F4;
+  color: #A328F4;
+  font-family: Roboto;
+  font-size: 16px;
+  font-weight: 500;
+  background: none;
+  cursor: pointer;
+}
+
+.bid-accept-button {
+  display: flex;
+  width: 130px;
+  height: 39px;
+  padding: 17px 32px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 30px;
+  background: linear-gradient(90deg, #A328F4 0%, #FF008A 100%);
+  color: #FAFAFA;
+  font-family: Roboto;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
