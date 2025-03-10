@@ -136,7 +136,7 @@ const Portfolio = () => {
 </svg>
     <div>
       <p className="detail-title">Price Range</p>
-      <p className="detail-text">Base Price: ${business.base_price || "100"}</p>
+      <p className="detail-text">Base Price: ${business.base_price || "1000"}</p>
     </div>
   </div>
 </div>
