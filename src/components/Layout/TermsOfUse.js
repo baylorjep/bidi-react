@@ -41,7 +41,7 @@ const TermsOfUse = () => {
                 <p>
                     By creating an account and using Bidi, you agree that you will not, directly or indirectly, establish, operate, advise, 
                     or work for a competing business that provides an online marketplace for bidding on wedding or event services for a period 
-                    of **two (2) years** after your last use of Bidi. 
+                    of (2) years after your last use of Bidi. 
                 </p>
                 <p>
                     This non-compete agreement applies to all users, including vendors, businesses, and individuals using Bidi's platform. 
