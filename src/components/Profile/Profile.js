@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
 
 const ProfilePage = () => {
-  const [profileData, setProfileData] = useState({});
+  const [profileData, setProfileData] = useState({specializations: [], });
   const [isBusiness, setIsBusiness] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -18,6 +18,7 @@ const ProfilePage = () => {
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(null);
   const profileFileInputRef = useRef(null);
+  
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -205,61 +206,61 @@ const handleUpload = async (file, type) => {
   }
 };
 
-  const handleSave = async () => {
-    try {
-      setLoading(true);
-      const { email, ...restProfileData } = profileData;
+const handleSave = async () => {
+  try {
+    setLoading(true);
+    const { email, newSpecialization, ...restProfileData } = profileData; // Exclude newSpecialization
 
-      // Update email in supabase.auth if it has changed
-      if (email !== currentEmail) {
-        const { error: emailError } = await supabase.auth.updateUser({ email });
-        if (emailError) throw emailError;
-        setCurrentEmail(email); // Update current email after successful change
+    // Update email in supabase.auth if it has changed
+    if (email !== currentEmail) {
+      const { error: emailError } = await supabase.auth.updateUser({ email });
+      if (emailError) throw emailError;
+      setCurrentEmail(email); // Update current email after successful change
 
-        // Update email in the profiles table
-        const { error: profilesError } = await supabase
+      // Update email in the profiles table
+      const { error: profilesError } = await supabase
         .from("profiles")
         .update({ email })
         .eq("id", profileData.id);
 
-        if (profilesError) throw profilesError;
-      }
-
-      // Update other profile data
-      const tableName = isBusiness ? "business_profiles" : "individual_profiles";
-
-      const { error: updateError } = await supabase
-        .from(tableName)
-        .update(restProfileData)
-        .eq("id", profileData.id);
-
-      if (updateError) throw updateError;
-
-      setSuccessMessage("Profile updated successfully!");
-
-       // Automatically clear the success message after 5 seconds
-        setTimeout(() => {
-            setSuccessMessage("");
-        }, 5000);
-
-      setLoading(false);
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      setErrorMessage("Failed to update profile.");
-
-      // Automatically clear the error message after 5 seconds
-    setTimeout(() => {
-        setErrorMessage("");
-      }, 5000);
-
-      setLoading(false);
+      if (profilesError) throw profilesError;
     }
-  };
+
+    // Update other profile data
+    const tableName = isBusiness ? "business_profiles" : "individual_profiles";
+
+    const { error: updateError } = await supabase
+      .from(tableName)
+      .update(restProfileData)
+      .eq("id", profileData.id);
+
+    if (updateError) throw updateError;
+
+    setSuccessMessage("Profile updated successfully!");
+
+    // Automatically clear the success message after 5 seconds
+    setTimeout(() => {
+      setSuccessMessage("");
+    }, 5000);
+
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    setErrorMessage("Failed to update profile.");
+
+    // Automatically clear the error message after 5 seconds
+    setTimeout(() => {
+      setErrorMessage("");
+    }, 5000);
+
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (loading) return <p>Loading...</p>;
 
   return (
-    <div classname="profile-form-overall-container">
+    <div className="profile-form-overall-container">
     <div className="profile-form-container-details">
       <h1>
         {isBusiness ? profileData.business_name : `${profileData.first_name} ${profileData.last_name}`}
@@ -326,12 +327,48 @@ const handleUpload = async (file, type) => {
             />
           </div>
           <div className="form-group mt-3">
-            <label>Business Address</label>
+            <label>Service Area</label>
             <input
               type="text"
               className="form-control"
               name="business_address"
               value={profileData.business_address || ""}
+              onChange={handleInputChange}
+            />
+          </div>
+
+          <div className="form-group mt-3">
+            <label>Slogan/One Liner</label>
+            <div className="textarea-container">
+              <textarea
+                className={`form-control description-textarea ${
+                  (profileData.business_description?.length || 0) > 50 ? "input-exceed-limit" : ""
+                }`}
+                name="business_description"
+                value={profileData.business_description || ""}
+                onChange={handleInputChange}
+                rows="4"
+                maxLength="50"
+                placeholder="Tell customers about your business..."
+              />
+              <span
+                className="char-counter"
+                style={{
+                  color: (profileData.business_description?.length || 0) > 50 ? "#ff6961" : "gray",
+                }}
+              >
+                {profileData.business_description?.length || 0}/50
+              </span>
+            </div>
+          </div>
+
+          <div className="form-group mt-3">
+            <label>Phone</label>
+            <input
+              type="text"
+              className="form-control"
+              name="phone"
+              value={profileData.phone || ""}
               onChange={handleInputChange}
             />
           </div>
@@ -355,6 +392,47 @@ const handleUpload = async (file, type) => {
               onChange={handleInputChange}
             />
           </div>
+
+
+          <div className="form-group mt-3">
+            <label>Specializations</label>
+            <div className="specializations-list">
+              {profileData.specializations?.map((specialty, index) => (
+                <div key={index} className="specialization-item">
+                  {specialty}
+                  <button
+                    type="button"
+                    className="remove-button"
+                    onClick={() => {
+                      const updatedSpecializations = profileData.specializations.filter((_, i) => i !== index);
+                      setProfileData({ ...profileData, specializations: updatedSpecializations });
+                    }}
+                  >
+                    ✖
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <input
+              type="text"
+              placeholder="Add a specialization..."
+              className="form-control mt-2"
+              value={profileData.newSpecialization || ""}
+              onChange={(e) => setProfileData({ ...profileData, newSpecialization: e.target.value })}
+              onKeyPress={(e) => {
+                if (e.key === "Enter" && profileData.newSpecialization.trim() !== "") {
+                  setProfileData({
+                    ...profileData,
+                    specializations: [...(profileData.specializations || []), profileData.newSpecialization.trim()],
+                    newSpecialization: "",
+                  });
+                }
+              }}
+            />
+          </div>
+
+
           {/* Portfolio Images Display */}
           <div className="portfolio-container">
     <p>Portfolio Images</p>
