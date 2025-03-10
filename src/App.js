@@ -104,6 +104,7 @@ import NewsletterLanding from './components/NewsletterLanding';
 import Unsubscribe from './components/Unsubscribe';
 import LocationBanner from './components/LocationBanner/LocationBanner';
 import UtahWeddingVideographerGuide from './components/Article/UtahWeddingVideographerGuide';
+import WeddingMarketGuide from './components/WeddingGuide/WeddingMarketGuide';
 
 function App() {
 
@@ -217,6 +218,7 @@ function App() {
                         <Route path="/request/catering" element={<CateringRequest />} /> {/* Add this route */}
                         <Route path="/welcome" element={<NewsletterLanding />} />
                         <Route path="/unsubscribe" element={<Unsubscribe />} />
+                        <Route path="/wedding-market-guide" element={<WeddingMarketGuide />} />
 
                     </Routes>
                 </div>
