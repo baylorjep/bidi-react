@@ -13,7 +13,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import "../../styles/Portfolio.css";
-import PortfolioBidDisplay from "../Bid/PortfolioBidDisplay";
+
 
 const Portfolio = () => {
   const { businessId } = useParams(); 
