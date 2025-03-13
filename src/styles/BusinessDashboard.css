@@ -286,34 +286,35 @@
 }
 
 /* Job Cards Grid */
-.job-cards {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1vw; /* Reduce spacing */
-  margin-top: 1vh;
+.all-job-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Creates 3 equal-width columns */
   width: 100%;
+  gap: 1%;
 }
 
 /* Individual Job Card */
-.job-card {
+.job-card-not-bidded {
   background: white;
-  width: calc(33.33% - 0.7vw);
+  width: calc(33.33%);
   padding: 1.2vw;
+  box-sizing: border-box;
   border-radius: 1vw;
-  border: 0.1vw solid #a328f4; /* Thinner border */
+  border: 0.05vw solid #a328f4; /* Thinner border */
   font-size: 0.85vw;
   transition: transform 0.2s ease-in-out;
   box-shadow: none;
   box-sizing: border-box;
+  width: 100%;
 }
 
 /* Job Card Title */
-.job-card h3 {
+.card-title {
   font-size: 1.1vw;
   font-weight: 600;
   margin-bottom: 0.3vh;
   color: black;
+  align-items: left !important;
 }
 
 /* Job Info Row (Price, Date, Time) */
@@ -347,14 +348,14 @@
 }
 
 /* Job Labels (Price Range, Date, Time) */
-.job-label {
+.job-label-name {
   font-size: 0.55vw;
   font-weight: 600;
   color: #999; /* Light gray */
 }
 
 /* Job Values */
-.job-value {
+.job-value-out {
   font-size: 0.75vw;
   font-weight: normal;
   color: black;
@@ -388,7 +389,7 @@
 }
 
 /* View Button */
-.view-btn {
+.view-btn-card {
   background: transparent;
   color: #a328f4;
   border: 0.1vw solid #a328f4;

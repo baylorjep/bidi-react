@@ -109,7 +109,6 @@ const BusinessDashSidebar = () => {
             console.error("Error fetching requests:", requestsError);
             return;
           }
-
           setRequests(requestsData);
         } else {
           console.warn("No business category found for this profile.");
@@ -250,14 +249,13 @@ const BusinessDashSidebar = () => {
                 <span className="job-subtext">
                   See the requests that you haven't bid on!
                 </span>
+                <br />
               </div>
 
               {/* Job Cards Grid */}
-              <div className="job-cards">
+              <div className="all-job-cards">
                 {requests.length > 0 ? (
-                  requests.map((request) => (
-                    <PlacedBidDisplay key={request.id} requestId={request.id} />
-                  ))
+                  <PlacedBidDisplay requests={requests} />
                 ) : (
                   <p className="no-jobs">No available jobs at this time.</p>
                 )}
