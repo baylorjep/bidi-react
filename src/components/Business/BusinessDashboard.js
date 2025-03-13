@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import { supabase } from "../../supabaseClient";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import "../../App.css"; // Include this for custom styles
 import "../../styles/BusinessDashboard.css";
 import DashboardBanner from "./DashboardBanner.js";
@@ -217,10 +217,10 @@ const BusinessDashSidebar = () => {
               {connectedAccountId ? (
                 <StripeDashboardButton accountId={connectedAccountId} />
               ) : (
-                <button onClick={() => setActiveSection("onboarding")}>
+                <Link to="/onboarding">
                   <img src={paymentIcon} alt="Payment" />
                   <span>Payment</span>
-                </button>
+                </Link>
               )}
             </li>
             <li onClick={() => setActiveSection("profile")}>
