@@ -14,6 +14,7 @@ import settingsIcon from "../../assets/images/Icons/settings.svg";
 import MessagingView from "../Messaging/MessagingView";
 import PlacedBidDisplay from "./PlacedBids.js";
 import BusinessBids from "./BusinessBids.js";
+import ProfilePage from "../Profile/Profile.js";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -267,8 +268,10 @@ const BusinessDashSidebar = () => {
             <BusinessBids bids={bids} />
           ) : activeSection === "onboarding" ? (
             <div>onboarding filler</div>
+          ) : activeSection === "profile" ? (
+            <ProfilePage />
           ) : (
-            <div>onboarding filler</div>
+            <div>An error occurred</div>
           )}
         </main>
       </div>
