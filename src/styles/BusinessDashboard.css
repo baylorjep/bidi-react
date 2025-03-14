@@ -420,3 +420,13 @@
   height: 100%; /* Ensure it takes up space */
   width: 100%;
 }
+
+/*              This is the profile section override css                   */
+.profile-form-overall-container,
+.profile-form-container-details {
+  all: unset !important;
+}
+.for-business-dashboard {
+  visibility: hidden;
+  font-size: 1vw !important;
+}
