@@ -122,7 +122,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
             <div ref={mastheadRef} className={`masthead-index fade-in-section ${mastheadVisible ? 'is-visible' : ''}`}>
                 <div className='text-section' >
                     <h1 className='landing-page-title heading-reset'>
-                        Tired of Looking for the Perfect <RotatingText />
+                        Tired of Looking for the Perfect <br></br><RotatingText />
                     </h1>
                     <h2 className='landing-page-subtitle heading-reset' style={{marginTop:'20px'}}>
                         With Bidi, you don't have to waste time searching for the perfect businesses to help you with your wedding. 
