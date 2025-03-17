@@ -121,7 +121,6 @@ const Portfolio = () => {
               <span key={index} className="specialty-item">• {specialty}</span>
             ))}
           </div>
-          <div className="section-divider"></div>
         </>
       )}
 
