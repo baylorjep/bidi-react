@@ -56,11 +56,19 @@ const Portfolio = () => {
 
       {/* 🔹 SECTION 1: Photos & Business Info */}
       <div className="portfolio-layout">
-        <img src={portfolioPics[0]} alt="Main Portfolio" className="main-portfolio-image" />
+      <img 
+        src={portfolioPics.length > 0 ? portfolioPics[0] : "/images/portfolio.jpeg"} 
+        alt="Main Portfolio" 
+        className="main-portfolio-image" 
+      />
         <div className="portfolio-grid">
-          {portfolioPics.slice(1, 5).map((img, index) => (
-            <img key={index} src={img} alt={`Portfolio ${index}`} className="portfolio-image" />
-          ))}
+        {portfolioPics.length > 0
+          ? portfolioPics.slice(1, 5).map((img, index) => (
+              <img key={index} src={img} alt={`Portfolio ${index}`} className="portfolio-image" />
+            ))
+          : Array.from({ length: 4 }).map((_, index) => (
+              <img key={index} src="/images/portfolio.jpeg" alt={`Default ${index}`} className="portfolio-image" />
+            ))}
           {portfolioPics.length > 5 && (
             <button className="see-all-button" onClick={() => navigate(`/portfolio/${businessId}/gallery`)}>
               + See All
