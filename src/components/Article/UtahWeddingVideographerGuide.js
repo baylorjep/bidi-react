@@ -49,7 +49,11 @@ const UtahWeddingVideographerGuide = () => {
                 <p style={{ fontSize: '16px', color: '#777', textAlign: 'center', marginBottom: '20px' }}>
                     By Weston Burnett, CEO of Bidi | Published on February 13, 2025
                 </p>
-                <img src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/77bcb9b6-4c3e-4211-90c8-0d38283a4b73.png?st=2025-03-02T06%3A23%3A56Z&amp;se=2025-03-09T06%3A23%3A56Z&amp;sp=r&amp;sv=2025-01-05&amp;sr=b&amp;sig=r5wT6tRzaICm3xtiZVVB4mdwIqX2fcGLH/PP3p081lI%3D" data-width="100%" data-align="center" alt="Hero Image for How to Choose Your Utah Wedding Videographer: A Stress-Free Guide"></img>
+                <img 
+                                src="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/77bcb9b6-4c3e-4211-90c8-0d38283a4b73.png"
+                                alt="Utah Wedding Videographer Guide" 
+                                style={{ width: '100%', height: 'auto', marginBottom: '20px' }}
+                            />
             </header>
 
             <p>Most couples love watching their wedding videos on their anniversary. These precious recordings become a lifelong investment that lets you relive your special day again and again.</p>
