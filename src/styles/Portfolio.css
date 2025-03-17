@@ -1,5 +1,6 @@
 /* General Styles */
 .portfolio-container {
+  width: 80%;
   max-width: 1200px;
   margin: auto;
   padding: 20px;
@@ -17,6 +18,7 @@
 .portfolio-layout {
   display: flex;
   gap: 10px;
+  min-height: 410px;
 }
 
 /* Main Image */
