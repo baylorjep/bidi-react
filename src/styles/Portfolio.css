@@ -1,225 +1,43 @@
-/* 🔹 General Layout */
+/* General Styles */
 .portfolio-container {
-  max-width: 900px;
-  margin: 50px auto;
+  max-width: 1200px;
+  margin: auto;
   padding: 20px;
-  text-align: left;
 }
 
-/* 🔹 Business Header */
-.business-header {
-  display: flex;
-  flex-direction: column;
-  align-items: left;
-  text-align: left;
-}
-
-.business-name {
-  color: #000;
-  font-family: Roboto;
-  font-size: 36px;
-  font-weight: 700;
-  line-height: normal;
-  margin-bottom: 5px;
-  text-align: left;
-}
-
-.business-oneliner {
-  color: #000;
-  font-family: Outfit;
-  font-size: 24px;
-  font-weight: 700;
-  line-height: normal;
-  margin-bottom: 10px;
-  text-align: left;
-}
-
-/* 🔹 Section Divider (SVG Line) */
+/* Section Divider */
 .section-divider {
   width: 100%;
   height: 2px;
   background-color: #D1D1D1;
-  margin: 20px 0;
+  margin: 25px 0;
 }
 
-/* 🔹 Details Section */
-
-.detail-title {
-  color: #83748D;
-  font-family: Outfit;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: normal;
-  text-align: left;
-}
-
-.detail-text {
-  color: #000;
-  font-family: Outfit;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: normal;
-  text-align: left;
-}
-
-/* 🔹 Vendor Section */
-.vendor-section {
-  text-align: left;
-}
-
-.vendor-title {
-  color: #000;
-  font-family: Outfit;
-  font-size: 24px;
-  font-weight: 600;
-  line-height: normal;
-  
-}
-
-.vendor-info {
+/* Portfolio Layout */
+.portfolio-layout {
   display: flex;
-  align-items: left;
-  justify-content: left;
-  gap: 20px;
-}
-
-.vendor-profile {
-  display: flex;
-  flex-direction: column;
-  align-items: left;
-}
-
-.vendor-image {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: lightgray 50% / cover no-repeat;
-  align-items: left;
-  object-fit: cover; /* Prevents stretching, ensures the image is cropped properly */
-  border: 3px solid black; /* Adds the themed purple border */
-  display: block;
-}
-
-.vendor-name {
-  color: #A328F4;
-  font-family: Outfit;
-  font-size: 16px;
-  font-weight: 600;
-  text-align: center;
-  margin-top: 5px;
-}
-
-.vendor-role {
-  color: #000;
-  font-family: Outfit;
-  font-size: 14px;
-  font-weight: 400;
-  text-align: center;
-  margin-top: 2px;
-}
-
-.vendor-description {
-  color: #000;
-  font-family: Outfit;
-  font-size: 16px;
-  font-weight: 400;
-  max-width: 600px;
-  text-align: center;
-  margin-top: 10px;
-}
-
-/* 🔹 Meet the Vendor Button */
-.message-vendor-button {
-  display: flex;
-  width: 188px;
-  height: 43px;
-  padding: 18px 32px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 30px;
-  border: 3px solid #A328F4;
-  box-shadow: 0px 4px 15px 0px rgba(46, 46, 46, 0.15);
-  cursor: pointer;
-  margin: 20px auto;
-  background: none;
-}
-
-.message-vendor-button span {
-  font-family: Roboto;
-  font-size: 14px;
-  font-weight: 700;
-  background: linear-gradient(90deg, #A328F4 13.13%, #FF008A 84.83%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.message-vendor-button:hover {
-  background: rgba(162, 40, 244, 0.1);
-}
-
-/* 🔹 Specialties Section */
-.specialties-section {
-  text-align: center;
-  margin-top: 30px;
-}
-
-/* 🔹 Specialties Title */
-.specialties-title {
-  color: #000;
-  font-family: Outfit;
-  font-size: 24px;
-  font-weight: 600;
-  line-height: normal;
-  text-align: left;
-}
-
-/* 🔹 Bullet-Pointed List */
-.specialties-list {
-  list-style: none; /* Removes default bullets */
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 15px;
-}
-
-/* 🔹 Individual List Items */
-.specialty-item {
-  font-family: Roboto;
-  font-size: 16px;
-  font-weight: 400;
-  color: #000;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* 🔹 Custom Bullet Point */
-.bullet-point {
-  color: #A328F4; /* Matches your theme color */
-  font-size: 20px;
-  font-weight: bold;
-}
-
-/* 🔹 Portfolio Grid */
-.portfolio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
-  margin-bottom: 20px;
-  max-height: 400px;
-  overflow: hidden;
+}
+
+/* Main Image */
+.main-portfolio-image {
+  width: 50%;
+  height: 410px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* 2x2 Grid */
+.portfolio-grid {
+  width: 50%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 10px;
   position: relative;
 }
 
-/* 🔹 Wrapper for each image (to position "See All" button) */
-.portfolio-image-wrapper {
-  position: relative;
-}
-
-/* 🔹 Portfolio Images */
+/* Grid Images */
 .portfolio-image {
   width: 100%;
   height: 200px;
@@ -227,205 +45,198 @@
   border-radius: 10px;
 }
 
-/* 🔹 "See All" Button (Overlay) */
+/* See All Button */
 .see-all-button {
   position: absolute;
   bottom: 10px;
   right: 10px;
   background: rgba(0, 0, 0, 0.6);
   color: white;
-  border: none;
-  padding: 6px 12px;
-  cursor: pointer;
+  padding: 8px 12px;
   border-radius: 5px;
-  font-size: 12px;
-}
-
-/* 🔹 "See All" Button */
-.see-all-buttons {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  width: 130px;
-  height: 39px;
-  padding: 17px 32px;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-  flex-shrink: 0;
-  border-radius: 30px;
-  background: #A328F4;
-  color: white;
-  font-family: Roboto;
-  font-size: 16px;
-  font-weight: 500;
-  text-align: center;
   cursor: pointer;
-  border: none;
 }
 
-.see-all-button:hover {
-  background: #8c1ecc;
+/* Business Header */
+.business-header {
+  margin-top: 20px;
 }
 
-.see-all-overlay:hover {
-  background: rgba(0, 0, 0, 0.8);
+.business-name {
+  font-size: 28px;
+  font-weight: bold;
 }
 
-/* 🔹 "Hide" Button (Toggle Back) */
-.see-all-toggle {
-  background: #A328F4;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  cursor: pointer;
-  border-radius: 8px;
-  font-size: 14px;
-  display: block;
-  margin: 10px auto;
-}
-
-.see-all-toggle:hover {
-  background: #8c1ecc;
-}
-
-/* 🔹 Business Details */
-
+/* 🔹 Location & Price Section */
 .business-details {
   display: flex;
   flex-direction: column;
-  align-items: left;
   gap: 15px;
-  margin-bottom: 20px;
 }
 
-/* 🔹 Individual Business Detail Row */
 .business-detail {
   display: flex;
-  align-items: center; /* Align icon and text in a row */
-  gap: 10px; /* Space between icon and text */
-  text-align: left;
-  width: fit-content; /* Prevents stretching */
+  flex-direction: column;
+  gap: 5px;
 }
 
-/* 🔹 Icons for Location & Price */
-.detail-icon {
-  flex-shrink: 0;
+.detail-title {
+  font-size: 16px;
+  color: gray;
+}
+
+.detail-content {
   display: flex;
   align-items: center;
-  position: relative;
-  top: 5px; /* Moves the icons down slightly */
+  gap: 8px;
 }
 
-.location-icon {
-  width: 31px;
-  height: 31px;
-}
-
-.price-icon {
+.detail-icon {
   width: 24px;
   height: 24px;
-  top: 10px;
 }
 
-.portfolio-bid-container {
+/* 🔹 Meet the Vendor */
+.vendor-section {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 15px;
 }
 
-.portfolio-bid-display {
-  width: 494px;
-  height: 419px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  border: 1px solid #A328F4;
+.vendor-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #A328F4;
+}
+
+.vendor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.vendor-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #A328F4;
+}
+
+.vendor-category {
+  font-size: 16px;
+  color: black;
+}
+
+.vendor-story {
+  font-size: 16px;
+  color: black;
+  max-width: 600px;
+}
+
+/* 🔹 Specialties */
+.specialties-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.specialty-item {
+  font-size: 16px;
+  color: black;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Mobile Styling */
+@media (max-width: 768px) {
+  .portfolio-layout {
+    flex-direction: column;
+  }
+
+  .main-portfolio-image,
+  .portfolio-grid {
+    width: 100%;
+  }
+
+  .vendor-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* 🔹 GALLERY PAGE */
+.gallery-container {
+  max-width: 1000px;
+  margin: auto;
   padding: 20px;
-  background: #fff;
-}
-
-.bid-title {
-  color: #A328F4;
-  text-align: left;
-  font-family: Outfit;
-  font-size: 24px;
-  font-weight: 400;
-  margin-bottom: 10px;
-}
-
-.bid-amount {
-  color: #000;
   text-align: center;
-  font-family: Outfit;
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 15px;
 }
 
-.down-payment-label {
-  color: #A328F4;
-  font-family: Outfit;
-  font-size: 16px;
-  font-weight: 400;
-}
-
-.down-payment-value {
-  color: #A328F4;
-  font-family: Outfit;
-  font-size: 16px;
-  font-weight: 400;
-  margin-bottom: 15px;
-}
-
-.bid-description-label {
-  color: #79747E;
-  font-family: Outfit;
-  font-size: 16px;
-  font-weight: 400;
-}
-
-.bid-description {
-  color: #000;
-  font-family: Outfit;
-  font-size: 16px;
-  font-weight: 400;
+/* 🔹 Back Button */
+.back-button {
+  background: #A328F4;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
   margin-bottom: 20px;
+  transition: background 0.3s ease;
 }
 
-.bid-actions {
-  display: flex;
-  justify-content: space-between;
+.back-button:hover {
+  background: #8c1ecc;
 }
 
-.bid-deny-button {
-  display: flex;
-  width: 130px;
-  height: 39px;
-  padding: 17px 32px;
+/* 🔹 Gallery Grid Layout */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
   justify-content: center;
-  align-items: center;
-  border-radius: 30px;
-  border: 1px solid #A328F4;
-  color: #A328F4;
-  font-family: Roboto;
-  font-size: 16px;
-  font-weight: 500;
-  background: none;
-  cursor: pointer;
+  margin-top: 10px;
 }
 
-.bid-accept-button {
-  display: flex;
-  width: 130px;
-  height: 39px;
-  padding: 17px 32px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 30px;
-  background: linear-gradient(90deg, #A328F4 0%, #FF008A 100%);
-  color: #FAFAFA;
-  font-family: Roboto;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
+/* 🔹 Individual Gallery Images */
+.gallery-image {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.gallery-image:hover {
+  transform: scale(1.03);
+  opacity: 0.9;
+}
+
+/* 🔹 Mobile Styles */
+@media (max-width: 768px) {
+  .gallery-container {
+    padding: 15px;
+  }
+
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 5px;
+  }
+
+  .gallery-image {
+    height: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+  }
+
+  .gallery-image {
+    height: 150px;
+  }
 }
