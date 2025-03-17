@@ -45,16 +45,26 @@
   border-radius: 10px;
 }
 
-/* See All Button */
+/* 🔹 See All Button */
 .see-all-button {
   position: absolute;
   bottom: 10px;
   right: 10px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
   color: white;
-  padding: 8px 12px;
-  border-radius: 5px;
+  padding: 10px 16px;
+  border-radius: 8px;
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.3s ease, transform 0.2s ease;
+  border: none;
+}
+
+/* 🔹 Hover Effect - Purple Background */
+.see-all-button:hover {
+  background: linear-gradient(90deg, #A328F4 0%, #8C1ECC 100%);
+  transform: scale(1.05);
 }
 
 /* Business Header */

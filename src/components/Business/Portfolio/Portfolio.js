@@ -89,10 +89,10 @@ const Portfolio = () => {
 
         {/* Price */}
         <div className="business-detail">
-          <p className="detail-title">Price Range</p>
+          <p className="detail-title">Base Price</p>
           <div className="detail-content">
             <i className="fa-solid fa-dollar-sign detail-icon"></i>
-            <p className="detail-text">${business.minimum_price || "Pricing Not Yet Set"}</p>
+            <p className="detail-text">{business.minimum_price || "Pricing Not Yet Set"}</p>
           </div>
         </div>
       </div>
