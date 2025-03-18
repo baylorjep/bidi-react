@@ -61,6 +61,7 @@ import EditBid from './components/Business/EditBid';
 import Portfolio from './components/Business/Portfolio/Portfolio';
 import Gallery from './components/Business/Portfolio/Gallery';
 
+
 // Misc Imports
 import Homepage from './components/Homepage';
 import ContactForm from './components/ContactForm';
@@ -171,7 +172,8 @@ function App() {
                         
                         {/* Dynamic URL for viewing portfolio */}
                         <Route path="/portfolio/:businessId" element={<Portfolio />} />
-                        <Route path="/portfolio/:businessId/gallery" element={<Gallery />} /> {/* Dynamic URL for viewing gallery */}
+                        <Route path="/portfolio/:businessId/gallery" element={<Gallery />} />
+
 
                         {/* Misc Routes */}
                         <Route path="/contact-us" element={<ContactForm />} />
