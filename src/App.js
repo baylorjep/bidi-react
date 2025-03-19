@@ -58,7 +58,9 @@ import EditRequest from './components/Individual/EditRequest';
 // Business Imports
 import BusinessDashboard from './components/Business/BusinessDashboard';
 import EditBid from './components/Business/EditBid';
-import Portfolio from './components/Business/Portfolio';
+import Portfolio from './components/Business/Portfolio/Portfolio';
+import Gallery from './components/Business/Portfolio/Gallery';
+
 
 // Misc Imports
 import Homepage from './components/Homepage';
@@ -170,8 +172,10 @@ function App() {
                         <Route path="/dashboard" element={<BusinessDashboard />} />
                         <Route path="/edit-bid/:requestId/:bidId" element={<EditBid />} /> {/* Dynamic URL for editing bids */}
                         
-                        {/* Dynamic URL for editing bids */}
+                        {/* Dynamic URL for viewing portfolio */}
                         <Route path="/portfolio/:businessId" element={<Portfolio />} />
+                        <Route path="/portfolio/:businessId/gallery" element={<Gallery />} />
+
 
                         {/* Misc Routes */}
                         <Route path="/contact-us" element={<ContactForm />} />
