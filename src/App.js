@@ -105,6 +105,8 @@ import Unsubscribe from './components/Unsubscribe';
 import LocationBanner from './components/LocationBanner/LocationBanner';
 import UtahWeddingVideographerGuide from './components/Article/UtahWeddingVideographerGuide';
 import WeddingMarketGuide from './components/WeddingGuide/WeddingMarketGuide';
+import VendorList from './components/VendorList/VendorList';
+import VendorListWithFilters from './components/VendorListWithFilters/VendorListWithFilters';
 
 function App() {
 
@@ -219,6 +221,7 @@ function App() {
                         <Route path="/welcome" element={<NewsletterLanding />} />
                         <Route path="/unsubscribe" element={<Unsubscribe />} />
                         <Route path="/wedding-market-guide" element={<WeddingMarketGuide />} />
+                        <Route path="/vendors" element={<VendorListWithFilters />} />
 
                     </Routes>
                 </div>
