@@ -139,7 +139,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                                 </Link>
                                 ) : role === 'business' ? (
                                 <Link to="/dashboard" onClick={() => posthog.capture('vendor_dashboard')}>
-                                    <button className='landing-page-button'>See Open Requests</button>
+                                    <button className='landing-page-button'>See Requests</button>
                                 </Link>
                                 ) : (
                                 // Default route if no role is found or unhandled role

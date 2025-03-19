@@ -27,9 +27,10 @@
 
     /* Shadow/02 */
     box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 60, 68, 0.16);
-    display: inline-flex;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding: 12px 48px;
-    align-items: flex-start;
     gap: 8px;
     color: #A328F4;
     text-align: center;
@@ -102,4 +103,80 @@
     font-weight: 400;
     width: 100%;
     margin: 0;
+}
+
+@media (max-width: 1200px) {
+    .filters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        text-align: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .filter-button {
+        padding: 10px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .sort-selector {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .sort-selector label {
+        font-size: 0.95rem;
+    }
+
+    .sort-selector select {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .vendor-count {
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .filters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+        text-align: center;
+        justify-content: center;
+        gap: 5px;
+        width: 100%;
+    }
+
+    .filter-button {
+        padding: 10px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .sort-selector {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+        width: 100%;
+    }
+
+    .sort-selector label {
+        font-size: 0.9rem;
+    }
+
+    .sort-selector select {
+        width: 100%;
+        padding: 8px;
+    }
+
+    .vendor-count {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
 }

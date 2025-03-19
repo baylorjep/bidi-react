@@ -144,6 +144,15 @@
     transition: scale 0.3s ease-in-out;
 }
 
+.vendor-button,
+.vendor-button-secondary {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+}
+
 .modal {
     display: flex;
     justify-content: center;
@@ -254,4 +263,128 @@
     width: 16px;
     height: 16px;
     margin-right: 4px;
+}
+
+@media (max-width: 1200px) {
+    .vendor-list {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .vendor-card {
+        flex-direction: column;
+        gap: 30px;
+        padding: 30px;
+    }
+
+    .portfolio-images {
+        width: 100%;
+    }
+
+    .portfolio-image {
+        height: auto !important;
+    }
+
+    .vendor-info {
+        gap: 8px;
+        width: 100%;
+    }
+
+    .vendor-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .vendor-profile-image {
+        width: 45px;
+        height: 45px;
+    }
+
+    .vendor-name {
+        font-size: 1.3rem;
+    }
+
+    .vendor-location,
+    .vendor-price {
+        font-size: 13px;
+    }
+
+    .vendor-description {
+        font-size: 0.95rem;
+    }
+
+    .vendor-buttons {
+        flex-direction: column;
+        gap: 8px;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .vendor-button,
+    .vendor-button-secondary {
+        width: 100%;
+        padding: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .vendor-list {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .vendor-card {
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .portfolio-images {
+        width: 100%;
+    }
+
+    .portfolio-image {
+        height: auto !important;
+    }
+
+    .vendor-info {
+        gap: 5px;
+    }
+
+    .vendor-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .vendor-profile-image {
+        width: 40px;
+        height: 40px;
+    }
+
+    .vendor-name {
+        font-size: 1.2rem;
+    }
+
+    .vendor-location,
+    .vendor-price {
+        font-size: 12px;
+    }
+
+    .vendor-description {
+        font-size: 0.9rem;
+    }
+
+    .vendor-buttons {
+        flex-direction: column;
+        gap: 5px;
+        width: 100%;
+    }
+
+    .vendor-button,
+    .vendor-button-secondary {
+        width: 100%;
+        padding: 10px;
+    }
 }

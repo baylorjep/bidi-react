@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Slider from 'react-slick';
 import { supabase } from '../../supabaseClient';
 import '../../styles/VendorList.css';
@@ -13,6 +14,7 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalImage, setModalImage] = useState('');
     const sliderRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchVendors = async () => {
@@ -211,6 +213,12 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
         }, 3000);
     };
 
+    const handleGetQuote = (vendor) => {
+        if (vendor.business_category === 'photography') {
+            navigate('/request/photography', { state: { vendor } });
+        }
+    };
+
     return (
         <div className="vendor-list">
             {vendors.map(vendor => (
@@ -257,7 +265,7 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                             </div>
                             </div>
                         </div>
-                        <div style={{display:'flex', flexDirection:'column', minHeight:'160px'}}>
+                        <div style={{display:'flex', flexDirection:'column', minHeight:'160px', width:'100%'}}>
                         <div style={{textAlign:'left', display:'flex', flexDirection:'row', gap:'8px', justifyContent:'left', width:'100%'}}>
                         <p className="vendor-location"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
   <path d="M15.9676 11.7334C15.2798 13.127 14.3489 14.5164 13.3951 15.7632C12.4442 17.0061 11.4902 18.0821 10.7726 18.8481C10.6772 18.9499 10.5862 19.0461 10.5 19.1363C10.4138 19.0461 10.3228 18.9499 10.2274 18.8481C9.50982 18.0821 8.55577 17.0061 7.60495 15.7632C6.65115 14.5164 5.7202 13.127 5.03243 11.7334C4.33756 10.3255 3.9375 9.00625 3.9375 7.875C3.9375 4.25063 6.87563 1.3125 10.5 1.3125C14.1244 1.3125 17.0625 4.25063 17.0625 7.875C17.0625 9.00625 16.6624 10.3255 15.9676 11.7334ZM10.5 21C10.5 21 18.375 13.5367 18.375 7.875C18.375 3.52576 14.8492 0 10.5 0C6.15076 0 2.625 3.52576 2.625 7.875C2.625 13.5367 10.5 21 10.5 21Z" fill="#7E7684"/>
@@ -280,7 +288,7 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                             </ul>
                         )}
                         <div className="vendor-buttons">
-                            <button className="vendor-button">Get a Tailored Quote</button>
+                            <button className="vendor-button" onClick={() => handleGetQuote(vendor)}>Get a Tailored Quote</button>
                             <button className="vendor-button-secondary">More Info</button>
                         </div>
                     </div>
