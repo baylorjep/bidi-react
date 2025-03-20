@@ -44,7 +44,7 @@ const Footer = () => {
                         <div className='contact-text'>Facebook</div>
                     </Link>
                     <Link 
-                        to="https://www.instagram.com/savewithbidi/" 
+                        to="https://www.instagram.com/bidiweddings/" 
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{display:'flex', flexDirection:'row', alignItems:'center', gap:'8px'}}

@@ -139,7 +139,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                                 </Link>
                                 ) : role === 'business' ? (
                                 <Link to="/dashboard" onClick={() => posthog.capture('vendor_dashboard')}>
-                                    <button className='landing-page-button'>See Open Requests</button>
+                                    <button className='landing-page-button'>See Requests</button>
                                 </Link>
                                 ) : (
                                 // Default route if no role is found or unhandled role
@@ -156,15 +156,15 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                     <div className='stat-container'>
                             <div className='stat-box' >
                                 <div className='stat-title'>Requests</div>
-                                <div className='stat'>140+</div>
+                                <div className='stat'>150+</div>
                             </div>
                             <div className='stat-box'>
                                 <div className='stat-title'>Users</div>
-                                <div className='stat'>390+</div>
+                                <div className='stat'>420+</div>
                             </div>
                             <div className='stat-box final'>
                                 <div className='stat-title'>Bids</div>
-                                <div className='stat'>930+</div>
+                                <div className='stat'>1100+</div>
                             </div>
 
                     </div>

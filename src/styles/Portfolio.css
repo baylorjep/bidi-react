@@ -147,6 +147,19 @@
   max-width: 600px;
 }
 
+.vendor-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 16px;
+  color: #000;
+}
+
+.star-icon {
+  width: 16px;
+  height: 16px;
+}
+
 /* 🔹 Specialties */
 .specialties-section {
   display: flex;
@@ -271,6 +284,7 @@
   width: 30px;
   height: 30px;
   display: flex;
+  justify-content: space-between;
   align-items: center;
   justify-content: center;
   cursor: pointer;

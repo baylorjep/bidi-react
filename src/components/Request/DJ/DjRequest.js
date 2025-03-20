@@ -65,6 +65,8 @@ function DjRequest() {
     const [uploadingFiles, setUploadingFiles] = useState(0);
     const [addMoreLoading, setAddMoreLoading] = useState(false);
     const [detailsSubStep, setDetailsSubStep] = useState(0);
+    const [vendorId, setVendorId] = useState(location.state?.vendor?.id || null);
+    const [selectedVendor, setSelectedVendor] = useState(location.state?.vendor || null);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
@@ -1322,7 +1324,8 @@ function DjRequest() {
                 special_requests: formData.eventDetails.additionalInfo,
                 status: 'pending',
                 coupon_code: appliedCoupon ? appliedCoupon.code : null,  // Add coupon code
-                indoor_outdoor: formData.eventDetails.indoorOutdoor // Ensure indoor_outdoor is included
+                indoor_outdoor: formData.eventDetails.indoorOutdoor, // Ensure indoor_outdoor is included
+                vendor_id: vendorId, // Add vendor_id to the request data
             };
 
             // Insert the request
@@ -1468,11 +1471,18 @@ function DjRequest() {
                     <div className="request-form-box">
                         <StatusBar steps={getSteps()} currentStep={currentStep} />
                     </div>
-                </div>  
+                </div>
                 {/* Status bar container moved above title for desktop */}
                 <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
                     {getSteps()[currentStep]}
                 </h2>
+                            {/* Display selected vendor information */}
+            {selectedVendor && (
+                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
+                    <img src={selectedVendor.profile_photo_url} alt={selectedVendor.business_name} className="vendor-profile-image" />
+                    <h3 className="selected-vendor-info">{selectedVendor.business_name} will be notified</h3>
+                </div>
+            )}
                 <div className="form-scrollable-content">
                     {getCurrentComponent()}
                 </div>
@@ -1486,6 +1496,8 @@ function DjRequest() {
                     </button>
                 </div>
             </div>
+
+
         </div>
     );
 }
