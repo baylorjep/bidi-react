@@ -108,6 +108,7 @@ function FloristRequest() {
     const [detailsSubStep, setDetailsSubStep] = useState(0);
     const [selectedFlower, setSelectedFlower] = useState(null);
     const [isFlowerModalOpen, setIsFlowerModalOpen] = useState(false);
+    const [selectedVendor, setSelectedVendor] = useState(location.state?.vendor || null);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
@@ -1356,7 +1357,8 @@ function FloristRequest() {
                 flower_preferences: formData.eventDetails.flowerPreferences || {},
                 floral_arrangements: formData.eventDetails.floralArrangements || {},
                 colors: formData.eventDetails.colorPreferences || [],
-                additional_services: formData.eventDetails.additionalServices || {} // Add additional services
+                additional_services: formData.eventDetails.additionalServices || {}, // Add additional services
+                vendor_id: selectedVendor?.id, // Add vendor_id to the request data
             };
 
             const { data: request, error: requestError } = await supabase
@@ -1543,6 +1545,13 @@ function FloristRequest() {
                         <StatusBar steps={getSteps()} currentStep={currentStep} />
                     </div>
                 </div>
+                            {/* Display selected vendor information */}
+            {selectedVendor && (
+                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
+                    <img src={selectedVendor.profile_photo_url} alt={selectedVendor.business_name} className="vendor-profile-image" />
+                    <h3 className="selected-vendor-info">{selectedVendor.business_name} will be notified</h3>
+                </div>
+            )}
 
                 <div className="form-scrollable-content">
                     {getCurrentComponent()}
@@ -1557,6 +1566,7 @@ function FloristRequest() {
                     </button>
                 </div>
             </div>
+
         </div>
     );
 }

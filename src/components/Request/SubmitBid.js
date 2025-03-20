@@ -175,8 +175,8 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
     };
 
     return (
-        <div className="container d-flex align-items-center justify-content-center content" style={{marginBottom:"55px"}}>
-            <div className="col-lg-6">
+        <div className="container d-flex align-items-center justify-content-center" style={{marginBottom:"55px"}}>
+            <div>
                 <br/>
                 <div className="Sign-Up-Page-Header" style={{ textAlign: 'center' }}>Place Your Bid</div>
                 {error && <p className="text-danger">{error}</p>}

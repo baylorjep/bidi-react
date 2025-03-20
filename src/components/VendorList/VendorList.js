@@ -84,32 +84,45 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
             }));
 
             // Sort vendors based on the sortOrder and prioritize profiles with photos
-            const sortedVendorData = vendorsWithPhotos.sort((a, b) => {
-                const aHasPhotos = a.portfolio_photos.length > 0;
-                const bHasPhotos = b.portfolio_photos.length > 0;
+            let sortedVendors;
 
-                if (aHasPhotos && !bHasPhotos) return -1;
-                if (!aHasPhotos && bHasPhotos) return 1;
+            if (sortOrder === 'recommended') {
+                sortedVendors = vendorsWithPhotos.sort((a, b) => {
+                    const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
+                    const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
 
-                switch (sortOrder) {
-                    case 'rating':
-                        return b.rating - a.rating;
-                    case 'distance':
-                        return a.distance - b.distance;
-                    case 'newest':
-                        return new Date(b.created_at) - new Date(a.created_at);
-                    case 'oldest':
-                        return new Date(a.created_at) - new Date(b.created_at);
-                    case 'base_price_low':
-                        return a.minimum_price - b.minimum_price;
-                    case 'base_price_high':
-                        return b.minimum_price - a.minimum_price;
-                    default:
-                        return 0; // Recommended or default sorting
-                }
-            });
+                    if (aIsVerified && !bIsVerified) return -1;
+                    if (!aIsVerified && bIsVerified) return 1;
+                    return 0;
+                });
+            } else if (sortOrder === 'rating') {
+                sortedVendors = vendorsWithPhotos.sort((a, b) => b.average_rating - a.average_rating);
+            } else if (sortOrder === 'base_price_low') {
+                sortedVendors = vendorsWithPhotos.sort((a, b) => a.minimum_price - b.minimum_price);
+            } else if (sortOrder === 'base_price_high') {
+                sortedVendors = vendorsWithPhotos.sort((a, b) => b.minimum_price - a.minimum_price);
+            } else {
+                sortedVendors = vendorsWithPhotos.sort((a, b) => {
+                    const aHasPhotos = a.portfolio_photos.length > 0;
+                    const bHasPhotos = b.portfolio_photos.length > 0;
 
-            setVendors(sortedVendorData);
+                    if (aHasPhotos && !bHasPhotos) return -1;
+                    if (!aHasPhotos && bHasPhotos) return 1;
+
+                    switch (sortOrder) {
+                        case 'distance':
+                            return a.distance - b.distance;
+                        case 'newest':
+                            return new Date(b.created_at) - new Date(a.created_at);
+                        case 'oldest':
+                            return new Date(a.created_at) - new Date(b.created_at);
+                        default:
+                            return 0; // Recommended or default sorting
+                    }
+                });
+            }
+
+            setVendors(sortedVendors);
             setLoading(false);
         };
 
@@ -216,6 +229,12 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
     const handleGetQuote = (vendor) => {
         if (vendor.business_category === 'photography') {
             navigate('/request/photography', { state: { vendor } });
+        } else if (vendor.business_category === 'dj') {
+            navigate('/request/dj', { state: { vendor } });
+        } else if (vendor.business_category === 'florist') {
+            navigate('/request/florist', { state: { vendor } });
+        } else if (vendor.business_category === 'catering') {
+            navigate('/request/catering', { state: { vendor } });
         }
     };
 

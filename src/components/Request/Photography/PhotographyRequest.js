@@ -1220,7 +1220,8 @@ function PhotographyRequest() {
                 date_type: formData.eventDetails.dateType,
                 coupon_code: appliedCoupon ? appliedCoupon.code : null,
                 pinterest_link: formData.eventDetails.pinterestBoard,
-                status: 'open'
+                status: 'open',
+                vendor_id: selectedVendor?.id // Add the selected vendor's ID here
             };
 
             // Additional fields including unknown flags and JSONB data

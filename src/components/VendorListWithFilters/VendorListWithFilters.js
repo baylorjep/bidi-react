@@ -9,11 +9,13 @@ const categories = [
     { id: 'florist', name: 'Florist' },
     { id: 'catering', name: 'Catering' },
     { id: 'dj', name: 'DJ' },
-    { id: 'beauty', name: 'Beauty' }
+    { id: 'beauty', name: 'Beauty' },
+    { id: 'admin', name: 'Admin'}
 ];
 
 const sortOptions = [
     { id: 'recommended', name: 'Recommended' },
+    { id: 'rating', name: 'Rating' },
     { id: 'base_price_low', name: 'Base Price: Low to High' },
     { id: 'base_price_high', name: 'Base Price: High to Low' }
 ];
@@ -69,19 +71,18 @@ const VendorListWithFilters = () => {
                     ))}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', justifyContent: 'center', width: '100%', marginTop: '20px' }}>
-                <div className="vendor-count">
-                {vendorCount} businesses found
+                    <div className="vendor-count">
+                        {vendorCount} businesses found
+                    </div>
+                    <div className="sort-selector">
+                        <label htmlFor="sortOrder">Sort:</label>
+                        <select id="sortOrder" value={sortOrder} onChange={handleSortOrderChange}>
+                            {sortOptions.map(option => (
+                                <option key={option.id} value={option.id}>{option.name}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
-            <div className="sort-selector">
-                    <label htmlFor="sortOrder">Sort:</label>
-                    <select id="sortOrder" value={sortOrder} onChange={handleSortOrderChange}>
-                        {sortOptions.map(option => (
-                            <option key={option.id} value={option.id}>{option.name}</option>
-                        ))}
-                    </select>
-                </div>
-                </div>
-
             </div>
 
             <VendorList selectedCategory={selectedCategory} sortOrder={sortOrder} />

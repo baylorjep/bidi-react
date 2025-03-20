@@ -5592,26 +5592,6 @@ background: linear-gradient(246deg, rgba(255, 0, 138, 0.79) 15.35%, #A328F4 85.5
   min-height: calc(100% - var(--bs-modal-margin) * 2);
 }
 
-
-.modal-backdrop {
-  --bs-backdrop-zindex: 1050;
-  --bs-backdrop-bg: #000;
-  --bs-backdrop-opacity: 0.5;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: var(--bs-backdrop-zindex);
-  width: 100vw;
-  height: 100vh;
-  background-color: var(--bs-backdrop-bg);
-}
-.modal-backdrop.fade {
-  opacity: 0;
-}
-.modal-backdrop.show {
-  opacity: var(--bs-backdrop-opacity);
-}
-
 .modal-header {
   display: flex;
   flex-shrink: 0;
@@ -5689,11 +5669,6 @@ background: linear-gradient(246deg, rgba(255, 0, 138, 0.79) 15.35%, #A328F4 85.5
   height: 100%;
   margin: 0;
 }
-.modal-fullscreen .modal-content {
-  height: 100%;
-  border: 0;
-  border-radius: 0;
-}
 .modal-fullscreen .modal-header,
 .modal-fullscreen .modal-footer {
   border-radius: 0;
@@ -5708,11 +5683,6 @@ background: linear-gradient(246deg, rgba(255, 0, 138, 0.79) 15.35%, #A328F4 85.5
     max-width: none;
     height: 100%;
     margin: 0;
-  }
-  .modal-fullscreen-sm-down .modal-content {
-    height: 100%;
-    border: 0;
-    border-radius: 0;
   }
   .modal-fullscreen-sm-down .modal-header,
   .modal-fullscreen-sm-down .modal-footer {
@@ -12833,7 +12803,7 @@ line-height: normal;
 
 @media (max-width:500px) {
   .request-display {
-    max-width: 400px;
+    max-width: 300px !important;
   }
 }
 
@@ -13054,6 +13024,11 @@ line-height: normal;
   font-style: normal;
   font-weight: 700;
   line-height: normal;
+  white-space: normal; /* Allow line breaks */
+  overflow: visible;   /* Allow overflow */
+  word-wrap: break-word; /* Break long words onto the next line */
+  overflow-wrap: break-word; /* For better compatibility */
+
 }
 
 .status-request-container {
