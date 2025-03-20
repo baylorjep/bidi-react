@@ -60,7 +60,7 @@ import BusinessDashboard from './components/Business/BusinessDashboard';
 import EditBid from './components/Business/EditBid';
 import Portfolio from './components/Business/Portfolio/Portfolio';
 import Gallery from './components/Business/Portfolio/Gallery';
-
+import VerificationApplication from './components/Business/VerificationApplication';
 
 // Misc Imports
 import Homepage from './components/Homepage';
@@ -171,6 +171,7 @@ function App() {
                         <Route path="/open-requests" element={<OpenRequests />} />
                         <Route path="/dashboard" element={<BusinessDashboard />} />
                         <Route path="/edit-bid/:requestId/:bidId" element={<EditBid />} /> {/* Dynamic URL for editing bids */}
+                        <Route path="/verification-application" element={<VerificationApplication />} />
                         
                         {/* Dynamic URL for viewing portfolio */}
                         <Route path="/portfolio/:businessId" element={<Portfolio />} />

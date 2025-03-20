@@ -236,6 +236,13 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
         } else if (vendor.business_category === 'catering') {
             navigate('/request/catering', { state: { vendor } });
         }
+        else if (vendor.business_category === 'videography') {
+            navigate('/request/videography', { state: { vendor } });
+        }
+    };
+
+    const handleMoreInfo = (vendor) => {
+        navigate(`/portfolio/${vendor.id}`);
     };
 
     return (
@@ -292,7 +299,7 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
 </svg> {vendor.business_address || "Location not available"}</p>
                         <p className="vendor-price"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 14 14" fill="none">
   <path d="M3.5 9.43363C3.62934 10.8923 4.82383 11.9268 6.64219 12.0608V13.125H7.55517V12.0608C9.54091 11.9045 10.7734 10.803 10.7734 9.17315C10.7734 7.78144 9.94414 6.97767 8.18665 6.52369L7.55517 6.35996V3.03326C8.53663 3.13001 9.19854 3.65841 9.36592 4.4473H10.6517C10.5072 3.04815 9.30506 2.04344 7.55517 1.9318V0.875H6.64219V1.95413C4.94556 2.15507 3.7815 3.24165 3.7815 4.71522C3.7815 5.98785 4.62601 6.88837 6.10961 7.26792L6.64219 7.40933V10.937C5.6379 10.7881 4.94556 10.2374 4.77818 9.43363H3.5ZM6.4672 6.07716C5.55421 5.84645 5.06729 5.35525 5.06729 4.66312C5.06729 3.83703 5.68355 3.22676 6.64219 3.06303V6.12181L6.4672 6.07716ZM7.8595 7.71446C8.98551 7.99727 9.48004 8.46613 9.48004 9.26245C9.48004 10.2225 8.75727 10.8625 7.55517 10.9593V7.64004L7.8595 7.71446Z" fill="#7E7684"/>
-</svg> Base Price ${vendor.minimum_price || "500"}</p>    
+</svg> Base Price ${vendor.minimum_price || "0"}</p>    
                         </div>
 
                         <p className="vendor-description"><strong>{vendor.business_description}</strong></p>
@@ -308,7 +315,7 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                         )}
                         <div className="vendor-buttons">
                             <button className="vendor-button" onClick={() => handleGetQuote(vendor)}>Get a Tailored Quote</button>
-                            <button className="vendor-button-secondary">More Info</button>
+                            <button className="vendor-button-secondary" onClick={() => handleMoreInfo(vendor)}>More Info</button>
                         </div>
                     </div>
                 </div>

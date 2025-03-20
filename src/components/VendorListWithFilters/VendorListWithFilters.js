@@ -72,7 +72,7 @@ const VendorListWithFilters = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', justifyContent: 'center', width: '100%', marginTop: '20px' }}>
                     <div className="vendor-count">
-                        {vendorCount} businesses found
+                        {vendorCount} vendors
                     </div>
                     <div className="sort-selector">
                         <label htmlFor="sortOrder">Sort:</label>

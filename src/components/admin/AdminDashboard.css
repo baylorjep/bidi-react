@@ -1,6 +1,7 @@
 .admin-content {
   margin-top: 20px;
   width: 100%;
+  transition: all 0.3s ease;
 }
 
 /* Make the container full width on mobile */
@@ -33,4 +34,12 @@
     width: 100%;
     padding: 0;
   }
+}
+
+.btn-group .btn:focus {
+    box-shadow: none;
+}
+
+.btn-group .btn:hover {
+    opacity: 0.9;
 }

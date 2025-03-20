@@ -29,49 +29,75 @@ const BusinessDashboard = () => {
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [unviewedBidCount, setUnviewedBidCount] = useState(0);
+  const [isVerified, setIsVerified] = useState(false);
+  const [isVerificationPending, setIsVerificationPending] = useState(false);
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
-      setIsLoading(true);
-      setError(null);
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           setError("No user found. Please log in again.");
-          setIsLoading(false);
           return;
         }
 
-        // Fetch business profile details
+        // Get both profile and verification application status
         const { data: profile, error: profileError } = await supabase
           .from('business_profiles')
-          .select('business_name, stripe_account_id, id, down_payment_type, amount, minimum_price, business_category')
+          .select('*')
           .eq('id', user.id)
           .single();
 
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
+        if (profileError) throw profileError;
+
+        // Check for verification application
+        const { data: verificationApp, error: verificationError } = await supabase
+          .from('verification_applications')
+          .select('id')
+          .eq('business_id', user.id)
+          .maybeSingle();
+
+        if (verificationError) throw verificationError;
+
+        // Set pending status only if membership tier is empty/null AND there's a verification application
+        const isPending = (!profile.membership_tier || profile.membership_tier === '') && verificationApp !== null;
+        
+        setIsVerified(profile.membership_tier === "Plus" || profile.membership_tier === "Verified");
+        setIsVerificationPending(isPending);
+
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch business profile details
+        const { data: profileDetails, error: profileDetailsError } = await supabase
+          .from('business_profiles')
+          .select('business_name, stripe_account_id, id, down_payment_type, amount, minimum_price, business_category, membership_tier, verification_pending')
+          .eq('id', user.id)
+          .single();
+
+        if (profileDetailsError) {
+          console.error('Error fetching profile:', profileDetailsError);
           setError("Error loading business profile");
           setIsLoading(false);
           return;
         }
 
-        if (!profile) {
+        if (!profileDetails) {
           setError("Business profile not found");
           setIsLoading(false);
           return;
         }
 
-        if (profile) {
-          setBusinessName(profile.business_name);
+        if (profileDetails) {
+          setBusinessName(profileDetails.business_name);
           // Check if user has admin privileges - Fix the error here
-          setIsAdmin(profile.business_category === "admin");
-          if (profile.stripe_account_id) {
-            setConnectedAccountId(profile.stripe_account_id);
+          setIsAdmin(profileDetails.business_category === "admin");
+          if (profileDetails.stripe_account_id) {
+            setConnectedAccountId(profileDetails.stripe_account_id);
           } 
           
           // Only show modal automatically if down payment has never been set
-          if (profile.down_payment_type === null && profile.amount === null) {
+          if (profileDetails.down_payment_type === null && profileDetails.amount === null) {
             setShowModal(true);
           }
   
@@ -83,7 +109,7 @@ const BusinessDashboard = () => {
               viewed,
               viewed_at
             `)
-            .eq('user_id', profile.id)
+            .eq('user_id', profileDetails.id)
             .or('hidden.is.false,hidden.is.null');
   
           if (bidsError) {
@@ -245,7 +271,7 @@ const BusinessDashboard = () => {
   
           // Update state with the bids that now have associated request data
           setBids(bidsWithRequestData);
-          setCurrentMinPrice(profile.minimum_price);
+          setCurrentMinPrice(profileDetails.minimum_price);
         }
         setIsLoading(false);
       } catch (err) {
@@ -629,7 +655,7 @@ const BusinessDashboard = () => {
       </div>
 
       <div className="container mt-4">
-        <div className="row justify-content-center">
+        <div className="row justify-content-center">  
           {/* Admin Dashboard Button - Only visible for admin users */}
           {isAdmin && (
             <div className="col-lg-10 col-md-12 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}} >
@@ -688,6 +714,29 @@ const BusinessDashboard = () => {
               </button>
             )}
           </div>
+          {/* Only show verification button if not verified */}
+          {!isVerified && (
+            <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}} >
+              <button
+                className="btn-secondary flex-fill"
+                style={{
+                  fontWeight: 'bold',
+                  opacity: isVerificationPending ? '0.7' : '1',
+                  cursor: isVerificationPending ? 'not-allowed' : 'pointer',
+                  background: isVerificationPending ? '#6c757d' : undefined // Grayed out when pending
+                }}
+                onClick={() => !isVerificationPending && navigate("/verification-application")}
+                disabled={isVerificationPending}
+              >
+                {isVerificationPending ? (
+                  <span>
+                    Verification Pending 
+                    <i className="fas fa-spinner fa-spin ml-2" style={{ marginLeft: '8px' }}></i>
+                  </span>
+                ) : 'Apply to be Bidi Verified'}
+              </button>
+            </div>
+          )}
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
             <button
             style={{fontWeight:'bold'}}

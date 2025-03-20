@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
 import "../../../styles/Portfolio.css";
 import EditProfileModal from "./EditProfileModal"; // Import modal component
+import Verified from '../../../assets/Frame 1162.svg'; // Import the verified icon
+import StarIcon from '../../../assets/star-duotone.svg'; // Add this import
 
 const Portfolio = () => {
   const { businessId } = useParams();
@@ -13,6 +15,7 @@ const Portfolio = () => {
   const [isOwner, setIsOwner] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editFields, setEditFields] = useState({});
+  const [averageRating, setAverageRating] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,6 +50,21 @@ const Portfolio = () => {
         setIsOwner(true);
       }
 
+      // Add this section to fetch reviews
+      const { data: reviewData, error: reviewError } = await supabase
+        .from('reviews')
+        .select('rating')
+        .eq('vendor_id', businessId);
+
+      if (reviewError) {
+        console.error('Error fetching reviews:', reviewError);
+      } else {
+        const avgRating = reviewData.length > 0
+          ? (reviewData.reduce((acc, review) => acc + review.rating, 0) / reviewData.length).toFixed(1)
+          : null;
+        setAverageRating(avgRating);
+      }
+
       setLoading(false);
     };
 
@@ -56,6 +74,18 @@ const Portfolio = () => {
   const openEditModal = (fields) => {
     setEditFields(fields);
     setModalOpen(true);
+  };
+
+  const handleCheckClick = (event) => {
+    const tooltip = event.currentTarget.querySelector('.verified-tooltip');
+    tooltip.style.visibility = 'visible';
+    tooltip.style.opacity = '1';
+    tooltip.style.zIndex = '1000'; // Ensure the tooltip is on top
+    setTimeout(() => {
+        tooltip.style.visibility = 'hidden';
+        tooltip.style.opacity = '0';
+        tooltip.style.zIndex = '1'; // Reset z-index
+    }, 3000);
   };
 
   if (loading) return <p>Loading portfolio...</p>;
@@ -71,7 +101,6 @@ const Portfolio = () => {
       />
 
       <div className="portfolio-container">
-
         {/* 🔹 SECTION 1: Portfolio Images & Business Info */}
         <div className="section-container">
           <div className="portfolio-header">
@@ -115,7 +144,25 @@ const Portfolio = () => {
             </button>
           )}
           <div className="business-header">
-            <h1 className="business-name">{business.business_name}</h1>
+            <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+              <h1 className="business-name">
+                {business.business_name}
+              </h1>
+              {averageRating && (
+                <span className="vendor-rating">
+                  <img src={StarIcon} alt="Star" className="star-icon" />
+                  {averageRating}
+                </span>
+              )}
+              {(business.membership_tier === 'Verified' || business.Bidi_Plus) && (
+                <div className="verified-check-container" onClick={handleCheckClick}>
+                  <img style={{ marginLeft: '4px', marginBottom: '4px' }} src={Verified} alt="Verified" />
+                  <span className="verified-tooltip">
+                    This business is verified by Bidi. You will have a 100% money back guarantee if you pay through Bidi.
+                  </span>
+                </div>
+              )}
+            </div>
             <p className="business-description">{business.business_description || "No description available"}</p>
           </div>
         </div>
@@ -171,7 +218,6 @@ const Portfolio = () => {
             </div>
           </div>
         )}
-
       </div>
     </>
   );
