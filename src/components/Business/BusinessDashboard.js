@@ -31,6 +31,7 @@ const BusinessDashboard = () => {
   const [unviewedBidCount, setUnviewedBidCount] = useState(0);
   const [isVerified, setIsVerified] = useState(false);
   const [isVerificationPending, setIsVerificationPending] = useState(false);
+  const [stripeError, setStripeError] = useState(false);
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
@@ -621,6 +622,24 @@ const BusinessDashboard = () => {
     navigate("/admin-dashboard");
   };
 
+  const handleResetStripeAccount = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('business_profiles')
+      .update({ stripe_account_id: null })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Error resetting Stripe account:', error);
+      alert('Error resetting Stripe account. Please try again.');
+    } else {
+      setConnectedAccountId(null);
+      alert('Stripe account has been reset. You can now try connecting again.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="business-dashboard text-center">
@@ -703,7 +722,27 @@ const BusinessDashboard = () => {
           </div>
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
             {connectedAccountId ? (
-              <StripeDashboardButton accountId={connectedAccountId} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <StripeDashboardButton 
+                  accountId={connectedAccountId}
+                  onError={() => setStripeError(true)}
+                  onSuccess={() => setStripeError(false)}
+                />
+                {stripeError && (
+                  <button
+                    className="btn-danger"
+                    style={{marginTop: '10px', width: '100%'}}
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to reset your Stripe connection? You will need to set it up again to receive payments.')) {
+                         handleResetStripeAccount();
+                        setStripeError(false);
+                      }
+                    }}
+                  >
+                    Reset Stripe Connection
+                  </button>
+                )}
+              </div>
             ) : (
               <button
               style={{fontWeight:'bold'}}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const StripeDashboardButton = ({ accountId }) => {
+const StripeDashboardButton = ({ accountId, onError, onSuccess }) => {
   const [error, setError] = useState(null);
 
   const handleViewDashboard = async () => {
@@ -10,25 +10,34 @@ const StripeDashboardButton = ({ accountId }) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ accountId }), // Send the connected account ID
+        body: JSON.stringify({ accountId }),
       });
 
       const data = await response.json();
       if (response.ok) {
-        window.location.href = data.url; // Redirect to the Stripe dashboard
+        onSuccess && onSuccess();
+        window.location.href = data.url;
       } else {
         setError(data.error || "Unable to create login link");
+        onError && onError();
       }
     } catch (err) {
       console.error("Error fetching login link:", err);
       setError("An error occurred. Please try again.");
+      onError && onError();
     }
   };
 
   return (
-    <div>
-      {error && <p>{error}</p>}
-      <button className="btn-secondary flex-fill"  style={{fontWeight:'bold'}}onClick={handleViewDashboard}>Payment Dashboard</button>
+    <div className="d-flex flex-column gap-2">
+      <button 
+        className="btn-secondary flex-fill" 
+        style={{fontWeight:'bold'}}
+        onClick={handleViewDashboard}
+      >
+        Payment Dashboard
+      </button>
+      {error && <div className="text-danger">{error}</div>}
     </div>
   );
 };
