@@ -104,6 +104,8 @@
     cursor: pointer;
     font-size: 14px;
     border-radius: 5px;
+    width: 100%;
+    margin-top: 4px;
   }
   
   .edit-portfolio-modal .close-btn:hover {
@@ -337,4 +339,21 @@
 
 .remove-button:hover {
   color: #ff4444;
+}
+
+.profile-image-container {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 8px;
+}
+
+/* 🔹 Profile Image Preview */
+.profile-image-preview {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
 }
