@@ -141,10 +141,6 @@ function Navbar() {
                         )}
 
                         <li className="nav-item">
-                            <Link className="nav-link me-lg-3" to="/vendors">View Vendors</Link>
-                        </li>
-
-                        <li className="nav-item">
                             <Link className="nav-link me-lg-3" to="/articles">Wedding Guides</Link>
                         </li>
 
