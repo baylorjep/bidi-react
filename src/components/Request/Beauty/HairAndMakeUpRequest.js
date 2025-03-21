@@ -66,6 +66,7 @@ function HairAndMakeUpRequest() {
     const [addMoreLoading, setAddMoreLoading] = useState(false);
     const [detailsSubStep, setDetailsSubStep] = useState(0);
     const [selectedVendor, setSelectedVendor] = useState(location.state?.vendor || null);
+    const [vendorImage, setVendorImage] = useState(location.state?.image || null);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
@@ -1492,7 +1493,7 @@ function HairAndMakeUpRequest() {
                 </h2>
                 {selectedVendor && (
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
-                    <img src={selectedVendor.profile_photo_url} alt={selectedVendor.business_name} className="vendor-profile-image" />
+                    <img src={vendorImage} alt={selectedVendor.business_name} className="vendor-profile-image" />
                     <h3 className="selected-vendor-info">{selectedVendor.business_name} will be notified</h3>
                 </div>
             )}

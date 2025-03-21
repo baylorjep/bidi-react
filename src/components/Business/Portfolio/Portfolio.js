@@ -132,16 +132,24 @@ const Portfolio = () => {
   };
 
   const handleGetQuote = () => {
-    if (business.business_category === 'photography') {
-      navigate('/request/photography', { state: { vendor: business } });
+    const vendorData = {
+      vendor: business,
+      image: profileImage
+    };
+  
+    if (business.business_category === 'photography') { 
+      navigate('/request/photography', { state: vendorData });
     } else if (business.business_category === 'dj') {
-      navigate('/request/dj', { state: { vendor: business } });
+      navigate('/request/dj', { state: vendorData });
     } else if (business.business_category === 'florist') {
-      navigate('/request/florist', { state: { vendor: business } });
+      navigate('/request/florist', { state: vendorData });
     } else if (business.business_category === 'catering') {
-      navigate('/request/catering', { state: { vendor: business } });
+      navigate('/request/catering', { state: vendorData });
     } else if (business.business_category === 'videography') {
-      navigate('/request/videography', { state: { vendor: business } });
+      navigate('/request/videography', { state: vendorData });
+    }
+    else if (business.business_category === 'beauty') {
+      navigate('/request/beauty', { state: vendorData });
     }
   };
 

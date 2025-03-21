@@ -109,6 +109,7 @@ function FloristRequest() {
     const [selectedFlower, setSelectedFlower] = useState(null);
     const [isFlowerModalOpen, setIsFlowerModalOpen] = useState(false);
     const [selectedVendor, setSelectedVendor] = useState(location.state?.vendor || null);
+    const [vendorImage, setVendorImage] = useState(location.state?.image || null);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
@@ -1547,7 +1548,7 @@ function FloristRequest() {
                             {/* Display selected vendor information */}
             {selectedVendor && (
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
-                    <img src={selectedVendor.profile_photo_url} alt={selectedVendor.business_name} className="vendor-profile-image" />
+                    <img src={vendorImage} alt={selectedVendor.business_name} className="vendor-profile-image" style={{marginRight:'8px'}}/>
                     <h3 className="selected-vendor-info">{selectedVendor.business_name} will be notified</h3>
                 </div>
             )}

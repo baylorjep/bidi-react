@@ -227,17 +227,24 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
     };
 
     const handleGetQuote = (vendor) => {
+        const vendorData = {
+            vendor,
+            image: vendor.profile_photo_url
+        };
+
         if (vendor.business_category === 'photography') {
-            navigate('/request/photography', { state: { vendor } });
+            navigate('/request/photography', { state: vendorData });
         } else if (vendor.business_category === 'dj') {
-            navigate('/request/dj', { state: { vendor } });
+            navigate('/request/dj', { state: vendorData });
         } else if (vendor.business_category === 'florist') {
-            navigate('/request/florist', { state: { vendor } });
+            navigate('/request/florist', { state: vendorData });
         } else if (vendor.business_category === 'catering') {
-            navigate('/request/catering', { state: { vendor } });
+            navigate('/request/catering', { state: vendorData });
+        } else if (vendor.business_category === 'videography') {
+            navigate('/request/videography', { state: vendorData });
         }
-        else if (vendor.business_category === 'videography') {
-            navigate('/request/videography', { state: { vendor } });
+        else if (vendor.business_category === 'beauty') {
+            navigate('/request/beauty', { state: vendorData });
         }
     };
 
