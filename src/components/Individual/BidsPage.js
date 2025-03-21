@@ -236,8 +236,27 @@ export default function BidsPage() {
             }
 
             if (bidsData) {
+                // Fetch profile pictures for each business profile
+                const profilePicturePromises = bidsData.map(async (bid) => {
+                    const { data: profilePhoto, error: profilePhotoError } = await supabase
+                        .from('profile_photos')
+                        .select('photo_url')
+                        .eq('user_id', bid.business_profiles.id)
+                        .eq('photo_type', 'profile')
+                        .single();
+
+                    if (profilePhotoError) {
+                        console.error('Error fetching profile photo:', profilePhotoError);
+                        return { ...bid, business_profiles: { ...bid.business_profiles, profile_image: '/images/default.jpg' } };
+                    }
+
+                    return { ...bid, business_profiles: { ...bid.business_profiles, profile_image: profilePhoto.photo_url } };
+                });
+
+                const bidsWithProfilePictures = await Promise.all(profilePicturePromises);
+
                 // Mark bids as viewed when they're loaded
-                const unviewedBids = bidsData.filter(bid => !bid.viewed);
+                const unviewedBids = bidsWithProfilePictures.filter(bid => !bid.viewed);
                 if (unviewedBids.length > 0) {
                     const { error } = await supabase
                         .from('bids')
@@ -253,7 +272,7 @@ export default function BidsPage() {
                 }
 
                 // Continue with existing bid filtering and processing
-                const filteredBids = bidsData
+                const filteredBids = bidsWithProfilePictures
                     .filter(bid => {
                         if (activeTab === 'pending') {
                             return bid.status?.toLowerCase() === 'pending';
@@ -466,6 +485,12 @@ export default function BidsPage() {
     };
 
     const renderBidCard = (bid) => {
+        const handleProfileClick = () => {
+            navigate(`/portfolio/${bid.business_profiles.id}`);
+        };
+
+        const profileImage = bid.business_profiles.profile_image || '/images/default.jpg'; // Default image if none
+
         if (activeTab === 'pending') {
             return (
                 <BidDisplay
@@ -474,7 +499,15 @@ export default function BidsPage() {
                     handleApprove={() => handleAcceptBidClick(bid)}
                     handleDeny={() => handleMoveToDenied(bid)} // Direct denial without modal
                     showActions={true}
-                />
+                >
+                    <img 
+                        src={profileImage} 
+                        alt={`${bid.business_profiles.business_name} profile`} 
+                        className="vendor-profile-image" 
+                        onClick={handleProfileClick} 
+                        style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%' }}
+                    />
+                </BidDisplay>
             );
         }
 
@@ -487,6 +520,13 @@ export default function BidsPage() {
                     <div className="title-and-price">
                         <div>
                             <div className="request-title" style={{ marginBottom: '0', textAlign: 'left', wordBreak: 'break-word' }}>
+                                <img 
+                                    src={profileImage} 
+                                    alt={`${bid.business_profiles.business_name} profile`} 
+                                    className="vendor-profile-image" 
+                                    onClick={handleProfileClick} 
+                                    style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%', marginRight: '10px' }}
+                                />
                                 {bid.business_profiles.business_name}
                                 {isBidiVerified && (
                                     <img
@@ -568,6 +608,13 @@ export default function BidsPage() {
                     <div className="title-and-price">
                         <div>
                             <div className="request-title" style={{ marginBottom: '0', textAlign: 'left', wordBreak: 'break-word' }}>
+                                <img 
+                                    src={profileImage} 
+                                    alt={`${bid.business_profiles.business_name} profile`} 
+                                    className="vendor-profile-image" 
+                                    onClick={handleProfileClick} 
+                                    style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%', marginRight: '10px' }}
+                                />
                                 {bid.business_profiles.business_name}
                             </div>
                         </div>
@@ -615,7 +662,15 @@ export default function BidsPage() {
                     requestType: bid.requestType
                 }}
                 showActions={false}
-            />
+            >
+                <img 
+                    src={profileImage} 
+                    alt={`${bid.business_profiles.business_name} profile`} 
+                    className="vendor-profile-image" 
+                    onClick={handleProfileClick} 
+                    style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%' }}
+                />
+            </BidDisplay>
         );
     };
 

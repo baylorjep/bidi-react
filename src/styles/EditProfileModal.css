@@ -126,6 +126,29 @@
   box-shadow: 0 0 5px rgba(163, 40, 244, 0.3);
 }
 
+.modal-input-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+  background: #FFFFFF;
+  transition: border-color 0.3s ease;
+}
+
+.modal-input-group textarea:focus {
+  outline: none;
+  border-color: #A328F4;
+  box-shadow: 0 0 0 2px rgba(163, 40, 244, 0.1);
+}
+
+.modal-input-group textarea::placeholder {
+  color: #999;
+}
+
 /* 🔹 Improve Modal Buttons */
 .modal-actions {
   display: flex;
@@ -258,4 +281,60 @@
 .save-close-btn:disabled {
   background: #D1D1D1;
   cursor: not-allowed;
+}
+
+/* 🔹 Specializations */
+.specializations-container {
+  width: 100%;
+}
+
+.specializations-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.specialization-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0f0f0;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.specialization-input {
+  display: flex;
+  gap: 8px;
+}
+
+.specialization-input input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+}
+
+.add-button {
+  background: #A328F4;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.remove-button {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+}
+
+.remove-button:hover {
+  color: #ff4444;
 }

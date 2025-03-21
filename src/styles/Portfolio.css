@@ -24,8 +24,8 @@
 /* Main Image */
 .main-portfolio-image {
   width: 50%;
-  height: 410px;
-  object-fit: cover;
+  height: 570px;
+  object-fit:cover;
   border-radius: 10px;
 }
 
@@ -40,9 +40,9 @@
 }
 
 /* Grid Images */
-.portfolio-image {
+.portfolio-image-portfolio {
   width: 100%;
-  height: 200px;
+  height: 280px;
   object-fit: cover;
   border-radius: 10px;
 }
@@ -77,6 +77,13 @@
 .business-name {
   font-size: 28px;
   font-weight: bold;
+  margin: 0;
+  margin-bottom: 20px;
+  padding: 0;
+  word-break: break-word;
+  text-overflow:clip!important;
+  overflow-wrap: break-word ; /* Add this line */
+  height: 100%;
 }
 
 /* 🔹 Location & Price Section */
@@ -92,9 +99,24 @@
   gap: 5px;
 }
 
+.business-description {
+  color: #000;
+text-align: left;
+font-family: Outfit;
+font-size: 24px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+}
+
 .detail-title {
+  color: #83748D;
+  text-align: left;
+  font-family: Outfit;
   font-size: 16px;
-  color: gray;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
 }
 
 .detail-content {
@@ -106,6 +128,16 @@
 .detail-icon {
   width: 24px;
   height: 24px;
+}
+
+.detail-text {
+  color: #000;
+text-align: center;
+font-family: Outfit;
+font-size: 20px;
+font-style: normal;
+font-weight: 600;
+line-height: normal;
 }
 
 /* 🔹 Meet the Vendor */
@@ -147,17 +179,18 @@
   max-width: 600px;
 }
 
-.vendor-rating {
+.vendor-rating-portfolio {
   display: flex;
   align-items: center;
   gap: 4px;
   font-size: 16px;
   color: #000;
+  margin-bottom: 14px;
 }
 
-.star-icon {
-  width: 16px;
-  height: 16px;
+.star-icon-portfolio {
+  width: 32px;
+  height: 32px;
 }
 
 /* 🔹 Specialties */
@@ -179,6 +212,8 @@
 @media (max-width: 768px) {
   .portfolio-layout {
     flex-direction: column;
+    min-height: auto;
+    gap: 15px;
   }
 
   .main-portfolio-image,
@@ -186,9 +221,64 @@
     width: 100%;
   }
 
+  .main-portfolio-image {
+    height: 300px; /* Adjusted height for mobile */
+  }
+
+  .portfolio-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 150px); /* Fixed height for grid items */
+    gap: 15px;
+  }
+
+  .portfolio-image-portfolio {
+    height: 150px !important;
+    width: 100%;
+    object-fit: cover;
+  }
+
   .vendor-section {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .section-container {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .section-right {
+    margin-left: 0;
+    margin-top: 20px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+  }
+  .gallery-image {
+    height: 150px;
+  }
+
+  .portfolio-container {
+    width: 95%;
+    padding: 10px;
+  }
+
+  .main-portfolio-image {
+    height: 250px; /* Even shorter for smaller screens */
+  }
+
+  .portfolio-grid {
+    grid-template-rows: repeat(2, 120px); /* Smaller height for very small screens */
+    gap: 10px;
+  }
+
+  .portfolio-image-portfolio {
+    height: 120px;
   }
 }
 
@@ -259,9 +349,7 @@
 @media (max-width: 480px) {
   .gallery-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 5px;
   }
-
   .gallery-image {
     height: 150px;
   }
@@ -271,10 +359,41 @@
 .section-container {
   position: relative;
   padding: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.section-left {
+  width: 100%;
+}
+
+.section-right {
+  display: flex;
+  justify-content: center;
+  border-radius: 8px;
+border: 1px solid #A328F4;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-left: 20px;
+}
+
+.get-quote-header {
+  color: #A328F4;
+  text-align: center;
+  font-family: Outfit;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
 }
 
 .edit-icon {
-  position: absolute;
   top: 15px;
   right: 15px;
   background: #A328F4;
@@ -321,4 +440,267 @@
 
 .portfolio-edit-btn:hover {
   color: #8C1ECC;
+}
+
+.vendor-button {
+  padding: 10px 20px;
+  border-radius: 100px;
+  background: #FF008A;
+  box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 60, 68, 0.16);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  width: 100%!important;
+  transition: 0.3s ease-in-out;
+  padding: 12px 48px;
+}
+
+.vendor-button:hover {
+  background-color: #e6007e;
+  transition: background-color 0.3s ease-in-out;
+  scale: 1.02;
+  transition: scale 0.3s ease-in-out;
+}
+
+.down-payment-title {
+  color: #79747E;
+font-family: Outfit;
+font-size: 16px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+}
+
+.down-payment-description {
+  color: #000;
+font-family: Outfit;
+font-size: 32px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+}
+
+.vendor-profile-container {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  width: 100%;
+  position: relative;
+}
+
+@media screen and (max-width: 768px) {
+  .vendor-profile-container {
+    flex-direction: column;
+    align-items: center;
+
+  }
+  .section-right {
+    margin: 0;
+  }
+  }
+  
+
+.vendor-profile-image {
+  width: 120px !important;
+  height: 120px !important;
+  border-radius: 8px;
+  object-fit: cover;
+  margin: 0;
+}
+
+
+.vendor-profile-description {
+  color: #000;
+  font-family: Outfit;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  max-width: 100%;
+  word-break: break-word;
+  text-align: left;
+}
+
+.vendor-profile-name {
+  color: #A328F4;
+  text-align: center;
+  font-family: Outfit;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.vendor-profile-owner {
+  color: #000;
+font-family: Outfit;
+font-size: 14px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+text-align: center;
+}
+
+/* 🔹 Reviews Section */
+.section-container-reviews {
+  margin: 20px 0;
+}
+
+.reviews-section {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .reviews-section {
+    grid-template-columns: 1fr; /* Single column on mobile */
+  }
+}
+
+.review-item {
+  padding: 20px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.review-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reviewer-name {
+  padding: 0;
+  margin: 0;
+  color: #000;
+  font-family: Outfit;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.review-date {
+  color: #79747E;
+  font-family: Outfit;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.review-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.review-text {
+  color: #4A4A4A;
+  font-family: Outfit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  margin: 0;
+  text-align: left;
+}
+
+.read-more {
+  color: #A328F4;
+  font-family: Outfit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  align-self: flex-end;
+}
+
+.read-more:hover {
+  text-decoration: underline;
+}
+
+.star-icon-portfolio {
+  width: 24px;
+  height: 24px;
+}
+
+.star-icon-portfolio.star-filled {
+  filter: none;
+  opacity: 1;
+}
+
+.star-icon-portfolio.star-empty {
+  opacity: 0.3;
+}
+
+.section-header {
+  color: var(--Text-text-primary, #010101);
+font-family: Outfit;
+font-size: 24px;
+font-style: normal;
+font-weight: 600;
+line-height: 150%; /* 36px */
+}
+
+.reviews-header {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  justify-content: left;
+  margin-bottom: 20px;
+}
+
+.reviews-average {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.average-rating {
+  color: #000;
+  font-family: Outfit;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
+.review-count {
+  color: #79747E;
+  font-family: Outfit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 18px */
+}
+
+.rating-stars {
+  display: flex;
+  align-items: left;
+  gap: 12px;
+  flex-direction: column;
+  justify-content: left;
+}
+
+.stars-container {
+  display: flex;
+  gap: 4px;
+}
+
+.star-icon.star-filled {
+  filter: none;
+  opacity: 1;
+}
+
+.star-icon.star-empty {
+  opacity: 0.3;
 }

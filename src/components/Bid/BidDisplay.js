@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient'; // Import your Supabase client
 import bidiCheck from '../../assets/images/Bidi-Favicon.png';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function BidDisplay({ bid, handleApprove, handleDeny }) {
     const [isBidiVerified, setIsBidiVerified] = useState(false);
@@ -9,6 +9,15 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
     const [error, setError] = useState(null);  // Error state
     const [downPayment, setDownPayment] = useState(null); // New state for down payment
     const [downPaymentAmount, setDownPaymentAmount] = useState(null); // New state for down payment
+    const [showBubble, setShowBubble] = useState(true); // State to control the visibility of the bubble
+    const navigate = useNavigate();
+    const handleProfileClick = () => {
+        setShowBubble(false); // Hide the bubble when the profile image is clicked
+        navigate(`/portfolio/${bid.business_profiles.id}`);
+    };
+
+    const profileImage = bid.business_profiles.profile_image || '/images/default.jpg'; // Default image if none
+
     useEffect(() => {
         const fetchMembershipTier = async () => {
             try {
@@ -50,7 +59,15 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
         <div className="request-display">
             <div className="d-flex justify-content-between align-items-center">
                 {/* Left Aligned: Business Name */}
-                <div className="request-title" style={{ marginBottom: '0', textAlign: 'left' }}>
+                <div className="request-title" style={{ marginBottom: '0', textAlign: 'left', position: 'relative' }}>
+                    <img 
+                        src={profileImage} 
+                        alt={`${bid.business_profiles.business_name} profile`} 
+                        className="vendor-profile-image" 
+                        onClick={handleProfileClick} 
+                        style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%', marginRight: '10px' }}
+                    />
+
                     <Link 
                         to={`/portfolio/${bid.business_profiles.id}`} 
                         style={{ textDecoration: "none", color: "inherit", fontWeight: "bold" }}
@@ -93,12 +110,6 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                 <p className="request-description" style={{ textAlign: 'left' }}>
                     <strong>Description:</strong> {bid.bid_description}
                 </p>
-                {/* If there's a website, display it */}
-                {bid.business_profiles.website && (
-                    <p className="request-comments" style={{ textAlign: 'left' }}>
-                        <strong>Website:</strong> <a href={bid.business_profiles.website} target="_blank" rel="noopener noreferrer">{bid.business_profiles.website}</a>
-                    </p>
-                )}
                 {/* Display down payment information */}
                 {downPayment && downPaymentAmount !== null && (
                     <p className="request-comments" style={{ textAlign: 'left' }}>

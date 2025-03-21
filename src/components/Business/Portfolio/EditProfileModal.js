@@ -8,6 +8,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const [portfolioPics, setPortfolioPics] = useState([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const [newSpecialization, setNewSpecialization] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -41,18 +42,20 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const handleSave = async () => {
     try {
       const updatedData = { ...formData };
-      delete updatedData.portfolio; // Remove portfolio field from general updates
+      delete updatedData.portfolio; // Remove portfolio field if it exists
 
       if (Object.keys(updatedData).length > 0) {
-        await supabase
+        const { error } = await supabase
           .from("business_profiles")
           .update(updatedData)
           .eq("id", businessId);
+          
+        if (error) throw error;
       }
-
-      onClose(); // Close modal after saving
+      onClose(); // Close modal after successful save
     } catch (error) {
       console.error("Error updating business data:", error);
+      alert("Failed to update profile. Please try again.");
     }
   };
 
@@ -135,6 +138,23 @@ const handleDeleteImage = async (imageUrl) => {
   }
 };
 
+const handleSpecializationAdd = () => {
+  if (newSpecialization.trim() !== "") {
+    setFormData({
+      ...formData,
+      specializations: [...(formData.specializations || []), newSpecialization.trim()]
+    });
+    setNewSpecialization("");
+  }
+};
+
+const handleSpecializationRemove = (indexToRemove) => {
+  setFormData({
+    ...formData,
+    specializations: formData.specializations.filter((_, index) => index !== indexToRemove)
+  });
+};
+
   return (
     isOpen && (
       <div className="edit-portfolio-modal">
@@ -142,18 +162,66 @@ const handleDeleteImage = async (imageUrl) => {
           <div className="modal-content">
             <h2>Edit {initialData.portfolio ? "Portfolio" : "Profile"}</h2>
 
-            {/* 🔹 Dynamic Form Fields (Non-Portfolio Data) */}
+            {/* Dynamic Form Fields (Non-Portfolio Data) */}
             {Object.keys(formData).length > 0 && !formData.portfolio && (
               <div>
                 {Object.entries(formData).map(([key, value]) => (
                   <div key={key} className="modal-input-group">
-                    <label>{key.replace("_", " ")}</label>
-                    <input
-                      type="text"
-                      name={key}
-                      value={value || ""}
-                      onChange={handleChange}
-                    />
+                    <label>{key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</label>
+                    {key === 'story' ? (
+                      <textarea
+                        name={key}
+                        value={value || ""}
+                        onChange={handleChange}
+                        rows={6}
+                        style={{ resize: 'vertical', minHeight: '150px' }}
+                      />
+                    ) : key === 'specializations' ? (
+                      <div className="specializations-container">
+                        <div className="specializations-list">
+                          {value?.map((specialty, index) => (
+                            <div key={index} className="specialization-item">
+                              {specialty}
+                              <button
+                                type="button"
+                                className="remove-button"
+                                onClick={() => handleSpecializationRemove(index)}
+                              >
+                                ✖
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="specialization-input">
+                          <input
+                            type="text"
+                            placeholder="Add a specialization..."
+                            value={newSpecialization}
+                            onChange={(e) => setNewSpecialization(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleSpecializationAdd();
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="add-button"
+                            onClick={handleSpecializationAdd}
+                          >
+                            Add
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        name={key}
+                        value={value || ""}
+                        onChange={handleChange}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -192,9 +260,10 @@ const handleDeleteImage = async (imageUrl) => {
               </div>
             )}
 
-            {/* 🔹 Action Buttons */}
+            {/* Action Buttons */}
             <div className="modal-actions">
-              <button className="save-close-btn" onClick={onClose}>Save and Close</button>
+              <button className="close-btn" onClick={onClose}>Cancel</button>
+              <button className="save-btn" onClick={handleSave}>Save Changes</button>
             </div>
           </div>
         </div>
