@@ -640,6 +640,25 @@ const BusinessDashboard = () => {
     }
   };
 
+  const handleViewPortfolio = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+  
+    const { data: profileDetails, error } = await supabase
+      .from('business_profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+  
+    if (error) {
+      console.error('Error fetching profile details:', error);
+      return;
+    }
+  
+    navigate(`/portfolio/${profileDetails.id}`);
+  };
+  
+
   if (isLoading) {
     return (
       <div className="business-dashboard text-center">
@@ -718,6 +737,15 @@ const BusinessDashboard = () => {
               onClick={handleViewRequests} // Updated to conditionally show modal
             >
               View Requests
+            </button>
+          </div>
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
+            <button
+              style={{fontWeight:'bold'}}
+              className="btn-secondary flex-fill"
+              onClick={handleViewPortfolio}
+            >
+              View Portfolio
             </button>
           </div>
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
