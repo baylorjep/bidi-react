@@ -745,7 +745,7 @@ const BusinessDashboard = () => {
               className="btn-secondary flex-fill"
               onClick={handleViewPortfolio}
             >
-              View Portfolio
+              View/Edit Profile
             </button>
           </div>
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
