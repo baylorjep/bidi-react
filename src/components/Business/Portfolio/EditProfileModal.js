@@ -305,6 +305,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                         value={value || ""}
                         onChange={handleChange}
                         rows={6}
+                        placeholder="Write about you, your business, your story..."
                         style={{ resize: 'vertical', minHeight: '150px' }}
                       />
                     ) : key === 'specializations' ? (
@@ -345,6 +346,15 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                           </button>
                         </div>
                       </div>
+                    ) : key === 'business_address' ? (
+                      <input
+                        type="text"
+                        name={key}
+                        value={value || ""}
+                        onChange={handleChange}
+                        placeholder="Enter the areas you cover (e.g., Utah)"
+                      />
+                      
                     ) : (
                       <input
                         type="text"
