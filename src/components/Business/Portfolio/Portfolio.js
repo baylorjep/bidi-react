@@ -180,14 +180,22 @@ const Portfolio = () => {
       />
 
       <div className="portfolio-container">
-            <div className="portfolio-layout">
+        <div className="portfolio-layout">
+          {portfolioPics.length === 1 ? (
+            <img 
+              src={portfolioPics[0]} 
+              alt="Main Portfolio" 
+              className="single-portfolio-image" 
+              onClick={() => handleImageClick(portfolioPics[0])}
+            />
+          ) : (
+            <>
               <img 
                 src={portfolioPics.length > 0 ? portfolioPics[0] : "/images/portfolio.jpeg"} 
                 alt="Main Portfolio" 
                 className="main-portfolio-image" 
                 onClick={() => handleImageClick(portfolioPics[0])}
               />
- 
               <div className="portfolio-grid">
                 {portfolioPics.length > 0
                   ? portfolioPics.slice(1, 5).map((img, index) => (
@@ -207,14 +215,15 @@ const Portfolio = () => {
                     + See All
                   </button>
                 )}
-
               </div>
-              {isOwner && (
-                <button className="edit-icon" onClick={() => openEditModal({ portfolio: portfolioPics })}>
-                  ✎
-                </button>
-              )}
-            </div>
+            </>
+          )}
+          {isOwner && (
+            <button className="edit-icon" onClick={() => openEditModal({ portfolio: portfolioPics })}>
+              ✎
+            </button>
+          )}
+        </div>
         <div className="section-container">
           
           <div className="section-left">

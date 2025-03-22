@@ -704,3 +704,10 @@ line-height: 150%; /* 36px */
 .star-icon.star-empty {
   opacity: 0.3;
 }
+
+.single-portfolio-image {
+  width: 100%;
+  height: 570px;
+  object-fit: cover;
+  border-radius: 10px;
+}
