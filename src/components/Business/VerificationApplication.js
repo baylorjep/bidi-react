@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import '../../App.css';
+import './VerificationApplication.css'; // Add this line
 
 const VerificationApplication = () => {
   const navigate = useNavigate();
@@ -118,13 +119,28 @@ const VerificationApplication = () => {
   return (
     <div className="container mt-5 mb-5">
       <div className="row justify-content-center">
-        <div className="col-lg-8 col-md-10">
-          <div className="request-form-container-details" style={{padding: '40px', height: '100%', borderRadius: '8px'}}>
+        <div style={{
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          display: 'flex', 
+          flexDirection: 'column', // Add this line for mobile responsiveness
+          padding: '0 15px' // Add padding for mobile responsiveness
+        }} className="col-md-8">
+          <div className="request-form-container-details" style={{
+            padding: '40px', 
+            height: '100%', 
+            borderRadius: '8px',
+            width: '100%', // Ensure full width on mobile
+            maxWidth: '600px' // Limit max width for larger screens
+          }}>
             <h2 className="text-center mb-4" style={{
               color: '#000',
               fontFamily: 'Outfit',
               fontSize: '30px',
-              fontWeight: '700'
+              fontWeight: '700',
+              wordBreak: 'break-word',
+              textOverflow: 'clip',
+              whiteSpace: 'normal'
             }}>Bidi Verification Application</h2>
             
             {/* Add new benefits section */}
@@ -179,7 +195,7 @@ const VerificationApplication = () => {
               We'll review your application and update your status within 2-3 business days.
             </p>
 
-            <form onSubmit={handleSubmit} style={{width: '80%', margin: '0 auto'}}>
+            <form onSubmit={handleSubmit} style={{width: '100%', margin: '0 auto'}}> {/* Change width to 100% */}
               <div className="mb-4">
                 <label className="form-label" style={{
                   color: '#000',

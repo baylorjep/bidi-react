@@ -1,0 +1,43 @@
+@media (max-width: 768px) {
+  .request-form-container-details {
+    padding: 8px !important;
+  }
+
+  .benefits-section {
+    padding: 16px;
+  }
+
+  .form-label {
+    font-size: 14px;
+  }
+
+  .form-control {
+    padding: 10px;
+  }
+
+  .btn-submit {
+    padding: 10px 24px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 400px) {
+  .benefits-section {
+    padding: 0px;
+  }
+
+  .benefits-section h3 {
+    font-size: 18px;
+    text-overflow: clip;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  .benefits-section p {
+    font-size: 14px;
+  }
+
+  .benefits-section span {
+    margin-top: 0;
+  }
+}
