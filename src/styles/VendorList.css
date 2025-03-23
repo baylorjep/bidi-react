@@ -155,6 +155,30 @@
     display: none !important; /* Hide default slick arrows */
 }
 
+.custom-arrow {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 40px;
+    background: var(--White-15, rgba(255, 255, 255, 0.15));
+    backdrop-filter: blur(14px);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    cursor: pointer;
+}
+
+.custom-next-arrow {
+    right: 10px;
+}
+
+.custom-prev-arrow {
+    left: 10px;
+}
+
 .vendor-info {
     display: flex;
     flex-direction: column;
@@ -166,6 +190,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-top: 20px;
 }
 
 .vendor-profile-image {
@@ -397,11 +422,11 @@
     }
 
     .portfolio-images {
-        width: 100%;
+        width: 80%;
     }
 
     .portfolio-image {
-        height: auto !important;
+        height: 60vh !important;
     }
 
     .vendor-info {
@@ -460,11 +485,7 @@
     }
 
     .portfolio-images {
-        width: 100%;
-    }
-
-    .portfolio-image {
-        height: auto !important;
+        width: 90%;
     }
 
     .vendor-info {

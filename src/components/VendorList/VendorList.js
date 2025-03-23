@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Slider from 'react-slick';
 import { supabase } from '../../supabaseClient';
@@ -13,7 +13,6 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalImage, setModalImage] = useState('');
-    const sliderRef = useRef(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -139,13 +138,16 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
         speed: 500,
         slidesToShow: 1,
         slidesToScroll: 1,
+        nextArrow: <SampleNextArrow />,
+        prevArrow: <SamplePrevArrow />
     };
 
     function SampleNextArrow(props) {
         const { className, style, onClick } = props;
         return (
             <div
-                className={className}
+                className={`${className} custom-arrow custom-next-arrow`}
+                onClick={onClick}
                 style={{ 
                     ...style, 
                     display: 'flex', 
@@ -163,11 +165,7 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                     right: '10px', 
                     transform: 'translateY(-50%)' 
                 }}
-                onClick={() => sliderRef.current.slickNext()}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M8.91016 19.9201L15.4302 13.4001C16.2002 12.6301 16.2002 11.3701 15.4302 10.6001L8.91016 4.08008" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
             </div>
         );
     }
@@ -176,7 +174,8 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
         const { className, style, onClick } = props;
         return (
             <div
-                className={className}
+                className={`${className} custom-arrow custom-prev-arrow`}
+                onClick={onClick}
                 style={{ 
                     ...style, 
                     display: 'flex', 
@@ -193,13 +192,9 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                     top: '50%', 
                     left: '10px', 
                     transform: 'translateY(-50%)',
-                    zIndex: '2'
+                    zIndex: '10'
                 }}
-                onClick={() => sliderRef.current.slickPrev()}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M15.0898 4.08008L8.56982 10.6001C7.79982 11.3701 7.79982 12.6301 8.56982 13.4001L15.0898 19.9201" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
             </div>
         );
     }
@@ -258,7 +253,7 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                 <div key={vendor.id} className="vendor-card">
                     <div className="portfolio-images">
                         {vendor.portfolio_photos.length > 0 ? (
-                            <Slider ref={sliderRef} {...settings}>
+                            <Slider {...settings}>
                                 {vendor.portfolio_photos.map((photo, index) => (
                                     <div key={index} onClick={() => openModal(photo)}>
                                         <img src={photo} alt={`Portfolio ${index}`} className="portfolio-image" />
@@ -268,8 +263,6 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                         ) : (
                             <img src="/images/default.jpg" alt="No portfolio available" className="portfolio-image" />
                         )}
-                        <SampleNextArrow />
-                        <SamplePrevArrow />
                     </div>
                     <div className="vendor-info">
                         <div className="vendor-header">
