@@ -12,16 +12,15 @@
 }
 
 .image-modal-content {
-  position: relative;
   max-width: 90%;
   max-height: 90%;
-  overflow: hidden;
+  height: auto;
+  width: auto;
 }
 
 .image-modal-img {
   width: 100%;
-  height: auto;
-  object-fit: contain;
+  height: 80vh;
   border-radius: 8px;
 }
 
