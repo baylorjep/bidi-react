@@ -19,7 +19,8 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
         const fetchVendors = async () => {
             let query = supabase
                 .from('business_profiles')
-                .select('*');
+                .select('*')
+                .or('stripe_account_id.not.is.null,stripe_account_id.not.eq.,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
                 query = query.eq('business_category', selectedCategory);

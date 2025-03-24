@@ -3,6 +3,7 @@ import '../../App.css';
 import './AdminDashboard.css';
 import UnviewedBids from './UnviewedBids';
 import VerificationApplications from './VerificationApplications';
+import AcceptedBids from './AcceptedBids'; // Import the new component
 
 function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('bids');
@@ -45,12 +46,29 @@ function AdminDashboard() {
                         >
                             Verification Applications
                         </button>
+                        <button
+                            className={`btn ${activeTab === 'accepted' ? 'btn-primary' : 'btn-outline-primary'}`}
+                            onClick={() => setActiveTab('accepted')}
+                            style={{
+                                borderRadius: '0 20px 20px 0',
+                                padding: '10px 30px',
+                                fontFamily: 'Outfit',
+                                fontWeight: '600',
+                                backgroundColor: activeTab === 'accepted' ? '#A328F4' : 'white',
+                                color: activeTab === 'accepted' ? 'white' : '#A328F4',
+                                border: '2px solid #A328F4'
+                            }}
+                        >
+                            Accepted Bids
+                        </button>
                     </div>
                 </div>
 
                 {/* Content */}
                 <div className="admin-content">
-                    {activeTab === 'bids' ? <UnviewedBids /> : <VerificationApplications />}
+                    {activeTab === 'bids' && <UnviewedBids />}
+                    {activeTab === 'verification' && <VerificationApplications />}
+                    {activeTab === 'accepted' && <AcceptedBids />}
                 </div>
             </div>
         </div>
