@@ -40,7 +40,7 @@ const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
         // Fetch the user's profile information
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role, has_seen_source_modal')
             .eq('id', user.id)
             .single();
 
@@ -51,12 +51,14 @@ const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
 
         setCurrentProfile(profile);
 
+        // Only show modal if user hasn't seen it before
         if (!profile.has_seen_source_modal) {
             setCurrentUserId(user.id);
             setShowSourceModal(true);
             return;
         }
 
+        // If user has seen modal, proceed with normal navigation
         if (profile.role === 'individual') {
             if (onSuccess) {
                 onSuccess(); // Call the success callback if provided
