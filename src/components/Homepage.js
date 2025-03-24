@@ -230,8 +230,8 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                     </div>
                     <div className='reason'>
                         <img className='reason-photo'src={WhyBidiPhoto2}></img>
-                        <div className='reason-title'>Competitive Pricing</div>
-                        <div className='reason-box'>Our revolutionary bidding system forces companies to directly compete with each other for your business. This transparent competition means you get the best price, every time. Wedding vendors submit detailed proposals tailored to your specific needs, allowing you to compare services and prices easily.</div>
+                        <div className='reason-title'>Transparent Pricing</div>
+                        <div className='reason-box'>Our transparent pricing system ensures you always know exactly what you're paying for—no hidden fees, no surprises. Wedding vendors provide detailed proposals tailored to your specific needs, allowing you to compare services and prices with confidence.</div>
                     </div>
                     <div className='reason'>
                         <img className='reason-photo'src={WhyBidiPhoto3}></img>
