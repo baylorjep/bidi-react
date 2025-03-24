@@ -68,6 +68,7 @@ import ContactForm from './components/ContactForm';
 import AboutUs from './components/AboutUs';
 
 // Messaging imports
+import MessagingView from './components/Messaging/MessagingView';
 
 
 // Spanish imports
@@ -183,7 +184,7 @@ function App() {
                         <Route path="/about-us" element={<AboutUs />} />
                         
                         {/* Messaging Routes */}
-                        
+                        <Route path="/messaging" element={<MessagingView />} />
 
                         {/* Spanish Routes */}
                         <Route path="/inicio" element={<HomepageES />} />
