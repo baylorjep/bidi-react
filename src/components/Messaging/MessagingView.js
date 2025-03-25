@@ -1,36 +1,31 @@
+// src/components/MessagingView.js
 import React, { useState, useEffect } from "react";
-import io from "socket.io-client";
+import { socket } from "../socket";
 import { supabase } from "../../supabaseClient";
 import "../../styles/messaging.css";
-
-// Connect to your deployed Socket.IO server
-// (if hosted on the same domain in production, you can simply call io())
-const socket = io("https://bidi-express.vercel.app");
 
 const MessagingView = () => {
   const [currentUserId, setCurrentUserId] = useState("");
   const [chatPartnerId, setChatPartnerId] = useState("");
-  const [allUsers, setAllUsers] = useState([]); // List of users for testing
+  const [allUsers, setAllUsers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
-  // Retrieve current user from Supabase on mount
+  // Retrieve current user from Supabase
   useEffect(() => {
     const getCurrentUser = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
-        // Join the room corresponding to this user
         socket.emit("join", user.id);
       } else {
         console.error("No user found", error);
       }
     };
-
     getCurrentUser();
   }, []);
 
-  // Fetch a list of all users from the "profiles" table for beta testing
+  // Fetch a list of users for beta testing chat partner selection
   useEffect(() => {
     const fetchUsers = async () => {
       const { data, error } = await supabase.from("profiles").select("id, email");
@@ -40,19 +35,16 @@ const MessagingView = () => {
         setAllUsers(data);
       }
     };
-
     fetchUsers();
   }, []);
 
   // Listen for incoming messages
   useEffect(() => {
     socket.on("receive_message", (data) => {
-      // Only add messages that involve the current user
       if (data.senderId === currentUserId || data.receiverId === currentUserId) {
         setMessages((prev) => [...prev, data]);
       }
     });
-
     return () => {
       socket.off("receive_message");
     };
@@ -60,17 +52,12 @@ const MessagingView = () => {
 
   const sendMessage = () => {
     if (newMessage.trim() === "" || chatPartnerId === "") return;
-
     const messageData = {
       senderId: currentUserId,
       receiverId: chatPartnerId,
       message: newMessage,
     };
-
-    // Emit the message to the server
     socket.emit("send_message", messageData);
-
-    // Optionally update UI immediately (optimistic update)
     setMessages((prev) => [...prev, messageData]);
     setNewMessage("");
   };
@@ -92,12 +79,13 @@ const MessagingView = () => {
           ))}
         </select>
       </div>
-
       <div className="messages-list">
         {messages.map((msg, index) => (
           <div
             key={index}
-            className={`message ${msg.senderId === currentUserId ? "sent" : "received"}`}
+            className={`message ${
+              msg.senderId === currentUserId ? "sent" : "received"
+            }`}
           >
             <span className="message-text">{msg.message}</span>
           </div>
