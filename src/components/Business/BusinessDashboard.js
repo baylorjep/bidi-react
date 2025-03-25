@@ -4,6 +4,7 @@ import { supabase } from "../../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 import '../../App.css'; // Include this for custom styles
 import { Modal, Button } from 'react-bootstrap'; // Make sure to install react-bootstrap
+import Verification from '../../assets/Frame 1162.svg'
 
 const BusinessDashboard = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -741,11 +742,13 @@ const BusinessDashboard = () => {
           </div>
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
             <button
-              style={{fontWeight:'bold'}}
-              className="btn-secondary flex-fill"
+              style={{fontWeight:'bold', color:'#9633eb'}}
+              className="btn-primary flex-fill"
               onClick={handleViewPortfolio}
             >
-              View/Edit Profile
+                      <i className="fas fa-user-circle" style={{ marginRight: '8px' }}></i>
+                View/Edit Portfolio
+        
             </button>
           </div>
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
@@ -773,68 +776,78 @@ const BusinessDashboard = () => {
               </div>
             ) : (
               <button
-              style={{fontWeight:'bold'}}
-                className="btn-secondary flex-fill"
+              style={{fontWeight:'bold', color:'#9633eb'}}
+                className="btn-primary flex-fill"
                 onClick={() => navigate("/onboarding")}
               >
+              <i className="fas fa-dollar-sign" style={{ marginRight: '8px' }}></i>
                 Set Up Payment Account
               </button>
             )}
           </div>
-          {/* Only show verification button if not verified */}
-          {!isVerified && (
-            <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}} >
-              <button
-                className="btn-secondary flex-fill"
-                style={{
-                  fontWeight: 'bold',
-                  opacity: isVerificationPending ? '0.7' : '1',
-                  cursor: isVerificationPending ? 'not-allowed' : 'pointer',
-                  background: isVerificationPending ? '#6c757d' : undefined // Grayed out when pending
-                }}
-                onClick={() => !isVerificationPending && navigate("/verification-application")}
-                disabled={isVerificationPending}
-              >
-                {isVerificationPending ? (
-                  <span>
+                {!isVerified && (
+                <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}} >
+                  <button
+                  className="btn-primary flex-fill"
+                  style={{
+                    fontWeight: 'bold',
+                    opacity: isVerificationPending ? '0.7' : '1',
+                    cursor: isVerificationPending ? 'not-allowed' : 'pointer',
+                    background: isVerificationPending ? '#6c757d' : undefined, // Grayed out when pending
+                    color:'#9633eb'
+                  }}
+                  onClick={() => !isVerificationPending && navigate("/verification-application")}
+                  disabled={isVerificationPending}
+                  >
+                  {isVerificationPending ? (
+                    <span>
                     Verification Pending 
                     <i className="fas fa-spinner fa-spin ml-2" style={{ marginLeft: '8px' }}></i>
-                  </span>
-                ) : 'Apply to be Bidi Verified'}
-              </button>
-            </div>
-          )}
-          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
-            <button
-            style={{fontWeight:'bold'}}
-              className="btn-secondary flex-fill"
-              onClick={() => setShowModal(true)}
-            >
-              Set Up Down Payment
-            </button>
-          </div>
-          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
-            <button
-              style={{fontWeight:'bold'}}
-              className="btn-secondary flex-fill"
-              onClick={() => setShowMinPriceModal(true)}
-            >
-              Set Minimum Price {currentMinPrice ? `($${currentMinPrice})` : ''}
-            </button>
-          </div>
-          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
-            <button
-              style={{fontWeight:'bold'}}
-              className="btn-secondary flex-fill"
-              onClick={handleGenerateCoupon}
-            >
-              {getButtonText()}
-            </button>
-          </div>
-        </div>
-      </div>
+                    </span>
+                  ) : (
+                    <span>
+                    <img src={Verification} alt="Bidi Verification Logo" style={{ marginRight: '8px', height: '20px' }} />
+                    Apply to be Bidi Verified
 
-      {/* Bids Section */}
+                    </span>
+                  )}
+                  </button>
+                </div>
+                )}
+                <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
+                <button
+                style={{fontWeight:'bold', color:'#9633eb'}}
+                  className="btn-primary flex-fill"
+                  onClick={() => setShowModal(true)}
+                >
+                  <i className="fas fa-dollar-sign" style={{ marginRight: '8px' }}></i>
+                  Set Up Down Payment
+                </button>
+                </div>
+                <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
+                <button
+                  style={{fontWeight:'bold', color:'#9633eb'}}
+                  className="btn-primary flex-fill"
+                  onClick={() => setShowMinPriceModal(true)}
+                >
+                  <i className="fas fa-tag" style={{ marginRight: '8px' }}></i>
+                  Set Minimum Price {currentMinPrice ? `($${currentMinPrice})` : ''}
+                </button>
+                </div>
+                <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
+                <button
+                  style={{fontWeight:'bold', color:'#9633eb'}}
+                  className="btn-primary flex-fill"
+                  onClick={handleGenerateCoupon}
+                >
+                  <i className="fas fa-ticket-alt" style={{ marginRight: '8px' }}></i>
+                  {getButtonText()}
+                </button>
+                </div>
+              </div>
+              </div>
+
+              {/* Bids Section */}
       <div className="container">
         <h3>Your Active Bids</h3>
         <div className="row">
