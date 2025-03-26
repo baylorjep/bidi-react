@@ -16167,6 +16167,53 @@ font-weight: 400;
 line-height: 150%; /* 27px */
 }
 
+.setup-progress-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.setup-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.setup-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+}
+
+.setup-item i {
+  font-size: 1.2rem;
+  width: 24px;
+}
+
+.setup-item span {
+  flex-grow: 1;
+  text-align: left;
+}
+
+.setup-item.completed {
+  background-color: #e8f5e9;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #9633eb;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-link:hover {
+  color: #7526bd;
+}
+
 @media (max-width: 860px) {
   .try-now-title {
     font-size: 28px;

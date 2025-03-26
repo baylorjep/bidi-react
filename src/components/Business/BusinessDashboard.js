@@ -33,6 +33,13 @@ const BusinessDashboard = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [isVerificationPending, setIsVerificationPending] = useState(false);
   const [stripeError, setStripeError] = useState(false);
+  const [portfolioPhotos, setPortfolioPhotos] = useState([]);
+  const [setupProgress, setSetupProgress] = useState({
+    paymentAccount: false,
+    downPayment: false,
+    minimumPrice: false,
+    affiliateCoupon: false
+  });
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
@@ -61,11 +68,30 @@ const BusinessDashboard = () => {
 
         if (verificationError) throw verificationError;
 
+        // Check for profile photos
+        const { data: photos, error: photosError } = await supabase
+          .from('profile_photos')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (photosError) throw photosError;
+
+        // Update setupProgress state with accurate photo count
+        setPortfolioPhotos(photos || []);
+        setSetupProgress(prev => ({
+          ...prev,
+          portfolio: photos && photos.length > 0
+        }));
+
         // Set pending status only if membership tier is empty/null AND there's a verification application
         const isPending = (!profile.membership_tier || profile.membership_tier === '') && verificationApp !== null;
         
         setIsVerified(profile.membership_tier === "Plus" || profile.membership_tier === "Verified");
         setIsVerificationPending(isPending);
+        setSetupProgress(prev => ({
+          ...prev, 
+          portfolio: photos && photos.length > 0
+        }));
 
         setIsLoading(true);
         setError(null);
@@ -92,17 +118,41 @@ const BusinessDashboard = () => {
 
         if (profileDetails) {
           setBusinessName(profileDetails.business_name);
-          // Check if user has admin privileges - Fix the error here
           setIsAdmin(profileDetails.business_category === "admin");
           if (profileDetails.stripe_account_id) {
             setConnectedAccountId(profileDetails.stripe_account_id);
-          } 
-          
-          // Only show modal automatically if down payment has never been set
-          if (profileDetails.down_payment_type === null && profileDetails.amount === null) {
-            setShowModal(true);
+            setSetupProgress(prev => ({...prev, paymentAccount: true}));
           }
-  
+          
+          if (profileDetails.down_payment_type !== null && profileDetails.amount !== null) {
+            setSetupProgress(prev => ({...prev, downPayment: true}));
+          }
+
+          if (profileDetails.minimum_price !== null) {
+            setSetupProgress(prev => ({...prev, minimumPrice: true}));
+          }
+
+          // Check portfolio photos
+          const { data: photos } = await supabase
+            .from('portfolio_photos')
+            .select('id')
+            .eq('business_id', user.id);
+          
+          setPortfolioPhotos(photos || []);
+          setSetupProgress(prev => ({...prev, portfolio: photos && photos.length > 0}));
+
+          // Check affiliate coupon
+          const { data: coupons } = await supabase
+            .from('coupons')
+            .select('*')
+            .eq('business_id', user.id)
+            .eq('valid', true)
+            .single();
+
+          if (coupons) {
+            setSetupProgress(prev => ({...prev, affiliateCoupon: true}));
+          }
+
           // Fetch current bids for this business
           const { data: bidsData, error: bidsError } = await supabase
             .from('bids')
@@ -686,6 +736,50 @@ const BusinessDashboard = () => {
   return (
     <div className="business-dashboard text-center">
       <h1 className="dashboard-title">Welcome, {businessName}!</h1>
+
+      {/* Only show setup progress if not everything is completed */}
+      {(!setupProgress.paymentAccount || 
+        !setupProgress.downPayment || 
+        !setupProgress.minimumPrice || 
+        !setupProgress.affiliateCoupon) && (
+        <div className="setup-progress-container container mt-4 mb-4">
+          <div className="card">
+            <div className="card-body">
+              <h3 className="card-title mb-4">Account Setup Progress</h3>
+              <div className="setup-items">
+                {!setupProgress.paymentAccount && (
+                  <div className="setup-item">
+                    <i className="fas fa-times-circle text-danger"></i>
+                    <span>Payment Account Setup</span>
+                    <button className="btn-link" onClick={() => navigate("/onboarding")}>Set up now</button>
+                  </div>
+                )}
+                {!setupProgress.downPayment && (
+                  <div className="setup-item">
+                    <i className="fas fa-times-circle text-danger"></i>
+                    <span>Down Payment Setup</span>
+                    <button className="btn-link" onClick={() => setShowModal(true)}>Set up now</button>
+                  </div>
+                )}
+                {!setupProgress.minimumPrice && (
+                  <div className="setup-item">
+                    <i className="fas fa-times-circle text-danger"></i>
+                    <span>Minimum Price Set</span>
+                    <button className="btn-link" onClick={() => setShowMinPriceModal(true)}>Set now</button>
+                  </div>
+                )}
+                {!setupProgress.affiliateCoupon && (
+                  <div className="setup-item">
+                    <i className="fas fa-times-circle text-danger"></i>
+                    <span>Affiliate Coupon Generated</span>
+                    <button className="btn-link" onClick={handleGenerateCoupon}>Generate now</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="edit-profile-container">
           <Link to="/profile" className="edit-profile">
