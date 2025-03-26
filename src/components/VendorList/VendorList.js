@@ -19,7 +19,8 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
         const fetchVendors = async () => {
             let query = supabase
                 .from('business_profiles')
-                .select('*');
+                .select('*')
+                .or('stripe_account_id.not.is.null,stripe_account_id.not.eq.,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
                 query = query.eq('business_category', selectedCategory);
@@ -85,28 +86,48 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
             // Sort vendors based on the sortOrder and prioritize profiles with photos
             let sortedVendors;
 
+            // First sort by whether they have portfolio photos
+            const sortByPhotos = (a, b) => {
+                const aHasPhotos = a.portfolio_photos.length > 0;
+                const bHasPhotos = b.portfolio_photos.length > 0;
+                if (aHasPhotos && !bHasPhotos) return -1;
+                if (!aHasPhotos && bHasPhotos) return 1;
+                return 0;
+            };
+
             if (sortOrder === 'recommended') {
                 sortedVendors = vendorsWithPhotos.sort((a, b) => {
+                    const photoSort = sortByPhotos(a, b);
+                    if (photoSort !== 0) return photoSort;
+
                     const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
                     const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
-
                     if (aIsVerified && !bIsVerified) return -1;
                     if (!aIsVerified && bIsVerified) return 1;
                     return 0;
                 });
             } else if (sortOrder === 'rating') {
-                sortedVendors = vendorsWithPhotos.sort((a, b) => b.average_rating - a.average_rating);
+                sortedVendors = vendorsWithPhotos.sort((a, b) => {
+                    const photoSort = sortByPhotos(a, b);
+                    if (photoSort !== 0) return photoSort;
+                    return b.average_rating - a.average_rating;
+                });
             } else if (sortOrder === 'base_price_low') {
-                sortedVendors = vendorsWithPhotos.sort((a, b) => a.minimum_price - b.minimum_price);
+                sortedVendors = vendorsWithPhotos.sort((a, b) => {
+                    const photoSort = sortByPhotos(a, b);
+                    if (photoSort !== 0) return photoSort;
+                    return a.minimum_price - b.minimum_price;
+                });
             } else if (sortOrder === 'base_price_high') {
-                sortedVendors = vendorsWithPhotos.sort((a, b) => b.minimum_price - a.minimum_price);
+                sortedVendors = vendorsWithPhotos.sort((a, b) => {
+                    const photoSort = sortByPhotos(a, b);
+                    if (photoSort !== 0) return photoSort;
+                    return b.minimum_price - a.minimum_price;
+                });
             } else {
                 sortedVendors = vendorsWithPhotos.sort((a, b) => {
-                    const aHasPhotos = a.portfolio_photos.length > 0;
-                    const bHasPhotos = b.portfolio_photos.length > 0;
-
-                    if (aHasPhotos && !bHasPhotos) return -1;
-                    if (!aHasPhotos && bHasPhotos) return 1;
+                    const photoSort = sortByPhotos(a, b);
+                    if (photoSort !== 0) return photoSort;
 
                     switch (sortOrder) {
                         case 'distance':
@@ -133,7 +154,6 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
     }
 
     const settings = {
-        dots: true,
         infinite: false,
         speed: 500,
         slidesToShow: 1,
