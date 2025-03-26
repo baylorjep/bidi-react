@@ -16543,3 +16543,24 @@ label {
   background-color: #ffe6e6; /* Light red background */
   color: #b22222; /* Darker red text */
 }
+
+.hide-button {
+  background-color: white;
+  border: none;
+  color: #9633eb;
+  transition: all 0.3s ease;
+}
+
+.hide-button:hover {
+  cursor: pointer;
+  scale: 1.05;
+  color: #9633eb;
+}
+
+.toggle-hidden-button {
+  background-color: white;
+  border: none;
+  color: #9633eb;
+  transition: all 0.3s ease;
+  display: flex;
+}

@@ -20,6 +20,7 @@ const Portfolio = () => {
   const [bidStats, setBidStats] = useState({ average: null, count: 0 });
   const [reviews, setReviews] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [expandedReviews, setExpandedReviews] = useState({});
   const navigate = useNavigate();
 
   const fetchBusinessData = async () => {
@@ -161,6 +162,13 @@ const Portfolio = () => {
     setSelectedImage(null);
   };
 
+  const toggleReview = (reviewId) => {
+    setExpandedReviews(prev => ({
+      ...prev,
+      [reviewId]: !prev[reviewId]
+    }));
+  };
+
   if (loading) return <p>Loading portfolio...</p>;
   if (!business) return <p>Error: Business not found.</p>;
 
@@ -236,12 +244,7 @@ const Portfolio = () => {
                   {business.business_name}
                 </div>
 
-                {averageRating && (
-                  <span className="vendor-rating-portfolio">
-                    <img src={StarIcon} alt="Star" className="star-icon" />
-                    {averageRating}
-                  </span>
-                )}
+
                 {(business.membership_tier === 'Verified' || business.Bidi_Plus) && (
                   <div className="verified-check-container" onClick={handleCheckClick}>
                     <img style={{ marginLeft: '4px', marginBottom: '14px' }} src={Verified} alt="Verified" />
@@ -250,6 +253,12 @@ const Portfolio = () => {
                     </span>
 
                   </div>
+                )}
+                                {averageRating && (
+                  <span className="vendor-rating-portfolio">
+                    <img src={StarIcon} alt="Star" className="star-icon" />
+                    {averageRating}
+                  </span>
                 )}
 
               </div>
@@ -419,8 +428,22 @@ const Portfolio = () => {
                           ))}
                         </div>
                       </div>
-                      <p className="review-text">{review.comment}</p>
-                      <a href="#" className="read-more">Read More</a>
+                      <p className="review-text">
+                        {expandedReviews[index] 
+                          ? review.comment
+                          : review.comment.length > 150 
+                            ? `${review.comment.substring(0, 150)}...` 
+                            : review.comment
+                        }
+                      </p>
+                      {review.comment.length > 150 && (
+                        <button 
+                          onClick={() => toggleReview(index)} 
+                          className="read-more-reviews"
+                        >
+                          {expandedReviews[index] ? 'Read Less' : 'Read More'}
+                        </button>
+                      )}
                     </div>
                   ))
                 ) : (

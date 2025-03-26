@@ -153,12 +153,6 @@
         width: 100%;
     }
 
-    .filter-button {
-        padding: 10px;
-        width: 100%;
-        text-align: center;
-    }
-
     .sort-selector {
         flex-direction: column;
         align-items: flex-start;

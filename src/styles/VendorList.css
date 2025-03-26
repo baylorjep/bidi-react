@@ -409,6 +409,24 @@
     margin-right: 4px;
 }
 
+.vendor-story {
+    position: relative;
+}
+
+.read-more-button {
+    background: none;
+    border: none;
+    color: #FF008A;
+    padding: 0;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-top: 4px;
+}
+
+.read-more-button:hover {
+    text-decoration: underline;
+}
+
 @media (max-width: 1200px) {
     .vendor-list {
         width: 100%;
@@ -447,6 +465,10 @@
 
     .vendor-name {
         font-size: 1.3rem;
+        text-overflow: clip;
+        white-space: normal;
+        overflow: visible;
+        height: auto;
     }
 
     .vendor-location,

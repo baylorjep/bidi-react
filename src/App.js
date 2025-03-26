@@ -70,7 +70,6 @@ import AboutUs from './components/AboutUs';
 // Messaging imports
 import MessagingView from './components/Messaging/MessagingView';
 
-
 // Spanish imports
 import HomepageES from './components/HomepageES'
 import ContactFormES from './components/ContactFormES';
@@ -110,6 +109,7 @@ import UtahWeddingVideographerGuide from './components/Article/UtahWeddingVideog
 import WeddingMarketGuide from './components/WeddingGuide/WeddingMarketGuide';
 import VendorList from './components/VendorList/VendorList';
 import VendorListWithFilters from './components/VendorListWithFilters/VendorListWithFilters';
+import LocationBasedVendors from './pages/LocationBasedVendors';
 
 function App() {
 
@@ -228,6 +228,16 @@ function App() {
                         <Route path="/unsubscribe" element={<Unsubscribe />} />
                         <Route path="/wedding-market-guide" element={<WeddingMarketGuide />} />
                         <Route path="/vendors" element={<VendorListWithFilters />} />
+                        <Route path="/:category" element={<LocationBasedVendors />} />
+                        <Route path="/:type/:category" element={<LocationBasedVendors />} />
+                        <Route path="/:category/:county/:city" element={<LocationBasedVendors />} />
+                        <Route path="/:type/:category/:county/:city" element={<LocationBasedVendors />} />
+                        <Route path="/:location" element={<LocationBasedVendors />} />
+                        <Route path="/:type" element={<LocationBasedVendors />} />
+                        <Route path="/:type/:category/:location" element={<LocationBasedVendors />} />
+                        <Route path="/:category/:location" element={<LocationBasedVendors />} />
+                        <Route path="/:category/:location" element={<LocationBasedVendors />} />
+                        <Route path="/:type/:category/:location" element={<LocationBasedVendors />} />
 
                     </Routes>
                 </div>

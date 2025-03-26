@@ -8,12 +8,26 @@ import 'slick-carousel/slick/slick-theme.css';
 import Verified from '../../assets/Frame 1162.svg';
 import StarIcon from '../../assets/star-duotone.svg'; // Assuming you have a star icon
 
-const VendorList = ({ selectedCategory, sortOrder }) => {
+const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => {
     const [vendors, setVendors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalImage, setModalImage] = useState('');
+    const [expandedStories, setExpandedStories] = useState({});
     const navigate = useNavigate();
+
+    const truncateText = (text, maxLength = 150) => {
+        if (!text) return "";
+        if (text.length <= maxLength) return text;
+        return text.substr(0, text.substr(0, maxLength).lastIndexOf(' ')) + '...';
+    };
+
+    const toggleStory = (vendorId) => {
+        setExpandedStories(prev => ({
+            ...prev,
+            [vendorId]: !prev[vendorId]
+        }));
+    };
 
     useEffect(() => {
         const fetchVendors = async () => {
@@ -24,6 +38,10 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
 
             if (selectedCategory) {
                 query = query.eq('business_category', selectedCategory);
+            }
+
+            if (categoryType) {
+                query = query.contains('specializations', [categoryType]);
             }
 
             const { data: vendorData, error: vendorError } = await query;
@@ -75,18 +93,23 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                     ? (reviewData.reduce((acc, review) => acc + review.rating, 0) / reviewData.length).toFixed(1)
                     : null;
 
+                // Add a location match score
+                const locationMatchScore = location && vendor.business_address
+                    ? vendor.business_address.toLowerCase().includes(location.toLowerCase().replace(/-/g, ' '))
+                        ? 1  // Direct match
+                        : 0  // No match
+                    : 0;     // No location specified
+
                 return {
                     ...vendor,
                     profile_photo_url: profilePhotoUrl,
                     portfolio_photos: portfolioPhotos,
-                    average_rating: averageRating
+                    average_rating: averageRating,
+                    locationMatchScore
                 };
             }));
 
-            // Sort vendors based on the sortOrder and prioritize profiles with photos
-            let sortedVendors;
-
-            // First sort by whether they have portfolio photos
+            // Define sortByPhotos function before using it
             const sortByPhotos = (a, b) => {
                 const aHasPhotos = a.portfolio_photos.length > 0;
                 const bHasPhotos = b.portfolio_photos.length > 0;
@@ -95,59 +118,46 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                 return 0;
             };
 
-            if (sortOrder === 'recommended') {
-                sortedVendors = vendorsWithPhotos.sort((a, b) => {
-                    const photoSort = sortByPhotos(a, b);
-                    if (photoSort !== 0) return photoSort;
+            // Sort vendors based on multiple criteria
+            let sortedVendors = vendorsWithPhotos.sort((a, b) => {
+                // First sort by location if specified
+                if (location) {
+                    const locationDiff = b.locationMatchScore - a.locationMatchScore;
+                    if (locationDiff !== 0) return locationDiff;
+                }
 
-                    const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
-                    const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
-                    if (aIsVerified && !bIsVerified) return -1;
-                    if (!aIsVerified && bIsVerified) return 1;
-                    return 0;
-                });
-            } else if (sortOrder === 'rating') {
-                sortedVendors = vendorsWithPhotos.sort((a, b) => {
-                    const photoSort = sortByPhotos(a, b);
-                    if (photoSort !== 0) return photoSort;
-                    return b.average_rating - a.average_rating;
-                });
-            } else if (sortOrder === 'base_price_low') {
-                sortedVendors = vendorsWithPhotos.sort((a, b) => {
-                    const photoSort = sortByPhotos(a, b);
-                    if (photoSort !== 0) return photoSort;
-                    return a.minimum_price - b.minimum_price;
-                });
-            } else if (sortOrder === 'base_price_high') {
-                sortedVendors = vendorsWithPhotos.sort((a, b) => {
-                    const photoSort = sortByPhotos(a, b);
-                    if (photoSort !== 0) return photoSort;
-                    return b.minimum_price - a.minimum_price;
-                });
-            } else {
-                sortedVendors = vendorsWithPhotos.sort((a, b) => {
-                    const photoSort = sortByPhotos(a, b);
-                    if (photoSort !== 0) return photoSort;
+                // Then apply the regular sorting logic
+                const photoSort = sortByPhotos(a, b);
+                if (photoSort !== 0) return photoSort;
 
-                    switch (sortOrder) {
-                        case 'distance':
-                            return a.distance - b.distance;
-                        case 'newest':
-                            return new Date(b.created_at) - new Date(a.created_at);
-                        case 'oldest':
-                            return new Date(a.created_at) - new Date(b.created_at);
-                        default:
-                            return 0; // Recommended or default sorting
-                    }
-                });
-            }
+                switch (sortOrder) {
+                    case 'recommended':
+                        const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
+                        const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
+                        if (aIsVerified && !bIsVerified) return -1;
+                        if (!aIsVerified && bIsVerified) return 1;
+                        return 0;
+                    case 'rating':
+                        return (b.average_rating || 0) - (a.average_rating || 0);
+                    case 'base_price_low':
+                        return (a.minimum_price || 0) - (b.minimum_price || 0);
+                    case 'base_price_high':
+                        return (b.minimum_price || 0) - (a.minimum_price || 0);
+                    case 'newest':
+                        return new Date(b.created_at) - new Date(a.created_at);
+                    case 'oldest':
+                        return new Date(a.created_at) - new Date(b.created_at);
+                    default:
+                        return 0;
+                }
+            });
 
             setVendors(sortedVendors);
             setLoading(false);
         };
 
         fetchVendors();
-    }, [selectedCategory, sortOrder]);
+    }, [selectedCategory, sortOrder, location, categoryType]);
 
     if (loading) {
         return <div>Loading...</div>;
@@ -291,14 +301,7 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                             <h2 className="vendor-name">
                                 {vendor.business_name}
                             </h2>
-                            <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'left'}}>
-                                {vendor.average_rating && (
-                                    <span className="vendor-rating">
-                                        <img src={StarIcon} alt="Star" className="star-icon" />
-                                        {vendor.average_rating}
-                                    </span>
-                                )}
-                            </div>
+
                             <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'left'}}>
                                 {(vendor.membership_tier === 'Verified' || vendor.Bidi_Plus) && (
                                     <div className="verified-check-container" onClick={handleCheckClick}>
@@ -307,6 +310,14 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                                             This business is verified by Bidi. You will have a 100% money back guarantee if you pay through Bidi.
                                         </span>
                                     </div>
+                                )}
+                            </div>
+                            <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'left'}}>
+                                {vendor.average_rating && (
+                                    <span className="vendor-rating">
+                                        <img src={StarIcon} alt="Star" className="star-icon" />
+                                        {vendor.average_rating}
+                                    </span>
                                 )}
                             </div>
                             </div>
@@ -323,7 +334,19 @@ const VendorList = ({ selectedCategory, sortOrder }) => {
                         </div>
 
                         <p className="vendor-description"><strong>{vendor.business_description}</strong></p>
-                        <p className="vendor-description">{vendor.story}</p>
+                        <div className="vendor-story">
+                            <p className="vendor-description">
+                                {expandedStories[vendor.id] ? vendor.story : truncateText(vendor.story)}
+                            </p>
+                            {vendor.story && vendor.story.length > 150 && (
+                                <button 
+                                    onClick={() => toggleStory(vendor.id)}
+                                    className="read-more-button"
+                                >
+                                    {expandedStories[vendor.id] ? 'Read Less' : 'Read More'}
+                                </button>
+                            )}
+                        </div>
                         </div>
 
                         {vendor.specializations && vendor.specializations.length > 0 && (

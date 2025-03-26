@@ -627,6 +627,22 @@ text-align: center;
   text-decoration: underline;
 }
 
+.read-more-reviews {
+    background: none;
+    border: none;
+    color: #9633eb;
+    padding: 0;
+    margin-top: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    text-align: right;
+}
+
+.read-more-reviews:hover {
+    text-decoration: underline;
+}
+
 .star-icon-portfolio {
   width: 24px;
   height: 24px;

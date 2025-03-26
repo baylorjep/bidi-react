@@ -9,8 +9,7 @@ const categories = [
     { id: 'florist', name: 'Florist' },
     { id: 'catering', name: 'Catering' },
     { id: 'dj', name: 'DJ' },
-    { id: 'beauty', name: 'Beauty' },
-    { id: 'admin', name: 'Admin' },
+    { id: 'beauty', name: 'Beauty' }
 ];
 
 const sortOptions = [
@@ -41,7 +40,7 @@ const VendorListWithFilters = () => {
                 .or('stripe_account_id.not.is.null,stripe_account_id.not.eq.,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
-                query = query.eq('business_category', selectedCategory);
+                query = query.eq('business_category', selectedCategory);    
             }
 
             const { count, error } = await query;

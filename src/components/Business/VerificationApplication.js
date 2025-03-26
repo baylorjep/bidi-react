@@ -339,7 +339,6 @@ const VerificationApplication = () => {
                   name="reviewsUrl"
                   value={formData.reviewsUrl}
                   onChange={handleChange}
-                  required
                   placeholder="https://www.google.com/business/..."
                   style={{
                     padding: '12px',
@@ -362,7 +361,6 @@ const VerificationApplication = () => {
                   name="portfolio"
                   value={formData.portfolio}
                   onChange={handleChange}
-                  required
                   placeholder="https://your-portfolio-website.com"
                   style={{
                     padding: '12px',

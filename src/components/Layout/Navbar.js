@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import logo from '../../assets/images/Bidi-Logo.svg';
 import '../../App.css';
+import VendorSearch from './VendorSearch';
 
 function Navbar() {
     const [user, setUser] = useState(null);
@@ -102,6 +103,7 @@ function Navbar() {
                 </button>
                 <div className="collapse navbar-collapse" id="navbarResponsive">
                     <ul className="navbar-nav ms-auto me-4 my-3 my-lg-0">
+                        <VendorSearch />
                         {(!userRole || userRole === 'individual' || userRole === 'both') && (
                             <li className="nav-item">
                                 <Link className="nav-link me-lg-3" to="/request-categories">Hire a Pro</Link>

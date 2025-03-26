@@ -36,6 +36,8 @@ function OpenRequests() {
     const [businessType, setBusinessType] = useState('');
     const [userBids, setUserBids] = useState(new Set()); // Add this new state
     const [minimumPrice, setMinimumPrice] = useState(null);
+    const [hiddenRequests, setHiddenRequests] = useState(new Set());
+    const [showHidden, setShowHidden] = useState(false);
 
     // Add this new function to fetch user's bids
     const fetchUserBids = async (userId) => {
@@ -84,6 +86,26 @@ function OpenRequests() {
 
         fetchUserBusinessType();
     }, []);
+
+    useEffect(() => {
+        // Load hidden requests from localStorage
+        const hidden = JSON.parse(localStorage.getItem('hiddenRequests') || '[]');
+        setHiddenRequests(new Set(hidden));
+    }, []);
+
+    const hideRequest = (requestId) => {
+        const newHiddenRequests = new Set(hiddenRequests);
+        newHiddenRequests.add(requestId);
+        setHiddenRequests(newHiddenRequests);
+        localStorage.setItem('hiddenRequests', JSON.stringify([...newHiddenRequests]));
+    };
+
+    const showRequest = (requestId) => {
+        const newHiddenRequests = new Set(hiddenRequests);
+        newHiddenRequests.delete(requestId);
+        setHiddenRequests(newHiddenRequests);
+        localStorage.setItem('hiddenRequests', JSON.stringify([...newHiddenRequests]));
+    };
 
     const isNew = (createdAt) => {
         const now = new Date();
@@ -373,6 +395,17 @@ function OpenRequests() {
     };
 
     return (
+        <div>
+            <h1 style={{fontFamily:'Outfit', fontWeight:'bold'}}>Open Requests</h1>
+            <div style={{display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '20px'}}>
+            <button 
+                className="toggle-hidden-button"
+                onClick={() => setShowHidden(!showHidden)}
+            >
+                {showHidden ? "Show Active Requests" : "Show Hidden Requests"}
+            </button>
+            </div>
+
         <div className="request-grid-container">
             <div className="request-grid">
                 {error && <p>Error: {error}</p>}
@@ -380,6 +413,7 @@ function OpenRequests() {
                 {['photography', 'videography'].includes(businessType?.toLowerCase()) ? (
                     openPhotoRequests
                         .filter(request => !userBids.has(request.id))
+                        .filter(request => showHidden ? hiddenRequests.has(request.id) : !hiddenRequests.has(request.id))
                         .filter(meetsMinimumPrice) // Add minimum price filter
                         .sort(sortByNewAndDate)
                         .map(request => (
@@ -387,11 +421,15 @@ function OpenRequests() {
                                 key={`photo-video-${request.id}`}
                                 request={request}
                                 isPhotoRequest={request.service_category === 'photography'}
+                                onHide={() => hideRequest(request.id)}
+                                onShow={() => showRequest(request.id)}
+                                isHidden={hiddenRequests.has(request.id)}
                             />
                         ))
                 ) : (
                     openRequests
                         .filter(request => !userBids.has(request.id))
+                        .filter(request => showHidden ? hiddenRequests.has(request.id) : !hiddenRequests.has(request.id))
                         .filter(meetsMinimumPrice) // Add minimum price filter
                         .sort(sortByNewAndDate)
                         .map(request => (
@@ -399,17 +437,21 @@ function OpenRequests() {
                                 key={`regular-${request.id}`}
                                 request={request}
                                 isPhotoRequest={false}
+                                onHide={() => hideRequest(request.id)}
+                                onShow={() => showRequest(request.id)}
+                                isHidden={hiddenRequests.has(request.id)}
                             />
                         ))
                 )}
 
                 {openRequests.length === 0 && openPhotoRequests.length === 0 && (
-                    <div>
+                     <div>
                         <h2>No open requests found.</h2>
                         <p>Please check again later.</p>
                     </div>
                 )}
             </div>
+        </div>
         </div>
     );
 }

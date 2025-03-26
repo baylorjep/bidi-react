@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../../App.css';
 
-function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false }) {
+function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false, onHide }) {
     const [timeLeft, setTimeLeft] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
 
@@ -16,12 +16,6 @@ function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false }) 
 
     const checkPromotion = (createdAt) => {
         if (!createdAt) return null;
-
-        const localCreated = new Date(createdAt);
-        const createdDate = localCreated.toLocaleDateString('en-CA');
-        const specialDates = ['2025-01-11', '2025-01-25'];
-
-        if (!specialDates.includes(createdDate)) return null;
 
         const now = Date.now();
         const created = new Date(createdAt).getTime();
@@ -106,6 +100,16 @@ function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false }) 
 
     return (
         <div className="request-display-mini text-center mb-4">
+            <div style={{display: 'flex', justifyContent:"flex-end"}}>
+            <button 
+                onClick={onHide} 
+                className="hide-button"
+                title="Hide this request"
+            >
+                <i className="fas fa-times"></i>
+            </button>
+            </div>
+
             <div className="request-content p-3">
                 <div style={{textAlign:'left', width: '100%', padding: '0 20px', marginBottom: '20px'}}>
                     <h2 className="request-title">{getTitle()}</h2>
@@ -114,7 +118,7 @@ function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false }) 
                             <div className="request-status">New</div>
                         )}
                         {checkPromotion(request.created_at) && (
-                            <div className="promotion-status">
+                            <div className="promotion-status fade-in">
                                 {checkPromotion(request.created_at).message}
                                 {timeLeft && <span> ({timeLeft})</span>}
                             </div>
