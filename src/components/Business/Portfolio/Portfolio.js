@@ -420,7 +420,6 @@ const Portfolio = () => {
                         </div>
                       </div>
                       <p className="review-text">{review.comment}</p>
-                      <a href="#" className="read-more">Read More</a>
                     </div>
                   ))
                 ) : (
