@@ -157,7 +157,7 @@ function PhotographyRequest() {
     // Event Selection Component
     const renderEventSelection = () => {
         const eventOptions = [
-            'Wedding', 'Engagement', 'Couples Session', 'Family',
+            'Wedding', 'Engagement', 'Graduation','Couples Session', 'Family',
             'Headshots', 'Event',
             'Product', 'Maternity', 'Newborn', 'Boudoir Session'
         ];

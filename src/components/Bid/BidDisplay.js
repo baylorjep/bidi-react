@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient'; // Import your Supabase client
-import bidiCheck from '../../assets/images/Bidi-Favicon.png';
+import bidiCheck from '../../assets/Frame 1162.svg';
+import StarIcon from '../../assets/star-duotone.svg';
 import { Link, useNavigate } from "react-router-dom";
 
 function BidDisplay({ bid, handleApprove, handleDeny }) {
@@ -10,6 +11,7 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
     const [downPayment, setDownPayment] = useState(null); // New state for down payment
     const [downPaymentAmount, setDownPaymentAmount] = useState(null); // New state for down payment
     const [showBubble, setShowBubble] = useState(true); // State to control the visibility of the bubble
+    const [averageRating, setAverageRating] = useState(null);
     const navigate = useNavigate();
     const handleProfileClick = () => {
         setShowBubble(false); // Hide the bubble when the profile image is clicked
@@ -55,46 +57,74 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
         fetchMembershipTier();
     }, [bid.business_profiles.id]);
 
+    // Simplified review fetching
+    useEffect(() => {
+        const fetchRating = async () => {
+            const { data: reviewData, error: reviewError } = await supabase
+                .from('reviews')
+                .select('rating')
+                .eq('vendor_id', bid.business_profiles.id);
+
+            if (reviewError) {
+                console.error('Error fetching reviews:', reviewError);
+            } else {
+                const avgRating = reviewData.length > 0
+                    ? (reviewData.reduce((acc, review) => acc + review.rating, 0) / reviewData.length).toFixed(1)
+                    : null;
+                setAverageRating(avgRating);
+            }
+        };
+
+        fetchRating();
+    }, [bid.business_profiles.id]);
+
     return (
         <div className="request-display">
             <div className="d-flex justify-content-between align-items-center">
-                {/* Left Aligned: Business Name */}
                 <div className="request-title" style={{ marginBottom: '0', textAlign: 'left', position: 'relative' }}>
-                    <img 
-                        src={profileImage} 
-                        alt={`${bid.business_profiles.business_name} profile`} 
-                        className="vendor-profile-image" 
-                        onClick={handleProfileClick} 
-                        style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%', marginRight: '10px' }}
-                    />
-
-                    <Link 
-                        to={`/portfolio/${bid.business_profiles.id}`} 
-                        style={{ textDecoration: "none", color: "inherit", fontWeight: "bold" }}
-                    >
-                        {bid.business_profiles.business_name}
-                    </Link>
-                    {isBidiVerified && (
-                        <img src={bidiCheck} style={{ height: '40px', width: 'auto', padding:"0px", marginLeft:"4px " }} alt="Bidi Verified Icon" />
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <img 
+                            src={profileImage} 
+                            alt={`${bid.business_profiles.business_name} profile`} 
+                            className="vendor-profile-image" 
+                            onClick={handleProfileClick} 
+                            style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%', marginRight: '10px' }}
+                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Link 
+                                to={`/portfolio/${bid.business_profiles.id}`} 
+                                style={{ textDecoration: "none", color: "inherit", fontWeight: "bold" }}
+                            >
+                                {bid.business_profiles.business_name}
+                            </Link>
+                            {isBidiVerified && (
+                                <img src={bidiCheck} style={{ height: '20px', width: 'auto' }} alt="Bidi Verified Icon" />
+                            )}
+                            {averageRating && (
+                                <span className="vendor-rating">
+                                    <img src={StarIcon} alt="Star" className="star-icon" />
+                                    {averageRating}
+                                </span>
+                            )}
+                        </div>
+                    </div>
                     {loading ? (
-                        <p>Loading...</p>  // Show loading text while fetching
+                        <p>Loading...</p>
                     ) : error ? (
                         <p>{error}</p>
                     ) : (
                         isBidiVerified && (
-                            <div style={{ textAlign: 'left',padding:"0px 0px" }}>
-                                <p style={{ fontSize: '0.9rem', margin: '0', fontWeight: 'bold', textAlign:'left', fontFamily: 'Outfit' }}>
+                            <div style={{ textAlign: 'left', padding:"0px 0px", marginTop:'8px' }}>
+                                <p style={{ fontSize: '0.9rem', margin: '0', fontWeight: 'bold', textAlign:'left', fontFamily: 'Outfit', color: '#a328f4' }}>
                                     Bidi Verified
                                 </p>
-                                <p style={{ fontSize: '0.8rem', margin: '5px 0 0', fontStyle: 'italic', textAlign:'left',fontFamily: 'Outfit' }}>
+                                <p style={{ fontSize: '0.8rem', margin: '5px 0 0', fontStyle: 'italic', textAlign:'left',fontFamily: 'Outfit', color: '#a328f4' }}>
                                     100% Money-Back Guarantee When You Pay Through Bidi
                                 </p>
                             </div>
                         )
                     )}
                 </div>
-                {/* Right Aligned: Price within a button */}
                 <button
                     className="bid-button"
                     disabled
