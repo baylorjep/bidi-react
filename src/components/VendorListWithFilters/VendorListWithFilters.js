@@ -9,8 +9,7 @@ const categories = [
     { id: 'florist', name: 'Florist' },
     { id: 'catering', name: 'Catering' },
     { id: 'dj', name: 'DJ' },
-    { id: 'beauty', name: 'Beauty' },
-    {id: 'admin', name: 'Admin'}
+    { id: 'beauty', name: 'Beauty' }
 ];
 
 const sortOptions = [
