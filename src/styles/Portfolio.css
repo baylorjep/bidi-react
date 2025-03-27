@@ -272,11 +272,6 @@ line-height: normal;
     height: 250px; /* Even shorter for smaller screens */
   }
 
-  .portfolio-grid {
-    grid-template-rows: repeat(2, 120px); /* Smaller height for very small screens */
-    gap: 10px;
-  }
-
   .portfolio-image-portfolio {
     height: 120px;
   }
