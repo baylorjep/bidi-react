@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Slider from 'react-slick';
 import { supabase } from '../../supabaseClient';
@@ -15,6 +15,7 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
     const [modalImage, setModalImage] = useState('');
     const [expandedStories, setExpandedStories] = useState({});
     const [expandedDescriptions, setExpandedDescriptions] = useState({});
+    const [imageLoading, setImageLoading] = useState({});
     const navigate = useNavigate();
 
     const truncateText = (text, maxLength = 150) => {
@@ -36,6 +37,22 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
             [vendorId]: !prev[vendorId]
         }));
     };
+
+    const preloadImage = useCallback((src) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.src = src;
+            img.onload = resolve;
+            img.onerror = reject;
+        });
+    }, []);
+
+    const handleImageLoad = useCallback((imageId) => {
+        setImageLoading(prev => ({
+            ...prev,
+            [imageId]: false
+        }));
+    }, []);
 
     useEffect(() => {
         const fetchVendors = async () => {
@@ -299,7 +316,14 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
                         {vendor.portfolio_photos.length > 0 ? (
                             <Slider {...settings}>
                                 {vendor.portfolio_photos.map((item, index) => {
+                                    const imageId = `${vendor.id}-${index}`;
                                     const isVideo = item.includes('.mp4');
+
+                                    // Preload the next image
+                                    if (index < vendor.portfolio_photos.length - 1) {
+                                        preloadImage(vendor.portfolio_photos[index + 1]);
+                                    }
+
                                     return (
                                         <div key={index} onClick={() => openModal(item)}>
                                             {isVideo ? (
@@ -307,20 +331,40 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
                                                     src={item}
                                                     className="portfolio-image"
                                                     controls
+                                                    loading="lazy"
+                                                    preload="metadata"
                                                 />
                                             ) : (
-                                                <img
-                                                    src={item}
-                                                    alt={`Portfolio ${index}`}
-                                                    className="portfolio-image"
-                                                />
+                                                <div className="image-container">
+                                                    {imageLoading[imageId] && (
+                                                        <div className="image-placeholder">
+                                                            Loading...
+                                                        </div>
+                                                    )}
+                                                    <img
+                                                        src={item}
+                                                        alt={`Portfolio ${index}`}
+                                                        className={`portfolio-image ${imageLoading[imageId] ? 'loading' : 'loaded'}`}
+                                                        loading="lazy"
+                                                        onLoad={() => handleImageLoad(imageId)}
+                                                        style={{
+                                                            opacity: imageLoading[imageId] ? 0 : 1,
+                                                            transition: 'opacity 0.3s ease-in-out'
+                                                        }}
+                                                    />
+                                                </div>
                                             )}
                                         </div>
                                     );
                                 })}
                             </Slider>
                         ) : (
-                            <img src="/images/default.jpg" alt="No portfolio available" className="portfolio-image" />
+                            <img 
+                                src="/images/default.jpg" 
+                                alt="No portfolio available" 
+                                className="portfolio-image"
+                                loading="lazy"
+                            />
                         )}
                     </div>
                     <div className="vendor-info">

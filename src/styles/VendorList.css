@@ -427,6 +427,35 @@
     text-decoration: underline;
 }
 
+.image-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.image-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    color: #666;
+}
+
+.portfolio-image.loading {
+    filter: blur(10px);
+    clip-path: inset(0);
+}
+
+.portfolio-image.loaded {
+    filter: blur(0);
+    transition: filter 0.3s ease-out;
+}
+
 @media (max-width: 1200px) {
     .vendor-list {
         width: 100%;
