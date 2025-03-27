@@ -25,7 +25,7 @@ const BusinessBids = () => {
         const { data: businessBids, error: bidError } = await supabase
           .from("bids")
           .select("id, request_id, category, status, bid_amount")
-          .eq("user_id", "6cdc1893-f536-4be6-812f-946d58a2dc92");
+          .eq("user_id", user.id);
 
         if (bidError) {
           console.error("❌ Error fetching bids:", bidError);
