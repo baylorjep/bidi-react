@@ -14,6 +14,7 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
     const [modalOpen, setModalOpen] = useState(false);
     const [modalImage, setModalImage] = useState('');
     const [expandedStories, setExpandedStories] = useState({});
+    const [expandedDescriptions, setExpandedDescriptions] = useState({});
     const navigate = useNavigate();
 
     const truncateText = (text, maxLength = 150) => {
@@ -24,6 +25,13 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
 
     const toggleStory = (vendorId) => {
         setExpandedStories(prev => ({
+            ...prev,
+            [vendorId]: !prev[vendorId]
+        }));
+    };
+
+    const toggleDescription = (vendorId) => {
+        setExpandedDescriptions(prev => ({
             ...prev,
             [vendorId]: !prev[vendorId]
         }));
@@ -354,7 +362,21 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
 </svg> Base Price ${vendor.minimum_price || "0"}</p>    
                         </div>
 
-                        <p className="vendor-description"><strong>{vendor.business_description}</strong></p>
+                        <div className="vendor-description" style={{textAlign:'left'}}>
+                            <p style={{textAlign:'left'}}><strong>
+                                {expandedDescriptions[vendor.id] 
+                                    ? vendor.business_description 
+                                    : truncateText(vendor.business_description)}
+                            </strong></p>
+                            {vendor.business_description && vendor.business_description.length > 150 && (
+                                <button 
+                                    onClick={() => toggleDescription(vendor.id)}
+                                    className="read-more-button"
+                                >
+                                    {expandedDescriptions[vendor.id] ? 'Read Less' : 'Read More'}
+                                </button>
+                            )}
+                        </div>
                         <div className="vendor-story">
                             <p className="vendor-description">
                                 {expandedStories[vendor.id] ? vendor.story : truncateText(vendor.story)}

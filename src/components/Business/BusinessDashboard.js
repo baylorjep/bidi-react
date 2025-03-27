@@ -38,8 +38,11 @@ const BusinessDashboard = () => {
     paymentAccount: false,
     downPayment: false,
     minimumPrice: false,
-    affiliateCoupon: false
+    affiliateCoupon: false,
+    verification: false,
+    story: false
   });
+  const [profileDetails, setProfileDetails] = useState(null);
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
@@ -99,7 +102,7 @@ const BusinessDashboard = () => {
         // Fetch business profile details
         const { data: profileDetails, error: profileDetailsError } = await supabase
           .from('business_profiles')
-          .select('business_name, stripe_account_id, id, down_payment_type, amount, minimum_price, business_category, membership_tier, verification_pending')
+          .select('business_name, stripe_account_id, id, down_payment_type, amount, minimum_price, business_category, membership_tier, verification_pending, story')
           .eq('id', user.id)
           .single();
 
@@ -116,6 +119,9 @@ const BusinessDashboard = () => {
           return;
         }
 
+        // Store profile details in state
+        setProfileDetails(profileDetails);
+
         if (profileDetails) {
           setBusinessName(profileDetails.business_name);
           setIsAdmin(profileDetails.business_category === "admin");
@@ -130,6 +136,16 @@ const BusinessDashboard = () => {
 
           if (profileDetails.minimum_price !== null) {
             setSetupProgress(prev => ({...prev, minimumPrice: true}));
+          }
+
+          // Add verification check
+          if (profileDetails.membership_tier === "Verified") {
+            setSetupProgress(prev => ({...prev, verification: true}));
+          }
+
+          // Add story check
+          if (profileDetails.story && profileDetails.story.trim() !== '') {
+            setSetupProgress(prev => ({...prev, story: true}));
           }
 
           // Check portfolio photos
@@ -741,7 +757,9 @@ const BusinessDashboard = () => {
       {(!setupProgress.paymentAccount || 
         !setupProgress.downPayment || 
         !setupProgress.minimumPrice || 
-        !setupProgress.affiliateCoupon) && (
+        !setupProgress.affiliateCoupon ||
+        !setupProgress.verification ||
+        !setupProgress.story) && (
         <div className="setup-progress-container container mt-4 mb-4">
           <div className="card">
             <div className="card-body">
@@ -773,6 +791,25 @@ const BusinessDashboard = () => {
                     <i className="fas fa-times-circle text-danger"></i>
                     <span>Affiliate Coupon Generated</span>
                     <button className="btn-link" onClick={handleGenerateCoupon}>Generate now</button>
+                  </div>
+                )}
+                {!setupProgress.verification && (
+                  <div className="setup-item">
+                    <i className="fas fa-times-circle text-danger"></i>
+                    <span>Bidi Verification</span>
+                    <button className="btn-link" onClick={() => navigate("/verification-application")}>Apply now</button>
+                  </div>
+                )}
+                {!setupProgress.story && profileDetails && (
+                  <div className="setup-item">
+                    <i className="fas fa-times-circle text-danger"></i>
+                    <span>Complete Your Profile</span>
+                    <button 
+                      className="btn-link" 
+                      onClick={() => navigate(`/portfolio/${profileDetails.id}`)}
+                    >
+                      Complete now
+                    </button>
                   </div>
                 )}
               </div>

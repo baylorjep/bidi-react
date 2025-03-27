@@ -303,14 +303,30 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                   <div key={key} className="modal-input-group">
                     <label>{key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</label>
                     {key === 'story' ? (
-                      <textarea
-                        name={key}
-                        value={value || ""}
-                        onChange={handleChange}
-                        rows={6}
-                        placeholder="Write about you, your business, your story..."
-                        style={{ resize: 'vertical', minHeight: '150px' }}
-                      />
+                      <div>
+                        <textarea
+                          name={key}
+                          value={value || ""}
+                          onChange={handleChange}
+                          rows={6}
+                          placeholder="Write about you, your business, your story..."
+                          style={{ resize: 'vertical', minHeight: '150px' }}
+                        />
+                      </div>
+                    ) : key === 'business_description' ? (
+                      <div>
+                        <input
+                          type="text"
+                          name={key}
+                          value={value || ""}
+                          onChange={handleChange}
+                          maxLength={50}
+                          placeholder="Brief description of your business"
+                        />
+                        <div className="character-count">
+                          {50 - (value?.length || 0)} characters remaining
+                        </div>
+                      </div>
                     ) : key === 'specializations' ? (
                       <div className="specializations-container">
                         <div className="specializations-list">
