@@ -23,7 +23,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-height: 80vh;
+    max-height: 100vh;
     overflow-y: auto;
   }
   
@@ -42,6 +42,11 @@
     padding: 10px;
     overflow-y: auto;
     max-height: 300px;
+
+  }
+
+  .portfolio-preview {
+    margin-bottom: 8px;
   }
   
   /* 🔹 Image Container */

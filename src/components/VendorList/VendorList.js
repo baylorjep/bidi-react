@@ -67,17 +67,23 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
                 const profilePhoto = photoData.find(photo => photo.user_id === vendor.id);
                 const profilePhotoUrl = profilePhoto ? profilePhoto.photo_url : '/images/default.jpg';
 
-                const { data: portfolioData, error: portfolioError } = await supabase
+                // Fetch both portfolio images and videos
+                const { data: mediaData, error: mediaError } = await supabase
                     .from('profile_photos')
-                    .select('photo_url')
+                    .select('photo_url, photo_type')
                     .eq('user_id', vendor.id)
-                    .eq('photo_type', 'portfolio');
+                    .or('photo_type.eq.portfolio,photo_type.eq.video');
 
-                if (portfolioError) {
-                    console.error('Error fetching portfolio images:', portfolioError);
+                if (mediaError) {
+                    console.error('Error fetching portfolio media:', mediaError);
                 }
 
-                const portfolioPhotos = portfolioData ? portfolioData.map(img => img.photo_url) : [];
+                // Separate videos and images
+                const portfolioVideos = mediaData ? mediaData.filter(item => item.photo_type === 'video').map(item => item.photo_url) : [];
+                const portfolioPhotos = mediaData ? mediaData.filter(item => item.photo_type === 'portfolio').map(item => item.photo_url) : [];
+
+                // Combine videos first, then photos
+                const allMedia = [...portfolioVideos, ...portfolioPhotos];
 
                 // Fetch average rating from reviews table
                 const { data: reviewData, error: reviewError } = await supabase
@@ -103,7 +109,7 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
                 return {
                     ...vendor,
                     profile_photo_url: profilePhotoUrl,
-                    portfolio_photos: portfolioPhotos,
+                    portfolio_photos: allMedia,
                     average_rating: averageRating,
                     locationMatchScore
                 };
@@ -284,11 +290,26 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
                     <div className="portfolio-images">
                         {vendor.portfolio_photos.length > 0 ? (
                             <Slider {...settings}>
-                                {vendor.portfolio_photos.map((photo, index) => (
-                                    <div key={index} onClick={() => openModal(photo)}>
-                                        <img src={photo} alt={`Portfolio ${index}`} className="portfolio-image" />
-                                    </div>
-                                ))}
+                                {vendor.portfolio_photos.map((item, index) => {
+                                    const isVideo = item.includes('.mp4');
+                                    return (
+                                        <div key={index} onClick={() => openModal(item)}>
+                                            {isVideo ? (
+                                                <video
+                                                    src={item}
+                                                    className="portfolio-image"
+                                                    controls
+                                                />
+                                            ) : (
+                                                <img
+                                                    src={item}
+                                                    alt={`Portfolio ${index}`}
+                                                    className="portfolio-image"
+                                                />
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </Slider>
                         ) : (
                             <img src="/images/default.jpg" alt="No portfolio available" className="portfolio-image" />

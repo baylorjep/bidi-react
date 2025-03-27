@@ -6,6 +6,7 @@ import "../../../styles/EditProfileModal.css";
 const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const [formData, setFormData] = useState(initialData || {}); // Store editable fields
   const [portfolioPics, setPortfolioPics] = useState([]);
+  const [portfolioVideos, setPortfolioVideos] = useState([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
   const [newSpecialization, setNewSpecialization] = useState("");
@@ -16,7 +17,10 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   useEffect(() => {
     if (isOpen) {
       setFormData(initialData || {}); // Reset form when modal opens
-      if (initialData.portfolio) fetchPortfolioImages();
+      if (initialData.portfolio) {
+        fetchPortfolioImages();
+        fetchPortfolioVideos();
+      }
       fetchProfilePicture(); // Fetch the current profile picture
     }
   }, [isOpen, initialData]);
@@ -34,6 +38,21 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       setPortfolioPics(data.map(img => img.photo_url));
     } catch (err) {
       console.error("Error fetching portfolio images:", err);
+    }
+  };
+
+  const fetchPortfolioVideos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profile_photos")
+        .select("photo_url")
+        .eq("user_id", businessId)
+        .eq("photo_type", "video");
+
+      if (error) throw error;
+      setPortfolioVideos(data.map(vid => vid.photo_url));
+    } catch (err) {
+      console.error("Error fetching portfolio videos:", err);
     }
   };
 
@@ -82,67 +101,44 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   };
 
   // 🔹 Handle Portfolio Image Upload
-  const handleFileChange = async (event, type) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files);
+    setUploading(true);
 
-    if (type === "profile") {
-      const uploadedUrl = await handleUpload(file, type);
-      if (uploadedUrl) {
-        setProfilePic(uploadedUrl); // Ensure the UI updates with the new image URL
-      }
-    } else {
-      const files = event.target.files;
-      if (!files.length) return;
-
-      setUploading(true);
+    for (const file of files) {
+      const fileType = file.type.startsWith('video/') ? 'video' : 'portfolio';
+      const filePath = `${businessId}/${Date.now()}_${file.name}`;
 
       try {
-        const uploadPromises = Array.from(files).map(async (file) => {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${uuidv4()}.${fileExt}`;
-          const filePath = `${businessId}/${fileName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('profile-photos')
+          .upload(filePath, file);
 
-          // 🔹 Upload image to Supabase storage
-          const { error: uploadError } = await supabase
-            .storage
-            .from('profile-photos')
-            .upload(filePath, file, { upsert: true });
+        if (uploadError) throw uploadError;
 
-          if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(filePath);
 
-          // 🔹 Retrieve public URL of uploaded image
-          const { data } = supabase.storage
-            .from('profile-photos')
-            .getPublicUrl(filePath);
+        const { error: dbError } = await supabase
+          .from('profile_photos')
+          .insert({
+            user_id: businessId,
+            photo_url: publicUrl,
+            photo_type: fileType,
+            file_path: filePath // Add this line to save the file path
+          });
 
-          if (data.publicUrl) {
-            // 🔹 Insert new portfolio image into the database
-            const { error: insertError } = await supabase
-              .from("profile_photos")
-              .insert([
-                {
-                  user_id: businessId,
-                  photo_url: data.publicUrl,
-                  file_path: filePath,
-                  photo_type: "portfolio"
-                }
-              ]);
+        if (dbError) throw dbError;
 
-            if (insertError) throw insertError;
-
-            return data.publicUrl;
-          }
-        });
-
-        const newImages = await Promise.all(uploadPromises);
-        setPortfolioPics(prevPics => [...prevPics, ...newImages]);
       } catch (error) {
-        console.error("Error uploading images:", error);
-      } finally {
-        setUploading(false);
+        console.error('Error uploading file:', error);
       }
     }
+
+    setUploading(false);
+    fetchPortfolioImages(); // Refresh the images after upload
+    fetchPortfolioVideos(); // Refresh the videos after upload
   };
 
   const handleUpload = async (file, type) => {
@@ -158,7 +154,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       const fileName = `${uuidv4()}.${fileExt}`;
       const filePath = `${businessId}/${fileName}`;
 
-      // 🔹 Upload new picture
+      // Upload new picture
       const { error: uploadError } = await supabase
         .storage
         .from('profile-photos')
@@ -166,14 +162,14 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
 
       if (uploadError) throw uploadError;
 
-      // 🔹 Get public URL of the uploaded image
+      // Get public URL of the uploaded image
       const { data } = supabase.storage
         .from('profile-photos')
         .getPublicUrl(filePath);
 
       const photoUrl = data.publicUrl;
 
-      // 🔹 Check if a profile picture already exists
+      // Check if a profile picture already exists
       const { data: existingProfile, error: fetchError } = await supabase
         .from('profile_photos')
         .select("id")
@@ -181,7 +177,11 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
         .eq("photo_type", type)
         .single();
 
-      // 🔹 If a profile picture exists, update it, otherwise insert a new one
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
+
+      // If a profile picture exists, update it, otherwise insert a new one
       if (existingProfile) {
         const { error: updateError } = await supabase
           .from('profile_photos')
@@ -204,7 +204,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
         if (insertError) throw insertError;
       }
 
-      return photoUrl; // 🔹 Return the new image URL to update UI properly
+      return photoUrl;
     } catch (error) {
       console.error(error);
       alert(`Failed to upload ${type} picture. Please try again.`);
@@ -214,33 +214,34 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     }
   };
 
-  const handleDeleteImage = async (imageUrl) => {
+  const handleDeleteMedia = async (mediaUrl, type) => {
     try {
-        // Extract file path from the URL
-        const filePath = imageUrl.split("/profile-photos/")[1];
+      const filePath = mediaUrl.split("/profile-photos/")[1];
 
-        // 🔹 Delete from database
-        const { error: deleteDbError } = await supabase
-            .from("profile_photos")
-            .delete()
-            .eq("user_id", businessId)
-            .eq("photo_url", imageUrl)
-            .eq("photo_type", "portfolio");
+      const { error: deleteDbError } = await supabase
+        .from("profile_photos")
+        .delete()
+        .eq("user_id", businessId)
+        .eq("photo_url", mediaUrl)
+        .eq("photo_type", type);
 
-        if (deleteDbError) throw deleteDbError;
+      if (deleteDbError) throw deleteDbError;
 
-        // 🔹 Delete from Supabase Storage
-        const { error: deleteStorageError } = await supabase
-            .storage
-            .from("profile-photos")
-            .remove([filePath]);
+      const { error: deleteStorageError } = await supabase
+        .storage
+        .from("profile-photos")
+        .remove([filePath]);
 
-        if (deleteStorageError) throw deleteStorageError;
+      if (deleteStorageError) throw deleteStorageError;
 
-        // 🔹 Remove from UI
-        setPortfolioPics((prevPics) => prevPics.filter((img) => img !== imageUrl));
+      // Update UI based on media type
+      if (type === 'video') {
+        setPortfolioVideos(prev => prev.filter(vid => vid !== mediaUrl));
+      } else {
+        setPortfolioPics(prev => prev.filter(img => img !== mediaUrl));
+      }
     } catch (error) {
-        console.error("Error deleting image:", error);
+      console.error(`Error deleting ${type}:`, error);
     }
   };
 
@@ -268,30 +269,32 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
           <div className="modal-content">
             <h2>Edit {initialData.portfolio ? "Portfolio" : "Profile"}</h2>
 
-            {/* Profile Picture Section */}
-            <div className="profile-picture-container">
-              <label>Profile Picture</label>
-              <div className="profile-pic-wrapper">
-                <img 
-                  src={profilePic || "/images/default.jpg"} // Default image if no profile pic
-                  alt="Profile"
-                  className="profile-pic"
-                />
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  ref={profileFileInputRef} 
-                  style={{ display: "none" }} 
-                  onChange={(e) => handleFileChange(e, "profile")}
-                />
-                <button 
-                  className="edit-profile-button" 
-                  onClick={() => profileFileInputRef.current.click()}
-                >
-                  Edit Profile Picture
-                </button>
+            {/* Profile Picture Section - Only show with business_owner/story */}
+            {!initialData.portfolio && initialData.business_owner && (
+              <div className="profile-picture-container">
+                <label>Profile Picture</label>
+                <div className="profile-pic-wrapper">
+                  <img 
+                    src={profilePic || "/images/default.jpg"}
+                    alt="Profile"
+                    className="profile-pic"
+                  />
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    ref={profileFileInputRef} 
+                    style={{ display: "none" }} 
+                    onChange={(e) => handleFileChange(e, "profile")}
+                  />
+                  <button   
+                    className="edit-profile-button" 
+                    onClick={() => profileFileInputRef.current.click()}
+                  >
+                    Edit Profile Picture
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Dynamic Form Fields (Non-Portfolio Data) */}
             {Object.keys(formData).length > 0 && !formData.portfolio && (
@@ -371,12 +374,45 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
             {/* 🔹 Portfolio Images Section */}
             {initialData.portfolio && (
               <div>
+                {/* Videos Section */}
+                <h3>Videos</h3>
                 <div className="portfolio-preview">
+                  
+                  {portfolioVideos.length > 0 ? (
+                    portfolioVideos.map((video, index) => (
+                      <div key={index} className="image-container">
+                        <video 
+                          src={video} 
+                          className="portfolio-image" 
+                          controls
+                        />
+                        <button 
+                          className="delete-btn" 
+                          onClick={() => handleDeleteMedia(video, 'video')}
+                        >
+                          ✖
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No videos yet.</p>
+                  )}
+                </div>
+
+                {/* Images Section */}
+                <h3>Images</h3>
+                <div className="portfolio-preview">
+                 
                   {portfolioPics.length > 0 ? (
                     portfolioPics.map((img, index) => (
                       <div key={index} className="image-container">
                         <img src={img} alt={`Portfolio ${index}`} className="portfolio-image" />
-                        <button className="delete-btn" onClick={() => handleDeleteImage(img)}>✖</button>
+                        <button 
+                          className="delete-btn" 
+                          onClick={() => handleDeleteMedia(img, 'portfolio')}
+                        >
+                          ✖
+                        </button>
                       </div>
                     ))
                   ) : (
@@ -386,7 +422,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
 
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   ref={fileInputRef}
                   style={{ display: "none" }}
                   onChange={handleFileChange}
@@ -397,7 +433,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                   onClick={() => fileInputRef.current.click()}
                   disabled={uploading}
                 >
-                  {uploading ? "Uploading..." : "Add Image"}
+                  {uploading ? "Uploading..." : "Add Media"}
                 </button>
               </div>
             )}

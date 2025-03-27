@@ -330,13 +330,13 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
                                 />
                             </div>
                             <div className="sign-in-input-container">
-                                <label htmlFor="businessAddress">Business Address</label>
+                                <label htmlFor="businessAddress">What area are you based out of?</label>
                                 <input
                                     className="sign-in-form"
                                     id="businessAddress"
                                     name="businessAddress"
                                     type="text"
-                                    placeholder="Business Address"
+                                    placeholder="Put a state, city, or county, etc. (Ex: Utah, Salt Lake City)"
                                     value={formData.businessAddress}
                                     onChange={handleChange}
                                     required

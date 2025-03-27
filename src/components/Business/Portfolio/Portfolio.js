@@ -21,6 +21,7 @@ const Portfolio = () => {
   const [reviews, setReviews] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [expandedReviews, setExpandedReviews] = useState({});
+  const [portfolioVideos, setPortfolioVideos] = useState([]);
   const navigate = useNavigate();
 
   const fetchBusinessData = async () => {
@@ -102,6 +103,15 @@ const Portfolio = () => {
         : null;
       setAverageRating(avgRating);
     }
+
+    // Add video fetching after portfolio images
+    const { data: videoData, error: videoError } = await supabase
+      .from("profile_photos")
+      .select("photo_url")
+      .eq("user_id", businessId)
+      .eq("photo_type", "video");
+    if (videoError) console.error("Error fetching videos:", videoError);
+    else setPortfolioVideos(videoData.map(vid => vid.photo_url));
 
     setLoading(false);
   };
@@ -189,49 +199,71 @@ const Portfolio = () => {
 
       <div className="portfolio-container">
         <div className="portfolio-layout">
-          {portfolioPics.length === 1 ? (
+          {/* Show video first if available, otherwise show first image */}
+          {portfolioVideos.length > 0 ? (
+            <video 
+              src={portfolioVideos[0]}
+              className="main-portfolio-image"
+              controls
+              onClick={() => handleImageClick(portfolioVideos[0])}
+            >
+              Your browser does not support the video tag.
+            </video>
+          ) : portfolioPics.length > 0 ? (
             <img 
               src={portfolioPics[0]} 
               alt="Main Portfolio" 
-              className="single-portfolio-image" 
+              className="main-portfolio-image" 
               onClick={() => handleImageClick(portfolioPics[0])}
             />
           ) : (
-            <>
-              <img 
-                src={portfolioPics.length > 0 ? portfolioPics[0] : "/images/portfolio.jpeg"} 
-                alt="Main Portfolio" 
-                className="main-portfolio-image" 
-                onClick={() => handleImageClick(portfolioPics[0])}
-              />
-              <div className="portfolio-grid">
-                {portfolioPics.length > 0
-                  ? portfolioPics.slice(1, 5).map((img, index) => (
-                      <img
-                        key={index}
-                        src={img}
-                        alt={`Portfolio ${index}`}
-                        className="portfolio-image-portfolio"
-                        onClick={() => handleImageClick(img)}
-                      />
-                    ))
-                  : Array.from({ length: 4 }).map((_, index) => (
-                      <img key={index} src="/images/portfolio.jpeg" alt={`Default ${index}`} className="portfolio-image" />
-                    ))}
-                {portfolioPics.length > 5 && (
-                  <button className="see-all-button" onClick={() => navigate(`/portfolio/${businessId}/gallery`)}>
-                    + See All
-                  </button>
-                )}
-              </div>
-            </>
+            <img 
+              src="/images/portfolio.jpeg" 
+              alt="Default Portfolio" 
+              className="main-portfolio-image" 
+            />
           )}
+
+          <div className="portfolio-grid">
+            {/* Combine remaining videos and images for the grid */}
+            {[...portfolioVideos.slice(1), ...portfolioPics]
+              .slice(0, 4)
+              .map((item, index) => {
+                const isVideo = item.includes('.mp4');
+                return isVideo ? (
+                  <video
+                    key={index}
+                    src={item}
+                    className="portfolio-image-portfolio"
+                    controls
+                    onClick={() => handleImageClick(item)}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <img
+                    key={index}
+                    src={item}
+                    alt={`Portfolio ${index}`}
+                    className="portfolio-image-portfolio"
+                    onClick={() => handleImageClick(item)}
+                  />
+                );
+              })}
+            {(portfolioPics.length + portfolioVideos.length) > 5 && (
+              <button className="see-all-button" onClick={() => navigate(`/portfolio/${businessId}/gallery`)}>
+                + See All
+              </button>
+            )}
+          </div>
+          
           {isOwner && (
             <button className="edit-icon" onClick={() => openEditModal({ portfolio: portfolioPics })}>
               ✎
             </button>
           )}
         </div>
+
         <div className="section-container">
           
           <div className="section-left">
@@ -275,7 +307,7 @@ const Portfolio = () => {
               </div>
 
 
-            </div>
+</div>
           
             <div className="section-divider"></div>
 
@@ -305,8 +337,9 @@ const Portfolio = () => {
             </button>
           )}
           </div>
-            </div>
-
+</div>
+        
+          
             <div className="section-divider"></div>
 
             <div className="business-details">
