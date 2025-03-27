@@ -25,7 +25,7 @@ const BusinessBids = () => {
         const { data: businessBids, error: bidError } = await supabase
           .from("bids")
           .select("id, request_id, category, status, bid_amount")
-          .eq("user_id", user.id);
+          .eq("user_id", "6cdc1893-f536-4be6-812f-946d58a2dc92");
 
         if (bidError) {
           console.error("❌ Error fetching bids:", bidError);
@@ -97,6 +97,7 @@ const BusinessBids = () => {
         <span className={`status-number ${colorClass}`}>{bidsList.length}</span>
       </div>
       <div className={`status-underline ${colorClass}`}></div>
+      <br />
       {bidsList.length > 0 ? (
         <div className="bids-grid">
           {bidsList.map((bid) => {
@@ -104,7 +105,7 @@ const BusinessBids = () => {
             return (
               request && (
                 <div key={bid.id} className="job-card">
-                  <h3 className="truncate">
+                  <h3 className="card-title">
                     {request.event_title || "Untitled Request"}
                   </h3>
                   <div className="job-info-grid">
