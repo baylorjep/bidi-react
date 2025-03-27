@@ -453,7 +453,16 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
             {modalOpen && (
                 <div className="modal" onClick={closeModal}>
                     <span className="close">&times;</span>
-                    <img className="modal-content" src={modalImage} alt="Full Size" />
+                    {modalImage.includes('.mp4') ? (
+                        <video 
+                            className="modal-content" 
+                            controls
+                            autoPlay
+                            src={modalImage}
+                        />
+                    ) : (
+                        <img className="modal-content" src={modalImage} alt="Full Size" />
+                    )}
                 </div>
             )}
         </div>
