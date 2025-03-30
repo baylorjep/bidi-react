@@ -198,12 +198,12 @@ const Portfolio = () => {
       />
 
       <div className="portfolio-container">
-        <div className="portfolio-layout">
+        <div className={`portfolio-layout ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media' : ''}`}>
           {/* Show video first if available, otherwise show first image */}
           {portfolioVideos.length > 0 ? (
             <video 
               src={portfolioVideos[0]}
-              className="main-portfolio-image"
+              className={`main-portfolio-image ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media-item' : ''}`}
               controls
               onClick={() => handleImageClick(portfolioVideos[0])}
             >
@@ -213,49 +213,52 @@ const Portfolio = () => {
             <img 
               src={portfolioPics[0]} 
               alt="Main Portfolio" 
-              className="main-portfolio-image" 
+              className={`main-portfolio-image ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media-item' : ''}`}
               onClick={() => handleImageClick(portfolioPics[0])}
             />
           ) : (
             <img 
               src="/images/portfolio.jpeg" 
               alt="Default Portfolio" 
-              className="main-portfolio-image" 
+              className="main-portfolio-image single-media-item" 
             />
           )}
 
-          <div className="portfolio-grid">
-            {/* Combine remaining videos and images for the grid */}
-            {[...portfolioVideos.slice(1), ...portfolioPics]
-              .slice(0, 4)
-              .map((item, index) => {
-                const isVideo = item.includes('.mp4');
-                return isVideo ? (
-                  <video
-                    key={index}
-                    src={item}
-                    className="portfolio-image-portfolio"
-                    controls
-                    onClick={() => handleImageClick(item)}
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                ) : (
-                  <img
-                    key={index}
-                    src={item}
-                    alt={`Portfolio ${index}`}
-                    className="portfolio-image-portfolio"
-                    onClick={() => handleImageClick(item)}
-                  />
-                );
-              })}
-            {(portfolioPics.length + portfolioVideos.length) > 5 && (
-              <button className="see-all-button" onClick={() => navigate(`/portfolio/${businessId}/gallery`)}>
-                + See All
-              </button>
-            )}
-          </div>
+          {/* Only show grid if there are additional images or videos */}
+          {(portfolioVideos.length + portfolioPics.length > 1) && (
+            <div className="portfolio-grid">
+              {/* Combine remaining videos and images for the grid */}
+              {[...portfolioVideos.slice(1), ...portfolioPics.slice(1)]
+                .slice(0, 4)
+                .map((item, index) => {
+                  const isVideo = item.includes('.mp4');
+                  return isVideo ? (
+                    <video
+                      key={index}
+                      src={item}
+                      className="portfolio-image-portfolio"
+                      controls
+                      onClick={() => handleImageClick(item)}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <img
+                      key={index}
+                      src={item}
+                      alt={`Portfolio ${index}`}
+                      className="portfolio-image-portfolio"
+                      onClick={() => handleImageClick(item)}
+                    />
+                  );
+                })}
+              {(portfolioPics.length + portfolioVideos.length) > 5 && (
+                <button className="see-all-button" onClick={() => navigate(`/portfolio/${businessId}/gallery`)}>
+                  + See All
+                </button>
+              )}
+            </div>
+          )}
           
           {isOwner && (
             <button className="edit-icon" onClick={() => openEditModal({ portfolio: portfolioPics })}>

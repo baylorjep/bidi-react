@@ -362,3 +362,14 @@
   object-fit: cover;
   border-radius: 50%;
 }
+
+.upload-progress {
+  margin: 10px 0;
+  width: 100%;
+}
+
+.progress-bar {
+  height: 4px;
+  background-color: #4CAF50;
+  transition: width 0.3s ease;
+}

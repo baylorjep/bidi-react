@@ -19,6 +19,7 @@
   display: flex;
   gap: 10px;
   min-height: 410px;
+  width: 100%;
 }
 
 /* Main Image */
@@ -721,4 +722,78 @@ line-height: 150%; /* 36px */
   height: 570px;
   object-fit: cover;
   border-radius: 10px;
+}
+
+.portfolio-layout.single-media {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  width: 100%;
+}
+
+.main-portfolio-image.single-media-item {
+  width: 80%;
+  max-width: 1000px;
+  height: auto;
+  aspect-ratio: 16/9;
+  object-fit: contain;
+}
+
+/* Add these media queries for responsive design */
+@media (max-width: 768px) {
+  .portfolio-layout.single-media {
+    padding: 1rem;
+  }
+
+  .main-portfolio-image.single-media-item {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+  }
+}
+
+@media (max-width: 480px) {
+  .portfolio-layout.single-media {
+    padding: 0.5rem;
+  }
+
+  .main-portfolio-image.single-media-item {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+  }
+}
+
+/* 🔹 Upload Progress */
+.upload-progress-container {
+  margin: 10px 0;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.upload-progress {
+  width: 100%;
+  height: 20px;
+  background: #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  margin-top: 5px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: #4CAF50;
+  transition: width 0.3s ease;
+}
+
+.upload-progress span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #000;
+  font-size: 12px;
 }

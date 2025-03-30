@@ -13,6 +13,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const [profilePic, setProfilePic] = useState(null);
   const profileFileInputRef = useRef(null);
   const [uploadingProfile, setUploadingProfile] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({});
 
   useEffect(() => {
     if (isOpen) {
@@ -107,38 +108,61 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
 
     for (const file of files) {
       const fileType = file.type.startsWith('video/') ? 'video' : 'portfolio';
-      const filePath = `${businessId}/${Date.now()}_${file.name}`;
+      const fileName = `${Date.now()}_${file.name}`;
+      const filePath = `${businessId}/${fileName}`;
 
       try {
+        // Update progress state to show starting upload
+        setUploadProgress(prev => ({
+          ...prev,
+          [file.name]: 0
+        }));
+
+        // Upload file
         const { error: uploadError } = await supabase.storage
           .from('profile-photos')
-          .upload(filePath, file);
+          .upload(filePath, file, {
+            onProgress: ({ percentage }) => {
+              setUploadProgress(prev => ({
+                ...prev,
+                [file.name]: Math.round(percentage)
+              }));
+            }
+          });
 
         if (uploadError) throw uploadError;
 
+        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('profile-photos')
           .getPublicUrl(filePath);
 
-        const { error: dbError } = await supabase
+        // Save to database
+        await supabase
           .from('profile_photos')
           .insert({
             user_id: businessId,
             photo_url: publicUrl,
             photo_type: fileType,
-            file_path: filePath // Add this line to save the file path
+            file_path: filePath
           });
 
-        if (dbError) throw dbError;
+        // Clear progress after successful upload
+        setUploadProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[file.name];
+          return newProgress;
+        });
 
       } catch (error) {
         console.error('Error uploading file:', error);
+        alert(`Failed to upload ${file.name}. Please try again.`);
       }
     }
 
     setUploading(false);
-    fetchPortfolioImages(); // Refresh the images after upload
-    fetchPortfolioVideos(); // Refresh the videos after upload
+    fetchPortfolioImages();
+    fetchPortfolioVideos();
   };
 
   const handleUpload = async (file, type) => {
@@ -261,6 +285,16 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       specializations: formData.specializations.filter((_, index) => index !== indexToRemove)
     });
   };
+
+  const ProgressBar = ({ progress }) => (
+    <div className="upload-progress">
+      <div 
+        className="progress-bar" 
+        style={{ width: `${progress}%` }}
+      ></div>
+      <span>{progress}%</span>
+    </div>
+  );
 
   return (
     isOpen && (
@@ -451,6 +485,14 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                 >
                   {uploading ? "Uploading..." : "Add Media"}
                 </button>
+
+                {/* Upload Progress */}
+                {Object.entries(uploadProgress).map(([fileName, progress]) => (
+                  <div key={fileName} className="upload-progress-container">
+                    <span>{fileName}</span>
+                    <ProgressBar progress={progress} />
+                  </div>
+                ))}
               </div>
             )}
 
