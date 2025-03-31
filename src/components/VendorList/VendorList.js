@@ -158,31 +158,35 @@ const VendorList = ({
 
     const sortVendors = (vendors) => {
         return vendors.sort((a, b) => {
-            const aMatchScore = (a.locationScore + a.typeScore);
-            const bMatchScore = (b.locationScore + b.typeScore);
-            if (aMatchScore !== bMatchScore) return bMatchScore - aMatchScore;
-
+            // First priority: Has any photos at all
             const aHasPhotos = a.portfolio_photos.length > 0;
             const bHasPhotos = b.portfolio_photos.length > 0;
             if (aHasPhotos !== bHasPhotos) return aHasPhotos ? -1 : 1;
 
+            // Second priority: Location and type matches
+            const aMatchScore = (a.locationScore + a.typeScore);
+            const bMatchScore = (b.locationScore + b.typeScore);
+            if (aMatchScore !== bMatchScore) return bMatchScore - aMatchScore;
+
+            // Third priority: Regular sort criteria
             switch (sortOrder) {
                 case 'recommended':
                     const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
                     const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
-                    return bIsVerified - aIsVerified;
+                    if (aIsVerified !== bIsVerified) return bIsVerified - aIsVerified;
+                    // If verification is the same, fall through to photo count comparison
+                    return b.portfolio_photos.length - a.portfolio_photos.length;
                 case 'rating':
-                    return (b.average_rating || 0) - (a.average_rating || 0);
+                    const ratingDiff = (b.average_rating || 0) - (a.average_rating || 0);
+                    return ratingDiff !== 0 ? ratingDiff : b.portfolio_photos.length - a.portfolio_photos.length;
                 case 'base_price_low':
-                    return (a.minimum_price || 0) - (b.minimum_price || 0);
+                    const priceLowDiff = (a.minimum_price || 0) - (b.minimum_price || 0);
+                    return priceLowDiff !== 0 ? priceLowDiff : b.portfolio_photos.length - a.portfolio_photos.length;
                 case 'base_price_high':
-                    return (b.minimum_price || 0) - (a.minimum_price || 0);
-                case 'newest':
-                    return new Date(b.created_at) - new Date(a.created_at);
-                case 'oldest':
-                    return new Date(a.created_at) - new Date(b.created_at);
+                    const priceHighDiff = (b.minimum_price || 0) - (a.minimum_price || 0);
+                    return priceHighDiff !== 0 ? priceHighDiff : b.portfolio_photos.length - a.portfolio_photos.length;
                 default:
-                    return 0;
+                    return b.portfolio_photos.length - a.portfolio_photos.length;
             }
         });
     };
