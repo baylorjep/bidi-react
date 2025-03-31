@@ -113,7 +113,7 @@ function Navbar() {
                         {(userRole === 'individual' || userRole === 'both') && (
                             <li className="nav-item dropdown">
                                 <a className="nav-link dropdown-toggle me-lg-3" href="#" id="individualDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Wedding Planning
+                                    Your Bids
                                 </a>
                                 <ul className="dropdown-menu" aria-labelledby="individualDropdown">
                                     <li>
