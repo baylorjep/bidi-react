@@ -286,6 +286,64 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     });
   };
 
+  const handleProfilePicChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingProfile(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `${businessId}/${fileName}`;
+
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(filePath);
+
+      // Update or insert into profile_photos table
+      const { data: existingProfile } = await supabase
+        .from('profile_photos')
+        .select("id")
+        .eq("user_id", businessId)
+        .eq("photo_type", "profile")
+        .single();
+
+      if (existingProfile) {
+        await supabase
+          .from('profile_photos')
+          .update({
+            photo_url: publicUrl,
+            file_path: filePath
+          })
+          .eq("id", existingProfile.id);
+      } else {
+        await supabase
+          .from('profile_photos')
+          .insert({
+            user_id: businessId,
+            photo_url: publicUrl,
+            photo_type: "profile",
+            file_path: filePath
+          });
+      }
+
+      setProfilePic(publicUrl);
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      alert("Failed to update profile picture. Please try again.");
+    } finally {
+      setUploadingProfile(false);
+    }
+  };
+
   const ProgressBar = ({ progress }) => (
     <div className="upload-progress">
       <div 
@@ -318,13 +376,14 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                     accept="image/*" 
                     ref={profileFileInputRef} 
                     style={{ display: "none" }} 
-                    onChange={(e) => handleFileChange(e, "profile")}
+                    onChange={handleProfilePicChange}
                   />
                   <button   
                     className="edit-profile-button" 
                     onClick={() => profileFileInputRef.current.click()}
+                    disabled={uploadingProfile}
                   >
-                    Edit Profile Picture
+                    {uploadingProfile ? "Uploading..." : "Edit Profile Picture"}
                   </button>
                 </div>
               </div>
