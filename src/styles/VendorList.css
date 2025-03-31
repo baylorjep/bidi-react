@@ -579,3 +579,15 @@
         padding: 10px;
     }
 }
+
+.pagination-btn {
+    background: #FF008A;
+    color: #fff;
+    border: none;
+    padding: 4px 20px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out;
+    font-family: Outfit;
+    margin: 0 5px;
+}

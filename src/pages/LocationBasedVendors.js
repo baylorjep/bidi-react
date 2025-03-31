@@ -121,6 +121,9 @@ const LocationBasedVendors = () => {
     const [selectedCounty, setSelectedCounty] = useState(county || '');
     const [selectedCity, setSelectedCity] = useState(city || '');
     const [filteredCities, setFilteredCities] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const vendorsPerPage = 10;
 
     useEffect(() => {
         if (selectedCounty) {
@@ -129,6 +132,11 @@ const LocationBasedVendors = () => {
             setFilteredCities(cities);
         }
     }, [selectedCounty]);
+
+    useEffect(() => {
+        // Reset page when filters change
+        setCurrentPage(1);
+    }, [selectedCategory, selectedType, selectedCounty, selectedCity]);
 
     const formatLocation = () => {
         if (!county && !city) return '';
@@ -295,9 +303,15 @@ const LocationBasedVendors = () => {
             <VendorList 
                 selectedCategory={selectedCategory}
                 sortOrder="recommended"
-                county={selectedCounty}
-                city={selectedCity}
+                location={city || county} // Pass either city or county as location
                 categoryType={selectedType === 'all' ? '' : selectedType}
+                currentPage={currentPage}
+                vendorsPerPage={vendorsPerPage}
+                setCurrentPage={setCurrentPage}
+                totalCount={totalCount}
+                setTotalCount={setTotalCount}
+                preferredLocation={city || county} // New prop for location preference
+                preferredType={selectedType} // New prop for type preference
             />
         </div>
     );

@@ -23,6 +23,8 @@ const VendorListWithFilters = () => {
     const [selectedCategory, setSelectedCategory] = useState('photography'); // Default to 'photography'
     const [sortOrder, setSortOrder] = useState(sortOptions[0].id);
     const [vendorCount, setVendorCount] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const vendorsPerPage = 10;
 
     const handleCategoryChange = (category) => {
         setSelectedCategory(category);
@@ -85,7 +87,15 @@ const VendorListWithFilters = () => {
                 </div>
             </div>
 
-            <VendorList selectedCategory={selectedCategory} sortOrder={sortOrder} />
+            <VendorList 
+                selectedCategory={selectedCategory} 
+                sortOrder={sortOrder} 
+                currentPage={currentPage}
+                vendorsPerPage={vendorsPerPage}
+                setCurrentPage={setCurrentPage}
+                totalCount={vendorCount}
+                setTotalCount={setVendorCount} // Changed this line to pass setVendorCount
+            />
         </div>
     );
 };

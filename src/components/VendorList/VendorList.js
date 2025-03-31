@@ -8,7 +8,17 @@ import 'slick-carousel/slick/slick-theme.css';
 import Verified from '../../assets/Frame 1162.svg';
 import StarIcon from '../../assets/star-duotone.svg'; // Assuming you have a star icon
 
-const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => {
+const VendorList = ({ 
+    selectedCategory, 
+    sortOrder, 
+    preferredLocation, 
+    categoryType, 
+    currentPage, 
+    vendorsPerPage, 
+    setCurrentPage,
+    setTotalCount,
+    preferredType 
+}) => {
     const [vendors, setVendors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
@@ -16,6 +26,7 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
     const [expandedStories, setExpandedStories] = useState({});
     const [expandedDescriptions, setExpandedDescriptions] = useState({});
     const [imageLoading, setImageLoading] = useState({});
+    const [totalCount, setTotalCountState] = useState(0);
     const navigate = useNavigate();
 
     const truncateText = (text, maxLength = 150) => {
@@ -56,20 +67,29 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
 
     useEffect(() => {
         const fetchVendors = async () => {
+            setLoading(true);
+            
+            // Base query to get all vendors in the category
             let query = supabase
                 .from('business_profiles')
-                .select('*')
+                .select('*', { count: 'exact' })
                 .or('stripe_account_id.not.is.null,stripe_account_id.not.eq.,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
                 query = query.eq('business_category', selectedCategory);
             }
 
-            if (categoryType) {
-                query = query.contains('specializations', [categoryType]);
+            // Get total count first
+            const { count, error: countError } = await query;
+            
+            if (!countError) {
+                setTotalCount(count || 0);
+                setTotalCountState(count || 0);
             }
 
-            const { data: vendorData, error: vendorError } = await query;
+            // Then get paginated data
+            const { data: vendorData, error: vendorError } = await query
+                .range((currentPage - 1) * vendorsPerPage, currentPage * vendorsPerPage - 1);
 
             if (vendorError) {
                 console.error('Error fetching vendors:', vendorError);
@@ -77,118 +97,102 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
                 return;
             }
 
+            const vendorIds = vendorData.map(vendor => vendor.id);
+            
             const { data: photoData, error: photoError } = await supabase
                 .from('profile_photos')
                 .select('*')
-                .eq('photo_type', 'profile');
+                .in('user_id', vendorIds);
 
             if (photoError) {
-                console.error('Error fetching profile photos:', photoError);
+                console.error('Error fetching photos:', photoError);
                 setLoading(false);
                 return;
             }
 
             const vendorsWithPhotos = await Promise.all(vendorData.map(async vendor => {
-                const profilePhoto = photoData.find(photo => photo.user_id === vendor.id);
-                const profilePhotoUrl = profilePhoto ? profilePhoto.photo_url : '/images/default.jpg';
+                const profilePhoto = photoData.find(photo => 
+                    photo.user_id === vendor.id && photo.photo_type === 'profile'
+                );
+                const portfolioMedia = photoData.filter(photo => 
+                    photo.user_id === vendor.id && 
+                    (photo.photo_type === 'portfolio' || photo.photo_type === 'video')
+                );
 
-                // Fetch both portfolio images and videos
-                const { data: mediaData, error: mediaError } = await supabase
-                    .from('profile_photos')
-                    .select('photo_url, photo_type')
-                    .eq('user_id', vendor.id)
-                    .or('photo_type.eq.portfolio,photo_type.eq.video');
-
-                if (mediaError) {
-                    console.error('Error fetching portfolio media:', mediaError);
-                }
-
-                // Separate videos and images
-                const portfolioVideos = mediaData ? mediaData.filter(item => item.photo_type === 'video').map(item => item.photo_url) : [];
-                const portfolioPhotos = mediaData ? mediaData.filter(item => item.photo_type === 'portfolio').map(item => item.photo_url) : [];
-
-                // Combine videos first, then photos
-                const allMedia = [...portfolioVideos, ...portfolioPhotos];
-
-                // Fetch average rating from reviews table
-                const { data: reviewData, error: reviewError } = await supabase
+                const { data: reviewData } = await supabase
                     .from('reviews')
                     .select('rating')
                     .eq('vendor_id', vendor.id);
 
-                if (reviewError) {
-                    console.error('Error fetching reviews:', reviewError);
-                }
-
-                const averageRating = reviewData.length > 0
+                const averageRating = reviewData?.length > 0
                     ? (reviewData.reduce((acc, review) => acc + review.rating, 0) / reviewData.length).toFixed(1)
                     : null;
 
-                // Add a location match score
-                const locationMatchScore = location && vendor.business_address
-                    ? vendor.business_address.toLowerCase().includes(location.toLowerCase().replace(/-/g, ' '))
-                        ? 1  // Direct match
-                        : 0  // No match
-                    : 0;     // No location specified
+                const locationScore = preferredLocation && vendor.business_address
+                    ? vendor.business_address.toLowerCase().includes(preferredLocation.replace(/-/g, ' ').toLowerCase())
+                        ? 1 : 0
+                    : 0;
+
+                const typeScore = preferredType && vendor.specializations
+                    ? vendor.specializations.includes(preferredType)
+                        ? 1 : 0
+                    : 0;
 
                 return {
                     ...vendor,
-                    profile_photo_url: profilePhotoUrl,
-                    portfolio_photos: allMedia,
+                    profile_photo_url: profilePhoto?.photo_url || '/images/default.jpg',
+                    portfolio_photos: portfolioMedia.map(media => media.photo_url),
                     average_rating: averageRating,
-                    locationMatchScore
+                    locationScore,
+                    typeScore
                 };
             }));
 
-            // Define sortByPhotos function before using it
-            const sortByPhotos = (a, b) => {
-                const aHasPhotos = a.portfolio_photos.length > 0;
-                const bHasPhotos = b.portfolio_photos.length > 0;
-                if (aHasPhotos && !bHasPhotos) return -1;
-                if (!aHasPhotos && bHasPhotos) return 1;
-                return 0;
-            };
-
-            // Sort vendors based on multiple criteria
-            let sortedVendors = vendorsWithPhotos.sort((a, b) => {
-                // First sort by location if specified
-                if (location) {
-                    const locationDiff = b.locationMatchScore - a.locationMatchScore;
-                    if (locationDiff !== 0) return locationDiff;
-                }
-
-                // Then apply the regular sorting logic
-                const photoSort = sortByPhotos(a, b);
-                if (photoSort !== 0) return photoSort;
-
-                switch (sortOrder) {
-                    case 'recommended':
-                        const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
-                        const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
-                        if (aIsVerified && !bIsVerified) return -1;
-                        if (!aIsVerified && bIsVerified) return 1;
-                        return 0;
-                    case 'rating':
-                        return (b.average_rating || 0) - (a.average_rating || 0);
-                    case 'base_price_low':
-                        return (a.minimum_price || 0) - (b.minimum_price || 0);
-                    case 'base_price_high':
-                        return (b.minimum_price || 0) - (a.minimum_price || 0);
-                    case 'newest':
-                        return new Date(b.created_at) - new Date(a.created_at);
-                    case 'oldest':
-                        return new Date(a.created_at) - new Date(b.created_at);
-                    default:
-                        return 0;
-                }
-            });
-
+            const sortedVendors = sortVendors(vendorsWithPhotos);
             setVendors(sortedVendors);
             setLoading(false);
         };
 
         fetchVendors();
-    }, [selectedCategory, sortOrder, location, categoryType]);
+    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, preferredLocation, preferredType]);
+
+    const sortVendors = (vendors) => {
+        return vendors.sort((a, b) => {
+            const aMatchScore = (a.locationScore + a.typeScore);
+            const bMatchScore = (b.locationScore + b.typeScore);
+            if (aMatchScore !== bMatchScore) return bMatchScore - aMatchScore;
+
+            const aHasPhotos = a.portfolio_photos.length > 0;
+            const bHasPhotos = b.portfolio_photos.length > 0;
+            if (aHasPhotos !== bHasPhotos) return aHasPhotos ? -1 : 1;
+
+            switch (sortOrder) {
+                case 'recommended':
+                    const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
+                    const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
+                    return bIsVerified - aIsVerified;
+                case 'rating':
+                    return (b.average_rating || 0) - (a.average_rating || 0);
+                case 'base_price_low':
+                    return (a.minimum_price || 0) - (b.minimum_price || 0);
+                case 'base_price_high':
+                    return (b.minimum_price || 0) - (a.minimum_price || 0);
+                case 'newest':
+                    return new Date(b.created_at) - new Date(a.created_at);
+                case 'oldest':
+                    return new Date(a.created_at) - new Date(b.created_at);
+                default:
+                    return 0;
+            }
+        });
+    };
+
+    const totalPages = Math.ceil(totalCount / vendorsPerPage);
+
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+        window.scrollTo(0, 0);
+    };
 
     if (loading) {
         return <div>Loading...</div>;
@@ -319,7 +323,6 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
                                     const imageId = `${vendor.id}-${index}`;
                                     const isVideo = item.includes('.mp4');
 
-                                    // Preload the next image
                                     if (index < vendor.portfolio_photos.length - 1) {
                                         preloadImage(vendor.portfolio_photos[index + 1]);
                                     }
@@ -462,6 +465,21 @@ const VendorList = ({ selectedCategory, sortOrder, location, categoryType }) => 
                         />
                     ) : (
                         <img className="modal-content" src={modalImage} alt="Full Size" />
+                    )}
+                </div>
+            )}
+            {totalPages > 1 && (
+                <div className="pagination">
+                    {currentPage > 1 && (
+                        <button className='pagination-btn' onClick={() => handlePageChange(currentPage - 1)}>
+                            Previous
+                        </button>
+                    )}
+                    <span>Page {currentPage} of {totalPages}</span>
+                    {currentPage < totalPages && (
+                        <button className='pagination-btn' onClick={() => handlePageChange(currentPage + 1)}>
+                            Next
+                        </button>
                     )}
                 </div>
             )}
