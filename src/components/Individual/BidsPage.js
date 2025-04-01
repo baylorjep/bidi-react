@@ -696,7 +696,7 @@ export default function BidsPage() {
             console.error('Error sharing:', error);
             // Fall back to copying to clipboard
             navigator.clipboard.writeText(
-                `Hey! I found this great wedding vendor platform called Bidi. Use my code ${newCouponCode} to get $50 off your booking! Check it out at https://bidi.app`
+                `Hey! I found this great wedding vendor platform called Bidi. Use my code ${newCouponCode} to get $50 off your booking! Check it out at https://savewithbidi.com`
             );
             alert('Share message copied to clipboard!');
         }
@@ -706,7 +706,7 @@ export default function BidsPage() {
         const shareData = {
             title: 'Get $50 off on Bidi',
             text: `Hey! I found this great wedding vendor platform called Bidi. Use my code ${newCouponCode} to get $50 off your booking!`,
-            url: 'https://bidi.app'
+            url: 'https://savewithbidi.com'
         };
 
         try {
