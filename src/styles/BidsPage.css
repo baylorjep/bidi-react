@@ -515,6 +515,13 @@
     margin-top: 24px;
 }
 
+@media (max-width: 768px) {
+    .modal-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+}
+
 .modal-buttons button {
     padding: 8px 16px;
     border-radius: 4px;

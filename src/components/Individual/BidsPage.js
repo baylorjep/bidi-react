@@ -21,6 +21,15 @@ export default function BidsPage() {
     const [user, setUser] = useState(null);
     const [showAcceptModal, setShowAcceptModal] = useState(false);
     const [selectedBid, setSelectedBid] = useState(null);
+    const [couponCode, setCouponCode] = useState('');
+    const [couponError, setError] = useState(null);
+    const [couponSuccess, setCouponSuccess] = useState(false);
+    const [showCouponDetailsModal, setShowCouponDetailsModal] = useState(false);
+    const [selectedCoupon, setSelectedCoupon] = useState(null);
+    const [showShareCouponModal, setShowShareCouponModal] = useState(false);
+    const [newCouponCode, setNewCouponCode] = useState('');
+    const [activeCoupon, setActiveCoupon] = useState(null);
+    const [calculatorAmount, setCalculatorAmount] = useState('');
     const navigate = useNavigate();
 
     const isNew = (createdAt) => {
@@ -455,12 +464,83 @@ export default function BidsPage() {
         setShowAcceptModal(true);
     };
 
+    const validateCoupon = async (businessId) => {
+        if (!couponCode) return false;
+
+        try {
+            // Check if coupon exists and is valid
+            const { data: coupon, error } = await supabase
+                .from('coupons')
+                .select('*')
+                .eq('code', couponCode.toUpperCase())
+                .eq('valid', true)
+                .single();
+
+            if (error) {
+                setError('Invalid coupon code');
+                setCouponSuccess(false);
+                return false;
+            }
+
+            // Check if coupon is expired
+            if (new Date(coupon.expiration_date) < new Date()) {
+                setError('This coupon has expired');
+                setCouponSuccess(false);
+                return false;
+            }
+
+            // Check if coupon belongs to the business
+            if (coupon.business_id !== businessId) {
+                setError('This coupon is not valid for this business');
+                setCouponSuccess(false);
+                return false;
+            }
+
+            setCouponSuccess(true);
+            setError(null);
+            return true;
+
+        } catch (err) {
+            console.error('Error validating coupon:', err);
+            setError('Error validating coupon');
+            setCouponSuccess(false);
+            return false;
+        }
+    };
+
     const handleConfirmAccept = async () => {
         if (selectedBid) {
+            // Validate coupon if one was entered
+            if (couponCode) {
+                const isValid = await validateCoupon(selectedBid.business_profiles.id);
+                if (!isValid) {
+                    return; // Don't proceed if coupon is invalid
+                }
+            }
+
+            // Update the bid with the coupon code if valid
+            const updateData = {
+                status: 'accepted',
+                coupon_code: couponSuccess ? couponCode.toUpperCase() : null
+            };
+
+            const { error } = await supabase
+                .from('bids')
+                .update(updateData)
+                .eq('id', selectedBid.id);
+
+            if (error) {
+                console.error('Error updating bid:', error);
+                return;
+            }
+
             await handleMoveToAccepted(selectedBid);
             setShowAcceptModal(false);
             setSelectedBid(null);
-            setActiveTab('approved'); // Add this line to switch to the approved tab
+            setCouponCode('');
+            setError(null);
+            setCouponSuccess(false);
+            setActiveTab('approved');
         }
     };
 
@@ -482,6 +562,104 @@ export default function BidsPage() {
                 display: `$${bid.business_profiles.amount.toFixed(2)}`
             };
         }
+    };
+
+    const handleViewCoupon = async (bid) => {
+        if (!bid.coupon_code) return;
+
+        try {
+            const { data: coupon, error } = await supabase
+                .from('coupons')
+                .select('*')
+                .eq('code', bid.coupon_code)
+                .single();
+
+            if (error) {
+                console.error('Error fetching coupon:', error);
+                return;
+            }
+
+            setSelectedCoupon(coupon);
+            setShowCouponDetailsModal(true);
+        } catch (err) {
+            console.error('Error:', err);
+        }
+    };
+
+    const generateCouponCode = () => {
+        // Generate a random 8-character code
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let code = '';
+        for (let i = 0; i < 8; i++) {
+            code += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        return code;
+    };
+
+    const handleGenerateCoupon = async (businessId) => {
+        try {
+            // First check for existing valid coupons
+            const { data: existingCoupons, error: fetchError } = await supabase
+                .from('coupons')
+                .select('*')
+                .eq(businessId ? 'business_id' : 'created_by', businessId || user.id)
+                .eq('valid', true);
+
+            if (fetchError) {
+                console.error('Error checking existing coupons:', fetchError);
+                return;
+            }
+
+            // Find if there's a non-expired coupon
+            const now = new Date();
+            const validCoupon = existingCoupons?.find(coupon => 
+                new Date(coupon.expiration_date) > now
+            );
+
+            if (validCoupon) {
+                setActiveCoupon(validCoupon);
+                setNewCouponCode(validCoupon.code);
+                setShowShareCouponModal(true);
+                return;
+            }
+
+            // If no valid coupon exists, generate a new one
+            const code = generateCouponCode();
+            const expirationDate = new Date();
+            expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+
+            // Create new coupon
+            const { data: newCoupon, error: insertError } = await supabase
+                .from('coupons')
+                .insert([{
+                    business_id: businessId || null,
+                    code: code,
+                    discount_amount: 50,
+                    expiration_date: expirationDate.toISOString(),
+                    valid: true,
+                    created_by: user.id
+                }])
+                .select()
+                .single();
+
+            if (insertError) {
+                console.error('Error generating coupon:', insertError);
+                alert('Error generating coupon. Please try again.');
+            } else {
+                setNewCouponCode(code);
+                setActiveCoupon(newCoupon);
+                setShowShareCouponModal(true);
+            }
+        } catch (err) {
+            console.error('Error:', err);
+        }
+    };
+
+    const handleShareAndEarn = () => {
+        // Show a modal explaining the referral program
+        setShowShareCouponModal(true);
+        // Generate a generic coupon that's not tied to a specific business
+        handleGenerateCoupon(null);
     };
 
     const renderBidCard = (bid) => {
@@ -559,6 +737,19 @@ export default function BidsPage() {
                         <strong>Phone:</strong> {bid.business_profiles.phone}
                     </p>
 
+                    {bid.coupon_code && (
+                        <div style={{ textAlign: 'left', marginTop: '8px' }}>
+                            <button
+                                className="btn-secondary"
+                                style={{ padding: '4px 8px', fontSize: '14px' }}
+                                onClick={() => handleViewCoupon(bid)}
+                            >
+                                <i className="fas fa-ticket-alt" style={{ marginRight: '8px' }}></i>
+                                View Applied Coupon
+                            </button>
+                        </div>
+                    )}
+
                     {downPayment && (
                         <p style={{ marginTop: '8px', textAlign: 'left' }}>
                             <strong>Down Payment:</strong>{' '}
@@ -596,6 +787,14 @@ export default function BidsPage() {
                             style={{fontSize:'14px'}}
                         >
                             Message
+                        </button>
+                        <button
+                            className="btn-primary flex-fill"
+                            onClick={() => handleGenerateCoupon(bid.business_profiles.id)}
+                            style={{fontSize:'14px'}}
+                        >
+                            <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
+                            Share & Earn
                         </button>
                     </div>
                 </div>
@@ -799,6 +998,40 @@ export default function BidsPage() {
                 <meta name="keywords" content="bids, wedding vendors, Bidi, manage bids" />
             </Helmet>
             <div className="bids-page">
+                <div className="share-earn-section" style={{ 
+                    padding: '20px',
+                    marginBottom: '20px',
+                    background: '#f8f9fa',
+                    borderRadius: '8px',
+                    textAlign: 'center'
+                }}>
+                    <h2 style={{ marginBottom: '15px', color: '#333' }}>
+                        Share Bidi & Earn
+                    </h2>
+                    <p style={{ marginBottom: '20px', color: '#666' }}>
+                        Share Bidi with your friends! They get $50 off their vendor, and you get $50 when they book!
+                    </p>
+                    <div style={{display: 'flex', justifyContent: 'center'}}>
+                        <button
+                        className="btn-primary"
+                        onClick={handleShareAndEarn}
+                        style={{
+                            padding: '12px 24px',
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            color: '#9633eb',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
+                        Get Your Referral Code
+                    </button>
+                    </div>
+
+                </div>
+
                 <h1 className="section-title">Your Service Requests</h1>
                 <p className="section-description">
                     Browse through your service requests using the arrows. Below, you'll find all bids received for the currently displayed request.
@@ -878,6 +1111,53 @@ export default function BidsPage() {
                     <div className="modal-content">
                         <h3>Accept Bid Confirmation</h3>
                         <p>Are you sure you want to accept this bid from {selectedBid?.business_profiles?.business_name}?</p>
+                        
+                        <div className="coupon-section" style={{ marginBottom: '20px' }}>
+                            <label htmlFor="coupon-input" style={{ display: 'block', marginBottom: '8px' }}>
+                                Have a coupon code? Enter it here:
+                            </label>
+                            <input
+                                id="coupon-input"
+                                type="text"
+                                value={couponCode}
+                                onChange={(e) => {
+                                    setCouponCode(e.target.value);
+                                    setError(null);
+                                    setCouponSuccess(false);
+                                }}
+                                placeholder="Enter coupon code"
+                                style={{
+                                    width: '100%',
+                                    padding: '8px',
+                                    marginBottom: '8px',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '4px'
+                                }}
+                            />
+                            {couponCode && (
+                                <button
+                                    onClick={() => validateCoupon(selectedBid?.business_profiles?.id)}
+                                    style={{
+                                        padding: '8px 16px',
+                                        marginBottom: '8px',
+                                        backgroundColor: '#007bff',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Validate Coupon
+                                </button>
+                            )}
+                            {couponError && (
+                                <p style={{ color: 'red', margin: '8px 0' }}>{couponError}</p>
+                            )}
+                            {couponSuccess && (
+                                <p style={{ color: 'green', margin: '8px 0' }}>Coupon code is valid!</p>
+                            )}
+                        </div>
+
                         <p>By accepting this bid:</p>
                         <ul>
                             <li>Your contact information will be shared with the business</li>
@@ -890,6 +1170,9 @@ export default function BidsPage() {
                                 onClick={() => {
                                     setShowAcceptModal(false);
                                     setSelectedBid(null);
+                                    setCouponCode('');
+                                    setError(null);
+                                    setCouponSuccess(false);
                                 }}
                             >
                                 Cancel
@@ -900,6 +1183,75 @@ export default function BidsPage() {
                                 onClick={handleConfirmAccept}
                             >
                                 Accept Bid
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showCouponDetailsModal && selectedCoupon && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Coupon Details</h3>
+                        <div style={{ margin: '20px 0' }}>
+                            <p><strong>Code:</strong> {selectedCoupon.code}</p>
+                            <p><strong>Discount Amount:</strong> ${selectedCoupon.discount_amount}</p>
+                            <p><strong>Valid Until:</strong> {new Date(selectedCoupon.expiration_date).toLocaleDateString()}</p>
+                        </div>
+                        <div className="modal-buttons">
+                            <button 
+                                className="btn-primary"
+                                onClick={() => setShowCouponDetailsModal(false)}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showShareCouponModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>{activeCoupon ? 'Your Referral Coupon' : 'New Referral Coupon Generated'}</h3>
+                        <div style={{ textAlign: 'center' }}>
+                            <h4>Your coupon code is:</h4>
+                            <div style={{ padding: '15px', margin: '15px 0', background: '#f5f5f5', borderRadius: '4px' }}>
+                                <strong>{newCouponCode}</strong>
+                            </div>
+                            <p>Share this code with your friends!</p>
+                            <div style={{ margin: '20px 0', padding: '15px', background: '#f5f5f5', borderRadius: '4px' }}>
+                                <h5>How it works:</h5>
+                                <p style={{ marginBottom: '10px' }}>
+                                    1. Your friend gets $50 off their vendor booking
+                                </p>
+                                <p style={{ marginBottom: '10px' }}>
+                                    2. You get $50 when they complete their booking
+                                </p>
+                                <p>
+                                    Valid until: {activeCoupon ? new Date(activeCoupon.expiration_date).toLocaleDateString() : ''}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="modal-buttons">
+                            <button 
+                                className="btn-danger"
+                                style={{borderRadius:'40px', width: '80%'}} 
+                                onClick={() => {
+                                    setShowShareCouponModal(false);
+                                }}
+                            >
+                                Close
+                            </button>
+                            <button 
+                                className="btn-success"
+                                style={{borderRadius:'40px', width: '80%'}} 
+                                onClick={() => {
+                                    navigator.clipboard.writeText(newCouponCode);
+                                    alert('Coupon code copied to clipboard!');
+                                }}
+                            >
+                                Copy Code
                             </button>
                         </div>
                     </div>
