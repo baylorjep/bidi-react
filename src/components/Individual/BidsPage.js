@@ -662,6 +662,69 @@ export default function BidsPage() {
         handleGenerateCoupon(null);
     };
 
+    const handleShareToContacts = async () => {
+        try {
+            // Check if the Contact Picker API is available
+            if ('contacts' in navigator && 'ContactsManager' in window) {
+                const props = ['email', 'tel'];
+                const opts = { multiple: true };
+                
+                try {
+                    const contacts = await navigator.contacts.select(props, opts);
+                    if (contacts.length > 0) {
+                        // Prepare share message
+                        const shareMessage = `Hey! I found this great wedding vendor platform called Bidi. Use my code ${newCouponCode} to get $50 off your booking! Check it out at https://savewithbidi.com`;
+                        
+                        // Share via SMS or email based on available contact info
+                        contacts.forEach(contact => {
+                            if (contact.tel && contact.tel.length > 0) {
+                                window.open(`sms:${contact.tel[0]}?body=${encodeURIComponent(shareMessage)}`);
+                            } else if (contact.email && contact.email.length > 0) {
+                                window.open(`mailto:${contact.email[0]}?subject=Get $50 off on Bidi&body=${encodeURIComponent(shareMessage)}`);
+                            }
+                        });
+                    }
+                } catch (err) {
+                    // Fall back to Web Share API
+                    handleWebShare();
+                }
+            } else {
+                // Fall back to Web Share API
+                handleWebShare();
+            }
+        } catch (error) {
+            console.error('Error sharing:', error);
+            // Fall back to copying to clipboard
+            navigator.clipboard.writeText(
+                `Hey! I found this great wedding vendor platform called Bidi. Use my code ${newCouponCode} to get $50 off your booking! Check it out at https://bidi.app`
+            );
+            alert('Share message copied to clipboard!');
+        }
+    };
+
+    const handleWebShare = async () => {
+        const shareData = {
+            title: 'Get $50 off on Bidi',
+            text: `Hey! I found this great wedding vendor platform called Bidi. Use my code ${newCouponCode} to get $50 off your booking!`,
+            url: 'https://bidi.app'
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                throw new Error('Web Share API not supported');
+            }
+        } catch (err) {
+            console.error('Error sharing:', err);
+            // Fall back to copying to clipboard
+            navigator.clipboard.writeText(
+                `${shareData.text} ${shareData.url}`
+            );
+            alert('Share message copied to clipboard!');
+        }
+    };
+
     const renderBidCard = (bid) => {
         const handleProfileClick = () => {
             navigate(`/portfolio/${bid.business_profiles.id}`);
@@ -1233,16 +1296,28 @@ export default function BidsPage() {
                                 </p>
                             </div>
                         </div>
-                        <div className="modal-buttons">
-                            <button 
-                                className="btn-danger"
-                                style={{borderRadius:'40px', width: '80%'}} 
-                                onClick={() => {
-                                    setShowShareCouponModal(false);
+                        <button 
+                                className="btn-primary"
+                                style={{
+                                    borderRadius: '40px',
+                                    width: '80%',
+                                    backgroundColor: '#9633eb',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    fontFamily:'Inter',
+                                    fontWeight:'600',
+                                    fontSize:'16px'
                                 }}
+                                onClick={handleShareToContacts}
                             >
-                                Close
+                                <i className="fas fa-address-book"></i>
+                                Share with Contacts
                             </button>
+                        <div className="modal-buttons" style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+
                             <button 
                                 className="btn-success"
                                 style={{borderRadius:'40px', width: '80%'}} 
@@ -1252,6 +1327,15 @@ export default function BidsPage() {
                                 }}
                             >
                                 Copy Code
+                            </button>
+                            <button 
+                                className="btn-danger"
+                                style={{borderRadius:'40px', width: '80%'}} 
+                                onClick={() => {
+                                    setShowShareCouponModal(false);
+                                }}
+                            >
+                                Close
                             </button>
                         </div>
                     </div>
