@@ -80,9 +80,9 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
 
     return (
         <div className="request-display">
-            <div className="d-flex justify-content-between align-items-center">
+            <div className="bid-display-head-container">
                 <div className="request-title" style={{ marginBottom: '0', textAlign: 'left', position: 'relative' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div className='bid-display-head'>
                         <img 
                             src={profileImage} 
                             alt={`${bid.business_profiles.business_name} profile`} 
@@ -125,12 +125,15 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                         )
                     )}
                 </div>
+                <div className='bid-display-btn-container'>
                 <button
-                    className="bid-button"
+                    className="bid-display-button"
                     disabled
                 >
                     ${bid.bid_amount}
+                    <div className='tag-hole'></div>
                 </button>
+                </div>
             </div>
             <hr />
             <div className="request-content">
