@@ -1,6 +1,7 @@
 import React from 'react';
 import './Articles.css';
 import Helmet from 'react-helmet';
+import RelatedArticles from './RelatedArticles';
 
 const UtahWeddingVideographerGuide = () => {
     return (
@@ -244,7 +245,7 @@ const UtahWeddingVideographerGuide = () => {
                 <li>[23] - <a href="https://www.savewithbidi.com/articles/utah-photography-cost-guide" className="reference-link" target="_blank" rel="noopener noreferrer">Bidi - Utah Photography Cost Guide</a></li>
             </ul>
 
-            {/* End of article */}
+            <RelatedArticles currentArticle="utah-videographer" />
         </article>
     );
 };

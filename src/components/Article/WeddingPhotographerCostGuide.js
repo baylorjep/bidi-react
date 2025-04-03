@@ -10,6 +10,7 @@ import hiddencost from '../../assets/articles/WeddingPhotographyCostGuide/hidden
 import choose from '../../assets/articles/WeddingPhotographyCostGuide/choose.webp'
 import saveMoney from '../../assets/articles/WeddingPhotographyCostGuide/save money.webp'
 import Helmet from 'react-helmet';
+import RelatedArticles from './RelatedArticles';
 
 const WeddingPhotographerCostGuide = () => {
     return (
@@ -316,6 +317,8 @@ const WeddingPhotographerCostGuide = () => {
                 <li>[5] - <a href="https://loveanneliese.com/how-much-wedding-photography-coverage-do-i-need/" className="reference-link" target="_blank" rel="noopener noreferrer">Love Anneliese</a></li>
                 <li>[6] - <a href="https://shootdotedit.com/blogs/news/wedding-photographers-guide-off-season" className="reference-link" target="_blank" rel="noopener noreferrer">Shoot Dot Edit</a></li>
             </ul>
+            
+            <RelatedArticles currentArticle="photographer" />
         </article>
     );
 };

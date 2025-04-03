@@ -7,6 +7,7 @@ import time from '../../assets/articles/VideographyCostGuide/time.webp'
 import price from '../../assets/articles/VideographyCostGuide/price.webp'
 import saveMoney from '../../assets/articles/WeddingPhotographyCostGuide/save money.webp'
 import Helmet from 'react-helmet';
+import RelatedArticles from './RelatedArticles';
 
 const WeddingVideographerCostGuide = () => {
     return (
@@ -291,6 +292,8 @@ const WeddingVideographerCostGuide = () => {
             <p>Wedding videography is a significant investment with lots of hidden costs, but the final product can be a perfect way to always remember a beautiful wedding. Base packages start at $1,000, though final prices typically reach $2,300-$4,000 after factoring in additional services, equipment needs, and timing considerations.</p>
             <p>Strategic planning makes quality wedding videography more affordable. Booking 12-18 months ahead unlocks early-bird discounts, while choosing off-peak seasons or weekdays can reduce costs by up to 50%. Additionally, understanding package components allows for effective customization without sacrificing essential coverage.</p>
             <p>Remember that professional wedding videography requires substantial investment in equipment, expertise, and post-production work. Focusing on value rather than just price ensures lasting memories of your special day. Through careful timing, package customization, and realistic budgeting, couples can secure excellent wedding video coverage that fits their financial plans while preserving their precious moments for years to come.</p>
+            
+            <RelatedArticles currentArticle="videographer" />
         </article>
     );
 };
