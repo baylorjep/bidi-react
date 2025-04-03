@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient'; // Import your Supabase client
 import bidiCheck from '../../assets/Frame 1162.svg';
 import StarIcon from '../../assets/star-duotone.svg';
 import { Link, useNavigate } from "react-router-dom";
+import './BidDisplay.css';
 
 function BidDisplay({ bid, handleApprove, handleDeny }) {
     const [isBidiVerified, setIsBidiVerified] = useState(false);
@@ -83,13 +84,29 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
             <div className="bid-display-head-container">
                 <div className="request-title" style={{ marginBottom: '0', textAlign: 'left', position: 'relative' }}>
                     <div className='bid-display-head'>
-                        <img 
-                            src={profileImage} 
-                            alt={`${bid.business_profiles.business_name} profile`} 
-                            className="vendor-profile-image" 
-                            onClick={handleProfileClick} 
-                            style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%', marginRight: '10px' }}
-                        />
+                        <div style={{ position: 'relative' }}>
+                            <img 
+                                src={profileImage} 
+                                alt={`${bid.business_profiles.business_name} profile`} 
+                                className="vendor-profile-image" 
+                                onClick={handleProfileClick} 
+                                style={{ 
+                                    cursor: 'pointer', 
+                                    width: '50px', 
+                                    height: '50px', 
+                                    borderRadius: '50%', 
+                                }}
+                                title="Click to view full profile"
+                            />
+                            <div 
+                                className="profile-tooltip"
+                                style={{
+                                    display: showBubble ? 'block' : 'none'
+                                }}
+                            >
+                                Click to view profile
+                            </div>
+                        </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <Link 
                                 to={`/portfolio/${bid.business_profiles.id}`} 
