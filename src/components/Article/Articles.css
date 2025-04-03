@@ -816,5 +816,60 @@ td {
   }
 }
 
+.responsive-table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin: 20px 0;
+}
+
+.responsive-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+}
+
+.responsive-table th,
+.responsive-table td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+.responsive-table th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+}
+
+@media screen and (max-width: 600px) {
+    .responsive-table thead {
+        display: none;
+    }
+    
+    .responsive-table tr {
+        margin-bottom: 20px;
+        display: block;
+        border: 1px solid #ddd;
+    }
+    
+    .responsive-table td {
+        display: block;
+        text-align: right;
+        padding: 12px;
+        border: none;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .responsive-table td:last-child {
+        border-bottom: none;
+    }
+    
+    .responsive-table td::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: bold;
+    }
+}
+
 
 
