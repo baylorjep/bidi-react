@@ -130,9 +130,10 @@ const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
                     <br />
                     <h1 className="Sign-Up-Page-Header">Sign In</h1>
                     {errorMessage && <p className="text-danger">{errorMessage}</p>}
+           {/* This is a JSX comment 
                     <div className="google-sign-in-container">
                         <p className="google-sign-in-text">Sign in with Google</p>
-                            {/* This is a JSX comment 
+                 
                         <button
                             type="button"
                             className="btn btn-google-signin"
@@ -140,11 +141,13 @@ const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
                         >
                             Sign in with Google
                         </button>
-                        */}
+                     
                     </div>
+                    
                     <div className="divider">
                         <span>OR</span>
                     </div>
+                       */}
                 <form style={{width:'100%'}} onSubmit={handleSignIn}>
                 <div className='sign-in-input-container'>
                     <label htmlFor="email">Email</label>
