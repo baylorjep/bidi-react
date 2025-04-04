@@ -66,6 +66,10 @@ function PhotographyRequest() {
     const [addMoreLoading, setAddMoreLoading] = useState(false);
     const [detailsSubStep, setDetailsSubStep] = useState(0);
 
+    // Add state for selected vendor
+    const [selectedVendor, setSelectedVendor] = useState(location.state?.vendor || null);
+    const [vendorImage, setVendorImage] = useState(location.state?.image || null);
+
     // Consolidated state
     const [formData, setFormData] = useState(() => {
         const saved = JSON.parse(localStorage.getItem('photographyRequest') || '{}');
@@ -153,7 +157,7 @@ function PhotographyRequest() {
     // Event Selection Component
     const renderEventSelection = () => {
         const eventOptions = [
-            'Wedding', 'Engagement', 'Couples Session', 'Family',
+            'Wedding', 'Engagement', 'Graduation','Couples Session', 'Family',
             'Headshots', 'Event',
             'Product', 'Maternity', 'Newborn', 'Boudoir Session'
         ];
@@ -1217,7 +1221,8 @@ function PhotographyRequest() {
                 date_type: formData.eventDetails.dateType,
                 coupon_code: appliedCoupon ? appliedCoupon.code : null,
                 pinterest_link: formData.eventDetails.pinterestBoard,
-                status: 'open'
+                status: 'open',
+                vendor_id: selectedVendor?.id // Add the selected vendor's ID here
             };
 
             // Additional fields including unknown flags and JSONB data
@@ -1411,6 +1416,13 @@ function PhotographyRequest() {
                 <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
                     {getSteps()[currentStep]}
                 </h2>
+                    {/* Display selected vendor information */}
+                    {selectedVendor && (
+                    <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent:'center', marginTop:'20px'}}>
+                        <img src={vendorImage} alt={selectedVendor.business_name} className="vendor-profile-image" style={{marginRight:'8px'}} />
+                        <h3 className="selected-vendor-info">{selectedVendor.business_name} will be notified</h3>
+                    </div>
+                )}
                 
                 {/* Mobile status bar */}
                 <div className="request-form-status-container mobile-only">
@@ -1422,6 +1434,7 @@ function PhotographyRequest() {
                 <div className="form-scrollable-content">
                     {getCurrentComponent()}
                 </div>
+                
 
                 <div className="form-button-container">
                     <button className="request-form-back-btn" onClick={handleBack} disabled={isSubmitting}>

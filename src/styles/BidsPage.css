@@ -513,6 +513,14 @@
     align-items: center;
     gap: 12px;
     margin-top: 24px;
+    flex-direction: row !important;
+}
+
+@media (max-width: 768px) {
+    .modal-buttons {
+        flex-direction: column !important;
+        width: 100%;
+    }
 }
 
 .modal-buttons button {

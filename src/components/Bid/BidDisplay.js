@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient"; // Import your Supabase client
-import bidiCheck from "../../assets/images/Bidi-Favicon.png";
+import bidiCheck from "../../assets/Frame 1162.svg";
+import StarIcon from "../../assets/star-duotone.svg";
+import { Link, useNavigate } from "react-router-dom";
+import "./BidDisplay.css";
 
 function BidDisplay({ bid, handleApprove, handleDeny }) {
   const [isBidiVerified, setIsBidiVerified] = useState(false);
@@ -8,6 +11,17 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
   const [error, setError] = useState(null); // Error state
   const [downPayment, setDownPayment] = useState(null); // New state for down payment
   const [downPaymentAmount, setDownPaymentAmount] = useState(null); // New state for down payment
+  const [showBubble, setShowBubble] = useState(true); // State to control the visibility of the bubble
+  const [averageRating, setAverageRating] = useState(null);
+  const navigate = useNavigate();
+  const handleProfileClick = () => {
+    setShowBubble(false); // Hide the bubble when the profile image is clicked
+    navigate(`/portfolio/${bid.business_profiles.id}`);
+  };
+
+  const profileImage =
+    bid.business_profiles.profile_image || "/images/default.jpg"; // Default image if none
+
   useEffect(() => {
     const fetchMembershipTier = async () => {
       try {
@@ -47,34 +61,101 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
     fetchMembershipTier();
   }, [bid.business_profiles.id]);
 
+  // Simplified review fetching
+  useEffect(() => {
+    const fetchRating = async () => {
+      const { data: reviewData, error: reviewError } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq("vendor_id", bid.business_profiles.id);
+
+      if (reviewError) {
+        console.error("Error fetching reviews:", reviewError);
+      } else {
+        const avgRating =
+          reviewData.length > 0
+            ? (
+                reviewData.reduce((acc, review) => acc + review.rating, 0) /
+                reviewData.length
+              ).toFixed(1)
+            : null;
+        setAverageRating(avgRating);
+      }
+    };
+
+    fetchRating();
+  }, [bid.business_profiles.id]);
+
   return (
     <div className="request-display">
-      <div className="d-flex justify-content-between align-items-center">
-        {/* Left Aligned: Business Name */}
+      <div className="bid-display-head-container">
         <div
           className="request-title"
-          style={{ marginBottom: "0", textAlign: "left" }}
+          style={{ marginBottom: "0", textAlign: "left", position: "relative" }}
         >
-          {bid.business_profiles.business_name}
-          {isBidiVerified && (
-            <img
-              src={bidiCheck}
-              style={{
-                height: "40px",
-                width: "auto",
-                padding: "0px",
-                marginLeft: "4px ",
-              }}
-              alt="Bidi Verified Icon"
-            />
-          )}
+          <div className="bid-display-head">
+            <div style={{ position: "relative" }}>
+              <img
+                src={profileImage}
+                alt={`${bid.business_profiles.business_name} profile`}
+                className="vendor-profile-image"
+                onClick={handleProfileClick}
+                style={{
+                  cursor: "pointer",
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "50%",
+                }}
+                title="Click to view full profile"
+              />
+              <div
+                className="profile-tooltip"
+                style={{
+                  display: showBubble ? "block" : "none",
+                }}
+              >
+                Click to view profile
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <Link
+                to={`/portfolio/${bid.business_profiles.id}`}
+                style={{
+                  textDecoration: "none",
+                  color: "inherit",
+                  fontWeight: "bold",
+                }}
+              >
+                {bid.business_profiles.business_name}
+              </Link>
+              {isBidiVerified && (
+                <img
+                  src={bidiCheck}
+                  style={{ height: "20px", width: "auto" }}
+                  alt="Bidi Verified Icon"
+                />
+              )}
+              {averageRating && (
+                <span className="vendor-rating">
+                  <img src={StarIcon} alt="Star" className="star-icon" />
+                  {averageRating}
+                </span>
+              )}
+            </div>
+          </div>
           {loading ? (
-            <p>Loading...</p> // Show loading text while fetching
+            <p>Loading...</p>
           ) : error ? (
             <p>{error}</p>
           ) : (
             isBidiVerified && (
-              <div style={{ textAlign: "left", padding: "0px 0px" }}>
+              <div
+                style={{
+                  textAlign: "left",
+                  padding: "0px 0px",
+                  marginTop: "8px",
+                }}
+              >
                 <p
                   style={{
                     fontSize: "0.9rem",
@@ -82,6 +163,7 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                     fontWeight: "bold",
                     textAlign: "left",
                     fontFamily: "Outfit",
+                    color: "#a328f4",
                   }}
                 >
                   Bidi Verified
@@ -93,6 +175,7 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                     fontStyle: "italic",
                     textAlign: "left",
                     fontFamily: "Outfit",
+                    color: "#a328f4",
                   }}
                 >
                   100% Money-Back Guarantee When You Pay Through Bidi
@@ -101,10 +184,12 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
             )
           )}
         </div>
-        {/* Right Aligned: Price within a button */}
-        <button className="bid-button" disabled>
-          ${bid.bid_amount}
-        </button>
+        <div className="bid-display-btn-container">
+          <button className="bid-display-button" disabled>
+            ${bid.bid_amount}
+            <div className="tag-hole"></div>
+          </button>
+        </div>
       </div>
       <hr />
       <div className="request-content">
@@ -114,19 +199,6 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
         <p className="request-description" style={{ textAlign: "left" }}>
           <strong>Description:</strong> {bid.bid_description}
         </p>
-        {/* If there's a website, display it */}
-        {bid.business_profiles.website && (
-          <p className="request-comments" style={{ textAlign: "left" }}>
-            <strong>Website:</strong>{" "}
-            <a
-              href={bid.business_profiles.website}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {bid.business_profiles.website}
-            </a>
-          </p>
-        )}
         {/* Display down payment information */}
         {downPayment && downPaymentAmount !== null && (
           <p className="request-comments" style={{ textAlign: "left" }}>

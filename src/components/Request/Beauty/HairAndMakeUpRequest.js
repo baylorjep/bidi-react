@@ -65,6 +65,8 @@ function HairAndMakeUpRequest() {
     const [uploadingFiles, setUploadingFiles] = useState(0);
     const [addMoreLoading, setAddMoreLoading] = useState(false);
     const [detailsSubStep, setDetailsSubStep] = useState(0);
+    const [selectedVendor, setSelectedVendor] = useState(location.state?.vendor || null);
+    const [vendorImage, setVendorImage] = useState(location.state?.image || null);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
@@ -1310,7 +1312,8 @@ function HairAndMakeUpRequest() {
                 lashes_included: formData.eventDetails.lashesIncluded || '',
                 trial_session_makeup: formData.eventDetails.trialSessionMakeup || '',
                 group_discount_inquiry: formData.eventDetails.groupDiscountInquiry || '',
-                on_site_service_needed: formData.eventDetails.onSiteServiceNeeded || ''
+                on_site_service_needed: formData.eventDetails.onSiteServiceNeeded || '',
+                vendor_id: selectedVendor?.id, // Add vendor_id to the request data
             };
 
             const { data: request, error: requestError } = await supabase
@@ -1488,6 +1491,12 @@ function HairAndMakeUpRequest() {
                 <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
                     {getSteps()[currentStep]}
                 </h2>
+                {selectedVendor && (
+                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
+                    <img src={vendorImage} alt={selectedVendor.business_name} className="vendor-profile-image" />
+                    <h3 className="selected-vendor-info">{selectedVendor.business_name} will be notified</h3>
+                </div>
+            )}
                 
                 {/* Mobile status bar */}
                 <div className="request-form-status-container mobile-only">
@@ -1509,6 +1518,7 @@ function HairAndMakeUpRequest() {
                     </button>
                 </div>
             </div>
+
         </div>
     );
 }

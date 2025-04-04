@@ -1,6 +1,11 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import './Articles.css';
+import decision from '../../assets/articles/Utah Photography/Making a Decision.jpg';
+import photographyBudget from '../../assets/articles/Utah Photography/photography budget.jpg';
+import question from '../../assets/articles/Utah Photography/Question.jpg';
+import style from '../../assets/articles/Utah Photography/Style Types.jpg';
+import RelatedArticles from './RelatedArticles';
 
 const UtahPhotographyCostGuide = () => {
     return (
@@ -77,17 +82,18 @@ const UtahPhotographyCostGuide = () => {
                     />
                 </div>
 
-                <p>Wedding photographers actually spend just 10% of their time behind the camera. The remaining 90% involves <a href="https://www.ppa.com/articles/wedding-photography-business-tips" target="_blank" rel="noopener noreferrer">managing emails, handling legal paperwork, sorting photos, and editing</a>. This explains their <a href="https://caelaphotoco.com/how-to-choose-a-wedding-photographer" target="_blank" rel="noopener noreferrer">average rates of $2,500 to $6,000</a>.</p>
+                <p>Wedding photographers actually spend just 10% of their time behind the camera. The remaining 90% involves <a href="https://www.ppa.com/articles/wedding-photography-business-tips" target="_blank" rel="noopener noreferrer">managing emails, handling legal paperwork, sorting photos, and editing</a>. This means that choosing the right photographer is about more than just their photography skills. You've got to think about how they shoot, how they edit, and what style they usually go for.</p>
 
                 <p>The search for your perfect <a href="https://www.utahvalleybride.com/how-to-find-utah-wedding-photographer" target="_blank" rel="noopener noreferrer">Utah wedding photographer</a> might seem daunting. The best photographers need bookings 12-18 months ahead. Selecting an unsuitable photographer could result in missed precious moments or delayed photo deliveries.</p>
 
                 <p>We've created this complete guide to help you through the Utah wedding photography landscape. You'll learn about various photography styles—from trending moody to bright approaches. We'll show you what questions to ask and help you make this vital decision.</p>
 
                 <h2>Understanding Utah Wedding Photography Costs</h2>
-                <p>Wedding photography costs in Utah are lower than the national average. Couples spend <a href="https://www.whitneysue.com/blog/utah-wedding-photography-prices/" target="_blank" rel="noopener noreferrer">around $2,298</a> for their wedding photography, which is less than the national average of $2,600.</p>
-
+                <img src={photographyBudget} style={{width:'100%', height:'auto', marginBottom:'20px'}}></img>
+                <p>Wedding photography costs in Utah are lower than the national average. According to Whitney Sue Photography, couples spend <a href="https://www.whitneysue.com/blog/utah-wedding-photography-prices/" target="_blank" rel="noopener noreferrer">around $2,298</a> for their wedding photography, which is less than the national average of $2,600.</p>
+                <p>Here at Bidi, our unique bidding system gives us access to data about what couples are paying for a photographer in Utah. According to <a href='https://www.savewithbidi.com/wedding-market-guide'>our data</a>, most couples are spending around $1900 on a photographer, with the range going from $300 to $6,000.</p>
                 <h3>Average pricing by region in Utah</h3>
-                <p>Photography prices vary throughout <a href="https://www.utahbrides.com/photography-pricing-guide" target="_blank" rel="noopener noreferrer">Utah's diverse regions</a>. Here's what couples usually pay, based on <a href="https://www.savewithbidi.com/wedding-photography-pricing" target="_blank" rel="noopener noreferrer">300 real photographer bids through Bidi</a>:</p>
+                <p>Photography prices vary throughout <a href="https://www.utahbrides.com/photography-pricing-guide" target="_blank" rel="noopener noreferrer">Utah's diverse regions</a>. Here's what couples usually pay, based on <a href="https://www.savewithbidi.com/wedding-market-guide" target="_blank" rel="noopener noreferrer">300 real photographer bids through Bidi</a>:</p>
                 
                 <table className="pricing-table">
                     <thead>
@@ -99,25 +105,25 @@ const UtahPhotographyCostGuide = () => {
                     <tbody>
                         <tr>
                             <td>Southern Utah</td>
-                            <td>$1,846</td>
+                            <td>$2,091</td>
                         </tr>
                         <tr>
                             <td>Salt Lake County</td>
-                            <td>$1,716</td>
+                            <td>$2,110</td>
                         </tr>
                         <tr>
                             <td>Utah County</td>
-                            <td>$1,700</td>
+                            <td>$1,572</td>
                         </tr>
                         <tr>
                             <td>Northern Utah</td>
-                            <td>$1,088</td>
+                            <td>$1,534</td>
                         </tr>
                     </tbody>
                 </table>
 
                 <h3>What affects photography package prices</h3>
-                <p><em>Experience</em> is a vital factor in package pricing. <a href="https://www.professionalphotographer.com/wedding-experience-pricing" target="_blank" rel="noopener noreferrer">Photographers with 10+ years of experience</a> and strong portfolios often charge between $4,000 and $10,000. New photographers might start their services at $1,000.</p>
+                <p><em>Experience</em> is a vital factor in package pricing. <a href="https://www.professionalphotographer.com/wedding-experience-pricing" target="_blank" rel="noopener noreferrer">Photographers with 10+ years of experience</a> and strong portfolios often charge between $2,000 and $10,000. New photographers might start their services at $1,000.</p>
 
                 <p>These elements shape the final price:</p>
                 <ul>
@@ -128,11 +134,12 @@ const UtahPhotographyCostGuide = () => {
                 </ul>
 
                 <h3>Using Bidi to get accurate cost estimates</h3>
-                <p>Bidi helps couples find photographers that match their budget. The platform looks at data from over 300 photography bids across Utah and gives accurate, local pricing. Couples who use Bidi save about $170 compared to average wedding photography costs.</p>
+                <p><a href='https://www.savewithbidi.com/'>Bidi</a> helps couples find photographers that match their budget. The platform looks at data from over 300 photography bids across Utah and gives accurate, local pricing. Couples who use Bidi save about $170 compared to average wedding photography costs.</p>
 
                 <p>Photographers submit bids within your budget range through the platform. This saves you hours you'd spend looking through endless portfolios and pricing pages.</p>
 
                 <h2>Essential Questions to Ask Potential Photographers</h2>
+                <img src={question} alt="Essential Questions to Ask Potential Photographers" style={{ width: '100%', marginBottom:'20px' }} />
                 <p>You need to ask the right questions during your first meeting to find a skilled photographer. A detailed discussion will help ensure they capture your special moments perfectly.</p>
 
                 <h3>Experience with your venue type</h3>
@@ -184,6 +191,7 @@ const UtahPhotographyCostGuide = () => {
                 </ul>
 
                 <h2>Making the Final Decision</h2>
+                <img src={decision} alt="Making the Final Decision" style={{ width: '100%', marginBottom:'20px' }} />
                 <p>Trustworthy reviews are the life-blood of finalizing your wedding photographer choice. In fact, experienced photographers maintain detailed portfolios backed by authentic client testimonials.</p>
 
                 <h3>Reading reviews and testimonials</h3>
@@ -197,6 +205,7 @@ const UtahPhotographyCostGuide = () => {
                 </ul>
 
                 <h2>Comparing Photography Styles and Packages</h2>
+                <img src={style} alt="Comparing Photography Styles and Packages" style={{ width: '100%', marginBottom:'20px' }} />
                 <p><a href="https://www.utahvalleybride.com/wedding-photography-trends" target="_blank" rel="noopener noreferrer">Photography styles in Utah</a> combine <a href="https://www.slcphotographers.org/urban-wedding-photography" target="_blank" rel="noopener noreferrer">city sophistication</a> with <a href="https://www.utahnationalparks.com/wedding-photography" target="_blank" rel="noopener noreferrer">natural beauty</a> and give couples many options to choose from on their wedding day.</p>
 
                 <h3>Common Utah wedding photography styles</h3>
@@ -212,11 +221,11 @@ const UtahPhotographyCostGuide = () => {
                 <p>Note that you should review all contract terms carefully, especially regarding cancelations and refunds. This careful review will give both parties clear understanding of their commitments and helps prevent future misunderstandings.</p>
 
                 <h2>Conclusion</h2>
-                <p>Finding your Utah wedding photographer means thinking over <a href="https://www.weddingwire.com/utah-photographers" target="_blank" rel="noopener noreferrer">costs, style priorities, and professional expertise</a>. Regional prices vary quite a bit - photographers in <a href="https://www.utahbrides.com/northern-utah-wedding-photography" target="_blank" rel="noopener noreferrer">Northern Utah</a> charge around $1,088, while <a href="https://www.utahbrides.com/southern-utah-wedding-photography" target="_blank" rel="noopener noreferrer">Southern Utah photographers</a> ask for about $1,846, according to actual bids on Bidi.</p>
+                <p>Finding your Utah wedding photographer means thinking over <a href="https://www.weddingwire.com/utah-photographers" target="_blank" rel="noopener noreferrer">costs, style priorities, and professional expertise</a>.</p>
 
                 <p>Great photographers come prepared with backup gear and know their venues inside out. They also provide clear contracts that keep everything running smoothly on your big day. Each photographer's unique style - from moody to bright - will define how you'll see your wedding memories decades from now.</p>
 
-                <p>Want to find a photographer who's perfect for you? Make a <a href="https://www.savewithbidi.com/request/photography" target="_blank" rel="noopener noreferrer">free photography request on Bidi</a>. You'll get real bids from <a href="https://www.utahweddingvendors.com/photographers" target="_blank" rel="noopener noreferrer">Utah's experienced photographers</a>. This helps you connect with professionals who match your style and budget quickly.</p>
+                <p>Want to find a photographer who's perfect for you? Make a <a href="https://www.savewithbidi.com/request/photography" target="_blank" rel="noopener noreferrer">free photography request on Bidi</a>. You'll get real bids from local Utah photographers. This helps you connect with professionals who match your style and budget quickly.</p>
 
                 <p>Make sure you read through contracts, check what other couples say, and share your ideas with potential photographers. These photos will tell your love story through the years - pick someone who gets your vision and knows how to capture those special moments.</p>
 
@@ -246,9 +255,7 @@ const UtahPhotographyCostGuide = () => {
                     [22] - <a href="https://taileephotography.com/utah-photography-pricing" target="_blank" rel="noopener noreferrer">Utah Wedding Photography Pricing</a>
                 </p>
 
-                <div className="cta-container">
-                    <a href="/request/photography" className="cta-button">Find Utah Photographers</a>
-                </div>
+                <RelatedArticles currentArticle="utah-photographer" />
             </article>
         </div>
     );

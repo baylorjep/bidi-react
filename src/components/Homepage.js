@@ -122,7 +122,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
             <div ref={mastheadRef} className={`masthead-index fade-in-section ${mastheadVisible ? 'is-visible' : ''}`}>
                 <div className='text-section' >
                     <h1 className='landing-page-title heading-reset'>
-                        Tired of Looking for the Perfect <RotatingText />
+                        Tired of Looking for the Perfect <br></br><RotatingText />
                     </h1>
                     <h2 className='landing-page-subtitle heading-reset' style={{marginTop:'20px'}}>
                         With Bidi, you don't have to waste time searching for the perfect businesses to help you with your wedding. 
@@ -139,7 +139,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                                 </Link>
                                 ) : role === 'business' ? (
                                 <Link to="/dashboard" onClick={() => posthog.capture('vendor_dashboard')}>
-                                    <button className='landing-page-button'>See Open Requests</button>
+                                    <button className='landing-page-button'>See Requests</button>
                                 </Link>
                                 ) : (
                                 // Default route if no role is found or unhandled role
@@ -156,15 +156,15 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                     <div className='stat-container'>
                             <div className='stat-box' >
                                 <div className='stat-title'>Requests</div>
-                                <div className='stat'>140+</div>
+                                <div className='stat'>150+</div>
                             </div>
                             <div className='stat-box'>
                                 <div className='stat-title'>Users</div>
-                                <div className='stat'>390+</div>
+                                <div className='stat'>420+</div>
                             </div>
                             <div className='stat-box final'>
                                 <div className='stat-title'>Bids</div>
-                                <div className='stat'>930+</div>
+                                <div className='stat'>1100+</div>
                             </div>
 
                     </div>
@@ -230,8 +230,8 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                     </div>
                     <div className='reason'>
                         <img className='reason-photo'src={WhyBidiPhoto2}></img>
-                        <div className='reason-title'>Competitive Pricing</div>
-                        <div className='reason-box'>Our revolutionary bidding system forces companies to directly compete with each other for your business. This transparent competition means you get the best price, every time. Wedding vendors submit detailed proposals tailored to your specific needs, allowing you to compare services and prices easily.</div>
+                        <div className='reason-title'>Transparent Pricing</div>
+                        <div className='reason-box'>Our transparent pricing system ensures you always know exactly what you're paying for—no hidden fees, no surprises. Wedding vendors provide detailed proposals tailored to your specific needs, allowing you to compare services and prices with confidence.</div>
                     </div>
                     <div className='reason'>
                         <img className='reason-photo'src={WhyBidiPhoto3}></img>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import { supabase } from "../../supabaseClient";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../../App.css"; // Include this for custom styles
+import { Modal, Button } from "react-bootstrap"; // Make sure to install react-bootstrap
+import Verification from "../../assets/Frame 1162.svg";
 import "../../styles/BusinessDashboard.css";
 import DashboardBanner from "./DashboardBanner.js";
 import verifiedCheckIcon from "../../assets/images/Icons/verified-check.svg";
@@ -26,6 +28,39 @@ const BusinessDashSidebar = () => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [bids, setBids] = useState([]);
+  const [isVerified, setIsVerified] = useState(false);
+  const [isVerificationPending, setIsVerificationPending] = useState(false);
+  const [stripeError, setStripeError] = useState(false);
+  const [portfolioPhotos, setPortfolioPhotos] = useState([]);
+  const [showModal, setShowModal] = useState(false); // For showing modal
+  const navigate = useNavigate();
+  const [percentage, setPercentage] = useState("");
+  const [number, setNumber] = useState("");
+  const [paymentType, setPaymentType] = useState(""); // "percentage" or "flat fee"
+  const [downPaymentAmount, setDownPaymentAmount] = useState(0);
+  const [requestData, setRequestData] = useState(null);
+  const [photographyRequestData, setPhotographyRequestData] = useState(null);
+  const [showMinPriceModal, setShowMinPriceModal] = useState(false);
+  const [minimumPrice, setMinimumPrice] = useState("");
+  const [currentMinPrice, setCurrentMinPrice] = useState(null);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [affiliateCoupons, setAffiliateCoupons] = useState([]);
+  const [newCouponCode, setNewCouponCode] = useState("");
+  const [activeCoupon, setActiveCoupon] = useState(null);
+  const [calculatorAmount, setCalculatorAmount] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [unviewedBidCount, setUnviewedBidCount] = useState(0);
+  const [setupProgress, setSetupProgress] = useState({
+    paymentAccount: false,
+    downPayment: false,
+    minimumPrice: false,
+    affiliateCoupon: false,
+    verification: false,
+    story: false,
+  });
+  const [profileDetails, setProfileDetails] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {

@@ -1,0 +1,389 @@
+.wedding-guide-container {
+  min-height: 100vh;
+  padding: 60px 20px;
+  background: linear-gradient(to bottom right, #fbfafb, #fff);
+  font-family: Outfit, sans-serif;
+}
+
+.guide-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.guide-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.guide-header h1 {
+  font-size: 48px;
+  font-weight: 700;
+  color: #0B1215;
+  margin-bottom: 20px;
+}
+
+.guide-header .highlight {
+  background: linear-gradient(91deg, #A328F4 34.17%, #FF008A 86.83%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.guide-subtitle {
+  font-size: 20px;
+  color: #4a4459;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.guide-sections {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.guide-info {
+  flex: 1;
+}
+
+.guide-info h2 {
+  font-size: 28px;
+  margin-bottom: 24px;
+  color: #0B1215;
+}
+
+.guide-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 40px 0;
+}
+
+.guide-benefits li {
+  margin: 16px 0;
+  font-size: 18px;
+  color: #4a4459;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.guide-preview {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.guide-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.guide-image:hover {
+  transform: translateY(-10px);
+}
+
+.guide-cta {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0px 0px 20px rgba(205, 198, 219, 0.3);
+}
+
+.email-form-container h3,
+.download-section h3 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  color: #0B1215;
+}
+
+.email-form-container p,
+.download-section p {
+  margin-bottom: 20px;
+  color: #4a4459;
+}
+
+.email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.email-input {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.email-input:focus {
+  border-color: #A328F4;
+  outline: none;
+}
+
+.submit-button, .download-button {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  color: white;
+}
+
+.submit-button {
+  background: linear-gradient(91deg, #A328F4 34.17%, #FF008A 86.83%);
+}
+
+.download-button {
+  background: #0B1215;
+  margin-top: 10px;
+}
+
+.submit-button:hover, .download-button:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.privacy-note, .thank-you-note {
+  text-align: center;
+  font-size: 14px;
+  color: #718096;
+  margin-top: 15px;
+}
+
+.error-message {
+  color: #e53e3e;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .guide-sections {
+    flex-direction: column-reverse;
+  }
+
+  .guide-header h1 {
+    font-size: 36px;
+  }
+
+  .guide-subtitle {
+    font-size: 18px;
+  }
+
+  .guide-preview {
+    margin-bottom: 30px;
+  }
+  
+  .wedding-guide-container {
+    padding: 40px 15px;
+  }
+}
+
+@media (max-width: 600px) {
+  .guide-header h1 {
+    font-size: 28px;
+  }
+
+  .wedding-guide-container {
+    padding: 30px 10px;
+  }
+
+  .guide-benefits li {
+    font-size: 16px;
+  }
+  
+  .guide-content {
+    padding: 10px;
+  }
+  
+  .guide-cta {
+    padding: 20px;
+  }
+  
+  .email-form-container h3,
+  .download-section h3 {
+    font-size: 22px;
+  }
+  
+  .email-input {
+    padding: 12px;
+  }
+  
+  .submit-button, .download-button {
+    padding: 12px;
+    font-size: 15px;
+  }
+  
+  .guide-header {
+    margin-bottom: 40px;
+  }
+  
+  .guide-image {
+    max-width: 280px;
+    margin: 0 auto;
+    display: block;
+  }
+  
+  .guide-info h2 {
+    font-size: 24px;
+    text-align: center;
+  }
+  
+  .guide-benefits {
+    max-width: 280px;
+    margin: 0 auto 30px auto;
+  }
+}
+
+@media (max-width: 400px) {
+  .guide-header h1 {
+    font-size: 26px;
+  }
+  
+  .guide-subtitle {
+    font-size: 16px;
+  }
+  
+  .guide-benefits li {
+    font-size: 15px;
+  }
+  
+  .email-form-container h3,
+  .download-section h3 {
+    font-size: 20px;
+  }
+  
+  .email-form-container p,
+  .download-section p {
+    font-size: 14px;
+  }
+}
+
+/* Handle extremely narrow screens */
+@media (max-width: 320px) {
+  .wedding-guide-container {
+    padding: 20px 5px;
+  }
+  
+  .guide-content {
+    padding: 5px;
+  }
+  
+  .guide-header h1 {
+    font-size: 22px;
+    padding: 0 5px;
+    word-wrap: break-word;
+  }
+  
+  .guide-subtitle {
+    font-size: 14px;
+    padding: 0 8px;
+  }
+  
+  .guide-info h2 {
+    font-size: 20px;
+  }
+  
+  .guide-benefits li {
+    font-size: 13px;
+    margin: 12px 0;
+  }
+  
+  .guide-cta {
+    padding: 15px 12px;
+  }
+  
+  .email-form-container h3,
+  .download-section h3 {
+    font-size: 18px;
+  }
+  
+  .email-form-container p,
+  .download-section p {
+    font-size: 13px;
+    margin-bottom: 15px;
+  }
+  
+  .email-input {
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .submit-button, .download-button {
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .guide-image {
+    max-width: 240px;
+  }
+}
+
+@media (max-width: 300px) {
+  .guide-header h1 {
+    font-size: 20px;
+  }
+  
+  .guide-subtitle {
+    font-size: 13px;
+  }
+  
+  .guide-info h2 {
+    font-size: 18px;
+  }
+  
+  .guide-benefits li {
+    font-size: 12px;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  
+  .guide-cta {
+    padding: 12px 10px;
+  }
+  
+  .email-form-container h3,
+  .download-section h3 {
+    font-size: 16px;
+  }
+  
+  .email-form-container p,
+  .download-section p {
+    font-size: 12px;
+  }
+  
+  .email-input {
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .submit-button, .download-button {
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .privacy-note, .thank-you-note {
+    font-size: 11px;
+  }
+  
+  .guide-image {
+    max-width: 200px;
+  }
+}

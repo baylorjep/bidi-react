@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import logo from '../../assets/images/Bidi-Logo.svg';
 import '../../App.css';
+import VendorSearch from './VendorSearch';
 
 function Navbar() {
     const [user, setUser] = useState(null);
@@ -102,34 +103,45 @@ function Navbar() {
                 </button>
                 <div className="collapse navbar-collapse" id="navbarResponsive">
                     <ul className="navbar-nav ms-auto me-4 my-3 my-lg-0">
-                        {(!userRole || userRole === 'individual') && (
+                        <VendorSearch />
+                        {(!userRole || userRole === 'individual' || userRole === 'both') && (
                             <li className="nav-item">
                                 <Link className="nav-link me-lg-3" to="/request-categories">Hire a Pro</Link>
                             </li>
                         )}
 
-                        {userRole === 'individual' && (
-                            <>
-                                <li className="nav-item">
-                                    <Link className="nav-link me-lg-3" to="/bids">View Bids</Link>
-                                </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link me-lg-3" to="/my-requests">My Requests</Link>
-                                </li>
-
-                            </>
+                        {(userRole === 'individual' || userRole === 'both') && (
+                            <li className="nav-item dropdown">
+                                <a className="nav-link dropdown-toggle me-lg-3" href="#" id="individualDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Your Bids
+                                </a>
+                                <ul className="dropdown-menu" aria-labelledby="individualDropdown">
+                                    <li>
+                                        <Link className="dropdown-item" to="/bids">View Bids</Link>
+                                    </li>
+                                    <li>
+                                        <Link className="dropdown-item" to="/my-requests">My Requests</Link>
+                                    </li>
+                                </ul>
+                            </li>
                         )}
 
-                        {userRole === 'business' && (
-                            <>
-                            <li className="nav-item">
-                                <Link className="nav-link me-lg-3" to="/dashboard">Dashboard</Link>
+                        {(userRole === 'business' || userRole === 'both') && (
+                            <li className="nav-item dropdown">
+                                <a className="nav-link dropdown-toggle me-lg-3" href="#" id="businessDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Business    
+                                </a>
+                                <ul className="dropdown-menu" aria-labelledby="businessDropdown">
+                                    <li>
+                                        <Link className="dropdown-item" to="/dashboard">Dashboard</Link>
+                                    </li>
+                                    <li>
+                                        <Link className="dropdown-item" to="/open-requests">Open Requests</Link>
+                                    </li>
+                                </ul>
                             </li>
-                            <li className="nav-item">
-                                <Link className="nav-link me-lg-3" to="/open-requests">Open Requests</Link>
-                            </li>
-                            </>
                         )}
+
                         <li className="nav-item">
                             <Link className="nav-link me-lg-3" to="/articles">Wedding Guides</Link>
                         </li>
@@ -150,7 +162,7 @@ function Navbar() {
                             </span>
                         </button>
                     ) : (
-                        <Link style={{textDecoration:'none'}}className="btn-nav-primary" to="/signin">
+                        <Link style={{ textDecoration: 'none' }} className="btn-nav-primary" to="/signin">
                             <span className="btn-text">
                                 <span className="small">Log In</span>
                             </span>
@@ -159,7 +171,7 @@ function Navbar() {
 
                     {/* Conditionally render the Sign Up button */}
                     {!user && (
-                        <Link className="btn-nav-secondary" style={{textDecoration:'none'}} to="/createaccount?source=navbar">
+                        <Link className="btn-nav-secondary" style={{ textDecoration: 'none' }} to="/createaccount?source=navbar">
                             <span className="btn-text-secondary">
                                 <span className="small">Sign Up</span>
                             </span>

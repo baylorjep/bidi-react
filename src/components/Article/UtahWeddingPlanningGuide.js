@@ -2,6 +2,16 @@ import React from 'react';
 import './Articles.css'
 import Helmet from 'react-helmet';
 import weddingPlanning from '../../assets/articles/weddingplanning.jpg'
+import templeWedding from '../../assets/articles/Utah Wedding Planning/Temple Wedding.jpg'
+import budget from '../../assets/articles/Utah Wedding Planning/budget.jpg'
+import utahVenue from '../../assets/articles/Utah Wedding Planning/Utah Venue.jpg'
+import mountainWedding from '../../assets/articles/Utah Wedding Planning/Mountain Wedding.avif'
+import cityWedding from '../../assets/articles/Utah Wedding Planning/City Venue.jpg'
+import leJardin from '../../assets/articles/Utah Wedding Planning/Le Jardin.jpg'
+import weddingTeam from '../../assets/articles/Utah Wedding Planning/Wedding Team.jpg'
+import summer from '../../assets/articles/Utah Wedding Planning/summer.jpg'
+import winter from '../../assets/articles/Utah Wedding Planning/winter.jpg'
+import RelatedArticles from './RelatedArticles';
 
 const UtahWeddingPlanningGuide = () => {
     return (
@@ -76,7 +86,7 @@ const UtahWeddingPlanningGuide = () => {
 
             {/* Introduction Section */}
             <p>
-                Did you know that the average cost of a wedding in Utah ranges from $19,000 to $30,000? Yet many couples end up spending far more than planned simply because they don't know where to start.
+                Did you know that the average cost of a wedding in <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://kslnewsradio.com/business-economy/utah-wedding-costs-are-skyrocketing/2089937/">Utah in 2023 was $17,000, but in 2024 it went up to $24,000?</a>. Yet many couples end up spending even more than planned simply because they don't know where to start.
             </p>
 
             <p>
@@ -84,15 +94,17 @@ const UtahWeddingPlanningGuide = () => {
             </p>
 
             <p>
-                That's where a wedding planner Utah expertise becomes invaluable. As professional planners who've guided countless couples through their wedding journeys, we understand the unique challenges and opportunities that come with planning a Utah wedding.
+                That's where a wedding planner Utah expertise becomes invaluable. As a wedding company who has helped countless couples through their wedding journeys, we understand the unique challenges and opportunities that come with planning a Utah wedding.
             </p>
 
             <p>
-                In this comprehensive guide, we'll walk you through every essential step of planning your dream Utah wedding. From understanding local customs and venue options to building your vendor team and managing your budget, you'll discover exactly what you need to know to create your perfect celebration.
+                In this comprehensive guide, we'll walk you through every essential step of planning your dream Utah wedding. From understanding venue options to building your vendor team and managing your budget, you'll discover exactly what you need to know to create your perfect celebration.
             </p>
 
             {/* Understanding Utah's Wedding Culture Section */}
             <h2>Understanding Utah's Wedding Culture</h2>
+
+            <img src={templeWedding} alt="LDS Temple Wedding" style={{ width: '100%', height: 'auto', marginBottom: '20px', objectFit:'cover' }} />
             <p>
                 Marriage in Utah holds unique significance, particularly considering the remarkable 6% divorce rate among temple-married couples, according to <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.michelleleoevents.com/blog/pros-and-cons-of-wedding-in-each-season">Michelle Leo Events</a>. This statistic underscores the deep cultural and religious influences shaping Utah's wedding traditions.
             </p>
@@ -100,16 +112,16 @@ const UtahWeddingPlanningGuide = () => {
             {/* Temple Wedding Considerations Section */}
             <h3>Temple wedding considerations</h3>
             <p>
-                Temple weddings, central to The Church of Jesus Christ of Latter-Day Saints (LDS) culture, typically last 30-45 minutes, as noted by <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.michelleleoevents.com/blog/pros-and-cons-of-wedding-in-each-season">wedding planning experts</a>. These ceremonies require both couples and guests to hold temple recommendations from church leaders. Subsequently, only Mormon members in good standing can attend temple ceremonies, generally accommodating 25 to 40 guests.
+                If you are a member of the church therea are a few things yous should know. Temple weddings, typically last 30-45 minutes, as noted by <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.michelleleoevents.com/blog/pros-and-cons-of-wedding-in-each-season">wedding planning experts</a>. 
             </p>
 
             <p>
-                During the ceremony, couples kneel at an altar, symbolizing their humility before God. The sealer (temple priest) conducts the ceremony, emphasizing eternal marriage bonds that extend beyond earthly life. Although ring exchanges aren't officially part of temple ceremonies, many couples incorporate this tradition afterward.
+                Also, although ring exchanges aren't officially part of temple ceremonies, you may choose to incorporate this tradition after the temple ceremony for those that couldn't attend. Many couples choose to have this ring ceremony during the reception so that most family and friends can participate in this special moment.
             </p>
 
             <h3>Typical wedding timeline expectations</h3>
             <p>
-                A standard temple wedding timeline follows a structured format:
+                A standard temple wedding timeline could look somethingl like this: 
             </p>
             <ul>
                 <li><p>10:00 AM - Temple sealing ceremony</p></li>
@@ -117,36 +129,33 @@ const UtahWeddingPlanningGuide = () => {
                 <li><p>1:00 PM - Wedding luncheon</p></li>
                 <li><p>5:00 PM - Family pictures at reception</p></li>
                 <li><p>6:00 PM - Reception begins</p></li>
+                <li><p>6:30 PM - Ring Ceremony (if you choose to have one)</p></li>
                 <li><p>8:30 PM - Grand exit</p></li>
             </ul>
 
+            <h3>Thinking about your reception</h3>
             <p>
-                According to <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://kimberlycrookphoto.com/2022/10/16/how-to-plan-your-lds-temple-marriage/">Kimberly Crook Photography</a>, couples must arrive at the temple one hour before their sealing time. Furthermore, the temple exit typically occurs 45-60 minutes after the sealing starts, making this moment particularly significant for photography.
-            </p>
-
-            <h3>Local customs and traditions</h3>
-            <p>
-                Utah wedding receptions often follow an open-house style format, allowing guests to come and go throughout the evening. Modern couples increasingly customize their celebrations while honoring traditional elements. For instance, many opt for a separate ring ceremony before the reception to include non-Mormon family members and friends.
+                Utah wedding receptions often follow an open-house style format, allowing guests to come and go throughout the evening. This approach accommodates larger guest lists and creates a more relaxed atmosphere and honestly, less stress for you. Trying to have an activity during every part of the reception can be overwhelming, so this is a great way to make it easier on yourself.
             </p>
 
             <h2>Setting Your Wedding Budget</h2>
+            <img src={budget} alt="Wedding Budget" style={{ width: '100%', height: '600px', marginBottom: '20px', objectFit:'cover' }} />
             <h3>Average costs in different Utah regions</h3>
             <p>
-                The baseline wedding cost in Utah starts at $20,000, according to <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.ashleydehartphotography.com/utah-wedding-budget/">Ashley DeHart Photography</a>. Smaller celebrations with 50-100 guests typically range from $14,805 to $18,095. In contrast, larger gatherings of 200-300 guests in Bluffdale command budgets between $30,877 and $37,739.
+                Like we mentioned earilier, the baseline wedding cost in Utah is $24,000, but this can vary significantly based on location and personal choices.
             </p>
-            <p>
-                Reception menus reflect couple preferences, though notably exclude alcohol, coffee, and tea, aligning with LDS faith practices. Traditional reception activities include first dances, parent dances, cake cutting, and bouquet tosses, creating a blend of religious reverence and celebratory customs.
-            </p>
-            <p>Location significantly influences costs:</p>
+
+            <p>For example, location significantly influences costs. Here is a breakdown from real <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.savewithbidi.com/wedding-market-guide">bid data collected on Bidi:</a></p>
             <ul>
-                <li><p>St. George celebrations exceeding 300 guests range from $62,074 to $75,868</p></li>
-                <li><p>Alta weddings with 150-200 guests average between $25,161 and $30,753</p></li>
-                <li><p>Salt Lake City venues offer diverse options, with some locations like Chase Mill at Tracy Aviary costing approximately $2,000</p></li>
+                <li><p><strong>Catering</strong>: The average cost is <strong>$1,689 statewide</strong>, but in <strong>Southern Utah</strong>, it jumps to <strong>$2,341</strong>.</p></li>
+                <li><p><strong>DJs</strong>: In <strong>Utah County</strong>, DJs typically charge around <strong>$900</strong>, while in <strong>Salt Lake County</strong>, the average is <strong>$1,296</strong>.</p></li>
+                <li><p><strong>Videography</strong>: The average cost is <strong>$1,570 in Utah County</strong>, compared to <strong>$2,181 in Salt Lake County</strong>.</p></li>
+                <li><p><strong>Photography</strong>: In <strong>Northern Utah (above Salt Lake City)</strong>, photographers charge around <strong>$1,500</strong>, while in <strong>Salt Lake City</strong>, the average is <strong>$2,100</strong>.</p></li>
             </ul>
 
             <h3>Where to splurge vs save</h3>
             <p>
-                <strong>Priority Investments:</strong> Floral arrangements now require minimum budgets of $3,000 for basic ceremony pieces and personal flowers. Wedding planners recommend allocating substantial portions of your budget to:
+                <strong>Priority Investments:</strong> When looking at your wedding and your budget, you want to make sure you get the most important things covered first. Wedding planners recommend allocating substantial portions of your budget to:
             </p>
             <ul>
                 <li><p>Photography and videography</p></li>
@@ -162,20 +171,23 @@ const UtahWeddingPlanningGuide = () => {
             </ol>
 
             <h2>Choosing Your Perfect Utah Venue</h2>
+            <img src={utahVenue} alt='Utah Venue' style={{width:'100%', height:'auto', marginBottom:'20px', objectFit:'cover'}}></img>
             <p>
                 Selecting the perfect venue sets the foundation for your Utah wedding experience. From majestic mountain backdrops to elegant garden settings, Utah offers diverse locations that cater to every couple's vision.
             </p>
 
             <h3>Mountain venues</h3>
+            <img src={mountainWedding} alt='Mountain Wedding' style={{width:'100%', height:'auto', marginBottom:'20px'}}></img>
             <p>
-                Alta Peruvian stands as a premier mountaintop destination, offering ceremonies at 8,500 feet with Mount Superior as your backdrop. The venue accommodates up to 200 guests and operates exclusively from June through September.
+                <a href='https://www.altaperuvian.com/weddings/'>Alta Peruvian</a> stands as a premier mountaintop destination, offering ceremonies at 8,500 feet with Mount Superior as your backdrop. The venue accommodates up to 200 guests and operates exclusively from June through September.
             </p>
 
             <p>
-                Park City Mountain provides multiple venue options with 360-degree views of the Wasatch Mountain range. The resort's capacity ranges from 80 to 450 guests depending on your chosen space.
+                <a href='https://www.parkcitymountain.com/explore-the-resort/about-the-resort/groups-and-weddings/weddings.aspx?CMPID=PPC'>Park City Mountain </a>provides multiple venue options with 360-degree views of the Wasatch Mountain range. The resort's capacity ranges from 80 to 450 guests depending on your chosen space.
             </p>
 
             <h3>Urban locations</h3>
+            <img src={cityWedding} alt='City Wedding' style={{width:'100%', height:'auto', marginBottom:'20px'}}></img>
             <p>
                 Salt Lake City's urban venues blend modern amenities with distinctive character. The Natural History Museum of Utah provides couples with a creative setting for exchanging vows.
             </p>
@@ -189,8 +201,9 @@ const UtahWeddingPlanningGuide = () => {
             </ul>
 
             <h3>Garden settings</h3>
+            <img src={leJardin} alt='Garden Wedding' style={{width:'100%', height:'auto', marginBottom:'20px'}}></img>
             <p>
-                Le Jardin in Sandy emerges as a standout garden venue, accommodating up to 800 guests. This greenhouse-style space features indoor fountains, abundant plant life, and a beautifully illuminated gazebo.
+                <a href='https://www.lejardinweddings.com/le-jardin-gallery'>Le Jardin </a>in Sandy emerges as a standout garden venue, accommodating up to 800 guests. This greenhouse-style space features indoor fountains, abundant plant life, and a beautifully illuminated gazebo.
             </p>
 
             <p>Garden venues offer distinct advantages:</p>
@@ -215,6 +228,7 @@ const UtahWeddingPlanningGuide = () => {
             </ol>
 
             <h2>Building Your Local Vendor Team</h2>
+            <img src={weddingTeam} alt='Wedding Team' style={{width:'100%', height:'auto', marginBottom:'20px', objectFit:'cover'}}></img>
             <p>
                 Assembling your vendor team marks a crucial milestone in creating your dream Utah wedding. Based on recent data, couples typically hire 15 wedding vendors on average, making early planning essential for securing top professionals.
             </p>
@@ -234,7 +248,7 @@ const UtahWeddingPlanningGuide = () => {
                     <p><strong>Entertainment</strong>: Reserve your DJ or band 9-10 months ahead. Entertainment professionals shape your reception atmosphere and often serve as event hosts.</p>
                 </li>
                 <li>
-                    <p><strong>Florist</strong>: Connect with florists early, as they require minimum budgets starting at $3,000 for basic ceremony pieces. Their expertise transforms venues through creative floral designs.</p>
+                    <p><strong>Florist</strong>: Connect with florists early, their expertise transforms venues through creative floral designs.</p>
                 </li>
                 <li>
                     <p><strong>Catering</strong>: If your venue lacks in-house catering, secure this service 6-8 months beforehand. Caterers need adequate time for menu planning and coordination.</p>
@@ -266,6 +280,10 @@ const UtahWeddingPlanningGuide = () => {
             </ul>
 
             <h2>Planning Around Utah's Seasons</h2>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+                <img src={summer} alt='Summer Wedding' style={{width:'50%', height:'auto', marginRight:'10px'}}></img>
+                <img src={winter} alt='Winter Wedding' style={{width:'50%', height:'auto'}}></img>
+            </div>
             <p>
                 Utah's diverse climate patterns shape wedding celebrations throughout the year. From snow-covered winter wonderlands to vibrant spring blooms, each season presents unique opportunities and challenges for couples planning their special day.
             </p>
@@ -327,7 +345,7 @@ const UtahWeddingPlanningGuide = () => {
             </p>
 
             <p>
-                Local expertise proves valuable when navigating Utah's distinct wedding landscape. Understanding temple ceremonies, managing costs between $19,000 and $30,000, selecting perfect venues, and building reliable vendor teams creates a solid foundation for your celebration.
+                Local expertise proves valuable when navigating Utah's distinct wedding landscape. Understanding temple weddings, managing costs between around $24,000, selecting perfect venues, and building reliable vendor teams creates a solid foundation for your celebration.
             </p>
 
             <p>
@@ -337,6 +355,8 @@ const UtahWeddingPlanningGuide = () => {
             <p>
                 Your dream Utah wedding awaits - start planning early, stay organized, and trust experienced professionals to guide your journey toward a memorable celebration that reflects your unique vision and values.
             </p>
+
+            <RelatedArticles currentArticle="planning" />
         </article>
     );
 };

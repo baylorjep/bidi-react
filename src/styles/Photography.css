@@ -657,3 +657,23 @@
     line-height: 1.4;
 }
 
+.selected-vendor-info {
+    font-family: Outfit;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    margin: 0;
+    padding:0;
+    white-space: normal; /* Allow line breaks */
+    overflow: visible;   /* Allow overflow */
+    word-wrap: break-word; /* Break long words onto the next line */
+    overflow-wrap: break-word; 
+}
+
+.vendor-profile-image {
+    margin-right: 8px;
+    width: 80px !important; /* Set a fixed width */
+    height: 80px !important; /* Set a fixed height */
+    object-fit: cover !important; /* Scale the image to cover the container */
+}

@@ -1,0 +1,375 @@
+/* 🔹 Modal Overlay */
+.edit-portfolio-modal .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  /* 🔹 Modal Content */
+  .edit-portfolio-modal .modal-content {
+    background: white;
+    width: 80%;
+    max-width: 600px;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+  
+  /* 🔹 Modal Header */
+  .edit-portfolio-modal .modal-content h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+  
+  /* 🔹 Portfolio Images Grid (ONLY inside modal) */
+  .edit-portfolio-modal .portfolio-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    width: 100%;
+    padding: 10px;
+    overflow-y: auto;
+    max-height: 300px;
+
+  }
+
+  .portfolio-preview {
+    margin-bottom: 8px;
+  }
+  
+  /* 🔹 Image Container */
+  .edit-portfolio-modal .image-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .edit-portfolio-modal .image-container:hover {
+    transform: scale(1.05);
+  }
+  
+  /* 🔹 Portfolio Images (ONLY inside modal) */
+  .edit-portfolio-modal .portfolio-image {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .edit-portfolio-modal .portfolio-image:hover {
+    transform: scale(1.05);
+  }
+  
+  /* 🔹 Upload Button */
+  .edit-portfolio-modal .upload-btn {
+    background: #FF008A;
+    color: white;
+    padding: 10px;
+    margin-top: 15px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    width: 100%;
+  }
+  
+  .edit-portfolio-modal .upload-btn:hover {
+    background: #EA3389;
+  }
+  
+  /* 🔹 Modal Actions (Bottom Buttons) */
+  .edit-portfolio-modal .modal-actions {
+    margin-top: 15px;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  /* 🔹 Close Button */
+  .edit-portfolio-modal .close-btn {
+    background: gray;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 5px;
+    width: 100%;
+    margin-top: 4px;
+  }
+  
+  .edit-portfolio-modal .close-btn:hover {
+    background: darkgray;
+  }
+
+  /* 🔹 Modal Input Styling (Matches Site Theme) */
+.modal-input-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #D1D1D1;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: border 0.3s ease-in-out;
+}
+
+.modal-input-group input:focus {
+  border-color: #A328F4;
+  outline: none;
+  box-shadow: 0 0 5px rgba(163, 40, 244, 0.3);
+}
+
+.modal-input-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+  background: #FFFFFF;
+  transition: border-color 0.3s ease;
+}
+
+.modal-input-group textarea:focus {
+  outline: none;
+  border-color: #A328F4;
+  box-shadow: 0 0 0 2px rgba(163, 40, 244, 0.1);
+}
+
+.modal-input-group textarea::placeholder {
+  color: #999;
+}
+
+/* 🔹 Improve Modal Buttons */
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.save-btn, .close-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out;
+}
+
+.save-btn {
+  background: #A328F4;
+  color: white;
+}
+
+.save-btn:hover {
+  background: #8C1ECC;
+}
+
+.close-btn {
+  background: #D1D1D1;
+  color: black;
+}
+
+.close-btn:hover {
+  background: #B0B0B0;
+}
+
+/* 🔹 Modal Image Preview Fix */
+.portfolio-preview .portfolio-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.2s ease-in-out;
+}
+
+.portfolio-preview .portfolio-image:hover {
+  transform: scale(1.05);
+}
+
+/* 🔹 Subtle Delete Button */
+.delete-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(200, 200, 200, 0.8); /* Soft gray */
+  color: white; /* White X */
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease-in-out, transform 0.2s ease-in-out;
+  z-index: 2; /* Ensures it stays above the image */
+}
+
+/* 🔹 Scale Delete Button When Hovering Over Image */
+.image-container:hover .delete-btn {
+  transform: scale(1.15); /* Slightly bigger when image grows */
+}
+
+/* 🔹 Hover Effect - Darker Gray */
+.delete-btn:hover {
+  background: rgba(150, 150, 150, 0.9); /* Darker gray on hover */
+  transform: scale(1.1); /* Slightly grow */
+}
+
+/* 🔹 Modal Header - Consistent Styling */
+.edit-portfolio-modal .modal-content h2 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  font-weight: 600; /* Slightly bolder */
+  color: #333; /* Darker gray for readability */
+}
+
+/* 🔹 Ensure Modal Inputs Have Padding & Consistent Styling */
+.modal-input-group input {
+  width: 100%;
+  padding: 12px; /* Increase padding slightly */
+  font-size: 16px;
+  border: 1px solid #D1D1D1;
+  border-radius: 6px;
+  transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* 🔹 Slight Glow on Focus */
+.modal-input-group input:focus {
+  border-color: #A328F4;
+  outline: none;
+  box-shadow: 0 0 6px rgba(163, 40, 244, 0.4);
+}
+
+
+/* 🔹 Save & Close Button - More Styled */
+.save-close-btn {
+  background: linear-gradient(90deg, #A328F4, #8C1ECC); /* Smooth gradient */
+  color: white;
+  padding: 12px 18px; /* Bigger padding for a better click feel */
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out, transform 0.2s ease-in-out;
+  width: 100%; /* Full width button */
+  text-align: center;
+  margin-top: 15px;
+}
+
+/* 🔹 Hover Effect */
+.save-close-btn:hover {
+  background: linear-gradient(90deg, #8C1ECC, #6E15A6);
+  transform: scale(1.05);
+}
+
+/* 🔹 Disable Button State */
+.save-close-btn:disabled {
+  background: #D1D1D1;
+  cursor: not-allowed;
+}
+
+/* 🔹 Specializations */
+.specializations-container {
+  width: 100%;
+}
+
+.specializations-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.specialization-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0f0f0;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.specialization-input {
+  display: flex;
+  gap: 8px;
+}
+
+.specialization-input input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+}
+
+.add-button {
+  background: #A328F4;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.remove-button {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+}
+
+.remove-button:hover {
+  color: #ff4444;
+}
+
+.profile-image-container {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 8px;
+}
+
+/* 🔹 Profile Image Preview */
+.profile-image-preview {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.upload-progress {
+  margin: 10px 0;
+  width: 100%;
+}
+
+.progress-bar {
+  height: 4px;
+  background-color: #4CAF50;
+  transition: width 0.3s ease;
+}

@@ -90,6 +90,9 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
 
         const { email, password, firstName, lastName, phone, businessName, businessCategory, otherBusinessCategory, businessAddress, website } = formData;
 
+        // Set userType to "both" if the business category is "wedding planner/coordinator"
+        const finalUserType = businessCategory === 'wedding planner/coordinator' ? 'both' : userType;
+
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -119,7 +122,7 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
                 {
                     id: user.id,
                     email: email,
-                    role: userType,
+                    role: finalUserType,
                 },
             ]);
 
@@ -129,7 +132,7 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
             return;
         }
 
-        if (userType === 'individual') {
+        if (finalUserType === 'individual' || finalUserType === 'both') {
             const { error: individualError } = await supabase
                 .from('individual_profiles')
                 .insert([
@@ -151,7 +154,9 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
                 onSuccess(); // Call onSuccess callback if provided
                 return; // Add return to prevent additional navigation
             }
-        } else if (userType === 'business') {
+        }
+
+        if (finalUserType === 'business' || finalUserType === 'both') {
             const { error: businessError } = await supabase
                 .from('business_profiles')
                 .insert([
@@ -266,6 +271,36 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
                                     <option value="other">Other</option>
                                 </select>
                             </div>
+                            {formData.businessCategory === 'wedding planner/coordinator' && (
+                                <div className="sign-in-input-container">
+                                <label htmlFor="firstName">First Name</label>
+                                <input
+                                    className="sign-in-form"
+                                    id="firstName"
+                                    name="firstName"
+                                    type="text"
+                                    placeholder="First Name"
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            )}
+                            {formData.businessCategory === 'wedding planner/coordinator' && (
+                             <div className="sign-in-input-container">
+                             <label htmlFor="lastName">Last Name</label>
+                             <input
+                                 className="sign-in-form"
+                                 id="lastName"
+                                 name="lastName"
+                                 type="text"
+                                 placeholder="Last Name"
+                                 value={formData.lastName}
+                                 onChange={handleChange}
+                                 required
+                             />
+                         </div>
+                            )}
                             {formData.businessCategory === 'other' && (
                                 <div className="sign-in-input-container">
                                     <label htmlFor="otherBusinessCategory">Please specify your business category</label>
@@ -295,13 +330,13 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
                                 />
                             </div>
                             <div className="sign-in-input-container">
-                                <label htmlFor="businessAddress">Business Address</label>
+                                <label htmlFor="businessAddress">What area are you based out of?</label>
                                 <input
                                     className="sign-in-form"
                                     id="businessAddress"
                                     name="businessAddress"
                                     type="text"
-                                    placeholder="Business Address"
+                                    placeholder="Put a state, city, or county, etc. (Ex: Utah, Salt Lake City)"
                                     value={formData.businessAddress}
                                     onChange={handleChange}
                                     required

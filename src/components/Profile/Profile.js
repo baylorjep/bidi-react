@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
 const ProfilePage = () => {
-  const [profileData, setProfileData] = useState({});
+  const [profileData, setProfileData] = useState({ specializations: [] });
   const [isBusiness, setIsBusiness] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -94,7 +94,11 @@ const ProfilePage = () => {
           (photo) => photo.photo_type === "portfolio"
         );
 
-        if (profileImage) setProfilePic(profileImage.photo_url);
+        if (profileImage) {
+          setProfilePic(profileImage.photo_url);
+        } else {
+          setProfilePic("/images/default.jpg"); // Ensures a default is used if no profile picture exists
+        }
         if (portfolioImages.length > 0)
           setPortfolioPic(portfolioImages.map((img) => img.photo_url));
       } catch (err) {
@@ -117,7 +121,10 @@ const ProfilePage = () => {
     if (!file) return;
 
     if (type === "profile") {
-      setProfilePic(URL.createObjectURL(file)); // Show preview immediately
+      const uploadedUrl = await handleUpload(file, type);
+      if (uploadedUrl && type === "profile") {
+        setProfilePic(uploadedUrl); // Ensure the UI updates with the new image URL
+      }
     } else {
       // Only add preview URL before upload, but update state properly after upload
       const previewURL = URL.createObjectURL(file);
@@ -169,17 +176,36 @@ const ProfilePage = () => {
 
       const photoUrl = data.publicUrl;
 
-      // 🔹 Save new portfolio picture in the database
-      const { error: dbError } = await supabase.from("profile_photos").insert([
-        {
-          user_id: userId,
-          photo_url: photoUrl,
-          file_path: filePath,
-          photo_type: type,
-        },
-      ]);
+      // 🔹 Check if a profile picture already exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from("profile_photos")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("photo_type", type)
+        .single();
 
-      if (dbError) throw dbError;
+      // 🔹 If a profile picture exists, update it, otherwise insert a new one
+      if (existingProfile) {
+        const { error: updateError } = await supabase
+          .from("profile_photos")
+          .update({ photo_url: photoUrl, file_path: filePath })
+          .eq("id", existingProfile.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("profile_photos")
+          .insert([
+            {
+              user_id: userId,
+              photo_url: photoUrl,
+              file_path: filePath,
+              photo_type: type,
+            },
+          ]);
+
+        if (insertError) throw insertError;
+      }
 
       setUploadSuccess(
         `${
@@ -202,7 +228,7 @@ const ProfilePage = () => {
   const handleSave = async () => {
     try {
       setLoading(true);
-      const { email, ...restProfileData } = profileData;
+      const { email, newSpecialization, ...restProfileData } = profileData; // Exclude newSpecialization
 
       // Update email in supabase.auth if it has changed
       if (email !== currentEmail) {
@@ -237,8 +263,6 @@ const ProfilePage = () => {
       setTimeout(() => {
         setSuccessMessage("");
       }, 5000);
-
-      setLoading(false);
     } catch (error) {
       console.error("Error updating profile:", error);
       setErrorMessage("Failed to update profile.");
@@ -247,7 +271,7 @@ const ProfilePage = () => {
       setTimeout(() => {
         setErrorMessage("");
       }, 5000);
-
+    } finally {
       setLoading(false);
     }
   };
@@ -255,9 +279,10 @@ const ProfilePage = () => {
   if (loading) return <p>Loading...</p>;
 
   return (
-    <div classname="profile-form-overall-container">
+    <div className="profile-form-overall-container">
       <div className="profile-form-container-details">
-        <h1 className="for-business-dashboard">
+        {/* <h1 className="for-business-dashboard"> */}
+        <h1>
           {isBusiness
             ? profileData.business_name
             : `${profileData.first_name} ${profileData.last_name}`}
@@ -324,12 +349,53 @@ const ProfilePage = () => {
               />
             </div>
             <div className="form-group mt-3">
-              <label>Business Address</label>
+              <label>Service Area</label>
               <input
                 type="text"
                 className="form-control"
                 name="business_address"
                 value={profileData.business_address || ""}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <div className="form-group mt-3">
+              <label>Slogan/One Liner</label>
+              <div className="textarea-container">
+                <textarea
+                  className={`form-control description-textarea ${
+                    (profileData.business_description?.length || 0) > 50
+                      ? "input-exceed-limit"
+                      : ""
+                  }`}
+                  name="business_description"
+                  value={profileData.business_description || ""}
+                  onChange={handleInputChange}
+                  rows="4"
+                  maxLength="50"
+                  placeholder="Tell customers about your business..."
+                />
+                <span
+                  className="char-counter"
+                  style={{
+                    color:
+                      (profileData.business_description?.length || 0) > 50
+                        ? "#ff6961"
+                        : "gray",
+                  }}
+                >
+                  {profileData.business_description?.length || 0}/50
+                </span>
+              </div>
+            </div>
+
+            <div className="form-group mt-3">
+              <label>Phone</label>
+              <input
+                type="text"
+                className="form-control"
+                name="phone"
+                value={profileData.phone || ""}
                 onChange={handleInputChange}
               />
             </div>
@@ -353,6 +419,62 @@ const ProfilePage = () => {
                 onChange={handleInputChange}
               />
             </div>
+
+            <div className="form-group mt-3">
+              <label>Specializations</label>
+              <div className="specializations-list">
+                {profileData.specializations?.map((specialty, index) => (
+                  <div key={index} className="specialization-item">
+                    {specialty}
+                    <button
+                      type="button"
+                      className="remove-button"
+                      onClick={() => {
+                        const updatedSpecializations =
+                          profileData.specializations.filter(
+                            (_, i) => i !== index
+                          );
+                        setProfileData({
+                          ...profileData,
+                          specializations: updatedSpecializations,
+                        });
+                      }}
+                    >
+                      ✖
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <input
+                type="text"
+                placeholder="Add a specialization..."
+                className="form-control mt-2"
+                value={profileData.newSpecialization || ""}
+                onChange={(e) =>
+                  setProfileData({
+                    ...profileData,
+                    newSpecialization: e.target.value,
+                  })
+                }
+                onKeyPress={(e) => {
+                  if (
+                    e.key === "Enter" &&
+                    profileData.newSpecialization.trim() !== ""
+                  ) {
+                    setProfileData({
+                      ...profileData,
+                      specializations: [
+                        ...(profileData.specializations || []),
+                        profileData.newSpecialization.trim(),
+                      ],
+                      newSpecialization: "",
+                    });
+                  }
+                }}
+              />
+            </div>
+
             {/* Portfolio Images Display */}
             <div className="portfolio-container">
               <p>Portfolio Images</p>

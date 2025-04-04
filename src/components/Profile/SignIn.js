@@ -4,11 +4,15 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import '../../App.css';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import HearAboutUsModal from '../Modals/HearAboutUsModal';
 
 const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [showSourceModal, setShowSourceModal] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState(null);
+    const [currentProfile, setCurrentProfile] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -36,7 +40,7 @@ const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
         // Fetch the user's profile information
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role, has_seen_source_modal')
             .eq('id', user.id)
             .single();
 
@@ -45,6 +49,16 @@ const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
             return;
         }
 
+        setCurrentProfile(profile);
+
+        // Only show modal if user hasn't seen it before
+        if (!profile.has_seen_source_modal) {
+            setCurrentUserId(user.id);
+            setShowSourceModal(true);
+            return;
+        }
+
+        // If user has seen modal, proceed with normal navigation
         if (profile.role === 'individual') {
             if (onSuccess) {
                 onSuccess(); // Call the success callback if provided
@@ -173,7 +187,29 @@ const SignIn = ({ onSuccess }) => {  // Add onSuccess prop
                     </div>
                 </form>
                 </div>
-
+                <HearAboutUsModal 
+                    isOpen={showSourceModal}
+                    onClose={() => {
+                        setShowSourceModal(false);
+                        if (currentProfile?.role === 'individual') {
+                            if (onSuccess) {
+                                onSuccess();
+                            } else {
+                                navigate(redirectTo, {
+                                    state: { 
+                                        source: localStorage.getItem('requestSource') || 
+                                               JSON.parse(localStorage.getItem('requestFormData') || '{}').source || 
+                                               'general',
+                                        from: 'signin'
+                                    }
+                                });
+                            }
+                        } else if (currentProfile?.role === 'business') {
+                            navigate('/dashboard');
+                        }
+                    }}
+                    userId={currentUserId}
+                />
             </div>
     );
 }
