@@ -22,11 +22,12 @@ const VendorList = ({
     const [vendors, setVendors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
-    const [modalImage, setModalImage] = useState('');
+    const [modalMedia, setModalMedia] = useState(null);
     const [expandedStories, setExpandedStories] = useState({});
     const [expandedDescriptions, setExpandedDescriptions] = useState({});
     const [imageLoading, setImageLoading] = useState({});
     const [totalCount, setTotalCountState] = useState(0);
+    const [mediaErrors, setMediaErrors] = useState({});
     const navigate = useNavigate();
 
     const truncateText = (text, maxLength = 150) => {
@@ -49,14 +50,39 @@ const VendorList = ({
         }));
     };
 
+    const isVideo = (url) => {
+        return url.match(/\.(mp4|mov|wmv|avi|mkv)$/i);
+    };
+
     const preloadImage = useCallback((src) => {
-        return new Promise((resolve, reject) => {
+        // Skip if not a valid image URL or already failed
+        if (isVideo(src) || mediaErrors[src]) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
             const img = new Image();
+            
+            img.onload = () => {
+                setMediaErrors(prev => ({
+                    ...prev,
+                    [src]: false
+                }));
+                resolve();
+            };
+            
+            img.onerror = () => {
+                console.warn(`Failed to load image: ${src}`);
+                setMediaErrors(prev => ({
+                    ...prev,
+                    [src]: true
+                }));
+                resolve();
+            };
+            
             img.src = src;
-            img.onload = resolve;
-            img.onerror = reject;
         });
-    }, []);
+    }, [mediaErrors]);
 
     const handleImageLoad = useCallback((imageId) => {
         setImageLoading(prev => ({
@@ -241,7 +267,25 @@ const VendorList = ({
         slidesToShow: 1,
         slidesToScroll: 1,
         nextArrow: <SampleNextArrow />,
-        prevArrow: <SamplePrevArrow />
+        prevArrow: <SamplePrevArrow />,
+        afterChange: (currentSlide) => {
+            // Pause all videos when sliding
+            const videos = document.querySelectorAll('.portfolio-image.video');
+            videos.forEach(video => {
+                video.pause();
+                // Reset overlay display
+                const overlay = video.parentElement?.querySelector('.video-play-overlay');
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                }
+            });
+        },
+        // Add these settings to ensure proper slider behavior
+        accessibility: true,
+        draggable: true,
+        swipe: true,
+        touchMove: true,
+        waitForAnimate: true
     };
 
     function SampleNextArrow(props) {
@@ -305,14 +349,32 @@ const VendorList = ({
         );
     }
 
-    const openModal = (image) => {
-        setModalImage(image);
+    const openModal = (media) => {
+        const isVideoFile = isVideo(media);
+        setModalMedia({
+            url: media,
+            type: isVideoFile ? 'video' : 'image'
+        });
         setModalOpen(true);
+        
+        // Pause all playing videos in the carousel when opening modal
+        document.querySelectorAll('.portfolio-image.video').forEach(video => {
+            video.pause();
+            const overlay = video.parentElement?.querySelector('.video-play-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
+        });
     };
 
     const closeModal = () => {
+        // If current modal content is video, pause it
+        const modalVideo = document.querySelector('.modal-content.video');
+        if (modalVideo) {
+            modalVideo.pause();
+        }
         setModalOpen(false);
-        setModalImage('');
+        setModalMedia(null);
     };
 
     const handleCheckClick = (event) => {
@@ -362,40 +424,123 @@ const VendorList = ({
                             <Slider {...settings}>
                                 {vendor.portfolio_photos.map((item, index) => {
                                     const imageId = `${vendor.id}-${index}`;
-                                    const isVideo = item.includes('.mp4');
-
-                                    if (index < vendor.portfolio_photos.length - 1) {
-                                        preloadImage(vendor.portfolio_photos[index + 1]);
-                                    }
+                                    const itemIsVideo = isVideo(item);
 
                                     return (
-                                        <div key={index} onClick={() => openModal(item)}>
-                                            {isVideo ? (
-                                                <video
-                                                    src={item}
-                                                    className="portfolio-image"
-                                                    controls
-                                                    loading="lazy"
-                                                    preload="metadata"
-                                                />
+                                        <div key={index}>
+                                            {itemIsVideo ? (
+                                                <div className="video-container"
+                                                    onClick={(e) => {
+                                                        // Only open modal if not clicking play button
+                                                        if (!e.target.closest('.play-button')) {
+                                                            openModal(item);
+                                                        }
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        try {
+                                                            const video = e.currentTarget.querySelector('video');
+                                                            const overlay = e.currentTarget.querySelector('.video-play-overlay');
+                                                            if (video && overlay && !video.paused) {
+                                                                overlay.style.display = 'none';
+                                                            }
+                                                        } catch (error) {
+                                                            console.warn('Error handling mouse enter:', error);
+                                                        }
+                                                    }}
+                                                >
+                                                    <video
+                                                        src={item}
+                                                        className="portfolio-image video"
+                                                        muted
+                                                        loop
+                                                        playsInline
+                                                        loading="lazy"
+                                                        preload="metadata"
+                                                        onError={(e) => {
+                                                            console.warn(`Failed to load video: ${item}`);
+                                                            setMediaErrors(prev => ({
+                                                                ...prev,
+                                                                [item]: true
+                                                            }));
+                                                        }}
+                                                    />
+                                                    {!mediaErrors[item] && (
+                                                        <div className="video-play-overlay">
+                                                            <button 
+                                                                className="play-button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    try {
+                                                                        const container = e.currentTarget.closest('.video-container');
+                                                                        const video = container?.querySelector('video');
+                                                                        const overlay = e.currentTarget.closest('.video-play-overlay');
+                                                                        
+                                                                        if (!video || !overlay) return;
+
+                                                                        // Pause all other videos
+                                                                        document.querySelectorAll('.portfolio-image.video').forEach(v => {
+                                                                            if (v !== video) {
+                                                                                v.pause();
+                                                                                const otherOverlay = v.parentElement?.querySelector('.video-play-overlay');
+                                                                                if (otherOverlay) {
+                                                                                    otherOverlay.style.display = 'flex';
+                                                                                }
+                                                                            }
+                                                                        });
+                                                                        
+                                                                        if (video.paused) {
+                                                                            video.play()
+                                                                                .then(() => {
+                                                                                    overlay.style.display = 'none';
+                                                                                })
+                                                                                .catch(error => {
+                                                                                    console.warn('Error playing video:', error);
+                                                                                });
+                                                                        } else {
+                                                                            video.pause();
+                                                                            overlay.style.display = 'flex';
+                                                                        }
+                                                                    } catch (error) {
+                                                                        console.warn('Error handling play button click:', error);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                ▶
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             ) : (
-                                                <div className="image-container">
-                                                    {imageLoading[imageId] && (
+                                                <div className="image-container" onClick={() => openModal(item)}>
+                                                    {imageLoading[imageId] && !mediaErrors[item] && (
                                                         <div className="image-placeholder">
                                                             Loading...
                                                         </div>
                                                     )}
-                                                    <img
-                                                        src={item}
-                                                        alt={`Portfolio ${index}`}
-                                                        className={`portfolio-image ${imageLoading[imageId] ? 'loading' : 'loaded'}`}
-                                                        loading="lazy"
-                                                        onLoad={() => handleImageLoad(imageId)}
-                                                        style={{
-                                                            opacity: imageLoading[imageId] ? 0 : 1,
-                                                            transition: 'opacity 0.3s ease-in-out'
-                                                        }}
-                                                    />
+                                                    {mediaErrors[item] ? (
+                                                        <div className="media-error">
+                                                            Unable to load media
+                                                        </div>
+                                                    ) : (
+                                                        <img
+                                                            src={item}
+                                                            alt={`Portfolio ${index}`}
+                                                            className={`portfolio-image ${imageLoading[imageId] ? 'loading' : 'loaded'}`}
+                                                            loading="lazy"
+                                                            onLoad={() => handleImageLoad(imageId)}
+                                                            onError={(e) => {
+                                                                console.warn(`Failed to load image: ${item}`);
+                                                                setMediaErrors(prev => ({
+                                                                    ...prev,
+                                                                    [item]: true
+                                                                }));
+                                                            }}
+                                                            style={{
+                                                                opacity: imageLoading[imageId] ? 0 : 1,
+                                                                transition: 'opacity 0.3s ease-in-out'
+                                                            }}
+                                                        />
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -496,17 +641,29 @@ const VendorList = ({
             ))}
             {modalOpen && (
                 <div className="modal" onClick={closeModal}>
-                    <span className="close">&times;</span>
-                    {modalImage.includes('.mp4') ? (
-                        <video 
-                            className="modal-content" 
-                            controls
-                            autoPlay
-                            src={modalImage}
-                        />
-                    ) : (
-                        <img className="modal-content" src={modalImage} alt="Full Size" />
-                    )}
+                    <span className="close" onClick={closeModal}>&times;</span>
+                    <div className="modal-content-wrapper" onClick={e => e.stopPropagation()}>
+                        {modalMedia?.type === 'video' ? (
+                            <div className="video-modal-container">
+                                <video 
+                                    className="modal-content video"
+                                    controls
+                                    autoPlay
+                                    src={modalMedia.url}
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                        ) : (
+                            <img 
+                                className="modal-content" 
+                                src={modalMedia?.url} 
+                                alt="Full Size" 
+                                onClick={e => e.stopPropagation()}
+                            />
+                        )}
+                    </div>
                 </div>
             )}
             {totalPages > 1 && (

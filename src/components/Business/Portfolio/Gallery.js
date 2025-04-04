@@ -63,18 +63,7 @@ const Gallery = () => {
             ? portfolioMedia.map((media, index) => (
                 <div key={index} className="gallery-item">
                   {media.type === 'video' ? (
-                    <div className="video-container"
-                      onMouseLeave={(e) => {
-                        const video = e.currentTarget.querySelector('video');
-                        if (video) {
-                          video.pause();
-                          // Show play overlay again for non-autoplay videos
-                          if (index >= AUTO_PLAY_COUNT) {
-                            e.currentTarget.querySelector('.video-play-overlay').style.display = 'flex';
-                          }
-                        }
-                      }}
-                    >
+                    <div className="video-container">
                       <video
                         src={media.url}
                         className="gallery-video"
