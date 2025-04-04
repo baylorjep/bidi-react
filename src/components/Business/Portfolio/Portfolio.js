@@ -268,6 +268,10 @@ const Portfolio = () => {
               src={portfolioVideos[0]}
               className={`main-portfolio-image ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media-item' : ''}`}
               controls
+              muted
+              autoPlay
+              loop
+              playsInline
               onClick={() => handleImageClick(portfolioVideos[0])}
             >
               Your browser does not support the video tag.
@@ -292,13 +296,18 @@ const Portfolio = () => {
               {[...portfolioVideos.slice(1), ...portfolioPics.slice(1)]
                 .slice(0, 4)
                 .map((item, index) => {
-                  const isVideo = item.includes('.mp4');
+                  const isVideo = item.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
                   return isVideo ? (
                     <video
                       key={index}
                       src={item}
                       className="portfolio-image-portfolio"
-                      controls
+                      poster={`${item}?thumb`}
+                      preload="metadata"
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
                       onClick={() => handleImageClick(item)}
                     >
                       Your browser does not support the video tag.

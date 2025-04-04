@@ -53,13 +53,14 @@ const Gallery = () => {
         <div className="gallery-grid">
           {portfolioPics.length > 0
             ? portfolioPics.map((img, index) => (
-                <img
-                  key={index}
-                  src={img}
-                  alt={`Portfolio ${index}`}
-                  className="gallery-image"
-                  onClick={() => handleImageClick(img)}
-                />
+                <div key={index} className="gallery-item">
+                  <img
+                    src={img}
+                    alt={`Portfolio ${index}`}
+                    className="gallery-image"
+                    onClick={() => handleImageClick(img)}
+                  />
+                </div>
               ))
             : <p>No images available</p>}
         </div>
