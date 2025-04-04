@@ -28,6 +28,7 @@ const VendorListWithFilters = () => {
 
     const handleCategoryChange = (category) => {
         setSelectedCategory(category);
+        setCurrentPage(1); // Reset to first page when category changes
     };
 
     const handleSortOrderChange = (event) => {

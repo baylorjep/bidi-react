@@ -122,3 +122,26 @@
         width: auto; /* Override the 100% width */
     }
 }
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.reset-filter-button {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.reset-filter-button:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}

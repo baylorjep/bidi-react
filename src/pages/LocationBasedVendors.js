@@ -139,50 +139,82 @@ const LocationBasedVendors = () => {
     }, [selectedCategory, selectedType, selectedCounty, selectedCity]);
 
     const formatLocation = () => {
-        if (!county && !city) return '';
-        const formattedCounty = county ? county.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : '';
-        const formattedCity = city ? city.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : '';
-        return formattedCity ? `${formattedCounty}, ${formattedCity}` : formattedCounty;
+        if (!county && !city) return 'Utah';
+        
+        const countyObj = county ? counties.find(c => c.id === county) : null;
+        const cityObj = city ? cities.find(c => c.id === city) : null;
+        
+        if (cityObj && countyObj) {
+            return `${cityObj.name}, ${countyObj.name}`;
+        } else if (cityObj) {
+            return cityObj.name;
+        } else if (countyObj) {
+            return countyObj.name;
+        }
+        return 'Utah';
     };
 
     const formatTitle = () => {
-        const categoryName = category 
-            ? categories.find(cat => cat.id === category)?.name?.toLowerCase() || ''
-            : '';
-
-        const typeString = (type && type !== 'all')
-            ? (categoryTypes[category]?.find(t => t.id === type)?.name || '') + ' '
-            : '';
-
-        const formattedCounty = county ? counties.find(c => c.id === county)?.name || '' : '';
-        const formattedCity = city ? cities.find(c => c.id === city)?.name || '' : '';
-        const locationString = city && formattedCity ? `${formattedCity}, ${formattedCounty}` : formattedCounty;
-
-        const parts = [typeString, categoryName].filter(Boolean).join('');
-        return `${parts}${locationString ? ' in ' : ''}${locationString} | Bidi`;
+        // Get the category and type from URL parameters
+        const categoryObj = categories.find(cat => cat.id === category);
+        const typeObj = type && categoryObj ? categoryTypes[categoryObj.id]?.find(t => t.id === type) : null;
+        const locationText = formatLocation();
+        
+        let titleParts = [];
+        
+        // Handle the category and type combination
+        if (categoryObj) {
+            if (typeObj) {
+                if (categoryObj.id === 'photography') {
+                    titleParts.push(`${typeObj.name} ${categoryObj.name}s`);
+                } else {
+                    titleParts.push(`${typeObj.name} ${categoryObj.name}s`);
+                }
+            } else {
+                titleParts.push(`${categoryObj.name}s`);
+            }
+        } else {
+            titleParts.push('Wedding Vendors');
+        }
+        
+        titleParts.push(`in ${locationText}`);
+        
+        return `${titleParts.join(' ')} | Bidi`;
     };
 
     const formatHeading = () => {
-        const categoryName = category 
-            ? categories.find(cat => cat.id === category)?.name?.toLowerCase() || ''
-            : '';
-
-        const typeString = (type && type !== 'all')
-            ? (categoryTypes[category]?.find(t => t.id === type)?.name || '') + ' '
-            : '';
-            
-        const formattedCounty = county ? counties.find(c => c.id === county)?.name || '' : '';
-        const formattedCity = city ? cities.find(c => c.id === city)?.name || '' : '';
-        const locationString = city && formattedCity ? `${formattedCity}, ${formattedCounty}` : formattedCounty;
+        // Get the category and type from URL parameters
+        const categoryObj = categories.find(cat => cat.id === category);
+        const typeObj = type && categoryObj ? categoryTypes[categoryObj.id]?.find(t => t.id === type) : null;
+        const locationText = formatLocation();
         
-        const parts = [typeString, categoryName].filter(Boolean).join('');
-        return `${parts}${locationString ? ' in ' : ''}${locationString}`;
+        let headingParts = [];
+        headingParts.push('Find');
+        
+        // Handle the category and type combination
+        if (categoryObj) {
+            if (typeObj) {
+                if (categoryObj.id === 'photography') {
+                    headingParts.push(`${typeObj.name} ${categoryObj.name}s`);
+                } else {
+                    headingParts.push(`${typeObj.name} ${categoryObj.name}s`);
+                }
+            } else {
+                headingParts.push(`${categoryObj.name}s`);
+            }
+        } else {
+            headingParts.push('Wedding Vendors');
+        }
+        
+        headingParts.push(`in ${locationText}`);
+        
+        return headingParts.join(' ');
     };
 
     const formatDescription = () => {
         const categoryName = category 
             ? categories.find(cat => cat.id === category)?.name || ''
-            : '';
+            : 'Wedding Vendors';
 
         const typeString = (type && type !== 'all')
             ? (categoryTypes[category]?.find(t => t.id === type)?.name || '') + ' '
@@ -190,46 +222,134 @@ const LocationBasedVendors = () => {
         
         const formattedCounty = county ? counties.find(c => c.id === county)?.name || '' : '';
         const formattedCity = city ? cities.find(c => c.id === city)?.name || '' : '';
-        const locationString = city && formattedCity ? `${formattedCity}, ${formattedCounty}` : formattedCounty;
+        
+        let locationString = '';
+        if (formattedCity && formattedCounty) {
+            locationString = `${formattedCity}, ${formattedCounty}`;
+        } else if (formattedCity) {
+            locationString = formattedCity;
+        } else if (formattedCounty) {
+            locationString = formattedCounty;
+        } else {
+            locationString = 'Utah';
+        }
 
-        const parts = [typeString, categoryName].filter(Boolean).join('');
-        return `Find the best ${parts}${locationString ? ' in ' : ''}${locationString}. Compare prices, read reviews, and book instantly with Bidi.`;
+        const serviceParts = [typeString, categoryName].filter(Boolean).join('');
+        return `Find and compare the best ${serviceParts}s in ${locationString}. Read verified reviews, check prices, and book instantly with Bidi.`;
     };
 
     const handleCategoryChange = (newCategory) => {
         setSelectedCategory(newCategory);
-        const path = selectedType 
-            ? `/${selectedType}/${newCategory}/${selectedCounty || ''}/${selectedCity || ''}`
-            : `/${newCategory}/${selectedCounty || ''}/${selectedCity || ''}`;
-        navigate(path.replace(/\/+$/, '')); // Remove trailing slashes
+        let path = '/';
+        const segments = [];
+        
+        if (newCategory) segments.push(newCategory);
+        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
+        if (selectedCounty) segments.push(selectedCounty);
+        if (selectedCity) segments.push(selectedCity);
+        
+        path += segments.join('/');
+        navigate(path || '/');
     };
 
     const handleTypeChange = (newType) => {
         setSelectedType(newType);
-        const path = `/${newType}/${selectedCategory}/${selectedCounty || ''}/${selectedCity || ''}`;
-        navigate(path.replace(/\/+$/, '')); // Remove trailing slashes
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (newType && newType !== 'all') segments.unshift(newType);
+        if (selectedCounty) segments.push(selectedCounty);
+        if (selectedCity) segments.push(selectedCity);
+        
+        path += segments.join('/');
+        navigate(path || '/');
     };
 
     const handleCountyChange = (newCounty) => {
         setSelectedCounty(newCounty);
         setSelectedCity(''); // Reset city when county changes
-        const path = selectedType 
-            ? `/${selectedType}/${selectedCategory}/${newCounty}`
-            : `/${selectedCategory}/${newCounty}`;
-        navigate(path);
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
+        if (newCounty) segments.push(newCounty);
+        
+        path += segments.join('/');
+        navigate(path || '/');
     };
 
     const handleCityChange = (newCity) => {
         setSelectedCity(newCity);
-        const path = selectedType 
-            ? `/${selectedType}/${selectedCategory}/${selectedCounty}/${newCity}`
-            : `/${selectedCategory}/${selectedCounty}/${newCity}`;
-        navigate(path);
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
+        if (selectedCounty) segments.push(selectedCounty);
+        if (newCity) segments.push(newCity);
+        
+        path += segments.join('/');
+        navigate(path || '/');
     };
 
     // Get the types for the selected category
     const getTypesForCategory = () => {
         return selectedCategory ? (categoryTypes[selectedCategory] || []) : [];
+    };
+
+    // Add these new handler functions after the existing handle*Change functions
+    const handleResetCategory = () => {
+        setSelectedCategory('');
+        setSelectedType(''); // Reset type when category is reset
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCounty) segments.push(selectedCounty);
+        if (selectedCity) segments.push(selectedCity);
+        
+        path += segments.join('/');
+        navigate(path || '/');
+    };
+
+    const handleResetType = () => {
+        setSelectedType('');
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (selectedCounty) segments.push(selectedCounty);
+        if (selectedCity) segments.push(selectedCity);
+        
+        path += segments.join('/');
+        navigate(path || '/');
+    };
+
+    const handleResetCounty = () => {
+        setSelectedCounty('');
+        setSelectedCity(''); // Reset city when county is reset
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
+        
+        path += segments.join('/');
+        navigate(path || '/');
+    };
+
+    const handleResetCity = () => {
+        setSelectedCity('');
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
+        if (selectedCounty) segments.push(selectedCounty);
+        
+        path += segments.join('/');
+        navigate(path || '/');
     };
 
     return (
@@ -247,7 +367,18 @@ const LocationBasedVendors = () => {
             
             <div className="filters-container-SEO">
                 <div className="filter-group">
-                    <h3 className='filter-title'>Find Wedding Services in {formatLocation()}</h3>
+                    <div className="filter-header">
+                        <h3 className='filter-title'>Find Wedding Services in {formatLocation() || 'Utah'}</h3>
+                        {selectedCategory && (
+                            <button 
+                                className="reset-filter-button"
+                                onClick={handleResetCategory}
+                                aria-label="Reset category filter"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
                     {categories.map(cat => (
                         <button
                             key={cat.id}
@@ -261,7 +392,20 @@ const LocationBasedVendors = () => {
 
                 {selectedCategory && (
                     <div className="filter-group">
-                        <h3 className='filter-title'>Find {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Services By Type</h3>
+                        <div className="filter-header">
+                            <h3 className='filter-title'>
+                                Find {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Services By Type
+                            </h3>
+                            {selectedType && selectedType !== 'all' && (
+                                <button 
+                                    className="reset-filter-button"
+                                    onClick={handleResetType}
+                                    aria-label="Reset type filter"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
                         {getTypesForCategory().map(t => (
                             <button
                                 key={t.id}
@@ -275,7 +419,22 @@ const LocationBasedVendors = () => {
                 )}
 
                 <div className="filter-group">
-                    <h3 className='filter-title'>Find {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} in a Different County</h3>
+                    <div className="filter-header">
+                        <h3 className='filter-title'>
+                            Find {selectedCategory ? 
+                                `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}s` : 
+                                'Wedding Vendors'} in a Different County
+                        </h3>
+                        {selectedCounty && (
+                            <button 
+                                className="reset-filter-button"
+                                onClick={handleResetCounty}
+                                aria-label="Reset county filter"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
                     {counties.map(county => (
                         <button
                             key={county.id}
@@ -287,7 +446,22 @@ const LocationBasedVendors = () => {
                     ))}
                 </div>
                 <div className="filter-group">
-                    <h3 className='filter-title'>Find {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} in a Different City</h3>
+                    <div className="filter-header">
+                        <h3 className='filter-title'>
+                            Find {selectedCategory ? 
+                                `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}s` : 
+                                'Wedding Vendors'} in a Different City
+                        </h3>
+                        {selectedCity && (
+                            <button 
+                                className="reset-filter-button"
+                                onClick={handleResetCity}
+                                aria-label="Reset city filter"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
                     {filteredCities.map(city => (
                         <button
                             key={city.id}
@@ -303,15 +477,15 @@ const LocationBasedVendors = () => {
             <VendorList 
                 selectedCategory={selectedCategory}
                 sortOrder="recommended"
-                location={city || county} // Pass either city or county as location
+                location={selectedCity || selectedCounty} // Changed to use selected values
                 categoryType={selectedType === 'all' ? '' : selectedType}
                 currentPage={currentPage}
                 vendorsPerPage={vendorsPerPage}
                 setCurrentPage={setCurrentPage}
                 totalCount={totalCount}
                 setTotalCount={setTotalCount}
-                preferredLocation={city || county} // New prop for location preference
-                preferredType={selectedType} // New prop for type preference
+                preferredLocation={selectedCity || selectedCounty} // Changed to use selected values
+                preferredType={selectedType}
             />
         </div>
     );

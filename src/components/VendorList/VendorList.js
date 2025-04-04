@@ -69,27 +69,18 @@ const VendorList = ({
         const fetchVendors = async () => {
             setLoading(true);
             
-            // Base query to get all vendors in the category
+            // Get all vendors in the category without pagination
             let query = supabase
                 .from('business_profiles')
-                .select('*', { count: 'exact' })
-                .or('stripe_account_id.not.is.null,stripe_account_id.not.eq.,Bidi_Plus.eq.true');
+                .select('*')
+                .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
                 query = query.eq('business_category', selectedCategory);
             }
 
-            // Get total count first
-            const { count, error: countError } = await query;
-            
-            if (!countError) {
-                setTotalCount(count || 0);
-                setTotalCountState(count || 0);
-            }
-
-            // Then get paginated data
-            const { data: vendorData, error: vendorError } = await query
-                .range((currentPage - 1) * vendorsPerPage, currentPage * vendorsPerPage - 1);
+            // Get all vendors first
+            const { data: allVendorData, error: vendorError } = await query;
 
             if (vendorError) {
                 console.error('Error fetching vendors:', vendorError);
@@ -97,12 +88,15 @@ const VendorList = ({
                 return;
             }
 
-            const vendorIds = vendorData.map(vendor => vendor.id);
-            
+            // Set total count
+            setTotalCount(allVendorData.length);
+            setTotalCountState(allVendorData.length);
+
+            // Get all photos for all vendors
             const { data: photoData, error: photoError } = await supabase
                 .from('profile_photos')
                 .select('*')
-                .in('user_id', vendorIds);
+                .in('user_id', allVendorData.map(vendor => vendor.id));
 
             if (photoError) {
                 console.error('Error fetching photos:', photoError);
@@ -110,14 +104,14 @@ const VendorList = ({
                 return;
             }
 
-            const vendorsWithPhotos = await Promise.all(vendorData.map(async vendor => {
-                const profilePhoto = photoData.find(photo => 
-                    photo.user_id === vendor.id && photo.photo_type === 'profile'
+            // Process all vendors with their photos
+            const allVendorsWithPhotos = await Promise.all(allVendorData.map(async vendor => {
+                const vendorPhotos = photoData?.filter(photo => photo.user_id === vendor.id) || [];
+                const profilePhoto = vendorPhotos.find(photo => photo.photo_type === 'profile');
+                const portfolioMedia = vendorPhotos.filter(photo => 
+                    photo.photo_type === 'portfolio' || photo.photo_type === 'video'
                 );
-                const portfolioMedia = photoData.filter(photo => 
-                    photo.user_id === vendor.id && 
-                    (photo.photo_type === 'portfolio' || photo.photo_type === 'video')
-                );
+                const videoCount = vendorPhotos.filter(photo => photo.photo_type === 'video').length;
 
                 const { data: reviewData } = await supabase
                     .from('reviews')
@@ -142,53 +136,92 @@ const VendorList = ({
                     ...vendor,
                     profile_photo_url: profilePhoto?.photo_url || '/images/default.jpg',
                     portfolio_photos: portfolioMedia.map(media => media.photo_url),
+                    photo_count: vendorPhotos.length,
+                    video_count: videoCount,
                     average_rating: averageRating,
                     locationScore,
                     typeScore
                 };
             }));
 
-            const sortedVendors = sortVendors(vendorsWithPhotos);
-            setVendors(sortedVendors);
+            // Sort all vendors
+            const sortedVendors = sortVendors(allVendorsWithPhotos);
+
+            // Then paginate the sorted results
+            const startIndex = (currentPage - 1) * vendorsPerPage;
+            const endIndex = startIndex + vendorsPerPage;
+            const paginatedVendors = sortedVendors.slice(startIndex, endIndex);
+
+            setVendors(paginatedVendors);
             setLoading(false);
         };
 
         fetchVendors();
-    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, preferredLocation, preferredType]);
+    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage]);
 
     const sortVendors = (vendors) => {
-        return vendors.sort((a, b) => {
-            // First priority: Has any photos at all
-            const aHasPhotos = a.portfolio_photos.length > 0;
-            const bHasPhotos = b.portfolio_photos.length > 0;
-            if (aHasPhotos !== bHasPhotos) return aHasPhotos ? -1 : 1;
+        // Log vendors and their counts before sorting
+        console.log('Vendors before sorting:', vendors.map(v => ({
+            id: v.id,
+            name: v.business_name,
+            photos: v.photo_count,
+            videos: v.video_count,
+            verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true
+        })));
 
-            // Second priority: Location and type matches
-            const aMatchScore = (a.locationScore + a.typeScore);
-            const bMatchScore = (b.locationScore + b.typeScore);
-            if (aMatchScore !== bMatchScore) return bMatchScore - aMatchScore;
+        const sorted = [...vendors].sort((a, b) => {
+            const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
+            const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
+            const aHasPhotos = a.photo_count > 0;
+            const bHasPhotos = b.photo_count > 0;
+            const aHasVideos = a.video_count > 0;
+            const bHasVideos = b.video_count > 0;
 
-            // Third priority: Regular sort criteria
+            // First priority: Verification status
+            if (aIsVerified !== bIsVerified) {
+                return aIsVerified ? -1 : 1;
+            }
+
+            // Second priority: Has videos (within verification groups)
+            if (aHasVideos !== bHasVideos) {
+                return aHasVideos ? -1 : 1;
+            }
+
+            // Third priority: Has photos (within video groups)
+            if (aHasPhotos !== bHasPhotos) {
+                return aHasPhotos ? -1 : 1;
+            }
+
+            // Fourth priority: Total media count (photos + videos)
+            const aTotalMedia = a.photo_count + (a.video_count * 2); // Weight videos more
+            const bTotalMedia = b.photo_count + (b.video_count * 2);
+            if (aTotalMedia !== bTotalMedia) {
+                return bTotalMedia - aTotalMedia;
+            }
+
+            // Finally, apply the selected sort order
             switch (sortOrder) {
-                case 'recommended':
-                    const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
-                    const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
-                    if (aIsVerified !== bIsVerified) return bIsVerified - aIsVerified;
-                    // If verification is the same, fall through to photo count comparison
-                    return b.portfolio_photos.length - a.portfolio_photos.length;
                 case 'rating':
-                    const ratingDiff = (b.average_rating || 0) - (a.average_rating || 0);
-                    return ratingDiff !== 0 ? ratingDiff : b.portfolio_photos.length - a.portfolio_photos.length;
+                    return (b.average_rating || 0) - (a.average_rating || 0);
                 case 'base_price_low':
-                    const priceLowDiff = (a.minimum_price || 0) - (b.minimum_price || 0);
-                    return priceLowDiff !== 0 ? priceLowDiff : b.portfolio_photos.length - a.portfolio_photos.length;
+                    return (a.minimum_price || 0) - (b.minimum_price || 0);
                 case 'base_price_high':
-                    const priceHighDiff = (b.minimum_price || 0) - (a.minimum_price || 0);
-                    return priceHighDiff !== 0 ? priceHighDiff : b.portfolio_photos.length - a.portfolio_photos.length;
+                    return (b.minimum_price || 0) - (a.minimum_price || 0);
                 default:
-                    return b.portfolio_photos.length - a.portfolio_photos.length;
+                    return 0;
             }
         });
+
+        // Log vendors after sorting
+        console.log('Vendors after sorting:', sorted.map(v => ({
+            id: v.id,
+            name: v.business_name,
+            photos: v.photo_count,
+            videos: v.video_count,
+            verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true
+        })));
+
+        return sorted;
     };
 
     const totalPages = Math.ceil(totalCount / vendorsPerPage);
@@ -214,7 +247,8 @@ const VendorList = ({
     function SampleNextArrow(props) {
         const { className, style, onClick } = props;
         return (
-            <div
+            <button
+                type="button"
                 className={`${className} custom-arrow custom-next-arrow`}
                 onClick={onClick}
                 style={{ 
@@ -232,17 +266,19 @@ const VendorList = ({
                     position: 'absolute', 
                     top: '50%', 
                     right: '10px', 
-                    transform: 'translateY(-50%)' 
+                    transform: 'translateY(-50%)',
+                    border: 'none',
+                    cursor: 'pointer'
                 }}
-            >
-            </div>
+            />
         );
     }
 
     function SamplePrevArrow(props) {
         const { className, style, onClick } = props;
         return (
-            <div
+            <button
+                type="button"
                 className={`${className} custom-arrow custom-prev-arrow`}
                 onClick={onClick}
                 style={{ 
@@ -261,10 +297,11 @@ const VendorList = ({
                     top: '50%', 
                     left: '10px', 
                     transform: 'translateY(-50%)',
-                    zIndex: '10'
+                    zIndex: '10',
+                    border: 'none',
+                    cursor: 'pointer'
                 }}
-            >
-            </div>
+            />
         );
     }
 

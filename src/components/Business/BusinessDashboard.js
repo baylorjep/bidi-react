@@ -817,13 +817,13 @@ const BusinessDashboard = () => {
           </div>
         </div>
       )}
-
+      {/*}
       <div className="edit-profile-container">
           <Link to="/profile" className="edit-profile">
               Edit Profile
           </Link>
       </div>
-
+      */}
       <div className="container mt-4">
         <div className="row justify-content-center">  
           {/* Admin Dashboard Button - Only visible for admin users */}
