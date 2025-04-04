@@ -17,7 +17,6 @@ const UtahWeddingVideographerGuide = () => {
 
                 <script type="application/ld+json">
                 {`
-                    "@context": "https://schema.org",
                     "@type": "Article",
                     "headline": "How to Choose Your Utah Wedding Videographer: A Stress-Free Guide",
                     "author": {

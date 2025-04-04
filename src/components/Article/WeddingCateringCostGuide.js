@@ -25,7 +25,6 @@ const WeddingCateringCostGuide = () => {
                 <meta name="twitter:image" content="https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/0feae650-b696-4124-89a5-b76f27157ab1.jpeg?st=2025-02-19T02%3A06%3A41Z&amp;se=2025-02-26T02%3A06%3A41Z&amp;sp=r&amp;sv=2025-01-05&amp;sr=b&amp;sig=Jy71E/0w%2BQV8h2IHqoywSMKqClC0oF6qX/e83pKliTI%3D" />
                 <script type="application/ld+json">
                 {`
-                    "@context": "https://schema.org",
                     "@type": "Article",
                     "headline": "Utah Wedding Catering Costs Guide 2025",
                     "author": {
