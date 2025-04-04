@@ -2,40 +2,47 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
 import "../../../styles/Gallery.css";
-import ImageModal from "./ImageModal"; // Import the new ImageModal component
+import ImageModal from "./ImageModal";
 
 const Gallery = () => {
   const { businessId } = useParams();
-  const [portfolioPics, setPortfolioPics] = useState([]);
+  const [portfolioMedia, setPortfolioMedia] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState(null);
   const navigate = useNavigate();
+  const AUTO_PLAY_COUNT = 4; // Number of videos that will autoplay
 
   useEffect(() => {
-    const fetchPortfolioImages = async () => {
+    const fetchPortfolioMedia = async () => {
       const { data, error } = await supabase
         .from("profile_photos")
-        .select("photo_url")
+        .select("photo_url, photo_type")
         .eq("user_id", businessId)
-        .eq("photo_type", "portfolio");
+        .in("photo_type", ["portfolio", "video"]);
 
       if (error) {
-        console.error("Error fetching portfolio images:", error);
+        console.error("Error fetching portfolio media:", error);
       } else {
-        setPortfolioPics(data.map(img => img.photo_url));
+        setPortfolioMedia(data.map(item => ({
+          url: item.photo_url,
+          type: item.photo_type === "video" ? "video" : "image"
+        })));
       }
       setLoading(false);
     };
 
-    fetchPortfolioImages();
+    fetchPortfolioMedia();
   }, [businessId]);
 
-  const handleImageClick = (imageUrl) => {
-    setSelectedImage(imageUrl);
+  const handleMediaClick = (media) => {
+    setSelectedMedia({
+      url: media.url,
+      type: media.type
+    });
   };
 
-  const handleCloseImageModal = () => {
-    setSelectedImage(null);
+  const handleCloseModal = () => {
+    setSelectedMedia(null);
   };
 
   if (loading) return <p>Loading gallery...</p>;
@@ -43,26 +50,73 @@ const Gallery = () => {
   return (
     <>
       <ImageModal
-        isOpen={!!selectedImage}
-        imageUrl={selectedImage}
-        onClose={handleCloseImageModal}
+        isOpen={!!selectedMedia}
+        imageUrl={selectedMedia?.url}
+        mediaType={selectedMedia?.type}
+        onClose={handleCloseModal}
       />
 
       <div className="gallery-container">
         <button className="back-button" onClick={() => navigate(-1)}>Back</button>
         <div className="gallery-grid">
-          {portfolioPics.length > 0
-            ? portfolioPics.map((img, index) => (
+          {portfolioMedia.length > 0
+            ? portfolioMedia.map((media, index) => (
                 <div key={index} className="gallery-item">
-                  <img
-                    src={img}
-                    alt={`Portfolio ${index}`}
-                    className="gallery-image"
-                    onClick={() => handleImageClick(img)}
-                  />
+                  {media.type === 'video' ? (
+                    <div className="video-container"
+                      onMouseLeave={(e) => {
+                        const video = e.currentTarget.querySelector('video');
+                        if (video) {
+                          video.pause();
+                          // Show play overlay again for non-autoplay videos
+                          if (index >= AUTO_PLAY_COUNT) {
+                            e.currentTarget.querySelector('.video-play-overlay').style.display = 'flex';
+                          }
+                        }
+                      }}
+                    >
+                      <video
+                        src={media.url}
+                        className="gallery-video"
+                        poster={`${media.url}?thumb`}
+                        preload="metadata"
+                        muted
+                        autoPlay={index < AUTO_PLAY_COUNT}
+                        loop
+                        playsInline
+                        onClick={() => handleMediaClick(media)}
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                      {index >= AUTO_PLAY_COUNT && (
+                        <div className="video-play-overlay">
+                          <button 
+                            className="play-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const video = e.currentTarget.parentElement.previousElementSibling;
+                              if (video.paused) {
+                                video.play();
+                                e.currentTarget.parentElement.style.display = 'none';
+                              }
+                            }}
+                          >
+                            ▶
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <img
+                      src={media.url}
+                      alt={`Portfolio ${index}`}
+                      className="gallery-image"
+                      onClick={() => handleMediaClick(media)}
+                    />
+                  )}
                 </div>
               ))
-            : <p>No images available</p>}
+            : <p>No media available</p>}
         </div>
       </div>
     </>
