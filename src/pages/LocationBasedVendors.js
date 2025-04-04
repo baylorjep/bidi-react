@@ -124,6 +124,7 @@ const LocationBasedVendors = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const vendorsPerPage = 10;
+    const [openFilter, setOpenFilter] = useState(null);
 
     useEffect(() => {
         if (selectedCounty) {
@@ -352,6 +353,10 @@ const LocationBasedVendors = () => {
         navigate(path || '/');
     };
 
+    const toggleFilter = (filterName) => {
+        setOpenFilter(openFilter === filterName ? null : filterName);
+    };
+
     return (
         <div className="location-based-vendors" style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
             <Helmet>
@@ -366,111 +371,166 @@ const LocationBasedVendors = () => {
             </h1>
             
             <div className="filters-container-SEO">
-                <div className="filter-group">
-                    <div className="filter-header">
-                        <h3 className='filter-title'>Find Wedding Services in {formatLocation() || 'Utah'}</h3>
+                <div className="filter-accordion">
+                    <div 
+                        className={`filter-header ${openFilter === 'category' ? 'open' : ''}`}
+                        onClick={() => toggleFilter('category')}
+                    >
+                        <h3 className='filter-title'>
+                            {selectedCategory ? 
+                                `Selected: ${categories.find(cat => cat.id === selectedCategory)?.name}` : 
+                                'Select Service Type'}
+                            <span className="dropdown-arrow">▼</span>
+                        </h3>
                         {selectedCategory && (
                             <button 
                                 className="reset-filter-button"
-                                onClick={handleResetCategory}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResetCategory();
+                                }}
                                 aria-label="Reset category filter"
                             >
                                 ✕
                             </button>
                         )}
                     </div>
-                    {categories.map(cat => (
-                        <button
-                            key={cat.id}
-                            className={`filter-button-SEO ${selectedCategory === cat.id ? 'active' : ''}`}
-                            onClick={() => handleCategoryChange(cat.id)}
-                        >
-                            {cat.name}
-                        </button>
-                    ))}
+                    <div className={`filter-content ${openFilter === 'category' ? 'open' : ''}`}>
+                        {categories.map(cat => (
+                            <button
+                                key={cat.id}
+                                className={`filter-button-SEO ${selectedCategory === cat.id ? 'active' : ''}`}
+                                onClick={() => {
+                                    handleCategoryChange(cat.id);
+                                    toggleFilter(null);
+                                }}
+                            >
+                                {cat.name}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {selectedCategory && (
-                    <div className="filter-group">
-                        <div className="filter-header">
+                    <div className="filter-accordion">
+                        <div 
+                            className={`filter-header ${openFilter === 'type' ? 'open' : ''}`}
+                            onClick={() => toggleFilter('type')}
+                        >
                             <h3 className='filter-title'>
-                                Find {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Services By Type
+                                {selectedType ? 
+                                    `Selected: ${categoryTypes[selectedCategory]?.find(t => t.id === selectedType)?.name}` : 
+                                    'Select Service Specialization'}
+                                <span className="dropdown-arrow">▼</span>
                             </h3>
                             {selectedType && selectedType !== 'all' && (
                                 <button 
                                     className="reset-filter-button"
-                                    onClick={handleResetType}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleResetType();
+                                    }}
                                     aria-label="Reset type filter"
                                 >
                                     ✕
                                 </button>
                             )}
                         </div>
-                        {getTypesForCategory().map(t => (
-                            <button
-                                key={t.id}
-                                className={`filter-button-SEO ${selectedType === t.id ? 'active' : ''}`}
-                                onClick={() => handleTypeChange(t.id)}
-                            >
-                                {t.name}
-                            </button>
-                        ))}
+                        <div className={`filter-content ${openFilter === 'type' ? 'open' : ''}`}>
+                            {getTypesForCategory().map(t => (
+                                <button
+                                    key={t.id}
+                                    className={`filter-button-SEO ${selectedType === t.id ? 'active' : ''}`}
+                                    onClick={() => {
+                                        handleTypeChange(t.id);
+                                        toggleFilter(null);
+                                    }}
+                                >
+                                    {t.name}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
 
-                <div className="filter-group">
-                    <div className="filter-header">
+                <div className="filter-accordion">
+                    <div 
+                        className={`filter-header ${openFilter === 'county' ? 'open' : ''}`}
+                        onClick={() => toggleFilter('county')}
+                    >
                         <h3 className='filter-title'>
-                            Find {selectedCategory ? 
-                                `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}s` : 
-                                'Wedding Vendors'} in a Different County
+                            {selectedCounty ? 
+                                `Selected: ${counties.find(c => c.id === selectedCounty)?.name}` : 
+                                'Select County'}
+                            <span className="dropdown-arrow">▼</span>
                         </h3>
                         {selectedCounty && (
                             <button 
                                 className="reset-filter-button"
-                                onClick={handleResetCounty}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResetCounty();
+                                }}
                                 aria-label="Reset county filter"
                             >
                                 ✕
                             </button>
                         )}
                     </div>
-                    {counties.map(county => (
-                        <button
-                            key={county.id}
-                            className={`filter-button-SEO ${selectedCounty === county.id ? 'active' : ''}`}
-                            onClick={() => handleCountyChange(county.id)}
-                        >
-                            {county.name}
-                        </button>
-                    ))}
+                    <div className={`filter-content ${openFilter === 'county' ? 'open' : ''}`}>
+                        {counties.map(county => (
+                            <button
+                                key={county.id}
+                                className={`filter-button-SEO ${selectedCounty === county.id ? 'active' : ''}`}
+                                onClick={() => {
+                                    handleCountyChange(county.id);
+                                    toggleFilter(null);
+                                }}
+                            >
+                                {county.name}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-                <div className="filter-group">
-                    <div className="filter-header">
+
+                <div className="filter-accordion">
+                    <div 
+                        className={`filter-header ${openFilter === 'city' ? 'open' : ''}`}
+                        onClick={() => toggleFilter('city')}
+                    >
                         <h3 className='filter-title'>
-                            Find {selectedCategory ? 
-                                `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}s` : 
-                                'Wedding Vendors'} in a Different City
+                            {selectedCity ? 
+                                `Selected: ${cities.find(c => c.id === selectedCity)?.name}` : 
+                                'Select City'}
+                            <span className="dropdown-arrow">▼</span>
                         </h3>
                         {selectedCity && (
                             <button 
                                 className="reset-filter-button"
-                                onClick={handleResetCity}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResetCity();
+                                }}
                                 aria-label="Reset city filter"
                             >
                                 ✕
                             </button>
                         )}
                     </div>
-                    {filteredCities.map(city => (
-                        <button
-                            key={city.id}
-                            className={`filter-button-SEO ${selectedCity === city.id ? 'active' : ''}`}
-                            onClick={() => handleCityChange(city.id)}
-                        >
-                            {city.name}
-                        </button>
-                    ))}
+                    <div className={`filter-content ${openFilter === 'city' ? 'open' : ''}`}>
+                        {filteredCities.map(city => (
+                            <button
+                                key={city.id}
+                                className={`filter-button-SEO ${selectedCity === city.id ? 'active' : ''}`}
+                                onClick={() => {
+                                    handleCityChange(city.id);
+                                    toggleFilter(null);
+                                }}
+                            >
+                                {city.name}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
