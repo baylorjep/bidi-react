@@ -86,6 +86,17 @@ const FlowerModal = ({ photo, onClose }) => {
     );
 };
 
+const BidScoreIndicator = ({ score, message }) => (
+    <div className="bid-score-container">
+        <div className="score-circle" style={{
+            background: `conic-gradient(#A328F4 ${score}%, #f0f0f0 ${score}%)`
+        }}>
+            <span>{score}%</span>
+        </div>
+        {message && <div className="score-message">{message}</div>}
+    </div>
+);
+
 function FloristRequest() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -110,6 +121,9 @@ function FloristRequest() {
     const [isFlowerModalOpen, setIsFlowerModalOpen] = useState(false);
     const [selectedVendor, setSelectedVendor] = useState(location.state?.vendor || null);
     const [vendorImage, setVendorImage] = useState(location.state?.image || null);
+    const [bidScore, setBidScore] = useState(0);
+    const [scoreMessage, setScoreMessage] = useState('');
+    const [earnedCoupon, setEarnedCoupon] = useState(false);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
@@ -149,7 +163,8 @@ function FloristRequest() {
                 flowerPreferences: saved.eventDetails?.flowerPreferences || '',
                 groupDiscountInquiry: saved.eventDetails?.groupDiscountInquiry || '',
                 specificTimeNeeded: saved.eventDetails?.specificTimeNeeded || '',
-                specificTime: saved.eventDetails?.specificTime || ''
+                specificTime: saved.eventDetails?.specificTime || '',
+                priceQualityPreference: saved.eventDetails?.priceQualityPreference || "2"
             },
             personalDetails: saved.personalDetails || {
                 firstName: '',
@@ -171,10 +186,9 @@ function FloristRequest() {
     const getDetailsSubSteps = () => [
         'Event Details',
         'Floral Arrangements Needed',
-        'Color Preferences', // New sub-step
+        'Color Preferences',
         'Flower Preferences & Greenery',
-        'Additional Services',
-        'Other Special Requests or Notes'
+        'Additional Services & Budget'
     ];
 
     const handleEventSelect = (event) => {
@@ -183,16 +197,29 @@ function FloristRequest() {
                 ...prev,
                 eventType: event
             };
-            // Save to localStorage
             localStorage.setItem('floristRequest', JSON.stringify(newData));
+            setTimeout(() => updateBidScore(), 0);
             return newData;
         });
     };
 
     const handleInputChange = (field, value) => {
         setFormData(prev => {
-            const newData = { ...prev, [field]: value };
+            let newData;
+            if (field === 'eventDetails') {
+                newData = {
+                    ...prev,
+                    eventDetails: {
+                        ...prev.eventDetails,
+                        ...value
+                    }
+                };
+            } else {
+                newData = { ...prev, [field]: value };
+            }
+            
             localStorage.setItem('floristRequest', JSON.stringify(newData));
+            setTimeout(() => updateBidScore(), 0);
             return newData;
         });
     };
@@ -347,7 +374,7 @@ function FloristRequest() {
                             </div>
                         )}
 
-                        <div className="custom-input-container">
+                        <div className="custom-input-container required">
                             <input
                                 type="text"
                                 name="location"
@@ -356,7 +383,7 @@ function FloristRequest() {
                                     ...formData.eventDetails,
                                     location: e.target.value
                                 })}
-                                placeholder='Location (City, County, Venue, or Address)'
+                                placeholder='Can be a city, county, address, or venue name'
                                 className="custom-input"
                             />
                             <label htmlFor="location" className="custom-label">
@@ -399,28 +426,6 @@ function FloristRequest() {
                                 </label>
                             </div>
                         )}
-                        <div className="custom-input-container">
-                            <select
-                                name="priceRange"
-                                value={formData.eventDetails.priceRange}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    priceRange: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select Budget Range</option>
-                                <option value="0-1000">$0 - $1000</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
-                            </select>
-                            <label htmlFor="priceRange" className="custom-label">
-                                Budget Range
-                            </label>
-                        </div>
                     </div>
                 );
 
@@ -566,107 +571,129 @@ function FloristRequest() {
 
             case 'Flower Preferences & Greenery':
                 const flowerOptions = [
-                    { id: 'roses', label: 'Roses', imgSrc: Roses },
-                    { id: 'peonies', label: 'Peonies', imgSrc: Peonies },
-                    { id: 'hydrangeas', label: 'Hydrangeas', imgSrc: Hydrangeas },
-                    { id: 'lilies', label: 'Lilies', imgSrc: Lilies },
-                    { id: 'tulips', label: 'Tulips', imgSrc: Tulips },
-                    { id: 'orchids', label: 'Orchids', imgSrc: Orchids },
-                    { id: 'daisies', label: 'Daisies', imgSrc: Daisies },
-                    { id: 'ranunculus', label: 'Ranunculus', imgSrc: Ranunculus },
-                    { id: 'anemones', label: 'Anemones', imgSrc: Anemones },
-                    { id: 'scabiosa', label: 'Scabiosa', imgSrc: Scabiosa },
-                    { id: 'eucalyptus', label: 'Eucalyptus', imgSrc: Eucalyptus },
-                    { id: 'sunflowers', label: 'Sunflowers', imgSrc: Sunflowers },
-                    { id: 'babysBreath', label: 'Baby’s Breath', imgSrc: BabysBreath },
-                    { id: 'lavender', label: 'Lavender', imgSrc: Lavender },
-                    { id: 'dahlia', label: 'Dahlia', imgSrc: Dahlia },
-                    { id: 'zinnias', label: 'Zinnias', imgSrc: Zinnias },
-                    { id: 'protea', label: 'Protea', imgSrc: Protea },
-                    { id: 'amaranthus', label: 'Amaranthus', imgSrc: Amaranthus },
-                    { id: 'chrysanthemums', label: 'Chrysanthemums', imgSrc: Chrysanthemums },
-                    { id: 'ruscus', label: 'Ruscus', imgSrc: Ruscus },
-                    { id: 'ivy', label: 'Ivy', imgSrc: Ivy },
-                    { id: 'ferns', label: 'Ferns', imgSrc: Ferns }
+                    // Luxury Tier
+                    { id: 'peonies', label: 'Peonies', imgSrc: Peonies, tier: 'luxury' },
+                    { id: 'orchids', label: 'Orchids', imgSrc: Orchids, tier: 'luxury' },
+                    { id: 'protea', label: 'Protea', imgSrc: Protea, tier: 'luxury' },
+                    
+                    // Premium Tier
+                    { id: 'ranunculus', label: 'Ranunculus', imgSrc: Ranunculus, tier: 'premium' },
+                    { id: 'anemones', label: 'Anemones', imgSrc: Anemones, tier: 'premium' },
+                    { id: 'dahlia', label: 'Dahlia', imgSrc: Dahlia, tier: 'premium' },
+                    
+                    // Moderate Tier
+                    { id: 'roses', label: 'Roses', imgSrc: Roses, tier: 'moderate' },
+                    { id: 'lilies', label: 'Lilies', imgSrc: Lilies, tier: 'moderate' },
+                    { id: 'hydrangeas', label: 'Hydrangeas', imgSrc: Hydrangeas, tier: 'moderate' },
+                    
+                    // Standard Tier
+                    { id: 'tulips', label: 'Tulips', imgSrc: Tulips, tier: 'standard' },
+                    { id: 'daisies', label: 'Daisies', imgSrc: Daisies, tier: 'standard' },
+                    { id: 'sunflowers', label: 'Sunflowers', imgSrc: Sunflowers, tier: 'standard' },
+                    { id: 'babysBreath', label: "Baby's Breath", imgSrc: BabysBreath, tier: 'standard' },
+                    { id: 'lavender', label: 'Lavender', imgSrc: Lavender, tier: 'standard' },
+                    { id: 'zinnias', label: 'Zinnias', imgSrc: Zinnias, tier: 'standard' },
+                    { id: 'amaranthus', label: 'Amaranthus', imgSrc: Amaranthus, tier: 'standard' },
+                    { id: 'chrysanthemums', label: 'Chrysanthemums', imgSrc: Chrysanthemums, tier: 'standard' },
+                    
+                    // Greenery
+                    { id: 'eucalyptus', label: 'Eucalyptus', imgSrc: Eucalyptus, tier: 'greenery' },
+                    { id: 'ruscus', label: 'Ruscus', imgSrc: Ruscus, tier: 'greenery' },
+                    { id: 'ivy', label: 'Ivy', imgSrc: Ivy, tier: 'greenery' },
+                    { id: 'ferns', label: 'Ferns', imgSrc: Ferns, tier: 'greenery' }
                 ];
+
+                // Group flowers by tier for display
+                const groupedFlowers = flowerOptions.reduce((acc, flower) => {
+                    if (!acc[flower.tier]) {
+                        acc[flower.tier] = [];
+                    }
+                    acc[flower.tier].push(flower);
+                    return acc;
+                }, {});
 
                 return (
                     <div className="form-grid">
                         <div className="custom-input-container">
                             <label className="photo-options-header">Flower Preferences & Greenery</label>
-                            <div className="photo-options-grid">
-                                {flowerOptions.map((item) => (
-                                    <div key={item.id} className="photo-option-item">
-                                        <img 
-                                            src={item.imgSrc} 
-                                            alt={item.label} 
-                                            className="flower-image" 
-                                            onClick={() => {
-                                                setSelectedFlower(item);
-                                                setIsFlowerModalOpen(true);
-                                            }}
-                                        />
-                                        <input
-                                            type="checkbox"
-                                            id={item.id}
-                                            checked={formData.eventDetails.flowerPreferences?.[item.id] || false}
-                                            onChange={(e) => handleInputChange('eventDetails', {
-                                                ...formData.eventDetails,
-                                                flowerPreferences: {
-                                                    ...formData.eventDetails.flowerPreferences,
-                                                    [item.id]: e.target.checked
-                                                }
-                                            })}
-                                        />
-                                        <label htmlFor={item.id}>{item.label}</label>
+                            <div className="flower-options-container">
+                                {Object.entries(groupedFlowers).map(([tier, flowers]) => (
+                                    <div key={tier} className="flower-tier-section">
+                                        <h3 className="flower-tier-header">
+                                            {tier === 'luxury' && '✨ Luxury Flowers'}
+                                            {tier === 'premium' && '💫 Premium Flowers'}
+                                            {tier === 'moderate' && '🌟 Moderate-Priced Flowers'}
+                                            {tier === 'standard' && '🌸 Standard Flowers'}
+                                            {tier === 'greenery' && '🌿 Greenery'}
+                                        </h3>
+                                        <div className="photo-options-grid">
+                                            {flowers.map((flower) => (
+                                                <div
+                                                    key={flower.id}
+                                                    className={`flower-option ${formData.eventDetails.flowerPreferences?.[flower.id] ? 'selected' : ''}`}
+                                                >
+                                                    <img
+                                                        src={flower.imgSrc}
+                                                        alt={flower.label}
+                                                        className="flower-image"
+                                                        onClick={() => {
+                                                            setSelectedFlower(flower);
+                                                            setIsFlowerModalOpen(true);
+                                                        }}
+                                                    />
+                                                    <div className="flower-label">
+                                                        {flower.label}
+                                                        {flower.tier === 'luxury' && ' ✨'}
+                                                        {flower.tier === 'premium' && ' 💫'}
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        id={flower.id}
+                                                        checked={formData.eventDetails.flowerPreferences?.[flower.id] || false}
+                                                        onChange={(e) => {
+                                                            handleInputChange('eventDetails', {
+                                                                ...formData.eventDetails,
+                                                                flowerPreferences: {
+                                                                    ...formData.eventDetails.flowerPreferences,
+                                                                    [flower.id]: e.target.checked
+                                                                }
+                                                            });
+                                                        }}
+                                                    />
+                                                    <label htmlFor={flower.id}>Select</label>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 ))}
-                                <div className="custom-input-container">
-                                    <input
-                                        type="text"
-                                        name="otherFlowerPreferences"
-                                        value={formData.eventDetails.otherFlowerPreferences || ''}
-                                        onChange={(e) => handleInputChange('eventDetails', {
-                                            ...formData.eventDetails,
-                                            otherFlowerPreferences: e.target.value
-                                        })}
-                                        placeholder='Other (please specify)'
-                                        className="custom-input"
-                                    />
-                                    <label htmlFor="otherFlowerPreferences" className="custom-label">
-                                        Other Flower Preferences
-                                    </label>
-                                </div>
                             </div>
                         </div>
                     </div>
                 );
 
-            case 'Additional Services':
+            case 'Additional Services & Budget':
                 return (
-                    <div className="form-grid">
+                    <div className='form-grid'>
                         <div className="custom-input-container">
-                            <label className="photo-options-header">Additional Services</label>
-                            <div className="photo-options-grid">
-                                <div className="photo-option-item">
+                            <h3 className="section-subtitle">Additional Services</h3>
+                            <div className="checkbox-grid">
+                                <label className="checkbox-container">
                                     <input
                                         type="checkbox"
-                                        id="setupAndTakedown"
-                                        checked={formData.eventDetails.additionalServices?.setupAndTakedown || false}
+                                        checked={formData.eventDetails.additionalServices?.setup || false}
                                         onChange={(e) => handleInputChange('eventDetails', {
                                             ...formData.eventDetails,
                                             additionalServices: {
                                                 ...formData.eventDetails.additionalServices,
-                                                setupAndTakedown: e.target.checked
+                                                setup: e.target.checked
                                             }
                                         })}
                                     />
-                                    <label htmlFor="setupAndTakedown">Setup and takedown</label>
-                                </div>
-                                <div className="photo-option-item">
+                                    <span className="checkbox-text">Setup & Installation</span>
+                                </label>
+                                <label className="checkbox-container">
                                     <input
                                         type="checkbox"
-                                        id="delivery"
                                         checked={formData.eventDetails.additionalServices?.delivery || false}
                                         onChange={(e) => handleInputChange('eventDetails', {
                                             ...formData.eventDetails,
@@ -676,68 +703,142 @@ function FloristRequest() {
                                             }
                                         })}
                                     />
-                                    <label htmlFor="delivery">Delivery</label>
-                                </div>
-                                <div className="photo-option-item">
+                                    <span className="checkbox-text">Delivery</span>
+                                </label>
+                                <label className="checkbox-container">
                                     <input
                                         type="checkbox"
-                                        id="floralPreservation"
-                                        checked={formData.eventDetails.additionalServices?.floralPreservation || false}
+                                        checked={formData.eventDetails.additionalServices?.cleanup || false}
                                         onChange={(e) => handleInputChange('eventDetails', {
                                             ...formData.eventDetails,
                                             additionalServices: {
                                                 ...formData.eventDetails.additionalServices,
-                                                floralPreservation: e.target.checked
+                                                cleanup: e.target.checked
                                             }
                                         })}
                                     />
-                                    <label htmlFor="floralPreservation">Floral preservation</label>
-                                </div>
-                                <div className="photo-option-item">
+                                    <span className="checkbox-text">Cleanup & Removal</span>
+                                </label>
+                                <label className="checkbox-container">
                                     <input
                                         type="checkbox"
-                                        id="otherAdditionalServices"
-                                        checked={formData.eventDetails.additionalServices?.otherAdditionalServices || false}
+                                        checked={formData.eventDetails.additionalServices?.consultation || false}
                                         onChange={(e) => handleInputChange('eventDetails', {
                                             ...formData.eventDetails,
                                             additionalServices: {
                                                 ...formData.eventDetails.additionalServices,
-                                                otherAdditionalServices: e.target.checked
+                                                consultation: e.target.checked
                                             }
                                         })}
                                     />
-                                    <label htmlFor="otherAdditionalServices">Other (please specify)</label>
-                                </div>
-                                {formData.eventDetails.additionalServices?.otherAdditionalServices && (
-                                    <div className="custom-input-container">
-                                        <input
-                                            type="text"
-                                            name="otherAdditionalServicesDetails"
-                                            value={formData.eventDetails.additionalServices?.otherAdditionalServicesDetails || ''}
-                                            onChange={(e) => handleInputChange('eventDetails', {
-                                                ...formData.eventDetails,
-                                                additionalServices: {
-                                                    ...formData.eventDetails.additionalServices,
-                                                    otherAdditionalServicesDetails: e.target.value
-                                                }
-                                            })}
-                                            placeholder='Please specify other additional services'
-                                            className="custom-input"
-                                        />
-                                        <label htmlFor="otherAdditionalServicesDetails" className="custom-label">
-                                            Other Additional Services Details
-                                        </label>
-                                    </div>
-                                )}
+                                    <span className="checkbox-text">In-person Consultation</span>
+                                </label>
                             </div>
                         </div>
-                    </div>
-                );
 
-            case 'Other Special Requests or Notes':
-                return (
-                    <div className="form-grid">
-                        <div className="custom-input-container">
+                        <div className="price-quality-slider-container">
+                            <div className="slider-header">What matters most to you?</div>
+                            <div className="slider-labels">
+                                <span>Budget Conscious</span>
+                                <span>Quality Focused</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="1"
+                                max="3"
+                                step="1"
+                                value={formData.eventDetails.priceQualityPreference || "2"}
+                                onChange={(e) => {
+                                    const newPreference = e.target.value;
+                                    const recommendation = getBudgetRecommendation(
+                                        newPreference,
+                                        formData.eventType,
+                                        formData.eventDetails
+                                    )[newPreference].range;
+
+                                    // Update both the preference and the price range in one call
+                                    handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        priceQualityPreference: newPreference,
+                                        priceRange: recommendation
+                                    });
+                                }}
+                                className="price-quality-slider"
+                            />
+                            <div className="preference-description">
+                                <div className="preference-detail">
+                                    {formData.eventDetails.priceQualityPreference === "1" && (
+                                        <p>👉 Focus on finding budget-friendly options while maintaining good quality</p>
+                                    )}
+                                    {formData.eventDetails.priceQualityPreference === "2" && (
+                                        <p>Balanced</p>
+                                    )}
+                                    {formData.eventDetails.priceQualityPreference === "3" && (
+                                        <>
+                                            <p>👉 Priority on portfolio quality and experience</p>
+                                            <p>👉 Access to top-tier florists</p>
+                                            <p>👉 Ideal for those seeking premium results</p>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                        {formData.eventType && (
+                            <div className="budget-guidance-container">
+                                <div className="budget-insights">
+                                    <div className="budget-recommendation">
+                                        {getBudgetRecommendation(
+                                            formData.eventDetails.priceQualityPreference || "2",
+                                            formData.eventType,
+                                            formData.eventDetails
+                                        )[formData.eventDetails.priceQualityPreference || "2"].message}
+                                    </div>
+                                    <div className="budget-insight-header">This recommendation is based on:</div>
+                                    <div className="budget-insight-details">
+                                        {getBudgetRecommendation(
+                                            formData.eventDetails.priceQualityPreference || "2",
+                                            formData.eventType,
+                                            formData.eventDetails
+                                        )[formData.eventDetails.priceQualityPreference || "2"].analysis.factors.map((factor, index) => (
+                                            <div key={index} className="insight-item">
+                                                <span className="insight-icon">•</span>
+                                                <span className="insight-text">{factor}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        </div>
+
+
+                        <div className="custom-input-container required">
+                            <select
+                                name="priceRange"
+                                value={formData.eventDetails.priceRange}
+                                onChange={(e) => handleInputChange('eventDetails', {
+                                    ...formData.eventDetails,
+                                    priceRange: e.target.value
+                                })}
+                                className="custom-input"
+                            >
+                                <option value="">Select a range</option>
+                                <option value="0-500">$0-500</option>
+                                <option value="500-1000">$500-1,000</option>
+                                <option value="1000-1500">$1,000-1,500</option>
+                                <option value="1500-2000">$1,500-2,000</option>
+                                <option value="2000-2500">$2,000-2,500</option>
+                                <option value="2500-3000">$2,500-3,000</option>
+                                <option value="3000-3500">$3,000-3,500</option>
+                                <option value="3500-4000">$3,500-4,000</option>
+                                <option value="4000+">$4,000+</option>
+                            </select>
+                            <label htmlFor="priceRange" className="custom-label">
+                                Budget Range
+                            </label>
+                        </div>
+
+                        <div className="custom-input-container optional">
                             <ReactQuill
                                 value={formData.eventDetails.additionalInfo || ''}
                                 onChange={(content) => handleInputChange('eventDetails', {
@@ -745,10 +846,10 @@ function FloristRequest() {
                                     additionalInfo: content
                                 })}
                                 modules={modules}
-                                placeholder="Other Special Requests or Notes"
+                                placeholder="Any special requests or additional information florists should know..."
                             />
                             <label htmlFor="additionalInfo" className="custom-label">
-                                Other Special Requests or Notes
+                                Additional Information
                             </label>
                         </div>
                     </div>
@@ -1088,6 +1189,8 @@ function FloristRequest() {
 
     // Summary Component
     const renderSummary = () => {
+        const { score } = calculateBidScore(formData);
+        
         const renderDateInfo = () => {
             switch (formData.eventDetails.dateFlexibility) {
                 case 'specific':
@@ -1128,38 +1231,67 @@ function FloristRequest() {
 
         const renderFloralArrangements = () => {
             const arrangements = formData.eventDetails.floralArrangements || {};
-            return Object.keys(arrangements).filter(key => arrangements[key] && !key.endsWith('Quantity')).map(key => (
-                <div key={key} style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">{key.replace(/([A-Z])/g, ' $1')}</div>
-                    <div className="request-info">
-                        Yes {formData.eventDetails.floralArrangements[`${key}Quantity`] ? `(${formData.eventDetails.floralArrangements[`${key}Quantity`]})` : ''}
+            return Object.keys(arrangements)
+                .filter(key => arrangements[key] && !key.endsWith('Quantity'))
+                .map(key => (
+                    <div key={key} style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}</div>
+                        <div className="request-info">
+                            Yes {arrangements[`${key}Quantity`] ? `(${arrangements[`${key}Quantity`]})` : ''}
+                        </div>
                     </div>
-                </div>
-            ));
+                ));
         };
 
         const renderFlowerPreferences = () => {
             const preferences = formData.eventDetails.flowerPreferences || {};
-            return Object.keys(preferences).filter(key => preferences[key]).map(key => (
-                <div key={key} style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">{key.replace(/([A-Z])/g, ' $1')}</div>
-                    <div className="request-info">Yes</div>
-                </div>
-            ));
+            return Object.entries(preferences)
+                .filter(([_, value]) => value)
+                .map(([key]) => (
+                    <div key={key} style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}</div>
+                        <div className="request-info">Yes</div>
+                    </div>
+                ));
         };
 
         const renderAdditionalServices = () => {
             const services = formData.eventDetails.additionalServices || {};
-            return Object.keys(services).filter(key => services[key]).map(key => (
-                <div key={key} style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">{key.replace(/([A-Z])/g, ' $1')}</div>
-                    <div className="request-info">Yes</div>
-                </div>
-            ));
+            return Object.entries(services)
+                .filter(([_, value]) => value)
+                .map(([key]) => (
+                    <div key={key} style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}</div>
+                        <div className="request-info">Yes</div>
+                    </div>
+                ));
         };
 
         return (
             <div className="event-summary-container" style={{padding:'0'}}>
+                {score >= 80 && !earnedCoupon && (
+                    <div className="coupon-earned-section">
+                        <h3>🎉 You've Earned a Reward!</h3>
+                        <p>For providing detailed information, you've earned a $25 coupon that will be automatically applied to your request.</p>
+                        <button 
+                            className="apply-coupon-btn" 
+                            onClick={() => {
+                                setEarnedCoupon(true);
+                                handleEarnedCoupon();
+                            }}
+                        >
+                            Apply Coupon
+                        </button>
+                    </div>
+                )}
+                
+                {earnedCoupon && (
+                    <div className="coupon-earned-section">
+                        <h3>✅ Coupon Applied!</h3>
+                        <p>Your $25 discount will be applied to your request.</p>
+                    </div>
+                )}
+
                 <div className="request-summary-grid">
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Event Type</div>
@@ -1521,6 +1653,227 @@ function FloristRequest() {
         setCurrentStep(prev => prev + 1);
     };
 
+    const calculateBidScore = (formData) => {
+        let points = 0;
+        let maxPoints = 0;
+        let breakdown = [];
+
+        // Required core fields (worth more points)
+        const coreFields = {
+            'Event Type': formData.eventType,
+            'Location': formData.eventDetails.location,
+            'Date Information': formData.eventDetails.dateFlexibility === 'specific' ? formData.eventDetails.startDate : 
+                formData.eventDetails.dateFlexibility === 'range' ? (formData.eventDetails.startDate && formData.eventDetails.endDate) :
+                formData.eventDetails.dateTimeframe,
+            'Budget Range': formData.eventDetails.priceRange
+        };
+
+        Object.entries(coreFields).forEach(([field, value]) => {
+            maxPoints += 20;
+            if (value) {
+                points += 20;
+                breakdown.push(`✓ ${field}`);
+            }
+        });
+
+        // Additional details (worth fewer points)
+        const additionalFields = {
+            'Color Preferences': Object.values(formData.eventDetails.colorPreferences || {}).some(v => v),
+            'Flower Preferences': Object.values(formData.eventDetails.flowerPreferences || {}).some(v => v),
+            'Floral Arrangements': Object.values(formData.eventDetails.floralArrangements || {}).some(v => v),
+            'Additional Services': Object.values(formData.eventDetails.additionalServices || {}).some(v => v)
+        };
+
+        Object.entries(additionalFields).forEach(([field, value]) => {
+            maxPoints += 5;
+            if (value) {
+                points += 5;
+                breakdown.push(`✓ ${field}`);
+            }
+        });
+
+        // Bonus points
+        if (formData.photos && formData.photos.length > 0) {
+            points += 10;
+            maxPoints += 10;
+            breakdown.push('✓ Inspiration Photos');
+        }
+
+        if (formData.eventDetails.pinterestBoard) {
+            points += 5;
+            maxPoints += 5;
+            breakdown.push('✓ Pinterest Board');
+        }
+
+        const score = Math.round((points / maxPoints) * 100);
+        return { score, breakdown, points, maxPoints };
+    };
+
+    const updateBidScore = () => {
+        const { score } = calculateBidScore(formData);
+        setBidScore(score);
+        
+        if (score === 100) {
+            setScoreMessage('Perfect! All details added');
+        } else if (score >= 80) {
+            setScoreMessage('Great job!');
+        } else if (score >= 60) {
+            setScoreMessage('Add details for better matches');
+        } else {
+            setScoreMessage('More info = better bids');
+        }
+    };
+
+    const handleEarnedCoupon = async () => {
+        try {
+            const couponCode = `QUALITY${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+            
+            const { error } = await supabase
+                .from('coupons')
+                .insert([{
+                    code: couponCode,
+                    discount_amount: 25,
+                    valid: true,
+                    expiration_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    description: 'Earned for detailed request completion'
+                }]);
+
+            if (error) throw error;
+
+            setCouponCode(couponCode);
+            setAppliedCoupon({
+                code: couponCode,
+                discount_amount: 25
+            });
+        } catch (err) {
+            console.error('Error generating coupon:', err);
+        }
+    };
+
+    const analyzeEventDetails = (eventDetails, eventType) => {
+        let basePrice = 500;
+        let factors = [];
+
+        // Event type factor
+        if (eventType === 'Wedding') {
+            basePrice = 1000;
+            factors.push('Wedding floral base package');
+        } else {
+            factors.push('Standard floral base package');
+        }
+
+        // Floral arrangements factor with quantities
+        const arrangements = eventDetails.floralArrangements || {};
+        let totalArrangements = 0;
+        let arrangementTypes = [];
+
+        Object.keys(arrangements).forEach(key => {
+            if (arrangements[key] && !key.includes('Quantity')) {
+                const quantity = parseInt(arrangements[`${key}Quantity`]) || 1;
+                totalArrangements += quantity;
+                arrangementTypes.push(key);
+
+                // Add cost based on arrangement type and quantity
+                switch(key) {
+                    case 'bridal':
+                        basePrice += 250 * quantity;
+                        break;
+                    case 'centerpiece':
+                        basePrice += 150 * quantity;
+                        break;
+                    case 'archway':
+                        basePrice += 500 * quantity;
+                        break;
+                    case 'bouquet':
+                        basePrice += 200 * quantity;
+                        break;
+                    case 'corsage':
+                        basePrice += 50 * quantity;
+                        break;
+                    default:
+                        basePrice += 100 * quantity;
+                }
+            }
+        });
+
+        if (totalArrangements > 0) {
+            factors.push(`${totalArrangements} total arrangements (${arrangementTypes.length} types)`);
+        }
+
+        // Flower preferences factor with price tiers
+        const flowerPreferences = eventDetails.flowerPreferences || {};
+        
+        const premiumFlowers = {
+            luxury: {
+                flowers: ['peonies', 'orchids', 'protea'],
+                pricePerType: 300,
+                label: 'Luxury flowers'
+            },
+            premium: {
+                flowers: ['ranunculus', 'anemones', 'dahlia'],
+                pricePerType: 200,
+                label: 'Premium flowers'
+            },
+            moderate: {
+                flowers: ['roses', 'lilies', 'hydrangeas'],
+                pricePerType: 100,
+                label: 'Moderate-priced flowers'
+            }
+        };
+
+        // Count selected flowers in each tier
+        Object.entries(premiumFlowers).forEach(([tier, { flowers, pricePerType, label }]) => {
+            const selectedCount = flowers.filter(flower => flowerPreferences[flower]).length;
+            if (selectedCount > 0) {
+                basePrice += selectedCount * pricePerType;
+                factors.push(`${selectedCount} ${label} selected (${flowers.filter(flower => flowerPreferences[flower]).join(', ')})`);
+            }
+        });
+
+        // Additional services factor
+        const services = eventDetails.additionalServices || {};
+        let serviceCount = Object.keys(services).filter(key => services[key]).length;
+        if (serviceCount > 0) {
+            basePrice += serviceCount * 150;
+            factors.push(`${serviceCount} additional services`);
+        }
+
+        // Round to nearest price bracket
+        const brackets = [500, 1000, 2000, 3000, 4000];
+        const suggestedRange = brackets.find(b => basePrice <= b) || '4000+';
+        
+        return {
+            suggestedRange: suggestedRange === 4000 ? '4000+' : `${suggestedRange-500}-${suggestedRange}`,
+            factors,
+            basePrice
+        };
+    };
+
+    const getBudgetRecommendation = (preference, eventType, eventDetails) => {
+        const analysis = analyzeEventDetails(eventDetails, eventType);
+        const baseRecommendation = analysis.suggestedRange;
+
+        let adjustedRange = baseRecommendation;
+        if (preference === "1") {
+            const currentMin = parseInt(baseRecommendation.split('-')[0]);
+            adjustedRange = currentMin <= 500 ? '0-500' : `${currentMin-500}-${currentMin}`;
+        } else if (preference === "3") {
+            const currentMax = baseRecommendation.includes('+') ? 4500 : parseInt(baseRecommendation.split('-')[1]);
+            adjustedRange = currentMax >= 4000 ? '4000+' : `${currentMax}-${currentMax+500}`;
+        }
+
+        return {
+            [preference]: {
+                range: adjustedRange,
+                message: `Recommended Budget Range: $${adjustedRange}`,
+                analysis: {
+                    basePrice: analysis.basePrice,
+                    factors: analysis.factors
+                }
+            }
+        };
+    };
+
     return (
         <div className='request-form-overall-container'>
             {isAuthModalOpen && <AuthModal setIsModalOpen={setIsAuthModalOpen} onSuccess={handleAuthSuccess} />}
@@ -1532,13 +1885,12 @@ function FloristRequest() {
                 </div>
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
-                {/* Status bar container moved above title for desktop */}
-
-
-                <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
+                <div className="form-header-section">
+                    <h2 className="request-form-header">
                     {getSteps()[currentStep]}
                 </h2>
-                
+                    <BidScoreIndicator score={bidScore} message={scoreMessage} />
+                </div>
                 {/* Mobile status bar */}
                 <div className="request-form-status-container mobile-only">
                     <div className="request-form-box">

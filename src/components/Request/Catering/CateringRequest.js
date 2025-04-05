@@ -45,6 +45,17 @@ const PhotoModal = ({ photo, onClose }) => {
     );
 };
 
+const BidScoreIndicator = ({ score, message }) => (
+    <div className="bid-score-container">
+        <div className="score-circle" style={{
+            background: `conic-gradient(#A328F4 ${score}%, #f0f0f0 ${score}%)`
+        }}>
+            <span>{score}%</span>
+        </div>
+        {message && <div className="score-message">{message}</div>}
+    </div>
+);
+
 function CateringRequest() {  // Changed function name
     const navigate = useNavigate();
     const location = useLocation();
@@ -67,6 +78,9 @@ function CateringRequest() {  // Changed function name
     const [detailsSubStep, setDetailsSubStep] = useState(0);
     const [selectedVendor, setSelectedVendor] = useState(location.state?.vendor || null); // Get vendor from location state
     const [vendorImage, setVendorImage] = useState(location.state?.image || null);
+    const [bidScore, setBidScore] = useState(0);
+    const [scoreMessage, setScoreMessage] = useState('');
+    const [earnedCoupon, setEarnedCoupon] = useState(false);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
@@ -107,6 +121,7 @@ function CateringRequest() {  // Changed function name
                 durationUnknown: saved.eventDetails?.durationUnknown || false,
                 numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
                 pinterestBoard: saved.eventDetails?.pinterestBoard || '',
+                priceQualityPreference: saved.eventDetails?.priceQualityPreference || "2"
             },
             personalDetails: saved.personalDetails || {
                 firstName: '',
@@ -145,8 +160,8 @@ function CateringRequest() {  // Changed function name
                 ...prev,
                 eventType: event
             };
-            // Save to localStorage
-            localStorage.setItem('cateringRequest', JSON.stringify(newData));  // Changed key
+            localStorage.setItem('cateringRequest', JSON.stringify(newData));
+            setTimeout(() => updateBidScore(), 0);
             return newData;
         });
     };
@@ -154,7 +169,8 @@ function CateringRequest() {  // Changed function name
     const handleInputChange = (field, value) => {
         setFormData(prev => {
             const newData = { ...prev, [field]: value };
-            localStorage.setItem('cateringRequest', JSON.stringify(newData));  // Changed key
+            localStorage.setItem('cateringRequest', JSON.stringify(newData));
+            setTimeout(() => updateBidScore(), 0);
             return newData;
         });
     };
@@ -604,7 +620,82 @@ function CateringRequest() {  // Changed function name
             case 2: // Budget & Additional Info
                 return (
                     <div className='form-grid'>
-                        <div className="custom-input-container">
+                        <div className="price-quality-slider-container">
+                            <div className="slider-header">What matters most to you?</div>
+                            <div className="slider-labels">
+                                <span>Budget Conscious</span>
+                                <span>Quality Focused</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="1"
+                                max="3"
+                                step="1"
+                                value={formData.eventDetails.priceQualityPreference || "2"}
+                                onChange={(e) => {
+                                    const newPreference = e.target.value;
+                                    const recommendation = getBudgetRecommendation(
+                                        newPreference,
+                                        formData.eventType,
+                                        formData.eventDetails
+                                    )[newPreference].range;
+
+                                    // Update both the preference and the price range
+                                    handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        priceQualityPreference: newPreference,
+                                        priceRange: recommendation
+                                    });
+                                }}
+                                className="price-quality-slider"
+                            />
+                            <div className="preference-description">
+                                <div className="preference-detail">
+                                    {formData.eventDetails.priceQualityPreference === "1" && (
+                                        <p>👉 Focus on finding budget-friendly catering options while maintaining good quality</p>
+                                    )}
+                                    {formData.eventDetails.priceQualityPreference === "2" && (
+                                        <p>Balanced</p>
+                                    )}
+                                    {formData.eventDetails.priceQualityPreference === "3" && (
+                                        <>
+                                            <p>👉 Priority on culinary excellence and presentation</p>
+                                            <p>👉 Access to premium catering services</p>
+                                            <p>👉 Ideal for those seeking exceptional dining experiences</p>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {formData.eventType && (
+                            <div className="budget-guidance-container">
+                                <div className="budget-insights">
+                                    <div className="budget-recommendation">
+                                        {getBudgetRecommendation(
+                                            formData.eventDetails.priceQualityPreference || "2",
+                                            formData.eventType,
+                                            formData.eventDetails
+                                        )[formData.eventDetails.priceQualityPreference || "2"].message}
+                                    </div>
+                                    <div className="budget-insight-header">This recommendation is based on:</div>
+                                    <div className="budget-insight-details">
+                                        {getBudgetRecommendation(
+                                            formData.eventDetails.priceQualityPreference || "2",
+                                            formData.eventType,
+                                            formData.eventDetails
+                                        )[formData.eventDetails.priceQualityPreference || "2"].analysis.factors.map((factor, index) => (
+                                            <div key={index} className="insight-item">
+                                                <span className="insight-icon">•</span>
+                                                <span className="insight-text">{factor}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="custom-input-container required">
                             <select
                                 name="priceRange"
                                 value={formData.eventDetails.priceRange}
@@ -614,20 +705,23 @@ function CateringRequest() {  // Changed function name
                                 })}
                                 className="custom-input"
                             >
-                                <option value="">Select Budget Range</option>
-                                <option value="under1000">Under $1,000</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
+                                <option value="">Select a range</option>
+                                <option value="0-1000">$0-1,000</option>
+                                <option value="1000-2000">$1,000-2,000</option>
+                                <option value="2000-3000">$2,000-3,000</option>
+                                <option value="3000-4000">$3,000-4,000</option>
+                                <option value="4000-5000">$4,000-5,000</option>
+                                <option value="5000-6000">$5,000-6,000</option>
+                                <option value="6000-8000">$6,000-8,000</option>
+                                <option value="8000-10000">$8,000-10,000</option>
+                                <option value="10000+">$10,000+</option>
                             </select>
                             <label htmlFor="priceRange" className="custom-label">
                                 Budget Range
                             </label>
                         </div>
 
-                        <div className="custom-input-container">
+                        <div className="custom-input-container optional">
                             <ReactQuill
                                 value={formData.eventDetails.additionalInfo || ''}
                                 onChange={(content) => handleInputChange('eventDetails', {
@@ -971,7 +1065,8 @@ function CateringRequest() {  // Changed function name
 
     // Summary Component
     const renderSummary = () => {
-        // Helper function to render date info based on flexibility
+        const { score } = calculateBidScore(formData);
+
         const renderDateInfo = () => {
             switch (formData.eventDetails.dateFlexibility) {
                 case 'specific':
@@ -988,16 +1083,14 @@ function CateringRequest() {  // Changed function name
                         <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                             <div className="request-subtype">Date Range</div>
                             <div className="request-info">
-                                From: {formData.eventDetails.startDate ? new Date(formData.eventDetails.startDate).toLocaleDateString() : 'Not specified'}
-                                <br />
-                                To: {formData.eventDetails.endDate ? new Date(formData.eventDetails.endDate).toLocaleDateString() : 'Not specified'}
+                                {`${formData.eventDetails.startDate ? new Date(formData.eventDetails.startDate).toLocaleDateString() : 'Not specified'} - ${formData.eventDetails.endDate ? new Date(formData.eventDetails.endDate).toLocaleDateString() : 'Not specified'}`}
                             </div>
                         </div>
                     );
                 case 'flexible':
                     return (
                         <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                            <div className="request-subtype">Date Preference</div>
+                            <div className="request-subtype">Preferred Timeframe</div>
                             <div className="request-info">
                                 {formData.eventDetails.dateTimeframe === '3months' && 'Within 3 months'}
                                 {formData.eventDetails.dateTimeframe === '6months' && 'Within 6 months'}
@@ -1014,87 +1107,50 @@ function CateringRequest() {  // Changed function name
 
         return (
             <div className="event-summary-container" style={{padding:'0'}}>
-                <h2 className='photo-options-header'>Summary</h2>
+                {/* Coupon reward section */}
+                {score >= 80 && !earnedCoupon && (
+                    <div className="coupon-earned-section">
+                        <h3>🎉 You've Earned a Reward!</h3>
+                        <p>For providing detailed information, you've earned a $25 coupon that will be automatically applied to your request.</p>
+                        <button 
+                            className="apply-coupon-btn" 
+                            onClick={() => {
+                                setEarnedCoupon(true);
+                                handleEarnedCoupon();
+                            }}
+                        >
+                            Apply Coupon
+                        </button>
+                    </div>
+                )}
+                
+                {earnedCoupon && (
+                    <div className="coupon-earned-section">
+                        <h3>✅ Coupon Applied!</h3>
+                        <p>Your $25 discount will be applied to your request.</p>
+                    </div>
+                )}
+
+                {/* Basic Details */}
                 <div className="request-summary-grid">
-                    
-                    {/* Basic Event Information */}
-                    <div className="summary-item">
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Event Type</div>
-                        <div className="request-info">{formData.eventType}</div>
+                        <div className="request-info">{formData.eventType || 'Not specified'}</div>
                     </div>
 
-                    <div className="summary-item">
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Location</div>
                         <div className="request-info">{formData.eventDetails.location || 'Not specified'}</div>
                     </div>
 
                     {renderDateInfo()}
 
+                    {/* Service Type */}
                     <div className="summary-item">
-                        <div className="request-subtype">Indoor/Outdoor</div>
-                        <div className="request-info">{formData.eventDetails.indoorOutdoor || 'Not specified'}</div>
-                    </div>
-
-                    {/* Setup & Cleanup */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Setup & Cleanup</div>
+                        <div className="request-subtype">Service Type</div>
                         <div className="request-info">
                             {(() => {
-                                switch (formData.eventDetails.setupCleanup) {
-                                    case 'setupOnly': return 'Setup Only';
-                                    case 'cleanupOnly': return 'Cleanup Only';
-                                    case 'both': return 'Both Setup & Cleanup';
-                                    case 'neither': return 'Neither';
-                                    default: return 'Not specified';
-                                }
-                            })()}
-                        </div>
-                    </div>
-
-                    {/* Serving Staff */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Serving Staff</div>
-                        <div className="request-info">
-                            {(() => {
-                                switch (formData.eventDetails.servingStaff) {
-                                    case 'fullService': return 'Full Service Staff';
-                                    case 'partialService': return 'Partial Service';
-                                    case 'noService': return 'No Staff Needed';
-                                    case 'unsure': return 'Not Sure';
-                                    default: return 'Not specified';
-                                }
-                            })()}
-                        </div>
-                    </div>
-
-                    {/* Dining Items */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Dinnerware, Utensils & Linens</div>
-                        <div className="request-info">
-                            {(() => {
-                                switch (formData.eventDetails.diningItems) {
-                                    case 'provided': return 'Provided by Caterer';
-                                    case 'notProvided': return 'Not Needed';
-                                    case 'partial': return 'Partial (See Details Below)';
-                                    default: return 'Not specified';
-                                }
-                            })()}
-                        </div>
-                    </div>
-
-                    {formData.eventDetails.diningItemsNotes && (
-                        <div className="summary-item">
-                            <div className="request-subtype">Dining Items Details</div>
-                            <div className="request-info" dangerouslySetInnerHTML={{ __html: formData.eventDetails.diningItemsNotes }} />
-                        </div>
-                    )}
-
-                    {/* Food Service Type */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Food Service Type</div>
-                        <div className="request-info">
-                            {(() => {
-                                switch (formData.eventDetails.foodService) {
+                                switch(formData.eventDetails.foodService) {
                                     case 'onSite': return 'Cooking On-Site';
                                     case 'delivered': return 'Delivered Ready-to-Serve';
                                     case 'both': return 'Combination';
@@ -1104,34 +1160,6 @@ function CateringRequest() {  // Changed function name
                             })()}
                         </div>
                     </div>
-
-                    {/* Equipment Setup */}
-                    <div className="summary-item">
-                        <div className="request-subtype">Kitchen Equipment</div>
-                        <div className="request-info">
-                            {(() => {
-                                switch (formData.eventDetails.equipmentNeeded) {
-                                    case 'venueProvided':
-                                        return 'The venue provides kitchen equipment';
-                                    case 'catererBringsAll':
-                                        return 'The caterer needs to bring all equipment';
-                                    case 'catererBringsSome':
-                                        return formData.eventDetails.equipmentNotes || 'The caterer needs to bring some equipment';
-                                    case 'unknown':
-                                        return 'Equipment requirements to be discussed';
-                                    default:
-                                        return 'Not specified';
-                                }
-                            })()}
-                        </div>
-                    </div>
-
-                    {formData.eventDetails.equipmentNeeded === 'catererBringsSome' && formData.eventDetails.equipmentNotes && (
-                        <div className="summary-item">
-                            <div className="request-subtype">Equipment Details</div>
-                            <div className="request-info" dangerouslySetInnerHTML={{ __html: formData.eventDetails.equipmentNotes }} />
-                        </div>
-                    )}
 
                     {/* Timing Information */}
                     <div className="summary-item">
@@ -1162,31 +1190,34 @@ function CateringRequest() {  // Changed function name
                             {Object.entries(formData.eventDetails.foodPreferences || {})
                                 .filter(([_, value]) => value)
                                 .map(([key, _]) => {
-                                    // Convert key to proper case (e.g., "middleEastern" to "Middle Eastern")
                                     return key
-                                        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-                                        .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+                                        .replace(/([A-Z])/g, ' $1')
+                                        .replace(/^./, str => str.toUpperCase())
                                 })
                                 .join(', ') || 'No preferences specified'}
                         </div>
                     </div>
 
+                    {/* Equipment Needs */}
+                    {Object.values(formData.eventDetails.equipment || {}).some(v => v) && (
+                        <div className="summary-item">
+                            <div className="request-subtype">Equipment Needs</div>
+                            <div className="request-info">
+                                {Object.entries(formData.eventDetails.equipment)
+                                    .filter(([_, value]) => value)
+                                    .map(([key, _]) => key
+                                        .replace(/([A-Z])/g, ' $1')
+                                        .replace(/^./, str => str.toUpperCase())
+                                    )
+                                    .join(', ')}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Budget */}
                     <div className="summary-item">
                         <div className="request-subtype">Budget Range</div>
-                        <div className="request-info">
-                            {(() => {
-                                switch (formData.eventDetails.priceRange) {
-                                    case 'under1000': return 'Under $1,000';
-                                    case '1000-2000': return '$1,000 - $2,000';
-                                    case '2000-3000': return '$2,000 - $3,000';
-                                    case '3000-4000': return '$3,000 - $4,000';
-                                    case '4000-5000': return '$4,000 - $5,000';
-                                    case '5000+': return '$5,000+';
-                                    default: return 'Not specified';
-                                }
-                            })()}
-                        </div>
+                        <div className="request-info">{formData.eventDetails.priceRange || 'Not specified'}</div>
                     </div>
                 </div>
 
@@ -1206,7 +1237,7 @@ function CateringRequest() {  // Changed function name
                     </div>
                 )}
 
-                {/* Coupon Section */}
+                {/* Manual Coupon Section */}
                 <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px'}}>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent:'center' }}>
                         <div className='custom-input-container' style={{marginBottom:'0'}}>
@@ -1518,6 +1549,176 @@ function CateringRequest() {  // Changed function name
         testConnection();
     }, []);
 
+    const calculateBidScore = (formData) => {
+        let points = 0;
+        let maxPoints = 0;
+        let breakdown = [];
+
+        // Required core fields (worth more points)
+        const coreFields = {
+            'Event Type': formData.eventType,
+            'Location': formData.eventDetails.location,
+            'Date Information': formData.eventDetails.dateFlexibility === 'specific' ? formData.eventDetails.startDate : 
+                formData.eventDetails.dateFlexibility === 'range' ? (formData.eventDetails.startDate && formData.eventDetails.endDate) :
+                formData.eventDetails.dateTimeframe,
+            'Guest Count': formData.eventDetails.numPeople,
+            'Budget Range': formData.eventDetails.priceRange
+        };
+
+        Object.entries(coreFields).forEach(([field, value]) => {
+            maxPoints += 20;
+            if (value) {
+                points += 20;
+                breakdown.push(`✓ ${field}`);
+            }
+        });
+
+        // Additional details (worth fewer points)
+        const additionalFields = {
+            'Food Preferences': Object.values(formData.eventDetails.foodPreferences || {}).some(v => v),
+            'Equipment Needs': Object.values(formData.eventDetails.equipment || {}).some(v => v),
+            'Special Requests': formData.eventDetails.specialRequests,
+            'Additional Info': formData.eventDetails.additionalInfo
+        };
+
+        Object.entries(additionalFields).forEach(([field, value]) => {
+            maxPoints += 5;
+            if (value) {
+                points += 5;
+                breakdown.push(`✓ ${field}`);
+            }
+        });
+
+        const score = Math.round((points / maxPoints) * 100);
+        return { score, breakdown, points, maxPoints };
+    };
+
+    const updateBidScore = () => {
+        const { score } = calculateBidScore(formData);
+        setBidScore(score);
+        
+        if (score === 100) {
+            setScoreMessage('Perfect! All details added');
+        } else if (score >= 80) {
+            setScoreMessage('Great job!');
+        } else if (score >= 60) {
+            setScoreMessage('Add details for better matches');
+        } else {
+            setScoreMessage('More info = better bids');
+        }
+    };
+
+    const analyzeEventDetails = (eventDetails, eventType) => {
+        let basePrice = 25; // Base price per person
+        let factors = [];
+
+        // Event type factor
+        if (eventType === 'Wedding') {
+            basePrice = 40; // Higher base price for weddings
+            factors.push('Wedding catering base package');
+        } else {
+            factors.push('Standard catering base package');
+        }
+
+        // Guest count factor
+        const guestCount = parseInt(eventDetails.numPeople) || 50; // Default to 50 if not specified
+        const totalBasePrice = basePrice * guestCount;
+        factors.push(`Estimated for ${guestCount} guests`);
+
+        // Food service types
+        const foodServices = eventDetails.foodPreferences || {};
+        let serviceTypes = [];
+        
+        if (foodServices.appetizers) {
+            totalBasePrice += 8 * guestCount;
+            serviceTypes.push('Appetizers');
+        }
+        if (foodServices.mainCourse) {
+            totalBasePrice += 15 * guestCount;
+            serviceTypes.push('Main Course');
+        }
+        if (foodServices.desserts) {
+            totalBasePrice += 7 * guestCount;
+            serviceTypes.push('Desserts');
+        }
+        if (foodServices.drinks) {
+            totalBasePrice += 5 * guestCount;
+            serviceTypes.push('Drinks');
+        }
+
+        if (serviceTypes.length > 0) {
+            factors.push(`Selected services: ${serviceTypes.join(', ')}`);
+        }
+
+        // Equipment needs
+        const equipment = eventDetails.equipment || {};
+        if (Object.values(equipment).some(v => v)) {
+            totalBasePrice += 500; // Base equipment cost
+            factors.push('Equipment needs included');
+        }
+
+        // Round to nearest price bracket
+        const brackets = [1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000];
+        const suggestedRange = brackets.find(b => totalBasePrice <= b) || '10000+';
+        
+        return {
+            suggestedRange: suggestedRange === 10000 ? '10000+' : `${suggestedRange-1000}-${suggestedRange}`,
+            factors,
+            basePrice: totalBasePrice
+        };
+    };
+
+    const getBudgetRecommendation = (preference, eventType, eventDetails) => {
+        const analysis = analyzeEventDetails(eventDetails, eventType);
+        const baseRecommendation = analysis.suggestedRange;
+
+        let adjustedRange = baseRecommendation;
+        if (preference === "1") { // Budget-conscious
+            const currentMin = parseInt(baseRecommendation.split('-')[0]);
+            adjustedRange = currentMin <= 1000 ? '0-1000' : `${currentMin-1000}-${currentMin}`;
+        } else if (preference === "3") { // Quality-focused
+            const currentMax = baseRecommendation.includes('+') ? 10000 : parseInt(baseRecommendation.split('-')[1]);
+            adjustedRange = currentMax >= 10000 ? '10000+' : `${currentMax}-${currentMax+1000}`;
+        }
+
+        return {
+            [preference]: {
+                range: adjustedRange,
+                message: `Recommended Budget Range: $${adjustedRange}`,
+                analysis: {
+                    basePrice: analysis.basePrice,
+                    factors: analysis.factors
+                }
+            }
+        };
+    };
+
+    const handleEarnedCoupon = async () => {
+        try {
+            const couponCode = `QUALITY${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+            
+            const { error } = await supabase
+                .from('coupons')
+                .insert([{
+                    code: couponCode,
+                    discount_amount: 25,
+                    valid: true,
+                    expiration_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    description: 'Earned for detailed request completion'
+                }]);
+
+            if (error) throw error;
+
+            setCouponCode(couponCode);
+            setAppliedCoupon({
+                code: couponCode,
+                discount_amount: 25
+            });
+        } catch (err) {
+            console.error('Error generating coupon:', err);
+        }
+    };
+
     return (
         <div className='request-form-overall-container'>
             {isAuthModalOpen && <AuthModal setIsModalOpen={setIsAuthModalOpen} onSuccess={handleAuthSuccess} />}
@@ -1534,10 +1735,12 @@ function CateringRequest() {  // Changed function name
                     </div>
                 </div>  
                 
-                {/* Added header here */}
-                <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
-                    {getSteps()[currentStep]}
-                </h2>
+                <div className="form-header-section">
+                    <h2 className="request-form-header">
+                        {getSteps()[currentStep]}
+                    </h2>
+                    <BidScoreIndicator score={bidScore} message={scoreMessage} />
+                </div>
                             {/* Display selected vendor information */}
             {selectedVendor && (
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>

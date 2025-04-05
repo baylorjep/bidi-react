@@ -45,6 +45,17 @@ const PhotoModal = ({ photo, onClose }) => {
     );
 };
 
+const BidScoreIndicator = ({ score, message }) => (
+    <div className="bid-score-container">
+        <div className="score-circle" style={{
+            background: `conic-gradient(#A328F4 ${score}%, #f0f0f0 ${score}%)`
+        }}>
+            <span>{score}%</span>
+        </div>
+        {message && <div className="score-message">{message}</div>}
+    </div>
+);
+
 function DjRequest() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -68,6 +79,9 @@ function DjRequest() {
     const [vendorId, setVendorId] = useState(location.state?.vendor?.id || null);
     const [selectedVendor, setSelectedVendor] = useState(location.state?.vendor || null);
     const [vendorImage, setVendorImage] = useState(location.state?.image || null);
+    const [bidScore, setBidScore] = useState(0);
+    const [scoreMessage, setScoreMessage] = useState('');
+    const [earnedCoupon, setEarnedCoupon] = useState(false);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
@@ -108,6 +122,7 @@ function DjRequest() {
                 durationUnknown: saved.eventDetails?.durationUnknown || false,
                 numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
                 pinterestBoard: saved.eventDetails?.pinterestBoard || '',
+                priceQualityPreference: saved.eventDetails?.priceQualityPreference || "2"
             },
             personalDetails: saved.personalDetails || {
                 firstName: '',
@@ -147,8 +162,19 @@ function DjRequest() {
                 ...prev,
                 eventType: event
             };
-            // Save to localStorage
+
+            // Update budget recommendation when event type changes
+            const preference = newData.eventDetails.priceQualityPreference || "2";
+            const recommendation = getBudgetRecommendation(
+                preference,
+                event,
+                newData.eventDetails
+            )[preference].range;
+
+            newData.eventDetails.priceRange = recommendation;
+            
             localStorage.setItem('djRequest', JSON.stringify(newData));
+            setTimeout(() => updateBidScore(), 0);
             return newData;
         });
     };
@@ -156,7 +182,40 @@ function DjRequest() {
     const handleInputChange = (field, value) => {
         setFormData(prev => {
             const newData = { ...prev, [field]: value };
+            
+            // List of fields that should trigger budget recalculation
+            const budgetTriggerFields = [
+                'duration',
+                'numPeople',
+                'equipment',
+                'weddingDetails',
+                'musicPreferences'
+            ];
+
+            // Only update budget recommendation if:
+            // 1. It's an eventDetails update
+            // 2. Contains relevant fields
+            // 3. Not a manual budget selection
+            if (field === 'eventDetails' && 
+                Object.keys(value).some(key => budgetTriggerFields.includes(key)) &&
+                !value.manualBudget) {
+                const preference = newData.eventDetails.priceQualityPreference || "2";
+                const recommendation = getBudgetRecommendation(
+                    preference,
+                    newData.eventType,
+                    value
+                )[preference].range;
+
+                newData.eventDetails.priceRange = recommendation;
+            }
+
+            // Remove the manualBudget flag after using it
+            if (field === 'eventDetails' && newData.eventDetails.manualBudget) {
+                delete newData.eventDetails.manualBudget;
+            }
+
             localStorage.setItem('djRequest', JSON.stringify(newData));
+            setTimeout(() => updateBidScore(), 0);
             return newData;
         });
     };
@@ -601,23 +660,113 @@ function DjRequest() {
             case 3: // Budget & Additional Info
                 return (
                     <div className='form-grid'>
-                        <div className="custom-input-container">
+                        <div className="price-quality-slider-container">
+                            <div className="slider-header">What matters most to you?</div>
+                            <div className="slider-labels">
+                                <span>Budget Conscious</span>
+                                <span>Quality Focused</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="1"
+                                max="3"
+                                step="1"
+                                value={formData.eventDetails.priceQualityPreference || "2"}
+                                onChange={(e) => {
+                                    const newPreference = e.target.value;
+                                    const recommendation = getBudgetRecommendation(
+                                        newPreference,
+                                        formData.eventType,
+                                        formData.eventDetails
+                                    )[newPreference].range;
+
+                                    handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        priceQualityPreference: newPreference,
+                                        priceRange: recommendation
+                                    });
+                                }}
+                                className="price-quality-slider"
+                            />
+                            <div className="preference-description">
+                                <div className="preference-detail">
+                                    {formData.eventDetails.priceQualityPreference === "1" && (
+                                        <p>👉 Focus on finding budget-friendly DJ options while maintaining good quality</p>
+                                    )}
+                                    {formData.eventDetails.priceQualityPreference === "2" && (
+                                        <p>Balanced approach to quality and budget</p>
+                                    )}
+                                    {formData.eventDetails.priceQualityPreference === "3" && (
+                                        <>
+                                            <p>👉 Priority on premium DJ services and equipment</p>
+                                            <p>👉 Access to experienced DJs with top-tier setups</p>
+                                            <p>👉 Ideal for those seeking the best entertainment experience</p>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        
+
+                        {formData.eventType && (
+                            <div className="budget-guidance-container">
+                                <div className="budget-insights">
+                                    <div className="budget-recommendation">
+                                        {getBudgetRecommendation(
+                                            formData.eventDetails.priceQualityPreference || "2",
+                                            formData.eventType,
+                                            formData.eventDetails
+                                        )[formData.eventDetails.priceQualityPreference || "2"].message}
+                                    </div>
+                                    <div className="budget-insight-header">This recommendation is based on:</div>
+                                    <div className="budget-insight-details">
+                                        {getBudgetRecommendation(
+                                            formData.eventDetails.priceQualityPreference || "2",
+                                            formData.eventType,
+                                            formData.eventDetails
+                                        )[formData.eventDetails.priceQualityPreference || "2"].analysis.factors.map((factor, index) => (
+                                            <div key={index} className="insight-item">
+                                                <span className="insight-icon">•</span>
+                                                <span className="insight-text">{factor}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {formData.eventDetails.priceQualityPreference === "1" && (
+                                        <div className="insight-warning">
+                                            <span>⚠️</span>
+                                            <span>This is a budget-conscious estimate. Quality and services may be limited.</span>
+                                        </div>
+                                    )}
+                                    {formData.eventDetails.priceQualityPreference === "3" && (
+                                        <div className="insight-warning" style={{backgroundColor: '#e8f5e9', color: '#2e7d32'}}>
+                                            <span>✨</span>
+                                            <span>This premium estimate ensures access to top-tier DJs and equipment.</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        
+                        )}
+                        </div>
+
+                        <div className="custom-input-container required">
                             <select
                                 name="priceRange"
-                                value={formData.eventDetails.priceRange}
+                                value={formData.eventDetails.priceRange || ''}
                                 onChange={(e) => handleInputChange('eventDetails', {
                                     ...formData.eventDetails,
-                                    priceRange: e.target.value
+                                    priceRange: e.target.value,
+                                    manualBudget: true
                                 })}
                                 className="custom-input"
                             >
                                 <option value="">Select Budget Range</option>
-                                <option value="0-1000">$0 - $1,000</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
+                                <option value="0-500">$0 - $500</option>
+                                <option value="500-1000">$500 - $1,000</option>
+                                <option value="1000-1500">$1,000 - $1,500</option>
+                                <option value="1500-2000">$1,500 - $2,000</option>
+                                <option value="2000-2500">$2,000 - $2,500</option>
+                                <option value="2500-3000">$2,500 - $3,000</option>
+                                <option value="3000+">$3,000+</option>
                             </select>
                             <label htmlFor="priceRange" className="custom-label">
                                 Budget Range
@@ -966,49 +1115,33 @@ function DjRequest() {
 
     // Summary Component
     const renderSummary = () => {
-        // Helper function to render date info based on flexibility
-        const renderDateInfo = () => {
-            switch (formData.eventDetails.dateFlexibility) {
-                case 'specific':
+        const { score } = calculateBidScore(formData);
+        
                     return (
-                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                            <div className="request-subtype">Event Date</div>
-                            <div className="request-info">
-                                {formData.eventDetails.startDate ? new Date(formData.eventDetails.startDate).toLocaleDateString() : 'Not specified'}
-                            </div>
-                        </div>
-                    );
-                case 'range':
-                    return (
-                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                            <div className="request-subtype">Date Range</div>
-                            <div className="request-info">
-                                From: {formData.eventDetails.startDate ? new Date(formData.eventDetails.startDate).toLocaleDateString() : 'Not specified'}
-                                <br />
-                                To: {formData.eventDetails.endDate ? new Date(formData.eventDetails.endDate).toLocaleDateString() : 'Not specified'}
-                            </div>
-                        </div>
-                    );
-                case 'flexible':
-                    return (
-                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                            <div className="request-subtype">Date Preference</div>
-                            <div className="request-info">
-                                {formData.eventDetails.dateTimeframe === '3months' && 'Within 3 months'}
-                                {formData.eventDetails.dateTimeframe === '6months' && 'Within 6 months'}
-                                {formData.eventDetails.dateTimeframe === '1year' && 'Within 1 year'}
-                                {formData.eventDetails.dateTimeframe === 'more' && 'More than 1 year'}
-                                {!formData.eventDetails.dateTimeframe && 'Not specified'}
-                            </div>
-                        </div>
-                    );
-                default:
-                    return null;
-            }
-        };
-
-        return (
             <div className="event-summary-container" style={{padding:'0'}}>
+                {score >= 80 && !earnedCoupon && (
+                    <div className="coupon-earned-section">
+                        <h3>🎉 You've Earned a Reward!</h3>
+                        <p>For providing detailed information, you've earned a $25 coupon that will be automatically applied to your request.</p>
+                        <button 
+                            className="apply-coupon-btn" 
+                            onClick={() => {
+                                setEarnedCoupon(true);
+                                handleEarnedCoupon();
+                            }}
+                        >
+                            Apply Coupon
+                        </button>
+                            </div>
+                )}
+                
+                {earnedCoupon && (
+                    <div className="coupon-earned-section">
+                        <h3>✅ Coupon Applied!</h3>
+                        <p>Your $25 discount will be applied to your request.</p>
+                        </div>
+                )}
+
                 <div className="request-summary-grid">
                     {/* Basic Event Information */}
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -1019,13 +1152,6 @@ function DjRequest() {
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Location</div>
                         <div className="request-info">{formData.eventDetails.location || 'Not specified'}</div>
-                    </div>
-
-                    {renderDateInfo()}
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Indoor/Outdoor</div>
-                        <div className="request-info">{formData.eventDetails.indoorOutdoor || 'Not specified'}</div>
                     </div>
 
                     {/* Timing Information */}
@@ -1457,6 +1583,187 @@ function DjRequest() {
         setCurrentStep(prev => prev + 1);
     };
 
+    const calculateBidScore = (formData) => {
+        let points = 0;
+        let maxPoints = 0;
+        let breakdown = [];
+
+        // Required core fields (worth more points)
+        const coreFields = {
+            'Event Type': formData.eventType,
+            'Location': formData.eventDetails.location,
+            'Date Information': formData.eventDetails.dateFlexibility === 'specific' ? formData.eventDetails.startDate : 
+                formData.eventDetails.dateFlexibility === 'range' ? (formData.eventDetails.startDate && formData.eventDetails.endDate) :
+                formData.eventDetails.dateTimeframe,
+            'Guest Count': formData.eventDetails.numPeople,
+            'Budget Range': formData.eventDetails.priceRange
+        };
+
+        Object.entries(coreFields).forEach(([field, value]) => {
+            maxPoints += 20;
+            if (value) {
+                points += 20;
+                breakdown.push(`✓ ${field}`);
+            }
+        });
+
+        // Additional details (worth fewer points)
+        const additionalFields = {
+            'Music Preferences': Object.values(formData.eventDetails.musicPreferences || {}).some(v => v),
+            'Equipment Needs': Object.values(formData.eventDetails.equipment || {}).some(v => v),
+            'Special Songs': formData.eventDetails.specialSongs,
+            'Additional Info': formData.eventDetails.additionalInfo
+        };
+
+        Object.entries(additionalFields).forEach(([field, value]) => {
+            maxPoints += 5;
+            if (value) {
+                points += 5;
+                breakdown.push(`✓ ${field}`);
+            }
+        });
+
+        const score = Math.round((points / maxPoints) * 100);
+        return { score, breakdown, points, maxPoints };
+    };
+
+    const updateBidScore = () => {
+        const { score } = calculateBidScore(formData);
+        setBidScore(score);
+        
+        if (score === 100) {
+            setScoreMessage('Perfect! All details added');
+        } else if (score >= 80) {
+            setScoreMessage('Great job!');
+        } else if (score >= 60) {
+            setScoreMessage('Add details for better matches');
+        } else {
+            setScoreMessage('More info = better bids');
+        }
+    };
+
+    const analyzeEventDetails = (eventDetails, eventType) => {
+        let basePrice = 500;
+        let factors = [];
+
+        // Event type factor with more detail
+        if (eventType === 'Wedding') {
+            basePrice = 800;
+            factors.push('Wedding DJ base package (includes professional MC services)');
+        } else {
+            factors.push('Standard DJ base package (includes basic MC services)');
+        }
+
+        // Duration factor with more detail
+        const duration = parseInt(eventDetails.duration) || 4;
+        if (duration > 4) {
+            basePrice += (duration - 4) * 100;
+            factors.push(`Extended duration: ${duration} hours ($100/hour after 4 hours)`);
+        } else {
+            factors.push(`Standard ${duration}-hour service`);
+        }
+
+        // Guest count factor with more detail
+        const guestCount = parseInt(eventDetails.numPeople) || 100;
+        if (guestCount > 200) {
+            basePrice += 200;
+            factors.push(`Large event setup (${guestCount}+ guests) - Additional sound coverage needed`);
+        } else {
+            factors.push(`Standard setup for ${guestCount} guests`);
+        }
+
+        // Equipment needs with specific details
+        const equipment = eventDetails.equipment || {};
+        if (Object.values(equipment).some(v => v)) {
+            basePrice += 300;
+            const equipmentList = Object.entries(equipment)
+                .filter(([_, value]) => value)
+                .map(([key]) => key.replace(/([A-Z])/g, ' $1').toLowerCase())
+                .join(', ');
+            factors.push(`Additional equipment needed: ${equipmentList} (+$300)`);
+        }
+
+        // Wedding-specific services with detailed breakdown
+        const weddingDetails = eventDetails.weddingDetails || {};
+        let serviceCount = Object.values(weddingDetails).filter(v => v).length;
+        if (serviceCount > 0) {
+            basePrice += serviceCount * 150;
+            const services = Object.entries(weddingDetails)
+                .filter(([_, value]) => value)
+                .map(([key]) => {
+                    switch(key) {
+                        case 'ceremony': return 'Ceremony music';
+                        case 'cocktailHour': return 'Cocktail hour';
+                        case 'reception': return 'Reception';
+                        case 'afterParty': return 'After party';
+                        default: return key;
+                    }
+                });
+            factors.push(`Multiple service periods: ${services.join(', ')} (+$150 each)`);
+        }
+
+        // Round to nearest price bracket
+        const brackets = [500, 1000, 1500, 2000, 2500, 3000];
+        const suggestedRange = brackets.find(b => basePrice <= b) || '3000+';
+        
+        return {
+            suggestedRange: suggestedRange === 3000 ? '3000+' : `${suggestedRange-500}-${suggestedRange}`,
+            factors,
+            basePrice
+        };
+    };
+
+    const getBudgetRecommendation = (preference, eventType, eventDetails) => {
+        const analysis = analyzeEventDetails(eventDetails, eventType);
+        const baseRecommendation = analysis.suggestedRange;
+
+        let adjustedRange = baseRecommendation;
+        if (preference === "1") { // Budget-conscious
+            const currentMin = parseInt(baseRecommendation.split('-')[0]);
+            adjustedRange = currentMin <= 500 ? '0-500' : `${currentMin-500}-${currentMin}`;
+        } else if (preference === "3") { // Quality-focused
+            const currentMax = baseRecommendation.includes('+') ? 3000 : parseInt(baseRecommendation.split('-')[1]);
+            adjustedRange = currentMax >= 3000 ? '3000+' : `${currentMax}-${currentMax+500}`;
+        }
+
+        return {
+            [preference]: {
+                range: adjustedRange,
+                message: `Recommended Budget Range: $${adjustedRange}`,
+                analysis: {
+                    basePrice: analysis.basePrice,
+                    factors: analysis.factors
+                }
+            }
+        };
+    };
+
+    const handleEarnedCoupon = async () => {
+        try {
+            const couponCode = `QUALITY${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+            
+            const { error } = await supabase
+                .from('coupons')
+                .insert([{
+                    code: couponCode,
+                    discount_amount: 25,
+                    valid: true,
+                    expiration_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    description: 'Earned for detailed request completion'
+                }]);
+
+            if (error) throw error;
+
+            setCouponCode(couponCode);
+            setAppliedCoupon({
+                code: couponCode,
+                discount_amount: 25
+            });
+        } catch (err) {
+            console.error('Error generating coupon:', err);
+        }
+    };
+
     return (
         <div className='request-form-overall-container'>
             {isAuthModalOpen && <AuthModal setIsModalOpen={setIsAuthModalOpen} onSuccess={handleAuthSuccess} />}
@@ -1474,9 +1781,12 @@ function DjRequest() {
                     </div>
                 </div>
                 {/* Status bar container moved above title for desktop */}
-                <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
+                <div className="form-header-section">
+                    <h2 className="request-form-header">
                     {getSteps()[currentStep]}
                 </h2>
+                    <BidScoreIndicator score={bidScore} message={scoreMessage} />
+                </div>
                             {/* Display selected vendor information */}
             {selectedVendor && (
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>

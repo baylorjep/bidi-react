@@ -45,6 +45,17 @@ const PhotoModal = ({ photo, onClose }) => {
     );
 };
 
+const BidScoreIndicator = ({ score, message }) => (
+    <div className="bid-score-container">
+        <div className="score-circle" style={{
+            background: `conic-gradient(#A328F4 ${score}%, #f0f0f0 ${score}%)`
+        }}>
+            <span>{score}%</span>
+        </div>
+        {message && <div className="score-message">{message}</div>}
+    </div>
+);
+
 function HairAndMakeUpRequest() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -67,6 +78,9 @@ function HairAndMakeUpRequest() {
     const [detailsSubStep, setDetailsSubStep] = useState(0);
     const [selectedVendor, setSelectedVendor] = useState(location.state?.vendor || null);
     const [vendorImage, setVendorImage] = useState(location.state?.image || null);
+    const [bidScore, setBidScore] = useState(0);
+    const [scoreMessage, setScoreMessage] = useState('');
+    const [earnedCoupon, setEarnedCoupon] = useState(false);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
@@ -116,7 +130,8 @@ function HairAndMakeUpRequest() {
                 groupDiscountInquiry: saved.eventDetails?.groupDiscountInquiry || '',
                 onSiteServiceNeeded: saved.eventDetails?.onSiteServiceNeeded || '',
                 specificTimeNeeded: saved.eventDetails?.specificTimeNeeded || '',
-                specificTime: saved.eventDetails?.specificTime || ''
+                specificTime: saved.eventDetails?.specificTime || '',
+                priceQualityPreference: saved.eventDetails?.priceQualityPreference || "2"
             },
             personalDetails: saved.personalDetails || {
                 firstName: '',
@@ -159,8 +174,8 @@ function HairAndMakeUpRequest() {
                 ...prev,
                 eventType: event
             };
-            // Save to localStorage
             localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
+            setTimeout(() => updateBidScore(), 0);
             return newData;
         });
     };
@@ -169,6 +184,7 @@ function HairAndMakeUpRequest() {
         setFormData(prev => {
             const newData = { ...prev, [field]: value };
             localStorage.setItem('hairAndMakeupRequest', JSON.stringify(newData));
+            setTimeout(() => updateBidScore(), 0);
             return newData;
         });
     };
@@ -587,65 +603,123 @@ function HairAndMakeUpRequest() {
             case 'Additional Details':
                 return (
                     <div className="form-grid">
-                        <div className="custom-input-container">
-                            <select
-                                name="groupDiscountInquiry"
-                                value={formData.eventDetails.groupDiscountInquiry}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    groupDiscountInquiry: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </select>
-                            <label htmlFor="groupDiscountInquiry" className="custom-label">
-                                Group Discount Inquiry?
-                            </label>
+                        <div className="price-quality-slider-container">
+                            <div className="slider-header">What matters most to you?</div>
+                            <div className="slider-labels">
+                                <span>Budget Conscious</span>
+                                <span>Quality Focused</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="1"
+                                max="3"
+                                step="1"
+                                value={formData.eventDetails.priceQualityPreference || "2"}
+                                onChange={(e) => {
+                                    const newPreference = e.target.value;
+                                    const recommendation = getBudgetRecommendation(
+                                        newPreference,
+                                        formData.eventType,
+                                        formData.eventDetails,
+                                        serviceType
+                                    );
+
+                                    console.log('Recommendation:', recommendation);
+
+                                    handleInputChange('eventDetails', {
+                                        ...formData.eventDetails,
+                                        priceQualityPreference: newPreference,
+                                        priceRange: recommendation.range,
+                                        manualBudget: false
+                                    });
+                                }}
+                                className="price-quality-slider"
+                            />
+                            <div className="preference-description">
+                                <div className="preference-detail">
+                                    {formData.eventDetails.priceQualityPreference === "1" && (
+                                        <p>👉 Focus on finding budget-friendly beauty services while maintaining good quality</p>
+                                    )}
+                                    {formData.eventDetails.priceQualityPreference === "2" && (
+                                        <p>Balanced approach to quality and budget</p>
+                                    )}
+                                    {formData.eventDetails.priceQualityPreference === "3" && (
+                                        <>
+                                            <p>👉 Priority on premium beauty services and products</p>
+                                            <p>👉 Access to experienced stylists and makeup artists</p>
+                                            <p>👉 Ideal for those seeking luxury beauty experiences</p>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                        <div className="custom-input-container">
-                            <select
-                                name="onSiteServiceNeeded"
-                                value={formData.eventDetails.onSiteServiceNeeded}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    onSiteServiceNeeded: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </select>
-                            <label htmlFor="onSiteServiceNeeded" className="custom-label">
-                                On-Site Service Needed?
-                            </label>
-                        </div>
-                        <div className="custom-input-container">
+
+                        {formData.eventType && (
+                            <div className="budget-guidance-container">
+                                <div className="budget-insights">
+                                    <div className="budget-recommendation">
+                                        {getBudgetRecommendation(
+                                            formData.eventDetails.priceQualityPreference || "2",
+                                            formData.eventType,
+                                            formData.eventDetails,
+                                            serviceType
+                                        ).message}
+                                    </div>
+                                    <div className="budget-insight-header">This recommendation is based on:</div>
+                                    <div className="budget-insight-details">
+                                        {getBudgetRecommendation(
+                                            formData.eventDetails.priceQualityPreference || "2",
+                                            formData.eventType,
+                                            formData.eventDetails,
+                                            serviceType
+                                        ).analysis.factors.map((factor, index) => (
+                                            <div key={index} className="insight-item">
+                                                <span className="insight-icon">•</span>
+                                                <span className="insight-text">{factor}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {formData.eventDetails.priceQualityPreference === "1" && (
+                                        <div className="insight-warning">
+                                            <span>⚠️</span>
+                                            <span>This is a budget-conscious estimate. Service options may be limited.</span>
+                                        </div>
+                                    )}
+                                    {formData.eventDetails.priceQualityPreference === "3" && (
+                                        <div className="insight-warning" style={{backgroundColor: '#e8f5e9', color: '#2e7d32'}}>
+                                            <span>✨</span>
+                                            <span>This premium estimate ensures access to top-tier beauty professionals.</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="custom-input-container required">
                             <select
                                 name="priceRange"
-                                value={formData.eventDetails.priceRange}
+                                value={formData.eventDetails.priceRange || ''}
                                 onChange={(e) => handleInputChange('eventDetails', {
                                     ...formData.eventDetails,
-                                    priceRange: e.target.value
+                                    priceRange: e.target.value,
+                                    manualBudget: true
                                 })}
                                 className="custom-input"
                             >
                                 <option value="">Select Budget Range</option>
-                                <option value="0-500">$0 - $500</option>
-                                <option value="500-1000">$500 - $1,000</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
+                                <option value="0-300">$0 - $300</option>
+                                <option value="300-500">$300 - $500</option>
+                                <option value="500-750">$500 - $750</option>
+                                <option value="750-1000">$750 - $1,000</option>
+                                <option value="1000-1500">$1,000 - $1,500</option>
+                                <option value="1500-2000">$1,500 - $2,000</option>
+                                <option value="2000+">$2,000+</option>
                             </select>
                             <label htmlFor="priceRange" className="custom-label">
                                 Budget Range
                             </label>
                         </div>
+
                         <div className="custom-input-container">
                             <ReactQuill
                                 value={formData.eventDetails.additionalInfo || ''}
@@ -997,6 +1071,8 @@ function HairAndMakeUpRequest() {
 
     // Summary Component
     const renderSummary = () => {
+        const { score } = calculateBidScore(formData);
+        
         const renderDateInfo = () => {
             switch (formData.eventDetails.dateFlexibility) {
                 case 'specific':
@@ -1035,8 +1111,31 @@ function HairAndMakeUpRequest() {
             }
         };
 
-        return (
+                    return (
             <div className="event-summary-container" style={{padding:'0'}}>
+                {score >= 80 && !earnedCoupon && (
+                    <div className="coupon-earned-section">
+                        <h3>🎉 You've Earned a Reward!</h3>
+                        <p>For providing detailed information, you've earned a $25 coupon that will be automatically applied to your request.</p>
+                        <button 
+                            className="apply-coupon-btn" 
+                            onClick={() => {
+                                setEarnedCoupon(true);
+                                handleEarnedCoupon();
+                            }}
+                        >
+                            Apply Coupon
+                        </button>
+                            </div>
+                )}
+                
+                {earnedCoupon && (
+                    <div className="coupon-earned-section">
+                        <h3>✅ Coupon Applied!</h3>
+                        <p>Your $25 discount will be applied to your request.</p>
+                        </div>
+                )}
+
                 <div className="request-summary-grid">
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Event Type</div>
@@ -1048,6 +1147,13 @@ function HairAndMakeUpRequest() {
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Location</div>
                         <div className="request-info">{formData.eventDetails.location}</div>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                        <div className="request-subtype">Budget Range</div>
+                        <div className="request-info">
+                            {formData.eventDetails.priceRange ? `$${formData.eventDetails.priceRange}` : 'Not specified'}
+                        </div>
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -1116,11 +1222,6 @@ function HairAndMakeUpRequest() {
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">On-Site Service Needed?</div>
                         <div className="request-info">{formData.eventDetails.onSiteServiceNeeded}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Budget Range</div>
-                        <div className="request-info">{formData.eventDetails.priceRange}</div>
                     </div>
 
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -1475,6 +1576,195 @@ function HairAndMakeUpRequest() {
         setCurrentStep(prev => prev + 1);
     };
 
+    const calculateBidScore = (formData) => {
+        let points = 0;
+        let maxPoints = 0;
+        let breakdown = [];
+
+        // Required core fields (worth more points)
+        const coreFields = {
+            'Event Type': formData.eventType,
+            'Location': formData.eventDetails.location,
+            'Date Information': formData.eventDetails.dateFlexibility === 'specific' ? formData.eventDetails.startDate : 
+                formData.eventDetails.dateFlexibility === 'range' ? (formData.eventDetails.startDate && formData.eventDetails.endDate) :
+                formData.eventDetails.dateTimeframe,
+            'Guest Count': formData.eventDetails.numPeople,
+            'Budget Range': formData.eventDetails.priceRange
+        };
+
+        Object.entries(coreFields).forEach(([field, value]) => {
+            maxPoints += 20;
+            if (value) {
+                points += 20;
+                breakdown.push(`✓ ${field}`);
+            }
+        });
+
+        // Additional details (worth fewer points)
+        const additionalFields = {
+            'Hair Preferences': formData.eventDetails.hairstylePreferences,
+            'Makeup Preferences': formData.eventDetails.makeupStylePreferences,
+            'Skin Concerns': formData.eventDetails.skinTypeConcerns,
+            'Additional Info': formData.eventDetails.additionalInfo
+        };
+
+        Object.entries(additionalFields).forEach(([field, value]) => {
+            maxPoints += 5;
+            if (value) {
+                points += 5;
+                breakdown.push(`✓ ${field}`);
+            }
+        });
+
+        const score = Math.round((points / maxPoints) * 100);
+        return { score, breakdown, points, maxPoints };
+    };
+
+    const updateBidScore = () => {
+        const { score } = calculateBidScore(formData);
+        setBidScore(score);
+        
+        if (score === 100) {
+            setScoreMessage('Perfect! All details added');
+        } else if (score >= 80) {
+            setScoreMessage('Great job!');
+        } else if (score >= 60) {
+            setScoreMessage('Add details for better matches');
+        } else {
+            setScoreMessage('More info = better bids');
+        }
+    };
+
+    const analyzeEventDetails = (eventDetails, eventType, serviceType) => {
+        let basePrice = 150; // Base price for standard services
+        let factors = [];
+
+        // Service type factor
+        if (serviceType === 'both') {
+            basePrice = 250;
+            factors.push('Combined hair and makeup services');
+        } else if (serviceType === 'hair') {
+            factors.push('Hair styling services only');
+        } else {
+            factors.push('Makeup services only');
+        }
+
+        // Event type factor
+        if (eventType === 'Wedding') {
+            basePrice *= 1.5; // 50% more for weddings
+            factors.push('Wedding beauty services (premium rate)');
+        } else {
+            factors.push('Standard beauty services');
+        }
+
+        // Number of people
+        const peopleCount = parseInt(eventDetails.numPeople) || 1;
+        if (peopleCount > 1) {
+            basePrice += (peopleCount - 1) * (serviceType === 'both' ? 200 : 120);
+            factors.push(`Services for ${peopleCount} people`);
+        }
+
+        // Trial sessions
+        if (eventDetails.trialSessionHair === 'yes' && (serviceType === 'both' || serviceType === 'hair')) {
+            basePrice += 75;
+            factors.push('Hair trial session (+$75)');
+        }
+        if (eventDetails.trialSessionMakeup === 'yes' && (serviceType === 'both' || serviceType === 'makeup')) {
+            basePrice += 75;
+            factors.push('Makeup trial session (+$75)');
+        }
+
+        // Additional services
+        if (eventDetails.extensionsNeeded === 'yes') {
+            basePrice += 100;
+            factors.push('Hair extensions (+$100)');
+        }
+        if (eventDetails.lashesIncluded === 'yes') {
+            basePrice += 25;
+            factors.push('False lashes (+$25)');
+        }
+        if (eventDetails.onSiteServiceNeeded === 'yes') {
+            basePrice += 50;
+            factors.push('On-site service fee (+$50)');
+        }
+
+        // Update brackets to match the select options
+        const brackets = [300, 500, 750, 1000, 1500, 2000];
+        const suggestedRange = brackets.find(b => basePrice <= b) || '2000+';
+        
+        return {
+            // Update the range format to match select options
+            suggestedRange: suggestedRange === 2000 ? '2000+' : `${brackets[brackets.indexOf(suggestedRange)-1]}-${suggestedRange}`,
+            factors,
+            basePrice
+        };
+    };
+
+    const getBudgetRecommendation = (preference, eventType, eventDetails, serviceType) => {
+        const analysis = analyzeEventDetails(eventDetails, eventType, serviceType);
+        const baseRecommendation = analysis.suggestedRange;
+
+        let adjustedRange = baseRecommendation;
+        if (preference === "1") { // Budget-conscious
+            const currentMin = parseInt(baseRecommendation.split('-')[0]);
+            adjustedRange = currentMin <= 300 ? '0-300' : `${currentMin-250}-${currentMin}`;
+        } else if (preference === "3") { // Quality-focused
+            const currentMax = baseRecommendation.includes('+') ? 2000 : parseInt(baseRecommendation.split('-')[1]);
+            adjustedRange = currentMax >= 2000 ? '2000+' : `${currentMax}-${currentMax+250}`;
+        }
+
+        return {
+            range: adjustedRange,
+            message: `Recommended Budget Range: $${adjustedRange}`,
+            analysis: {
+                basePrice: analysis.basePrice,
+                factors: analysis.factors
+            }
+        };
+    };
+
+    const handleEarnedCoupon = async () => {
+        try {
+            const couponCode = `QUALITY${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+            
+            const { error } = await supabase
+                .from('coupons')
+                .insert([{
+                    code: couponCode,
+                    discount_amount: 25,
+                    valid: true,
+                    expiration_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    description: 'Earned for detailed request completion'
+                }]);
+
+            if (error) throw error;
+
+            setCouponCode(couponCode);
+            setAppliedCoupon({
+                code: couponCode,
+                discount_amount: 25
+            });
+        } catch (err) {
+            console.error('Error generating coupon:', err);
+        }
+    };
+
+    // Add this useEffect near the top of the component with other hooks
+    useEffect(() => {
+        updateBidScore();
+    }, [formData.eventType, 
+        formData.eventDetails.location,
+        formData.eventDetails.startDate,
+        formData.eventDetails.endDate,
+        formData.eventDetails.dateTimeframe,
+        formData.eventDetails.numPeople,
+        formData.eventDetails.priceRange,
+        formData.eventDetails.hairstylePreferences,
+        formData.eventDetails.makeupStylePreferences,
+        formData.eventDetails.skinTypeConcerns,
+        formData.eventDetails.additionalInfo
+    ]);
+
     return (
         <div className='request-form-overall-container'>
             {isAuthModalOpen && <AuthModal setIsModalOpen={setIsAuthModalOpen} onSuccess={handleAuthSuccess} />}
@@ -1485,12 +1775,12 @@ function HairAndMakeUpRequest() {
                 </div>
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
-                {/* Status bar container moved above title for desktop */}
-
-
-                <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
+                <div className="form-header-section">
+                    <h2 className="request-form-header">
                     {getSteps()[currentStep]}
                 </h2>
+                    <BidScoreIndicator score={bidScore} message={scoreMessage} />
+                </div>
                 {selectedVendor && (
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
                     <img src={vendorImage} alt={selectedVendor.business_name} className="vendor-profile-image" />

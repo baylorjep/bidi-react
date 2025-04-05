@@ -67,6 +67,9 @@ function VideographyRequest() {
     const [detailsSubStep, setDetailsSubStep] = useState(0);
     const [selectedVendor, setSelectedVendor] = useState(location.state?.vendor || null); // Get vendor from location state
     const [vendorImage, setVendorImage] = useState(location.state?.image || null);
+    const [bidScore, setBidScore] = useState(0);
+    const [scoreMessage, setScoreMessage] = useState('');
+    const [earnedCoupon, setEarnedCoupon] = useState(false);
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
@@ -107,6 +110,7 @@ function VideographyRequest() {
                 durationUnknown: saved.eventDetails?.durationUnknown || false,
                 numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
                 pinterestBoard: saved.eventDetails?.pinterestBoard || '',
+                priceQualityPreference: saved.eventDetails?.priceQualityPreference || "2"
             },
             personalDetails: saved.personalDetails || {
                 firstName: '',
@@ -146,16 +150,29 @@ function VideographyRequest() {
                 ...prev,
                 eventType: event
             };
-            // Save to localStorage
             localStorage.setItem('videographyRequest', JSON.stringify(newData));
+            setTimeout(() => updateBidScore(), 0);
             return newData;
         });
     };
 
     const handleInputChange = (field, value) => {
         setFormData(prev => {
-            const newData = { ...prev, [field]: value };
+            let newData;
+            if (field === 'eventDetails') {
+                newData = {
+                    ...prev,
+                    eventDetails: {
+                        ...prev.eventDetails,
+                        ...value
+                    }
+                };
+            } else {
+                newData = { ...prev, [field]: value };
+            }
+            
             localStorage.setItem('videographyRequest', JSON.stringify(newData));
+            setTimeout(() => updateBidScore(), 0);
             return newData;
         });
     };
@@ -196,7 +213,7 @@ function VideographyRequest() {
             case 0: // Basic Wedding Details
                 return (
                     <div className='form-grid'>
-                        <div className="custom-input-container">
+                        <div className="custom-input-container required">
                             <input
                                 type="text"
                                 name="location"
@@ -213,7 +230,7 @@ function VideographyRequest() {
                             </label>
                         </div>
 
-                        <div className="custom-input-container">
+                        <div className="custom-input-container required">
                             <select
                                 name="dateFlexibility"
                                 value={formData.eventDetails.dateFlexibility}
@@ -586,47 +603,7 @@ function VideographyRequest() {
                 );
 
             case 3: // Budget & Additional Info
-                return (
-                    <div className='form-grid'>
-                        <div className="custom-input-container">
-                            <select
-                                name="priceRange"
-                                value={formData.eventDetails.priceRange}
-                                onChange={(e) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    priceRange: e.target.value
-                                })}
-                                className="custom-input"
-                            >
-                                <option value="">Select Budget Range</option>
-                                <option value="0-1000">$0 - $1,000</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
-                            </select>
-                            <label htmlFor="priceRange" className="custom-label">
-                                Budget Range
-                            </label>
-                        </div>
-
-                        <div className="custom-input-container">
-                            <ReactQuill
-                                value={formData.eventDetails.additionalInfo || ''}
-                                onChange={(content) => handleInputChange('eventDetails', {
-                                    ...formData.eventDetails,
-                                    additionalInfo: content
-                                })}
-                                modules={modules}
-                                placeholder="Any special requests or additional information photographers should know..."
-                            />
-                            <label htmlFor="additionalInfo" className="custom-label">
-                                Additional Information
-                            </label>
-                        </div>
-                    </div>
-                );
+                return renderBudgetSection();
 
             default:
                 return null;
@@ -962,7 +939,8 @@ function VideographyRequest() {
 
     // Summary Component
     const renderSummary = () => {
-        // Helper function to render date info based on flexibility
+        const { score } = calculateBidScore(formData);
+        
         const renderDateInfo = () => {
             switch (formData.eventDetails.dateFlexibility) {
                 case 'specific':
@@ -1003,6 +981,29 @@ function VideographyRequest() {
 
         return (
             <div className="event-summary-container" style={{padding:'0'}}>
+                {score >= 80 && !earnedCoupon && (
+                    <div className="coupon-earned-section">
+                        <h3>🎉 You've Earned a Reward!</h3>
+                        <p>For providing detailed information, you've earned a $25 coupon that will be automatically applied to your request.</p>
+                        <button 
+                            className="apply-coupon-btn" 
+                            onClick={() => {
+                                setEarnedCoupon(true);
+                                handleEarnedCoupon();
+                            }}
+                        >
+                            Apply $25 Coupon
+                        </button>
+                    </div>
+                )}
+                
+                {earnedCoupon && (
+                    <div className="coupon-earned-section">
+                        <h3>✅ Coupon Applied!</h3>
+                        <p>Your $25 discount will be applied to your request.</p>
+                    </div>
+                )}
+                
                 <div className="request-summary-grid">
                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                         <div className="request-subtype">Event Type</div>
@@ -1395,6 +1396,328 @@ function VideographyRequest() {
         setCurrentStep(prev => prev + 1);
     };
 
+    const calculateBidScore = (formData) => {
+        let points = 0;
+        let maxPoints = 0;
+        let breakdown = [];
+
+        // Required core fields (worth more points)
+        const coreFields = {
+            'Event Type': formData.eventType,
+            'Location': formData.eventDetails.location,
+            'Date Information': formData.eventDetails.dateFlexibility === 'specific' ? formData.eventDetails.startDate : 
+                formData.eventDetails.dateFlexibility === 'range' ? (formData.eventDetails.startDate && formData.eventDetails.endDate) :
+                formData.eventDetails.dateTimeframe,
+            'Budget Range': formData.eventDetails.priceRange
+        };
+
+        // Give more weight to core fields
+        Object.entries(coreFields).forEach(([field, value]) => {
+            maxPoints += 20;
+            if (value) {
+                points += 20;
+                breakdown.push(`✓ ${field}`);
+            }
+        });
+
+        // Additional details (worth fewer points)
+        const additionalFields = {
+            'Indoor/Outdoor': formData.eventDetails.indoorOutdoor,
+            'Time Information': !formData.eventDetails.startTimeUnknown && formData.eventDetails.startTime,
+            'Duration': !formData.eventDetails.durationUnknown && formData.eventDetails.duration,
+            'Number of People': !formData.eventDetails.numPeopleUnknown && formData.eventDetails.numPeople,
+            'Style Preferences': Object.values(formData.eventDetails.stylePreferences || {}).some(v => v),
+            'Deliverables': Object.values(formData.eventDetails.deliverables || {}).some(v => v)
+        };
+
+        Object.entries(additionalFields).forEach(([field, value]) => {
+            maxPoints += 5;
+            if (value) {
+                points += 5;
+                breakdown.push(`✓ ${field}`);
+            }
+        });
+
+        // Bonus points
+        if (formData.photos && formData.photos.length > 0) {
+            points += 10;
+            maxPoints += 10;
+            breakdown.push('✓ Inspiration Photos');
+        }
+
+        if (formData.eventDetails.pinterestBoard) {
+            points += 5;
+            maxPoints += 5;
+            breakdown.push('✓ Pinterest Board');
+        }
+
+        const score = Math.round((points / maxPoints) * 100);
+
+        return {
+            score,
+            breakdown,
+            points,
+            maxPoints
+        };
+    };
+
+    const updateBidScore = () => {
+        const { score } = calculateBidScore(formData);
+        setBidScore(score);
+        
+        if (score === 100) {
+            setScoreMessage('Perfect! All details added');
+        } else if (score >= 80) {
+            setScoreMessage('Great job!');
+        } else if (score >= 60) {
+            setScoreMessage('Add details for better matches');
+        } else {
+            setScoreMessage('More info = better bids');
+        }
+    };
+
+    const handleEarnedCoupon = async () => {
+        try {
+            const couponCode = `QUALITY${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+            
+            const { error } = await supabase
+                .from('coupons')
+                .insert([{
+                    code: couponCode,
+                    discount_amount: 25,
+                    valid: true,
+                    expiration_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    description: 'Earned for detailed request completion'
+                }]);
+
+            if (error) throw error;
+
+            setCouponCode(couponCode);
+            handleApplyCoupon();
+        } catch (err) {
+            console.error('Error generating coupon:', err);
+        }
+    };
+
+    const BidScoreIndicator = ({ score, message }) => (
+        <div className="bid-score-container">
+            <div className="score-circle" style={{
+                background: `conic-gradient(#A328F4 ${score}%, #f0f0f0 ${score}%)`
+            }}>
+                <span>{score}%</span>
+            </div>
+            {message && <div className="score-message">{message}</div>}
+        </div>
+    );
+
+    // Add useEffect to update score when component mounts
+    useEffect(() => {
+        updateBidScore();
+    }, []);
+
+    const analyzeEventDetails = (eventDetails, eventType) => {
+        let basePrice = 1000; // Lower base price for standard coverage (was 2000)
+        let factors = [];
+
+        // Event type factor
+        if (eventType === 'Wedding') {
+            basePrice = 2000; // Lower wedding base price (was 3000)
+            factors.push('Wedding videography base package');
+        } else {
+            factors.push('Standard videography base package');
+        }
+
+        // Duration factor
+        if (!eventDetails.durationUnknown && eventDetails.duration) {
+            const hours = parseInt(eventDetails.duration);
+            if (hours > 4) {
+                basePrice += (hours - 4) * 200; // Lower hourly rate (was 250)
+                factors.push(`Extended duration (${hours} hours)`);
+            }
+        }
+
+        // Wedding coverage factor
+        if (eventType === 'Wedding') {
+            let coveragePoints = 0;
+            const weddingDetails = eventDetails.weddingDetails || {};
+            
+            if (weddingDetails.preCeremony) coveragePoints++;
+            if (weddingDetails.ceremony) coveragePoints++;
+            if (weddingDetails.luncheon) coveragePoints++;
+            if (weddingDetails.reception) coveragePoints++;
+
+            if (coveragePoints > 2) {
+                basePrice += (coveragePoints - 2) * 300; // Lower per-event rate (was 400)
+                factors.push(`Coverage for ${coveragePoints} events`);
+            }
+        }
+
+        // Group size factor
+        if (!eventDetails.numPeopleUnknown && eventDetails.numPeople) {
+            const people = parseInt(eventDetails.numPeople);
+            if (people > 50) {
+                basePrice += 200; // Lower large group fee (was 300)
+                factors.push('Large group (50+ people)');
+            }
+        }
+
+        // Round to nearest price bracket
+        const brackets = [1000, 1500, 2500, 3500, 4500]; // Adjusted brackets down
+        const suggestedRange = brackets.find(b => basePrice <= b) || '4500+';
+        
+        return {
+            suggestedRange: suggestedRange === 4500 ? '4500+' : `${suggestedRange-1000}-${suggestedRange}`,
+            factors,
+            basePrice
+        };
+    };
+
+    const getBudgetRecommendation = (preference, eventType, eventDetails) => {
+        const analysis = analyzeEventDetails(eventDetails, eventType);
+        const baseRecommendation = analysis.suggestedRange;
+
+        // Adjust based on price-quality preference
+        let adjustedRange = baseRecommendation;
+        if (preference === "1") {
+            // Try to suggest one bracket lower if possible
+            const currentMin = parseInt(baseRecommendation.split('-')[0]);
+            adjustedRange = currentMin <= 1500 ? '500-1500' : `${currentMin-1000}-${currentMin}`;
+        } else if (preference === "3") {
+            // Suggest one bracket higher
+            const currentMax = baseRecommendation.includes('+') ? 6500 : parseInt(baseRecommendation.split('-')[1]);
+            adjustedRange = currentMax >= 5500 ? '5500+' : `${currentMax}-${currentMax+1000}`;
+        }
+
+        return {
+            [preference]: {
+                range: adjustedRange,
+                message: `Recommended Budget Range: $${adjustedRange}`,
+                analysis: {
+                    basePrice: analysis.basePrice,
+                    factors: analysis.factors
+                }
+            }
+        };
+    };
+
+    const renderBudgetSection = () => {
+        return (
+            <div className='form-grid'>
+                <div className="price-quality-slider-container">
+                    <div className="slider-header">What matters most to you?</div>
+                    <div className="slider-labels">
+                        <span>Budget Conscious</span>
+                        <span>Quality Focused</span>
+                    </div>
+                    <input
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="1"
+                        value={formData.eventDetails.priceQualityPreference || "2"}
+                        onChange={(e) => {
+                            const newPreference = e.target.value;
+                            const recommendation = getBudgetRecommendation(
+                                newPreference,
+                                formData.eventType,
+                                formData.eventDetails
+                            )[newPreference].range;
+
+                            // Update both the preference and the price range
+                            handleInputChange('eventDetails', {
+                                ...formData.eventDetails,
+                                priceQualityPreference: newPreference,
+                                priceRange: recommendation
+                            });
+                        }}
+                        className="price-quality-slider"
+                    />
+                    <div className="preference-description">
+                        <div className="preference-detail">
+                            {formData.eventDetails.priceQualityPreference === "1" && (
+                                <p>👉 Focus on finding budget-friendly options while maintaining good quality</p>
+                            )}
+                            {formData.eventDetails.priceQualityPreference === "2" && (
+                                <p>Balanced</p>
+                            )}
+                            {formData.eventDetails.priceQualityPreference === "3" && (
+                                <>
+                                    <p>👉 Priority on portfolio quality and experience</p>
+                                    <p>👉 Access to top-tier videographers</p>
+                                    <p>👉 Ideal for those seeking premium results</p>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    {formData.eventType && (
+                    <div className="budget-guidance-container">
+                        <div className="budget-insights">
+                            <div className="budget-recommendation">
+                                {getBudgetRecommendation(
+                                    formData.eventDetails.priceQualityPreference || "2",
+                                    formData.eventType,
+                                    formData.eventDetails
+                                )[formData.eventDetails.priceQualityPreference || "2"].message}
+                            </div>
+                            <div className="budget-insight-header">This recommendation is based on:</div>
+                            <div className="budget-insight-details">
+                                {getBudgetRecommendation(
+                                    formData.eventDetails.priceQualityPreference || "2",
+                                    formData.eventType,
+                                    formData.eventDetails
+                                )[formData.eventDetails.priceQualityPreference || "2"].analysis.factors.map((factor, index) => (
+                                    <div key={index} className="insight-item">
+                                        <span className="insight-icon">•</span>
+                                        <span className="insight-text">{factor}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+                </div>
+
+                <div className="custom-input-container required">
+                    <select
+                        name="priceRange"
+                        value={formData.eventDetails.priceRange}
+                        onChange={(e) => handleInputChange('eventDetails', {
+                            ...formData.eventDetails,
+                            priceRange: e.target.value
+                        })}
+                        className="custom-input"
+                    >
+                        <option value="">Select a range</option>
+                        <option value="500-1000">$500-1,000</option>
+                        <option value="1000-1500">$1,000-1,500</option>
+                        <option value="1500-2500">$1,500-2,500</option>
+                        <option value="2500-3500">$2,500-3,500</option>
+                        <option value="3500-4500">$3,500-4,500</option>
+                        <option value="4500+">$4,500+</option>
+                    </select>
+                    <label htmlFor="priceRange" className="custom-label">
+                        Budget Range
+                    </label>
+                </div>
+
+                <div className="custom-input-container optional">
+                    <ReactQuill
+                        value={formData.eventDetails.additionalInfo || ''}
+                        onChange={(content) => handleInputChange('eventDetails', {
+                            ...formData.eventDetails,
+                            additionalInfo: content
+                        })}
+                        modules={modules}
+                        placeholder="Any special requests or additional information videographers should know..."
+                    />
+                    <label htmlFor="additionalInfo" className="custom-label">
+                        Additional Information
+                    </label>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className='request-form-overall-container'>
             {isAuthModalOpen && <AuthModal setIsModalOpen={setIsAuthModalOpen} onSuccess={handleAuthSuccess} />}
@@ -1405,20 +1728,19 @@ function VideographyRequest() {
                 </div>
             </div>
             <div className='request-form-container-details' style={{alignItems:"normal"}}>
-                {/* Status bar container moved above title for desktop */}
-
-
-                <h2 className="request-form-header" style={{textAlign:'left', marginLeft:"20px"}}>
-                    {getSteps()[currentStep]}
-                </h2>
-
-                            {/* Display selected vendor information */}
-            {selectedVendor && (
-                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
-                    <img src={vendorImage} alt={selectedVendor.business_name} className="vendor-profile-image" style={{marginRight:'8px'}}/>
-                    <h3 className="selected-vendor-info">{selectedVendor.business_name} will be notified</h3>
+                <div className="form-header-section">
+                    <h2 className="request-form-header">
+                        {getSteps()[currentStep]}
+                    </h2>
+                    <BidScoreIndicator score={bidScore} message={scoreMessage} />
                 </div>
-            )}
+                {/* Display selected vendor information */}
+                {selectedVendor && (
+                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
+                        <img src={vendorImage} alt={selectedVendor.business_name} className="vendor-profile-image" style={{marginRight:'8px'}}/>
+                        <h3 className="selected-vendor-info">{selectedVendor.business_name} will be notified</h3>
+                    </div>
+                )}
                 
                 {/* Mobile status bar */}
                 <div className="request-form-status-container mobile-only">
