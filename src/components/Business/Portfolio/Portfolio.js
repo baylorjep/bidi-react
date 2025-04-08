@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
 import "../../../styles/Portfolio.css";
 import EditProfileModal from "./EditProfileModal"; // Import modal component
@@ -20,14 +20,14 @@ const Portfolio = ({ profileId: passedProfileId }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editFields, setEditFields] = useState({});
   const [averageRating, setAverageRating] = useState(null);
-  const [bidStats, setBidStats] = useState({ average: null, count: 0 });
+  const [, setBidStats] = useState({ average: null, count: 0 });
   const [reviews, setReviews] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [expandedReviews, setExpandedReviews] = useState({});
   const [portfolioVideos, setPortfolioVideos] = useState([]);
   const [isIndividual, setIsIndividual] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
-  const [showReviewForm, setShowReviewForm] = useState(false);
+  // const [showReviewForm, setShowReviewForm] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false); // State for modal visibility
   const navigate = useNavigate();
 

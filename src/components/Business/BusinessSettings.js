@@ -9,7 +9,7 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 
 const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [isVerified, setIsVerified] = useState(false);
-  const [isVerificationPending, setIsVerificationPending] = useState(false);
+  // const [isVerificationPending, setIsVerificationPending] = useState(false);
   const [currentMinPrice, setCurrentMinPrice] = useState(null);
   const [newCouponCode, setNewCouponCode] = useState("");
   const [activeCoupon, setActiveCoupon] = useState(null);

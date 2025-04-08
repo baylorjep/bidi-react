@@ -3,7 +3,7 @@ import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import { supabase } from "../../supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 import "../../App.css"; // Include this for custom styles
-import { Modal, Button } from "react-bootstrap"; // Make sure to install react-bootstrap
+import { Modal } from "react-bootstrap"; // Make sure to install react-bootstrap
 import Verification from "../../assets/Frame 1162.svg";
 
 const BusinessDashboard = () => {
@@ -15,14 +15,14 @@ const BusinessDashboard = () => {
   const [percentage, setPercentage] = useState("");
   const [number, setNumber] = useState("");
   const [paymentType, setPaymentType] = useState(""); // "percentage" or "flat fee"
-  const [downPaymentAmount, setDownPaymentAmount] = useState(0);
-  const [requestData, setRequestData] = useState(null);
-  const [photographyRequestData, setPhotographyRequestData] = useState(null);
+  // const [downPaymentAmount, setDownPaymentAmount] = useState(0);
+  // const [requestData, setRequestData] = useState(null);
+  // const [photographyRequestData, setPhotographyRequestData] = useState(null);
   const [showMinPriceModal, setShowMinPriceModal] = useState(false);
   const [minimumPrice, setMinimumPrice] = useState("");
   const [currentMinPrice, setCurrentMinPrice] = useState(null);
   const [showCouponModal, setShowCouponModal] = useState(false);
-  const [affiliateCoupons, setAffiliateCoupons] = useState([]);
+  // const [affiliateCoupons, setAffiliateCoupons] = useState([]);
   const [newCouponCode, setNewCouponCode] = useState("");
   const [activeCoupon, setActiveCoupon] = useState(null);
   const [calculatorAmount, setCalculatorAmount] = useState("");
@@ -33,7 +33,7 @@ const BusinessDashboard = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [isVerificationPending, setIsVerificationPending] = useState(false);
   const [stripeError, setStripeError] = useState(false);
-  const [portfolioPhotos, setPortfolioPhotos] = useState([]);
+  const [, setPortfolioPhotos] = useState([]);
   const [setupProgress, setSetupProgress] = useState({
     paymentAccount: false,
     downPayment: false,
@@ -234,12 +234,11 @@ const BusinessDashboard = () => {
                 }
 
                 // Try Catering requests
-                const { data: cateringRequest, error: cateringError } =
-                  await supabase
-                    .from("catering_requests")
-                    .select("*")
-                    .eq("id", bid.request_id)
-                    .single();
+                const { data: cateringRequest } = await supabase
+                  .from("catering_requests")
+                  .select("*")
+                  .eq("id", bid.request_id)
+                  .single();
 
                 if (cateringRequest) {
                   return {
@@ -252,12 +251,11 @@ const BusinessDashboard = () => {
                 }
 
                 // Try Beauty requests
-                const { data: beautyRequest, error: beautyError } =
-                  await supabase
-                    .from("beauty_requests")
-                    .select("*")
-                    .eq("id", bid.request_id)
-                    .single();
+                const { data: beautyRequest } = await supabase
+                  .from("beauty_requests")
+                  .select("*")
+                  .eq("id", bid.request_id)
+                  .single();
 
                 if (beautyRequest) {
                   return {
@@ -270,12 +268,11 @@ const BusinessDashboard = () => {
                 }
 
                 // Try Florist requests
-                const { data: floristRequest, error: floristError } =
-                  await supabase
-                    .from("florist_requests")
-                    .select("*")
-                    .eq("id", bid.request_id)
-                    .single();
+                const { data: floristRequest } = await supabase
+                  .from("florist_requests")
+                  .select("*")
+                  .eq("id", bid.request_id)
+                  .single();
 
                 if (floristRequest) {
                   return {
@@ -288,7 +285,7 @@ const BusinessDashboard = () => {
                 }
 
                 // Try Photography requests
-                const { data: photoRequest, error: photoError } = await supabase
+                const { data: photoRequest } = await supabase
                   .from("photography_requests")
                   .select("*")
                   .eq("id", bid.request_id)
@@ -305,7 +302,7 @@ const BusinessDashboard = () => {
                 }
 
                 // Try Videography requests
-                const { data: videoRequest, error: videoError } = await supabase
+                const { data: videoRequest } = await supabase
                   .from("videography_requests")
                   .select("*")
                   .eq("id", bid.request_id)
@@ -322,12 +319,11 @@ const BusinessDashboard = () => {
                 }
 
                 // Try legacy/normal requests
-                const { data: normalRequest, error: normalError } =
-                  await supabase
-                    .from("requests")
-                    .select("*")
-                    .eq("id", bid.request_id)
-                    .single();
+                const { data: normalRequest } = await supabase
+                  .from("requests")
+                  .select("*")
+                  .eq("id", bid.request_id)
+                  .single();
 
                 if (normalRequest) {
                   return {
@@ -543,33 +539,33 @@ const BusinessDashboard = () => {
     }
   };
 
-  // Shorten description to a certain length
-  const truncateDescription = (description, length) => {
-    if (!description) return ""; // Return empty string if description is null/undefined
-    if (description.length <= length) return description;
-    return description.slice(0, length) + "...";
-  };
+  // // Shorten description to a certain length
+  // const truncateDescription = (description, length) => {
+  //   if (!description) return ""; // Return empty string if description is null/undefined
+  //   if (description.length <= length) return description;
+  //   return description.slice(0, length) + "...";
+  // };
 
-  // Check if there's more content to view
-  const hasMoreContent = (description, length) => {
-    if (!description) return false; // Return false if description is null/undefined
-    return description.length > length;
-  };
+  // // Check if there's more content to view
+  // const hasMoreContent = (description, length) => {
+  //   if (!description) return false; // Return false if description is null/undefined
+  //   return description.length > length;
+  // };
 
-  const handleViewMore = (index) => {
-    setBids((prevBids) => {
-      const updatedBids = [...prevBids];
-      updatedBids[index] = {
-        ...updatedBids[index],
-        isDescriptionExpanded: !updatedBids[index].isDescriptionExpanded,
-      };
-      return updatedBids;
-    });
-  };
+  // const handleViewMore = (index) => {
+  //   setBids((prevBids) => {
+  //     const updatedBids = [...prevBids];
+  //     updatedBids[index] = {
+  //       ...updatedBids[index],
+  //       isDescriptionExpanded: !updatedBids[index].isDescriptionExpanded,
+  //     };
+  //     return updatedBids;
+  //   });
+  // };
 
   const handleRemoveBid = async (bidId) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("bids")
         .update({ hidden: true })
         .eq("id", bidId);
@@ -664,7 +660,7 @@ const BusinessDashboard = () => {
     }
 
     if (existingProfile) {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("business_profiles")
         .update({
           down_payment_type: paymentType,
@@ -704,7 +700,7 @@ const BusinessDashboard = () => {
       return;
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("business_profiles")
       .update({
         minimum_price: Number(minimumPrice),
