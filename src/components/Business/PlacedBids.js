@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { supabase } from "../../supabaseClient";
+// import { supabase } from "../../supabaseClient";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import "../../styles/BusinessDashboard.css";
 
 function PlacedBidDisplay({ requests }) {
   // Ensure requestId is properly destructured
   const [Bids, setBidInfo] = useState([]);
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (requests && requests.length) {
       setBidInfo(requests); // Set the Bids state when requests data is available
@@ -86,7 +89,14 @@ function PlacedBidDisplay({ requests }) {
               {truncateText(BidInfo.additional_comments, 50, 15)}
             </p>
           </div>
-          <button className="view-btn-card">View</button>
+
+          {/* View More Button */}
+          <button
+            className="view-btn-card"
+            onClick={() => navigate(`/submit-bid/${BidInfo.id}`)} // Navigate to the submit-bid page with the request ID
+          >
+            View More
+          </button>
         </div>
       ))}
     </>

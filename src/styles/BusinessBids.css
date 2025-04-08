@@ -5,7 +5,8 @@
   align-items: flex-start;
   gap: 1.5vw;
   width: 100%;
-  padding: 2vw;
+  padding-left: 5.1vw;
+  padding-right: 5.1vw;
   box-sizing: border-box;
 }
 

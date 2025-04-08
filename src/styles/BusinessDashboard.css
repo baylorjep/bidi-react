@@ -145,7 +145,7 @@
   flex-wrap: wrap;
   transform: scale(0.85); /* Keeps everything proportionally smaller */
   transform-origin: center;
-  margin-top: -7vh; /* Moves it higher up the page */
+  margin-top: -6vh; /* Moves it higher up the page */
   height: auto; /* Allows height to adjust dynamically */
   min-height: 8vh; /* Ensures it doesn’t collapse too much */
 }

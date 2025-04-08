@@ -1,66 +1,42 @@
 import React, { useState, useEffect } from "react";
-import StripeDashboardButton from "../Stripe/StripeDashboardButton";
+// import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import { supabase } from "../../supabaseClient";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../../App.css"; // Include this for custom styles
-import { Modal, Button } from "react-bootstrap"; // Make sure to install react-bootstrap
-import Verification from "../../assets/Frame 1162.svg";
+// import { Modal, Button } from "react-bootstrap"; // Make sure to install react-bootstrap
+// import Verification from "../../assets/Frame 1162.svg";
 import "../../styles/BusinessDashboard.css";
 import DashboardBanner from "./DashboardBanner.js";
 import verifiedCheckIcon from "../../assets/images/Icons/verified-check.svg";
 import dashboardIcon from "../../assets/images/Icons/dashboard.svg";
 import bidsIcon from "../../assets/images/Icons/bids.svg";
 import messageIcon from "../../assets/images/Icons/message.svg";
-import paymentIcon from "../../assets/images/Icons/payment.svg";
+// import paymentIcon from "../../assets/images/Icons/payment.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
-import MessagingView from "../Messaging/MessagingView";
+import profileIcon from "../../assets/images/Icons/profile.svg";
+import bidiLogo from "../../assets/images/bidi check.png";
+// import MessagingView from "../Messaging/MessagingView";
 import PlacedBidDisplay from "./PlacedBids.js";
 import BusinessBids from "./BusinessBids.js";
-import ProfilePage from "../Profile/Profile.js";
+// import ProfilePage from "../Profile/Profile.js";
+import BusinessSettings from "./BusinessSettings.js";
+import PortfolioPage from "../Business/Portfolio/Portfolio.js";
+import Onboarding from "../../components/Stripe/Onboarding.js";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
   const [businessName, setBusinessName] = useState("");
   const [BidiPlus, setBidiPlus] = useState(false);
   const [requests, setRequests] = useState([]); // Stores service requests
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState(
+    localStorage.getItem("activeSection") || "dashboard"
+  );
   const [profileImage, setProfileImage] = useState("/images/default.jpg");
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [bids, setBids] = useState([]);
-  const [isVerified, setIsVerified] = useState(false);
-  const [isVerificationPending, setIsVerificationPending] = useState(false);
-  const [stripeError, setStripeError] = useState(false);
-  const [portfolioPhotos, setPortfolioPhotos] = useState([]);
-  const [showModal, setShowModal] = useState(false); // For showing modal
   const navigate = useNavigate();
-  const [percentage, setPercentage] = useState("");
-  const [number, setNumber] = useState("");
-  const [paymentType, setPaymentType] = useState(""); // "percentage" or "flat fee"
-  const [downPaymentAmount, setDownPaymentAmount] = useState(0);
-  const [requestData, setRequestData] = useState(null);
-  const [photographyRequestData, setPhotographyRequestData] = useState(null);
-  const [showMinPriceModal, setShowMinPriceModal] = useState(false);
-  const [minimumPrice, setMinimumPrice] = useState("");
-  const [currentMinPrice, setCurrentMinPrice] = useState(null);
-  const [showCouponModal, setShowCouponModal] = useState(false);
-  const [affiliateCoupons, setAffiliateCoupons] = useState([]);
-  const [newCouponCode, setNewCouponCode] = useState("");
-  const [activeCoupon, setActiveCoupon] = useState(null);
-  const [calculatorAmount, setCalculatorAmount] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [unviewedBidCount, setUnviewedBidCount] = useState(0);
-  const [setupProgress, setSetupProgress] = useState({
-    paymentAccount: false,
-    downPayment: false,
-    minimumPrice: false,
-    affiliateCoupon: false,
-    verification: false,
-    story: false,
-  });
-  const [profileDetails, setProfileDetails] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,7 +57,7 @@ const BusinessDashSidebar = () => {
           supabase
             .from("business_profiles")
             .select(
-              "business_name, stripe_account_id, Bidi_Plus, business_category"
+              "business_name, stripe_account_id, Bidi_Plus, business_category, is_admin"
             )
             .eq("id", user.id)
             .single(),
@@ -91,25 +67,7 @@ const BusinessDashSidebar = () => {
             .eq("user_id", user.id)
             .eq("photo_type", "profile")
             .single(),
-          supabase
-            .from("bids")
-            .select(
-              `
-                        *,
-                        business_profiles(
-                            business_name, 
-                            business_category, 
-                            phone, 
-                            website, 
-                            id, 
-                            membership_tier,
-                            down_payment_type,
-                            amount,
-                            stripe_account_id
-                        )
-                    `
-            )
-            .eq("user_id", user.id), // Fetch all bids for this business
+          supabase.from("bids").select("*").eq("user_id", user.id), // Fetch all bids for this business
         ]);
 
         if (profileRes.error) {
@@ -124,6 +82,7 @@ const BusinessDashSidebar = () => {
           );
           setConnectedAccountId(profileRes.data.stripe_account_id || null);
           setBidiPlus(!!profileRes.data.Bidi_Plus);
+          setIsAdmin(!!profileRes.data.is_admin);
           setProfile(profileRes.data);
         }
 
@@ -134,28 +93,15 @@ const BusinessDashSidebar = () => {
           console.error("Error fetching profile picture:", profilePicRes.error);
         }
 
-        // Fetch service requests based on business category
-        if (profileRes.data.business_category) {
-          const { data: requestsData, error: requestsError } = await supabase
-            .from("requests")
-            .select("*")
-            .eq("service_category", profileRes.data.business_category);
-
-          if (requestsError) {
-            console.error("Error fetching requests:", requestsError);
-            return;
-          }
-          setRequests(requestsData);
-        } else {
-          console.warn("No business category found for this profile.");
-          setRequests([]); // Clear any stale requests
+        if (profilePicRes.data) {
+          setProfileImage(profilePicRes.data.photo_url);
+        } else if (profilePicRes.error) {
+          console.error("Error fetching profile picture:", profilePicRes.error);
         }
 
-        // Set fetched bids
         if (bidsRes.error) {
           console.error("Error fetching bids:", bidsRes.error);
         } else {
-          console.log("Fetched Bids:", bidsRes.data);
           setBids(bidsRes.data);
         }
       } catch (error) {
@@ -165,6 +111,33 @@ const BusinessDashSidebar = () => {
 
     fetchData();
   }, []);
+
+  // Save the active section to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("activeSection", activeSection);
+  }, [activeSection]);
+
+  const handleViewPortfolio = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profileDetails, error } = await supabase
+      .from("business_profiles")
+      .select("id")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching profile details:", error);
+      return;
+    }
+
+    // Set the active section to "portfolio" and pass the profile ID
+    setProfile(profileDetails.id); // Store the profile ID in state
+    setActiveSection("portfolio");
+  };
 
   const formatBusinessName = (name) => {
     if (!name) return "Your Business";
@@ -248,20 +221,24 @@ const BusinessDashSidebar = () => {
               <img src={messageIcon} alt="Message" />
               <span>Message</span>
             </li>
-            <li>
-              {connectedAccountId ? (
-                <StripeDashboardButton accountId={connectedAccountId} />
-              ) : (
-                <Link to="/onboarding">
-                  <img src={paymentIcon} alt="Payment" />
-                  <span>Payment</span>
-                </Link>
-              )}
+            <li
+              onClick={() => {
+                handleViewPortfolio(); // Trigger the function when clicking the button
+              }}
+            >
+              <img src={profileIcon} alt="Portfolio" />
+              <span>Portfolio</span>
             </li>
-            <li onClick={() => setActiveSection("profile")}>
+            <li onClick={() => setActiveSection("settings")}>
               <img src={settingsIcon} alt="Settings" />
               <span>Settings</span>
             </li>
+            {isAdmin && (
+              <li onClick={() => navigate("/admin-dashboard")}>
+                <img src={bidiLogo} alt="Admin" />
+                <span>Admin</span>
+              </li>
+            )}
           </ul>
 
           {/* Upgrade Prompt */}
@@ -276,6 +253,7 @@ const BusinessDashSidebar = () => {
         {/* Main Dashboard */}
         <main className="dashboard-main">
           <DashboardBanner />
+
           {/* find active sections */}
           {activeSection === "dashboard" ? (
             <section className="job-listings">
@@ -298,14 +276,33 @@ const BusinessDashSidebar = () => {
               </div>
             </section>
           ) : activeSection === "messages" ? (
-            <MessagingView />
+            // <MessagingView />
+            <div
+              className="text-gray-700 mt-4"
+              style={{
+                fontSize: "2vw",
+                fontWeight: "bold",
+              }}
+            >
+              Coming Soon!
+            </div>
           ) : activeSection === "bids" ? (
             <BusinessBids bids={bids} />
           ) : activeSection === "onboarding" ? (
-            <div>onboarding filler</div>
-          ) : activeSection === "profile" ? (
-            <ProfilePage />
+            <Onboarding setActiveSection={setActiveSection} />
+          ) : activeSection === "portfolio" ? (
+            <PortfolioPage profileId={profile} /> // Pass profileId as a prop
+          ) : activeSection === "settings" ? (
+            <BusinessSettings
+              setActiveSection={setActiveSection}
+              connectedAccountId={connectedAccountId}
+            />
           ) : (
+            // ) : activeSection === "admin" ? (
+            //   <AdminDashboard
+            //     connectedAccountId={connectedAccountId}
+            //     setUnviewedBidCount={setUnviewedBidCount}
+            //   />
             <div>An error occurred</div>
           )}
         </main>

@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import "../../styles/BusinessBids.css";
+import WithdrawConfirmationModal from "./WithdrawConfirmationModal";
 
 const BusinessBids = () => {
   const [bids, setBids] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [selectedBidId, setSelectedBidId] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBusinessBids = async () => {
@@ -25,7 +30,8 @@ const BusinessBids = () => {
         const { data: businessBids, error: bidError } = await supabase
           .from("bids")
           .select("id, request_id, category, status, bid_amount")
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .or("hidden.is.false,hidden.is.null");
 
         if (bidError) {
           console.error("❌ Error fetching bids:", bidError);
@@ -74,6 +80,41 @@ const BusinessBids = () => {
     fetchBusinessBids();
   }, []);
 
+  const handleRemoveBid = async (bidId) => {
+    try {
+      const { data, error } = await supabase
+        .from("bids")
+        .update({ hidden: true }) // Mark the bid as hidden
+        .eq("id", bidId);
+
+      if (error) {
+        console.error("Error updating bid:", error);
+      } else {
+        // Update the local state to reflect the change immediately
+        setBids((prevBids) => prevBids.filter((bid) => bid.id !== bidId));
+      }
+    } catch (err) {
+      console.error("Error:", err);
+    }
+  };
+
+  const openWithdrawModal = (bidId) => {
+    setSelectedBidId(bidId); // Set the bid ID to withdraw
+    setShowWithdrawModal(true); // Show the modal
+  };
+
+  const closeWithdrawModal = () => {
+    setSelectedBidId(null); // Clear the selected bid ID
+    setShowWithdrawModal(false); // Hide the modal
+  };
+
+  const confirmWithdraw = () => {
+    if (selectedBidId) {
+      handleRemoveBid(selectedBidId); // Call the remove bid function
+    }
+    closeWithdrawModal(); // Close the modal
+  };
+
   // Group bids by status
   const pendingBids = bids.filter((bid) => bid.status === "pending");
   const approvedBids = bids.filter((bid) => bid.status === "approved");
@@ -100,6 +141,13 @@ const BusinessBids = () => {
       <br />
       {bidsList.length > 0 ? (
         <div className="bids-grid">
+          {/* Render the modal */}
+          <WithdrawConfirmationModal
+            show={showWithdrawModal}
+            onClose={closeWithdrawModal}
+            onConfirm={confirmWithdraw}
+          />
+
           {bidsList.map((bid) => {
             const request = requests.find((req) => req.id === bid.request_id);
             return (
@@ -141,7 +189,32 @@ const BusinessBids = () => {
                         "No description available."}
                     </p>
                   </div>
-                  <button className="view-btn">View</button>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      gap: "10px",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {/* Withdraw Button */}
+                    <button
+                      className="view-btn-card"
+                      onClick={() => openWithdrawModal(bid.id)} // Open the modal
+                    >
+                      Withdraw
+                    </button>
+
+                    {/* View/Edit Button */}
+                    <button
+                      className="view-btn-card"
+                      onClick={() =>
+                        navigate(`/edit-bid/${bid.request_id}/${bid.id}`)
+                      } // Navigate to the edit page
+                    >
+                      View/Edit
+                    </button>
+                  </div>
                 </div>
               )
             );
