@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import VendorList from '../components/VendorList/VendorList';
 import { Helmet } from 'react-helmet';
 import '../styles/LocationBasedVendors.css';
+import { supabase } from '../supabaseClient';
 
 const categories = [
     { id: 'photography', name: 'Photographer' },
@@ -138,6 +139,37 @@ const LocationBasedVendors = () => {
         // Reset page when filters change
         setCurrentPage(1);
     }, [selectedCategory, selectedType, selectedCounty, selectedCity]);
+
+    // Add this new useEffect to update total count when filters change
+    useEffect(() => {
+        const fetchVendorCount = async () => {
+            let query = supabase
+                .from('business_profiles')
+                .select('*', { count: 'exact' })
+                .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
+
+            if (selectedCategory) {
+                query = query.eq('business_category', selectedCategory);
+            }
+
+            // Add location filter if present
+            if (selectedCity || selectedCounty) {
+                const locationTerm = selectedCity || selectedCounty;
+                query = query.ilike('business_address', `%${locationTerm.replace(/-/g, ' ')}%`);
+            }
+
+            const { count, error } = await query;
+
+            if (error) {
+                console.error('Error fetching vendor count:', error);
+                return;
+            }
+
+            setTotalCount(count);
+        };
+
+        fetchVendorCount();
+    }, [selectedCategory, selectedCity, selectedCounty]);
 
     const formatLocation = () => {
         if (!county && !city) return 'Utah';
@@ -535,16 +567,17 @@ const LocationBasedVendors = () => {
             </div>
 
             <VendorList 
+                key={`${selectedCategory}-${selectedType}-${selectedCity || selectedCounty}`}
                 selectedCategory={selectedCategory}
                 sortOrder="recommended"
-                location={selectedCity || selectedCounty} // Changed to use selected values
+                location={selectedCity || selectedCounty}
                 categoryType={selectedType === 'all' ? '' : selectedType}
                 currentPage={currentPage}
                 vendorsPerPage={vendorsPerPage}
                 setCurrentPage={setCurrentPage}
                 totalCount={totalCount}
                 setTotalCount={setTotalCount}
-                preferredLocation={selectedCity || selectedCounty} // Changed to use selected values
+                preferredLocation={selectedCity || selectedCounty}
                 preferredType={selectedType}
             />
         </div>
