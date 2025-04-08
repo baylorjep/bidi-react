@@ -32,6 +32,11 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
     const [scrollAmount, setScrollAmount] = useState(0);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [activeIndex, setActiveIndex] = useState(null);
+    const [stats, setStats] = useState({
+        users: 0,
+        vendors: 0,
+        bids: 0
+    });
   
     useEffect(() => {
       const fetchSessionAndRole = async () => {
@@ -68,7 +73,49 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
       }
     }, []);
   
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                // Get users count (excluding vendors)
+                const { count: usersCount } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact' })
+                    .eq('role', 'individual');
 
+                // Get vendors count
+                const { count: vendorsCount } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact' })
+                    .eq('role', 'business');
+
+                // Get bids count
+                const { count: bidsCount } = await supabase
+                    .from('bids')
+                    .select('*', { count: 'exact' });
+
+                setStats({
+                    users: usersCount || 0,
+                    vendors: vendorsCount || 0,
+                    bids: bidsCount || 0
+                });
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        };
+
+        fetchStats();
+        
+        // Optional: Set up real-time subscription
+        const subscription = supabase
+            .channel('stats_changes')
+            .on('postgres_changes', { event: '*', schema: 'public' }, fetchStats)
+            .subscribe();
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
+  
     // Add refs for each section
     const [mastheadRef, mastheadVisible] = useIntersectionObserver();
     const [connectRef, connectVisible] = useIntersectionObserver();
@@ -155,16 +202,16 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                         </div>
                     <div className='stat-container'>
                             <div className='stat-box' >
-                                <div className='stat-title'>Requests</div>
-                                <div className='stat'>150+</div>
+                                <div className='stat-title'>Users</div>
+                                <div className='stat'>{stats.users}</div>
                             </div>
                             <div className='stat-box'>
-                                <div className='stat-title'>Users</div>
-                                <div className='stat'>420+</div>
+                                <div className='stat-title'>Vendors</div>
+                                <div className='stat'>{stats.vendors}</div>
                             </div>
                             <div className='stat-box final'>
                                 <div className='stat-title'>Bids</div>
-                                <div className='stat'>1100+</div>
+                                <div className='stat'>{stats.bids}</div>
                             </div>
 
                     </div>

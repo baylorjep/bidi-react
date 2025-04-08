@@ -1063,8 +1063,21 @@ const BusinessDashboard = () => {
                           <p><strong>End Date: </strong>{bid.request_data?.end_date}</p>
                         )}
                         <p><strong>Location: </strong>{bid.request_data?.location}</p>
-                        <p><strong>Flower Types: </strong>{Array.isArray(bid.request_data?.flower_preferences) ? bid.request_data?.flower_preferences.join(', ') : bid.request_data?.flower_preferences}</p>
-                        <p><strong>Color Scheme: </strong>{Array.isArray(bid.request_data?.colors) ? bid.request_data?.colors.join(', ') : bid.request_data?.colors}</p>
+                        <p><strong>Flower Types: </strong>
+                          {typeof bid.request_data?.flower_preferences === 'object' 
+                            ? Object.entries(bid.request_data?.flower_preferences)
+                                .filter(([_, value]) => value === true)
+                                .map(([key]) => key)
+                                .join(', ')
+                            : Array.isArray(bid.request_data?.flower_preferences)
+                              ? bid.request_data?.flower_preferences.join(', ')
+                              : bid.request_data?.flower_preferences}
+                        </p>
+                        <p><strong>Color Scheme: </strong>
+                          {Array.isArray(bid.request_data?.colors) 
+                            ? bid.request_data?.colors.join(', ') 
+                            : bid.request_data?.colors}
+                        </p>
                       </div>
                     ) : bid.request_type === "DJ Request" ? (
                       <div>
@@ -1090,7 +1103,14 @@ const BusinessDashboard = () => {
                           </p>
                         )}
                         <p><strong>Location: </strong>{bid.request_data?.location}</p>
-                        <p><strong>Music Genre: </strong>{typeof bid.request_data?.music_preferences === 'object' ? Object.keys(bid.request_data?.music_preferences).join(', ') : bid.request_data?.music_preferences}</p>
+                        <p><strong>Music Genre: </strong>
+                          {typeof bid.request_data?.music_preferences === 'object'
+                            ? Object.entries(bid.request_data?.music_preferences)
+                                .filter(([_, value]) => value === true)
+                                .map(([key]) => key)
+                                .join(', ')
+                            : bid.request_data?.music_preferences}
+                        </p>
                         <p><strong>Equipment Needed: </strong>{bid.request_data?.equipment_needed ? 'Yes' : 'No'}</p>
                         <p><strong>Duration: </strong>{bid.request_data?.event_duration} hours</p>
                       </div>
