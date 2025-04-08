@@ -20,7 +20,7 @@ const sortOptions = [
 ];
 
 const VendorListWithFilters = () => {
-    const [selectedCategory, setSelectedCategory] = useState('photography'); // Default to 'photography'
+    const [selectedCategory, setSelectedCategory] = useState('photography');
     const [sortOrder, setSortOrder] = useState(sortOptions[0].id);
     const [vendorCount, setVendorCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
@@ -90,7 +90,6 @@ const VendorListWithFilters = () => {
             </div>
 
             <VendorList 
-                key={selectedCategory}
                 selectedCategory={selectedCategory} 
                 sortOrder={sortOrder} 
                 currentPage={currentPage}

@@ -93,7 +93,6 @@ const VendorList = ({
     }, []);
 
     useEffect(() => {
-        // Initial load of minimal data
         const fetchVendors = async () => {
             setLoading(true);
             
@@ -106,6 +105,7 @@ const VendorList = ({
                 query = query.eq('business_category', selectedCategory);
             }
 
+            // Get all vendors first
             const { data: allVendorData, error: vendorError } = await query;
 
             if (vendorError) {
@@ -114,10 +114,11 @@ const VendorList = ({
                 return;
             }
 
+            // Set total count
             setTotalCount(allVendorData.length);
             setTotalCountState(allVendorData.length);
 
-            // Get only profile photos and first portfolio photo for initial load
+            // Get all photos for all vendors
             const { data: photoData, error: photoError } = await supabase
                 .from('profile_photos')
                 .select('*')
@@ -129,8 +130,8 @@ const VendorList = ({
                 return;
             }
 
-            // Process vendors with minimal photos
-            const vendorsWithMinimalPhotos = await Promise.all(allVendorData.map(async vendor => {
+            // Process vendors with photos
+            const vendorsWithPhotos = await Promise.all(allVendorData.map(async vendor => {
                 const vendorPhotos = photoData?.filter(photo => photo.user_id === vendor.id) || [];
                 const profilePhoto = vendorPhotos.find(photo => photo.photo_type === 'profile');
                 const firstPortfolioPhoto = vendorPhotos.find(photo => 
@@ -169,21 +170,18 @@ const VendorList = ({
                 };
             }));
 
-            const sortedVendors = sortVendors(vendorsWithMinimalPhotos);
-            const paginatedVendors = sortedVendors.slice(
-                (currentPage - 1) * vendorsPerPage, 
-                currentPage * vendorsPerPage
-            );
+            const sortedVendors = sortVendors(vendorsWithPhotos);
+            
+            // Calculate pagination
+            const startIndex = (currentPage - 1) * vendorsPerPage;
+            const paginatedVendors = sortedVendors.slice(startIndex, startIndex + vendorsPerPage);
 
             setVendors(paginatedVendors);
             setLoading(false);
-
-            // After initial load, fetch remaining photos
-            setTimeout(() => setLoadAllMedia(true), 1000);
         };
 
         fetchVendors();
-    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage]);
+    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, preferredLocation, preferredType]);
 
     // Effect for loading remaining media
     useEffect(() => {

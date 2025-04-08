@@ -140,7 +140,6 @@ const LocationBasedVendors = () => {
         setCurrentPage(1);
     }, [selectedCategory, selectedType, selectedCounty, selectedCity]);
 
-    // Add this new useEffect to update total count when filters change
     useEffect(() => {
         const fetchVendorCount = async () => {
             let query = supabase
@@ -152,7 +151,6 @@ const LocationBasedVendors = () => {
                 query = query.eq('business_category', selectedCategory);
             }
 
-            // Add location filter if present
             if (selectedCity || selectedCounty) {
                 const locationTerm = selectedCity || selectedCounty;
                 query = query.ilike('business_address', `%${locationTerm.replace(/-/g, ' ')}%`);
@@ -567,7 +565,6 @@ const LocationBasedVendors = () => {
             </div>
 
             <VendorList 
-                key={`${selectedCategory}-${selectedType}-${selectedCity || selectedCounty}`}
                 selectedCategory={selectedCategory}
                 sortOrder="recommended"
                 location={selectedCity || selectedCounty}
