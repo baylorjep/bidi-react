@@ -768,3 +768,13 @@
     padding: 20px;
     text-align: center;
 }
+
+.loading-more-photos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    background: #f5f5f5;
+    color: #666;
+    font-size: 0.9em;
+}

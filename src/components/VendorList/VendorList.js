@@ -28,6 +28,7 @@ const VendorList = ({
     const [imageLoading, setImageLoading] = useState({});
     const [totalCount, setTotalCountState] = useState(0);
     const [mediaErrors, setMediaErrors] = useState({});
+    const [loadAllMedia, setLoadAllMedia] = useState(false);
     const navigate = useNavigate();
 
     const truncateText = (text, maxLength = 150) => {
@@ -92,10 +93,10 @@ const VendorList = ({
     }, []);
 
     useEffect(() => {
+        // Initial load of minimal data
         const fetchVendors = async () => {
             setLoading(true);
             
-            // Get all vendors in the category without pagination
             let query = supabase
                 .from('business_profiles')
                 .select('*')
@@ -105,7 +106,6 @@ const VendorList = ({
                 query = query.eq('business_category', selectedCategory);
             }
 
-            // Get all vendors first
             const { data: allVendorData, error: vendorError } = await query;
 
             if (vendorError) {
@@ -114,11 +114,10 @@ const VendorList = ({
                 return;
             }
 
-            // Set total count
             setTotalCount(allVendorData.length);
             setTotalCountState(allVendorData.length);
 
-            // Get all photos for all vendors
+            // Get only profile photos and first portfolio photo for initial load
             const { data: photoData, error: photoError } = await supabase
                 .from('profile_photos')
                 .select('*')
@@ -130,14 +129,13 @@ const VendorList = ({
                 return;
             }
 
-            // Process all vendors with their photos
-            const allVendorsWithPhotos = await Promise.all(allVendorData.map(async vendor => {
+            // Process vendors with minimal photos
+            const vendorsWithMinimalPhotos = await Promise.all(allVendorData.map(async vendor => {
                 const vendorPhotos = photoData?.filter(photo => photo.user_id === vendor.id) || [];
                 const profilePhoto = vendorPhotos.find(photo => photo.photo_type === 'profile');
-                const portfolioMedia = vendorPhotos.filter(photo => 
+                const firstPortfolioPhoto = vendorPhotos.find(photo => 
                     photo.photo_type === 'portfolio' || photo.photo_type === 'video'
                 );
-                const videoCount = vendorPhotos.filter(photo => photo.photo_type === 'video').length;
 
                 const { data: reviewData } = await supabase
                     .from('reviews')
@@ -161,29 +159,57 @@ const VendorList = ({
                 return {
                     ...vendor,
                     profile_photo_url: profilePhoto?.photo_url || '/images/default.jpg',
-                    portfolio_photos: portfolioMedia.map(media => media.photo_url),
+                    portfolio_photos: firstPortfolioPhoto ? [firstPortfolioPhoto.photo_url] : [],
+                    has_more_photos: vendorPhotos.length > 2, // Profile + first portfolio
                     photo_count: vendorPhotos.length,
-                    video_count: videoCount,
+                    video_count: 0,
                     average_rating: averageRating,
                     locationScore,
                     typeScore
                 };
             }));
 
-            // Sort all vendors
-            const sortedVendors = sortVendors(allVendorsWithPhotos);
-
-            // Then paginate the sorted results
-            const startIndex = (currentPage - 1) * vendorsPerPage;
-            const endIndex = startIndex + vendorsPerPage;
-            const paginatedVendors = sortedVendors.slice(startIndex, endIndex);
+            const sortedVendors = sortVendors(vendorsWithMinimalPhotos);
+            const paginatedVendors = sortedVendors.slice(
+                (currentPage - 1) * vendorsPerPage, 
+                currentPage * vendorsPerPage
+            );
 
             setVendors(paginatedVendors);
             setLoading(false);
+
+            // After initial load, fetch remaining photos
+            setTimeout(() => setLoadAllMedia(true), 1000);
         };
 
         fetchVendors();
     }, [selectedCategory, sortOrder, currentPage, vendorsPerPage]);
+
+    // Effect for loading remaining media
+    useEffect(() => {
+        if (!loadAllMedia || !vendors.length) return;
+
+        const loadRemainingMedia = async () => {
+            const updatedVendors = await Promise.all(vendors.map(async vendor => {
+                if (!vendor.has_more_photos) return vendor;
+
+                const { data: allPhotos } = await supabase
+                    .from('profile_photos')
+                    .select('*')
+                    .eq('user_id', vendor.id)
+                    .or('photo_type.eq.portfolio,photo_type.eq.video');
+
+                return {
+                    ...vendor,
+                    portfolio_photos: allPhotos?.map(photo => photo.photo_url) || vendor.portfolio_photos
+                };
+            }));
+
+            setVendors(updatedVendors);
+        };
+
+        loadRemainingMedia();
+    }, [loadAllMedia, vendors]);
 
     const sortVendors = (vendors) => {
         // Log vendors and their counts before sorting
@@ -546,6 +572,11 @@ const VendorList = ({
                                         </div>
                                     );
                                 })}
+                                {vendor.has_more_photos && !loadAllMedia && (
+                                    <div className="loading-more-photos">
+                                        Loading more photos...
+                                    </div>
+                                )}
                             </Slider>
                         ) : (
                             <img 
