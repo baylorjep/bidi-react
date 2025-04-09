@@ -195,7 +195,12 @@ const VendorList = ({
         try {
             let query = supabase
                 .from('business_profiles')
-                .select('*')
+                .select(`
+                    *,
+                    reviews (
+                        rating
+                    )
+                `)
                 .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
@@ -205,20 +210,32 @@ const VendorList = ({
             const { data: allVendorData, error: vendorError } = await query;
             if (vendorError) throw vendorError;
 
+            // Calculate average ratings
+            const vendorsWithRatings = allVendorData.map(vendor => {
+                const ratings = vendor.reviews?.map(review => review.rating) || [];
+                const averageRating = ratings.length > 0 
+                    ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+                    : null;
+                return {
+                    ...vendor,
+                    average_rating: averageRating
+                };
+            });
+
             // Set total count for pagination
-            setTotalCount(allVendorData.length);
-            setTotalCountState(allVendorData.length);
+            setTotalCount(vendorsWithRatings.length);
+            setTotalCountState(vendorsWithRatings.length);
 
             // Get ALL photos first to calculate counts
             const { data: allPhotos, error: photoError } = await supabase
                 .from('profile_photos')
                 .select('*')
-                .in('user_id', allVendorData.map(v => v.id));
+                .in('user_id', vendorsWithRatings.map(v => v.id));
 
             if (photoError) throw photoError;
 
             // Get basic vendor info for sorting
-            const vendorsWithBasicInfo = allVendorData.map(vendor => {
+            const vendorsWithBasicInfo = vendorsWithRatings.map(vendor => {
                 const vendorPhotos = allPhotos?.filter(photo => photo.user_id === vendor.id) || [];
                 const portfolioPhotoCount = vendorPhotos.filter(
                     photo => photo.photo_type === 'portfolio' || photo.photo_type === 'video'

@@ -24,7 +24,7 @@ const VendorListWithFilters = () => {
     const [sortOrder, setSortOrder] = useState(sortOptions[0].id);
     const [vendorCount, setVendorCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const vendorsPerPage = 10;
+    const vendorsPerPage = 5;
 
     useEffect(() => {
         const fetchVendorCount = async () => {
