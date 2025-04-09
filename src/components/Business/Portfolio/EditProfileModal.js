@@ -107,9 +107,24 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     }
   };
 
-  // 🔹 Handle Portfolio Image Upload
+  // Add a function to check file type
+  const isValidFileType = (file) => {
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'video/mp4', 'video/quicktime'];
+    return validTypes.includes(file.type);
+  };
+
+  // Update handleFileChange to check file types
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
+    
+    // Filter out HEIC files and warn user
+    const invalidFiles = files.filter(file => !isValidFileType(file));
+    if (invalidFiles.length > 0) {
+      alert('Only JPG, PNG, and MP4 files are supported. HEIC files are not accepted.');
+      e.target.value = ''; // Clear the file input
+      return;
+    }
+
     setUploading(true);
 
     for (const file of files) {
@@ -315,9 +330,16 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     });
   };
 
+  // Update handleProfilePicChange to check file type
   const handleProfilePicChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (!isValidFileType(file)) {
+      alert('Only JPG and PNG files are supported. HEIC files are not accepted.');
+      e.target.value = ''; // Clear the file input
+      return;
+    }
 
     setUploadingProfile(true);
     try {

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
 import "../../../styles/Gallery.css";
 import ImageModal from "./ImageModal";
+import { convertHeicToJpeg } from "../../../utils/imageUtils";
 
 const Gallery = () => {
   const { businessId } = useParams();
@@ -11,6 +12,8 @@ const Gallery = () => {
   const [selectedMedia, setSelectedMedia] = useState(null);
   const navigate = useNavigate();
   const AUTO_PLAY_COUNT = 4; // Number of videos that will autoplay
+  const [convertedUrls, setConvertedUrls] = useState({});
+  const [convertingImages, setConvertingImages] = useState({});
 
   useEffect(() => {
     const fetchPortfolioMedia = async () => {
@@ -33,6 +36,30 @@ const Gallery = () => {
 
     fetchPortfolioMedia();
   }, [businessId]);
+
+  useEffect(() => {
+    const convertImages = async () => {
+      const converted = {};
+      for (const media of portfolioMedia) {
+        if (media.type === 'image' && media.url.toLowerCase().match(/\.heic$/)) {
+          setConvertingImages(prev => ({ ...prev, [media.url]: true }));
+          converted[media.url] = await convertHeicToJpeg(media.url);
+          setConvertingImages(prev => ({ ...prev, [media.url]: false }));
+        }
+      }
+      setConvertedUrls(converted);
+    };
+
+    convertImages();
+
+    return () => {
+      Object.values(convertedUrls).forEach(url => {
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [portfolioMedia]);
 
   const handleMediaClick = (media) => {
     setSelectedMedia({
@@ -97,11 +124,20 @@ const Gallery = () => {
                     </div>
                   ) : (
                     <img
-                      src={media.url}
+                      src={convertedUrls[media.url] || media.url}
                       alt={`Portfolio ${index}`}
                       className="gallery-image"
                       onClick={() => handleMediaClick(media)}
+                      style={{
+                        opacity: convertingImages[media.url] ? 0.5 : 1,
+                        transition: 'opacity 0.3s ease-in-out'
+                      }}
                     />
+                  )}
+                  {convertingImages[media.url] && (
+                    <div className="converting-overlay">
+                      <div className="converting-spinner"></div>
+                    </div>
                   )}
                 </div>
               ))

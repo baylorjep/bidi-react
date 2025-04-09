@@ -7,6 +7,7 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import Verified from '../../assets/Frame 1162.svg';
 import StarIcon from '../../assets/star-duotone.svg'; // Assuming you have a star icon
+import { convertHeicToJpeg } from "../../utils/imageUtils";
 
 const VendorList = ({ 
     selectedCategory, 
@@ -35,6 +36,8 @@ const VendorList = ({
     const [photosLoading, setPhotosLoading] = useState(true);
     const [vendorPhotosLoaded, setVendorPhotosLoaded] = useState({});
     const [loadingRemainingPhotos, setLoadingRemainingPhotos] = useState({});
+    const [convertedUrls, setConvertedUrls] = useState({});
+    const [convertingImages, setConvertingImages] = useState({});
     const navigate = useNavigate();
 
     const truncateText = (text, maxLength = 150) => {
@@ -61,35 +64,41 @@ const VendorList = ({
         return url.match(/\.(mp4|mov|wmv|avi|mkv)$/i);
     };
 
-    const preloadImage = useCallback((src) => {
-        // Skip if not a valid image URL or already failed
+    const preloadImage = useCallback(async (src) => {
         if (isVideo(src) || mediaErrors[src]) {
             return Promise.resolve();
         }
 
-        return new Promise((resolve) => {
-            const img = new Image();
+        try {
+            const convertedSrc = convertedUrls[src] || src;
             
-            img.onload = () => {
-                setMediaErrors(prev => ({
-                    ...prev,
-                    [src]: false
-                }));
-                resolve();
-            };
-            
-            img.onerror = () => {
-                console.warn(`Failed to load image: ${src}`);
-                setMediaErrors(prev => ({
-                    ...prev,
-                    [src]: true
-                }));
-                resolve();
-            };
-            
-            img.src = src;
-        });
-    }, [mediaErrors]);
+            return new Promise((resolve) => {
+                const img = new Image();
+                
+                img.onload = () => {
+                    setMediaErrors(prev => ({
+                        ...prev,
+                        [src]: false
+                    }));
+                    resolve();
+                };
+                
+                img.onerror = () => {
+                    console.warn(`Failed to load image: ${src}`);
+                    setMediaErrors(prev => ({
+                        ...prev,
+                        [src]: true
+                    }));
+                    resolve();
+                };
+                
+                img.src = convertedSrc;
+            });
+        } catch (error) {
+            console.error('Error loading image:', error);
+            return Promise.resolve();
+        }
+    }, [mediaErrors, convertedUrls]);
 
     const handleImageLoad = useCallback((imageId) => {
         setImageLoading(prev => ({
@@ -149,6 +158,33 @@ const VendorList = ({
         return () => {
             vendorCards.forEach(card => observer.unobserve(card));
             observer.disconnect();
+        };
+    }, [vendors]);
+
+    // Add useEffect to convert HEIC images when portfolio photos change
+    useEffect(() => {
+        const convertImages = async () => {
+            const newConvertedUrls = {};
+            for (const vendor of vendors) {
+                for (const photo of vendor.portfolio_photos) {
+                    if (!isVideo(photo) && !newConvertedUrls[photo] && photo.toLowerCase().match(/\.heic$/)) {
+                        setConvertingImages(prev => ({ ...prev, [photo]: true }));
+                        newConvertedUrls[photo] = await convertHeicToJpeg(photo);
+                        setConvertingImages(prev => ({ ...prev, [photo]: false }));
+                    }
+                }
+            }
+            setConvertedUrls(newConvertedUrls);
+        };
+
+        convertImages();
+
+        return () => {
+            Object.values(convertedUrls).forEach(url => {
+                if (url && url.startsWith('blob:')) {
+                    URL.revokeObjectURL(url);
+                }
+            });
         };
     }, [vendors]);
 
@@ -647,7 +683,7 @@ const VendorList = ({
                                                     </div>
                                                 ) : (
                                                     <img
-                                                        src={item}
+                                                        src={convertedUrls[item] || item}
                                                         alt={`Portfolio ${index}`}
                                                         className={`portfolio-image ${imageLoading[imageId] ? 'loading' : 'loaded'}`}
                                                         loading="lazy"
@@ -660,10 +696,15 @@ const VendorList = ({
                                                             }));
                                                         }}
                                                         style={{
-                                                            opacity: imageLoading[imageId] ? 0 : 1,
+                                                            opacity: imageLoading[imageId] || convertingImages[item] ? 0.5 : 1,
                                                             transition: 'opacity 0.3s ease-in-out'
                                                         }}
                                                     />
+                                                )}
+                                                {convertingImages[item] && (
+                                                    <div className="converting-overlay">
+                                                        <div className="converting-spinner"></div>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>

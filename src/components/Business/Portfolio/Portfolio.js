@@ -8,6 +8,7 @@ import StarIcon from '../../../assets/star-duotone.svg'; // Add this import
 import ImageModal from "./ImageModal"; // Import the new ImageModal component
 import EmptyStarIcon from "../../../assets/userpov-vendor-profile-star.svg"; // Import the empty star icon
 import Modal from "react-modal"; // Import the modal library
+import { convertHeicToJpeg } from "../../../utils/imageUtils";
 
 const Portfolio = () => {
   const { businessId } = useParams();
@@ -29,6 +30,7 @@ const Portfolio = () => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false); // State for modal visibility
   const navigate = useNavigate();
+  const [convertedUrls, setConvertedUrls] = useState({});
 
   const fetchBusinessData = async () => {
     const { data: businessData, error: businessError } = await supabase
@@ -129,6 +131,30 @@ const Portfolio = () => {
   useEffect(() => {
     fetchBusinessData();
   }, [businessId]);
+
+  useEffect(() => {
+    const convertImages = async () => {
+      const converted = {};
+      if (profileImage) {
+        converted.profile = await convertHeicToJpeg(profileImage);
+      }
+      for (const photo of portfolioPics) {
+        converted[photo] = await convertHeicToJpeg(photo);
+      }
+      setConvertedUrls(converted);
+    };
+
+    convertImages();
+
+    // Cleanup function
+    return () => {
+      Object.values(convertedUrls).forEach(url => {
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [profileImage, portfolioPics]);
 
   const openEditModal = (fields) => {
     setEditFields(fields);
@@ -280,7 +306,7 @@ const Portfolio = () => {
             </video>
           ) : portfolioPics.length > 0 ? (
             <img 
-              src={portfolioPics[0]} 
+              src={convertedUrls[portfolioPics[0]] || portfolioPics[0]} 
               alt="Main Portfolio" 
               className={`main-portfolio-image ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media-item' : ''}`}
               onClick={() => handleImageClick(portfolioPics[0])}
@@ -317,7 +343,7 @@ const Portfolio = () => {
                   ) : (
                     <img
                       key={index}
-                      src={item}
+                      src={convertedUrls[item] || item}
                       alt={`Portfolio ${index}`}
                       className="portfolio-image-portfolio"
                       onClick={() => handleImageClick(item)}
@@ -425,7 +451,7 @@ const Portfolio = () => {
 
                 <div className="vendor-profile-left">
                   <img 
-                    src={profileImage} 
+                    src={convertedUrls.profile || profileImage} 
                     alt={`${business.business_name} profile`} 
                     className="vendor-profile-image"
                   />
