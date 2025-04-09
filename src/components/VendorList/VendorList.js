@@ -778,7 +778,7 @@ const VendorList = ({
                         )}
                         <div className="vendor-buttons">
                             <button className="vendor-button" onClick={() => handleGetQuote(vendor)}>Get a Tailored Quote</button>
-                            <button className="vendor-button-secondary" onClick={() => handleMoreInfo(vendor)}>More Info</button>
+                            <button className="vendor-button-secondary" onClick={() => handleMoreInfo(vendor)}>See Profile</button>
                         </div>
                     </div>
                 </div>
