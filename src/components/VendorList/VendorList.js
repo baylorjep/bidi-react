@@ -33,6 +33,8 @@ const VendorList = ({
     const [loadedPhotoCount, setLoadedPhotoCount] = useState({});
     const [sliderDimensions, setSliderDimensions] = useState({ width: 0, height: 0 });
     const [photosLoading, setPhotosLoading] = useState(true);
+    const [vendorPhotosLoaded, setVendorPhotosLoaded] = useState({});
+    const [loadingRemainingPhotos, setLoadingRemainingPhotos] = useState({});
     const navigate = useNavigate();
 
     const truncateText = (text, maxLength = 150) => {
@@ -96,9 +98,56 @@ const VendorList = ({
         }));
     }, []);
 
+    // Add this function to track when all vendors' initial photos are loaded
+    const checkAllVendorsLoaded = useCallback((vendorsData) => {
+        return vendorsData.every(vendor => vendorPhotosLoaded[vendor.id]);
+    }, [vendorPhotosLoaded]);
+
+    // Add useEffect to call fetchVendors when needed
+    useEffect(() => {
+        fetchVendors();
+    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, preferredLocation, preferredType]);
+
+    // Add effect to check when all vendors are loaded
+    useEffect(() => {
+        if (vendors.length > 0 && checkAllVendorsLoaded(vendors)) {
+            setLoading(false);
+        }
+    }, [vendors, vendorPhotosLoaded, checkAllVendorsLoaded]);
+
+    // Add intersection observer to detect when vendor cards come into view
+    useEffect(() => {
+        const observerCallback = (entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const vendorId = entry.target.dataset.vendorId;
+                    const vendor = vendors.find(v => v.id === vendorId);
+                    if (vendor && vendor.has_more_photos) {
+                        loadRemainingPhotos(vendor);
+                    }
+                }
+            });
+        };
+
+        const observer = new IntersectionObserver(observerCallback, {
+            root: null,
+            rootMargin: '50px',
+            threshold: 0.1
+        });
+
+        // Observe all vendor cards
+        const vendorCards = document.querySelectorAll('.vendor-card');
+        vendorCards.forEach(card => observer.observe(card));
+
+        return () => {
+            vendorCards.forEach(card => observer.unobserve(card));
+            observer.disconnect();
+        };
+    }, [vendors]);
+
     const fetchVendors = async () => {
         setLoading(true);
-        setPhotosLoading(true);
+        setVendorPhotosLoaded({});
         
         try {
             let query = supabase
@@ -157,12 +206,18 @@ const VendorList = ({
                         .slice(0, 10)
                         .map(photo => photo.photo_url);
 
-                    // Preload images
-                    await Promise.all(portfolioPhotos.map(async photo => {
+                    // Mark this vendor's photos as loaded before preloading
+                    setVendorPhotosLoaded(prev => ({
+                        ...prev,
+                        [vendor.id]: true
+                    }));
+
+                    // Preload images in the background
+                    Promise.all(portfolioPhotos.map(async photo => {
                         if (!isVideo(photo)) {
                             await preloadImage(photo);
                         }
-                    }));
+                    })).catch(console.error); // Handle preload errors silently
 
                     const hasMorePhotos = vendorPhotos.filter(photo => 
                         photo.photo_type === 'portfolio' || photo.photo_type === 'video'
@@ -178,79 +233,13 @@ const VendorList = ({
             );
 
             setVendors(vendorsWithPhotos);
+            setLoading(false); // Set loading to false after vendors are set
+
         } catch (error) {
             console.error('Error fetching vendors:', error);
-        } finally {
             setLoading(false);
-            setPhotosLoading(false);
         }
     };
-
-    // Add useEffect to call fetchVendors when needed
-    useEffect(() => {
-        fetchVendors();
-    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, preferredLocation, preferredType]);
-
-    // Modify the effect that loads remaining media to work per vendor
-    useEffect(() => {
-        const loadVendorMedia = async (vendorId) => {
-            if (!loadingVendors[vendorId]) return;
-
-            const vendor = vendors.find(v => v.id === vendorId);
-            if (!vendor || !vendor.has_more_photos) return;
-
-            console.log('Loading more photos for vendor:', vendor.business_name);
-            const currentCount = vendor.portfolio_photos.length;
-            
-            const { data: allPhotos } = await supabase
-                .from('profile_photos')
-                .select('*')
-                .eq('user_id', vendorId)
-                .or('photo_type.eq.portfolio,photo_type.eq.video')
-                .order('created_at', { ascending: true })
-                .range(currentCount, currentCount + 2);
-
-            console.log('Fetched photos:', allPhotos?.length);
-
-            if (allPhotos && allPhotos.length > 0) {
-                const updatedVendors = vendors.map(v => {
-                    if (v.id === vendorId) {
-                        const newPhotos = [...v.portfolio_photos, ...allPhotos.map(photo => photo.photo_url)];
-                        console.log('Updated photo count:', newPhotos.length);
-                        return {
-                            ...v,
-                            portfolio_photos: newPhotos,
-                            has_more_photos: allPhotos.length === 3
-                        };
-                    }
-                    return v;
-                });
-                setVendors(updatedVendors);
-            } else {
-                const updatedVendors = vendors.map(v => {
-                    if (v.id === vendorId) {
-                        return {
-                            ...v,
-                            has_more_photos: false
-                        };
-                    }
-                    return v;
-                });
-                setVendors(updatedVendors);
-            }
-
-            setLoadingVendors(prev => ({
-                ...prev,
-                [vendorId]: false
-            }));
-        };
-
-        Object.keys(loadingVendors).forEach(vendorId => {
-            if (loadingVendors[vendorId]) {
-                loadVendorMedia(vendorId);
-            }
-        });
-    }, [loadingVendors, vendors]);
 
     const sortVendors = (vendors) => {
         console.log('Vendors before sorting:', vendors.map(v => ({
@@ -315,11 +304,11 @@ const VendorList = ({
         window.scrollTo(0, 0);
     };
 
-    if (loading || photosLoading) {
+    if (loading) {
         return (
             <div className="loading-container">
                 <div className="loading-spinner">
-                    Loading vendors and photos
+                    Loading vendors and photos...
                 </div>
             </div>
         );
@@ -514,10 +503,57 @@ const VendorList = ({
         }));
     };
 
+    // Add this function to load remaining photos for a vendor
+    const loadRemainingPhotos = async (vendor) => {
+        if (loadingRemainingPhotos[vendor.id]) return;
+        
+        setLoadingRemainingPhotos(prev => ({ ...prev, [vendor.id]: true }));
+        
+        try {
+            const { data: remainingPhotos } = await supabase
+                .from('profile_photos')
+                .select('*')
+                .eq('user_id', vendor.id)
+                .or('photo_type.eq.portfolio,photo_type.eq.video')
+                .order('created_at', { ascending: true })
+                .range(10, 999); // Get all remaining photos after the first 10
+
+            if (remainingPhotos && remainingPhotos.length > 0) {
+                // Preload the images in the background
+                await Promise.all(remainingPhotos.map(async photo => {
+                    if (!isVideo(photo.photo_url)) {
+                        await preloadImage(photo.photo_url);
+                    }
+                }));
+
+                // Update the vendor's photos
+                setVendors(prevVendors => 
+                    prevVendors.map(v => {
+                        if (v.id === vendor.id) {
+                            return {
+                                ...v,
+                                portfolio_photos: [
+                                    ...v.portfolio_photos,
+                                    ...remainingPhotos.map(photo => photo.photo_url)
+                                ],
+                                has_more_photos: false
+                            };
+                        }
+                        return v;
+                    })
+                );
+            }
+        } catch (error) {
+            console.error('Error loading remaining photos:', error);
+        } finally {
+            setLoadingRemainingPhotos(prev => ({ ...prev, [vendor.id]: false }));
+        }
+    };
+
     return (
         <div className="vendor-list">
             {vendors.map(vendor => (
-                <div key={vendor.id} className="vendor-card">
+                <div key={vendor.id} className="vendor-card" data-vendor-id={vendor.id}>
                     <div className="portfolio-images" style={{ minHeight: '300px' }}>
                         {vendor.portfolio_photos.length > 0 ? (
                             <Slider {...settings}>

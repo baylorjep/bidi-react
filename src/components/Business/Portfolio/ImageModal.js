@@ -1,25 +1,35 @@
 import React from "react";
-import "../../../styles/ImageModal.css";
+import Modal from "react-modal";
 
-const ImageModal = ({ isOpen, imageUrl, mediaType, onClose }) => {
-  if (!isOpen) return null;
-
-  const isVideo = mediaType === 'video';
-
+const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose }) => {
   return (
-    <div className="image-modal-overlay" onClick={onClose}>
-      <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+    <Modal
+      isOpen={isOpen}
+      onRequestClose={onClose}
+      className="image-modal"
+      overlayClassName="image-modal-overlay"
+      ariaHideApp={false}
+    >
+      <button onClick={onClose} className="close-modal-button">×</button>
+      <div className="modal-content">
         {isVideo ? (
-          <video controls autoPlay className="image-modal-img">
-            <source src={imageUrl} type="video/mp4" />
+          <video
+            src={mediaUrl}
+            controls
+            autoPlay
+            className="modal-media"
+          >
             Your browser does not support the video tag.
           </video>
         ) : (
-          <img src={imageUrl} alt="Enlarged Portfolio" className="image-modal-img" />
+          <img
+            src={mediaUrl}
+            alt="Portfolio item"
+            className="modal-media"
+          />
         )}
-        <button className="image-modal-close" onClick={onClose}>✖</button>
       </div>
-    </div>
+    </Modal>
   );
 };
 

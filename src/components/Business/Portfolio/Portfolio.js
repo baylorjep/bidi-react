@@ -174,8 +174,9 @@ const Portfolio = () => {
     }
   };
 
-  const handleImageClick = (imageUrl) => {
-    setSelectedImage(imageUrl);
+  const handleImageClick = (mediaUrl) => {
+    const isVideo = mediaUrl.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
+    setSelectedImage({ url: mediaUrl, isVideo });
   };
 
   const handleCloseImageModal = () => {
@@ -257,7 +258,8 @@ const Portfolio = () => {
 
       <ImageModal
         isOpen={!!selectedImage}
-        imageUrl={selectedImage}
+        mediaUrl={selectedImage?.url}
+        isVideo={selectedImage?.isVideo}
         onClose={handleCloseImageModal}
       />
 
