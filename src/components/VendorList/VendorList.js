@@ -14,7 +14,7 @@ const VendorList = ({
     preferredLocation, 
     categoryType, 
     currentPage, 
-    vendorsPerPage, 
+    vendorsPerPage,
     setCurrentPage,
     setTotalCount,
     preferredType 
@@ -103,6 +103,13 @@ const VendorList = ({
         return vendorsData.every(vendor => vendorPhotosLoaded[vendor.id]);
     }, [vendorPhotosLoaded]);
 
+    // Add this useEffect to ensure vendorsPerPage is always 5
+    useEffect(() => {
+        if (vendorsPerPage !== 5) {
+            console.warn('vendorsPerPage should be 5');
+        }
+    }, [vendorsPerPage]);
+
     // Add useEffect to call fetchVendors when needed
     useEffect(() => {
         fetchVendors();
@@ -190,9 +197,9 @@ const VendorList = ({
             // Sort all vendors first
             const sortedVendors = sortVendors(vendorsWithBasicInfo);
             
-            // Get the current page vendors
-            const startIndex = (currentPage - 1) * vendorsPerPage;
-            const endIndex = startIndex + vendorsPerPage;
+            // Get the current page vendors - using 5 vendors per page
+            const startIndex = (currentPage - 1) * 5; // Changed to hardcoded 5
+            const endIndex = startIndex + 5; // Changed to hardcoded 5
             const currentPageVendors = sortedVendors.slice(startIndex, endIndex);
 
             // Process vendors with their photos
@@ -297,7 +304,8 @@ const VendorList = ({
         return sorted;
     };
 
-    const totalPages = Math.ceil(totalCount / vendorsPerPage);
+    // Update totalPages calculation to use 5 vendors per page
+    const totalPages = Math.ceil(totalCount / 5); // Changed to hardcoded 5
 
     const handlePageChange = (newPage) => {
         setCurrentPage(newPage);
