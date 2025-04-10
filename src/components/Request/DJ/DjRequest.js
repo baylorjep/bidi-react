@@ -86,6 +86,18 @@ function DjRequest() {
     // Consolidated state
     const [formData, setFormData] = useState(() => {
         const saved = JSON.parse(localStorage.getItem('djRequest') || '{}');
+        const quizPrefs = JSON.parse(localStorage.getItem('quizPreferences') || '{}');
+        
+        const musicPreferences = (quizPrefs.category === 'dj') ? {
+            traditional: quizPrefs.tags?.includes('traditional'),
+            modern: quizPrefs.tags?.includes('modern'),
+            eclectic: quizPrefs.tags?.includes('eclectic'),
+            relaxed: quizPrefs.tags?.includes('relaxed'),
+            party: quizPrefs.tags?.includes('party'),
+            trendy: quizPrefs.tags?.includes('trendy'),
+            unique: quizPrefs.tags?.includes('unique')
+        } : saved.eventDetails?.musicPreferences || {};
+
         const defaultWeddingDetails = {
             ceremony: false,    
             cocktailHour: false,
@@ -111,7 +123,7 @@ function DjRequest() {
                 startTime: saved.eventDetails?.startTime || '',
                 endTime: saved.eventDetails?.endTime || '',
                 stylePreferences: saved.eventDetails?.stylePreferences || {},
-                musicPreferences: saved.eventDetails?.musicPreferences || {},
+                musicPreferences: musicPreferences,
                 equipment: saved.eventDetails?.equipment || {},
                 specialSongs: saved.eventDetails?.specialSongs || '',
                 additionalInfo: saved.eventDetails?.additionalInfo || '',

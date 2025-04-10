@@ -90,6 +90,21 @@ function PhotographyRequest() {
     const saved = JSON.parse(
       localStorage.getItem("photographyRequest") || "{}"
     );
+    const quizPrefs = JSON.parse(localStorage.getItem("quizPreferences") || "{}");
+    
+    // Only use quiz preferences if they're for photography
+    const stylePreferences = (quizPrefs.category === "photography") ? {
+        brightAiry: quizPrefs.tags?.includes("light-and-airy"),
+        darkMoody: quizPrefs.tags?.includes("dark-moody"),
+        traditional: quizPrefs.tags?.includes("traditional"),
+        documentary: quizPrefs.tags?.includes("photojournalistic"),
+        artistic: quizPrefs.tags?.includes("creative"),
+        editorial: quizPrefs.tags?.includes("editorial"),
+        candid: quizPrefs.tags?.includes("candid"),
+        formal: quizPrefs.tags?.includes("formal"),
+        natural: quizPrefs.tags?.includes("natural")
+    } : saved.eventDetails?.stylePreferences || {};
+
     return {
       eventType: saved.eventType || "",
       eventDetails: {
@@ -113,7 +128,7 @@ function PhotographyRequest() {
         secondPhotographer: saved.eventDetails?.secondPhotographer || "",
         secondPhotographerUnknown:
           saved.eventDetails?.secondPhotographerUnknown || false,
-        stylePreferences: saved.eventDetails?.stylePreferences || {},
+        stylePreferences,
         deliverables: saved.eventDetails?.deliverables || {},
         weddingDetails: saved.eventDetails?.weddingDetails || {},
         priceRange: saved.eventDetails?.priceRange || "",
@@ -2202,6 +2217,52 @@ function PhotographyRequest() {
   useEffect(() => {
     updateBidScore();
   }, []); // Run once when component mounts
+
+  // Add this to the component where you render style preferences
+  const renderStylePreferences = () => {
+    return (
+      <div className="custom-input-container">
+        <label className="custom-label">Photography Style Preferences</label>
+        <div className="checkbox-group">
+          {[
+            { id: 'brightAiry', label: 'Light & Airy' },
+            { id: 'darkMoody', label: 'Dark & Moody' },
+            { id: 'traditional', label: 'Traditional' },
+            { id: 'documentary', label: 'Documentary/Photojournalistic' },
+            { id: 'artistic', label: 'Artistic & Creative' },
+            { id: 'editorial', label: 'Editorial' },
+            { id: 'candid', label: 'Candid' },
+            { id: 'formal', label: 'Formal' },
+            { id: 'natural', label: 'Natural' }
+          ].map(style => (
+            <div key={style.id} className="checkbox-item">
+              <input
+                type="checkbox"
+                id={style.id}
+                checked={formData.eventDetails.stylePreferences[style.id] || false}
+                onChange={(e) => handleStylePreferenceChange(style.id, e.target.checked)}
+              />
+              <label htmlFor={style.id}>{style.label}</label>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Add this handler function
+  const handleStylePreferenceChange = (style, checked) => {
+    setFormData({
+      ...formData,
+      eventDetails: {
+        ...formData.eventDetails,
+        stylePreferences: {
+          ...formData.eventDetails.stylePreferences,
+          [style]: checked
+        }
+      }
+    });
+  };
 
   return (
     <div className="request-form-overall-container">

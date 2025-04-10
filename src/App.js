@@ -110,6 +110,7 @@ import WeddingMarketGuide from './components/WeddingGuide/WeddingMarketGuide';
 import VendorList from './components/VendorList/VendorList';
 import VendorListWithFilters from './components/VendorListWithFilters/VendorListWithFilters';
 import LocationBasedVendors from './pages/LocationBasedVendors';
+import WeddingVibeQuizPage from './pages/WeddingVibeQuiz';
 
 function App() {
 
@@ -238,6 +239,7 @@ function App() {
                         <Route path="/:category/:location" element={<LocationBasedVendors />} />
                         <Route path="/:category/:location" element={<LocationBasedVendors />} />
                         <Route path="/:type/:category/:location" element={<LocationBasedVendors />} />
+                        <Route path="/wedding-vibe-quiz" element={<WeddingVibeQuizPage />} />
 
                     </Routes>
                 </div>

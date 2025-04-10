@@ -85,6 +85,17 @@ function HairAndMakeUpRequest() {
     // Consolidated state
     const [formData, setFormData] = useState(() => {
         const saved = JSON.parse(localStorage.getItem('hairAndMakeupRequest') || '{}');
+        const quizPrefs = JSON.parse(localStorage.getItem('quizPreferences') || '{}');
+        
+        let makeupStylePreferences = (quizPrefs.category === 'beauty') ? {
+            traditional: quizPrefs.tags?.includes('traditional'),
+            natural: quizPrefs.tags?.includes('minimal'),
+            glamorous: quizPrefs.tags?.includes('dramatic'),
+            bohemian: quizPrefs.tags?.includes('bohemian'),
+            elegant: quizPrefs.tags?.includes('elegant'),
+            fresh: quizPrefs.tags?.includes('fresh')
+        } : saved.eventDetails?.makeupStylePreferences || {};
+
         const defaultWeddingDetails = {
             ceremony: false,    
             reception: false,
@@ -122,7 +133,7 @@ function HairAndMakeUpRequest() {
                 hairLengthType: saved.eventDetails?.hairLengthType || '',
                 extensionsNeeded: saved.eventDetails?.extensionsNeeded || '',
                 trialSessionHair: saved.eventDetails?.trialSessionHair || '',
-                makeupStylePreferences: saved.eventDetails?.makeupStylePreferences || '',
+                makeupStylePreferences,
                 skinTypeConcerns: saved.eventDetails?.skinTypeConcerns || '',
                 preferredProductsAllergies: saved.eventDetails?.preferredProductsAllergies || '',
                 lashesIncluded: saved.eventDetails?.lashesIncluded || '',
@@ -1764,6 +1775,50 @@ function HairAndMakeUpRequest() {
         formData.eventDetails.skinTypeConcerns,
         formData.eventDetails.additionalInfo
     ]);
+
+    const renderStylePreferences = () => {
+        return (
+            <div className="custom-input-container">
+                <label className="custom-label">Makeup Style Preferences</label>
+                <div className="checkbox-group">
+                    {[
+                        { id: 'traditional', label: 'Classic Bridal' },
+                        { id: 'natural', label: 'Natural & Fresh' },
+                        { id: 'glamorous', label: 'Glamorous' },
+                        { id: 'bohemian', label: 'Boho Beauty' },
+                        { id: 'elegant', label: 'Elegant' },
+                        { id: 'fresh', label: 'Fresh & Dewy' }
+                    ].map(style => (
+                        <div key={style.id} className="checkbox-item">
+                            <input
+                                type="checkbox"
+                                id={style.id}
+                                checked={formData.eventDetails.makeupStylePreferences[style.id] || false}
+                                onChange={(e) => handleStylePreferenceChange(style.id, e.target.checked)}
+                            />
+                            <label htmlFor={style.id}>{style.label}</label>
+                        </div>
+                    ))}
+                </div>
+                <small className="text-muted">
+                    Select all styles that match your vision. This helps artists prepare the right look for you.
+                </small>
+            </div>
+        );
+    };
+
+    const handleStylePreferenceChange = (style, checked) => {
+        setFormData({
+            ...formData,
+            eventDetails: {
+                ...formData.eventDetails,
+                makeupStylePreferences: {
+                    ...formData.eventDetails.makeupStylePreferences,
+                    [style]: checked
+                }
+            }
+        });
+    };
 
     return (
         <div className='request-form-overall-container'>

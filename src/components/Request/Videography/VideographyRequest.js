@@ -74,6 +74,18 @@ function VideographyRequest() {
     // Consolidated state
     const [formData, setFormData] = useState(() => {
         const saved = JSON.parse(localStorage.getItem('videographyRequest') || '{}');
+        const quizPrefs = JSON.parse(localStorage.getItem('quizPreferences') || '{}');
+        
+        const stylePreferences = (quizPrefs.category === 'videography') ? {
+            cinematic: quizPrefs.tags?.includes('cinematic'),
+            documentary: quizPrefs.tags?.includes('documentary'),
+            journalistic: quizPrefs.tags?.includes('journalistic'),
+            artistic: quizPrefs.tags?.includes('experimental'),
+            romantic: quizPrefs.tags?.includes('romantic'),
+            traditional: quizPrefs.tags?.includes('traditional'),
+            luxury: quizPrefs.tags?.includes('luxury')
+        } : saved.eventDetails?.stylePreferences || {};
+
         const defaultWeddingDetails = {
             ceremony: false,    
             reception: false,
@@ -99,7 +111,7 @@ function VideographyRequest() {
                 startTime: saved.eventDetails?.startTime || '',
                 endTime: saved.eventDetails?.endTime || '',
                 secondPhotographer: saved.eventDetails?.secondPhotographer || '',
-                stylePreferences: saved.eventDetails?.stylePreferences || {},
+                stylePreferences,
                 deliverables: saved.eventDetails?.deliverables || {},
                 additionalInfo: saved.eventDetails?.additionalInfo || '',
                 dateFlexibility: saved.eventDetails?.dateFlexibility || 'specific', // 'specific', 'range', 'flexible'
@@ -1716,6 +1728,51 @@ function VideographyRequest() {
                 </div>
             </div>
         );
+    };
+
+    const renderStylePreferences = () => {
+        return (
+            <div className="custom-input-container">
+                <label className="custom-label">Videography Style Preferences</label>
+                <div className="checkbox-group">
+                    {[
+                        { id: 'cinematic', label: 'Cinematic Film Style' },
+                        { id: 'documentary', label: 'Documentary Style' },
+                        { id: 'journalistic', label: 'Journalistic' },
+                        { id: 'artistic', label: 'Artistic & Experimental' },
+                        { id: 'romantic', label: 'Romantic' },
+                        { id: 'traditional', label: 'Traditional' },
+                        { id: 'luxury', label: 'Luxury Production' }
+                    ].map(style => (
+                        <div key={style.id} className="checkbox-item">
+                            <input
+                                type="checkbox"
+                                id={style.id}
+                                checked={formData.eventDetails.stylePreferences[style.id] || false}
+                                onChange={(e) => handleStylePreferenceChange(style.id, e.target.checked)}
+                            />
+                            <label htmlFor={style.id}>{style.label}</label>
+                        </div>
+                    ))}
+                </div>
+                <small className="text-muted">
+                    Select all styles that interest you. This helps videographers understand your vision.
+                </small>
+            </div>
+        );
+    };
+
+    const handleStylePreferenceChange = (style, checked) => {
+        setFormData({
+            ...formData,
+            eventDetails: {
+                ...formData.eventDetails,
+                stylePreferences: {
+                    ...formData.eventDetails.stylePreferences,
+                    [style]: checked
+                }
+            }
+        });
     };
 
     return (

@@ -128,6 +128,19 @@ function FloristRequest() {
     // Consolidated state
     const [formData, setFormData] = useState(() => {
         const saved = JSON.parse(localStorage.getItem('floristRequest') || '{}');
+        const quizPrefs = JSON.parse(localStorage.getItem('quizPreferences') || '{}');
+        
+        const flowerPreferences = (quizPrefs.category === 'florist') ? {
+            traditional: quizPrefs.tags?.includes('traditional'),
+            wild: quizPrefs.tags?.includes('wild'),
+            modern: quizPrefs.tags?.includes('modern'),
+            romantic: quizPrefs.tags?.includes('romantic'),
+            elegant: quizPrefs.tags?.includes('elegant'),
+            natural: quizPrefs.tags?.includes('natural'),
+            structural: quizPrefs.tags?.includes('architectural'),
+            lush: quizPrefs.tags?.includes('lush')
+        } : saved.eventDetails?.flowerPreferences || {};
+
         const defaultWeddingDetails = {
             ceremony: false,    
             reception: false,
@@ -160,7 +173,7 @@ function FloristRequest() {
                 numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
                 pinterestBoard: saved.eventDetails?.pinterestBoard || '',
                 eventDateTime: saved.eventDetails?.eventDateTime || '',
-                flowerPreferences: saved.eventDetails?.flowerPreferences || '',
+                flowerPreferences,
                 groupDiscountInquiry: saved.eventDetails?.groupDiscountInquiry || '',
                 specificTimeNeeded: saved.eventDetails?.specificTimeNeeded || '',
                 specificTime: saved.eventDetails?.specificTime || '',

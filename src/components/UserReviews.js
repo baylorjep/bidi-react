@@ -41,6 +41,7 @@ const UserReviews = () => {
       date: "December 9th, 2024",
       review: "I used it and was able to find a great photographer! It was nice to see options all in one place, and to know that they were available."
     },
+    {/*
     {
       avatar: jennaferIcon, // Replace with actual avatar URL
       name: "Jennifer J.",
@@ -53,6 +54,7 @@ const UserReviews = () => {
       date: "October 8th, 2024",
       review: `We recently used Bidi to find a cleaning service, and it was a total game-changer. With a new baby on the way, we needed all the help we could get, and Bidi made it super easy. After I submitted a quick request, I got lots of bids from different cleaning services right away. Bidi took care of all the details, saving us tons of time, and it ended up being way more affordable. If you’re looking for a quick, budget-friendly way to find a reliable service, I’d definitely recommend Bidi!`,
     },
+    */}
   ];
 
   return (

@@ -84,7 +84,19 @@ function CateringRequest() {  // Changed function name
 
     // Consolidated state
     const [formData, setFormData] = useState(() => {
-        const saved = JSON.parse(localStorage.getItem('cateringRequest') || '{}');  // Changed key
+        const saved = JSON.parse(localStorage.getItem('cateringRequest') || '{}');
+        const quizPrefs = JSON.parse(localStorage.getItem('quizPreferences') || '{}');
+        
+        const serviceStyle = (quizPrefs.category === 'catering') ? {
+            fineDining: quizPrefs.tags?.includes('fine-dining'),
+            stations: quizPrefs.tags?.includes('stations'),
+            innovative: quizPrefs.tags?.includes('innovative'),
+            farmToTable: quizPrefs.tags?.includes('farm-to-table'),
+            modern: quizPrefs.tags?.includes('modern'),
+            creative: quizPrefs.tags?.includes('creative'),
+            traditional: quizPrefs.tags?.includes('traditional')
+        } : saved.eventDetails?.serviceStyle || {};
+
         const defaultEventDetails = {
             appetizers: false,    
             mainCourse: false,
@@ -121,7 +133,8 @@ function CateringRequest() {  // Changed function name
                 durationUnknown: saved.eventDetails?.durationUnknown || false,
                 numPeopleUnknown: saved.eventDetails?.numPeopleUnknown || false,
                 pinterestBoard: saved.eventDetails?.pinterestBoard || '',
-                priceQualityPreference: saved.eventDetails?.priceQualityPreference || "2"
+                priceQualityPreference: saved.eventDetails?.priceQualityPreference || "2",
+                serviceStyle,
             },
             personalDetails: saved.personalDetails || {
                 firstName: '',

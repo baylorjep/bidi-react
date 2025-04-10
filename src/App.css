@@ -152,8 +152,9 @@ h6, .h6, h5, .h5, h4, .h4, h3, .h3, h2, .h2, h1, .h1 {
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap; /* Prevents text from wrapping to the next line */
-  overflow: hidden; /* Prevents text overflow issues */
-  text-overflow: ellipsis; /* Adds ellipsis if text is too long */
+  text-overflow:clip;
+  white-space: normal; /* Adds ellipsis if text is too long */
+
 }
 
 h1, .h1 {
@@ -2939,7 +2940,7 @@ line-height: px;
 
 .btn-secondary {
   color: #fff;
-  background: linear-gradient(85deg, #A328F4 9.33%, rgba(255, 0, 138, 0.76) 68.51%);
+  background: #a328f4;
   transition: all 0.3s ease;
   border: none;
   border-radius: 5px;
