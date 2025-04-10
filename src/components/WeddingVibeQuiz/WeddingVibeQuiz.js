@@ -34,6 +34,7 @@ import romanticWedding from '../../assets/quiz/romantic/romantic-wedding.jpg';
 import chicWedding from '../../assets/quiz/chic/chic-wedding.jpg';
 import naturalWedding from '../../assets/quiz/natural/natural-wedding.jpg';
 import artisticWedding from '../../assets/quiz/artistic/artistic-wedding.jpg';
+import { Helmet } from 'react-helmet-async';
 
 // At the top of the file, add this placeholder image mapping
 const placeholderImages = {
@@ -719,38 +720,79 @@ const WeddingVibeQuiz = () => {
   };
 
   return (
-    <div className="container py-5">
-      <h1 className="text-center mb-3">
-        What's Your Wedding Vibe?
-      </h1>
-      <div className="text-center mb-4">
-        <p className="lead text-muted">
-          Find your perfect wedding style in minutes! 💍
-        </p>
-      </div>
-      {showTutorial && (
-        <div className="tutorial-overlay" onClick={() => setShowTutorial(false)}>
-          <div className="tutorial-content">
-            <h3>Find Your Style</h3>
-            <div className="tutorial-step">
-              <FaHeart /> Swipe right or click Heart on what you love
-            </div>
-            <div className="tutorial-step">
-              <FaTimes /> Swipe left or click X on what you don't
-            </div>
-            <button className="btn-secondary" onClick={() => setShowTutorial(false)}>
-              Start Quiz
-            </button>
-          </div>
+    <>
+      <Helmet>
+        <title>Wedding Style Quiz | Find Your Perfect Wedding Vibe | Bidi</title>
+        <meta name="description" content="Take our interactive wedding style quiz to discover your perfect wedding aesthetic. Get matched with vendors who match your unique vision and style preferences." />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Wedding Style Quiz | Find Your Perfect Wedding Vibe" />
+        <meta property="og:description" content="Discover your wedding style and get matched with vendors who share your vision." />
+        <meta property="og:image" content={rusticWedding} />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Wedding Style Quiz | Find Your Perfect Wedding Vibe" />
+        <meta name="twitter:description" content="Take our fun quiz to discover your wedding style and find your perfect vendors!" />
+        <meta name="twitter:image" content={rusticWedding} />
+
+        {/* Additional SEO tags */}
+        <meta name="keywords" content="wedding style quiz, wedding aesthetic, wedding planning, wedding vendors, wedding inspiration, wedding theme, bridal style" />
+        <link rel="canonical" href="https://savewithbidi.com/wedding-style-quiz" />
+        
+        {/* Structured Data for Google */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Quiz",
+            "name": "Wedding Style Quiz",
+            "description": "Interactive quiz to help couples discover their wedding style and find matching vendors",
+            "provider": {
+              "@type": "Organization",
+              "name": "Bidi",
+              "url": "https://savewithbidi.com"
+            },
+            "about": {
+              "@type": "Thing",
+              "name": "Wedding Planning"
+            }
+          })}
+        </script>
+      </Helmet>
+      <div className="container py-5">
+        <h1 className="text-center mb-3">
+          What's Your Wedding Vibe?
+        </h1>
+        <div className="text-center mb-4">
+          <p className="lead text-muted">
+            Find your perfect wedding style in minutes! 💍
+          </p>
         </div>
-      )}
-      {!showResults ? renderCard() : renderResults()}
-      <div className="text-center mt-3">
-        <small className="text-muted">
-          Style {currentIndex + 1} of {shuffledOptions.length}
-        </small>
+        {showTutorial && (
+          <div className="tutorial-overlay" onClick={() => setShowTutorial(false)}>
+            <div className="tutorial-content">
+              <h3>Find Your Style</h3>
+              <div className="tutorial-step">
+                <FaHeart /> Swipe right or click Heart on what you love
+              </div>
+              <div className="tutorial-step">
+                <FaTimes /> Swipe left or click X on what you don't
+              </div>
+              <button className="btn-secondary" onClick={() => setShowTutorial(false)}>
+                Start Quiz
+              </button>
+            </div>
+          </div>
+        )}
+        {!showResults ? renderCard() : renderResults()}
+        <div className="text-center mt-3">
+          <small className="text-muted">
+            Style {currentIndex + 1} of {shuffledOptions.length}
+          </small>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
