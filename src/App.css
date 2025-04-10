@@ -16670,7 +16670,8 @@ label {
 
 .quiz-promo-section {
   padding: 40px 20px;
-  background: linear-gradient(135deg, #f8f2ff 0%, #fff 100%);
+  background: white;
+  margin-top: 40px;
 }
 
 .quiz-promo-container {
