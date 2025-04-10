@@ -6,6 +6,7 @@ import weddingPlanning from '../../assets/articles/weddingplanning.jpg'
 import florist from '../../assets/articles/Florist/pexels-digitle-pixels-1775950082-30891131.jpg'
 import catering from '../../assets/articles/Catering/pexels-fu-zhichao-176355-587741.jpg'
 import weddingMarketGuide from '../../assets/images/State of the Utah Wedding Markets.png'
+import rusticWedding from '../../assets/quiz/rustic/rustic-wedding.jpg'
 
 const Articles = () => {
     return (
@@ -36,6 +37,30 @@ const Articles = () => {
                             <img 
                                 src={weddingMarketGuide} 
                                 alt="State of Utah Wedding Markets Guide" 
+                            />
+                        </div>
+                    </div>
+                </Link>
+            </div>
+
+            <div className="interactive-feature">
+                <Link to="/wedding-vibe-quiz" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="interactive-feature-content">
+                        <div className="interactive-feature-text">
+                            <span className="featured-label">INTERACTIVE</span>
+                            <h2 className="featured-title">What's Your Wedding Style?</h2>
+                            <p className="featured-description">
+                                Take our quick quiz to discover your perfect wedding aesthetic and get matched with vendors who match your vision. 
+                                From classic elegance to modern chic, find your unique style in minutes!
+                            </p>
+                            <div className="button-container">
+                                <button className="take-quiz-button">Take the Quiz</button>
+                            </div>
+                        </div>
+                        <div className="interactive-feature-image">
+                            <img 
+                                src={rusticWedding}
+                                alt="Wedding Style Quiz" 
                             />
                         </div>
                     </div>

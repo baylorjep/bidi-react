@@ -16,6 +16,7 @@ import UserReviews from './UserReviews';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import '../styles/animations.css';
 import { Helmet } from 'react-helmet';
+import rusticWedding from '../assets/quiz/rustic/rustic-wedding.jpg';
 
 // Initialize PostHog for client-side tracking
 posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
@@ -125,6 +126,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
     const [newsletterRef, newsletterVisible] = useIntersectionObserver();
     const [tryNowRef, tryNowVisible] = useIntersectionObserver();
     const [faqRef, faqVisible] = useIntersectionObserver();
+    const [quizRef, quizVisible] = useIntersectionObserver();
 
     const toggleAnswer = (index) => {
         setActiveIndex(activeIndex === index ? null : index);
@@ -231,6 +233,23 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
    
             </div>
 
+            {/* Add Quiz Promo Section */}
+            <div ref={quizRef} className={`quiz-promo-section fade-in-section ${quizVisible ? 'is-visible' : ''}`}>
+                <div className="quiz-promo-container">
+                    <div className="quiz-promo-content">
+                        <span className="quiz-label">NEW</span>
+                        <h2>Discover Your Wedding Style</h2>
+                        <p>Take our quick style quiz to find vendors that match your vision!</p>
+                        <Link to="/wedding-vibe-quiz" style={{textDecoration: 'none'}}>
+                            <button className="quiz-button">Take the Quiz</button>
+                        </Link>
+                    </div>
+                    <div className="quiz-image-container">
+                        <img src={rusticWedding} alt="Wedding Style Quiz" />
+                    </div>
+                </div>
+            </div>
+
             <div ref={connectRef} className={`connect-section fade-in-section ${connectVisible ? 'is-visible' : ''}`}>
                 <div style={{display:'flex', flexDirection:'column', gap:'20px'}}> 
                     <div className='connect-sub-title'>Connect</div>
@@ -251,14 +270,14 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                     </Link>
                 </div>
                 <div style={{display:'flex', flexDirection:'column', gap:'20px'}}> 
-                    <div className='connect-sub-title'>Unique</div>
-                    <div className='connect-title'>Try Something <br></br><span className='connect-highlight'>New</span></div>
+                    <div className='connect-sub-title'>Interactive</div>
+                    <div className='connect-title'>Find Your Perfect <br></br><span className='connect-highlight'>Wedding Style</span></div>
                     <div className='connect-text'>
-                        Traditional wedding planning can take weeks of research, back-and-forth emails, and uncertainty about pricing.  
-                        Bidi changes that. Our platform brings vendors to you—so you can find the right match in less time, with less stress, and more confidence.
+                        Take our quick style quiz to discover your wedding aesthetic and get matched with vendors who share your vision. 
+                        From classic elegance to modern chic, find your unique style in minutes!
                     </div>
-                    <Link to="/request-categories" style={{textDecoration:'none'}}>
-                        <button className='connect-button'>Try Now</button>
+                    <Link to="/wedding-vibe-quiz" style={{textDecoration:'none'}}>
+                        <button className='connect-button'>Take the Quiz</button>
                     </Link>
                 </div>
 
