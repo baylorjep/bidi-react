@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
+import { supabaseAdmin } from '../../lib/supabaseAdmin';
+import { Modal, Button } from 'react-bootstrap';
 
 const VerificationApplications = () => {
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [isApproved, setIsApproved] = useState(false);
 
   useEffect(() => {
     fetchApplications();
@@ -13,13 +17,13 @@ const VerificationApplications = () => {
     try {
       console.log('Fetching applications...'); // Debug log
 
-      // Modified query to use proper join syntax
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('verification_applications')
         .select(`
           *,
           business_profiles!business_id (
-            business_name
+            business_name,
+            phone
           )
         `)
         .eq('status', 'pending')
@@ -47,7 +51,7 @@ const VerificationApplications = () => {
     try {
       // Begin transaction
       // 1. Update application status
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseAdmin
         .from('verification_applications')
         .update({ 
           status: approved ? 'approved' : 'rejected',
@@ -58,7 +62,7 @@ const VerificationApplications = () => {
       if (updateError) throw updateError;
 
       // 2. Update business profile
-      const { error: profileError } = await supabase
+      const { error: profileError } = await supabaseAdmin
         .from('business_profiles')
         .update({ 
           verification_pending: false,
@@ -69,11 +73,41 @@ const VerificationApplications = () => {
 
       if (profileError) throw profileError;
 
+      // Find the business in our current applications
+      const application = applications.find(app => app.id === applicationId);
+      const businessData = {
+        business_name: application.business_profiles.business_name,
+        phone: application.business_profiles.phone
+      };
+
+      // Show modal with business details
+      setSelectedBusiness(businessData);
+      setIsApproved(approved);
+      setShowModal(true);
+
       // Refresh applications list
       fetchApplications();
     } catch (error) {
       console.error('Error processing application:', error);
       alert('Error processing application');
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedBusiness(null);
+  };
+
+  const handleTextClick = () => {
+    if (selectedBusiness?.phone) {
+      // Format phone number for SMS link
+      const formattedPhone = selectedBusiness.phone.replace(/\D/g, '');
+      const message = isApproved 
+        ? `Congratulations! Your verification application for ${selectedBusiness.business_name} has been approved on Utah Wedding Vendors!`
+        : `We've reviewed your verification application for ${selectedBusiness.business_name} on Utah Wedding Vendors. Unfortunately, we cannot verify your business at this time.`;
+      
+      // Open default SMS app with pre-filled message
+      window.open(`sms:${formattedPhone}?body=${encodeURIComponent(message)}`);
     }
   };
 
@@ -150,6 +184,49 @@ const VerificationApplications = () => {
           ))}
         </div>
       )}
+
+      <Modal show={showModal} onHide={handleCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Application {isApproved ? 'Approved' : 'Rejected'}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            {selectedBusiness?.business_name} has been {isApproved ? 'approved' : 'rejected'}.
+            Would you like to send them a text notification?
+          </p>
+          {selectedBusiness?.phone ? (
+            <Button 
+              onClick={handleTextClick}
+              variant="primary"
+              className="w-100"
+              style={{
+                backgroundColor: '#A328F4',
+                border: 'none',
+                fontFamily: 'Outfit',
+                fontWeight: '600'
+              }}
+            >
+              📱 Text {selectedBusiness.business_name}
+            </Button>
+          ) : (
+            <p className="text-muted">No phone number available for this business.</p>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button 
+            variant="secondary" 
+            onClick={handleCloseModal}
+            style={{
+              fontFamily: 'Outfit',
+              fontWeight: '600'
+            }}
+          >
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
