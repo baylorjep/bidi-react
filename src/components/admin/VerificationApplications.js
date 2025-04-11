@@ -103,8 +103,8 @@ const VerificationApplications = () => {
       // Format phone number for SMS link
       const formattedPhone = selectedBusiness.phone.replace(/\D/g, '');
       const message = isApproved 
-        ? `Congratulations! Your verification application for ${selectedBusiness.business_name} has been approved on Utah Wedding Vendors!`
-        : `We've reviewed your verification application for ${selectedBusiness.business_name} on Utah Wedding Vendors. Unfortunately, we cannot verify your business at this time.`;
+        ? `Congratulations! Your verification application for ${selectedBusiness.business_name} has been approved! If you have any questions please let us know! - The Bidi Team`
+        : `We've reviewed your verification application for ${selectedBusiness.business_name} on Bidi. Unfortunately, we cannot verify your business at this time.`;
       
       // Open default SMS app with pre-filled message
       window.open(`sms:${formattedPhone}?body=${encodeURIComponent(message)}`);
