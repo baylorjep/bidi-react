@@ -66,6 +66,7 @@ const BusinessDashboard = () => {
   const [profileDetails, setProfileDetails] = useState(null);
   const [bidTemplate, setBidTemplate] = useState('');
   const [showBidTemplateModal, setShowBidTemplateModal] = useState(false);
+  const [bidTemplateError, setBidTemplateError] = useState('');
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
@@ -754,11 +755,53 @@ const BusinessDashboard = () => {
   };
   
 
+  const validateBidTemplate = (template) => {
+    // Regular expressions to detect contact information
+    const phoneRegex = /(\+\d{1,3}[-.]?)?\(?\d{3}\)?[-.]?\d{3}[-.]?\d{4}/g;
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    const websiteRegex = /(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?/g;
+    const socialMediaRegex = /(?:@|(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|facebook\.com|linkedin\.com|twitter\.com)\/)[a-zA-Z0-9._-]+/g;
+
+    // Check for any matches
+    const hasPhone = phoneRegex.test(template);
+    const hasEmail = emailRegex.test(template);
+    const hasWebsite = websiteRegex.test(template);
+    const hasSocialMedia = socialMediaRegex.test(template);
+
+    if (hasPhone || hasEmail || hasWebsite || hasSocialMedia) {
+      let errorMessage = "Please remove the following contact information from your template:";
+      if (hasPhone) errorMessage += "\n- Phone numbers";
+      if (hasEmail) errorMessage += "\n- Email addresses";
+      if (hasWebsite) errorMessage += "\n- Website URLs";
+      if (hasSocialMedia) errorMessage += "\n- Social media handles/links";
+      errorMessage += "\n\nAll contact information should be managed through your Bidi profile. The user can see your work on your profile and will get your contact information after accepting your bid.";
+      setBidTemplateError(errorMessage);
+      return { isValid: false, message: errorMessage };
+    }
+
+    setBidTemplateError('');
+    return { isValid: true };
+  };
+
+  const handleBidTemplateChange = (content) => {
+    // Update the template content
+    setBidTemplate(content);
+    
+    // Validate the content
+    validateBidTemplate(content);
+  };
+
   const handleBidTemplateSubmit = async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       alert("User not found. Please log in again.");
+      return;
+    }
+
+    // Validate the template content
+    const validation = validateBidTemplate(bidTemplate);
+    if (!validation.isValid) {
       return;
     }
 
@@ -774,6 +817,7 @@ const BusinessDashboard = () => {
       alert("An error occurred while updating your bid template.");
     } else {
       setShowBidTemplateModal(false);
+      setBidTemplateError('');
     }
   };
 
@@ -1427,17 +1471,27 @@ const BusinessDashboard = () => {
       </Modal>
 
       {/* Modal for Bid Template Editing */}
-      <Modal show={showBidTemplateModal} onHide={() => setShowBidTemplateModal(false)} centered size="lg">
+      <Modal show={showBidTemplateModal} onHide={() => {
+        setShowBidTemplateModal(false);
+        setBidTemplateError('');
+      }} centered size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Edit Bid Template</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="mb-3">
             <label htmlFor="bidTemplate" className="form-label">Your bid template:</label>
+            {bidTemplateError && (
+              <div className="alert alert-warning" role="alert">
+                {bidTemplateError.split('\n').map((line, index) => (
+                  <div key={index}>{line}</div>
+                ))}
+              </div>
+            )}
             <ReactQuill
               theme="snow"
               value={bidTemplate}
-              onChange={setBidTemplate}
+              onChange={handleBidTemplateChange}
               modules={modules}
               formats={formats}
               style={{ height: '300px', marginBottom: '50px' }}
@@ -1445,7 +1499,10 @@ const BusinessDashboard = () => {
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <button className="btn-danger" onClick={() => setShowBidTemplateModal(false)}>
+          <button className="btn-danger" onClick={() => {
+            setShowBidTemplateModal(false);
+            setBidTemplateError('');
+          }}>
             Close
           </button>
           <button className="btn-success" onClick={handleBidTemplateSubmit}>

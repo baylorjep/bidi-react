@@ -57,6 +57,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [bidTemplate, setBidTemplate] = useState('');
+    const [bidDescriptionError, setBidDescriptionError] = useState('');
 
     useEffect(() => {
         const fetchRequestDetails = async () => {
@@ -148,12 +149,50 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
         fetchBidTemplate();
     }, [requestId, requestType]);
 
+    const validateBidDescription = (content) => {
+        // Regular expressions to detect contact information
+        const phoneRegex = /(\+\d{1,3}[-.]?)?\(?\d{3}\)?[-.]?\d{3}[-.]?\d{4}/g;
+        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+        const websiteRegex = /(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?/g;
+        const socialMediaRegex = /(?:@|(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|facebook\.com|linkedin\.com|twitter\.com)\/)[a-zA-Z0-9._-]+/g;
+
+        // Check for any matches
+        const hasPhone = phoneRegex.test(content);
+        const hasEmail = emailRegex.test(content);
+        const hasWebsite = websiteRegex.test(content);
+        const hasSocialMedia = socialMediaRegex.test(content);
+
+        if (hasPhone || hasEmail || hasWebsite || hasSocialMedia) {
+            let errorMessage = "Please remove the following contact information from your bid:";
+            if (hasPhone) errorMessage += "\n- Phone numbers";
+            if (hasEmail) errorMessage += "\n- Email addresses";
+            if (hasWebsite) errorMessage += "\n- Website URLs";
+            if (hasSocialMedia) errorMessage += "\n- Social media handles/links";
+            errorMessage += "\n\nAll contact information should be managed through your Bidi profile. The user can see your work on your profile and will get your contact information after accepting your bid.";
+            setBidDescriptionError(errorMessage);
+            return false;
+        }
+
+        setBidDescriptionError('');
+        return true;
+    };
+
+    const handleBidDescriptionChange = (content) => {
+        setBidDescription(content);
+        validateBidDescription(content);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Check if user has stripe account or Bidi Plus
         if (!connectedAccountId && !Bidi_Plus) {
             setShowModal(true);
+            return;
+        }
+
+        // Validate bid description
+        if (!validateBidDescription(bidDescription)) {
             return;
         }
 
@@ -254,10 +293,17 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                             <label className="custom-label"htmlFor="bidAmount">Bid Price</label>
                         </div>
                         <div className="custom-input-container" style={{ marginBottom: '80px' }}>
+                            {bidDescriptionError && (
+                                <div className="alert alert-warning" role="alert">
+                                    {bidDescriptionError.split('\n').map((line, index) => (
+                                        <div key={index}>{line}</div>
+                                    ))}
+                                </div>
+                            )}
                             <ReactQuill
                                 theme="snow"
                                 value={bidDescription}
-                                onChange={setBidDescription}
+                                onChange={handleBidDescriptionChange}
                                 modules={modules}
                                 formats={formats}
                                 style={{ 

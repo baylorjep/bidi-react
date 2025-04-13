@@ -13753,7 +13753,6 @@ h1 {
 p {
   font-size: 18px;
   color: #333;
-  text-align: center;
 }
 
 @media (max-width: 768px) {
@@ -16751,4 +16750,17 @@ label {
   .quiz-promo-content h2 {
      font-size: 28px;
  }
+}
+
+.vendor-name-bid-display {
+  text-decoration: none;
+  color: inherit;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+@media (max-width: 768px) {
+  .vendor-name-bid-display {
+    margin-left: 0;
+  }
 }

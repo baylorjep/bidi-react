@@ -110,7 +110,7 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <Link 
                                 to={`/portfolio/${bid.business_profiles.id}`} 
-                                style={{ textDecoration: "none", color: "inherit", fontWeight: "bold" }}
+                                className='vendor-name-bid-display'
                             >
                                 {bid.business_profiles.business_name}
                             </Link>
@@ -163,13 +163,19 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                         className="bid-description-content"
                         dangerouslySetInnerHTML={{ __html: bid.bid_description }} 
                         style={{
-                            maxHeight: '200px',
+                            maxHeight: '400px',
                             overflowY: 'auto',
-                            marginTop: '8px',
-                            padding: '8px',
+                            marginTop: '12px',
+                            padding: '12px',
                             border: '1px solid #eee',
-                            borderRadius: '4px',
-                            backgroundColor: '#f9f9f9'
+                            borderRadius: '8px',
+                            backgroundColor: '#f9f9f9',
+                            fontFamily: 'Inter, sans-serif',
+                            fontSize: '14px',
+                            lineHeight: '1.6',
+                            color: '#333',
+                            textAlign: 'left',
+                            width: '100%',
                         }}
                     />
                 </p>
