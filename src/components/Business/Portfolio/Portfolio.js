@@ -52,11 +52,31 @@ const Portfolio = () => {
 
     const { data: portfolioData, error: portfolioError } = await supabase
       .from("profile_photos")
-      .select("photo_url")
+      .select("photo_url, photo_type, display_order")
       .eq("user_id", businessId)
-      .eq("photo_type", "portfolio");
-    if (portfolioError) console.error("Error fetching portfolio images:", portfolioError);
-    else setPortfolioPics(portfolioData.map(img => img.photo_url));
+      .or("photo_type.eq.portfolio,photo_type.eq.video")
+      .order("display_order", { ascending: true });
+
+    if (portfolioError) {
+      console.error("Error fetching portfolio media:", portfolioError);
+    } else {
+      // Sort by display_order
+      const sortedMedia = portfolioData.sort((a, b) => a.display_order - b.display_order);
+      
+      const videos = [];
+      const images = [];
+      
+      sortedMedia.forEach(item => {
+        if (item.photo_type === 'video') {
+          videos.push(item.photo_url);
+        } else {
+          images.push(item.photo_url);
+        }
+      });
+      
+      setPortfolioVideos(videos);
+      setPortfolioPics(images);
+    }
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (!userError && user) {
@@ -116,14 +136,6 @@ const Portfolio = () => {
         : null;
       setAverageRating(avgRating);
     }
-
-    const { data: videoData, error: videoError } = await supabase
-      .from("profile_photos")
-      .select("photo_url")
-      .eq("user_id", businessId)
-      .eq("photo_type", "video");
-    if (videoError) console.error("Error fetching videos:", videoError);
-    else setPortfolioVideos(videoData.map(vid => vid.photo_url));
 
     setLoading(false);
   };
@@ -291,26 +303,29 @@ const Portfolio = () => {
 
       <div className="portfolio-container">
         <div className={`portfolio-layout ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media' : ''}`}>
-          {portfolioVideos.length > 0 ? (
-            <video 
-              src={portfolioVideos[0]}
-              className={`main-portfolio-image ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media-item' : ''}`}
-              controls
-              muted
-              autoPlay
-              loop
-              playsInline
-              onClick={() => handleImageClick(portfolioVideos[0])}
-            >
-              Your browser does not support the video tag.
-            </video>
-          ) : portfolioPics.length > 0 ? (
-            <img 
-              src={convertedUrls[portfolioPics[0]] || portfolioPics[0]} 
-              alt="Main Portfolio" 
-              className={`main-portfolio-image ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media-item' : ''}`}
-              onClick={() => handleImageClick(portfolioPics[0])}
-            />
+          {/* Show first media item based on display_order */}
+          {portfolioPics.length > 0 || portfolioVideos.length > 0 ? (
+            portfolioPics[0] ? (
+              <img 
+                src={convertedUrls[portfolioPics[0]] || portfolioPics[0]} 
+                alt="Main Portfolio" 
+                className={`main-portfolio-image ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media-item' : ''}`}
+                onClick={() => handleImageClick(portfolioPics[0])}
+              />
+            ) : portfolioVideos[0] ? (
+              <video 
+                src={portfolioVideos[0]}
+                className={`main-portfolio-image ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media-item' : ''}`}
+                controls
+                muted
+                autoPlay
+                loop
+                playsInline
+                onClick={() => handleImageClick(portfolioVideos[0])}
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : null
           ) : (
             <img 
               src="/images/portfolio.jpeg" 
@@ -319,6 +334,7 @@ const Portfolio = () => {
             />
           )}
 
+          {/* Show remaining media items in grid */}
           {(portfolioVideos.length + portfolioPics.length > 1) && (
             <div className="portfolio-grid">
               {[...portfolioVideos.slice(1), ...portfolioPics.slice(1)]

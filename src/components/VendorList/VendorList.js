@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Slider from 'react-slick';
 import { supabase } from '../../supabaseClient';
@@ -7,7 +7,9 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import Verified from '../../assets/Frame 1162.svg';
 import StarIcon from '../../assets/star-duotone.svg'; // Assuming you have a star icon
-import { convertHeicToJpeg } from "../../utils/imageUtils";
+import { convertHeicToJpeg, convertToWebP, convertImagesToWebP, clearImageCache, registerServiceWorker } from "../../utils/imageUtils";
+import LoadingPlaceholder from '../Common/LoadingPlaceholder';
+import ImageErrorBoundary from '../Common/ImageErrorBoundary';
 
 const VendorList = ({ 
     selectedCategory, 
@@ -38,6 +40,9 @@ const VendorList = ({
     const [loadingRemainingPhotos, setLoadingRemainingPhotos] = useState({});
     const [convertedUrls, setConvertedUrls] = useState({});
     const [convertingImages, setConvertingImages] = useState({});
+    const [visibleVendors, setVisibleVendors] = useState([]);
+    const observerRef = useRef(null);
+    const vendorRefs = useRef({});
     const navigate = useNavigate();
 
     const truncateText = (text, maxLength = 150) => {
@@ -69,36 +74,29 @@ const VendorList = ({
             return Promise.resolve();
         }
 
-        try {
-            const convertedSrc = convertedUrls[src] || src;
+        return new Promise((resolve) => {
+            const img = new Image();
             
-            return new Promise((resolve) => {
-                const img = new Image();
-                
-                img.onload = () => {
-                    setMediaErrors(prev => ({
-                        ...prev,
-                        [src]: false
-                    }));
-                    resolve();
-                };
-                
-                img.onerror = () => {
-                    console.warn(`Failed to load image: ${src}`);
-                    setMediaErrors(prev => ({
-                        ...prev,
-                        [src]: true
-                    }));
-                    resolve();
-                };
-                
-                img.src = convertedSrc;
-            });
-        } catch (error) {
-            console.error('Error loading image:', error);
-            return Promise.resolve();
-        }
-    }, [mediaErrors, convertedUrls]);
+            img.onload = () => {
+                setMediaErrors(prev => ({
+                    ...prev,
+                    [src]: false
+                }));
+                resolve();
+            };
+            
+            img.onerror = () => {
+                console.warn(`Failed to load image: ${src}`);
+                setMediaErrors(prev => ({
+                    ...prev,
+                    [src]: true
+                }));
+                resolve();
+            };
+            
+            img.src = src;
+        });
+    }, [mediaErrors]);
 
     const handleImageLoad = useCallback((imageId) => {
         setImageLoading(prev => ({
@@ -131,62 +129,69 @@ const VendorList = ({
         }
     }, [vendors, vendorPhotosLoaded, checkAllVendorsLoaded]);
 
-    // Add intersection observer to detect when vendor cards come into view
+    // Add intersection observer for lazy loading
     useEffect(() => {
-        const observerCallback = (entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const vendorId = entry.target.dataset.vendorId;
-                    const vendor = vendors.find(v => v.id === vendorId);
-                    if (vendor && vendor.has_more_photos) {
-                        loadRemainingPhotos(vendor);
+        observerRef.current = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const vendorId = entry.target.dataset.vendorId;
+                        setVisibleVendors(prev => [...prev, vendorId]);
                     }
-                }
-            });
-        };
-
-        const observer = new IntersectionObserver(observerCallback, {
-            root: null,
-            rootMargin: '50px',
-            threshold: 0.1
-        });
-
-        // Observe all vendor cards
-        const vendorCards = document.querySelectorAll('.vendor-card');
-        vendorCards.forEach(card => observer.observe(card));
-
-        return () => {
-            vendorCards.forEach(card => observer.unobserve(card));
-            observer.disconnect();
-        };
-    }, [vendors]);
-
-    // Add useEffect to convert HEIC images when portfolio photos change
-    useEffect(() => {
-        const convertImages = async () => {
-            const newConvertedUrls = {};
-            for (const vendor of vendors) {
-                for (const photo of vendor.portfolio_photos) {
-                    if (!isVideo(photo) && !newConvertedUrls[photo] && photo.toLowerCase().match(/\.heic$/)) {
-                        setConvertingImages(prev => ({ ...prev, [photo]: true }));
-                        newConvertedUrls[photo] = await convertHeicToJpeg(photo);
-                        setConvertingImages(prev => ({ ...prev, [photo]: false }));
-                    }
-                }
+                });
+            },
+            {
+                root: null,
+                rootMargin: '50px',
+                threshold: 0.1
             }
-            setConvertedUrls(newConvertedUrls);
-        };
-
-        convertImages();
+        );
 
         return () => {
-            Object.values(convertedUrls).forEach(url => {
-                if (url && url.startsWith('blob:')) {
-                    URL.revokeObjectURL(url);
-                }
-            });
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+            }
         };
+    }, []);
+
+    // Update visible vendors when vendors change
+    useEffect(() => {
+        setVisibleVendors([]);
+        vendorRefs.current = {};
+        
+        vendors.forEach(vendor => {
+            const ref = document.querySelector(`[data-vendor-id="${vendor.id}"]`);
+            if (ref) {
+                vendorRefs.current[vendor.id] = ref;
+                observerRef.current?.observe(ref);
+            }
+        });
     }, [vendors]);
+
+    // Convert images for visible vendors
+    useEffect(() => {
+        const convertVisibleImages = async () => {
+            const visibleVendorData = vendors.filter(v => visibleVendors.includes(v.id));
+            const allImageUrls = visibleVendorData.flatMap(v => v.portfolio_photos);
+            
+            const convertedUrls = await convertImagesToWebP(allImageUrls);
+            setConvertedUrls(prev => ({ ...prev, ...convertedUrls }));
+        };
+
+        convertVisibleImages();
+    }, [visibleVendors, vendors]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            clearImageCache();
+        };
+    }, []);
+
+    // Register service worker on mount
+    useEffect(() => {
+        registerServiceWorker();
+    }, []);
 
     const fetchVendors = async () => {
         setLoading(true);
@@ -611,122 +616,135 @@ const VendorList = ({
         }
     };
 
+    // Update the image rendering part
+    const renderImage = (item, index, vendorId) => {
+        const imageId = `${vendorId}-${index}`;
+        const itemIsVideo = isVideo(item);
+
+        return (
+            <div key={index} style={{ height: '100%' }}>
+                <div className="image-container" 
+                     style={{ 
+                         height: '100%',
+                         display: 'flex',
+                         alignItems: 'center',
+                         justifyContent: 'center',
+                         background: '#f5f5f5'
+                     }}
+                     onClick={() => openModal(item)}
+                >
+                    {itemIsVideo ? (
+                        <div className="video-container">
+                            <video
+                                src={item}
+                                className="portfolio-image video"
+                                muted
+                                loop
+                                playsInline
+                                loading="lazy"
+                                preload="metadata"
+                                onError={(e) => {
+                                    console.warn(`Failed to load video: ${item}`);
+                                    setMediaErrors(prev => ({
+                                        ...prev,
+                                        [item]: true
+                                    }));
+                                }}
+                            />
+                            {!mediaErrors[item] && (
+                                <div className="video-play-overlay">
+                                    <button 
+                                        className="play-button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            try {
+                                                const container = e.currentTarget.closest('.video-container');
+                                                const video = container?.querySelector('video');
+                                                const overlay = e.currentTarget.closest('.video-play-overlay');
+                                                
+                                                if (!video || !overlay) return;
+
+                                                // Pause all other videos
+                                                document.querySelectorAll('.portfolio-image.video').forEach(v => {
+                                                    if (v !== video) {
+                                                        v.pause();
+                                                        const otherOverlay = v.parentElement?.querySelector('.video-play-overlay');
+                                                        if (otherOverlay) {
+                                                            otherOverlay.style.display = 'flex';
+                                                        }
+                                                    }
+                                                });
+                                                
+                                                if (video.paused) {
+                                                    video.play()
+                                                        .then(() => {
+                                                            overlay.style.display = 'none';
+                                                        })
+                                                        .catch(error => {
+                                                            console.warn('Error playing video:', error);
+                                                        });
+                                                } else {
+                                                    video.pause();
+                                                    overlay.style.display = 'flex';
+                                                }
+                                            } catch (error) {
+                                                console.warn('Error handling play button click:', error);
+                                            }
+                                        }}
+                                    >
+                                        ▶
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <ImageErrorBoundary>
+                            {imageLoading[imageId] ? (
+                                <LoadingPlaceholder 
+                                    width="100%"
+                                    height="100%"
+                                    className="portfolio-image"
+                                />
+                            ) : (
+                                <img
+                                    src={item}
+                                    alt={`Portfolio ${index}`}
+                                    className={`portfolio-image ${imageLoading[imageId] ? 'loading' : 'loaded'}`}
+                                    loading="lazy"
+                                    onLoad={() => handleImageLoad(imageId)}
+                                    onError={(e) => {
+                                        console.warn(`Failed to load image: ${item}`);
+                                        setMediaErrors(prev => ({
+                                            ...prev,
+                                            [item]: true
+                                        }));
+                                    }}
+                                    style={{
+                                        opacity: imageLoading[imageId] ? 0.5 : 1,
+                                        transition: 'opacity 0.3s ease-in-out'
+                                    }}
+                                />
+                            )}
+                        </ImageErrorBoundary>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="vendor-list">
             {vendors.map(vendor => (
-                <div key={vendor.id} className="vendor-card" data-vendor-id={vendor.id}>
+                <div 
+                    key={vendor.id} 
+                    className="vendor-card" 
+                    data-vendor-id={vendor.id}
+                    ref={el => vendorRefs.current[vendor.id] = el}
+                >
                     <div className="portfolio-images" style={{ minHeight: '300px' }}>
                         {vendor.portfolio_photos.length > 0 ? (
                             <Slider {...settings}>
-                                {vendor.portfolio_photos.map((item, index) => {
-                                    const imageId = `${vendor.id}-${index}`;
-                                    const itemIsVideo = isVideo(item);
-
-                                    return (
-                                        <div key={index} style={{ height: '100%' }}>
-                                            <div className="image-container" 
-                                                 style={{ 
-                                                     height: '100%',
-                                                     display: 'flex',
-                                                     alignItems: 'center',
-                                                     justifyContent: 'center',
-                                                     background: '#f5f5f5' // Light background for empty states
-                                                 }}
-                                                 onClick={() => openModal(item)}
-                                            >
-                                                {itemIsVideo ? (
-                                                    <div className="video-container">
-                                                        <video
-                                                            src={item}
-                                                            className="portfolio-image video"
-                                                            muted
-                                                            loop
-                                                            playsInline
-                                                            loading="lazy"
-                                                            preload="metadata"
-                                                            onError={(e) => {
-                                                                console.warn(`Failed to load video: ${item}`);
-                                                                setMediaErrors(prev => ({
-                                                                    ...prev,
-                                                                    [item]: true
-                                                                }));
-                                                            }}
-                                                        />
-                                                        {!mediaErrors[item] && (
-                                                            <div className="video-play-overlay">
-                                                                <button 
-                                                                    className="play-button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        try {
-                                                                            const container = e.currentTarget.closest('.video-container');
-                                                                            const video = container?.querySelector('video');
-                                                                            const overlay = e.currentTarget.closest('.video-play-overlay');
-                                                                            
-                                                                            if (!video || !overlay) return;
-
-                                                                            // Pause all other videos
-                                                                            document.querySelectorAll('.portfolio-image.video').forEach(v => {
-                                                                                if (v !== video) {
-                                                                                    v.pause();
-                                                                                    const otherOverlay = v.parentElement?.querySelector('.video-play-overlay');
-                                                                                    if (otherOverlay) {
-                                                                                        otherOverlay.style.display = 'flex';
-                                                                                    }
-                                                                                }
-                                                                            });
-                                                                            
-                                                                            if (video.paused) {
-                                                                                video.play()
-                                                                                    .then(() => {
-                                                                                        overlay.style.display = 'none';
-                                                                                    })
-                                                                                    .catch(error => {
-                                                                                        console.warn('Error playing video:', error);
-                                                                                    });
-                                                                            } else {
-                                                                                video.pause();
-                                                                                overlay.style.display = 'flex';
-                                                                            }
-                                                                        } catch (error) {
-                                                                            console.warn('Error handling play button click:', error);
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    ▶
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <img
-                                                        src={convertedUrls[item] || item}
-                                                        alt={`Portfolio ${index}`}
-                                                        className={`portfolio-image ${imageLoading[imageId] ? 'loading' : 'loaded'}`}
-                                                        loading="lazy"
-                                                        onLoad={() => handleImageLoad(imageId)}
-                                                        onError={(e) => {
-                                                            console.warn(`Failed to load image: ${item}`);
-                                                            setMediaErrors(prev => ({
-                                                                ...prev,
-                                                                [item]: true
-                                                            }));
-                                                        }}
-                                                        style={{
-                                                            opacity: imageLoading[imageId] || convertingImages[item] ? 0.5 : 1,
-                                                            transition: 'opacity 0.3s ease-in-out'
-                                                        }}
-                                                    />
-                                                )}
-                                                {convertingImages[item] && (
-                                                    <div className="converting-overlay">
-                                                        <div className="converting-spinner"></div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                {vendor.portfolio_photos.map((item, index) => renderImage(item, index, vendor.id))}
                                 {vendor.has_more_photos && (
                                     <div className="loading-more-photos" 
                                          style={{ 

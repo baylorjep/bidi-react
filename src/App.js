@@ -112,6 +112,7 @@ import VendorList from './components/VendorList/VendorList';
 import VendorListWithFilters from './components/VendorListWithFilters/VendorListWithFilters';
 import LocationBasedVendors from './pages/LocationBasedVendors';
 import WeddingVibeQuizPage from './pages/WeddingVibeQuiz';
+import ImageConversion from './pages/Admin/ImageConversion';
 
 function App() {
 
@@ -242,6 +243,9 @@ function App() {
                             <Route path="/:category/:location" element={<LocationBasedVendors />} />
                             <Route path="/:type/:category/:location" element={<LocationBasedVendors />} />
                             <Route path="/wedding-vibe-quiz" element={<WeddingVibeQuizPage />} />
+
+                            {/* Image Conversion Route */}
+                            <Route path="/admin/image-conversion" element={<ImageConversion />} />
 
                         </Routes>
                     </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../supabaseClient";
 import { v4 as uuidv4 } from 'uuid';
 import "../../../styles/EditProfileModal.css";
+import { convertToWebP } from "../../../utils/imageUtils";
 
 const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const [formData, setFormData] = useState(initialData || {}); // Store editable fields
@@ -14,6 +15,10 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const profileFileInputRef = useRef(null);
   const [uploadingProfile, setUploadingProfile] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
+  const [mediaOrder, setMediaOrder] = useState([]);
+  const [touchStartY, setTouchStartY] = useState(null);
+  const [draggedElement, setDraggedElement] = useState(null);
+  const [dragFeedback, setDragFeedback] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -31,14 +36,31 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     try {
       const { data, error } = await supabase
         .from("profile_photos")
-        .select("photo_url")
+        .select("photo_url, display_order, photo_type")
         .eq("user_id", businessId)
-        .eq("photo_type", "portfolio");
+        .or("photo_type.eq.portfolio,photo_type.eq.video")
+        .order("display_order", { ascending: true });
 
       if (error) throw error;
-      setPortfolioPics(data.map(img => img.photo_url));
+      
+      const videos = [];
+      const images = [];
+      const order = [];
+      
+      data.forEach(item => {
+        if (item.photo_type === 'video') {
+          videos.push(item.photo_url);
+        } else {
+          images.push(item.photo_url);
+        }
+        order.push(item.photo_url);
+      });
+      
+      setPortfolioVideos(videos);
+      setPortfolioPics(images);
+      setMediaOrder(order);
     } catch (err) {
-      console.error("Error fetching portfolio images:", err);
+      console.error("Error fetching portfolio media:", err);
     }
   };
 
@@ -115,11 +137,14 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
 
   // Update handleFileChange to check file types
   const handleFileChange = async (e) => {
+    console.log('Starting file upload process...');
     const files = Array.from(e.target.files);
+    console.log('Files selected:', files);
     
     // Filter out HEIC files and warn user
     const invalidFiles = files.filter(file => !isValidFileType(file));
     if (invalidFiles.length > 0) {
+      console.log('Invalid files found:', invalidFiles);
       alert('Only JPG, PNG, and MP4 files are supported. HEIC files are not accepted.');
       e.target.value = ''; // Clear the file input
       return;
@@ -128,9 +153,11 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     setUploading(true);
 
     for (const file of files) {
+      console.log('Processing file:', file.name);
       const fileType = file.type.startsWith('video/') ? 'video' : 'portfolio';
       const fileName = `${Date.now()}_${file.name}`;
       const filePath = `${businessId}/${fileName}`;
+      console.log('File path:', filePath);
 
       try {
         // Initialize progress for this file
@@ -139,42 +166,101 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
           [fileName]: 0
         }));
 
-        // Create upload options with progress tracking
-        const options = {
-          onUploadProgress: (progressEvent) => {
-            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(prev => ({
-              ...prev,
-              [fileName]: progress
-            }));
+        let fileToUpload = file;
+        
+        // Convert image to WebP if it's not a video
+        if (fileType === 'portfolio') {
+          console.log('Converting image to WebP...');
+          try {
+            // Create a canvas element
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Create an image element
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            
+            // Wait for image to load
+            await new Promise((resolve, reject) => {
+              img.onload = resolve;
+              img.onerror = reject;
+            });
+            
+            // Set canvas dimensions
+            canvas.width = img.width;
+            canvas.height = img.height;
+            
+            // Draw image on canvas
+            ctx.drawImage(img, 0, 0);
+            
+            // Convert to WebP
+            const webpBlob = await new Promise((resolve) => {
+              canvas.toBlob((blob) => {
+                resolve(blob);
+              }, 'image/webp', 0.8);
+            });
+            
+            fileToUpload = webpBlob;
+            console.log('WebP conversion successful');
+            
+            // Clean up
+            URL.revokeObjectURL(img.src);
+          } catch (error) {
+            console.error('Error converting to WebP:', error);
+            // If conversion fails, upload original file
+            fileToUpload = file;
+            console.log('Falling back to original file');
           }
-        };
+        }
 
-        // Upload file with progress tracking
-        const { error: uploadError, data } = await supabase.storage
+        console.log('Uploading file to storage...');
+        // Upload file to storage with progress tracking
+        const { error: uploadError } = await supabase.storage
           .from('profile-photos')
-          .upload(filePath, file, {
+          .upload(filePath, fileToUpload, {
             cacheControl: '3600',
             upsert: false,
-            onUploadProgress: options.onUploadProgress
+            onUploadProgress: (progress) => {
+              const percentCompleted = Math.round((progress.loaded * 100) / progress.total);
+              setUploadProgress(prev => ({
+                ...prev,
+                [fileName]: percentCompleted
+              }));
+            }
           });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw new Error(`Failed to upload file: ${uploadError.message}`);
+        }
+        console.log('File uploaded successfully');
 
         // Get public URL
+        console.log('Getting public URL...');
         const { data: { publicUrl } } = supabase.storage
           .from('profile-photos')
           .getPublicUrl(filePath);
+        console.log('Public URL:', publicUrl);
 
-        // Save to database
-        await supabase
+        // Save to database with order
+        const { error: insertError } = await supabase
           .from('profile_photos')
           .insert({
             user_id: businessId,
             photo_url: publicUrl,
             photo_type: fileType,
-            file_path: filePath
+            file_path: filePath,
+            display_order: mediaOrder.length
           });
+
+        if (insertError) {
+          console.error('Database insert error:', insertError);
+          throw new Error(`Failed to save file info: ${insertError.message}`);
+        }
+        console.log('Database entry created successfully');
+
+        // Update local order state
+        setMediaOrder(prev => [...prev, publicUrl]);
 
         // Set progress to 100% when complete
         setUploadProgress(prev => ({
@@ -192,8 +278,8 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
         }, 1000);
 
       } catch (error) {
-        console.error('Error uploading file:', error);
-        alert(`Failed to upload ${file.name}. Please try again.`);
+        console.error('Error in upload process:', error);
+        alert(`Failed to upload ${file.name}: ${error.message}`);
         
         // Remove progress bar on error
         setUploadProgress(prev => {
@@ -205,6 +291,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     }
 
     setUploading(false);
+    console.log('Upload process completed');
     fetchPortfolioImages();
     fetchPortfolioVideos();
   };
@@ -218,7 +305,15 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     type === "profile" ? setUploadingProfile(true) : setUploading(true);
 
     try {
-      const fileExt = file.name.split('.').pop();
+      // Convert image to WebP if it's not already
+      let processedFile = file;
+      if (file.type.startsWith('image/') && !file.type.includes('webp')) {
+        const webpUrl = await convertToWebP(URL.createObjectURL(file));
+        const response = await fetch(webpUrl);
+        processedFile = await response.blob();
+      }
+
+      const fileExt = 'webp'; // Always use webp extension
       const fileName = `${uuidv4()}.${fileExt}`;
       const filePath = `${businessId}/${fileName}`;
 
@@ -226,7 +321,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       const { error: uploadError } = await supabase
         .storage
         .from('profile-photos')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, processedFile, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -285,7 +380,20 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const handleDeleteMedia = async (mediaUrl, type) => {
     try {
       const filePath = mediaUrl.split("/profile-photos/")[1];
+      console.log('Deleting media:', { mediaUrl, filePath, type });
 
+      // Delete from storage
+      const { error: deleteStorageError } = await supabase.storage
+        .from("profile-photos")
+        .remove([filePath]);
+
+      if (deleteStorageError) {
+        console.error('Storage deletion error:', deleteStorageError);
+        throw deleteStorageError;
+      }
+      console.log('Successfully deleted from storage');
+
+      // Delete from database
       const { error: deleteDbError } = await supabase
         .from("profile_photos")
         .delete()
@@ -293,23 +401,48 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
         .eq("photo_url", mediaUrl)
         .eq("photo_type", type);
 
-      if (deleteDbError) throw deleteDbError;
+      if (deleteDbError) {
+        console.error('Database deletion error:', deleteDbError);
+        throw deleteDbError;
+      }
+      console.log('Successfully deleted from database');
 
-      const { error: deleteStorageError } = await supabase
-        .storage
-        .from("profile-photos")
-        .remove([filePath]);
-
-      if (deleteStorageError) throw deleteStorageError;
-
-      // Update UI based on media type
+      // Immediately update UI
       if (type === 'video') {
         setPortfolioVideos(prev => prev.filter(vid => vid !== mediaUrl));
       } else {
         setPortfolioPics(prev => prev.filter(img => img !== mediaUrl));
       }
+
+      // Update media order
+      setMediaOrder(prev => prev.filter(url => url !== mediaUrl));
+
+      // Update display order for remaining items
+      const { data: remainingMedia } = await supabase
+        .from("profile_photos")
+        .select("photo_url, display_order")
+        .eq("user_id", businessId)
+        .or("photo_type.eq.portfolio,photo_type.eq.video")
+        .order("display_order", { ascending: true });
+
+      if (remainingMedia) {
+        console.log('Updating display order for remaining items:', remainingMedia);
+        // Update display order for all remaining items
+        const updates = remainingMedia.map((media, index) => 
+          supabase
+            .from("profile_photos")
+            .update({ display_order: index })
+            .eq("user_id", businessId)
+            .eq("photo_url", media.photo_url)
+        );
+
+        await Promise.all(updates);
+        console.log('Successfully updated display order');
+      }
+
     } catch (error) {
       console.error(`Error deleting ${type}:`, error);
+      alert(`Failed to delete ${type}. Please try again.`);
     }
   };
 
@@ -343,23 +476,79 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
 
     setUploadingProfile(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
+      console.log('Processing profile picture:', file.name);
+      const fileName = `${Date.now()}_${file.name}`;
       const filePath = `${businessId}/${fileName}`;
+      console.log('File path:', filePath);
 
+      let fileToUpload = file;
+      
+      // Convert image to WebP
+      console.log('Converting profile picture to WebP...');
+      try {
+        // Create a canvas element
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Create an image element
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        
+        // Wait for image to load
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+        
+        // Set canvas dimensions
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Draw image on canvas
+        ctx.drawImage(img, 0, 0);
+        
+        // Convert to WebP
+        const webpBlob = await new Promise((resolve) => {
+          canvas.toBlob((blob) => {
+            resolve(blob);
+          }, 'image/webp', 0.8);
+        });
+        
+        fileToUpload = webpBlob;
+        console.log('WebP conversion successful');
+        
+        // Clean up
+        URL.revokeObjectURL(img.src);
+      } catch (error) {
+        console.error('Error converting to WebP:', error);
+        // If conversion fails, upload original file
+        fileToUpload = file;
+        console.log('Falling back to original file');
+      }
+
+      console.log('Uploading profile picture to storage...');
       // Upload file to storage
       const { error: uploadError } = await supabase.storage
         .from('profile-photos')
-        .upload(filePath, file);
+        .upload(filePath, fileToUpload, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Failed to upload file: ${uploadError.message}`);
+      }
+      console.log('Profile picture uploaded successfully');
 
       // Get public URL
+      console.log('Getting public URL...');
       const { data: { publicUrl } } = supabase.storage
         .from('profile-photos')
         .getPublicUrl(filePath);
+      console.log('Public URL:', publicUrl);
 
-      // Update or insert into profile_photos table
+      // Check if a profile picture already exists
       const { data: existingProfile } = await supabase
         .from('profile_photos')
         .select("id")
@@ -368,15 +557,24 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
         .single();
 
       if (existingProfile) {
-        await supabase
+        // Update existing profile picture
+        console.log('Updating existing profile picture...');
+        const { error: updateError } = await supabase
           .from('profile_photos')
           .update({
             photo_url: publicUrl,
             file_path: filePath
           })
           .eq("id", existingProfile.id);
+
+        if (updateError) {
+          console.error('Database update error:', updateError);
+          throw new Error(`Failed to update profile picture: ${updateError.message}`);
+        }
       } else {
-        await supabase
+        // Insert new profile picture
+        console.log('Creating new profile picture record...');
+        const { error: insertError } = await supabase
           .from('profile_photos')
           .insert({
             user_id: businessId,
@@ -384,8 +582,14 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
             photo_type: "profile",
             file_path: filePath
           });
+
+        if (insertError) {
+          console.error('Database insert error:', insertError);
+          throw new Error(`Failed to save profile picture: ${insertError.message}`);
+        }
       }
 
+      console.log('Profile picture update completed successfully');
       setProfilePic(publicUrl);
     } catch (error) {
       console.error("Error uploading profile picture:", error);
@@ -446,6 +650,180 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     </div>
   );
 
+  // Add this function to handle reordering
+  const handleReorder = async (draggedUrl, droppedUrl) => {
+    try {
+      // Get current order
+      const { data: currentMedia } = await supabase
+        .from("profile_photos")
+        .select("photo_url, display_order")
+        .eq("user_id", businessId)
+        .or("photo_type.eq.portfolio,photo_type.eq.video")
+        .order("display_order", { ascending: true });
+
+      if (!currentMedia) return;
+
+      // Create new order array
+      const newOrder = [...mediaOrder];
+      const draggedIndex = newOrder.indexOf(draggedUrl);
+      const droppedIndex = newOrder.indexOf(droppedUrl);
+      
+      // Remove dragged item and insert at new position
+      newOrder.splice(draggedIndex, 1);
+      newOrder.splice(droppedIndex, 0, draggedUrl);
+      
+      // Update display_order in database
+      const updates = newOrder.map((url, index) => {
+        const media = currentMedia.find(m => m.photo_url === url);
+        if (media) {
+          return supabase
+            .from("profile_photos")
+            .update({ display_order: index })
+            .eq("user_id", businessId)
+            .eq("photo_url", url);
+        }
+        return Promise.resolve();
+      });
+
+      await Promise.all(updates);
+      setMediaOrder(newOrder);
+    } catch (error) {
+      console.error("Error reordering media:", error);
+      alert("Failed to reorder media. Please try again.");
+    }
+  };
+
+  // Update the touch event handlers
+  const handleTouchStart = (e, url) => {
+    // Only start drag if touching the drag handle
+    if (!e.target.closest('.drag-handle')) return;
+    
+    const touch = e.touches[0];
+    const element = e.currentTarget;
+    
+    setTouchStartY(touch.clientY);
+    setDraggedElement(element);
+    element.classList.add('dragging');
+    
+    // Store the original URL and position
+    element.dataset.originalUrl = url;
+    element.dataset.initialY = element.getBoundingClientRect().top;
+    
+    // Add feedback element
+    setDragFeedback('Hold and drag to reorder');
+    
+    // Prevent scrolling while dragging
+    e.preventDefault();
+  };
+
+  const handleTouchMove = (e) => {
+    if (!draggedElement) return;
+    
+    const touch = e.touches[0];
+    const elements = Array.from(document.querySelectorAll('.image-container:not(.dragging)'));
+    
+    // Calculate drag distance
+    const deltaY = touch.clientY - touchStartY;
+    draggedElement.style.transform = `translateY(${deltaY}px)`;
+    
+    // Remove existing drag-over states
+    elements.forEach(el => {
+      el.classList.remove('drag-over-above', 'drag-over-below');
+    });
+    
+    // Find the element we're dragging over
+    let closestElement = null;
+    let closestDistance = Infinity;
+    let isAbove = false;
+
+    elements.forEach(el => {
+      const box = el.getBoundingClientRect();
+      const distance = Math.abs(touch.clientY - (box.top + box.height / 2));
+      
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestElement = el;
+        isAbove = touch.clientY < box.top + box.height / 2;
+      }
+    });
+    
+    if (closestElement) {
+      if (isAbove) {
+        closestElement.classList.add('drag-over-above');
+        setDragFeedback('Release to place before');
+      } else {
+        closestElement.classList.add('drag-over-below');
+        setDragFeedback('Release to place after');
+      }
+    }
+    
+    e.preventDefault();
+  };
+
+  const handleTouchEnd = async (e) => {
+    if (!draggedElement) return;
+    
+    const dropTarget = document.querySelector('.drag-over-above, .drag-over-below');
+    
+    if (dropTarget) {
+      const draggedUrl = draggedElement.dataset.originalUrl;
+      const droppedUrl = dropTarget.querySelector('img, video').src;
+      const dropAbove = dropTarget.classList.contains('drag-over-above');
+      
+      // Update the order based on drop position
+      const newOrder = [...mediaOrder];
+      const draggedIndex = newOrder.indexOf(draggedUrl);
+      let droppedIndex = newOrder.indexOf(droppedUrl);
+      
+      if (!dropAbove) droppedIndex += 1;
+      
+      // Remove dragged item and insert at new position
+      newOrder.splice(draggedIndex, 1);
+      newOrder.splice(droppedIndex, 0, draggedUrl);
+      
+      // Update state immediately for smooth UI
+      setMediaOrder(newOrder);
+      
+      try {
+        // Get current order from database
+        const { data: currentMedia } = await supabase
+          .from("profile_photos")
+          .select("photo_url, display_order")
+          .eq("user_id", businessId)
+          .or("photo_type.eq.portfolio,photo_type.eq.video")
+          .order("display_order", { ascending: true });
+
+        if (currentMedia) {
+          // Update display_order in database
+          const updates = newOrder.map((url, index) => 
+            supabase
+              .from("profile_photos")
+              .update({ display_order: index })
+              .eq("user_id", businessId)
+              .eq("photo_url", url)
+          );
+
+          await Promise.all(updates);
+        }
+      } catch (error) {
+        console.error("Error updating order:", error);
+        // Revert to previous order if update fails
+        setMediaOrder(mediaOrder);
+      }
+    }
+    
+    // Reset styles and states
+    draggedElement.style.transform = '';
+    draggedElement.classList.remove('dragging');
+    document.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
+      el.classList.remove('drag-over-above', 'drag-over-below');
+    });
+    
+    setDraggedElement(null);
+    setTouchStartY(null);
+    setDragFeedback(null);
+  };
+
   return (
     isOpen && (
       <div className="edit-portfolio-modal">
@@ -453,8 +831,8 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
           <div className="modal-content">
             <h2>Edit {initialData.portfolio ? "Portfolio" : "Profile"}</h2>
 
-            {/* Profile Picture Section - Move this above the form fields */}
-            {!initialData.portfolio && (
+            {/* Profile Picture Section - Only show when editing story with owner name */}
+            {!initialData.portfolio && initialData.story && initialData.business_owner && (
               <div className="profile-picture-container">
                 <label>Profile Picture</label>
                 <div className="profile-pic-wrapper">
@@ -585,51 +963,86 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
 
             {/* 🔹 Portfolio Images Section */}
             {initialData.portfolio && (
-              <div>
-                {/* Videos Section */}
-                <h3>Videos</h3>
+              <div className="portfolio-preview-container">
+                <h3>Portfolio Media</h3>
                 <div className="portfolio-preview">
-                  
-                  {portfolioVideos.length > 0 ? (
-                    portfolioVideos.map((video, index) => (
-                      <div key={index} className="image-container">
-                        <video 
-                          src={video} 
-                          className="portfolio-image" 
-                          controls
-                        />
+                  {mediaOrder.map((url, index) => {
+                    const isVideo = url.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
+                    return (
+                      <div 
+                        key={url} 
+                        className="image-container"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = 'move';
+                          e.dataTransfer.setData('text/plain', url);
+                          e.currentTarget.classList.add('dragging');
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.classList.remove('dragging');
+                          e.currentTarget.style.transform = '';
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = 'move';
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const centerY = rect.top + rect.height / 2;
+                          
+                          if (e.clientY < centerY) {
+                              e.currentTarget.classList.add('drag-over-above');
+                              e.currentTarget.classList.remove('drag-over-below');
+                          } else {
+                              e.currentTarget.classList.add('drag-over-below');
+                              e.currentTarget.classList.remove('drag-over-above');
+                          }
+                        }}
+                        onDragLeave={(e) => {
+                          e.currentTarget.classList.remove('drag-over-above', 'drag-over-below');
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.currentTarget.classList.remove('drag-over-above', 'drag-over-below');
+                          const draggedUrl = e.dataTransfer.getData('text/plain');
+                          if (draggedUrl !== url) {
+                              handleReorder(draggedUrl, url);
+                          }
+                        }}
+                        onTouchStart={(e) => handleTouchStart(e, url)}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                      >
+                        {isVideo ? (
+                          <video 
+                            src={url} 
+                            className="portfolio-image video" 
+                            controls
+                            playsInline
+                          />
+                        ) : (
+                          <img 
+                            src={url} 
+                            alt={`Portfolio ${index}`} 
+                            className="portfolio-image" 
+                            loading="lazy"
+                          />
+                        )}
                         <button 
                           className="delete-btn" 
-                          onClick={() => handleDeleteMedia(video, 'video')}
+                          onClick={() => handleDeleteMedia(url, isVideo ? 'video' : 'portfolio')}
+                          aria-label="Delete media"
                         >
                           ✖
                         </button>
-                      </div>
-                    ))
-                  ) : (
-                    <p>No videos yet.</p>
-                  )}
-                </div>
-
-                {/* Images Section */}
-                <h3>Images</h3>
-                <div className="portfolio-preview">
-                 
-                  {portfolioPics.length > 0 ? (
-                    portfolioPics.map((img, index) => (
-                      <div key={index} className="image-container">
-                        <img src={img} alt={`Portfolio ${index}`} className="portfolio-image" />
-                        <button 
-                          className="delete-btn" 
-                          onClick={() => handleDeleteMedia(img, 'portfolio')}
+                        <div 
+                          className="drag-handle" 
+                          title="Drag to reorder"
+                          aria-label="Drag to reorder"
                         >
-                          ✖
-                        </button>
+                          ⋮⋮
+                        </div>
                       </div>
-                    ))
-                  ) : (
-                    <p>No images yet. Add some!</p>
-                  )}
+                    );
+                  })}
                 </div>
 
                 <input
@@ -638,15 +1051,17 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                   ref={fileInputRef}
                   style={{ display: "none" }}
                   onChange={handleFileChange}
-                  multiple // Allow multiple file selection
+                  multiple
                 />
-                <button
-                  className="upload-btn"
-                  onClick={() => fileInputRef.current.click()}
-                  disabled={uploading}
-                >
-                  {uploading ? "Uploading..." : "Add Media"}
-                </button>
+                <div className="upload-btn-container">
+                  <button
+                    className="upload-btn"
+                    onClick={() => fileInputRef.current.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? "Uploading..." : "Add Media"}
+                  </button>
+                </div>
 
                 {/* Upload Progress */}
                 {Object.entries(uploadProgress).map(([fileName, progress]) => (
@@ -655,6 +1070,12 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                     <ProgressBar progress={progress} />
                   </div>
                 ))}
+
+                {dragFeedback && (
+                  <div className="drag-feedback">
+                    {dragFeedback}
+                  </div>
+                )}
               </div>
             )}
 
