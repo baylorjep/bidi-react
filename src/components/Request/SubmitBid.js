@@ -5,6 +5,8 @@ import '../../App.css';
 import RequestDisplay from './RequestDisplay'; // Regular request display component
 import PhotoRequestDisplay from './PhotoRequestDisplay'; // Photography request display component
 import { Modal, Button } from 'react-bootstrap'; // Make sure to install react-bootstrap
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 
 const sendEmailNotification = async (recipientEmail, subject, htmlContent) => {
@@ -21,6 +23,24 @@ const sendEmailNotification = async (recipientEmail, subject, htmlContent) => {
     }
 };
 
+// Add these modules for the editor
+const modules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['link', 'image'],
+    ['clean']
+  ],
+};
+
+const formats = [
+  'header',
+  'bold', 'italic', 'underline', 'strike',
+  'list', 'bullet',
+  'link', 'image'
+];
+
 function SubmitBid({ onClose }) { // Remove request from props since we're fetching it
     const { requestId } = useParams();
     const [requestDetails, setRequestDetails] = useState(null);
@@ -36,6 +56,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
     const [showModal, setShowModal] = useState(false); // For showing modal
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
+    const [bidTemplate, setBidTemplate] = useState('');
 
     useEffect(() => {
         const fetchRequestDetails = async () => {
@@ -106,8 +127,25 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
             }
         };
 
+        const fetchBidTemplate = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('business_profiles')
+                    .select('bid_template')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile?.bid_template) {
+                    setBidTemplate(profile.bid_template);
+                    setBidDescription(profile.bid_template); // Pre-fill the description with the template
+                }
+            }
+        };
+
         fetchRequestDetails();
         fetchStripeStatus();
+        fetchBidTemplate();
     }, [requestId, requestType]);
 
     const handleSubmit = async (e) => {
@@ -200,45 +238,96 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                 )}
             </div>
                 
-                <form onSubmit={handleSubmit} style={{padding:"20px"}}>
-                    <div className="custom-input-container">
-                        <input
-                            className="custom-input"
-                            id="bidAmount"
-                            name="bidAmount"
-                            type="number"
-                            placeholder="Bid Price"
-                            value={bidAmount}
-                            onChange={(e) => setBidAmount(e.target.value)}
-                            required
-                        />
-                        <label className="custom-label"htmlFor="bidAmount">Bid Price</label>
-                    </div>
-                    <div className="custom-input-container">
-                        <textarea
-                            className="custom-input"
-                            id="bidDescription"
-                            name="bidDescription"
-                            placeholder="Bid Description"
-                            value={bidDescription}
-                            onChange={(e) => setBidDescription(e.target.value)}
-                            required
-                            style={{ height: "160px" }} // Adjust the height as needed
-                        />
-                        <label className="custom-label"htmlFor="bidDescription">Bid Description</label>
-                    </div>
+                <div style={{padding:"20px"}}>
+                    <form onSubmit={handleSubmit}>
+                        <div className="custom-input-container">
+                            <input
+                                className="custom-input"
+                                id="bidAmount"
+                                name="bidAmount"
+                                type="number"
+                                placeholder="Bid Price"
+                                value={bidAmount}
+                                onChange={(e) => setBidAmount(e.target.value)}
+                                required
+                            />
+                            <label className="custom-label"htmlFor="bidAmount">Bid Price</label>
+                        </div>
+                        <div className="custom-input-container" style={{ marginBottom: '80px' }}>
+                            <ReactQuill
+                                theme="snow"
+                                value={bidDescription}
+                                onChange={setBidDescription}
+                                modules={modules}
+                                formats={formats}
+                                style={{ 
+                                    height: '400px',
+                                    marginBottom: '20px',
+                                    backgroundColor: 'white'
+                                }}
+                            />
+                        </div>
+                    </form>
 
-                    <div style={{ display: "flex", flexDirection: "row", justifyContent:'space-between', gap: "12px" }}>
-                        <div className="submit-bid-btn-container">
-                            <button onClick={handleBack} className="submit-bid-button secondary">
+                    <div style={{ 
+                        display: "flex", 
+                        flexDirection: "row", 
+                        justifyContent: 'space-between', 
+                        gap: "12px",
+                        position: 'fixed',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        padding: '15px',
+                        backgroundColor: 'white',
+                        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
+                        zIndex: 1000,
+                        '@media (max-width: 350px)': {
+                            flexDirection: 'column',
+                            gap: '8px',
+                            padding: '10px'
+                        }
+                    }}>
+                        <div className="submit-bid-btn-container" style={{ 
+                            flex: 1,
+                            '@media (max-width: 350px)': {
+                                width: '100%'
+                            }
+                        }}>
+                            <button 
+                                onClick={handleBack} 
+                                className="submit-bid-button secondary"
+                                style={{
+                                    padding: '8px 12px',
+                                    fontSize: '14px',
+                                    '@media (max-width: 350px)': {
+                                        padding: '10px',
+                                        fontSize: '13px'
+                                    }
+                                }}
+                            >
                                 Back
                             </button>
                         </div>
-                        <div className="submit-bid-btn-container">
+                        <div className="submit-bid-btn-container" style={{ 
+                            flex: 1,
+                            '@media (max-width: 350px)': {
+                                width: '100%'
+                            }
+                        }}>
                             <button 
                                 type="submit" 
                                 className="submit-bid-button"
                                 disabled={isLoading}
+                                onClick={handleSubmit}
+                                style={{
+                                    padding: '8px 12px',
+                                    fontSize: '14px',
+                                    '@media (max-width: 350px)': {
+                                        padding: '10px',
+                                        fontSize: '13px'
+                                    }
+                                }}
                             >
                                 {isLoading && (
                                     <span 
@@ -250,30 +339,23 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                                 {isLoading ? 'Submitting...' : 'Submit Bid'}
                             </button>
                         </div>
-
-
                     </div>
-                    
-                    <br/>
-                </form>
-            </div>
-            {/* Modal for Stripe Account Setup */}
+                </div>
+                {/* Modal for Stripe Account Setup */}
                 <Modal show={showModal} onHide={() => setShowModal(false)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                     <Modal.Header closeButton>
                         <Modal.Title>Stripe Account Setup Required</Modal.Title>
                     </Modal.Header>
                     <Modal.Body className="d-flex flex-column align-items-center justify-content-center">
                         <p className="text-center">
-                        
-                                To start making bids, you’ll need to set up a payment account. Bidi will never charge you to talk to users or bid on jobs — you only pay when you win.
-                            
+                            To start making bids, you'll need to set up a payment account. Bidi will never charge you to talk to users or bid on jobs — you only pay when you win.
                         </p>
                         <Button className="btn-secondary" onClick={() => navigate("/onboarding")}>
-                        Set Up Account
+                            Set Up Account
                         </Button>
                     </Modal.Body>
                 </Modal>
-
+            </div>
         </div>
     );
 }

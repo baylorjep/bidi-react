@@ -793,8 +793,25 @@ export default function BidsPage() {
                         </button>
                     </div>
 
-                    <p style={{ marginTop: '16px', textAlign: 'left' }}>
-                        <strong>Description:</strong> {bid.message}
+                    <p className="request-description" style={{ textAlign: 'left' }}>
+                        <strong>Description:</strong> 
+                        <div 
+                            className="bid-description-content"
+                            dangerouslySetInnerHTML={{ __html: bid.bid_description }} 
+                            style={{
+                                maxHeight: '400px',
+                                overflowY: 'auto',
+                                marginTop: '12px',
+                                padding: '12px',
+                                border: '1px solid #eee',
+                                borderRadius: '8px',
+                                backgroundColor: '#f9f9f9',
+                                fontFamily: 'Inter, sans-serif',
+                                fontSize: '14px',
+                                lineHeight: '1.6',
+                                color: '#333'
+                            }}
+                        />
                     </p>
                     <p style={{ textAlign: 'left' }}>
                         <strong>Phone:</strong> {bid.business_profiles.phone}
@@ -885,8 +902,25 @@ export default function BidsPage() {
                         </button>
                     </div>
 
-                    <p style={{ marginTop: '16px', textAlign: 'left' }}>
-                        <strong>Description:</strong> {bid.message}
+                    <p className="request-description" style={{ textAlign: 'left' }}>
+                        <strong>Description:</strong> 
+                        <div 
+                            className="bid-description-content"
+                            dangerouslySetInnerHTML={{ __html: bid.bid_description }} 
+                            style={{
+                                maxHeight: '400px',
+                                overflowY: 'auto',
+                                marginTop: '12px',
+                                padding: '12px',
+                                border: '1px solid #eee',
+                                borderRadius: '8px',
+                                backgroundColor: '#f9f9f9',
+                                fontFamily: 'Inter, sans-serif',
+                                fontSize: '14px',
+                                lineHeight: '1.6',
+                                color: '#333'
+                            }}
+                        />
                     </p>
                     <p style={{ textAlign: 'left' }}>
                         <strong>Phone:</strong> {bid.business_profiles.phone}

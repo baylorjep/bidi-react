@@ -141,7 +141,20 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                     <strong>Category:</strong> {bid.business_profiles.business_category}
                 </p>
                 <p className="request-description" style={{ textAlign: 'left' }}>
-                    <strong>Description:</strong> {bid.bid_description}
+                    <strong>Description:</strong> 
+                    <div 
+                        className="bid-description-content"
+                        dangerouslySetInnerHTML={{ __html: bid.bid_description }} 
+                        style={{
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                            marginTop: '8px',
+                            padding: '8px',
+                            border: '1px solid #eee',
+                            borderRadius: '4px',
+                            backgroundColor: '#f9f9f9'
+                        }}
+                    />
                 </p>
                 {/* Display down payment information */}
                 {downPayment && downPaymentAmount !== null && (

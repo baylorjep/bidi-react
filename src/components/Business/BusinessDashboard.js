@@ -5,6 +5,26 @@ import { useNavigate, Link } from "react-router-dom";
 import '../../App.css'; // Include this for custom styles
 import { Modal, Button } from 'react-bootstrap'; // Make sure to install react-bootstrap
 import Verification from '../../assets/Frame 1162.svg'
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+
+// Add these modules for the editor
+const modules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['link', 'image'],
+    ['clean']
+  ],
+};
+
+const formats = [
+  'header',
+  'bold', 'italic', 'underline', 'strike',
+  'list', 'bullet',
+  'link', 'image'
+];
 
 const BusinessDashboard = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -40,9 +60,12 @@ const BusinessDashboard = () => {
     minimumPrice: false,
     affiliateCoupon: false,
     verification: false,
-    story: false
+    story: false,
+    bidTemplate: false
   });
   const [profileDetails, setProfileDetails] = useState(null);
+  const [bidTemplate, setBidTemplate] = useState('');
+  const [showBidTemplateModal, setShowBidTemplateModal] = useState(false);
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
@@ -102,7 +125,7 @@ const BusinessDashboard = () => {
         // Fetch business profile details
         const { data: profileDetails, error: profileDetailsError } = await supabase
           .from('business_profiles')
-          .select('business_name, stripe_account_id, id, down_payment_type, amount, minimum_price, business_category, membership_tier, verification_pending, story')
+          .select('business_name, stripe_account_id, id, down_payment_type, amount, minimum_price, business_category, membership_tier, verification_pending, story, bid_template')
           .eq('id', user.id)
           .single();
 
@@ -340,6 +363,11 @@ const BusinessDashboard = () => {
           // Update state with the bids that now have associated request data
           setBids(bidsWithRequestData);
           setCurrentMinPrice(profileDetails.minimum_price);
+
+          if (profileDetails.bid_template) {
+            setBidTemplate(profileDetails.bid_template);
+            setSetupProgress(prev => ({...prev, bidTemplate: true}));
+          }
         }
         setIsLoading(false);
       } catch (err) {
@@ -726,6 +754,29 @@ const BusinessDashboard = () => {
   };
   
 
+  const handleBidTemplateSubmit = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("User not found. Please log in again.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .update({
+        bid_template: bidTemplate
+      })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error("Error updating bid template:", error);
+      alert("An error occurred while updating your bid template.");
+    } else {
+      setShowBidTemplateModal(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="business-dashboard text-center">
@@ -759,7 +810,8 @@ const BusinessDashboard = () => {
         !setupProgress.minimumPrice || 
         !setupProgress.affiliateCoupon ||
         !setupProgress.verification ||
-        !setupProgress.story) && (
+        !setupProgress.story ||
+        !setupProgress.bidTemplate) && (
         <div className="setup-progress-container container mt-4 mb-4">
           <div className="card">
             <div className="card-body">
@@ -810,6 +862,13 @@ const BusinessDashboard = () => {
                     >
                       Complete now
                     </button>
+                  </div>
+                )}
+                {!setupProgress.bidTemplate && (
+                  <div className="setup-item">
+                    <i className="fas fa-times-circle text-danger"></i>
+                    <span>Bid Template</span>
+                    <button className="btn-link" onClick={() => setShowBidTemplateModal(true)}>Set up now</button>
                   </div>
                 )}
               </div>
@@ -974,6 +1033,16 @@ const BusinessDashboard = () => {
                   <i className="fas fa-ticket-alt" style={{ marginRight: '8px' }}></i>
                   {getButtonText()}
                 </button>
+                </div>
+                <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column" style={{marginTop:'20px'}}>
+                  <button
+                    style={{fontWeight:'bold', color:'#9633eb'}}
+                    className="btn-primary flex-fill"
+                    onClick={() => setShowBidTemplateModal(true)}
+                  >
+                    <i className="fas fa-file-alt" style={{ marginRight: '8px' }}></i>
+                    Edit Bid Template
+                  </button>
                 </div>
               </div>
               </div>
@@ -1333,6 +1402,34 @@ const BusinessDashboard = () => {
             }}
           >
             Copy
+          </button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal for Bid Template Editing */}
+      <Modal show={showBidTemplateModal} onHide={() => setShowBidTemplateModal(false)} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Bid Template</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <label htmlFor="bidTemplate" className="form-label">Your bid template:</label>
+            <ReactQuill
+              theme="snow"
+              value={bidTemplate}
+              onChange={setBidTemplate}
+              modules={modules}
+              formats={formats}
+              style={{ height: '300px', marginBottom: '50px' }}
+            />
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <button className="btn-danger" onClick={() => setShowBidTemplateModal(false)}>
+            Close
+          </button>
+          <button className="btn-success" onClick={handleBidTemplateSubmit}>
+            Save
           </button>
         </Modal.Footer>
       </Modal>

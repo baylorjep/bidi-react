@@ -14357,7 +14357,7 @@ line-height: normal;
   font-weight: 700;
   line-height: normal;
   display: flex;
-  width: 160px;
+  max-width: 160px !important;
   height: 56px;
   border: none;
   justify-content: center;
@@ -14366,6 +14366,7 @@ line-height: normal;
   flex-shrink: 0;
   margin:0;
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 .submit-bid-button:hover {
