@@ -8,6 +8,7 @@ import StarIcon from '../../../assets/star-duotone.svg'; // Add this import
 import ImageModal from "./ImageModal"; // Import the new ImageModal component
 import EmptyStarIcon from "../../../assets/userpov-vendor-profile-star.svg"; // Import the empty star icon
 import Modal from "react-modal"; // Import the modal library
+import { convertHeicToJpeg } from "../../../utils/imageUtils";
 
 const Portfolio = () => {
   const { businessId } = useParams();
@@ -29,6 +30,7 @@ const Portfolio = () => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false); // State for modal visibility
   const navigate = useNavigate();
+  const [convertedUrls, setConvertedUrls] = useState({});
 
   const fetchBusinessData = async () => {
     const { data: businessData, error: businessError } = await supabase
@@ -130,6 +132,30 @@ const Portfolio = () => {
     fetchBusinessData();
   }, [businessId]);
 
+  useEffect(() => {
+    const convertImages = async () => {
+      const converted = {};
+      if (profileImage) {
+        converted.profile = await convertHeicToJpeg(profileImage);
+      }
+      for (const photo of portfolioPics) {
+        converted[photo] = await convertHeicToJpeg(photo);
+      }
+      setConvertedUrls(converted);
+    };
+
+    convertImages();
+
+    // Cleanup function
+    return () => {
+      Object.values(convertedUrls).forEach(url => {
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [profileImage, portfolioPics]);
+
   const openEditModal = (fields) => {
     setEditFields(fields);
     setModalOpen(true);
@@ -174,8 +200,9 @@ const Portfolio = () => {
     }
   };
 
-  const handleImageClick = (imageUrl) => {
-    setSelectedImage(imageUrl);
+  const handleImageClick = (mediaUrl) => {
+    const isVideo = mediaUrl.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
+    setSelectedImage({ url: mediaUrl, isVideo });
   };
 
   const handleCloseImageModal = () => {
@@ -257,7 +284,8 @@ const Portfolio = () => {
 
       <ImageModal
         isOpen={!!selectedImage}
-        imageUrl={selectedImage}
+        mediaUrl={selectedImage?.url}
+        isVideo={selectedImage?.isVideo}
         onClose={handleCloseImageModal}
       />
 
@@ -268,13 +296,17 @@ const Portfolio = () => {
               src={portfolioVideos[0]}
               className={`main-portfolio-image ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media-item' : ''}`}
               controls
+              muted
+              autoPlay
+              loop
+              playsInline
               onClick={() => handleImageClick(portfolioVideos[0])}
             >
               Your browser does not support the video tag.
             </video>
           ) : portfolioPics.length > 0 ? (
             <img 
-              src={portfolioPics[0]} 
+              src={convertedUrls[portfolioPics[0]] || portfolioPics[0]} 
               alt="Main Portfolio" 
               className={`main-portfolio-image ${portfolioVideos.length + portfolioPics.length <= 1 ? 'single-media-item' : ''}`}
               onClick={() => handleImageClick(portfolioPics[0])}
@@ -292,13 +324,18 @@ const Portfolio = () => {
               {[...portfolioVideos.slice(1), ...portfolioPics.slice(1)]
                 .slice(0, 4)
                 .map((item, index) => {
-                  const isVideo = item.includes('.mp4');
+                  const isVideo = item.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
                   return isVideo ? (
                     <video
                       key={index}
                       src={item}
                       className="portfolio-image-portfolio"
-                      controls
+                      poster={`${item}?thumb`}
+                      preload="metadata"
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
                       onClick={() => handleImageClick(item)}
                     >
                       Your browser does not support the video tag.
@@ -306,7 +343,7 @@ const Portfolio = () => {
                   ) : (
                     <img
                       key={index}
-                      src={item}
+                      src={convertedUrls[item] || item}
                       alt={`Portfolio ${index}`}
                       className="portfolio-image-portfolio"
                       onClick={() => handleImageClick(item)}
@@ -414,7 +451,7 @@ const Portfolio = () => {
 
                 <div className="vendor-profile-left">
                   <img 
-                    src={profileImage} 
+                    src={convertedUrls.profile || profileImage} 
                     alt={`${business.business_name} profile`} 
                     className="vendor-profile-image"
                   />

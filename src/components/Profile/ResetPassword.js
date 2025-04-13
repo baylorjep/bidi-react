@@ -18,7 +18,7 @@ function ResetPassword() {
         if (error) {
             setErrorMessage(`Error sending reset email: ${error.message}`);
         } else {
-            setSuccessMessage('Password reset email sent. Please check your inbox.');
+            setSuccessMessage('Password reset email sent. It may take 5-10 minutes to arrive. Please check your inbox and spam folder.');
         }
     };
 

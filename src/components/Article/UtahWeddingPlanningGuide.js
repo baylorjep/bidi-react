@@ -11,6 +11,7 @@ import leJardin from '../../assets/articles/Utah Wedding Planning/Le Jardin.jpg'
 import weddingTeam from '../../assets/articles/Utah Wedding Planning/Wedding Team.jpg'
 import summer from '../../assets/articles/Utah Wedding Planning/summer.jpg'
 import winter from '../../assets/articles/Utah Wedding Planning/winter.jpg'
+import RelatedArticles from './RelatedArticles';
 
 const UtahWeddingPlanningGuide = () => {
     return (
@@ -354,9 +355,8 @@ const UtahWeddingPlanningGuide = () => {
             <p>
                 Your dream Utah wedding awaits - start planning early, stay organized, and trust experienced professionals to guide your journey toward a memorable celebration that reflects your unique vision and values.
             </p>
-            <p>
-                If you are looking to get your wedding planning started, Bidi is a great resource to find what you need for your wedding without all the hassle. Instead of filling out endless forms, you can simply make a request on our site and our vendors will send you bids completely free! Check us out <a href='https://www.savewithbidi.com/'>here</a>!
-            </p>
+
+            <RelatedArticles currentArticle="planning" />
         </article>
     );
 };

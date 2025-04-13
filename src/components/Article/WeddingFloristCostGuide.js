@@ -2,6 +2,8 @@ import React from 'react';
 import './Articles.css';
 import Helmet from 'react-helmet';
 import florist from '../../assets/articles/Florist/pexels-digitle-pixels-1775950082-30891131.jpg'
+import RelatedArticles from './RelatedArticles';
+
 const WeddingFloristCostGuide = () => {
     return (
         <article className="article-container">
@@ -16,7 +18,6 @@ const WeddingFloristCostGuide = () => {
 
                 <script type="application/ld+json">
                 {`
-                    "@context": "https://schema.org",
                     "@type": "Article",
                     "headline": "Utah Wedding Florist Costs Guide 2025",
                     "author": {
@@ -55,16 +56,16 @@ const WeddingFloristCostGuide = () => {
                 <img src={florist} data-width="100%" height="400px" data-align="center" alt="Hero Image for How to Budget Wedding Flowers Cost: What Real Couples Actually Pay" />
             </div>
             <p>
-                Tired of guessing what wedding flowers should cost? Wedding flowers cost <a href="https://www.theknot.com/content/average-cost-wedding-flowers" target="_blank" rel="noopener noreferrer">22% more</a> than just two years ago. Your dream bouquet that cost $2,200 in 2021 now sits at $2,800.
+                Tired of guessing what wedding flowers should cost? According to <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.theknot.com/content/average-cost-wedding-flowers">industry data</a>, wedding flowers cost 22% more than just four years ago. Your dream bouquet that cost $2,200 in 2021 now sits at $2,800.
             </p>
             <p>
-                The numbers tell a wild story. Some couples in <a href="https://www.brides.com/story/how-much-do-wedding-flowers-cost-carmel-valley" target="_blank" rel="noopener noreferrer">Los Angeles</a> spend over $10,000 on their floral arrangements, while others create beautiful celebrations with just $700. Most couples set aside <a href="https://www.theknot.com/content/average-cost-wedding-flowers" target="_blank" rel="noopener noreferrer">8% to 10%</a> of their total budget for flowers, but what's the right amount for you?
+                The numbers tell a wild story. According to <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.brides.com/story/how-much-do-wedding-flowers-cost-carmel-valley">recent studies</a>, some couples in Los Angeles spend over $10,000 on their floral arrangements, while others create beautiful celebrations with just $700. Most couples set aside 8% to 10% of their total budget for flowers, but what's the right amount for you?
             </p>
             <p>
                 Your perfect flower budget depends on what matters most - your location, flower choices, and design dreams all play a part. The best way to plan? Learn what other couples actually pay.
             </p>
             <p>
-                We'll show you real costs and smart ways to get the flowers you want without breaking your budget. Not sure about flower prices in your area? Tell us what you need, and <a href="https://savewithbidi.com" target="_blank" rel="noopener noreferrer">Bidi</a> will match you with local florists ready to create custom quotes for your special day.
+                We'll show you real costs and smart ways to get the flowers you want without breaking your budget. Not sure about flower prices in your area? Tell us what you need, and <a target="_blank" rel="noopener noreferrer" href="https://savewithbidi.com">Bidi</a> will match you with local florists ready to create custom quotes for your special day.
             </p>
             <h2>Real Wedding Flower Prices in 2024</h2>
             <p>
@@ -87,10 +88,10 @@ const WeddingFloristCostGuide = () => {
                 <li><strong>Getting Everything There:</strong> Setup and delivery adds 10% to 30% to your total.</li>
             </ul>
             <p>
-                The flower world keeps changing too. Prices jumped <a href="https://www.theknot.com/content/average-cost-wedding-flowers" target="_blank" rel="noopener noreferrer">22%</a> since 2021 - what cost $2,300 back then now runs about $2,800.
+                The flower world keeps changing too. Weather can have a huge impact on the quality and quantity of blooms, so prices may jump unexpectedly due to a harsh winter or spring frost.
             </p>
             <p>
-                Not sure what flowers cost in your area? Tell us what you need. Bidi connects you with local florists who know exactly what works for your location and season.
+                Not sure what flowers cost in your area? Tell us what you need. <a target="_blank" rel="noopener noreferrer" href="https://savewithbidi.com">Bidi</a> connects you with local florists who know exactly what works for your location and season.
             </p>
             <h2>Wedding Flower Must-Haves: Your Complete List</h2>
             <p>
@@ -114,7 +115,7 @@ const WeddingFloristCostGuide = () => {
             </p>
             <h2>The Costs Nobody Tells You About</h2>
             <p>
-                Here's something florists don't always mention up front - flowers are just part of what you're paying for. Labor costs typically comprise <a href="https://www.brides.com/story/wedding-flowers-checklist" target="_blank" rel="noopener noreferrer">30-50%</a> of your total flower budget. Think setup fees, breakdown costs, and sometimes special equipment for those fancy installations.
+                Here's something florists don't always mention up front - flowers are just part of what you're paying for. According to <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.brides.com/story/wedding-flowers-checklist">wedding planning experts</a>, labor costs typically comprise 30-50% of your total flower budget. Think setup fees, breakdown costs, and sometimes special equipment for those fancy installations.
             </p>
             <p>
                 Your florist starts working months before your big day, shows up early morning for setup, and stays late for cleanup. Getting everything to your venue? That costs extra too - especially for out-of-the-way locations that need bigger trucks or multiple trips.
@@ -125,16 +126,16 @@ const WeddingFloristCostGuide = () => {
             </p>
             <h3>Smart Couples, Beautiful Budgets</h3>
             <p>
-                Meet Sarah and Mike - they created stunning arrangements for their entire wedding at just $700. Their secret? Wholesale flowers and family helping hands. Then there's Jessica and Tom, who spent $1,200 on all the essentials - we're talking one bridal bouquet, six bridesmaid bouquets, ten boutonnieres, a corsage, aisle petals, and even a grand arch arrangement.
-            </p>
-            <p>
-                These budget-savvy couples made it work by:
+                If you're willing to put in a little extra time and effort, you can make almost any budget for flowers work. Here are some tips to stretch your money as far as it can go that still results in gorgeous florals:
             </p>
             <ul>
-                <li>Picking flowers in season (hello, savings!)</li>
+                <li>Picking flowers in season from local growers</li>
                 <li>Moving ceremony flowers to the reception</li>
                 <li>Mixing show-stopping blooms with pretty fillers</li>
                 <li>Buying straight from wholesale suppliers</li>
+                <li>Arranging flowers yourself (or with help from friends and family)</li>
+                <li>Purchasing/reusing faux florals</li>
+                <li>Mixing fresh flowers with dried ones</li>
                 <li>Adding lots of gorgeous greenery</li>
             </ul>
             <h3>Dream Big: Luxury Flower Budgets</h3>
@@ -183,9 +184,6 @@ const WeddingFloristCostGuide = () => {
                 Your aisle decorations work perfectly as chair accents for your sweetheart table or head table. Just remember - talk timing with your florist since photographers love using ceremony flowers for those just-married photos.
             </p>
             <h2>Your Wedding Flower Budget Plan</h2>
-            <p>
-                "As a general rule, plan to spend 8-10% of your total wedding budget on flowers. So for a $30,000 wedding, aim for $2,400-$3,000 on blooms." — Poppy Flowers, Professional florist and wedding flower expert
-            </p>
             <p>
                 Let's build your flower budget together. We'll help you create a plan that makes sense for your wedding dreams.
             </p>
@@ -264,37 +262,13 @@ const WeddingFloristCostGuide = () => {
                 Start with what matters most to you. Love peonies? Make them your focal point. Dream of a flower wall? We'll help you find room in your budget. Whether you're planning an intimate celebration with $700 in flowers or dreaming up a $10,000 floral wonderland, talking openly with your florist helps turn your vision into reality.
             </p>
             <p>
-                Ready to find your perfect wedding flowers? Tell us what you're dreaming of. Bidi matches you with local florists who know exactly how to make your flower budget bloom.
+                Ready to find your perfect wedding flowers? Tell us what you're dreaming of. <a target="_blank" rel="noopener noreferrer" href="https://savewithbidi.com">Bidi</a> matches you with local florists who know exactly how to make your flower budget bloom.
             </p>
             <p>
                 Remember - stunning wedding flowers don't always need premium prices. They just need your vision, some creative thinking, and the right florist to bring it all together.
             </p>
-            <h2>References</h2>
-            <p>
-                [1] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.weddingwire.com/cost/wedding-flowers">https://www.weddingwire.com/cost/wedding-flowers</a><br />
-                [2] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.brides.com/story/how-much-do-wedding-flowers-cost-carmel-valley">https://www.brides.com/story/how-much-do-wedding-flowers-cost-carmel-valley</a><br />
-                [3] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.candidstudios.net/the-average-cost-of-wedding-flowers/?srsltid=AfmBOooEzcpKaJr33OO1ARtKJTj8EhzFboBn6H_XUHE0FCSN8RLqFRxT">https://www.candidstudios.net/the-average-cost-of-wedding-flowers/</a><br />
-                [4] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.theknot.com/content/average-cost-wedding-flowers">https://www.theknot.com/content/average-cost-wedding-flowers</a><br />
-                [5] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://withjoy.com/blog/average-cost-of-wedding-flowers/?srsltid=AfmBOoorkHUhEUPAg-mwjbxy6sCSB2CmGFA-tn_UivTa3dH0szAll2rV">https://withjoy.com/blog/average-cost-of-wedding-flowers/</a><br />
-                [6] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://bloomwildlyflorals.com/how-much-do-wedding-flowers-cost/">https://bloomwildlyflorals.com/how-much-do-wedding-flowers-cost/</a><br />
-                [7] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.yescasflowers.com/blog/understanding-the-true-cost-of-wedding-flowers">https://www.yescasflowers.com/blog/understanding-the-true-cost-of-wedding-flowers</a><br />
-                [8] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.theknot.com/content/a-glossary-of-wedding-flower-terms">https://www.theknot.com/content/a-glossary-of-wedding-flower-terms</a><br />
-                [9] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.brides.com/story/wedding-flowers-checklist">https://www.brides.com/story/wedding-flowers-checklist</a><br />
-                [10] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.theknot.com/content/unique-wedding-flower-ideas">https://www.theknot.com/content/unique-wedding-flower-ideas</a><br />
-                [11] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://kristineaejin.com/blog/factors-that-may-affect-the-cost-of-your-wedding-flowers">https://kristineaejin.com/blog/factors-that-may-affect-the-cost-of-your-wedding-flowers</a><br />
-                [12] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.herecomestheguide.com/wedding-ideas/hidden-wedding-costs">https://www.herecomestheguide.com/wedding-ideas/hidden-wedding-costs</a><br />
-                [13] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.1209creative.com/blog/2017/4/10/the-true-cost-of-wedding-flowers">https://www.1209creative.com/blog/2017/4/10/the-true-cost-of-wedding-flowers</a><br />
-                [14] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.reddit.com/r/weddingplanning/comments/9pf3l5/how_much_did_you_spend_on_wedding_flowers_was_it/">https://www.reddit.com/r/weddingplanning/comments/9pf3l5/how_much_did_you_spend_on_wedding_flowers_was_it/</a><br />
-                [15] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.marthastewart.com/7936735/elegant-and-inexpensive-wedding-flower-ideas">https://www.marthastewart.com/7936735/elegant-and-inexpensive-wedding-flower-ideas</a><br />
-                [16] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://heritageflorals.com/blogs/heritage-blooms-blog/how-to-mix-and-match-flowers-for-a-unique-wedding-look?srsltid=AfmBOorI35fn6zJzsUZHtwS0336mmitAIqxChlkon5QiEp4tkx03UdPg">https://heritageflorals.com/blogs/heritage-blooms-blog/how-to-mix-and-match-flowers-for-a-unique-wedding-look</a><br />
-                [17] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.zola.com/expert-advice/how-to-cut-costs-on-wedding-flowers">https://www.zola.com/expert-advice/how-to-cut-costs-on-wedding-flowers</a><br />
-                [18] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.wedding-spot.com/blog/how-to-save-money-on-wedding-flowers">https://www.wedding-spot.com/blog/how-to-save-money-on-wedding-flowers</a><br />
-                [19] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.brides.com/bridesmaid-bouquet-alternatives-5079694">https://www.brides.com/bridesmaid-bouquet-alternatives-5079694</a><br />
-                [20] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://gardenstudiollc.com/making-every-bloom-count-tips-for-repurposing-your-wedding-flowers/">https://gardenstudiollc.com/making-every-bloom-count-tips-for-repurposing-your-wedding-flowers/</a><br />
-                [21] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.zola.com/expert-advice/how-to-set-your-floral-budget">https://www.zola.com/expert-advice/how-to-set-your-floral-budget</a><br />
-                [22] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://www.botanicawedding.com/weddings/budget-planner/">https://www.botanicawedding.com/weddings/budget-planner/</a><br />
-                [23] - <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://forflorists.com/wedding-flower-budgets-2/">https://forflorists.com/wedding-flower-budgets-2/</a>
-            </p>
+
+            <RelatedArticles currentArticle="florist" />
         </article>
     );
 };

@@ -10,6 +10,7 @@ import hiddencost from '../../assets/articles/WeddingPhotographyCostGuide/hidden
 import choose from '../../assets/articles/WeddingPhotographyCostGuide/choose.webp'
 import saveMoney from '../../assets/articles/WeddingPhotographyCostGuide/save money.webp'
 import Helmet from 'react-helmet';
+import RelatedArticles from './RelatedArticles';
 
 const WeddingPhotographerCostGuide = () => {
     return (
@@ -25,7 +26,6 @@ const WeddingPhotographerCostGuide = () => {
 
                 <script type="application/ld+json">
                 {`
-                    "@context": "https://schema.org",
                     "@type": "Article",
                     "headline": "Utah Wedding Photographer Costs Guide 2025",
                     "author": {
@@ -127,38 +127,44 @@ const WeddingPhotographerCostGuide = () => {
             </p>
             
             <h3>Regional Price Breakdown</h3>
-            <table>
-                <tr>
-                    <th>Region</th>
-                    <th>Average Cost</th>
-                    <th>Min</th>
-                    <th>Max</th>
-                </tr>
-                <tr>
-                    <td><strong>Northern UT (Above Salt Lake City)</strong></td>
-                    <td>$1,534</td>
-                    <td>$900</td>
-                    <td>$2,450</td>
-                </tr>
-                <tr>
-                    <td><strong>Salt Lake County</strong></td>
-                    <td>$2,110</td>
-                    <td>$750</td>
-                    <td>$6,000</td>
-                </tr>
-                <tr>
-                    <td><strong>Utah County</strong></td>
-                    <td>$1,572</td>
-                    <td>$625</td>
-                    <td>$4,000</td>
-                </tr>
-                <tr>
-                    <td><strong>Southern Utah (Below Utah County)</strong></td>
-                    <td>$2,091</td>
-                    <td>$600</td>
-                    <td>$5,000</td>
-                </tr>
-            </table>
+            <div className="responsive-table-container">
+                <table className="responsive-table">
+                    <thead>
+                        <tr>
+                            <th>Region</th>
+                            <th>Average Cost</th>
+                            <th>Min</th>
+                            <th>Max</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="Region"><strong>Northern UT (Above Salt Lake City)</strong></td>
+                            <td data-label="Average Cost">$1,534</td>
+                            <td data-label="Min">$900</td>
+                            <td data-label="Max">$2,450</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Region"><strong>Salt Lake County</strong></td>
+                            <td data-label="Average Cost">$2,110</td>
+                            <td data-label="Min">$750</td>
+                            <td data-label="Max">$6,000</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Region"><strong>Utah County</strong></td>
+                            <td data-label="Average Cost">$1,572</td>
+                            <td data-label="Min">$625</td>
+                            <td data-label="Max">$4,000</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Region"><strong>Southern Utah (Below Utah County)</strong></td>
+                            <td data-label="Average Cost">$2,091</td>
+                            <td data-label="Min">$600</td>
+                            <td data-label="Max">$5,000</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
             
             <h3>Popular Utah Wedding Photo Packages</h3>
@@ -221,7 +227,7 @@ const WeddingPhotographerCostGuide = () => {
             <div className="article-container-image">
                 <img style={{ width: '100%', height: '600px', borderRadius: '10px', objectFit: 'cover' }} src={hiddencost} alt="Wedding Photographer Cost Guide" />
             </div>
-            <p>Behind every wedding photo lies hours of unseen work that gets factored into a photographer’s pricing. The cost of this extra labor often surprises couples when they see the final bill.</p>
+            <p>Behind every wedding photo lies hours of unseen work that gets factored into a photographer's pricing. The cost of this extra labor often surprises couples when they see the final bill.</p>
             <h4>Post-production charges</h4>
             <p>For each hour of wedding coverage, photographers typically spend three additional hours in post-production. This time encompasses crucial tasks like:</p>
             <ul>
@@ -262,7 +268,7 @@ const WeddingPhotographerCostGuide = () => {
             </ul>
             <p>Travel time between locations can also affect coverage needs. Since photography hours run continuously, couples must factor in transportation between venues when selecting their package, so keep in mind that events with separate ceremony and reception locations often require additional coverage hours.</p>
             <h4>Must-have vs nice-to-have features</h4>
-            <p>Wedding planning is full of big decisions, so it’s important to consider what elements of photography are essential. The core necessities include the photographer's shooting time, professional editing, and high-resolution image delivery.</p>
+            <p>Wedding planning is full of big decisions, so it's important to consider what elements of photography are essential. The core necessities include the photographer's shooting time, professional editing, and high-resolution image delivery.</p>
             <p>First looks can significantly impact package selection. Opting for a pre-ceremony first look allows photographers to complete most portraits beforehand, potentially reducing the total coverage hours needed. Couples skipping the first look should consider extended coverage to accommodate post-ceremony portraits.</p>
             <p>Getting-ready photos require strategic planning. If both partners want preparation coverage and are getting ready in separate locations, you will need either additional hours or a second shooter. A second photographer helps maintain timeline efficiency, which can be especially important for couples with larger wedding parties.</p>
             <p>The timing of your ceremony also influences package selection. Photography experts recommend scheduling ceremonies at least two hours before sunset for better lighting and more flexibility with timelines.</p>
@@ -271,10 +277,10 @@ const WeddingPhotographerCostGuide = () => {
             <div className="article-container-image">
                 <img style={{ width: '100%', height: '600px', borderRadius: '10px', objectFit: 'cover' }} src={saveMoney} alt="Wedding Photographer Cost Guide" />
             </div>
-            <p>It’s no secret that weddings are expensive, but you can get by on a smaller budget without sacrificing quality through strategic timing and thoughtful negotiations.</p>        
+            <p>It's no secret that weddings are expensive, but you can get by on a smaller budget without sacrificing quality through strategic timing and thoughtful negotiations.</p>        
             <h4>Off-season booking benefits</h4>
             <p>Booking during November through April offers substantial savings, as photographers have more availability during <a href='https://shootdotedit.com/blogs/news/wedding-photographers-guide-off-season'className="reference-link" target="_blank" rel="noopener noreferrer">these months</a>. Many couples can secure discounts ranging from <a href='https://weddingphotographyandfilms.com/wedding-blog/the-ultimate-wedding-money-savings-guide'>10% to 40%</a> on photography services during off-peak seasons.</p>
-            <p>Choosing weekday ceremonies presents another opportunity for cost reduction. Many photographers offer special rates for Monday through Thursday weddings. If you’re looking for the best deal, try a weekday during the off-season, like a ceremony on a Monday in March.</p>
+            <p>Choosing weekday ceremonies presents another opportunity for cost reduction. Many photographers offer special rates for Monday through Thursday weddings. If you're looking for the best deal, try a weekday during the off-season, like a ceremony on a Monday in March.</p>
             <h4>Package negotiation tips</h4>
             <p>Negotiating with a photographer can be tricky, especially because you want to build and maintain a positive relationship with them. Rather than directly asking for discounts, consider these proven strategies:</p>
             <ul>
@@ -288,7 +294,6 @@ const WeddingPhotographerCostGuide = () => {
             <p>Most photographers now offer flexible payment structures to make their services more accessible. Rather than requiring large upfront deposits, many studios have adapted their payment terms.</p>
             <p>Initial deposits can be as low as $39, followed by manageable monthly installments. Some photographers structure payments into three equal portions: booking, mid-planning, and pre-wedding. Others allow couples to split the total cost into monthly payments, with final balances due 30 days before the wedding. </p>
             <p>Some studios even permit couples to pay in full at any point during the <a href='https://classicphotographers.com/payment-plans/'className="reference-link" target="_blank" rel="noopener noreferrer">payment schedule</a>.This flexibility helps manage cash flow while securing your preferred photographer. However, it's essential to thoroughly review payment terms, as late fees or missed payment penalties may apply depending on the studio's policies.</p>
-            <p>However, it's essential to thoroughly review payment terms, as late fees or missed payment penalties may apply depending on the studio's policies.</p>
             <p>Paying your photographer using a credit card can offer additional benefits, as some couples report earning cash back rewards while maintaining <a href='https://www.weddingwire.com/wedding-forums/when-did-you-pay-your-photographer/828168cfc251ee9e.html'>payment protection</a>. </p>
             <h4>Leverage Bidi for Affordable Wedding Photography</h4>
             <p>When looking for affordable photography services, <a href="https://savewithbidi.com" className="reference-link" target="_blank" rel="noopener noreferrer">Bidi</a> is a game-changer for savvy couples. Bidi makes the process effortless—there's no need for hours of searching through countless photographers. Simply set your preferred budget range, and let Bidi handle the rest. Once you've set your budget, photographers in your area will submit bids for your wedding, all within your specified price range.</p>
@@ -311,6 +316,8 @@ const WeddingPhotographerCostGuide = () => {
                 <li>[5] - <a href="https://loveanneliese.com/how-much-wedding-photography-coverage-do-i-need/" className="reference-link" target="_blank" rel="noopener noreferrer">Love Anneliese</a></li>
                 <li>[6] - <a href="https://shootdotedit.com/blogs/news/wedding-photographers-guide-off-season" className="reference-link" target="_blank" rel="noopener noreferrer">Shoot Dot Edit</a></li>
             </ul>
+            
+            <RelatedArticles currentArticle="photographer" />
         </article>
     );
 };

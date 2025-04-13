@@ -67,11 +67,17 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
         .eq("photo_type", "profile")
         .single();
 
-      if (error) throw error;
-      setProfilePic(data.photo_url);
+      if (error) {
+        if (error.code === 'PGRST116') { // No data found
+          setProfilePic("/images/default.jpg");
+          return;
+        }
+        throw error;
+      }
+      setProfilePic(data?.photo_url || "/images/default.jpg");
     } catch (err) {
       console.error("Error fetching profile picture:", err);
-      setProfilePic("/images/default.jpg"); // Set default if no profile picture exists
+      setProfilePic("/images/default.jpg"); // Set default if error occurs
     }
   };
 
@@ -101,9 +107,24 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     }
   };
 
-  // 🔹 Handle Portfolio Image Upload
+  // Add a function to check file type
+  const isValidFileType = (file) => {
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'video/mp4', 'video/quicktime'];
+    return validTypes.includes(file.type);
+  };
+
+  // Update handleFileChange to check file types
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
+    
+    // Filter out HEIC files and warn user
+    const invalidFiles = files.filter(file => !isValidFileType(file));
+    if (invalidFiles.length > 0) {
+      alert('Only JPG, PNG, and MP4 files are supported. HEIC files are not accepted.');
+      e.target.value = ''; // Clear the file input
+      return;
+    }
+
     setUploading(true);
 
     for (const file of files) {
@@ -112,22 +133,30 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       const filePath = `${businessId}/${fileName}`;
 
       try {
-        // Update progress state to show starting upload
+        // Initialize progress for this file
         setUploadProgress(prev => ({
           ...prev,
-          [file.name]: 0
+          [fileName]: 0
         }));
 
-        // Upload file
-        const { error: uploadError } = await supabase.storage
+        // Create upload options with progress tracking
+        const options = {
+          onUploadProgress: (progressEvent) => {
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(prev => ({
+              ...prev,
+              [fileName]: progress
+            }));
+          }
+        };
+
+        // Upload file with progress tracking
+        const { error: uploadError, data } = await supabase.storage
           .from('profile-photos')
           .upload(filePath, file, {
-            onProgress: ({ percentage }) => {
-              setUploadProgress(prev => ({
-                ...prev,
-                [file.name]: Math.round(percentage)
-              }));
-            }
+            cacheControl: '3600',
+            upsert: false,
+            onUploadProgress: options.onUploadProgress
           });
 
         if (uploadError) throw uploadError;
@@ -147,16 +176,31 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
             file_path: filePath
           });
 
-        // Clear progress after successful upload
-        setUploadProgress(prev => {
-          const newProgress = { ...prev };
-          delete newProgress[file.name];
-          return newProgress;
-        });
+        // Set progress to 100% when complete
+        setUploadProgress(prev => ({
+          ...prev,
+          [fileName]: 100
+        }));
+
+        // Remove progress after a short delay
+        setTimeout(() => {
+          setUploadProgress(prev => {
+            const newProgress = { ...prev };
+            delete newProgress[fileName];
+            return newProgress;
+          });
+        }, 1000);
 
       } catch (error) {
         console.error('Error uploading file:', error);
         alert(`Failed to upload ${file.name}. Please try again.`);
+        
+        // Remove progress bar on error
+        setUploadProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[fileName];
+          return newProgress;
+        });
       }
     }
 
@@ -286,9 +330,16 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     });
   };
 
+  // Update handleProfilePicChange to check file type
   const handleProfilePicChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (!isValidFileType(file)) {
+      alert('Only JPG and PNG files are supported. HEIC files are not accepted.');
+      e.target.value = ''; // Clear the file input
+      return;
+    }
 
     setUploadingProfile(true);
     try {
@@ -344,11 +395,52 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     }
   };
 
+  const handleRemoveProfilePic = async () => {
+    try {
+      // Get the current profile photo record
+      const { data, error: fetchError } = await supabase
+        .from('profile_photos')
+        .select('file_path')
+        .eq('user_id', businessId)
+        .eq('photo_type', 'profile')
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+
+      if (data) {
+        // Delete from storage
+        const { error: storageError } = await supabase.storage
+          .from('profile-photos')
+          .remove([data.file_path]);
+
+        if (storageError) throw storageError;
+
+        // Delete from database
+        const { error: dbError } = await supabase
+          .from('profile_photos')
+          .delete()
+          .eq('user_id', businessId)
+          .eq('photo_type', 'profile');
+
+        if (dbError) throw dbError;
+      }
+
+      // Reset profile pic to default
+      setProfilePic("/images/default.jpg");
+    } catch (error) {
+      console.error("Error removing profile picture:", error);
+      alert("Failed to remove profile picture. Please try again.");
+    }
+  };
+
   const ProgressBar = ({ progress }) => (
     <div className="upload-progress">
       <div 
         className="progress-bar" 
-        style={{ width: `${progress}%` }}
+        style={{ 
+          width: `${progress}%`,
+          transition: 'width 0.3s ease-in-out'
+        }}
       ></div>
       <span>{progress}%</span>
     </div>
@@ -361,8 +453,8 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
           <div className="modal-content">
             <h2>Edit {initialData.portfolio ? "Portfolio" : "Profile"}</h2>
 
-            {/* Profile Picture Section - Only show with business_owner/story */}
-            {!initialData.portfolio && initialData.business_owner && (
+            {/* Profile Picture Section - Move this above the form fields */}
+            {!initialData.portfolio && (
               <div className="profile-picture-container">
                 <label>Profile Picture</label>
                 <div className="profile-pic-wrapper">
@@ -371,20 +463,31 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                     alt="Profile"
                     className="profile-pic"
                   />
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    ref={profileFileInputRef} 
-                    style={{ display: "none" }} 
-                    onChange={handleProfilePicChange}
-                  />
-                  <button   
-                    className="edit-profile-button" 
-                    onClick={() => profileFileInputRef.current.click()}
-                    disabled={uploadingProfile}
-                  >
-                    {uploadingProfile ? "Uploading..." : "Edit Profile Picture"}
-                  </button>
+                  <div className="profile-pic-buttons">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      ref={profileFileInputRef} 
+                      style={{ display: "none" }} 
+                      onChange={handleProfilePicChange}
+                    />
+                    <button   
+                      className="edit-profile-button" 
+                      onClick={() => profileFileInputRef.current.click()}
+                      disabled={uploadingProfile}
+                    >
+                      {uploadingProfile ? "Uploading..." : "Edit Profile Picture"}
+                    </button>
+                    {profilePic && profilePic !== "/images/default.jpg" && (
+                      <button
+                        className="remove-profile-button"
+                        onClick={handleRemoveProfilePic}
+                        disabled={uploadingProfile}
+                      >
+                        Remove Picture
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

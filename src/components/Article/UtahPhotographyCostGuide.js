@@ -5,6 +5,7 @@ import decision from '../../assets/articles/Utah Photography/Making a Decision.j
 import photographyBudget from '../../assets/articles/Utah Photography/photography budget.jpg';
 import question from '../../assets/articles/Utah Photography/Question.jpg';
 import style from '../../assets/articles/Utah Photography/Style Types.jpg';
+import RelatedArticles from './RelatedArticles';
 
 const UtahPhotographyCostGuide = () => {
     return (
@@ -253,6 +254,8 @@ const UtahPhotographyCostGuide = () => {
                     [21] - <a href="https://www.sparklephoto.com/wedding-photography-process" target="_blank" rel="noopener noreferrer">Wedding Photography Process</a><br />
                     [22] - <a href="https://taileephotography.com/utah-photography-pricing" target="_blank" rel="noopener noreferrer">Utah Wedding Photography Pricing</a>
                 </p>
+
+                <RelatedArticles currentArticle="utah-photographer" />
             </article>
         </div>
     );

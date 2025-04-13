@@ -20,26 +20,18 @@ const sortOptions = [
 ];
 
 const VendorListWithFilters = () => {
-    const [selectedCategory, setSelectedCategory] = useState('photography'); // Default to 'photography'
+    const [selectedCategory, setSelectedCategory] = useState('photography');
     const [sortOrder, setSortOrder] = useState(sortOptions[0].id);
     const [vendorCount, setVendorCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const vendorsPerPage = 10;
-
-    const handleCategoryChange = (category) => {
-        setSelectedCategory(category);
-    };
-
-    const handleSortOrderChange = (event) => {
-        setSortOrder(event.target.value);
-    };
+    const vendorsPerPage = 5;
 
     useEffect(() => {
         const fetchVendorCount = async () => {
             let query = supabase
                 .from('business_profiles')
                 .select('*', { count: 'exact' })
-                .or('stripe_account_id.not.is.null,stripe_account_id.not.eq.,Bidi_Plus.eq.true');
+                .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
                 query = query.eq('business_category', selectedCategory);    
@@ -57,6 +49,16 @@ const VendorListWithFilters = () => {
 
         fetchVendorCount();
     }, [selectedCategory]);
+
+    const handleCategoryChange = (category) => {
+        setSelectedCategory(category);
+        setCurrentPage(1); // Reset to first page when category changes
+        setSortOrder('recommended'); // Reset sort order when category changes
+    };
+
+    const handleSortOrderChange = (event) => {
+        setSortOrder(event.target.value);
+    };
 
     return (
         <div className="vendor-list-with-filters">
@@ -94,7 +96,7 @@ const VendorListWithFilters = () => {
                 vendorsPerPage={vendorsPerPage}
                 setCurrentPage={setCurrentPage}
                 totalCount={vendorCount}
-                setTotalCount={setVendorCount} // Changed this line to pass setVendorCount
+                setTotalCount={setVendorCount}
             />
         </div>
     );

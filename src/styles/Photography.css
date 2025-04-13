@@ -677,3 +677,762 @@
     height: 80px !important; /* Set a fixed height */
     object-fit: cover !important; /* Scale the image to cover the container */
 }
+
+.budget-guidance-container {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.budget-insights {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.budget-insight-header {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.budget-insight-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.insight-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.insight-icon {
+    font-size: 1.2em;
+    width: 24px;
+}
+
+.insight-text {
+    color: #555;
+    flex: 1;
+}
+
+.insight-warning {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #fff3cd;
+    border-radius: 6px;
+    color: #856404;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .budget-insights {
+        padding: 15px;
+    }
+    
+    .insight-item {
+        font-size: 0.9em;
+    }
+}
+
+.price-quality-slider-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.slider-header {
+    font-size: 1.2rem;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.price-quality-slider {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    background: linear-gradient(to right, #FF008A, #A328F4);
+    border-radius: 3px;
+    outline: none;
+    margin: 15px 0;
+}
+
+.price-quality-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border: 2px solid #A328F4;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.price-quality-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.price-quality-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: white;
+    border: 2px solid #A328F4;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.price-quality-slider::-moz-range-thumb:hover {
+    transform: scale(1.1);
+}
+
+.preference-description {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.preference-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.preference-detail p {
+    margin: 8px 0;
+    color: #555;
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .price-quality-slider-container {
+        padding: 15px;
+    }
+
+    .slider-labels {
+        font-size: 0.8rem;
+    }
+
+    .preference-detail p {
+        font-size: 0.9rem;
+    }
+}
+
+.budget-recommendation {
+    font-size: 1.1rem;
+    color: #0066cc;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.recommendation-header {
+    font-weight: 600;
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+
+.recommendation-factors {
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+.recommendation-factors p {
+    margin-bottom: 8px;
+    color: #0066cc;
+}
+
+.recommendation-factors ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #2980b9;
+}
+
+.recommendation-factors li {
+    margin-bottom: 4px;
+}
+
+@media (max-width: 768px) {
+    .budget-recommendation {
+        padding: 12px;
+    }
+    
+    .recommendation-header {
+        font-size: 0.95rem;
+    }
+    
+    .recommendation-factors {
+        font-size: 0.8rem;
+    }
+}
+
+/* Required field indicators */
+.required-field label::after {
+    content: " *";
+    color: #FF008A;
+}
+
+/* Bid score styles */
+.bid-score-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px;
+}
+
+.bid-score-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.bid-score-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.score-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.score-circle::before {
+    content: '';
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: white;
+}
+
+.score-circle span {
+    position: relative;
+    font-weight: bold;
+    color: #A328F4;
+    font-size: 1.1rem;
+}
+
+.score-message {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+/* Add required field indicator to custom-input-container */
+.custom-input-container.required .custom-label::after {
+    content: " *";
+    color: #FF008A;
+}
+
+/* Optional field indicator */
+.custom-input-container.optional .custom-label::after {
+    content: " (optional)";
+    color: #666;
+    font-size: 0.8em;
+}
+
+.form-header-section {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    padding: 0px 20px 0px 20px;
+    gap: 20px;
+}
+
+.bid-score-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 8px;
+}
+
+.score-circle {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.score-circle::before {
+    content: '';
+    position: absolute;
+    width: 39px;
+    height: 39px;
+    border-radius: 50%;
+    background: white;
+}
+
+.score-circle span {
+    position: relative;
+    font-weight: bold;
+    color: #A328F4;
+    font-size: 0.9rem;
+}
+
+.score-message {
+    font-size: 0.8rem;
+    color: #666;
+    max-width: 150px;
+}
+
+@media (max-width: 768px) {
+    .form-header-section {
+        padding: 15px;
+    }
+    
+    .score-message {
+        display: none;
+    }
+}
+
+.coupon-earned-section {
+    background-color: #f8f9fa;
+    border: 2px solid #A328F4;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.coupon-earned-section h3 {
+    color: #A328F4;
+    margin-bottom: 10px;
+}
+
+.coupon-earned-section p {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.apply-coupon-btn {
+    background-color: #A328F4;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.apply-coupon-btn:hover {
+    background-color: #8a1cd9;
+}
+
+.checkbox-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checkbox-text {
+    font-size: 1rem;
+    color: #333;
+    margin-left: 4px;
+    font-family: Inter;
+}
+
+.flower-tier-section {
+    margin-bottom: 30px;
+}
+
+.flower-tier-header {
+    color: #333;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.flower-options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.flower-label {
+    margin-top: 8px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.flower-option {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.flower-option.selected {
+    border-color: #A328F4;
+    background-color: rgba(163, 40, 244, 0.05);
+}
+
+.flower-option input[type="checkbox"] {
+    margin-top: 8px;
+}
+
+.flower-option label {
+    font-size: 0.9rem;
+    color: #666;
+    cursor: pointer;
+}
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.checkbox-item label {
+    margin: 0;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.tinder-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.tinder-card {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.tinder-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.tinder-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  color: white;
+  pointer-events: none;
+}
+
+.tinder-content h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.tinder-content p {
+  color: white;
+}
+
+.tinder-buttons {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.tinder-button {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.tinder-button:hover {
+  transform: scale(1.1);
+}
+
+.tinder-button.no {
+  background: #ff4b4b;
+  color: white;
+}
+
+.tinder-button.yes {
+  background: #A328F4;
+  color: white;
+}
+
+/* Add swipe indicators */
+.swipe-hint {
+  position: absolute;
+  top: 40%;
+  font-size: 40px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  height: 80px;
+}
+
+.swipe-hint.left {
+  left: 20px;
+  color: #ff4b4b;
+}
+
+.swipe-hint.right {
+  right: 20px;
+  color: #A328F4;
+}
+
+.tinder-card:hover .swipe-hint {
+  opacity: 0.5;
+}
+
+/* Tutorial styles */
+.tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.tutorial-content {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  max-width: 500px;
+  text-align: center;
+}
+
+.tutorial-step {
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+}
+
+/* Progress bar */
+.quiz-progress {
+  width: 100%;
+  height: 4px;
+  background: #eee;
+  margin-bottom: 20px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* Updated controls */
+.quiz-controls {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.tinder-button.undo {
+  background: #666;
+  color: white;
+}
+
+.tinder-button.skip {
+  background: #999;
+  color: white;
+  width: auto;
+  padding: 0 20px;
+  border-radius: 30px;
+}
+
+.tinder-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Results page styles */
+.result-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.result-image-container {
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+}
+
+.result-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.result-content {
+  padding: 30px;
+}
+
+.suggested-vendors {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.suggested-vendors ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+
+.suggested-vendors li {
+  padding: 5px 0;
+  color: #666;
+}
+
+.vendor-card-quiz {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  height: 100%;
+}
+
+.vendor-image-container {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.vendor-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vendor-content {
+  padding: 20px;
+}
+
+.image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  font-size: 40px;
+  color: #A328F4;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tinder-image.loading {
+  opacity: 0.5;
+}
+
+/* Optional: Add a smooth transition */
+.tinder-image {
+  transition: opacity 0.3s ease;
+}
+
+.vendor-image-quiz {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
