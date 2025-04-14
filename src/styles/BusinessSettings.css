@@ -1,0 +1,27 @@
+.business-settings-container {
+  margin-left: 1vh;
+  margin-right: 1vh;
+}
+
+.admin-logo {
+  height: 2.5vh;
+  margin-bottom: 0.5vh;
+  margin-right: 8px;
+}
+
+@media screen and (max-width: 768px) {
+  .btn-primary {
+    width: 100%;
+    height: 64px;
+    font-size: 20px;
+  }
+  .btn-secondary {
+    width: 100%;
+    height: 64px;
+    font-size: 20px;
+  }
+  .admin-logo {
+    height: 4vh;
+    margin-bottom: 0.5vh;
+  }
+}

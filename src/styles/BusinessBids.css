@@ -79,7 +79,7 @@
 }
 
 /* Job card styling */
-.job-card {
+/* .job-card {
   background: white;
   width: 90%;
   padding: 2vw;
@@ -89,7 +89,7 @@
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
   margin: 10px auto;
-}
+} */
 
 /* Job card title */
 .job-card h3 {
@@ -117,7 +117,7 @@
   margin-top: 10px;
 }
 
-.job-card {
+/* .job-card {
   background: white;
   width: 100%;
   padding: 1.2vw;
@@ -128,7 +128,7 @@
   transition: transform 0.2s ease-in-out;
   box-shadow: none;
   margin: 0 auto;
-}
+} */
 .job-card h3 {
   font-size: 1.1vw;
   font-weight: 600;
@@ -184,4 +184,151 @@
 .view-btn:hover {
   background: #a328f4;
   color: white;
+}
+
+.no-bids-text {
+  font-size: 1.4vw;
+}
+
+@media (max-width: 768px) {
+  .no-bids-text {
+    font-size: 4vw;
+  }
+  .bids-status-header {
+    font-size: 4vw;
+  }
+  .status-number {
+    font-size: 6vw;
+    padding: 0;
+  }
+  .status-underline {
+    width: 100%;
+  }
+  .bids-status-column {
+    margin-right: 1vh;
+  }
+}
+
+.status-sections-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.status-selector {
+  margin-bottom: 16px;
+}
+
+.status-selector select {
+  width: 100%;
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.status-tabs {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 16px;
+}
+
+/* Tab Button Styling */
+.tab-button {
+  font-weight: bold;
+  background-color: #f8f9fa; /* Default light background */
+  border: 1px solid transparent; /* Default border */
+  border-radius: 8px; /* Rounded corners */
+  padding: 10px 20px; /* Padding for the button */
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+/* Pending Tab */
+.tab-button.pending {
+  color: #ffbf00; /* Yellow text */
+  border-color: #ffbf00; /* Yellow border */
+}
+
+.tab-button.pending.active {
+  background-color: #ffbf00; /* Yellow background for active state */
+  color: #fff; /* White text for active state */
+}
+
+/* Approved Tab */
+.tab-button.approved {
+  color: #28a745; /* Green text */
+  border-color: #28a745; /* Green border */
+}
+
+.tab-button.approved.active {
+  background-color: #28a745; /* Green background for active state */
+  color: #fff; /* White text for active state */
+}
+
+/* Denied Tab */
+.tab-button.denied {
+  color: #dc3545; /* Red text */
+  border-color: #dc3545; /* Red border */
+}
+
+.tab-button.denied.active {
+  background-color: #dc3545; /* Red background for active state */
+  color: #fff; /* White text for active state */
+}
+
+/* Hover State */
+.tab-button:not(.active):hover {
+  background-color: #e9ecef; /* Light gray background on hover */
+  color: inherit; /* Keep the text color based on the status */
+}
+
+/* Mobile and Smaller Web Screen Styling */
+.bids-status-container {
+  display: block;
+  padding: 0 16px;
+  margin-bottom: 16px;
+}
+
+.bids-grid-container {
+  display: block;
+  /* padding: 0 16px; */
+  margin-top: 16px;
+}
+
+.status-tabs {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 16px;
+  width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+  gap: 10px;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 8px;
+  font-size: 1rem;
+  border: none;
+  background: #f8f9fa;
+  color: #555;
+  cursor: pointer;
+  text-align: center;
+}
+
+.tab-button.active {
+  /* background: #007bff; */
+  color: white;
+  font-weight: bold;
+}
+
+.tab-button:not(.active):hover {
+  background: #e9ecef;
+}
+
+.business-bids-container {
+  width: 100%;
 }

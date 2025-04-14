@@ -14,14 +14,15 @@ import messageIcon from "../../assets/images/Icons/message.svg";
 // import paymentIcon from "../../assets/images/Icons/payment.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
 import profileIcon from "../../assets/images/Icons/profile.svg";
-import bidiLogo from "../../assets/images/bidi check.png";
+// import bidiLogo from "../../assets/images/bidi check.png";
 // import MessagingView from "../Messaging/MessagingView";
-import PlacedBidDisplay from "./PlacedBids.js";
+// import PlacedBidDisplay from "./PlacedBids.js";
 import BusinessBids from "./BusinessBids.js";
 // import ProfilePage from "../Profile/Profile.js";
 import BusinessSettings from "./BusinessSettings.js";
 import PortfolioPage from "../Business/Portfolio/Portfolio.js";
 import Onboarding from "../../components/Stripe/Onboarding.js";
+import OpenRequests from "../../components/Request/OpenRequests.js";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -37,6 +38,7 @@ const BusinessDashSidebar = () => {
   const [bids, setBids] = useState([]);
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,10 +114,22 @@ const BusinessDashSidebar = () => {
     fetchData();
   }, []);
 
-  // Save the active section to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("activeSection", activeSection);
   }, [activeSection]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768); // Check if the screen width is 768px or less
+    };
+
+    handleResize(); // Check on initial render
+    window.addEventListener("resize", handleResize); // Listen for window resize
+
+    return () => {
+      window.removeEventListener("resize", handleResize); // Cleanup
+    };
+  }, []);
 
   const handleViewPortfolio = async () => {
     const {
@@ -210,8 +224,8 @@ const BusinessDashSidebar = () => {
           {/* Sidebar Links */}
           <ul className="sidebar-links">
             <li onClick={() => setActiveSection("dashboard")}>
-              <img src={dashboardIcon} alt="Dashboard" />
-              <span>Dashboard</span>
+              <img src={dashboardIcon} alt="Requests" />
+              <span>Requests</span>
             </li>
             <li onClick={() => setActiveSection("bids")}>
               <img src={bidsIcon} alt="Bids" />
@@ -233,59 +247,45 @@ const BusinessDashSidebar = () => {
               <img src={settingsIcon} alt="Settings" />
               <span>Settings</span>
             </li>
-            {isAdmin && (
-              <li onClick={() => navigate("/admin-dashboard")}>
-                <img src={bidiLogo} alt="Admin" />
-                <span>Admin</span>
-              </li>
-            )}
           </ul>
 
           {/* Upgrade Prompt */}
-          {!BidiPlus && (
+          {/* {!BidiPlus && (
             <div className="upgrade-box">
               <p>
                 Upgrade to <strong>PRO</strong> to get access to all features!
               </p>
             </div>
-          )}
+          )} */}
         </aside>
         {/* Main Dashboard */}
         <main className="dashboard-main">
-          <DashboardBanner />
-
+          {/* {activeSection === "dashboard" && !isMobile && <DashboardBanner />} */}
           {/* find active sections */}
           {activeSection === "dashboard" ? (
-            <section className="job-listings">
-              {/* Section Header */}
-              <div className="job-listings-header">
-                <span className="job-title">Jobs for you</span>
-                <span className="job-subtext">
-                  See the requests that you haven't bid on!
-                </span>
-                <br />
-              </div>
+            // <section className="job-listings">
+            //   {/* Section Header */}
+            //   <div className="job-listings-header">
+            //     <span className="job-title">Jobs for you</span>
+            //     <span className="job-subtext">
+            //       See the requests that you haven't bid on!
+            //     </span>
+            //     <br />
+            //   </div>
 
-              {/* Job Cards Grid */}
-              <div className="all-job-cards">
-                {requests.length > 0 ? (
-                  <PlacedBidDisplay requests={requests} />
-                ) : (
-                  <p className="no-jobs">No available jobs at this time.</p>
-                )}
-              </div>
-            </section>
+            //   {/* Job Cards Grid */}
+            //   <div className="all-job-cards">
+            //     {requests.length > 0 ? (
+            //       <OpenRequests requests={requests} />
+            //     ) : (
+            //       <p className="no-jobs">No available jobs at this time.</p>
+            //     )}
+            //   </div>
+            // </section>
+            <OpenRequests requests={requests} />
           ) : activeSection === "messages" ? (
             // <MessagingView />
-            <div
-              className="text-gray-700 mt-4"
-              style={{
-                fontSize: "2vw",
-                fontWeight: "bold",
-              }}
-            >
-              Coming Soon!
-            </div>
+            <div className="coming-soon">Coming Soon!</div>
           ) : activeSection === "bids" ? (
             <BusinessBids bids={bids} />
           ) : activeSection === "onboarding" ? (
@@ -306,6 +306,44 @@ const BusinessDashSidebar = () => {
             <div>An error occurred</div>
           )}
         </main>
+
+        {/* Bottom Navigation Bar */}
+        <nav className="bottom-nav">
+          <button onClick={() => setActiveSection("dashboard")}>
+            <div className="nav-item">
+              <img src={dashboardIcon} alt="Dashboard" />
+              <span className="nav-label">Requests</span>
+            </div>
+          </button>
+          <button onClick={() => setActiveSection("bids")}>
+            <div className="nav-item">
+              <img src={bidsIcon} alt="Bids" />
+              <span className="nav-label">Bids</span>
+            </div>
+          </button>
+          <button onClick={() => setActiveSection("messages")}>
+            <div className="nav-item">
+              <img src={messageIcon} alt="Message" />
+              <span className="nav-label">Messages</span>
+            </div>
+          </button>
+          <button onClick={() => handleViewPortfolio()}>
+            <div className="nav-item profile-nav-item">
+              <img src={profileIcon} alt="Portfolio" className="profile-icon" />
+              <span className="nav-label">Portfolio</span>
+            </div>
+          </button>
+          <button onClick={() => setActiveSection("settings")}>
+            <div className="nav-item">
+              <img
+                src={settingsIcon}
+                alt="Settings"
+                className="settings-icon"
+              />
+              <span className="nav-label">Settings</span>
+            </div>
+          </button>
+        </nav>
       </div>
     </div>
   );

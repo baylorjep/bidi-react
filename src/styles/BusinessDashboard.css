@@ -310,7 +310,7 @@
 
 /* Job Card Title */
 .card-title {
-  font-size: 1.1vw;
+  /* font-size: 1.1vw; */
   font-weight: 600;
   margin-bottom: 0.3vh;
   color: black;
@@ -429,4 +429,83 @@
 .for-business-dashboard {
   visibility: hidden;
   font-size: 1vw !important;
+}
+
+/* Bottom Navigation Bar */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-top: 2px solid rgb(222, 226, 230);
+  /* display: flex; */
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.5rem 0;
+  z-index: 1000;
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.bottom-nav button:focus {
+  outline: none;
+}
+
+.coming-soon {
+  font-size: 4vw;
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none; /* Hide sidebar on mobile */
+  }
+
+  .bottom-nav {
+    display: flex; /* Show bottom navigation on mobile */
+  }
+
+  .dashboard-main {
+    padding-bottom: 4rem; /* Add space for the bottom nav */
+  }
+  .job-listings {
+    margin-top: -10vh;
+  }
+  .job-title {
+    font-size: 4vw;
+  }
+  .job-subtext {
+    font-size: 3vw;
+  }
+  .no-jobs {
+    font-size: 4vw;
+  }
+  .coming-soon {
+    font-size: 6vw;
+  }
+  .profile-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .settings-icon {
+    margin-bottom: -8px;
+  }
+  .profile-nav-item {
+    margin-top: -2px;
+  }
+  .nav-label {
+    font-size: 0.75rem; /* Small font size for labels */
+    margin-top: 4px;
+    display: block; /* Forces the text to appear on a new line */
+    text-align: center;
+    font-family: inherit;
+  }
 }

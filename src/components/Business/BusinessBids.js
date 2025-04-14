@@ -4,16 +4,32 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import "../../styles/BusinessBids.css";
 import WithdrawConfirmationModal from "./WithdrawConfirmationModal";
+import BidDisplayMini from "./BidDisplayMini";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const BusinessBids = () => {
   const [bids, setBids] = useState([]);
   const [requests, setRequests] = useState([]);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [selectedBidId, setSelectedBidId] = useState(null);
+  const [activeTab, setActiveTab] = useState("pending");
+  const [isFullScreen, setIsFullScreen] = useState(window.innerWidth > 1200);
+  const filteredBids = bids.filter((bid) => bid.status === activeTab);
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsFullScreen(window.innerWidth > 1200);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchBusinessBids = async () => {
+      setIsLoading(true);
       try {
         const {
           data: { user },
@@ -29,7 +45,7 @@ const BusinessBids = () => {
 
         const { data: businessBids, error: bidError } = await supabase
           .from("bids")
-          .select("id, request_id, category, status, bid_amount")
+          .select("*")
           .eq("user_id", user.id)
           .or("hidden.is.false,hidden.is.null");
 
@@ -74,6 +90,8 @@ const BusinessBids = () => {
           "❌ An error occurred while fetching business bids:",
           error
         );
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -99,6 +117,7 @@ const BusinessBids = () => {
   };
 
   const openWithdrawModal = (bidId) => {
+    console.log("Opening modal for bid ID:", bidId); // Debug log
     setSelectedBidId(bidId); // Set the bid ID to withdraw
     setShowWithdrawModal(true); // Show the modal
   };
@@ -130,6 +149,50 @@ const BusinessBids = () => {
     }
   };
 
+  const renderTabSelector = () => (
+    <div className="status-tabs">
+      {["pending", "approved", "denied"].map((status) => (
+        <button
+          key={status}
+          className={`tab-button ${status} ${
+            activeTab === status ? "active" : ""
+          }`}
+          onClick={() => setActiveTab(status)}
+        >
+          {status.charAt(0).toUpperCase() + status.slice(1)} (
+          {bids.filter((bid) => bid.status === status).length})
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderMobileBids = () => (
+    <div className="bids-grid-container">
+      {filteredBids.length > 0 ? (
+        <div className="request-grid">
+          {filteredBids.map((bid) => {
+            const request = requests.find((req) => req.id === bid.request_id);
+            return (
+              request && (
+                <BidDisplayMini
+                  key={bid.id}
+                  bid={bid}
+                  request={request}
+                  onEditBid={(requestId, bidId) =>
+                    navigate(`/edit-bid/${requestId}/${bidId}`)
+                  }
+                  openWithdrawModal={openWithdrawModal}
+                />
+              )
+            );
+          })}
+        </div>
+      ) : (
+        <p className="no-bids-text">No {activeTab.toLowerCase()} bids.</p>
+      )}
+    </div>
+  );
+
   // Function to render the job cards inside status sections
   const renderStatusSection = (status, title, colorClass, bidsList) => (
     <div className={`bids-status-column ${colorClass}`} key={status}>
@@ -140,97 +203,75 @@ const BusinessBids = () => {
       <div className={`status-underline ${colorClass}`}></div>
       <br />
       {bidsList.length > 0 ? (
-        <div className="bids-grid">
-          {/* Render the modal */}
-          <WithdrawConfirmationModal
-            show={showWithdrawModal}
-            onClose={closeWithdrawModal}
-            onConfirm={confirmWithdraw}
-          />
-
-          {bidsList.map((bid) => {
-            const request = requests.find((req) => req.id === bid.request_id);
-            return (
-              request && (
-                <div key={bid.id} className="job-card">
-                  <h3 className="card-title">
-                    {request.event_title || "Untitled Request"}
-                  </h3>
-                  <div className="job-info-grid">
-                    <div className="job-info-item">
-                      <span className="job-label">Price Range</span>
-                      <span className="job-value">
-                        {request.price_range || "N/A"}
-                      </span>
-                    </div>
-                    <div className="job-info-item">
-                      <span className="job-label">Location</span>
-                      <span className="job-value">
-                        {request.location || "TBD"}
-                      </span>
-                    </div>
-                    <div className="job-info-item">
-                      <span className="job-label">Date</span>
-                      <span className="job-value">
-                        {formatDate(request.start_date)}
-                      </span>
-                    </div>
-                    <div className="job-info-item">
-                      <span className="job-label">Time</span>
-                      <span className="job-value">
-                        {request.start_time || "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="job-description">
-                    <span className="job-label">Description</span>
-                    <p className="job-value">
-                      {request.additional_comments ||
-                        "No description available."}
-                    </p>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      gap: "10px",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {/* Withdraw Button */}
-                    <button
-                      className="view-btn-card"
-                      onClick={() => openWithdrawModal(bid.id)} // Open the modal
-                    >
-                      Withdraw
-                    </button>
-
-                    {/* View/Edit Button */}
-                    <button
-                      className="view-btn-card"
-                      onClick={() =>
-                        navigate(`/edit-bid/${bid.request_id}/${bid.id}`)
-                      } // Navigate to the edit page
-                    >
-                      View/Edit
-                    </button>
-                  </div>
-                </div>
-              )
-            );
-          })}
+        <div className="request-grid-container">
+          <div className="request-grid">
+            {bidsList.map((bid) => {
+              const request = requests.find((req) => req.id === bid.request_id);
+              return (
+                request && (
+                  <BidDisplayMini
+                    key={bid.id}
+                    bid={bid}
+                    request={request}
+                    onEditBid={(requestId, bidId) =>
+                      navigate(`/edit-bid/${requestId}/${bidId}`)
+                    }
+                    openWithdrawModal={openWithdrawModal}
+                  />
+                )
+              );
+            })}
+          </div>
         </div>
       ) : (
-        <p>No {title.toLowerCase()} bids.</p>
+        <p className="no-bids-text">No {title.toLowerCase()} bids.</p>
       )}
     </div>
   );
 
+  if (isLoading) {
+    return <LoadingSpinner color="#9633eb" size={50} />;
+  }
+
   return (
-    <div className="bids-status-container">
-      {renderStatusSection("pending", "PENDING", "pending", pendingBids)}
-      {renderStatusSection("approved", "APPROVED", "approved", approvedBids)}
-      {renderStatusSection("denied", "DENIED", "denied", deniedBids)}
+    <div className="business-bids-container">
+      {/* Always Render Tab Selector */}
+      <div className="bids-status-container">{renderTabSelector()}</div>
+
+      {/* Render Bids */}
+      <div className="bids-grid-container">
+        {filteredBids.length > 0 ? (
+          <div className="request-grid">
+            {filteredBids.map((bid) => {
+              const request = requests.find((req) => req.id === bid.request_id);
+              return (
+                request && (
+                  <BidDisplayMini
+                    key={bid.id}
+                    bid={bid}
+                    request={request}
+                    onEditBid={(requestId, bidId) =>
+                      navigate(`/edit-bid/${requestId}/${bidId}`)
+                    }
+                    openWithdrawModal={openWithdrawModal}
+                  />
+                )
+              );
+            })}
+          </div>
+        ) : (
+          <p className="no-bids-text">No {activeTab.toLowerCase()} bids.</p>
+        )}
+      </div>
+
+      {/* Withdraw Confirmation Modal */}
+      {showWithdrawModal && (
+        <WithdrawConfirmationModal
+          show={showWithdrawModal}
+          onClose={closeWithdrawModal}
+          onConfirm={confirmWithdraw}
+        />
+      )}
     </div>
   );
 };

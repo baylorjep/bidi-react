@@ -6,6 +6,8 @@ import { Modal } from "react-bootstrap";
 import { supabase } from "../../supabaseClient";
 // import StripeOnboarding from "../../components/Stripe/Onboarding.js";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import bidiLogo from "../../assets/images/bidi check.png";
+import "../../styles/BusinessSettings.css";
 
 const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [isVerified, setIsVerified] = useState(false);
@@ -34,6 +36,7 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   });
   const [profileDetails, setProfileDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     console.log("Active Coupon:", activeCoupon);
@@ -64,6 +67,8 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
           setIsLoading(false);
           return;
         }
+
+        setIsAdmin(!!profile.is_admin);
 
         // Step 2: Use the business_id from the profile to fetch related data
         const { data: existingCoupon, error: couponError } = await supabase
@@ -444,6 +449,23 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
         </div>
       )}
       <div className="row justify-content-center">
+        {/* Admin Dashboard */}
+        {isAdmin && (
+          <div
+            className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
+            style={{ marginTop: "20px" }}
+          >
+            <button
+              style={{ fontWeight: "bold", color: "#9633eb" }}
+              className="btn-primary flex-fill"
+              onClick={() => navigate("/admin-dashboard")}
+            >
+              <img src={bidiLogo} className="admin-logo" alt="Admin" />
+              Admin Dashboard
+            </button>
+          </div>
+        )}
+
         {/* Payment Dashboard Button */}
         <div
           className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
@@ -521,42 +543,28 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
         </div>
 
         {/* Apply to Be Bidi Verified Button */}
-        <div
-          className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
-          style={{ marginTop: "20px" }}
-        >
-          <button
-            className="btn-primary flex-fill"
-            style={{
-              fontWeight: "bold",
-              opacity: isVerified ? "0.7" : "1",
-              cursor: isVerified ? "not-allowed" : "pointer",
-              // background: isVerified ? "#6c757d" : undefined,
-              color: "#9633eb",
-            }}
-            onClick={() => !isVerified && navigate("/verification-application")}
-            disabled={isVerified}
+        {!isVerified && (
+          <div
+            className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
+            style={{ marginTop: "20px" }}
           >
-            {isVerified ? (
-              <span>
-                <i
-                  className="fas fa-check-circle"
-                  style={{ marginRight: "8px", color: "#28a745" }}
-                ></i>
-                You are Bidi Verified!
-              </span>
-            ) : (
-              <span>
-                <img
-                  src={Verification}
-                  alt="Bidi Verification Logo"
-                  style={{ marginRight: "8px", height: "20px" }}
-                />
-                Apply to be Bidi Verified
-              </span>
-            )}
-          </button>
-        </div>
+            <button
+              className="btn-primary flex-fill"
+              style={{
+                fontWeight: "bold",
+                color: "#9633eb",
+              }}
+              onClick={() => navigate("/verification-application")}
+            >
+              <img
+                src={Verification}
+                alt="Bidi Verification Logo"
+                style={{ marginRight: "8px", height: "20px" }}
+              />
+              Apply to be Bidi Verified
+            </button>
+          </div>
+        )}
 
         {/* Set Up Down Payment Button */}
         <div
