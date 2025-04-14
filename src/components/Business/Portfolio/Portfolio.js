@@ -282,7 +282,15 @@ const Portfolio = () => {
     }
   };
 
-  if (loading) return <p>Loading portfolio...</p>;
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner">
+          Loading vendors and photos...
+        </div>
+      </div>
+    );
+  }
   if (!business) return <p>Error: Business not found.</p>;
 
   return (

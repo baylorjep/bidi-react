@@ -366,14 +366,7 @@ h1 {
     }
 }
 
-/* Add styles for the filter backdrop */
-.filter-backdrop {
-    display: none;
-}
-
-.filter-backdrop.show {
-    display: none;
-}
+/* Remove filter backdrop styles */
 
 .filter-header h3 {
     margin: 0;
