@@ -12732,7 +12732,7 @@ line-height: normal;
   margin: 8px;
   padding: 16px;
   height: 388px;
-  width: 372px;
+  /* width: 372px; */
   overflow: hidden;
   position: relative;
 }

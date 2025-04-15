@@ -1,12 +1,1 @@
-.requests-main-container {
-  padding-left: 12px;
-  padding-right: 12px;
-}
 
-@media (max-width: 768px) {
-  /* For mobile devices */
-  .requests-main-container {
-    padding-left: 0px;
-    padding-right: 0px;
-  }
-}
