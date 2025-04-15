@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import RequestDisplayMini from "./RequestDisplayMini";
 import "../../App.css";
+import "../../styles/OpenRequests.css";
 import SearchBar from "../SearchBar/SearchBar";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
@@ -449,7 +450,7 @@ function OpenRequests() {
   }
 
   return (
-    <div>
+    <div className="requests-main-container">
       <h1 style={{ fontFamily: "Outfit", fontWeight: "bold" }}>
         Open Requests
       </h1>
