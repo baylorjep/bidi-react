@@ -1,0 +1,49 @@
+/* Bid Info Box */
+.bid-info-box {
+  border: 1px solid #ddd; /* Light gray border */
+  border-radius: 8px; /* Rounded corners */
+  padding: 16px; /* Padding inside the box */
+  background-color: #f9f9f9; /* Slightly off-white background */
+}
+
+/* Detail Item Styling */
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px; /* Space between items */
+}
+
+.detail-label {
+  font-weight: bold;
+  color: #555; /* Darker text for labels */
+}
+
+.detail-value {
+  color: #333; /* Slightly darker text for values */
+}
+
+/* Buttons */
+.view-btn-card {
+  background-color: #9633eb;
+  color: #fff; /* White text */
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.view-btn-card:hover {
+  background-color: #7a29b8;
+}
+
+.request-display-mini {
+  height: 90%;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .view-btn-card {
+    font-size: 1rem; /* Larger font size for mobile */
+  }
+}

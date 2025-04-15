@@ -1,119 +1,112 @@
+// src/components/MessagingView.js
 import React, { useState, useEffect } from "react";
-import io from "socket.io-client";
+import { socket } from "../../socket.js";
 import { supabase } from "../../supabaseClient";
 import "../../styles/messaging.css";
 
-// Connect to your deployed Socket.IO server
-// (if hosted on the same domain in production, you can simply call io())
-const socket = io("https://bidi-express.vercel.app");
-
 const MessagingView = () => {
   const [currentUserId, setCurrentUserId] = useState("");
-  const [chatPartnerId, setChatPartnerId] = useState("");
-  const [allUsers, setAllUsers] = useState([]); // List of users for testing
+  const [businesses, setBusinesses] = useState([]);
+  const [selectedBusiness, setSelectedBusiness] = useState("");
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
-  // Retrieve current user from Supabase on mount
+  // Retrieve the current user (bride/groom) from Supabase
   useEffect(() => {
     const getCurrentUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
-        // Join the room corresponding to this user
+        // Join the room for the current user
         socket.emit("join", user.id);
       } else {
         console.error("No user found", error);
       }
     };
-
     getCurrentUser();
   }, []);
 
-  // Fetch a list of all users from the "profiles" table for beta testing
+  // Fetch businesses from Supabase for selection
   useEffect(() => {
-    const fetchUsers = async () => {
-      const { data, error } = await supabase.from("profiles").select("id, email");
+    const fetchBusinesses = async () => {
+      // Adjust table name/columns as needed
+      const { data, error } = await supabase.from("business_profiles").select("id, business_name");
       if (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching businesses:", error);
       } else if (data) {
-        setAllUsers(data);
+        setBusinesses(data);
       }
     };
-
-    fetchUsers();
+    fetchBusinesses();
   }, []);
 
   // Listen for incoming messages
   useEffect(() => {
     socket.on("receive_message", (data) => {
-      // Only add messages that involve the current user
-      if (data.senderId === currentUserId || data.receiverId === currentUserId) {
+      // Only add the message if it involves the current conversation
+      if (
+        (data.senderId === selectedBusiness && data.receiverId === currentUserId) ||
+        (data.senderId === currentUserId && data.receiverId === selectedBusiness)
+      ) {
         setMessages((prev) => [...prev, data]);
       }
     });
-
     return () => {
       socket.off("receive_message");
     };
-  }, [currentUserId]);
+  }, [selectedBusiness, currentUserId]);
 
   const sendMessage = () => {
-    if (newMessage.trim() === "" || chatPartnerId === "") return;
-
+    if (newMessage.trim() === "" || selectedBusiness === "") return;
     const messageData = {
       senderId: currentUserId,
-      receiverId: chatPartnerId,
+      receiverId: selectedBusiness,
       message: newMessage,
     };
-
-    // Emit the message to the server
+    // Emit the message to the backend via Socket.IO
     socket.emit("send_message", messageData);
 
-    // Optionally update UI immediately (optimistic update)
+    // Optimistic update: add it locally
     setMessages((prev) => [...prev, messageData]);
     setNewMessage("");
   };
 
   return (
     <div className="messaging-container">
-      <h2>Messaging</h2>
+      <h2>Chat with a Business</h2>
       <div style={{ marginBottom: "1rem" }}>
-        <label>Select Chat Partner: </label>
-        <select
-          value={chatPartnerId}
-          onChange={(e) => setChatPartnerId(e.target.value)}
-        >
-          <option value="">Select a user</option>
-          {allUsers.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.email} ({user.id})
+        <label>Select Business: </label>
+        <select value={selectedBusiness} onChange={(e) => setSelectedBusiness(e.target.value)}>
+          <option value="">-- Select a Business --</option>
+          {businesses.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.business_name}
             </option>
           ))}
         </select>
       </div>
-
-      <div className="messages-list">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`message ${msg.senderId === currentUserId ? "sent" : "received"}`}
-          >
-            <span className="message-text">{msg.message}</span>
-          </div>
-        ))}
+      <div>
+        <h3>Messages:</h3>
+        <ul>
+          {messages.map((msg, index) => (
+            <li key={index}>
+              <strong>{msg.senderId === currentUserId ? "You" : "Business"}: </strong>
+              {msg.message}
+            </li>
+          ))}
+        </ul>
       </div>
-      <div className="message-input">
+      <div>
         <input
           type="text"
-          placeholder="Type a message..."
+          placeholder="Type your message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          className="input-field"
         />
-        <button onClick={sendMessage} className="send-button">
-          Send
-        </button>
+        <button onClick={sendMessage}>Send</button>
       </div>
     </div>
   );

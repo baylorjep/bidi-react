@@ -1,61 +1,61 @@
 // App Imports
-import './App.css';
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import './i18n';
-import '@fortawesome/fontawesome-free/css/all.min.css';
-import { HelmetProvider } from 'react-helmet-async';
+import "./App.css";
+import React, { useState } from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import "./i18n";
+import "@fortawesome/fontawesome-free/css/all.min.css";
+import { HelmetProvider } from "react-helmet-async";
 
 // Layout Imports
-import Navbar from './components/Layout/Navbar';
-import Footer from './components/Layout/Footer';
-import PrivacyPolicy from './components/Layout/PrivacyPolicy';
-import TermsOfUse from './components/Layout/TermsOfUse';
+import Navbar from "./components/Layout/Navbar";
+import Footer from "./components/Layout/Footer";
+import PrivacyPolicy from "./components/Layout/PrivacyPolicy";
+import TermsOfUse from "./components/Layout/TermsOfUse";
 
 // Admin Imports
-import AdminDashboard from './components/admin/AdminDashboard';
+import AdminDashboard from "./components/admin/AdminDashboard";
 
 // Bid Imports
-import SubmitBid from './components/Request/SubmitBid';
-import BidSuccess from './components/Bid/BidSuccess';
-import BidAccepted from './components/Bid/BidAccepted';
+import SubmitBid from "./components/Request/SubmitBid";
+import BidSuccess from "./components/Bid/BidSuccess";
+import BidAccepted from "./components/Bid/BidAccepted";
 
 // Request Imports
-import RequestCategories from './components/Request/RequestCategories';
-import SuccessRequest from './components/Request/SuccessRequest';
-import OpenRequests from './components/Request/OpenRequests';
-import PhotographyRequest from './components/Request/Photography/PhotographyRequest';
+import RequestCategories from "./components/Request/RequestCategories";
+import SuccessRequest from "./components/Request/SuccessRequest";
+import OpenRequests from "./components/Request/OpenRequests";
+import PhotographyRequest from "./components/Request/Photography/PhotographyRequest";
 
 // New staged request imports
-import MultiStepRequestForm from './components/Request/general requests/MultiStepRequestForm';
+import MultiStepRequestForm from "./components/Request/general requests/MultiStepRequestForm";
 
 // test email imports
-import TestEmail from './components/TestEmail';
+import TestEmail from "./components/TestEmail";
 
 // Event Imports
-import SelectEvent from './components/Request/Event/SelectEvent';
-import EventDetails from './components/Request/Event/EventDetails';
-import EventPhotos from './components/Request/Event/UploadPictures';
-import PersonalDetails from './components/Request/Event/PersonalDetails';
-import EventSummary from './components/Request/Event/EventSummary';
+import SelectEvent from "./components/Request/Event/SelectEvent";
+import EventDetails from "./components/Request/Event/EventDetails";
+import EventPhotos from "./components/Request/Event/UploadPictures";
+import PersonalDetails from "./components/Request/Event/PersonalDetails";
+import EventSummary from "./components/Request/Event/EventSummary";
 
 // Profile Imports
-import Signup from './components/Profile/Signup';
-import SignIn from './components/Profile/SignIn';
-import ChooseUserType from './components/Profile/ChooseUserType';
-import ChoosePricingPlan from './components/Profile/ChoosePricingPlan';
-import SuccessSignup from './components/Profile/SuccessSignup';
-import ResetPassword from './components/Profile/ResetPassword';
-import UpdatePassword from './components/Profile/UpdatePassword';
-import ProfilePage from './components/Profile/Profile';
+import Signup from "./components/Profile/Signup";
+import SignIn from "./components/Profile/SignIn";
+import ChooseUserType from "./components/Profile/ChooseUserType";
+import ChoosePricingPlan from "./components/Profile/ChoosePricingPlan";
+import SuccessSignup from "./components/Profile/SuccessSignup";
+import ResetPassword from "./components/Profile/ResetPassword";
+import UpdatePassword from "./components/Profile/UpdatePassword";
+import ProfilePage from "./components/Profile/Profile";
 
 // Individual Imports
-import MyDashboard from './components/Individual/MyDashboard'
-import MyRequests from './components/Individual/MyRequests';
-import EditRequest from './components/Individual/EditRequest';
-
+import MyDashboard from "./components/Individual/MyDashboard";
+import MyRequests from "./components/Individual/MyRequests";
+import EditRequest from "./components/Individual/EditRequest";
+//
 // Business Imports
 import BusinessDashboard from './components/Business/BusinessDashboard';
 import EditBid from './components/Business/EditBid';
@@ -65,27 +65,27 @@ import VerificationApplication from './components/Business/VerificationApplicati
 import VendorHomepage from './components/VendorHomepage';
 
 // Misc Imports
-import Homepage from './components/Homepage';
-import ContactForm from './components/ContactForm';
-import AboutUs from './components/AboutUs';
+import Homepage from "./components/Homepage";
+import ContactForm from "./components/ContactForm";
+import AboutUs from "./components/AboutUs";
 
 // Messaging imports
-import MessagingView from './components/Messaging/MessagingView';
+import MessagingView from "./components/Messaging/MessagingView";
 
 // Spanish imports
-import HomepageES from './components/HomepageES'
-import ContactFormES from './components/ContactFormES';
+import HomepageES from "./components/HomepageES";
+import ContactFormES from "./components/ContactFormES";
 
 // Stripe imports
-import Onboarding from './components/Stripe/Onboarding';
-import StripeOnboarding from './components/Stripe/StripeOnboarding';
-import EmbeddedCheckoutForm from './components/Stripe/EmbeddedCheckoutForm';
-import PaymentCancelled from './components/Stripe/PaymentCancelled';
-import SuccessPayment from './components/Stripe/SuccessfulPayment';
-import PaymentStatus from './components/Stripe/PaymentStatus';
+import Onboarding from "./components/Stripe/Onboarding";
+import StripeOnboarding from "./components/Stripe/StripeOnboarding";
+import EmbeddedCheckoutForm from "./components/Stripe/EmbeddedCheckoutForm";
+import PaymentCancelled from "./components/Stripe/PaymentCancelled";
+import SuccessPayment from "./components/Stripe/SuccessfulPayment";
+import PaymentStatus from "./components/Stripe/PaymentStatus";
 
 // ScrollToTop import
-import ScrollToTop from './components/ScrollToTop';
+import ScrollToTop from "./components/ScrollToTop";
 
 // Add this import
 import BidsPage from './components/Individual/BidsPage'
@@ -115,9 +115,8 @@ import LocationBasedVendors from './pages/LocationBasedVendors';
 import WeddingVibeQuizPage from './pages/WeddingVibeQuiz';
 
 function App() {
-
-    const [eventType, setEventType] = useState('');
-    const [eventDetails, setEventDetails] = useState({});
+  const [eventType, setEventType] = useState("");
+  const [eventDetails, setEventDetails] = useState({});
 
     return (
         <HelmetProvider>
