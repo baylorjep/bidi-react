@@ -1,6 +1,6 @@
 // src/components/MessagingView.js
 import React, { useState, useEffect } from "react";
-import { socket } from "../socket";
+import { socket } from "../../socket.js";
 import { supabase } from "../../supabaseClient";
 import "../../styles/messaging.css";
 
