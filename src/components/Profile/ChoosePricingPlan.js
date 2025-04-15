@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import checkIcon from '../../assets/images/Icons/entypo_check.svg'
 import checkIconWhite from '../../assets/images/Icons/ideas-entypo-check.svg'
 import { supabase } from '../../supabaseClient';
-
-
+import { Helmet } from 'react-helmet';
+import './ChoosePricingPlan.css';
 
 function ChoosePricingPlan() {
     const [userId, setUserId] = useState(null);
+    const [email, setEmail] = useState('');
     const navigate = useNavigate();
   
-    // Fetch the current user's ID
     useEffect(() => {
       const fetchUserId = async () => {
         const { data: { user }, error } = await supabase.auth.getUser();
@@ -19,14 +19,14 @@ function ChoosePricingPlan() {
           return;
         }
         if (user) {
-          setUserId(user.id); // Store the user's ID
+          setUserId(user.id);
+          setEmail(user.email);
         }
       };
   
       fetchUserId();
     }, []);
   
-    // Generic function to update the pricing plan
     const updatePricingPlan = async (membershipTier) => {
       if (!userId) {
         console.error('User ID not available.');
@@ -35,115 +35,137 @@ function ChoosePricingPlan() {
   
       try {
         const { data, error } = await supabase
-          .from('business_profiles') // Replace with your actual table name
-          .update({ membership_tier: membershipTier }) // Update the membership_tier column
-          .eq('id', userId); // Match the user by ID
+          .from('business_profiles')
+          .update({ membership_tier: membershipTier })
+          .eq('id', userId);
   
         if (error) throw error;
-  
         console.log('Data updated successfully:', data);
-  
-        // Navigate to another page after successful update
-        navigate('/dashboard'); // Replace with the desired route
+        navigate('/dashboard');
       } catch (err) {
         console.error('Error updating data:', err.message);
       }
     };
 
-    
+    const handleBetaSignup = async () => {
+        try {
+            // Add user to beta waitlist
+            const { data, error } = await supabase
+                .from('beta_waitlist')
+                .insert([
+                    {
+                        user_id: userId,
+                        email: email,
+                        feature: 'ai_bidder',
+                        status: 'pending'
+                    }
+                ]);
+
+            if (error) throw error;
+
+            // Show success message
+            alert('Thanks for your interest! We\'ll notify you when the AI bidder beta is ready.');
+            
+        } catch (err) {
+            console.error('Error signing up for beta:', err.message);
+            alert('There was an error signing up for the beta. Please try again later.');
+        }
+    };
+
+    const handlePlanSelection = (tier) => {
+        navigate(`/signup?type=business&membership-tier=${tier}`);
+    };
 
     return (
-        
-        <div style={{display:'flex', flexDirection:'column', gap:'40px', justifyContent:'center', alignItems:'center'}}>
-            <div className="pricing-plans-header" style={{  marginTop:'0px'}}>Pricing & Plans</div>
-            <div className="pricing-plans-subheader" >Choose the plan that best fits your needs and start transforming your business today!</div>
-            <div className='payment-plan-container'>
-                <div className='free-plan'>
-                    <div className='plan-items-header'>Free</div>
-                    <div className='plan-items-subheader'>Use Bidi for free with no monthly cost. We only get paid if you do.</div>
-                    <div className='includes-text'>Includes:</div>
-                    <div className='plan-items-container'>
-                        <div className='plan-items' >
-                            <img src={checkIcon}></img>
-                            Unlimited bids
-                        </div>
-                        <div className='plan-items' >
-                            <img src={checkIcon}></img>
-                            Get access to hundreds of new potential clients
-                        </div>
-                        <div className='plan-items' >
-                        <img src={checkIcon}></img>
-                            Use Bidi’s payment method for clients
-                        </div>
-                        <div className='plan-items' >
-                        <img src={checkIcon}></img>
-                            Pay a 8% fee per bid you win
-                        </div>
-                    </div>
-                    <div className='price-text'>$0<span className='price-text-span'>/month</span></div>
-                    <button className='free-plan-button'onClick={() => updatePricingPlan('Free')}>Choose Plan</button>
+        <>
+            <Helmet>
+                <title>Bidi Pricing Plans | Choose Your Perfect Plan</title>
+                <meta name="description" content="Choose from Bidi's flexible pricing plans. Start for free or upgrade to Plus for enhanced features. Find the perfect plan for your wedding business." />
+            </Helmet>
+            
+            <div className="pricing-container">
+                <div className="pricing-header">
+                    <h1 className="pricing-title landing-page-title heading-reset">
+                        Choose Your <span className="highlight">Perfect Plan</span>
+                    </h1>
+                    <h2 className="pricing-subtitle landing-page-subtitle heading-reset">
+                        Start for free and only pay when you win jobs. Upgrade to Pro for advanced features and tools.
+                    </h2>
                 </div>
-                <div className='plus-plan'>
-                    <div style={{display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
-                    <div className='plan-items-header' style={{color:'white'}}>Plus</div>
-                    <div className='popular-tag'>Popular</div>
-                    </div>
-                
-                    <div className='plan-items-subheader' style={{color:'white'}}>For a limited time, sign up for Bidi Plus and lock in at $20/month for life. </div>
-                    <div className='includes-text'style={{color:'white'}}>Includes:</div>
-                    <div className='plan-items-container' style={{ gap:"28px"}}>
-                        <div className='plan-items' style={{color:'white'}}>
-                            <img src={checkIconWhite}></img>
-                            Unlimited bids
+
+                <div className="payment-plan-container two-column">
+                    <div className="plan-card">
+                        <div>
+                            <div className="plan-title">Free</div>
+                            <div className="plan-subheader">
+                                Get started with Bidi and only pay when you win jobs.
+                            </div>
+                            <div className="includes-text">Includes:</div>
+                            <div className="plan-items-container">
+                                {[
+                                    'Unlimited bids',
+                                    'Access to all local wedding requests',
+                                    'Basic vendor profile',
+                                    'Secure payment processing',
+                                    'Basic analytics dashboard',
+                                    '10% commission on won jobs'
+                                ].map((item, index) => (
+                                    <div key={index} className="plan-item">
+                                        <img src={checkIcon} alt="check" />
+                                        {item}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <div className='plan-items' style={{color:'white'}}>
-                            <img src={checkIconWhite}></img>
-                            No 8% payment to Bidi
-                        </div>
-                        <div className='plan-items' style={{color:'white'}}>
-                        <img src={checkIconWhite}></img>
-                            Choose your own payment method for clients
-                        </div>
-                        <div className='plan-items' style={{color:'white'}}>
-                        <img src={checkIconWhite}></img>
-                            5 monthly credits to spend on boosting your bids
-                        </div>
-                    </div>
-                    <div className='price-text'style={{color:'white'}}>$20<span className='price-text-span' style={{color:'white'}}>/month</span></div>
-                    <button className='plus-plan-button' onClick={() => updatePricingPlan('Plus')}>Choose Plan</button>
-                </div>
-                <div className='free-plan'>
-                <div className='plan-items-header'>Pro</div>
-                    <div className='plan-items-subheader'>Automate your bids and grow your business like never before.</div>
-                    <div className='includes-text'>Includes:</div>
-                    <div className='plan-items-container' style={{marginBottom:'-3px'}}>
-                        <div className='plan-items' >
-                            <img src={checkIcon}></img>
-                            Unlimited bids
-                        </div>
-                        <div className='plan-items' >
-                            <img src={checkIcon}></img>
-                            Automated bidding based on criteria that you set
-                        </div>
-                        <div className='plan-items' >
-                        <img src={checkIcon}></img>
-                            Use AI to create templates for Bid descriptions
-                        </div>
-                        <div className='plan-items' >
-                        <img src={checkIcon}></img>
-                            5 monthly credits to spend on boosting your bids
-                        </div>
-                        <div className='plan-items' >
-                        <img src={checkIcon}></img>
-                            More coming soon
+                        <div>
+                            <div className="price-text">
+                                10%<span className="price-suffix"> commission</span>
+                            </div>
+                            <button className="plan-button" onClick={() => handlePlanSelection('free')}>
+                                Choose Plan
+                            </button>
                         </div>
                     </div>
-                    <div className='price-text'>TBD</div>
-                    <button className='bidi-pro-button'>Coming Soon</button>
+
+                    <div className="plan-card pro">
+                        <div>
+                            <div className="plan-header">
+                                <div className="plan-title">Pro</div>
+                                <div className="popular-tag">Beta</div>
+                            </div>
+                            <div className="plan-subheader">
+                                Be among the first to test our AI-powered bidding tools.
+                            </div>
+                            <div className="includes-text">Everything in Free, plus:</div>
+                            <div className="plan-items-container">
+                                {[
+                                    'Early access to AI bid optimization',
+                                    'Help shape the future of automated bidding',
+                                    'Market rate insights for your area',
+                                    'Priority placement in search results',
+                                    'Premium analytics and reporting',
+                                    'VIP support during beta',
+                                    'Lock in 20% commission rate'
+                                ].map((item, index) => (
+                                    <div key={index} className="plan-item">
+                                        <img src={checkIcon} alt="check" />
+                                        {item}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="price-text">
+                                20%<span className="price-suffix"> commission</span>
+                            </div>
+                            <button className="plan-button beta-button" onClick={() => handlePlanSelection('pro')}>
+                                Join Pro Beta
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-          
+        </>
     );
 }
 

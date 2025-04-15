@@ -3,9 +3,9 @@ import { supabase } from '../../supabaseClient';
 import '../../App.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import './ChoosePricingPlan.css';
 
-
-const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop name to initialUserType
+const Signup = ({ onSuccess, initialUserType }) => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -15,7 +15,7 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
         phone: '',
         businessName: '',
         businessCategory: '',
-        otherBusinessCategory: '', // Field for custom business category
+        otherBusinessCategory: '',
         businessAddress: '',
         website: '',
     });
@@ -43,7 +43,7 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
     };
 
     useEffect(() => {
-        if (initialUserType) {  // Use initialUserType instead
+        if (initialUserType) {
             setUserType(initialUserType);
         } else {
             const params = new URLSearchParams(location.search);
@@ -51,24 +51,20 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
             if (type) {
                 setUserType(type);
             } else {
-                navigate('/createaccount'); // Redirect if no user type is selected
+                navigate('/createaccount');
             }
         }
-    }, [location, navigate, initialUserType]);  // Updated dependency
+    }, [location, navigate, initialUserType]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const redirect = params.get('redirect');
         if (redirect) {
-            // Store this value to navigate after successful signup
             setRedirectUrl(redirect);
         }
     }, [location]);
     
     const [redirectUrl, setRedirectUrl] = useState('');
-
-    
-    
 
     const handleChange = (e) => {
         setFormData({
@@ -77,8 +73,6 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
             ...(e.target.name === 'businessCategory' && e.target.value !== 'other' ? { otherBusinessCategory: '' } : {}),
         });
     };
-
-
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -89,8 +83,6 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
         }
 
         const { email, password, firstName, lastName, phone, businessName, businessCategory, otherBusinessCategory, businessAddress, website } = formData;
-
-        // Set userType to "both" if the business category is "wedding planner/coordinator"
         const finalUserType = businessCategory === 'wedding planner/coordinator' ? 'both' : userType;
 
         const { data, error } = await supabase.auth.signUp({
@@ -107,7 +99,6 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
         const { user } = data;
         console.log('User signed up:', user);
 
-        // Step 2: Log the user in immediately after sign up
         const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
 
         if (loginError) {
@@ -118,13 +109,11 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
 
         const { error: profileError } = await supabase
             .from('profiles')
-            .insert([
-                {
-                    id: user.id,
-                    email: email,
-                    role: finalUserType,
-                },
-            ]);
+            .insert([{
+                id: user.id,
+                email: email,
+                role: finalUserType,
+            }]);
 
         if (profileError) {
             setErrorMessage(`Profile insertion error: ${profileError.message}`);
@@ -135,14 +124,12 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
         if (finalUserType === 'individual' || finalUserType === 'both') {
             const { error: individualError } = await supabase
                 .from('individual_profiles')
-                .insert([
-                    {
-                        id: user.id,
-                        first_name: firstName,
-                        last_name: lastName,
-                        phone: phone,
-                    },
-                ]);
+                .insert([{
+                    id: user.id,
+                    first_name: firstName,
+                    last_name: lastName,
+                    phone: phone,
+                }]);
 
             if (individualError) {
                 setErrorMessage(`Individual profile insertion error: ${individualError.message}`);
@@ -151,24 +138,26 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
             }
 
             if (onSuccess) {
-                onSuccess(); // Call onSuccess callback if provided
-                return; // Add return to prevent additional navigation
+                onSuccess();
+                return;
             }
         }
 
         if (finalUserType === 'business' || finalUserType === 'both') {
+            const params = new URLSearchParams(location.search);
+            const membershipTier = params.get('membership-tier') || 'free';
+
             const { error: businessError } = await supabase
                 .from('business_profiles')
-                .insert([
-                    {
-                        id: user.id,
-                        business_name: businessName,
-                        business_category: businessCategory === 'other' ? otherBusinessCategory : businessCategory,
-                        business_address: businessAddress,
-                        phone: phone,
-                        website: website,
-                    },
-                ]);
+                .insert([{
+                    id: user.id,
+                    business_name: businessName,
+                    business_category: businessCategory === 'other' ? otherBusinessCategory : businessCategory,
+                    business_address: businessAddress,
+                    phone: phone,
+                    website: website,
+                    membership_tier: membershipTier
+                }]);
 
             if (businessError) {
                 setErrorMessage(`Business profile insertion error: ${businessError.message}`);
@@ -179,24 +168,19 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
             if (businessCategory === 'other' && otherBusinessCategory) {
                 const { error: otherCategoryError } = await supabase
                     .from('other_service_categories')
-                    .insert([
-                        {
-                            user_id: user.id,
-                            category_name: otherBusinessCategory,
-                        },
-                    ]);
+                    .insert([{
+                        user_id: user.id,
+                        category_name: otherBusinessCategory,
+                    }]);
 
                 if (otherCategoryError) {
                     setErrorMessage(`Error submitting custom category: ${otherCategoryError.message}`);
                     console.error('Detailed error:', otherCategoryError);
                     return;
-                } else {
-                    console.log('Custom category inserted successfully');
                 }
             }
         }
 
-        // Only navigate to success page if onSuccess wasn't called
         if (!onSuccess) {
             navigate(redirectUrl || '/success-signup');
         }
@@ -209,304 +193,500 @@ const Signup = ({ onSuccess, initialUserType }) => { // Changed userType prop na
                 <meta name="description" content="Create an account on Bidi to connect with top wedding vendors and services." />
                 <meta name="keywords" content="sign up, create account, wedding vendors, Bidi" />
             </Helmet>
-            <div className="sign-in-container" style={{marginBottom:'20px '}}>
-                <div className="sign-in-form-container" style={{height:'auto', padding:'20px'}}>
+            
+            <div className="pricing-container">
+                <div className="pricing-header">
+                    <h1 className="pricing-title landing-page-title heading-reset">
+                        Create Your Account
+                    </h1>
+                </div>
 
-                    <h1 className="Sign-Up-Page-Header" style={{marginTop:'20px'}}>Create an Account</h1>
-                    {errorMessage && <p className="text-danger">{errorMessage}</p>}
-                    <form onSubmit={handleSubmit}>
-                    {/*<div className="mt-3 text-center">
-                        <button
-                            type="button"
-                            className="btn btn-google-signin"
-                            onClick={handleGoogleSignUp}
-                            
-                        >
-                            Sign Up with Google
-                        </button>
-                    </div>
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    marginTop: '20px'
+                }}>
+                    <div className="plan-card" style={{
+                        maxWidth: '800px',
+                        width: '100%',
+                        padding: '40px'
+                    }}>
+                        {errorMessage && (
+                            <div style={{
+                                color: '#dc3545',
+                                marginBottom: '20px',
+                                textAlign: 'center',
+                                padding: '10px',
+                                borderRadius: '8px',
+                                backgroundColor: '#fff'
+                            }}>
+                                {errorMessage}
+                            </div>
+                        )}
 
-                    <div className="divider" style={{ display: 'flex', alignItems: 'center', margin: '20px 0' }}>
-                        <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ccc', margin: '0 10px' }} />
-                        <span style={{ fontSize: '14px', color: '#666' }}>OR</span>
-                        <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ccc', margin: '0 10px' }} />
-                    </div>*/}
+                        <form onSubmit={handleSubmit}>
+                            {userType === 'business' && (
+                                <div className='sign-up-single-column'>
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label style={{
+                                            display: 'block',
+                                            marginBottom: '8px',
+                                            fontWeight: '500'
+                                        }}>Business Name</label>
+                                        <input
+                                            type="text"
+                                            name="businessName"
+                                            value={formData.businessName}
+                                            onChange={handleChange}
+                                            required
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #ddd',
+                                                fontSize: '1rem'
+                                            }}
+                                            placeholder="Enter your business name"
+                                        />
+                                    </div>
 
-                    {userType === 'business' && (
-                        <div className='sign-up-single-column'>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="businessName">Business Name</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="businessName"
-                                    name="businessName"
-                                    type="text"
-                                    placeholder="Business Name"
-                                    value={formData.businessName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="businessCategory">Business Category</label>
-                                <select
-                                    className="sign-in-form"
-                                    id="businessCategory"
-                                    name="businessCategory"
-                                    value={formData.businessCategory}
-                                    onChange={handleChange}
-                                    required
-                                >
-                                    <option value="">Select a category...</option>
-                                    <option value="photography">Photography</option>
-                                    <option value="videography">Videography</option>
-                                    <option value="dj">DJ</option>
-                                    <option value="cake">Cake Making</option>
-                                    <option value="catering">Catering</option>
-                                    <option value="hair and makeup artist">Hair and Makeup Artist</option>
-                                    <option value="wedding planner/coordinator">Wedding/Event Planner</option>
-                                    <option value="florist">Florist</option>
-                                    <option value="rental">Rentals</option>
-                                    <option value="venue">Venue</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            {formData.businessCategory === 'wedding planner/coordinator' && (
-                                <div className="sign-in-input-container">
-                                <label htmlFor="firstName">First Name</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="firstName"
-                                    name="firstName"
-                                    type="text"
-                                    placeholder="First Name"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            )}
-                            {formData.businessCategory === 'wedding planner/coordinator' && (
-                             <div className="sign-in-input-container">
-                             <label htmlFor="lastName">Last Name</label>
-                             <input
-                                 className="sign-in-form"
-                                 id="lastName"
-                                 name="lastName"
-                                 type="text"
-                                 placeholder="Last Name"
-                                 value={formData.lastName}
-                                 onChange={handleChange}
-                                 required
-                             />
-                         </div>
-                            )}
-                            {formData.businessCategory === 'other' && (
-                                <div className="sign-in-input-container">
-                                    <label htmlFor="otherBusinessCategory">Please specify your business category</label>
-                                    <input
-                                        className="sign-in-form"
-                                        id="otherBusinessCategory"
-                                        name="otherBusinessCategory"
-                                        type="text"
-                                        placeholder="Specify your business category"
-                                        value={formData.otherBusinessCategory}
-                                        onChange={handleChange}
-                                        required
-                                    />
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label style={{
+                                            display: 'block',
+                                            marginBottom: '8px',
+                                            fontWeight: '500'
+                                        }}>Business Category</label>
+                                        <select
+                                            name="businessCategory"
+                                            value={formData.businessCategory}
+                                            onChange={handleChange}
+                                            required
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #ddd',
+                                                fontSize: '1rem',
+                                                backgroundColor: '#fff'
+                                            }}
+                                        >
+                                            <option value="">Select a category...</option>
+                                            <option value="photography">Photography</option>
+                                            <option value="videography">Videography</option>
+                                            <option value="dj">DJ</option>
+                                            <option value="cake">Cake Making</option>
+                                            <option value="catering">Catering</option>
+                                            <option value="hair and makeup artist">Hair and Makeup Artist</option>
+                                            <option value="wedding planner/coordinator">Wedding/Event Planner</option>
+                                            <option value="florist">Florist</option>
+                                            <option value="rental">Rentals</option>
+                                            <option value="venue">Venue</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+
+                                    {formData.businessCategory === 'other' && (
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '8px',
+                                                fontWeight: '500'
+                                            }}>Specify Your Business Category</label>
+                                            <input
+                                                type="text"
+                                                name="otherBusinessCategory"
+                                                value={formData.otherBusinessCategory}
+                                                onChange={handleChange}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '1rem'
+                                                }}
+                                                placeholder="Enter your business category"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {formData.businessCategory === 'wedding planner/coordinator' && (
+                                        <>
+                                            <div style={{ marginBottom: '20px' }}>
+                                                <label style={{
+                                                    display: 'block',
+                                                    marginBottom: '8px',
+                                                    fontWeight: '500'
+                                                }}>First Name</label>
+                                                <input
+                                                    type="text"
+                                                    name="firstName"
+                                                    value={formData.firstName}
+                                                    onChange={handleChange}
+                                                    required
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '12px',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #ddd',
+                                                        fontSize: '1rem'
+                                                    }}
+                                                    placeholder="Enter your first name"
+                                                />
+                                            </div>
+
+                                            <div style={{ marginBottom: '20px' }}>
+                                                <label style={{
+                                                    display: 'block',
+                                                    marginBottom: '8px',
+                                                    fontWeight: '500'
+                                                }}>Last Name</label>
+                                                <input
+                                                    type="text"
+                                                    name="lastName"
+                                                    value={formData.lastName}
+                                                    onChange={handleChange}
+                                                    required
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '12px',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #ddd',
+                                                        fontSize: '1rem'
+                                                    }}
+                                                    placeholder="Enter your last name"
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label style={{
+                                            display: 'block',
+                                            marginBottom: '8px',
+                                            fontWeight: '500'
+                                        }}>Phone Number</label>
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            value={formData.phone}
+                                            onChange={handleChange}
+                                            required
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #ddd',
+                                                fontSize: '1rem'
+                                            }}
+                                            placeholder="Enter your phone number"
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label style={{
+                                            display: 'block',
+                                            marginBottom: '8px',
+                                            fontWeight: '500'
+                                        }}>Business Location</label>
+                                        <input
+                                            type="text"
+                                            name="businessAddress"
+                                            value={formData.businessAddress}
+                                            onChange={handleChange}
+                                            required
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #ddd',
+                                                fontSize: '1rem'
+                                            }}
+                                            placeholder="State, city, or county (e.g., Utah, Salt Lake City)"
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label style={{
+                                            display: 'block',
+                                            marginBottom: '8px',
+                                            fontWeight: '500'
+                                        }}>Website (Optional)</label>
+                                        <input
+                                            type="url"
+                                            name="website"
+                                            value={formData.website}
+                                            onChange={handleChange}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #ddd',
+                                                fontSize: '1rem'
+                                            }}
+                                            placeholder="Enter your website URL"
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label style={{
+                                            display: 'block',
+                                            marginBottom: '8px',
+                                            fontWeight: '500'
+                                        }}>Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            required
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #ddd',
+                                                fontSize: '1rem'
+                                            }}
+                                            placeholder="name@example.com"
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label style={{
+                                            display: 'block',
+                                            marginBottom: '8px',
+                                            fontWeight: '500'
+                                        }}>Password</label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            required
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #ddd',
+                                                fontSize: '1rem'
+                                            }}
+                                            placeholder="Create a password"
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label style={{
+                                            display: 'block',
+                                            marginBottom: '8px',
+                                            fontWeight: '500'
+                                        }}>Confirm Password</label>
+                                        <input
+                                            type="password"
+                                            name="confirmPassword"
+                                            value={formData.confirmPassword}
+                                            onChange={handleChange}
+                                            required
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #ddd',
+                                                fontSize: '1rem'
+                                            }}
+                                            placeholder="Confirm your password"
+                                        />
+                                    </div>
                                 </div>
                             )}
-                            <div className="sign-in-input-container">
-                                <label htmlFor="phone">Phone Number</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="phone"
-                                    name="phone"
-                                    type="tel"
-                                    placeholder="Phone Number"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    required
-                                />
+
+                            {userType === 'individual' && (
+                                <div className='sign-up-grid-container'>
+                                    <div>
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '8px',
+                                                fontWeight: '500'
+                                            }}>First Name</label>
+                                            <input
+                                                type="text"
+                                                name="firstName"
+                                                value={formData.firstName}
+                                                onChange={handleChange}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '1rem'
+                                                }}
+                                                placeholder="Enter your first name"
+                                            />
+                                        </div>
+
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '8px',
+                                                fontWeight: '500'
+                                            }}>Last Name</label>
+                                            <input
+                                                type="text"
+                                                name="lastName"
+                                                value={formData.lastName}
+                                                onChange={handleChange}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '1rem'
+                                                }}
+                                                placeholder="Enter your last name"
+                                            />
+                                        </div>
+
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '8px',
+                                                fontWeight: '500'
+                                            }}>Phone Number</label>
+                                            <input
+                                                type="tel"
+                                                name="phone"
+                                                value={formData.phone}
+                                                onChange={handleChange}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '1rem'
+                                                }}
+                                                placeholder="Enter your phone number"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '8px',
+                                                fontWeight: '500'
+                                            }}>Email</label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '1rem'
+                                                }}
+                                                placeholder="name@example.com"
+                                            />
+                                        </div>
+
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '8px',
+                                                fontWeight: '500'
+                                            }}>Password</label>
+                                            <input
+                                                type="password"
+                                                name="password"
+                                                value={formData.password}
+                                                onChange={handleChange}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '1rem'
+                                                }}
+                                                placeholder="Create a password"
+                                            />
+                                        </div>
+
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '8px',
+                                                fontWeight: '500'
+                                            }}>Confirm Password</label>
+                                            <input
+                                                type="password"
+                                                name="confirmPassword"
+                                                value={formData.confirmPassword}
+                                                onChange={handleChange}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '1rem'
+                                                }}
+                                                placeholder="Confirm your password"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div style={{
+                                backgroundColor: '#f9f9f9',
+                                border: '1px solid #ddd',
+                                borderRadius: '8px',
+                                padding: '15px',
+                                marginBottom: '20px',
+                                fontSize: '0.9rem',
+                                color: '#666',
+                                textAlign: 'center'
+                            }}>
+                                By signing up, you agree to receive notifications related to your account.
                             </div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="businessAddress">What area are you based out of?</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="businessAddress"
-                                    name="businessAddress"
-                                    type="text"
-                                    placeholder="Put a state, city, or county, etc. (Ex: Utah, Salt Lake City)"
-                                    value={formData.businessAddress}
-                                    onChange={handleChange}
-                                    required
-                                />
+
+                            <button 
+                                type="submit" 
+                                className="plan-button"
+                                style={{
+                                    width: '100%',
+                                    marginBottom: '20px'
+                                }}
+                            >
+                                Create Account
+                            </button>
+
+                            <div style={{
+                                textAlign: 'center',
+                                color: '#666'
+                            }}>
+                                Already have an account?{' '}
+                                <a 
+                                    href="/signin" 
+                                    style={{
+                                        color: 'var(--primary-color, #A328F4)',
+                                        textDecoration: 'none',
+                                        fontWeight: '500'
+                                    }}
+                                >
+                                    Log In
+                                </a>
                             </div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="website">Website (Optional)</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="website"
-                                    name="website"
-                                    type="url"
-                                    placeholder="Business Website"
-                                    value={formData.website}
-                                    onChange={handleChange}
-                                />
-                            </div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="email">Email</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    placeholder="Email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="password">Password</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    placeholder="Password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="confirmPassword">Confirm Password</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    type="password"
-                                    placeholder="Confirm Password"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                        </div>
-                    )}
-                {userType === 'individual' && (
-                    <div className='sign-up-grid-container'>
-                        <div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="firstName">First Name</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="firstName"
-                                    name="firstName"
-                                    type="text"
-                                    placeholder="First Name"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="lastName">Last Name</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="lastName"
-                                    name="lastName"
-                                    type="text"
-                                    placeholder="Last Name"
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="phone">Phone Number</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="phone"
-                                    name="phone"
-                                    type="tel"
-                                    placeholder="Phone Number"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="email">Email</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    placeholder="Email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="password">Password</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    placeholder="Password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="sign-in-input-container">
-                                <label htmlFor="confirmPassword">Confirm Password</label>
-                                <input
-                                    className="sign-in-form"
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    type="password"
-                                    placeholder="Confirm Password"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                        </div>
+                        </form>
                     </div>
-                )}
-
-                    <div 
-    className="notification-bar" 
-    style={{
-        backgroundColor: '#f9f9f9', 
-        border: '1px solid #ddd', 
-        borderRadius: '5px', 
-        padding: '10px', 
-        marginBottom: '20px',
-        fontSize: '14px',
-        color: '#555',
-        textAlign: 'center'
-    }}
->
-    By signing up, you consent to receive notifications related to your account. 
-</div>
-
-                        <div className="d-grid">
-                            <button type="submit" className="sign-up-button">Sign Up</button>
-                        </div>
-
-                        <div className='forgot-your-password' style={{marginTop:'20px'}}>
-                            <div>Already have an account? <a href="/signin" className='forgot-your-password-highlight'>Log In</a></div>
-                        </div>
-
-                    </form>
                 </div>
             </div>
         </>

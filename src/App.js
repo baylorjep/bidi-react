@@ -44,7 +44,7 @@ import EventSummary from "./components/Request/Event/EventSummary";
 // Profile Imports
 import Signup from "./components/Profile/Signup";
 import SignIn from "./components/Profile/SignIn";
-import ChooseUserType from "./components/Profile/ChooseUserType";
+import CreateAccount from "./components/Profile/CreateAccount";
 import ChoosePricingPlan from "./components/Profile/ChoosePricingPlan";
 import SuccessSignup from "./components/Profile/SuccessSignup";
 import ResetPassword from "./components/Profile/ResetPassword";
@@ -160,8 +160,7 @@ function App() {
                             <Route path="/signin" element={<SignIn />} />
                             <Route path="/request-password-reset" element={<ResetPassword />} />
                             <Route path="/reset-password" element={<UpdatePassword />} />
-                            <Route path="/createaccount" element={<ChooseUserType />} />
-                            <Route path="/choose-pricing" element={<ChoosePricingPlan />}/>
+                            <Route path="/createaccount" element={<CreateAccount />} />
                             <Route path="/profile" element={<ProfilePage />} />
 
                             {/* Individual Routes */}

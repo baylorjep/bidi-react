@@ -211,7 +211,7 @@ function Navbar() {
             <Link
               className="btn-nav-secondary"
               style={{ textDecoration: "none" }}
-              to="/createaccount?source=navbar"
+              to="/createaccount"
             >
               <span className="btn-text-secondary">
                 <span className="small">Sign Up</span>
