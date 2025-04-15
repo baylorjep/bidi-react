@@ -212,12 +212,12 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                             </div>
                         */}
                             <div className='stat-box'>
-                                <div className='stat-title'>Vendors</div>
-                                <div className='stat'>{stats.vendors}</div>
+                                <div className='stat-title-homepage'>Vendors</div>
+                                <div className='stat-homepage'>{stats.vendors}</div>
                             </div>
                             <div className='stat-box final'>
-                                <div className='stat-title'>Bids</div>
-                                <div className='stat'>{stats.bids}</div>
+                                <div className='stat-title-homepage'>Bids</div>
+                                <div className='stat-homepage'>{stats.bids}</div>
                             </div>
 
                     </div>

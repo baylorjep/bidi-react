@@ -11750,7 +11750,7 @@ footer a:hover, footer a:active, footer a:focus {
     display: none;
   }
 }
-.stat-title {
+.stat-title-homepage {
   background: linear-gradient(96deg, #A328F4 11.31%, #FF008A 85.44%);
   background-clip: text;
   -webkit-background-clip: text;
@@ -11761,9 +11761,10 @@ footer a:hover, footer a:active, footer a:focus {
   font-style: normal;
   font-weight: 400;
   line-height: normal;
+  color: #000;
 }
 
-.stat {
+.stat-homepage {
   color: #000;
 font-family: Outfit;
 font-size: 51px;
@@ -11776,19 +11777,19 @@ line-height: normal;
   .stat-container {
     justify-content: center;
   }
-  .stat-title {
+  .stat-title-homepage {
     font-size: 48px;
   }
-  .stat {
+  .stat-homepage {
     font-size: 48px;
   }
 }
 
 @media (max-width:570px) {
-  .stat-title {
+  .stat-title-homepage {
     font-size: 32px;
   }
-  .stat {
+  .stat-homepage {
     font-size: 32px;
   }
 }
