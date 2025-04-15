@@ -1,0 +1,510 @@
+/* General Dashboard Styles */
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 20%; /* Adjusts dynamically with screen size */
+  background-color: #fff;
+  padding: 2vw;
+  border-right: 0.2vw solid #ddd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.profile-section {
+  position: relative;
+  text-align: center;
+}
+.profile-pic {
+  width: 6vw;
+  height: 6vw;
+  border-radius: 50%;
+  background: lightgray 50% / cover no-repeat;
+  object-fit: cover; /* Prevents stretching, ensures the image is cropped properly */
+  display: block;
+  margin: 0 auto; /* Centers the image horizontally */
+  border-radius: 50%;
+  object-fit: cover;
+  border: none;
+}
+.verified-badge {
+  position: absolute;
+  margin-top: -5px;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%);
+  background-color: #a328f4;
+  color: white;
+  font-size: 0.8vw;
+  font-weight: 400;
+  padding: 0.1vw 0.8vw;
+}
+.profile-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 12vw;
+  line-height: 1.2;
+  font-size: 0.9vw;
+  margin-top: 1.3vw;
+}
+
+.business-name-under-picture {
+  display: inline-block;
+  max-width: 100%;
+  text-align: center;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.verified-wrapper {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px; /* Keeps icon to the right */
+}
+
+.verified-icon {
+  width: 1vw;
+  height: auto;
+  position: relative;
+  transform: translateY(2%); /* Slightly adjusts alignment */
+}
+.sidebar-links {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+  text-align: center;
+}
+.sidebar-links li {
+  display: flex;
+  align-items: center;
+  padding: 0.3vh 0;
+  font-size: 1.2vw;
+  margin-left: 2.5vw;
+  cursor: pointer;
+}
+.sidebar-links li img {
+  width: 1.5vw;
+  margin-right: 1vw;
+}
+.sidebar-links li a {
+  text-decoration: none;
+  color: inherit;
+}
+.select {
+  background: #f6eafe; /* Updated color */
+  border-radius: 0.5vw;
+}
+/* Upgrade to PRO Box */
+.upgrade-box {
+  background: #f6eafe; /* Updated color */
+  border-radius: 0.5vw;
+  padding: 1.25vw 0.5vw; /* Increase padding to make the box larger */
+  text-align: center;
+  width: 85%; /* Slightly increase width */
+  margin: 3vh auto; /* Add more vertical margin */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+
+  /* Center content vertically */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: auto; /* Allow it to grow dynamically */
+}
+
+/* Force Small Text */
+.upgrade-box p {
+  font-size: 0.6vw !important; /* Keep small text */
+  line-height: 1.3; /* Slightly increase line spacing */
+  color: black !important;
+  margin: 0; /* Remove default margin */
+  font-weight: 600 !important;
+}
+
+/* Main Dashboard */
+.dashboard-main {
+  flex-grow: 1;
+  padding: 5vh 0; /* Remove side padding */
+  width: 70%; /* Reduce width to bring it closer to sidebar */
+}
+.dashboard-header {
+  background: #a328f4;
+  color: white;
+  padding: 2.5vh 5.1vw; /* Reduce padding to make it shorter */
+  border-radius: 1vw;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  transform: scale(0.85); /* Keeps everything proportionally smaller */
+  transform-origin: center;
+  margin-top: -6vh; /* Moves it higher up the page */
+  height: auto; /* Allows height to adjust dynamically */
+  min-height: 8vh; /* Ensures it doesn’t collapse too much */
+}
+
+.dashboard-header-left {
+  width: 55%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+.dashboard-title {
+  font-size: 2vw;
+  font-weight: bold;
+  color: white;
+}
+.dashboard-subtext {
+  font-size: 0.85vw;
+  opacity: 0.9;
+  margin-bottom: 1.5vh;
+  max-width: 80%;
+}
+.see-all-btn {
+  background: white;
+  padding: 0.5vh 2.5vw;
+  border-radius: 2vw;
+  border: none;
+  font-size: 0.75vw;
+  font-weight: bold;
+}
+.see-all-btn:hover {
+  background: #f7f7f8; /* Change to your desired hover background color */
+}
+.dashboard-stats {
+  width: 40%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2vw; /* Reduce spacing between stats */
+  margin-top: -4vh; /* Moves it further up */
+  position: relative;
+  transform: scale(1.3); /* Scale down the entire section */
+  transform-origin: center;
+}
+.stat {
+  background: transparent;
+  padding: 1vw 1.5vw; /* Reduce padding */
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.5vh; /* Reduce gap between number and text */
+  font-size: 1.8vw !important; /* Reduce number size */
+  min-width: 7vw; /* Reduce width */
+  justify-content: center;
+  position: relative;
+}
+
+.stat span {
+  font-size: 3vw; /* Reduce the number font */
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
+}
+
+.stat:nth-child(1) img {
+  width: 2vw; /* Keep first icon smaller */
+  height: auto;
+}
+
+.stat:nth-child(2) img {
+  width: 2.5vw; /* Make second icon larger */
+  height: auto;
+}
+
+.stat:nth-child(3) img {
+  width: 2.5vw; /* Make third icon larger */
+  height: auto;
+}
+
+/* Smaller Text Below Numbers */
+.stat-subtext {
+  font-size: 1.1vw !important;
+  font-weight: bold;
+  margin-top: -1vh;
+}
+
+/* Adjust vertical dividers */
+.stat:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: -3%;
+  top: 35%;
+  transform: translateY(0);
+  width: 0.15vw;
+  height: 40%; /* Reduce height */
+  background: white;
+}
+/* First vertical line */
+.stat:nth-child(1)::after {
+  right: -10%;
+}
+
+/* Second vertical line */
+.stat:nth-child(2)::after {
+  right: -20%;
+}
+
+/* Job Listings Section */
+.job-listings {
+  padding-left: 5.1vw;
+  padding-right: 5.1vw;
+  width: 100%;
+  margin-top: -7vh;
+}
+
+/* Job Listings Header */
+.job-listings-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Job Listings Title */
+.job-title {
+  font-size: 1.5vw;
+  font-weight: 700; /* Less bold */
+  color: black;
+}
+
+/* Job Listings Subtext */
+.job-subtext {
+  font-size: 1.05vw;
+  color: #555;
+}
+
+/* Job Cards Grid */
+.all-job-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Creates 3 equal-width columns */
+  width: 100%;
+  gap: 1%;
+}
+
+/* Individual Job Card */
+.job-card-not-bidded {
+  background: white;
+  width: calc(33.33%);
+  padding: 1.2vw;
+  box-sizing: border-box;
+  border-radius: 1vw;
+  border: 0.05vw solid #a328f4; /* Thinner border */
+  font-size: 0.85vw;
+  transition: transform 0.2s ease-in-out;
+  box-shadow: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Job Card Title */
+.card-title {
+  /* font-size: 1.1vw; */
+  font-weight: 600;
+  margin-bottom: 0.3vh;
+  color: black;
+  align-items: left !important;
+}
+
+/* Job Info Row (Price, Date, Time) */
+.job-info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5vh;
+  width: 100%;
+}
+
+/* Individual Job Info Container */
+.job-info-container {
+  display: flex;
+  flex-direction: column;
+  text-align: left; /* Left-align content */
+}
+/* Job Info Grid Layout */
+.job-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  gap: 1vw; /* Adds spacing between items */
+  margin-bottom: 1.5vh;
+  width: 100%;
+}
+
+/* Individual Job Info Items */
+.job-info-item {
+  display: flex;
+  flex-direction: column;
+  text-align: left; /* Align text to the left */
+}
+
+/* Job Labels (Price Range, Date, Time) */
+.job-label-name {
+  font-size: 0.55vw;
+  font-weight: 600;
+  color: #999; /* Light gray */
+}
+
+/* Job Values */
+.job-value-out {
+  font-size: 0.75vw;
+  font-weight: normal;
+  color: black;
+}
+
+/* Location & Hours Needed Values */
+.job-location-values {
+  display: flex;
+  justify-content: flex-start; /* Aligns values to the left */
+  gap: 2vw; /* Matches the label spacing */
+  font-size: 0.85vw;
+  font-weight: normal;
+  color: black;
+  width: 100%;
+}
+
+/* Description Section */
+.job-description {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  margin-top: 0.5vh;
+}
+
+/* Description Text */
+.job-description .job-value {
+  font-size: 0.75vw;
+  font-weight: normal;
+  color: black;
+  text-align: left;
+}
+
+/* View Button */
+.view-btn-card {
+  background: transparent;
+  color: #a328f4;
+  border: 0.1vw solid #a328f4;
+  padding: 0.4vw 1.5vw;
+  border-radius: 2vw;
+  cursor: pointer;
+  font-size: 0.75vw;
+  font-weight: bold;
+  text-align: center;
+  width: 65%;
+  display: block;
+  margin: 0vh auto 0;
+  transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* Hover Effect */
+.view-btn:hover {
+  background: #a328f4;
+  color: white;
+}
+
+.no-jobs {
+  font-size: 1.5vw;
+  text-align: center;
+  display: flex;
+  justify-content: center; /* Centers horizontally */
+  align-items: center; /* Centers vertically */
+  height: 100%; /* Ensure it takes up space */
+  width: 100%;
+}
+
+/*              This is the profile section override css                   */
+.profile-form-overall-container,
+.profile-form-container-details {
+  all: unset !important;
+}
+.for-business-dashboard {
+  visibility: hidden;
+  font-size: 1vw !important;
+}
+
+/* Bottom Navigation Bar */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-top: 2px solid rgb(222, 226, 230);
+  /* display: flex; */
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.5rem 0;
+  z-index: 1000;
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.bottom-nav button:focus {
+  outline: none;
+}
+
+.coming-soon {
+  font-size: 4vw;
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none; /* Hide sidebar on mobile */
+  }
+
+  .bottom-nav {
+    display: flex; /* Show bottom navigation on mobile */
+  }
+
+  .dashboard-main {
+    padding-bottom: 4rem; /* Add space for the bottom nav */
+  }
+  .job-listings {
+    margin-top: -10vh;
+  }
+  .job-title {
+    font-size: 4vw;
+  }
+  .job-subtext {
+    font-size: 3vw;
+  }
+  .no-jobs {
+    font-size: 4vw;
+  }
+  .coming-soon {
+    font-size: 6vw;
+  }
+  .profile-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .settings-icon {
+    margin-bottom: -8px;
+  }
+  .profile-nav-item {
+    margin-top: -2px;
+  }
+  .nav-label {
+    font-size: 0.75rem; /* Small font size for labels */
+    margin-top: 4px;
+    display: block; /* Forces the text to appear on a new line */
+    text-align: center;
+    font-family: inherit;
+  }
+}

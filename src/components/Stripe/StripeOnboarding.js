@@ -20,7 +20,9 @@ export default function StripeOnboarding() {
   // Fetch email when component loads
   useEffect(() => {
     const fetchEmail = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         setEmail(user.email);
       }
@@ -47,7 +49,9 @@ export default function StripeOnboarding() {
       if (json.account) {
         setConnectedAccountId(json.account);
 
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
         if (user) {
           const userId = user.id;
@@ -58,7 +62,10 @@ export default function StripeOnboarding() {
             .eq("id", userId);
 
           if (supabaseError) {
-            console.error("Failed to store connected account ID:", supabaseError);
+            console.error(
+              "Failed to store connected account ID:",
+              supabaseError
+            );
             setError(true);
           }
         }
@@ -78,9 +85,12 @@ export default function StripeOnboarding() {
         <div className="mb-5 text-center">
           <h1 className="OnboardingPageHeader">Set Up Your Payment Account</h1>
           <p>
-            To start making bids, you’ll need to set up a payment account. Bidi will never charge you to talk to users or bid on jobs — you only pay when you win. <br/>
-            You can skip this step for now and set it up later from your dashboard.
-        </p>
+            To start making bids, you’ll need to set up a payment account. Bidi
+            will never charge you to talk to users or bid on jobs — you only pay
+            when you win. <br />
+            You can skip this step for now and set it up later from your
+            dashboard.
+          </p>
         </div>
 
         {/* If no connected account */}
@@ -111,14 +121,18 @@ export default function StripeOnboarding() {
         {/* Stripe onboarding flow */}
         {stripeConnectInstance && (
           <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
-            <ConnectAccountOnboarding onExit={() => setOnboardingExited(true)} />
+            <ConnectAccountOnboarding
+              onExit={() => setOnboardingExited(true)}
+            />
           </ConnectComponentsProvider>
         )}
 
         {/* Onboarding completion */}
         {(connectedAccountId || onboardingExited) && (
           <div className="text-center mt-4">
-            {onboardingExited && <p>Onboarding complete! You're ready to go.</p>}
+            {onboardingExited && (
+              <p>Onboarding complete! You're ready to go.</p>
+            )}
             <button
               className="btn btn-primary"
               onClick={() => navigate("/dashboard")}
@@ -131,7 +145,9 @@ export default function StripeOnboarding() {
         {/* Error message */}
         {error && (
           <div className="text-center mt-4">
-            <p className="text-danger">Something went wrong! Please try again.</p>
+            <p className="text-danger">
+              Something went wrong! Please try again.
+            </p>
           </div>
         )}
       </div>

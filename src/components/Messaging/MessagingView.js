@@ -14,7 +14,10 @@ const MessagingView = () => {
   // Retrieve the current user (bride/groom) from Supabase
   useEffect(() => {
     const getCurrentUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
         // Join the room for the current user
