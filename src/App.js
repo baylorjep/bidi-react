@@ -62,6 +62,7 @@ import EditBid from './components/Business/EditBid';
 import Portfolio from './components/Business/Portfolio/Portfolio';
 import Gallery from './components/Business/Portfolio/Gallery';
 import VerificationApplication from './components/Business/VerificationApplication';
+import VendorHomepage from './components/VendorHomepage';
 
 // Misc Imports
 import Homepage from './components/Homepage';
@@ -112,7 +113,6 @@ import VendorList from './components/VendorList/VendorList';
 import VendorListWithFilters from './components/VendorListWithFilters/VendorListWithFilters';
 import LocationBasedVendors from './pages/LocationBasedVendors';
 import WeddingVibeQuizPage from './pages/WeddingVibeQuiz';
-import ImageConversion from './pages/Admin/ImageConversion';
 
 function App() {
 
@@ -130,6 +130,7 @@ function App() {
                         <Routes>
                             {/* Layout Routes */}
                             <Route path="/" element={<Homepage />} />
+                            <Route path="/for-vendors" element={<VendorHomepage />} />
                             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                             <Route path="/terms-of-use" element={<TermsOfUse />} />
 
@@ -243,9 +244,6 @@ function App() {
                             <Route path="/:category/:location" element={<LocationBasedVendors />} />
                             <Route path="/:type/:category/:location" element={<LocationBasedVendors />} />
                             <Route path="/wedding-vibe-quiz" element={<WeddingVibeQuizPage />} />
-
-                            {/* Image Conversion Route */}
-                            <Route path="/admin/image-conversion" element={<ImageConversion />} />
 
                         </Routes>
                     </div>

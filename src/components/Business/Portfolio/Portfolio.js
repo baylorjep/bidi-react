@@ -168,6 +168,13 @@ const Portfolio = () => {
     };
   }, [profileImage, portfolioPics]);
 
+  const handleProfilePicEdit = () => {
+    openEditModal({
+      story: business.story,
+      business_owner: business.business_owner
+    });
+  };
+
   const openEditModal = (fields) => {
     setEditFields(fields);
     setModalOpen(true);
@@ -472,7 +479,6 @@ const Portfolio = () => {
                 <p className="business-description">Meet {business.business_name}</p>
               </div>
               <div className="vendor-profile-container">
-
                 <div className="vendor-profile-left">
                   <img 
                     src={convertedUrls.profile || profileImage} 
@@ -490,10 +496,11 @@ const Portfolio = () => {
                 {isOwner && (
                   <button 
                     className="edit-icon" 
-                    style={{  right: '10px', top: '10px' }}
+                    style={{ position: 'absolute', right: '10px', top: '10px' }}
                     onClick={() => openEditModal({
                       business_owner: business.business_owner,
-                      story: business.story
+                      story: business.story,
+                      profile_picture: true  // Add this flag to show profile picture section
                     })}
                   >
                     ✎

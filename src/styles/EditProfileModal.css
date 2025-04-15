@@ -8,21 +8,24 @@
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   z-index: 1000;
   overflow-y: auto;
-  padding: 20px 0;
+  padding: 20px 0 80px 0;
 }
 
 .modal-content {
+  position: relative;
   background: white;
   width: 80%;
   max-width: 1400px;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  margin: auto;
-  overflow-x: hidden;
+  margin: 20px auto;
+  overflow-x: visible;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
 }
 
 /* Portfolio Preview Styles */
@@ -273,7 +276,9 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 30px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
 }
 
 .save-btn, .close-btn {
@@ -700,4 +705,93 @@
   .image-container:active {
     opacity: 0.8;
   }
+}
+
+.cropper-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background: #333;
+  margin-bottom: 100px;
+  border-radius: 8px;
+  overflow: visible;
+}
+
+.cropper-controls {
+  position: absolute;
+  bottom: -80px;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.zoom-slider {
+  width: 200px;
+  margin-right: 15px;
+  -webkit-appearance: none;
+  height: 4px;
+  background: #ddd;
+  border-radius: 2px;
+  outline: none;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #007bff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.zoom-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #007bff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.cropper-controls button {
+  padding: 8px 16px;
+  margin: 0 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  z-index: 1001;
+}
+
+.cropper-controls button:first-of-type {
+  background: #A328F4;
+  color: white;
+}
+
+.cropper-controls button:last-of-type {
+  background: #D1D1D1;
+  color: black;
+}
+
+.cropper-controls button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Ensure the cropper container is visible */
+.reactEasyCrop_Container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  overflow: hidden;
 }

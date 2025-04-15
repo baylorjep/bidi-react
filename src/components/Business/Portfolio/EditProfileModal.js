@@ -3,6 +3,7 @@ import { supabase } from "../../../supabaseClient";
 import { v4 as uuidv4 } from 'uuid';
 import "../../../styles/EditProfileModal.css";
 import { convertToWebP } from "../../../utils/imageUtils";
+import Cropper from 'react-easy-crop';
 
 const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const [formData, setFormData] = useState(initialData || {}); // Store editable fields
@@ -19,6 +20,11 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const [touchStartY, setTouchStartY] = useState(null);
   const [draggedElement, setDraggedElement] = useState(null);
   const [dragFeedback, setDragFeedback] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [isCropping, setIsCropping] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -113,6 +119,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     try {
       const updatedData = { ...formData };
       delete updatedData.portfolio; // Remove portfolio field if it exists
+      delete updatedData.profile_picture; // Remove profile_picture flag before saving
 
       if (Object.keys(updatedData).length > 0) {
         const { error } = await supabase
@@ -463,92 +470,110 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     });
   };
 
-  // Update handleProfilePicChange to check file type
+  // Add this function to create a cropped image
+  const createImage = (url) =>
+    new Promise((resolve, reject) => {
+      const image = new Image();
+      image.addEventListener('load', () => resolve(image));
+      image.addEventListener('error', (error) => reject(error));
+      image.src = url;
+    });
+
+  const getCroppedImg = async (imageSrc, pixelCrop) => {
+    const image = await createImage(imageSrc);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Set canvas size to desired dimensions
+    canvas.width = 400;  // Fixed width
+    canvas.height = 400; // Fixed height
+
+    // Calculate scaling factors
+    const scaleX = image.width / pixelCrop.width;
+    const scaleY = image.height / pixelCrop.height;
+    const scale = Math.min(scaleX, scaleY);
+
+    // Calculate dimensions to maintain aspect ratio
+    const cropWidth = pixelCrop.width * scale;
+    const cropHeight = pixelCrop.height * scale;
+
+    ctx.drawImage(
+      image,
+      pixelCrop.x * scale,
+      pixelCrop.y * scale,
+      cropWidth,
+      cropHeight,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/jpeg', 0.95);
+    });
+  };
+
+  // Modify handleProfilePicChange to show cropper
   const handleProfilePicChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     if (!isValidFileType(file)) {
       alert('Only JPG and PNG files are supported. HEIC files are not accepted.');
-      e.target.value = ''; // Clear the file input
+      e.target.value = '';
       return;
     }
 
-    setUploadingProfile(true);
-    try {
-      console.log('Processing profile picture:', file.name);
-      const fileName = `${Date.now()}_${file.name}`;
-      const filePath = `${businessId}/${fileName}`;
-      console.log('File path:', filePath);
+    // Create temporary URL for the cropper
+    const imageUrl = URL.createObjectURL(file);
+    setTempImageUrl(imageUrl);
+    setIsCropping(true);
+  };
 
-      let fileToUpload = file;
+  // Add function to handle crop complete
+  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  // Add function to handle crop confirmation
+  const handleCropConfirm = async () => {
+    try {
+      setUploadingProfile(true);
+      const croppedImage = await getCroppedImg(tempImageUrl, croppedAreaPixels);
       
-      // Convert image to WebP
-      console.log('Converting profile picture to WebP...');
-      try {
-        // Create a canvas element
+      // Convert cropped image to WebP
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
-        // Create an image element
-        const img = new Image();
-        img.src = URL.createObjectURL(file);
-        
-        // Wait for image to load
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-        
-        // Set canvas dimensions
-        canvas.width = img.width;
-        canvas.height = img.height;
-        
-        // Draw image on canvas
-        ctx.drawImage(img, 0, 0);
-        
-        // Convert to WebP
+      const img = await createImage(URL.createObjectURL(croppedImage));
+      
+      canvas.width = 400;
+      canvas.height = 400;
+      ctx.drawImage(img, 0, 0, 400, 400);
+      
         const webpBlob = await new Promise((resolve) => {
-          canvas.toBlob((blob) => {
-            resolve(blob);
-          }, 'image/webp', 0.8);
-        });
-        
-        fileToUpload = webpBlob;
-        console.log('WebP conversion successful');
-        
-        // Clean up
-        URL.revokeObjectURL(img.src);
-      } catch (error) {
-        console.error('Error converting to WebP:', error);
-        // If conversion fails, upload original file
-        fileToUpload = file;
-        console.log('Falling back to original file');
-      }
+        canvas.toBlob((blob) => resolve(blob), 'image/webp', 0.8);
+      });
 
-      console.log('Uploading profile picture to storage...');
-      // Upload file to storage
+      const fileName = `${uuidv4()}.webp`;
+      const filePath = `${businessId}/${fileName}`;
+
+      // Upload cropped and converted image
       const { error: uploadError } = await supabase.storage
         .from('profile-photos')
-        .upload(filePath, fileToUpload, {
-          cacheControl: '3600',
-          upsert: false
-        });
+        .upload(filePath, webpBlob, { upsert: true });
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error(`Failed to upload file: ${uploadError.message}`);
-      }
-      console.log('Profile picture uploaded successfully');
+      if (uploadError) throw uploadError;
 
-      // Get public URL
-      console.log('Getting public URL...');
-      const { data: { publicUrl } } = supabase.storage
+      const { data } = supabase.storage
         .from('profile-photos')
         .getPublicUrl(filePath);
-      console.log('Public URL:', publicUrl);
 
-      // Check if a profile picture already exists
+      const photoUrl = data.publicUrl;
+
+      // Update or insert in profile_photos table
       const { data: existingProfile } = await supabase
         .from('profile_photos')
         .select("id")
@@ -557,46 +582,38 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
         .single();
 
       if (existingProfile) {
-        // Update existing profile picture
-        console.log('Updating existing profile picture...');
-        const { error: updateError } = await supabase
+        await supabase
           .from('profile_photos')
-          .update({
-            photo_url: publicUrl,
-            file_path: filePath
-          })
+          .update({ photo_url: photoUrl, file_path: filePath })
           .eq("id", existingProfile.id);
-
-        if (updateError) {
-          console.error('Database update error:', updateError);
-          throw new Error(`Failed to update profile picture: ${updateError.message}`);
-        }
       } else {
-        // Insert new profile picture
-        console.log('Creating new profile picture record...');
-        const { error: insertError } = await supabase
+        await supabase
           .from('profile_photos')
-          .insert({
+          .insert([{
             user_id: businessId,
-            photo_url: publicUrl,
-            photo_type: "profile",
-            file_path: filePath
-          });
-
-        if (insertError) {
-          console.error('Database insert error:', insertError);
-          throw new Error(`Failed to save profile picture: ${insertError.message}`);
-        }
+            photo_url: photoUrl,
+            file_path: filePath,
+            photo_type: "profile"
+          }]);
       }
 
-      console.log('Profile picture update completed successfully');
-      setProfilePic(publicUrl);
+      setProfilePic(photoUrl);
+      setIsCropping(false);
+      URL.revokeObjectURL(tempImageUrl);
+      setTempImageUrl(null);
     } catch (error) {
-      console.error("Error uploading profile picture:", error);
+      console.error("Error processing profile picture:", error);
       alert("Failed to update profile picture. Please try again.");
     } finally {
       setUploadingProfile(false);
     }
+  };
+
+  // Add function to handle crop cancellation
+  const handleCropCancel = () => {
+    setIsCropping(false);
+    URL.revokeObjectURL(tempImageUrl);
+    setTempImageUrl(null);
   };
 
   const handleRemoveProfilePic = async () => {
@@ -831,8 +848,39 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
           <div className="modal-content">
             <h2>Edit {initialData.portfolio ? "Portfolio" : "Profile"}</h2>
 
-            {/* Profile Picture Section - Only show when editing story with owner name */}
-            {!initialData.portfolio && initialData.story && initialData.business_owner && (
+            {/* Cropping Modal */}
+            {isCropping && (
+              <div className="cropper-container">
+                <Cropper
+                  image={tempImageUrl}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={onCropComplete}
+                />
+                <div className="cropper-controls">
+                  <input
+                    type="range"
+                    value={zoom}
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    aria-labelledby="Zoom"
+                    onChange={(e) => setZoom(parseFloat(e.target.value))}
+                    className="zoom-slider"
+                  />
+                  <button onClick={handleCropConfirm} disabled={uploadingProfile}>
+                    {uploadingProfile ? "Saving..." : "Save"}
+                  </button>
+                  <button onClick={handleCropCancel}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {/* Profile Picture Section */}
+            {!initialData.portfolio && initialData.profile_picture && !isCropping && (
               <div className="profile-picture-container">
                 <label>Profile Picture</label>
                 <div className="profile-pic-wrapper">
@@ -873,7 +921,9 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
             {/* Dynamic Form Fields (Non-Portfolio Data) */}
             {Object.keys(formData).length > 0 && !formData.portfolio && (
               <div>
-                {Object.entries(formData).map(([key, value]) => (
+                {Object.entries(formData)
+                  .filter(([key]) => !['portfolio', 'profile_picture'].includes(key)) // Filter out portfolio and profile_picture
+                  .map(([key, value]) => (
                   <div key={key} className="modal-input-group">
                     <label>{key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</label>
                     {key === 'story' ? (
