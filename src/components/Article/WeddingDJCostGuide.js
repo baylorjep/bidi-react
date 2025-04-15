@@ -17,7 +17,6 @@ const WeddingDJCostGuide = () => {
 
                 <script type="application/ld+json">
                 {`
-                    "@context": "https://schema.org",
                     "@type": "Article",
                     "headline": "Utah Wedding DJ Costs Guide 2025",
                     "author": {

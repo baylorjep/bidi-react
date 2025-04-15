@@ -510,18 +510,10 @@ export default function BidsPage() {
 
     const handleConfirmAccept = async () => {
         if (selectedBid) {
-            // Validate coupon if one was entered
-            if (couponCode) {
-                const isValid = await validateCoupon(selectedBid.business_profiles.id);
-                if (!isValid) {
-                    return; // Don't proceed if coupon is invalid
-                }
-            }
-
-            // Update the bid with the coupon code if valid
+            // Update the bid status and add acceptance timestamp
             const updateData = {
                 status: 'accepted',
-                coupon_code: couponSuccess ? couponCode.toUpperCase() : null
+                accepted_at: new Date().toISOString()
             };
 
             const { error } = await supabase
@@ -537,9 +529,6 @@ export default function BidsPage() {
             await handleMoveToAccepted(selectedBid);
             setShowAcceptModal(false);
             setSelectedBid(null);
-            setCouponCode('');
-            setError(null);
-            setCouponSuccess(false);
             setActiveTab('approved');
         }
     };
@@ -793,8 +782,25 @@ export default function BidsPage() {
                         </button>
                     </div>
 
-                    <p style={{ marginTop: '16px', textAlign: 'left' }}>
-                        <strong>Description:</strong> {bid.message}
+                    <p className="request-description" style={{ textAlign: 'left' }}>
+                        <strong>Description:</strong> 
+                        <div 
+                            className="bid-description-content"
+                            dangerouslySetInnerHTML={{ __html: bid.bid_description }} 
+                            style={{
+                                maxHeight: '400px',
+                                overflowY: 'auto',
+                                marginTop: '12px',
+                                padding: '12px',
+                                border: '1px solid #eee',
+                                borderRadius: '8px',
+                                backgroundColor: '#f9f9f9',
+                                fontFamily: 'Inter, sans-serif',
+                                fontSize: '14px',
+                                lineHeight: '1.6',
+                                color: '#333'
+                            }}
+                        />
                     </p>
                     <p style={{ textAlign: 'left' }}>
                         <strong>Phone:</strong> {bid.business_profiles.phone}
@@ -850,15 +856,7 @@ export default function BidsPage() {
                             style={{fontSize:'14px'}}
                         >
                             Message
-                        </button>
-                        <button
-                            className="btn-primary flex-fill"
-                            onClick={() => handleGenerateCoupon(bid.business_profiles.id)}
-                            style={{fontSize:'14px'}}
-                        >
-                            <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
-                            Share & Earn
-                        </button>
+                        </button>   
                     </div>
                 </div>
             );
@@ -885,8 +883,25 @@ export default function BidsPage() {
                         </button>
                     </div>
 
-                    <p style={{ marginTop: '16px', textAlign: 'left' }}>
-                        <strong>Description:</strong> {bid.message}
+                    <p className="request-description" style={{ textAlign: 'left' }}>
+                        <strong>Description:</strong> 
+                        <div 
+                            className="bid-description-content"
+                            dangerouslySetInnerHTML={{ __html: bid.bid_description }} 
+                            style={{
+                                maxHeight: '400px',
+                                overflowY: 'auto',
+                                marginTop: '12px',
+                                padding: '12px',
+                                border: '1px solid #eee',
+                                borderRadius: '8px',
+                                backgroundColor: '#f9f9f9',
+                                fontFamily: 'Inter, sans-serif',
+                                fontSize: '14px',
+                                lineHeight: '1.6',
+                                color: '#333'
+                            }}
+                        />
                     </p>
                     <p style={{ textAlign: 'left' }}>
                         <strong>Phone:</strong> {bid.business_profiles.phone}
@@ -1171,55 +1186,10 @@ export default function BidsPage() {
 
             {showAcceptModal && (
                 <div className="modal-overlay">
-                    <div className="modal-content">
+                    <div className="modal-content-bids-page">
                         <h3>Accept Bid Confirmation</h3>
                         <p>Are you sure you want to accept this bid from {selectedBid?.business_profiles?.business_name}?</p>
                         
-                        <div className="coupon-section" style={{ marginBottom: '20px' }}>
-                            <label htmlFor="coupon-input" style={{ display: 'block', marginBottom: '8px' }}>
-                                Have a coupon code? Enter it here:
-                            </label>
-                            <input
-                                id="coupon-input"
-                                type="text"
-                                value={couponCode}
-                                onChange={(e) => {
-                                    setCouponCode(e.target.value);
-                                    setError(null);
-                                    setCouponSuccess(false);
-                                }}
-                                placeholder="Enter coupon code"
-                                style={{
-                                    width: '100%',
-                                    padding: '8px',
-                                    marginBottom: '8px',
-                                    border: '1px solid #ccc',
-                                    borderRadius: '4px'
-                                }}
-                            />
-                            {couponCode && (
-                                <button
-                                    onClick={() => validateCoupon(selectedBid?.business_profiles?.id)}
-                                    style={{
-                                        padding: '8px 16px',
-                                        marginBottom: '8px',
-                                        backgroundColor: '#007bff',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Validate Coupon
-                                </button>
-                            )}
-                            {couponError && (
-                                <p style={{ color: 'red', margin: '8px 0' }}>{couponError}</p>
-                            )}
-                            {couponSuccess && (
-                                <p style={{ color: 'green', margin: '8px 0' }}>Coupon code is valid!</p>
-                            )}
-                        </div>
 
                         <p>By accepting this bid:</p>
                         <ul>

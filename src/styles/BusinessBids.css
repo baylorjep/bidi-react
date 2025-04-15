@@ -188,6 +188,7 @@
 
 .no-bids-text {
   font-size: 1.4vw;
+  padding-left: 48px;
 }
 
 @media (max-width: 768px) {

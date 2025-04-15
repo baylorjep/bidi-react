@@ -15,7 +15,6 @@ const WeddingHairMakeupCostGuide = () => {
                 <script type="application/ld+json">
                     {`
                     {
-                      "@context": "https://schema.org",
                       "@type": "Article",
                       "headline": "Utah Wedding Hair & Makeup Costs Guide 2025",
                       "author": {

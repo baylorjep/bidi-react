@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
 import "../../../styles/Portfolio.css";
 import EditProfileModal from "./EditProfileModal"; // Import modal component
@@ -8,10 +8,11 @@ import StarIcon from "../../../assets/star-duotone.svg"; // Add this import
 import ImageModal from "./ImageModal"; // Import the new ImageModal component
 import EmptyStarIcon from "../../../assets/userpov-vendor-profile-star.svg"; // Import the empty star icon
 import Modal from "react-modal"; // Import the modal library
+import { convertHeicToJpeg } from "../../../utils/imageUtils";
 import LoadingSpinner from "../../LoadingSpinner"; // Import the loading spinner component
 
-const Portfolio = ({ profileId: passedProfileId }) => {
-  const [profileId, setProfileId] = useState(passedProfileId || null);
+const Portfolio = () => {
+  const [businessId, setBusinessId] = useState(null);
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
   const [portfolioPics, setPortfolioPics] = useState([]);
@@ -20,46 +21,58 @@ const Portfolio = ({ profileId: passedProfileId }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editFields, setEditFields] = useState({});
   const [averageRating, setAverageRating] = useState(null);
-  const [, setBidStats] = useState({ average: null, count: 0 });
+  const [bidStats, setBidStats] = useState({ average: null, count: 0 });
   const [reviews, setReviews] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [expandedReviews, setExpandedReviews] = useState({});
   const [portfolioVideos, setPortfolioVideos] = useState([]);
   const [isIndividual, setIsIndividual] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
-  // const [showReviewForm, setShowReviewForm] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false); // State for modal visibility
   const navigate = useNavigate();
+  const [convertedUrls, setConvertedUrls] = useState({});
 
   useEffect(() => {
-    const fetchProfileId = async () => {
-      if (!profileId) {
-        try {
-          const {
-            data: { user },
-            error,
-          } = await supabase.auth.getUser();
+    const fetchBusinessId = async () => {
+      try {
+        // Get the logged-in user
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
 
-          if (error || !user) {
-            console.error("Error fetching user:", error || "No user found.");
-            return;
-          }
-
-          setProfileId(user.id); // Set the profileId from the authenticated user
-        } catch (err) {
-          console.error("Error fetching profileId:", err);
+        if (error || !user) {
+          console.error("Error fetching user:", error || "No user found.");
+          return;
         }
+
+        // Fetch the businessId from the business_profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from("business_profiles")
+          .select("id")
+          .eq("id", user.id)
+          .single();
+
+        if (profileError || !profile) {
+          console.error("Error fetching business profile:", profileError);
+          return;
+        }
+
+        setBusinessId(profile.id); // Set the businessId
+      } catch (err) {
+        console.error("Error fetching businessId:", err);
       }
     };
 
-    fetchProfileId();
-  }, [profileId]);
+    fetchBusinessId();
+  }, []);
 
   const fetchBusinessData = async () => {
     const { data: businessData, error: businessError } = await supabase
       .from("business_profiles")
       .select("*")
-      .eq("id", profileId)
+      .eq("id", businessId)
       .single();
     if (businessError) console.error("Error fetching business:", businessError);
     else setBusiness(businessData);
@@ -67,7 +80,7 @@ const Portfolio = ({ profileId: passedProfileId }) => {
     const { data: profileData, error: profileError } = await supabase
       .from("profile_photos")
       .select("photo_url")
-      .eq("user_id", profileId)
+      .eq("user_id", businessId)
       .eq("photo_type", "profile")
       .single();
     if (profileData) setProfileImage(profileData.photo_url);
@@ -76,19 +89,40 @@ const Portfolio = ({ profileId: passedProfileId }) => {
 
     const { data: portfolioData, error: portfolioError } = await supabase
       .from("profile_photos")
-      .select("photo_url")
-      .eq("user_id", profileId)
-      .eq("photo_type", "portfolio");
-    if (portfolioError)
-      console.error("Error fetching portfolio images:", portfolioError);
-    else setPortfolioPics(portfolioData.map((img) => img.photo_url));
+      .select("photo_url, photo_type, display_order")
+      .eq("user_id", businessId)
+      .or("photo_type.eq.portfolio,photo_type.eq.video")
+      .order("display_order", { ascending: true });
+
+    if (portfolioError) {
+      console.error("Error fetching portfolio media:", portfolioError);
+    } else {
+      // Sort by display_order
+      const sortedMedia = portfolioData.sort(
+        (a, b) => a.display_order - b.display_order
+      );
+
+      const videos = [];
+      const images = [];
+
+      sortedMedia.forEach((item) => {
+        if (item.photo_type === "video") {
+          videos.push(item.photo_url);
+        } else {
+          images.push(item.photo_url);
+        }
+      });
+
+      setPortfolioVideos(videos);
+      setPortfolioPics(images);
+    }
 
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
     if (!userError && user) {
-      if (user.id === profileId) {
+      if (user.id === businessId) {
         setIsOwner(true);
       } else {
         const { data: userData } = await supabase
@@ -103,7 +137,7 @@ const Portfolio = ({ profileId: passedProfileId }) => {
     const { data: reviewData, error: reviewError } = await supabase
       .from("reviews")
       .select("rating, first_name")
-      .eq("vendor_id", profileId);
+      .eq("vendor_id", businessId);
 
     if (reviewError) {
       console.error("Error fetching reviews:", reviewError);
@@ -121,7 +155,7 @@ const Portfolio = ({ profileId: passedProfileId }) => {
     const { data: bidData, error: bidError } = await supabase
       .from("bids")
       .select("bid_amount")
-      .eq("user_id", profileId);
+      .eq("user_id", businessId);
 
     if (bidError) {
       console.error("Error fetching bids:", bidError);
@@ -137,7 +171,7 @@ const Portfolio = ({ profileId: passedProfileId }) => {
     const { data: reviewsData, error: reviewsError } = await supabase
       .from("reviews")
       .select("rating, comment, first_name, created_at")
-      .eq("vendor_id", profileId);
+      .eq("vendor_id", businessId);
 
     if (reviewsError) {
       console.error("Error fetching reviews:", reviewsError);
@@ -153,20 +187,36 @@ const Portfolio = ({ profileId: passedProfileId }) => {
       setAverageRating(avgRating);
     }
 
-    const { data: videoData, error: videoError } = await supabase
-      .from("profile_photos")
-      .select("photo_url")
-      .eq("user_id", profileId)
-      .eq("photo_type", "video");
-    if (videoError) console.error("Error fetching videos:", videoError);
-    else setPortfolioVideos(videoData.map((vid) => vid.photo_url));
-
     setLoading(false);
   };
 
   useEffect(() => {
     fetchBusinessData();
-  }, [profileId]);
+  }, [businessId]);
+
+  useEffect(() => {
+    const convertImages = async () => {
+      const converted = {};
+      if (profileImage) {
+        converted.profile = await convertHeicToJpeg(profileImage);
+      }
+      for (const photo of portfolioPics) {
+        converted[photo] = await convertHeicToJpeg(photo);
+      }
+      setConvertedUrls(converted);
+    };
+
+    convertImages();
+
+    // Cleanup function
+    return () => {
+      Object.values(convertedUrls).forEach((url) => {
+        if (url && url.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [profileImage, portfolioPics]);
 
   const openEditModal = (fields) => {
     setEditFields(fields);
@@ -211,8 +261,9 @@ const Portfolio = ({ profileId: passedProfileId }) => {
     }
   };
 
-  const handleImageClick = (imageUrl) => {
-    setSelectedImage(imageUrl);
+  const handleImageClick = (mediaUrl) => {
+    const isVideo = mediaUrl.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
+    setSelectedImage({ url: mediaUrl, isVideo });
   };
 
   const handleCloseImageModal = () => {
@@ -258,7 +309,7 @@ const Portfolio = ({ profileId: passedProfileId }) => {
 
       const { error: reviewError } = await supabase.from("reviews").insert([
         {
-          vendor_id: profileId,
+          vendor_id: businessId,
           customer_id: user.id,
           first_name: userData.first_name,
           rating: newReview.rating,
@@ -293,13 +344,14 @@ const Portfolio = ({ profileId: passedProfileId }) => {
       <EditProfileModal
         isOpen={modalOpen}
         onClose={handleModalClose}
-        profileId={profileId}
+        businessId={businessId}
         initialData={editFields}
       />
 
       <ImageModal
         isOpen={!!selectedImage}
-        imageUrl={selectedImage}
+        mediaUrl={selectedImage?.url}
+        isVideo={selectedImage?.isVideo}
         onClose={handleCloseImageModal}
       />
 
@@ -311,30 +363,37 @@ const Portfolio = ({ profileId: passedProfileId }) => {
               : ""
           }`}
         >
-          {portfolioVideos.length > 0 ? (
-            <video
-              src={portfolioVideos[0]}
-              className={`main-portfolio-image ${
-                portfolioVideos.length + portfolioPics.length <= 1
-                  ? "single-media-item"
-                  : ""
-              }`}
-              controls
-              onClick={() => handleImageClick(portfolioVideos[0])}
-            >
-              Your browser does not support the video tag.
-            </video>
-          ) : portfolioPics.length > 0 ? (
-            <img
-              src={portfolioPics[0]}
-              alt="Main Portfolio"
-              className={`main-portfolio-image ${
-                portfolioVideos.length + portfolioPics.length <= 1
-                  ? "single-media-item"
-                  : ""
-              }`}
-              onClick={() => handleImageClick(portfolioPics[0])}
-            />
+          {/* Show first media item based on display_order */}
+          {portfolioPics.length > 0 || portfolioVideos.length > 0 ? (
+            portfolioPics[0] ? (
+              <img
+                src={convertedUrls[portfolioPics[0]] || portfolioPics[0]}
+                alt="Main Portfolio"
+                className={`main-portfolio-image ${
+                  portfolioVideos.length + portfolioPics.length <= 1
+                    ? "single-media-item"
+                    : ""
+                }`}
+                onClick={() => handleImageClick(portfolioPics[0])}
+              />
+            ) : portfolioVideos[0] ? (
+              <video
+                src={portfolioVideos[0]}
+                className={`main-portfolio-image ${
+                  portfolioVideos.length + portfolioPics.length <= 1
+                    ? "single-media-item"
+                    : ""
+                }`}
+                controls
+                muted
+                autoPlay
+                loop
+                playsInline
+                onClick={() => handleImageClick(portfolioVideos[0])}
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : null
           ) : (
             <img
               src="/images/portfolio.jpeg"
@@ -343,18 +402,26 @@ const Portfolio = ({ profileId: passedProfileId }) => {
             />
           )}
 
+          {/* Show remaining media items in grid */}
           {portfolioVideos.length + portfolioPics.length > 1 && (
             <div className="portfolio-grid">
               {[...portfolioVideos.slice(1), ...portfolioPics.slice(1)]
                 .slice(0, 4)
                 .map((item, index) => {
-                  const isVideo = item.includes(".mp4");
+                  const isVideo = item
+                    .toLowerCase()
+                    .match(/\.(mp4|mov|avi|wmv|webm)$/);
                   return isVideo ? (
                     <video
                       key={index}
                       src={item}
                       className="portfolio-image-portfolio"
-                      controls
+                      poster={`${item}?thumb`}
+                      preload="metadata"
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
                       onClick={() => handleImageClick(item)}
                     >
                       Your browser does not support the video tag.
@@ -362,7 +429,7 @@ const Portfolio = ({ profileId: passedProfileId }) => {
                   ) : (
                     <img
                       key={index}
-                      src={item}
+                      src={convertedUrls[item] || item}
                       alt={`Portfolio ${index}`}
                       className="portfolio-image-portfolio"
                       onClick={() => handleImageClick(item)}
@@ -372,7 +439,7 @@ const Portfolio = ({ profileId: passedProfileId }) => {
               {portfolioPics.length + portfolioVideos.length > 5 && (
                 <button
                   className="see-all-button"
-                  onClick={() => navigate(`/portfolio/${profileId}/gallery`)}
+                  onClick={() => navigate(`/portfolio/${businessId}/gallery`)}
                 >
                   + See All
                 </button>
@@ -504,7 +571,7 @@ const Portfolio = ({ profileId: passedProfileId }) => {
               <div className="vendor-profile-container">
                 <div className="vendor-profile-left">
                   <img
-                    src={profileImage}
+                    src={convertedUrls.profile || profileImage}
                     alt={`${business.business_name} profile`}
                     className="vendor-profile-image"
                   />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Slider from 'react-slick';
 import { supabase } from '../../supabaseClient';
@@ -7,6 +7,9 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import Verified from '../../assets/Frame 1162.svg';
 import StarIcon from '../../assets/star-duotone.svg'; // Assuming you have a star icon
+import { convertHeicToJpeg, convertToWebP, convertImagesToWebP, clearImageCache, registerServiceWorker } from "../../utils/imageUtils";
+import LoadingPlaceholder from '../Common/LoadingPlaceholder';
+import ImageErrorBoundary from '../Common/ImageErrorBoundary';
 
 const VendorList = ({ 
     selectedCategory, 
@@ -14,7 +17,7 @@ const VendorList = ({
     preferredLocation, 
     categoryType, 
     currentPage, 
-    vendorsPerPage, 
+    vendorsPerPage,
     setCurrentPage,
     setTotalCount,
     preferredType 
@@ -22,11 +25,24 @@ const VendorList = ({
     const [vendors, setVendors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
-    const [modalImage, setModalImage] = useState('');
+    const [modalMedia, setModalMedia] = useState(null);
     const [expandedStories, setExpandedStories] = useState({});
     const [expandedDescriptions, setExpandedDescriptions] = useState({});
     const [imageLoading, setImageLoading] = useState({});
     const [totalCount, setTotalCountState] = useState(0);
+    const [mediaErrors, setMediaErrors] = useState({});
+    const [loadAllMedia, setLoadAllMedia] = useState(false);
+    const [loadingVendors, setLoadingVendors] = useState({});
+    const [loadedPhotoCount, setLoadedPhotoCount] = useState({});
+    const [sliderDimensions, setSliderDimensions] = useState({ width: 0, height: 0 });
+    const [photosLoading, setPhotosLoading] = useState(true);
+    const [vendorPhotosLoaded, setVendorPhotosLoaded] = useState({});
+    const [loadingRemainingPhotos, setLoadingRemainingPhotos] = useState({});
+    const [convertedUrls, setConvertedUrls] = useState({});
+    const [convertingImages, setConvertingImages] = useState({});
+    const [visibleVendors, setVisibleVendors] = useState([]);
+    const observerRef = useRef(null);
+    const vendorRefs = useRef({});
     const navigate = useNavigate();
 
     const truncateText = (text, maxLength = 150) => {
@@ -49,14 +65,38 @@ const VendorList = ({
         }));
     };
 
-    const preloadImage = useCallback((src) => {
-        return new Promise((resolve, reject) => {
+    const isVideo = (url) => {
+        return url.match(/\.(mp4|mov|wmv|avi|mkv)$/i);
+    };
+
+    const preloadImage = useCallback(async (src) => {
+        if (isVideo(src) || mediaErrors[src]) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
             const img = new Image();
+            
+            img.onload = () => {
+                setMediaErrors(prev => ({
+                    ...prev,
+                    [src]: false
+                }));
+                resolve();
+            };
+            
+            img.onerror = () => {
+                console.warn(`Failed to load image: ${src}`);
+                setMediaErrors(prev => ({
+                    ...prev,
+                    [src]: true
+                }));
+                resolve();
+            };
+            
             img.src = src;
-            img.onload = resolve;
-            img.onerror = reject;
         });
-    }, []);
+    }, [mediaErrors]);
 
     const handleImageLoad = useCallback((imageId) => {
         setImageLoading(prev => ({
@@ -65,133 +105,265 @@ const VendorList = ({
         }));
     }, []);
 
+    // Add this function to track when all vendors' initial photos are loaded
+    const checkAllVendorsLoaded = useCallback((vendorsData) => {
+        return vendorsData.every(vendor => vendorPhotosLoaded[vendor.id]);
+    }, [vendorPhotosLoaded]);
+
+    // Add this useEffect to ensure vendorsPerPage is always 5
     useEffect(() => {
-        const fetchVendors = async () => {
-            setLoading(true);
+        if (vendorsPerPage !== 5) {
+            console.warn('vendorsPerPage should be 5');
+        }
+    }, [vendorsPerPage]);
+
+    // Add useEffect to call fetchVendors when needed
+    useEffect(() => {
+        fetchVendors();
+    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, preferredLocation, preferredType]);
+
+    // Add effect to check when all vendors are loaded
+    useEffect(() => {
+        if (vendors.length > 0 && checkAllVendorsLoaded(vendors)) {
+            setLoading(false);
+        }
+    }, [vendors, vendorPhotosLoaded, checkAllVendorsLoaded]);
+
+    // Add intersection observer for lazy loading
+    useEffect(() => {
+        observerRef.current = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const vendorId = entry.target.dataset.vendorId;
+                        setVisibleVendors(prev => [...prev, vendorId]);
+                    }
+                });
+            },
+            {
+                root: null,
+                rootMargin: '50px',
+                threshold: 0.1
+            }
+        );
+
+        return () => {
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+            }
+        };
+    }, []);
+
+    // Update visible vendors when vendors change
+    useEffect(() => {
+        setVisibleVendors([]);
+        vendorRefs.current = {};
+        
+        vendors.forEach(vendor => {
+            const ref = document.querySelector(`[data-vendor-id="${vendor.id}"]`);
+            if (ref) {
+                vendorRefs.current[vendor.id] = ref;
+                observerRef.current?.observe(ref);
+            }
+        });
+    }, [vendors]);
+
+    // Convert images for visible vendors
+    useEffect(() => {
+        const convertVisibleImages = async () => {
+            const visibleVendorData = vendors.filter(v => visibleVendors.includes(v.id));
+            const allImageUrls = visibleVendorData.flatMap(v => v.portfolio_photos);
             
-            // Base query to get all vendors in the category
+            const convertedUrls = await convertImagesToWebP(allImageUrls);
+            setConvertedUrls(prev => ({ ...prev, ...convertedUrls }));
+        };
+
+        convertVisibleImages();
+    }, [visibleVendors, vendors]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            clearImageCache();
+        };
+    }, []);
+
+    // Register service worker on mount
+    useEffect(() => {
+        registerServiceWorker();
+    }, []);
+
+    const fetchVendors = async () => {
+        setLoading(true);
+        setVendorPhotosLoaded({});
+        
+        try {
             let query = supabase
                 .from('business_profiles')
-                .select('*', { count: 'exact' })
-                .or('stripe_account_id.not.is.null,stripe_account_id.not.eq.,Bidi_Plus.eq.true');
+                .select(`
+                    *,
+                    reviews (
+                        rating
+                    )
+                `)
+                .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
                 query = query.eq('business_category', selectedCategory);
             }
 
-            // Get total count first
-            const { count, error: countError } = await query;
-            
-            if (!countError) {
-                setTotalCount(count || 0);
-                setTotalCountState(count || 0);
-            }
+            const { data: allVendorData, error: vendorError } = await query;
+            if (vendorError) throw vendorError;
 
-            // Then get paginated data
-            const { data: vendorData, error: vendorError } = await query
-                .range((currentPage - 1) * vendorsPerPage, currentPage * vendorsPerPage - 1);
+            // Calculate average ratings
+            const vendorsWithRatings = allVendorData.map(vendor => {
+                const ratings = vendor.reviews?.map(review => review.rating) || [];
+                const averageRating = ratings.length > 0 
+                    ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+                    : null;
+                return {
+                    ...vendor,
+                    average_rating: averageRating
+                };
+            });
 
-            if (vendorError) {
-                console.error('Error fetching vendors:', vendorError);
-                setLoading(false);
-                return;
-            }
+            // Set total count for pagination
+            setTotalCount(vendorsWithRatings.length);
+            setTotalCountState(vendorsWithRatings.length);
 
-            const vendorIds = vendorData.map(vendor => vendor.id);
-            
-            const { data: photoData, error: photoError } = await supabase
+            // Get ALL photos first to calculate counts
+            const { data: allPhotos, error: photoError } = await supabase
                 .from('profile_photos')
                 .select('*')
-                .in('user_id', vendorIds);
+                .in('user_id', vendorsWithRatings.map(v => v.id));
 
-            if (photoError) {
-                console.error('Error fetching photos:', photoError);
-                setLoading(false);
-                return;
-            }
+            if (photoError) throw photoError;
 
-            const vendorsWithPhotos = await Promise.all(vendorData.map(async vendor => {
-                const profilePhoto = photoData.find(photo => 
-                    photo.user_id === vendor.id && photo.photo_type === 'profile'
-                );
-                const portfolioMedia = photoData.filter(photo => 
-                    photo.user_id === vendor.id && 
-                    (photo.photo_type === 'portfolio' || photo.photo_type === 'video')
-                );
-
-                const { data: reviewData } = await supabase
-                    .from('reviews')
-                    .select('rating')
-                    .eq('vendor_id', vendor.id);
-
-                const averageRating = reviewData?.length > 0
-                    ? (reviewData.reduce((acc, review) => acc + review.rating, 0) / reviewData.length).toFixed(1)
-                    : null;
-
-                const locationScore = preferredLocation && vendor.business_address
-                    ? vendor.business_address.toLowerCase().includes(preferredLocation.replace(/-/g, ' ').toLowerCase())
-                        ? 1 : 0
-                    : 0;
-
-                const typeScore = preferredType && vendor.specializations
-                    ? vendor.specializations.includes(preferredType)
-                        ? 1 : 0
-                    : 0;
+            // Get basic vendor info for sorting
+            const vendorsWithBasicInfo = vendorsWithRatings.map(vendor => {
+                const vendorPhotos = allPhotos?.filter(photo => photo.user_id === vendor.id) || [];
+                const portfolioPhotoCount = vendorPhotos.filter(
+                    photo => photo.photo_type === 'portfolio' || photo.photo_type === 'video'
+                ).length;
 
                 return {
                     ...vendor,
-                    profile_photo_url: profilePhoto?.photo_url || '/images/default.jpg',
-                    portfolio_photos: portfolioMedia.map(media => media.photo_url),
-                    average_rating: averageRating,
-                    locationScore,
-                    typeScore
+                    photo_count: portfolioPhotoCount
                 };
-            }));
+            });
 
-            const sortedVendors = sortVendors(vendorsWithPhotos);
-            setVendors(sortedVendors);
+            // Sort all vendors first
+            const sortedVendors = sortVendors(vendorsWithBasicInfo);
+            
+            // Get the current page vendors - using 5 vendors per page
+            const startIndex = (currentPage - 1) * 5; // Changed to hardcoded 5
+            const endIndex = startIndex + 5; // Changed to hardcoded 5
+            const currentPageVendors = sortedVendors.slice(startIndex, endIndex);
+
+            // Process vendors with their photos
+            const vendorsWithPhotos = await Promise.all(
+                currentPageVendors.map(async vendor => {
+                    const vendorPhotos = allPhotos?.filter(photo => photo.user_id === vendor.id) || [];
+                    const profilePhoto = vendorPhotos.find(photo => photo.photo_type === 'profile');
+                    
+                    const portfolioPhotos = vendorPhotos
+                        .filter(photo => photo.photo_type === 'portfolio' || photo.photo_type === 'video')
+                        .slice(0, 10)
+                        .map(photo => photo.photo_url);
+
+                    // Mark this vendor's photos as loaded before preloading
+                    setVendorPhotosLoaded(prev => ({
+                        ...prev,
+                        [vendor.id]: true
+                    }));
+
+                    // Preload images in the background
+                    Promise.all(portfolioPhotos.map(async photo => {
+                        if (!isVideo(photo)) {
+                            await preloadImage(photo);
+                        }
+                    })).catch(console.error); // Handle preload errors silently
+
+                    const hasMorePhotos = vendorPhotos.filter(photo => 
+                        photo.photo_type === 'portfolio' || photo.photo_type === 'video'
+                    ).length > 10;
+
+                    return {
+                        ...vendor,
+                        profile_photo_url: profilePhoto?.photo_url || '/images/default.jpg',
+                        portfolio_photos: portfolioPhotos,
+                        has_more_photos: hasMorePhotos
+                    };
+                })
+            );
+
+            setVendors(vendorsWithPhotos);
+            setLoading(false); // Set loading to false after vendors are set
+
+        } catch (error) {
+            console.error('Error fetching vendors:', error);
             setLoading(false);
-        };
-
-        fetchVendors();
-    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, preferredLocation, preferredType]);
-
-    const sortVendors = (vendors) => {
-        return vendors.sort((a, b) => {
-            // First priority: Has any photos at all
-            const aHasPhotos = a.portfolio_photos.length > 0;
-            const bHasPhotos = b.portfolio_photos.length > 0;
-            if (aHasPhotos !== bHasPhotos) return aHasPhotos ? -1 : 1;
-
-            // Second priority: Location and type matches
-            const aMatchScore = (a.locationScore + a.typeScore);
-            const bMatchScore = (b.locationScore + b.typeScore);
-            if (aMatchScore !== bMatchScore) return bMatchScore - aMatchScore;
-
-            // Third priority: Regular sort criteria
-            switch (sortOrder) {
-                case 'recommended':
-                    const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
-                    const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
-                    if (aIsVerified !== bIsVerified) return bIsVerified - aIsVerified;
-                    // If verification is the same, fall through to photo count comparison
-                    return b.portfolio_photos.length - a.portfolio_photos.length;
-                case 'rating':
-                    const ratingDiff = (b.average_rating || 0) - (a.average_rating || 0);
-                    return ratingDiff !== 0 ? ratingDiff : b.portfolio_photos.length - a.portfolio_photos.length;
-                case 'base_price_low':
-                    const priceLowDiff = (a.minimum_price || 0) - (b.minimum_price || 0);
-                    return priceLowDiff !== 0 ? priceLowDiff : b.portfolio_photos.length - a.portfolio_photos.length;
-                case 'base_price_high':
-                    const priceHighDiff = (b.minimum_price || 0) - (a.minimum_price || 0);
-                    return priceHighDiff !== 0 ? priceHighDiff : b.portfolio_photos.length - a.portfolio_photos.length;
-                default:
-                    return b.portfolio_photos.length - a.portfolio_photos.length;
-            }
-        });
+        }
     };
 
-    const totalPages = Math.ceil(totalCount / vendorsPerPage);
+    const sortVendors = (vendors) => {
+        console.log('Vendors before sorting:', vendors.map(v => ({
+            id: v.id,
+            name: v.business_name,
+            photos: v.photo_count,
+            videos: v.video_count,
+            verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true
+        })));
+
+        const sorted = [...vendors].sort((a, b) => {
+            const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
+            const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
+            const aHasPhotos = a.photo_count > 0;
+            const bHasPhotos = b.photo_count > 0;
+
+            // First priority: Has photos
+            if (aHasPhotos !== bHasPhotos) {
+                return aHasPhotos ? -1 : 1;
+            }
+
+            // Second priority: Verification status (within photo groups)
+            if (aIsVerified !== bIsVerified) {
+                return aIsVerified ? -1 : 1;
+            }
+
+            // Third priority: Total media count
+            const aTotalMedia = a.photo_count;
+            const bTotalMedia = b.photo_count;
+            if (aTotalMedia !== bTotalMedia) {
+                return bTotalMedia - aTotalMedia;
+            }
+
+            // Finally, apply the selected sort order
+            switch (sortOrder) {
+                case 'rating':
+                    return (b.average_rating || 0) - (a.average_rating || 0);
+                case 'base_price_low':
+                    return (a.minimum_price || 0) - (b.minimum_price || 0);
+                case 'base_price_high':
+                    return (b.minimum_price || 0) - (a.minimum_price || 0);
+                default:
+                    return 0;
+            }
+        });
+
+        console.log('Vendors after sorting:', sorted.map(v => ({
+            id: v.id,
+            name: v.business_name,
+            photos: v.photo_count,
+            videos: v.video_count,
+            verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true
+        })));
+
+        return sorted;
+    };
+
+    // Update totalPages calculation to use 5 vendors per page
+    const totalPages = Math.ceil(totalCount / 5); // Changed to hardcoded 5
 
     const handlePageChange = (newPage) => {
         setCurrentPage(newPage);
@@ -199,7 +371,13 @@ const VendorList = ({
     };
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <div className="loading-container">
+                <div className="loading-spinner">
+                    Loading vendors and photos...
+                </div>
+            </div>
+        );
     }
 
     const settings = {
@@ -208,74 +386,141 @@ const VendorList = ({
         slidesToShow: 1,
         slidesToScroll: 1,
         nextArrow: <SampleNextArrow />,
-        prevArrow: <SamplePrevArrow />
+        prevArrow: <SamplePrevArrow />,
+        dots: false,
+        beforeChange: (oldIndex, newIndex) => {
+            const currentVendor = vendors[Math.floor(newIndex / 10)]; // Changed from 6 to 10
+            
+            console.log('Current slide:', newIndex);
+            console.log('Current vendor:', currentVendor?.business_name);
+            console.log('Photos loaded:', currentVendor?.portfolio_photos.length);
+            
+            if (currentVendor && currentVendor.has_more_photos) {
+                if (newIndex >= currentVendor.portfolio_photos.length - 2) {
+                    console.log('Loading more photos for:', currentVendor.business_name);
+                    setLoadingVendors(prev => ({
+                        ...prev,
+                        [currentVendor.id]: true
+                    }));
+                }
+            }
+        },
+        afterChange: (currentSlide) => {
+            // Pause all videos when sliding
+            const videos = document.querySelectorAll('.portfolio-image.video');
+            videos.forEach(video => {
+                video.pause();
+                // Reset overlay display
+                const overlay = video.parentElement?.querySelector('.video-play-overlay');
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                }
+            });
+        },
+        // Add these settings to ensure proper slider behavior
+        accessibility: true,
+        draggable: true,
+        swipe: true,
+        touchMove: true,
+        waitForAnimate: true,
+        // Add onInit callback
+        onInit: () => {
+            // Set initial dimensions based on first image
+            const sliderContainer = document.querySelector('.portfolio-images');
+            if (sliderContainer) {
+                setSliderDimensions({
+                    width: sliderContainer.offsetWidth,
+                    height: sliderContainer.offsetHeight
+                });
+            }
+        }
     };
 
     function SampleNextArrow(props) {
         const { className, style, onClick } = props;
         return (
-            <div
+            <button
+                type="button"
                 className={`${className} custom-arrow custom-next-arrow`}
                 onClick={onClick}
                 style={{ 
                     ...style, 
-                    display: 'flex', 
+                    display: 'block',
                     width: '40px', 
                     height: '40px', 
-                    justifyContent: 'center',   
-                    alignItems: 'center', 
-                    gap: '8px', 
-                    flexShrink: 0, 
                     borderRadius: '40px', 
-                    background: 'var(--White-15, rgba(255, 255, 255, 0.15))', 
+                    background: 'rgba(255, 255, 255, 0.15)', 
                     backdropFilter: 'blur(14px)', 
                     position: 'absolute', 
                     top: '50%', 
                     right: '10px', 
-                    transform: 'translateY(-50%)' 
+                    transform: 'translateY(-50%)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    zIndex: 2,
+                    content: '"→"'
                 }}
             >
-            </div>
+                <span style={{ color: '#fff', fontSize: '20px' }}>→</span>
+            </button>
         );
     }
 
     function SamplePrevArrow(props) {
         const { className, style, onClick } = props;
         return (
-            <div
+            <button
+                type="button"
                 className={`${className} custom-arrow custom-prev-arrow`}
                 onClick={onClick}
                 style={{ 
                     ...style, 
-                    display: 'flex', 
+                    display: 'block',
                     width: '40px', 
                     height: '40px', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
-                    gap: '8px', 
-                    flexShrink: 0, 
                     borderRadius: '40px', 
-                    background: 'var(--White-15, rgba(255, 255, 255, 0.15))', 
+                    background: 'rgba(255, 255, 255, 0.15)', 
                     backdropFilter: 'blur(14px)', 
                     position: 'absolute', 
                     top: '50%', 
                     left: '10px', 
                     transform: 'translateY(-50%)',
-                    zIndex: '10'
+                    border: 'none',
+                    cursor: 'pointer',
+                    zIndex: 2
                 }}
             >
-            </div>
+                <span style={{ color: '#fff', fontSize: '20px' }}>←</span>
+            </button>
         );
     }
 
-    const openModal = (image) => {
-        setModalImage(image);
+    const openModal = (media) => {
+        const isVideoFile = isVideo(media);
+        setModalMedia({
+            url: media,
+            type: isVideoFile ? 'video' : 'image'
+        });
         setModalOpen(true);
+        
+        // Pause all playing videos in the carousel when opening modal
+        document.querySelectorAll('.portfolio-image.video').forEach(video => {
+            video.pause();
+            const overlay = video.parentElement?.querySelector('.video-play-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
+        });
     };
 
     const closeModal = () => {
+        // If current modal content is video, pause it
+        const modalVideo = document.querySelector('.modal-content.video');
+        if (modalVideo) {
+            modalVideo.pause();
+        }
         setModalOpen(false);
-        setModalImage('');
+        setModalMedia(null);
     };
 
     const handleCheckClick = (event) => {
@@ -316,62 +561,219 @@ const VendorList = ({
         navigate(`/portfolio/${vendor.id}`);
     };
 
+    // Add click handler for loading more photos
+    const handleLoadMorePhotos = (vendorId) => {
+        setLoadingVendors(prev => ({
+            ...prev,
+            [vendorId]: true
+        }));
+    };
+
+    // Add this function to load remaining photos for a vendor
+    const loadRemainingPhotos = async (vendor) => {
+        if (loadingRemainingPhotos[vendor.id]) return;
+        
+        setLoadingRemainingPhotos(prev => ({ ...prev, [vendor.id]: true }));
+        
+        try {
+            const { data: remainingPhotos } = await supabase
+                .from('profile_photos')
+                .select('*')
+                .eq('user_id', vendor.id)
+                .or('photo_type.eq.portfolio,photo_type.eq.video')
+                .order('created_at', { ascending: true })
+                .range(10, 999); // Get all remaining photos after the first 10
+
+            if (remainingPhotos && remainingPhotos.length > 0) {
+                // Preload the images in the background
+                await Promise.all(remainingPhotos.map(async photo => {
+                    if (!isVideo(photo.photo_url)) {
+                        await preloadImage(photo.photo_url);
+                    }
+                }));
+
+                // Update the vendor's photos
+                setVendors(prevVendors => 
+                    prevVendors.map(v => {
+                        if (v.id === vendor.id) {
+                            return {
+                                ...v,
+                                portfolio_photos: [
+                                    ...v.portfolio_photos,
+                                    ...remainingPhotos.map(photo => photo.photo_url)
+                                ],
+                                has_more_photos: false
+                            };
+                        }
+                        return v;
+                    })
+                );
+            }
+        } catch (error) {
+            console.error('Error loading remaining photos:', error);
+        } finally {
+            setLoadingRemainingPhotos(prev => ({ ...prev, [vendor.id]: false }));
+        }
+    };
+
+    // Update the image rendering part
+    const renderImage = (item, index, vendorId) => {
+        const imageId = `${vendorId}-${index}`;
+        const itemIsVideo = isVideo(item);
+
+        return (
+            <div key={index} style={{ height: '100%' }}>
+                <div className="image-container" 
+                     style={{ 
+                         height: '100%',
+                         display: 'flex',
+                         alignItems: 'center',
+                         justifyContent: 'center',
+                         background: '#f5f5f5'
+                     }}
+                     onClick={() => openModal(item)}
+                >
+                    {itemIsVideo ? (
+                        <div className="video-container">
+                            <video
+                                src={item}
+                                className="portfolio-image video"
+                                muted
+                                loop
+                                playsInline
+                                loading="lazy"
+                                preload="metadata"
+                                onError={(e) => {
+                                    console.warn(`Failed to load video: ${item}`);
+                                    setMediaErrors(prev => ({
+                                        ...prev,
+                                        [item]: true
+                                    }));
+                                }}
+                            />
+                            {!mediaErrors[item] && (
+                                <div className="video-play-overlay">
+                                    <button 
+                                        className="play-button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            try {
+                                                const container = e.currentTarget.closest('.video-container');
+                                                const video = container?.querySelector('video');
+                                                const overlay = e.currentTarget.closest('.video-play-overlay');
+                                                
+                                                if (!video || !overlay) return;
+
+                                                // Pause all other videos
+                                                document.querySelectorAll('.portfolio-image.video').forEach(v => {
+                                                    if (v !== video) {
+                                                        v.pause();
+                                                        const otherOverlay = v.parentElement?.querySelector('.video-play-overlay');
+                                                        if (otherOverlay) {
+                                                            otherOverlay.style.display = 'flex';
+                                                        }
+                                                    }
+                                                });
+                                                
+                                                if (video.paused) {
+                                                    video.play()
+                                                        .then(() => {
+                                                            overlay.style.display = 'none';
+                                                        })
+                                                        .catch(error => {
+                                                            console.warn('Error playing video:', error);
+                                                        });
+                                                } else {
+                                                    video.pause();
+                                                    overlay.style.display = 'flex';
+                                                }
+                                            } catch (error) {
+                                                console.warn('Error handling play button click:', error);
+                                            }
+                                        }}
+                                    >
+                                        ▶
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <ImageErrorBoundary>
+                            {imageLoading[imageId] ? (
+                                <LoadingPlaceholder 
+                                    width="100%"
+                                    height="100%"
+                                    className="portfolio-image"
+                                />
+                            ) : (
+                                <img
+                                    src={item}
+                                    alt={`Portfolio ${index}`}
+                                    className={`portfolio-image ${imageLoading[imageId] ? 'loading' : 'loaded'}`}
+                                    loading="lazy"
+                                    onLoad={() => handleImageLoad(imageId)}
+                                    onError={(e) => {
+                                        console.warn(`Failed to load image: ${item}`);
+                                        setMediaErrors(prev => ({
+                                            ...prev,
+                                            [item]: true
+                                        }));
+                                    }}
+                                    style={{
+                                        opacity: imageLoading[imageId] ? 0.5 : 1,
+                                        transition: 'opacity 0.3s ease-in-out'
+                                    }}
+                                />
+                            )}
+                        </ImageErrorBoundary>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="vendor-list">
             {vendors.map(vendor => (
-                <div key={vendor.id} className="vendor-card">
-                    <div className="portfolio-images">
+                <div 
+                    key={vendor.id} 
+                    className="vendor-card" 
+                    data-vendor-id={vendor.id}
+                    ref={el => vendorRefs.current[vendor.id] = el}
+                >
+                    <div className="portfolio-images" style={{ minHeight: '300px' }}>
                         {vendor.portfolio_photos.length > 0 ? (
                             <Slider {...settings}>
-                                {vendor.portfolio_photos.map((item, index) => {
-                                    const imageId = `${vendor.id}-${index}`;
-                                    const isVideo = item.includes('.mp4');
-
-                                    if (index < vendor.portfolio_photos.length - 1) {
-                                        preloadImage(vendor.portfolio_photos[index + 1]);
-                                    }
-
-                                    return (
-                                        <div key={index} onClick={() => openModal(item)}>
-                                            {isVideo ? (
-                                                <video
-                                                    src={item}
-                                                    className="portfolio-image"
-                                                    controls
-                                                    loading="lazy"
-                                                    preload="metadata"
-                                                />
-                                            ) : (
-                                                <div className="image-container">
-                                                    {imageLoading[imageId] && (
-                                                        <div className="image-placeholder">
-                                                            Loading...
-                                                        </div>
-                                                    )}
-                                                    <img
-                                                        src={item}
-                                                        alt={`Portfolio ${index}`}
-                                                        className={`portfolio-image ${imageLoading[imageId] ? 'loading' : 'loaded'}`}
-                                                        loading="lazy"
-                                                        onLoad={() => handleImageLoad(imageId)}
-                                                        style={{
-                                                            opacity: imageLoading[imageId] ? 0 : 1,
-                                                            transition: 'opacity 0.3s ease-in-out'
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                                {vendor.portfolio_photos.map((item, index) => renderImage(item, index, vendor.id))}
+                                {vendor.has_more_photos && (
+                                    <div className="loading-more-photos" 
+                                         style={{ 
+                                             height: '100%',
+                                             minHeight: '300px',
+                                             display: 'flex',
+                                             alignItems: 'center',
+                                             justifyContent: 'center'
+                                         }}>
+                                        {loadingVendors[vendor.id] ? 'Loading more photos...' : ''}
+                                    </div>
+                                )}
                             </Slider>
                         ) : (
-                            <img 
-                                src="/images/default.jpg" 
-                                alt="No portfolio available" 
-                                className="portfolio-image"
-                                loading="lazy"
-                            />
+                            <div style={{ 
+                                height: '100%',
+                                minHeight: '300px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <img 
+                                    src="/images/default.jpg" 
+                                    alt="No portfolio available" 
+                                    className="portfolio-image"
+                                    loading="lazy"
+                                    style={{ objectFit: 'contain', maxHeight: '100%' }}
+                                />
+                            </div>
                         )}
                     </div>
                     <div className="vendor-info">
@@ -452,24 +854,36 @@ const VendorList = ({
                         )}
                         <div className="vendor-buttons">
                             <button className="vendor-button" onClick={() => handleGetQuote(vendor)}>Get a Tailored Quote</button>
-                            <button className="vendor-button-secondary" onClick={() => handleMoreInfo(vendor)}>More Info</button>
+                            <button className="vendor-button-secondary" onClick={() => handleMoreInfo(vendor)}>See Profile</button>
                         </div>
                     </div>
                 </div>
             ))}
             {modalOpen && (
                 <div className="modal" onClick={closeModal}>
-                    <span className="close">&times;</span>
-                    {modalImage.includes('.mp4') ? (
-                        <video 
-                            className="modal-content" 
-                            controls
-                            autoPlay
-                            src={modalImage}
-                        />
-                    ) : (
-                        <img className="modal-content" src={modalImage} alt="Full Size" />
-                    )}
+                    <span className="close" onClick={closeModal}>&times;</span>
+                    <div className="modal-content-wrapper" onClick={e => e.stopPropagation()}>
+                        {modalMedia?.type === 'video' ? (
+                            <div className="video-modal-container">
+                                <video 
+                                    className="modal-content video"
+                                    controls
+                                    autoPlay
+                                    src={modalMedia.url}
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                        ) : (
+                            <img 
+                                className="modal-content" 
+                                src={modalMedia?.url} 
+                                alt="Full Size" 
+                                onClick={e => e.stopPropagation()}
+                            />
+                        )}
+                    </div>
                 </div>
             )}
             {totalPages > 1 && (

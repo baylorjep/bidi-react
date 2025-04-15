@@ -8,6 +8,8 @@ import { supabase } from "../../supabaseClient";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import bidiLogo from "../../assets/images/bidi check.png";
 import "../../styles/BusinessSettings.css";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [isVerified, setIsVerified] = useState(false);
@@ -33,10 +35,37 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
     affiliateCoupon: false,
     verification: false,
     story: false,
+    bidTemplate: false,
   });
   const [profileDetails, setProfileDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [bidTemplate, setBidTemplate] = useState("");
+  const [showBidTemplateModal, setShowBidTemplateModal] = useState(false);
+  const [bidTemplateError, setBidTemplateError] = useState("");
+
+  // Add these modules for the editor
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["link", "image"],
+      ["clean"],
+    ],
+  };
+
+  const formats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "list",
+    "bullet",
+    "link",
+    "image",
+  ];
 
   useEffect(() => {
     console.log("Active Coupon:", activeCoupon);
@@ -96,6 +125,12 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
         setIsVerified(!!profile.verified_at);
         setActiveCoupon(existingCoupon || null); // Set the active coupon if it exists
         setProfileDetails(profile);
+        setCurrentMinPrice(profileDetails.minimum_price);
+
+        if (profileDetails.bid_template) {
+          setBidTemplate(profileDetails.bid_template);
+          setSetupProgress((prev) => ({ ...prev, bidTemplate: true }));
+        }
       } catch (error) {
         console.error("Error fetching setup progress:", error);
       } finally {
@@ -354,6 +389,78 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
     }
   };
 
+  const validateBidTemplate = (template) => {
+    // Regular expressions to detect contact information
+    const phoneRegex = /(\+\d{1,3}[-.]?)?\(?\d{3}\)?[-.]?\d{3}[-.]?\d{4}/g;
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    const websiteRegex =
+      /(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?/g;
+    const socialMediaRegex =
+      /(?:@|(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|facebook\.com|linkedin\.com|twitter\.com)\/)[a-zA-Z0-9._-]+/g;
+
+    // Check for any matches
+    const hasPhone = phoneRegex.test(template);
+    const hasEmail = emailRegex.test(template);
+    const hasWebsite = websiteRegex.test(template);
+    const hasSocialMedia = socialMediaRegex.test(template);
+
+    if (hasPhone || hasEmail || hasWebsite || hasSocialMedia) {
+      let errorMessage =
+        "Please remove the following contact information from your template:";
+      if (hasPhone) errorMessage += "\n- Phone numbers";
+      if (hasEmail) errorMessage += "\n- Email addresses";
+      if (hasWebsite) errorMessage += "\n- Website URLs";
+      if (hasSocialMedia) errorMessage += "\n- Social media handles/links";
+      errorMessage +=
+        "\n\nAll contact information should be managed through your Bidi profile. The user can see your work on your profile and will get your contact information after accepting your bid.";
+      setBidTemplateError(errorMessage);
+      return { isValid: false, message: errorMessage };
+    }
+
+    setBidTemplateError("");
+    return { isValid: true };
+  };
+
+  const handleBidTemplateChange = (content) => {
+    // Update the template content
+    setBidTemplate(content);
+
+    // Validate the content
+    validateBidTemplate(content);
+  };
+
+  const handleBidTemplateSubmit = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("User not found. Please log in again.");
+      return;
+    }
+
+    // Validate the template content
+    const validation = validateBidTemplate(bidTemplate);
+    if (!validation.isValid) {
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("business_profiles")
+      .update({
+        bid_template: bidTemplate,
+      })
+      .eq("id", user.id);
+
+    if (error) {
+      console.error("Error updating bid template:", error);
+      alert("An error occurred while updating your bid template.");
+    } else {
+      setShowBidTemplateModal(false);
+      setBidTemplateError("");
+    }
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -366,7 +473,8 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
         !setupProgress.minimumPrice ||
         !setupProgress.affiliateCoupon ||
         !setupProgress.verification ||
-        !setupProgress.story) && (
+        !setupProgress.story ||
+        !setupProgress.bidTemplate) && (
         <div className="setup-progress-container container mt-4 mb-4">
           <div className="card">
             <div className="card-body">
@@ -414,6 +522,18 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
                     <span>Affiliate Coupon Generated</span>
                     <button className="btn-link" onClick={handleGenerateCoupon}>
                       Generate now
+                    </button>
+                  </div>
+                )}
+                {!setupProgress.bidTemplate && (
+                  <div className="setup-item">
+                    <i className="fas fa-times-circle text-danger"></i>
+                    <span>Bid Template</span>
+                    <button
+                      className="btn-link"
+                      onClick={() => setShowBidTemplateModal(true)}
+                    >
+                      Set up now
                     </button>
                   </div>
                 )}
@@ -611,6 +731,19 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
           >
             <i className="fas fa-ticket-alt" style={{ marginRight: "8px" }}></i>
             {getButtonText()}
+          </button>
+        </div>
+        <div
+          className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
+          style={{ marginTop: "20px" }}
+        >
+          <button
+            style={{ fontWeight: "bold", color: "#9633eb" }}
+            className="btn-primary flex-fill"
+            onClick={() => setShowBidTemplateModal(true)}
+          >
+            <i className="fas fa-file-alt" style={{ marginRight: "8px" }}></i>
+            {bidTemplate ? "Edit Bid Template" : "Create Bid Template"}
           </button>
         </div>
       </div>
@@ -825,6 +958,57 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
             }}
           >
             Copy
+          </button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal for Bid Template Editing */}
+      <Modal
+        show={showBidTemplateModal}
+        onHide={() => {
+          setShowBidTemplateModal(false);
+          setBidTemplateError("");
+        }}
+        centered
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Bid Template</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <label htmlFor="bidTemplate" className="form-label">
+              Your bid template:
+            </label>
+            {bidTemplateError && (
+              <div className="alert alert-warning" role="alert">
+                {bidTemplateError.split("\n").map((line, index) => (
+                  <div key={index}>{line}</div>
+                ))}
+              </div>
+            )}
+            <ReactQuill
+              theme="snow"
+              value={bidTemplate}
+              onChange={handleBidTemplateChange}
+              modules={modules}
+              formats={formats}
+              style={{ height: "300px", marginBottom: "50px" }}
+            />
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <button
+            className="btn-danger"
+            onClick={() => {
+              setShowBidTemplateModal(false);
+              setBidTemplateError("");
+            }}
+          >
+            Close
+          </button>
+          <button className="btn-success" onClick={handleBidTemplateSubmit}>
+            Save
           </button>
         </Modal.Footer>
       </Modal>

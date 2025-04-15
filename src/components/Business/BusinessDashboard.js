@@ -2,11 +2,9 @@ import React, { useState, useEffect } from "react";
 // import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import { supabase } from "../../supabaseClient";
 import { useNavigate } from "react-router-dom";
-import "../../App.css"; // Include this for custom styles
-// import { Modal, Button } from "react-bootstrap"; // Make sure to install react-bootstrap
-// import Verification from "../../assets/Frame 1162.svg";
+import "../../App.css";
 import "../../styles/BusinessDashboard.css";
-import DashboardBanner from "./DashboardBanner.js";
+// import DashboardBanner from "./DashboardBanner.js";
 import verifiedCheckIcon from "../../assets/images/Icons/verified-check.svg";
 import dashboardIcon from "../../assets/images/Icons/dashboard.svg";
 import bidsIcon from "../../assets/images/Icons/bids.svg";
@@ -23,6 +21,7 @@ import BusinessSettings from "./BusinessSettings.js";
 import PortfolioPage from "../Business/Portfolio/Portfolio.js";
 import Onboarding from "../../components/Stripe/Onboarding.js";
 import OpenRequests from "../../components/Request/OpenRequests.js";
+import LoadingSpinner from "../LoadingSpinner.js";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -39,6 +38,22 @@ const BusinessDashSidebar = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [unviewedBidCount, setUnviewedBidCount] = useState(0);
+  const [isVerified, setIsVerified] = useState(false);
+  const [isVerificationPending, setIsVerificationPending] = useState(false);
+  const [stripeError, setStripeError] = useState(false);
+  const [portfolioPhotos, setPortfolioPhotos] = useState([]);
+  const [setupProgress, setSetupProgress] = useState({
+    paymentAccount: false,
+    downPayment: false,
+    minimumPrice: false,
+    affiliateCoupon: false,
+    verification: false,
+    story: false,
+    bidTemplate: false,
+  });
+  const [profileDetails, setProfileDetails] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,60 +69,62 @@ const BusinessDashSidebar = () => {
         }
         setUser(user);
 
-        // Fetch business details and profile picture concurrently
-        const [profileRes, profilePicRes, bidsRes] = await Promise.all([
-          supabase
-            .from("business_profiles")
-            .select(
-              "business_name, stripe_account_id, Bidi_Plus, business_category, is_admin"
-            )
-            .eq("id", user.id)
-            .single(),
-          supabase
-            .from("profile_photos")
-            .select("photo_url")
-            .eq("user_id", user.id)
-            .eq("photo_type", "profile")
-            .single(),
-          supabase.from("bids").select("*").eq("user_id", user.id), // Fetch all bids for this business
-        ]);
+        const { data: profile, error: profileError } = await supabase
+          .from("business_profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
 
-        if (profileRes.error) {
-          console.error("Error fetching business profile:", profileRes.error);
-          return;
-        }
+        if (profileError) throw profileError;
+
+        // Check for profile photos
+        const { data: photos, error: photosError } = await supabase
+          .from("profile_photos")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("photo_type", "profile")
+          .limit(1);
+
+        if (photosError) throw photosError;
+
+        // Update setupProgress state with accurate photo count
+        setPortfolioPhotos(photos || []);
+        setSetupProgress((prev) => ({
+          ...prev,
+          portfolio: photos && photos.length > 0,
+        }));
+
+        setError(null);
 
         // Set business profile data
-        if (profileRes.data) {
-          setBusinessName(
-            profileRes.data.business_name || "Business Name Not Found"
-          );
-          setConnectedAccountId(profileRes.data.stripe_account_id || null);
-          setBidiPlus(!!profileRes.data.Bidi_Plus);
-          setIsAdmin(!!profileRes.data.is_admin);
-          setProfile(profileRes.data);
+        if (profile) {
+          setBusinessName(profile.business_name || "Business Name Not Found");
+          setConnectedAccountId(profile.stripe_account_id || null);
+          setBidiPlus(!!profile.Bidi_Plus);
+          setIsAdmin(!!profile.is_admin);
+          setProfile(profile);
         }
 
         // Set profile picture
-        if (profilePicRes.data) {
-          setProfileImage(profilePicRes.data.photo_url);
-        } else if (profilePicRes.error) {
-          console.error("Error fetching profile picture:", profilePicRes.error);
-        }
-
-        if (profilePicRes.data) {
-          setProfileImage(profilePicRes.data.photo_url);
-        } else if (profilePicRes.error) {
-          console.error("Error fetching profile picture:", profilePicRes.error);
-        }
-
-        if (bidsRes.error) {
-          console.error("Error fetching bids:", bidsRes.error);
+        if (photos && photos.length > 0) {
+          setProfileImage(photos[0].photo_url); // Use the first photo as the profile picture
         } else {
-          setBids(bidsRes.data);
+          console.error("No profile picture found.");
+        }
+
+        const { data: bids, error: bidsError } = await supabase
+          .from("bids")
+          .select("*")
+          .eq("user_id", user.id);
+
+        if (bidsError) {
+          console.error("Error fetching bids:", bidsError);
+        } else {
+          setBids(bids);
         }
       } catch (error) {
         console.error("An error occurred while fetching data:", error);
+      } finally {
       }
     };
 

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import VendorList from '../components/VendorList/VendorList';
 import { Helmet } from 'react-helmet';
 import '../styles/LocationBasedVendors.css';
+import { supabase } from '../supabaseClient';
 
 const categories = [
     { id: 'photography', name: 'Photographer' },
@@ -124,6 +125,7 @@ const LocationBasedVendors = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const vendorsPerPage = 10;
+    const [openFilter, setOpenFilter] = useState(null);
 
     useEffect(() => {
         if (selectedCounty) {
@@ -138,51 +140,112 @@ const LocationBasedVendors = () => {
         setCurrentPage(1);
     }, [selectedCategory, selectedType, selectedCounty, selectedCity]);
 
+    useEffect(() => {
+        const fetchVendorCount = async () => {
+            let query = supabase
+                .from('business_profiles')
+                .select('*', { count: 'exact' })
+                .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
+
+            if (selectedCategory) {
+                query = query.eq('business_category', selectedCategory);
+            }
+
+            if (selectedCity || selectedCounty) {
+                const locationTerm = selectedCity || selectedCounty;
+                query = query.ilike('business_address', `%${locationTerm.replace(/-/g, ' ')}%`);
+            }
+
+            const { count, error } = await query;
+
+            if (error) {
+                console.error('Error fetching vendor count:', error);
+                return;
+            }
+
+            setTotalCount(count);
+        };
+
+        fetchVendorCount();
+    }, [selectedCategory, selectedCity, selectedCounty]);
+
     const formatLocation = () => {
-        if (!county && !city) return '';
-        const formattedCounty = county ? county.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : '';
-        const formattedCity = city ? city.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : '';
-        return formattedCity ? `${formattedCounty}, ${formattedCity}` : formattedCounty;
+        if (!county && !city) return 'Utah';
+        
+        const countyObj = county ? counties.find(c => c.id === county) : null;
+        const cityObj = city ? cities.find(c => c.id === city) : null;
+        
+        if (cityObj && countyObj) {
+            return `${cityObj.name}, ${countyObj.name}`;
+        } else if (cityObj) {
+            return cityObj.name;
+        } else if (countyObj) {
+            return countyObj.name;
+        }
+        return 'Utah';
     };
 
     const formatTitle = () => {
-        const categoryName = category 
-            ? categories.find(cat => cat.id === category)?.name?.toLowerCase() || ''
-            : '';
-
-        const typeString = (type && type !== 'all')
-            ? (categoryTypes[category]?.find(t => t.id === type)?.name || '') + ' '
-            : '';
-
-        const formattedCounty = county ? counties.find(c => c.id === county)?.name || '' : '';
-        const formattedCity = city ? cities.find(c => c.id === city)?.name || '' : '';
-        const locationString = city && formattedCity ? `${formattedCity}, ${formattedCounty}` : formattedCounty;
-
-        const parts = [typeString, categoryName].filter(Boolean).join('');
-        return `${parts}${locationString ? ' in ' : ''}${locationString} | Bidi`;
+        // Get the category and type from URL parameters
+        const categoryObj = categories.find(cat => cat.id === category);
+        const typeObj = type && categoryObj ? categoryTypes[categoryObj.id]?.find(t => t.id === type) : null;
+        const locationText = formatLocation();
+        
+        let titleParts = [];
+        
+        // Handle the category and type combination
+        if (categoryObj) {
+            if (typeObj) {
+                if (categoryObj.id === 'photography') {
+                    titleParts.push(`${typeObj.name} ${categoryObj.name}s`);
+                } else {
+                    titleParts.push(`${typeObj.name} ${categoryObj.name}s`);
+                }
+            } else {
+                titleParts.push(`${categoryObj.name}s`);
+            }
+        } else {
+            titleParts.push('Wedding Vendors');
+        }
+        
+        titleParts.push(`in ${locationText}`);
+        
+        return `${titleParts.join(' ')} | Bidi`;
     };
 
     const formatHeading = () => {
-        const categoryName = category 
-            ? categories.find(cat => cat.id === category)?.name?.toLowerCase() || ''
-            : '';
-
-        const typeString = (type && type !== 'all')
-            ? (categoryTypes[category]?.find(t => t.id === type)?.name || '') + ' '
-            : '';
-            
-        const formattedCounty = county ? counties.find(c => c.id === county)?.name || '' : '';
-        const formattedCity = city ? cities.find(c => c.id === city)?.name || '' : '';
-        const locationString = city && formattedCity ? `${formattedCity}, ${formattedCounty}` : formattedCounty;
+        // Get the category and type from URL parameters
+        const categoryObj = categories.find(cat => cat.id === category);
+        const typeObj = type && categoryObj ? categoryTypes[categoryObj.id]?.find(t => t.id === type) : null;
+        const locationText = formatLocation();
         
-        const parts = [typeString, categoryName].filter(Boolean).join('');
-        return `${parts}${locationString ? ' in ' : ''}${locationString}`;
+        let headingParts = [];
+        headingParts.push('Find');
+        
+        // Handle the category and type combination
+        if (categoryObj) {
+            if (typeObj) {
+                if (categoryObj.id === 'photography') {
+                    headingParts.push(`${typeObj.name} ${categoryObj.name}s`);
+                } else {
+                    headingParts.push(`${typeObj.name} ${categoryObj.name}s`);
+                }
+            } else {
+                headingParts.push(`${categoryObj.name}s`);
+            }
+        } else {
+            headingParts.push('Wedding Vendors');
+        }
+        
+        headingParts.push(`in ${locationText}`);
+        
+        return headingParts.join(' ');
     };
 
     const formatDescription = () => {
         const categoryName = category 
             ? categories.find(cat => cat.id === category)?.name || ''
-            : '';
+            : 'Wedding Vendors';
 
         const typeString = (type && type !== 'all')
             ? (categoryTypes[category]?.find(t => t.id === type)?.name || '') + ' '
@@ -190,46 +253,138 @@ const LocationBasedVendors = () => {
         
         const formattedCounty = county ? counties.find(c => c.id === county)?.name || '' : '';
         const formattedCity = city ? cities.find(c => c.id === city)?.name || '' : '';
-        const locationString = city && formattedCity ? `${formattedCity}, ${formattedCounty}` : formattedCounty;
+        
+        let locationString = '';
+        if (formattedCity && formattedCounty) {
+            locationString = `${formattedCity}, ${formattedCounty}`;
+        } else if (formattedCity) {
+            locationString = formattedCity;
+        } else if (formattedCounty) {
+            locationString = formattedCounty;
+        } else {
+            locationString = 'Utah';
+        }
 
-        const parts = [typeString, categoryName].filter(Boolean).join('');
-        return `Find the best ${parts}${locationString ? ' in ' : ''}${locationString}. Compare prices, read reviews, and book instantly with Bidi.`;
+        const serviceParts = [typeString, categoryName].filter(Boolean).join('');
+        return `Find and compare the best ${serviceParts}s in ${locationString}. Read verified reviews, check prices, and book instantly with Bidi.`;
     };
 
     const handleCategoryChange = (newCategory) => {
         setSelectedCategory(newCategory);
-        const path = selectedType 
-            ? `/${selectedType}/${newCategory}/${selectedCounty || ''}/${selectedCity || ''}`
-            : `/${newCategory}/${selectedCounty || ''}/${selectedCity || ''}`;
-        navigate(path.replace(/\/+$/, '')); // Remove trailing slashes
+        let path = '/';
+        const segments = [];
+        
+        if (newCategory) segments.push(newCategory);
+        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
+        if (selectedCounty) segments.push(selectedCounty);
+        if (selectedCity) segments.push(selectedCity);
+        
+        path += segments.join('/');
+        navigate(path || '/');
     };
 
     const handleTypeChange = (newType) => {
         setSelectedType(newType);
-        const path = `/${newType}/${selectedCategory}/${selectedCounty || ''}/${selectedCity || ''}`;
-        navigate(path.replace(/\/+$/, '')); // Remove trailing slashes
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (newType && newType !== 'all') segments.unshift(newType);
+        if (selectedCounty) segments.push(selectedCounty);
+        if (selectedCity) segments.push(selectedCity);
+        
+        path += segments.join('/');
+        navigate(path || '/');
     };
 
     const handleCountyChange = (newCounty) => {
         setSelectedCounty(newCounty);
         setSelectedCity(''); // Reset city when county changes
-        const path = selectedType 
-            ? `/${selectedType}/${selectedCategory}/${newCounty}`
-            : `/${selectedCategory}/${newCounty}`;
-        navigate(path);
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
+        if (newCounty) segments.push(newCounty);
+        
+        path += segments.join('/');
+        navigate(path || '/');
     };
 
     const handleCityChange = (newCity) => {
         setSelectedCity(newCity);
-        const path = selectedType 
-            ? `/${selectedType}/${selectedCategory}/${selectedCounty}/${newCity}`
-            : `/${selectedCategory}/${selectedCounty}/${newCity}`;
-        navigate(path);
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
+        if (selectedCounty) segments.push(selectedCounty);
+        if (newCity) segments.push(newCity);
+        
+        path += segments.join('/');
+        navigate(path || '/');
     };
 
     // Get the types for the selected category
     const getTypesForCategory = () => {
         return selectedCategory ? (categoryTypes[selectedCategory] || []) : [];
+    };
+
+    // Add these new handler functions after the existing handle*Change functions
+    const handleResetCategory = () => {
+        setSelectedCategory('');
+        setSelectedType(''); // Reset type when category is reset
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCounty) segments.push(selectedCounty);
+        if (selectedCity) segments.push(selectedCity);
+        
+        path += segments.join('/');
+        navigate(path || '/');
+    };
+
+    const handleResetType = () => {
+        setSelectedType('');
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (selectedCounty) segments.push(selectedCounty);
+        if (selectedCity) segments.push(selectedCity);
+        
+        path += segments.join('/');
+        navigate(path || '/');
+    };
+
+    const handleResetCounty = () => {
+        setSelectedCounty('');
+        setSelectedCity(''); // Reset city when county is reset
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
+        
+        path += segments.join('/');
+        navigate(path || '/');
+    };
+
+    const handleResetCity = () => {
+        setSelectedCity('');
+        let path = '/';
+        const segments = [];
+        
+        if (selectedCategory) segments.push(selectedCategory);
+        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
+        if (selectedCounty) segments.push(selectedCounty);
+        
+        path += segments.join('/');
+        navigate(path || '/');
+    };
+
+    const toggleFilter = (filterName) => {
+        setOpenFilter(openFilter === filterName ? null : filterName);
     };
 
     return (
@@ -246,72 +401,181 @@ const LocationBasedVendors = () => {
             </h1>
             
             <div className="filters-container-SEO">
-                <div className="filter-group">
-                    <h3 className='filter-title'>Find Wedding Services in {formatLocation()}</h3>
-                    {categories.map(cat => (
-                        <button
-                            key={cat.id}
-                            className={`filter-button-SEO ${selectedCategory === cat.id ? 'active' : ''}`}
-                            onClick={() => handleCategoryChange(cat.id)}
-                        >
-                            {cat.name}
-                        </button>
-                    ))}
-                </div>
-
-                {selectedCategory && (
-                    <div className="filter-group">
-                        <h3 className='filter-title'>Find {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Services By Type</h3>
-                        {getTypesForCategory().map(t => (
-                            <button
-                                key={t.id}
-                                className={`filter-button-SEO ${selectedType === t.id ? 'active' : ''}`}
-                                onClick={() => handleTypeChange(t.id)}
+                <div className="filter-accordion">
+                    <div 
+                        className={`filter-header ${openFilter === 'category' ? 'open' : ''}`}
+                        onClick={() => toggleFilter('category')}
+                    >
+                        <h3 className='filter-title'>
+                            {selectedCategory ? 
+                                `Selected: ${categories.find(cat => cat.id === selectedCategory)?.name}` : 
+                                'Select Service Type'}
+                            <span className="dropdown-arrow">▼</span>
+                        </h3>
+                        {selectedCategory && (
+                            <button 
+                                className="reset-filter-button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResetCategory();
+                                }}
+                                aria-label="Reset category filter"
                             >
-                                {t.name}
+                                ✕
+                            </button>
+                        )}
+                    </div>
+                    <div className={`filter-content ${openFilter === 'category' ? 'open' : ''}`}>
+                        {categories.map(cat => (
+                            <button
+                                key={cat.id}
+                                className={`filter-button-SEO ${selectedCategory === cat.id ? 'active' : ''}`}
+                                onClick={() => {
+                                    handleCategoryChange(cat.id);
+                                    toggleFilter(null);
+                                }}
+                            >
+                                {cat.name}
                             </button>
                         ))}
                     </div>
+                </div>
+
+                {selectedCategory && (
+                    <div className="filter-accordion">
+                        <div 
+                            className={`filter-header ${openFilter === 'type' ? 'open' : ''}`}
+                            onClick={() => toggleFilter('type')}
+                        >
+                            <h3 className='filter-title'>
+                                {selectedType ? 
+                                    `Selected: ${categoryTypes[selectedCategory]?.find(t => t.id === selectedType)?.name}` : 
+                                    'Select Service Specialization'}
+                                <span className="dropdown-arrow">▼</span>
+                            </h3>
+                            {selectedType && selectedType !== 'all' && (
+                                <button 
+                                    className="reset-filter-button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleResetType();
+                                    }}
+                                    aria-label="Reset type filter"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                        <div className={`filter-content ${openFilter === 'type' ? 'open' : ''}`}>
+                            {getTypesForCategory().map(t => (
+                                <button
+                                    key={t.id}
+                                    className={`filter-button-SEO ${selectedType === t.id ? 'active' : ''}`}
+                                    onClick={() => {
+                                        handleTypeChange(t.id);
+                                        toggleFilter(null);
+                                    }}
+                                >
+                                    {t.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 )}
 
-                <div className="filter-group">
-                    <h3 className='filter-title'>Find {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} in a Different County</h3>
-                    {counties.map(county => (
-                        <button
-                            key={county.id}
-                            className={`filter-button-SEO ${selectedCounty === county.id ? 'active' : ''}`}
-                            onClick={() => handleCountyChange(county.id)}
-                        >
-                            {county.name}
-                        </button>
-                    ))}
+                <div className="filter-accordion">
+                    <div 
+                        className={`filter-header ${openFilter === 'county' ? 'open' : ''}`}
+                        onClick={() => toggleFilter('county')}
+                    >
+                        <h3 className='filter-title'>
+                            {selectedCounty ? 
+                                `Selected: ${counties.find(c => c.id === selectedCounty)?.name}` : 
+                                'Select County'}
+                            <span className="dropdown-arrow">▼</span>
+                        </h3>
+                        {selectedCounty && (
+                            <button 
+                                className="reset-filter-button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResetCounty();
+                                }}
+                                aria-label="Reset county filter"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
+                    <div className={`filter-content ${openFilter === 'county' ? 'open' : ''}`}>
+                        {counties.map(county => (
+                            <button
+                                key={county.id}
+                                className={`filter-button-SEO ${selectedCounty === county.id ? 'active' : ''}`}
+                                onClick={() => {
+                                    handleCountyChange(county.id);
+                                    toggleFilter(null);
+                                }}
+                            >
+                                {county.name}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-                <div className="filter-group">
-                    <h3 className='filter-title'>Find {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} in a Different City</h3>
-                    {filteredCities.map(city => (
-                        <button
-                            key={city.id}
-                            className={`filter-button-SEO ${selectedCity === city.id ? 'active' : ''}`}
-                            onClick={() => handleCityChange(city.id)}
-                        >
-                            {city.name}
-                        </button>
-                    ))}
+
+                <div className="filter-accordion">
+                    <div 
+                        className={`filter-header ${openFilter === 'city' ? 'open' : ''}`}
+                        onClick={() => toggleFilter('city')}
+                    >
+                        <h3 className='filter-title'>
+                            {selectedCity ? 
+                                `Selected: ${cities.find(c => c.id === selectedCity)?.name}` : 
+                                'Select City'}
+                            <span className="dropdown-arrow">▼</span>
+                        </h3>
+                        {selectedCity && (
+                            <button 
+                                className="reset-filter-button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResetCity();
+                                }}
+                                aria-label="Reset city filter"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
+                    <div className={`filter-content ${openFilter === 'city' ? 'open' : ''}`}>
+                        {filteredCities.map(city => (
+                            <button
+                                key={city.id}
+                                className={`filter-button-SEO ${selectedCity === city.id ? 'active' : ''}`}
+                                onClick={() => {
+                                    handleCityChange(city.id);
+                                    toggleFilter(null);
+                                }}
+                            >
+                                {city.name}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
             <VendorList 
                 selectedCategory={selectedCategory}
                 sortOrder="recommended"
-                location={city || county} // Pass either city or county as location
+                location={selectedCity || selectedCounty}
                 categoryType={selectedType === 'all' ? '' : selectedType}
                 currentPage={currentPage}
                 vendorsPerPage={vendorsPerPage}
                 setCurrentPage={setCurrentPage}
                 totalCount={totalCount}
                 setTotalCount={setTotalCount}
-                preferredLocation={city || county} // New prop for location preference
-                preferredType={selectedType} // New prop for type preference
+                preferredLocation={selectedCity || selectedCounty}
+                preferredType={selectedType}
             />
         </div>
     );

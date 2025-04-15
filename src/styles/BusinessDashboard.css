@@ -132,7 +132,6 @@
   flex-grow: 1;
   padding: 5vh 0; /* Remove side padding */
   width: 70%; /* Reduce width to bring it closer to sidebar */
-  margin-left: -3vw; /* Move closer to the sidebar */
 }
 .dashboard-header {
   background: #a328f4;

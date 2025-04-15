@@ -1,25 +1,70 @@
-import React from "react";
-import "../../../styles/ImageModal.css";
+import React, { useEffect, useState } from "react";
+import Modal from "react-modal";
+import { convertHeicToJpeg } from "../../../utils/imageUtils";
 
-const ImageModal = ({ isOpen, imageUrl, onClose }) => {
-  if (!isOpen) return null;
+const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose }) => {
+  const [convertedUrl, setConvertedUrl] = useState(mediaUrl);
+  const [isConverting, setIsConverting] = useState(false);
 
-  const isVideo = imageUrl?.toLowerCase().endsWith('.mp4');
+  useEffect(() => {
+    const handleHeicImage = async () => {
+      if (!isVideo && mediaUrl && mediaUrl.toLowerCase().match(/\.heic$/)) {
+        setIsConverting(true);
+        const converted = await convertHeicToJpeg(mediaUrl);
+        setConvertedUrl(converted);
+        setIsConverting(false);
+      } else {
+        setConvertedUrl(mediaUrl);
+      }
+    };
+
+    handleHeicImage();
+
+    // Cleanup function to revoke object URL
+    return () => {
+      if (convertedUrl && convertedUrl !== mediaUrl) {
+        URL.revokeObjectURL(convertedUrl);
+      }
+    };
+  }, [mediaUrl, isVideo]);
 
   return (
-    <div className="image-modal-overlay" onClick={onClose}>
-      <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+    <Modal
+      isOpen={isOpen}
+      onRequestClose={onClose}
+      className="image-modal"
+      overlayClassName="image-modal-overlay"
+      ariaHideApp={false}
+    >
+      <button onClick={onClose} className="close-modal-button">×</button>
+      <div className="modal-content">
         {isVideo ? (
-          <video controls className="image-modal-img">
-            <source src={imageUrl} type="video/mp4" />
+          <video
+            src={mediaUrl}
+            controls
+            autoPlay
+            className="modal-media"
+          >
             Your browser does not support the video tag.
           </video>
         ) : (
-          <img src={imageUrl} alt="Enlarged Portfolio" className="image-modal-img" />
+          <>
+            {isConverting ? (
+              <div className="converting-overlay">
+                <div className="converting-spinner"></div>
+                <p>Converting image...</p>
+              </div>
+            ) : (
+              <img
+                src={convertedUrl}
+                alt="Portfolio item"
+                className="modal-media"
+              />
+            )}
+          </>
         )}
-        <button className="image-modal-close" onClick={onClose}>✖</button>
       </div>
-    </div>
+    </Modal>
   );
 };
 

@@ -945,5 +945,74 @@ td {
     }
 }
 
+.interactive-feature {
+    background: linear-gradient(135deg, #f8f2ff 0%, #fff 100%);
+    border-radius: 20px;
+    padding: 20px;
+    margin: 40px 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.interactive-feature-content {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    transition: transform 0.2s ease;
+}
+
+.interactive-feature-content:hover {
+    transform: translateY(-5px);
+}
+
+.interactive-feature-text {
+    flex: 1;
+}
+
+.interactive-feature-image {
+    flex: 1;
+    max-width: 400px;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.interactive-feature-image img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.interactive-feature:hover .interactive-feature-image img {
+    transform: scale(1.05);
+}
+
+.take-quiz-button {
+    background: #A328F4;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin-top: 20px;
+}
+
+.take-quiz-button:hover {
+    background: #8a14d4;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(163, 40, 244, 0.2);
+}
+
+@media (max-width: 768px) {
+    .interactive-feature-content {
+        flex-direction: column;
+    }
+    
+    .interactive-feature-image {
+        max-width: 100%;
+    }
+}
+
 
 

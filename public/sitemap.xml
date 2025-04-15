@@ -854,6 +854,67 @@
             </url>
         
             <url>
+                <loc>https://www.savewithbidi.com/wedding-vibe-quiz</loc>
+                <changefreq>weekly</changefreq>
+                <priority>0.9</priority>
+            </url>
+            </url>
+        
+            <url>
+                <loc>https://www.savewithbidi.com/event/photography/summit-county</loc>
+                <changefreq>weekly</changefreq>
+                <priority>0.8</priority>
+            </url>
+        
+            <url>
+                <loc>https://www.savewithbidi.com/event/photography/summit-county/park-city</loc>
+                <changefreq>weekly</changefreq>
+                <priority>0.8</priority>
+            </url>
+        
+            <url>
+                <loc>https://www.savewithbidi.com/event/photography/tooele-county</loc>
+                <changefreq>weekly</changefreq>
+                <priority>0.8</priority>
+            </url>
+        
+            <url>
+                <loc>https://www.savewithbidi.com/event/photography/tooele-county/tooele</loc>
+                <changefreq>weekly</changefreq>
+                <priority>0.8</priority>
+            </url>
+        
+            <url>
+                <loc>https://www.savewithbidi.com/event/photography/iron-county</loc>
+                <changefreq>weekly</changefreq>
+                <priority>0.8</priority>
+            </url>
+        
+            <url>
+                <loc>https://www.savewithbidi.com/event/photography/iron-county/cedar-city</loc>
+                <changefreq>weekly</changefreq>
+                <priority>0.8</priority>
+            </url>
+        
+            <url>
+                <loc>https://www.savewithbidi.com/event/photography/box-elder-county</loc>
+                <changefreq>weekly</changefreq>
+                <priority>0.8</priority>
+            </url>
+        
+            <url>
+                <loc>https://www.savewithbidi.com/event/photography/box-elder-county/brigham-city</loc>
+                <changefreq>weekly</changefreq>
+                <priority>0.8</priority>
+            </url>
+        
+            <url>
+                <loc>https://www.savewithbidi.com/event/photography/box-elder-county/tremonton</loc>
+                <changefreq>weekly</changefreq>
+                <priority>0.8</priority>
+            </url>
+        
+            <url>
                 <loc>https://www.savewithbidi.com/family/photography</loc>
                 <changefreq>weekly</changefreq>
                 <priority>0.8</priority>
@@ -4790,12 +4851,6 @@
             </url>
         
             <url>
-                <loc>https://www.savewithbidi.com/wedding/dj/tooele-county/tooele</loc>
-                <changefreq>weekly</changefreq>
-                <priority>0.8</priority>
-            </url>
-        
-            <url>
                 <loc>https://www.savewithbidi.com/wedding/dj/iron-county</loc>
                 <changefreq>weekly</changefreq>
                 <priority>0.8</priority>
@@ -6381,12 +6436,6 @@
         
             <url>
                 <loc>https://www.savewithbidi.com/photoshoot/beauty/utah-county/american-fork</loc>
-                <changefreq>weekly</changefreq>
-                <priority>0.8</priority>
-            </url>
-        
-            <url>
-                <loc>https://www.savewithbidi.com/photoshoot/beauty/utah-county/saratoga-springs</loc>
                 <changefreq>weekly</changefreq>
                 <priority>0.8</priority>
             </url>
