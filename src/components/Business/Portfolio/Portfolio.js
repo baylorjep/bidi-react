@@ -617,39 +617,41 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
             <div className="section-divider"></div>
 
-            {business.specializations &&
-              business.specializations.length > 0 && (
-                <div className="section-container-specialties">
-                  <h2 className="section-header">Specialties</h2>
-                  <div className="specialties-section">
-                    {business.specializations.map((specialty, index) => (
-                      <span key={index} className="specialty-item">
-                        • {specialty}
-                      </span>
-                    ))}
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      width: "100%",
-                    }}
+            <div className="section-container-specialties">
+              <h2 className="section-header">Specialties</h2>
+              <div className="specialties-section">
+                {business.specializations &&
+                business.specializations.length > 0 ? (
+                  business.specializations.map((specialty, index) => (
+                    <span key={index} className="specialty-item">
+                      • {specialty}
+                    </span>
+                  ))
+                ) : (
+                  <p className="no-specialties-text">No specialties yet.</p>
+                )}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  width: "100%",
+                }}
+              >
+                {isOwner && (
+                  <button
+                    className="edit-icon"
+                    onClick={() =>
+                      openEditModal({
+                        specializations: business.specializations,
+                      })
+                    }
                   >
-                    {isOwner && (
-                      <button
-                        className="edit-icon"
-                        onClick={() =>
-                          openEditModal({
-                            specializations: business.specializations,
-                          })
-                        }
-                      >
-                        ✎
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
+                    ✎
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {!isOwner && (
