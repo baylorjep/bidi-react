@@ -4,6 +4,8 @@ import { supabase } from "../../../supabaseClient";
 import "../../../styles/Gallery.css";
 import ImageModal from "./ImageModal";
 import { convertHeicToJpeg } from "../../../utils/imageUtils";
+import LoadingPlaceholder from '../../Common/LoadingPlaceholder';
+import ImageErrorBoundary from '../../Common/ImageErrorBoundary';
 
 const Gallery = () => {
   const { businessId } = useParams();
@@ -14,6 +16,7 @@ const Gallery = () => {
   const AUTO_PLAY_COUNT = 4; // Number of videos that will autoplay
   const [convertedUrls, setConvertedUrls] = useState({});
   const [convertingImages, setConvertingImages] = useState({});
+  const [imageLoading, setImageLoading] = useState({});
 
   useEffect(() => {
     const fetchPortfolioMedia = async () => {
@@ -64,7 +67,7 @@ const Gallery = () => {
   const handleMediaClick = (media) => {
     setSelectedMedia({
       url: media.url,
-      type: media.type
+      type: media.type === 'video' ? 'video' : 'image'
     });
   };
 
@@ -72,13 +75,21 @@ const Gallery = () => {
     setSelectedMedia(null);
   };
 
-  if (loading) return <p>Loading gallery...</p>;
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner">
+          Loading vendors and photos...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
       <ImageModal
         isOpen={!!selectedMedia}
-        imageUrl={selectedMedia?.url}
+        mediaUrl={selectedMedia?.url}
         mediaType={selectedMedia?.type}
         onClose={handleCloseModal}
       />
@@ -123,16 +134,28 @@ const Gallery = () => {
                       )}
                     </div>
                   ) : (
-                    <img
-                      src={convertedUrls[media.url] || media.url}
-                      alt={`Portfolio ${index}`}
-                      className="gallery-image"
-                      onClick={() => handleMediaClick(media)}
-                      style={{
-                        opacity: convertingImages[media.url] ? 0.5 : 1,
-                        transition: 'opacity 0.3s ease-in-out'
-                      }}
-                    />
+                    <ImageErrorBoundary>
+                      {imageLoading[`gallery-${index}`] ? (
+                        <LoadingPlaceholder 
+                          width="100%"
+                          height="100%"
+                          className="gallery-image"
+                        />
+                      ) : (
+                        <img
+                          src={convertedUrls[media.url] || media.url}
+                          alt={`Portfolio ${index}`}
+                          className={`gallery-image ${imageLoading[`gallery-${index}`] ? 'loading' : 'loaded'}`}
+                          onClick={() => handleMediaClick(media)}
+                          loading="lazy"
+                          onLoad={() => setImageLoading(prev => ({ ...prev, [`gallery-${index}`]: false }))}
+                          style={{
+                            opacity: convertingImages[media.url] ? 0.5 : 1,
+                            transition: 'opacity 0.3s ease-in-out'
+                          }}
+                        />
+                      )}
+                    </ImageErrorBoundary>
                   )}
                   {convertingImages[media.url] && (
                     <div className="converting-overlay">

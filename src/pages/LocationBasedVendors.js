@@ -66,51 +66,115 @@ const counties = [
 ];
 
 const cities = [
+    // Salt Lake County
     { id: 'salt-lake-city', name: 'Salt Lake City', county: 'salt-lake-county' },
-    { id: 'provo', name: 'Provo', county: 'utah-county' },
-    { id: 'ogden', name: 'Ogden', county: 'weber-county' },
-    { id: 'st-george', name: 'St. George', county: 'washington-county' },
-    { id: 'logan', name: 'Logan', county: 'cache-county' },
-    { id: 'layton', name: 'Layton', county: 'davis-county' },
-    { id: 'orem', name: 'Orem', county: 'utah-county' },
-    { id: 'sandy', name: 'Sandy', county: 'salt-lake-county' },
     { id: 'west-valley-city', name: 'West Valley City', county: 'salt-lake-county' },
-    { id: 'lehi', name: 'Lehi', county: 'utah-county' },
-    { id: 'herriman', name: 'Herriman', county: 'salt-lake-county' },
-    { id: 'draper', name: 'Draper', county: 'salt-lake-county' },
-    { id: 'bountiful', name: 'Bountiful', county: 'davis-county' },
-    { id: 'riverton', name: 'Riverton', county: 'salt-lake-county' },
-    { id: 'south-jordan', name: 'South Jordan', county: 'salt-lake-county' },
-    { id: 'tooele', name: 'Tooele', county: 'tooele-county' },
-    { id: 'eagle-mountain', name: 'Eagle Mountain', county: 'utah-county' },
-    { id: 'pleasant-grove', name: 'Pleasant Grove', county: 'utah-county' },
-    { id: 'springville', name: 'Springville', county: 'utah-county' },
-    { id: 'spanish-fork', name: 'Spanish Fork', county: 'utah-county' },
-    { id: 'american-fork', name: 'American Fork', county: 'utah-county' },
-    { id: 'kaysville', name: 'Kaysville', county: 'davis-county' },
-    { id: 'centerville', name: 'Centerville', county: 'davis-county' },
-    { id: 'farmington', name: 'Farmington', county: 'davis-county' },
-    { id: 'heber-city', name: 'Heber City', county: 'wasatch-county' },
-    { id: 'midway', name: 'Midway', county: 'wasatch-county' },
-    { id: 'park-city', name: 'Park City', county: 'summit-county' },
-    { id: 'saratoga-springs', name: 'Saratoga Springs', county: 'utah-county' },
-    { id: 'holladay', name: 'Holladay', county: 'salt-lake-county' },
-    { id: 'cottonwood-heights', name: 'Cottonwood Heights', county: 'salt-lake-county' },
-    { id: 'murray', name: 'Murray', county: 'salt-lake-county' },
     { id: 'west-jordan', name: 'West Jordan', county: 'salt-lake-county' },
-    { id: 'kearns', name: 'Kearns', county: 'salt-lake-county' },
+    { id: 'sandy', name: 'Sandy', county: 'salt-lake-county' },
+    { id: 'south-jordan', name: 'South Jordan', county: 'salt-lake-county' },
     { id: 'taylorsville', name: 'Taylorsville', county: 'salt-lake-county' },
+    { id: 'murray', name: 'Murray', county: 'salt-lake-county' },
+    { id: 'millcreek', name: 'Millcreek', county: 'salt-lake-county' },
+    { id: 'cottonwood-heights', name: 'Cottonwood Heights', county: 'salt-lake-county' },
+    { id: 'holladay', name: 'Holladay', county: 'salt-lake-county' },
+    { id: 'herriman', name: 'Herriman', county: 'salt-lake-county' },
+    { id: 'riverton', name: 'Riverton', county: 'salt-lake-county' },
+    { id: 'draper', name: 'Draper', county: 'salt-lake-county' },
+    { id: 'midvale', name: 'Midvale', county: 'salt-lake-county' },
+    { id: 'south-salt-lake', name: 'South Salt Lake', county: 'salt-lake-county' },
+
+    // Utah County
+    { id: 'provo', name: 'Provo', county: 'utah-county' },
+    { id: 'orem', name: 'Orem', county: 'utah-county' },
+    { id: 'lehi', name: 'Lehi', county: 'utah-county' },
+    { id: 'spanish-fork', name: 'Spanish Fork', county: 'utah-county' },
+    { id: 'pleasant-grove', name: 'Pleasant Grove', county: 'utah-county' },
+    { id: 'american-fork', name: 'American Fork', county: 'utah-county' },
+    { id: 'springville', name: 'Springville', county: 'utah-county' },
+    { id: 'payson', name: 'Payson', county: 'utah-county' },
+    { id: 'saratoga-springs', name: 'Saratoga Springs', county: 'utah-county' },
+    { id: 'eagle-mountain', name: 'Eagle Mountain', county: 'utah-county' },
+    { id: 'highland', name: 'Highland', county: 'utah-county' },
+    { id: 'lindon', name: 'Lindon', county: 'utah-county' },
+    { id: 'mapleton', name: 'Mapleton', county: 'utah-county' },
+    { id: 'vineyard', name: 'Vineyard', county: 'utah-county' },
+    { id: 'cedar-hills', name: 'Cedar Hills', county: 'utah-county' },
+
+    // Davis County
+    { id: 'layton', name: 'Layton', county: 'davis-county' },
+    { id: 'bountiful', name: 'Bountiful', county: 'davis-county' },
+    { id: 'clearfield', name: 'Clearfield', county: 'davis-county' },
+    { id: 'syracuse', name: 'Syracuse', county: 'davis-county' },
+    { id: 'kaysville', name: 'Kaysville', county: 'davis-county' },
+    { id: 'farmington', name: 'Farmington', county: 'davis-county' },
+    { id: 'centerville', name: 'Centerville', county: 'davis-county' },
+    { id: 'north-salt-lake', name: 'North Salt Lake', county: 'davis-county' },
+    { id: 'woods-cross', name: 'Woods Cross', county: 'davis-county' },
+    { id: 'clinton', name: 'Clinton', county: 'davis-county' },
+    { id: 'fruit-heights', name: 'Fruit Heights', county: 'davis-county' },
+    { id: 'west-bountiful', name: 'West Bountiful', county: 'davis-county' },
+    { id: 'sunset', name: 'Sunset', county: 'davis-county' },
+
+    // Weber County
+    { id: 'ogden', name: 'Ogden', county: 'weber-county' },
+    { id: 'roy', name: 'Roy', county: 'weber-county' },
+    { id: 'south-ogden', name: 'South Ogden', county: 'weber-county' },
+    { id: 'north-ogden', name: 'North Ogden', county: 'weber-county' },
+    { id: 'washington-terrace', name: 'Washington Terrace', county: 'weber-county' },
+    { id: 'riverdale', name: 'Riverdale', county: 'weber-county' },
+    { id: 'west-haven', name: 'West Haven', county: 'weber-county' },
+    { id: 'pleasant-view', name: 'Pleasant View', county: 'weber-county' },
+    { id: 'harrisville', name: 'Harrisville', county: 'weber-county' },
+
+    // Washington County
+    { id: 'st-george', name: 'St. George', county: 'washington-county' },
+    { id: 'washington-city', name: 'Washington City', county: 'washington-county' },
     { id: 'hurricane', name: 'Hurricane', county: 'washington-county' },
-    { id: 'cedar-city', name: 'Cedar City', county: 'iron-county' },
-    { id: 'moab', name: 'Moab', county: 'grand-county' },
+    { id: 'santa-clara', name: 'Santa Clara', county: 'washington-county' },
+    { id: 'ivins', name: 'Ivins', county: 'washington-county' },
+    { id: 'la-verkin', name: 'La Verkin', county: 'washington-county' },
+
+    // Cache County
+    { id: 'logan', name: 'Logan', county: 'cache-county' },
+    { id: 'north-logan', name: 'North Logan', county: 'cache-county' },
+    { id: 'smithfield', name: 'Smithfield', county: 'cache-county' },
+    { id: 'hyrum', name: 'Hyrum', county: 'cache-county' },
+    { id: 'providence', name: 'Providence', county: 'cache-county' },
+    { id: 'nibley', name: 'Nibley', county: 'cache-county' },
+
+    // Box Elder County
     { id: 'brigham-city', name: 'Brigham City', county: 'box-elder-county' },
     { id: 'tremonton', name: 'Tremonton', county: 'box-elder-county' },
-    { id: 'roosevelt', name: 'Roosevelt', county: 'duchesne-county' },
+    { id: 'perry', name: 'Perry', county: 'box-elder-county' },
+
+    // Tooele County
+    { id: 'tooele', name: 'Tooele', county: 'tooele-county' },
+    { id: 'grantsville', name: 'Grantsville', county: 'tooele-county' },
+    { id: 'stansbury-park', name: 'Stansbury Park', county: 'tooele-county' },
+
+    // Summit County
+    { id: 'park-city', name: 'Park City', county: 'summit-county' },
+    { id: 'snyderville', name: 'Snyderville', county: 'summit-county' },
+    { id: 'kimball-junction', name: 'Kimball Junction', county: 'summit-county' },
+
+    // Iron County
+    { id: 'cedar-city', name: 'Cedar City', county: 'iron-county' },
+    { id: 'enoch', name: 'Enoch', county: 'iron-county' },
+
+    // Other Notable Cities
     { id: 'vernal', name: 'Vernal', county: 'uintah-county' },
+    { id: 'moab', name: 'Moab', county: 'grand-county' },
     { id: 'price', name: 'Price', county: 'carbon-county' },
     { id: 'richfield', name: 'Richfield', county: 'sevier-county' },
-    { id: 'monticello', name: 'Monticello', county: 'san-juan-county' },
+    { id: 'heber-city', name: 'Heber City', county: 'wasatch-county' },
+    { id: 'midway', name: 'Midway', county: 'wasatch-county' },
+    { id: 'roosevelt', name: 'Roosevelt', county: 'duchesne-county' },
+    { id: 'ephraim', name: 'Ephraim', county: 'sanpete-county' },
+    { id: 'nephi', name: 'Nephi', county: 'juab-county' },
+    { id: 'delta', name: 'Delta', county: 'millard-county' },
     { id: 'kanab', name: 'Kanab', county: 'kane-county' },
+    { id: 'blanding', name: 'Blanding', county: 'san-juan-county' },
+    { id: 'monticello', name: 'Monticello', county: 'san-juan-county' }
 ];
 
 const LocationBasedVendors = () => {
@@ -121,19 +185,66 @@ const LocationBasedVendors = () => {
     const [selectedType, setSelectedType] = useState(type || 'all');
     const [selectedCounty, setSelectedCounty] = useState(county || '');
     const [selectedCity, setSelectedCity] = useState(city || '');
-    const [filteredCities, setFilteredCities] = useState([]);
+    const [openFilter, setOpenFilter] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const vendorsPerPage = 10;
-    const [openFilter, setOpenFilter] = useState(null);
 
-    useEffect(() => {
+    // Add search states for each filter
+    const [categorySearch, setCategorySearch] = useState('');
+    const [typeSearch, setTypeSearch] = useState('');
+    const [citySearch, setCitySearch] = useState('');
+
+    // Add filter functions
+    const getFilteredCategories = () => {
+        return categories.filter(cat => 
+            cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+        );
+    };
+
+    const getFilteredTypes = () => {
+        const types = getTypesForCategory();
+        return types.filter(type => 
+            type.name.toLowerCase().includes(typeSearch.toLowerCase())
+        );
+    };
+
+    const getFilteredCities = () => {
+        let filteredCities = cities;
+        
+        // First filter by selected county if one is selected
         if (selectedCounty) {
-            setFilteredCities(cities.filter(city => city.county === selectedCounty));
-        } else {
-            setFilteredCities(cities);
+            filteredCities = cities.filter(city => city.county === selectedCounty);
         }
-    }, [selectedCounty]);
+        
+        // Then filter by search term if one exists
+        if (citySearch) {
+            filteredCities = filteredCities.filter(city => 
+                city.name.toLowerCase().includes(citySearch.toLowerCase())
+            );
+        }
+        
+        return filteredCities;
+    };
+
+    // Reset search when closing filters
+    const toggleFilter = (filterName) => {
+        if (openFilter === filterName) {
+            setOpenFilter(null);
+        } else {
+            if (openFilter) {
+                document.querySelector(`.filter-accordion[data-filter="${openFilter}"]`)?.classList.remove('active');
+            }
+            setOpenFilter(filterName);
+        }
+    };
+
+    // Add cleanup effect
+    useEffect(() => {
+        return () => {
+            // No cleanup needed anymore
+        };
+    }, []);
 
     useEffect(() => {
         // Reset page when filters change
@@ -151,9 +262,8 @@ const LocationBasedVendors = () => {
                 query = query.eq('business_category', selectedCategory);
             }
 
-            if (selectedCity || selectedCounty) {
-                const locationTerm = selectedCity || selectedCounty;
-                query = query.ilike('business_address', `%${locationTerm.replace(/-/g, ' ')}%`);
+            if (selectedCity) {
+                query = query.ilike('business_address', `%${selectedCity.replace(/-/g, ' ')}%`);
             }
 
             const { count, error } = await query;
@@ -167,28 +277,22 @@ const LocationBasedVendors = () => {
         };
 
         fetchVendorCount();
-    }, [selectedCategory, selectedCity, selectedCounty]);
+    }, [selectedCategory, selectedCity]);
 
     const formatLocation = () => {
-        if (!county && !city) return 'Utah';
-        
-        const countyObj = county ? counties.find(c => c.id === county) : null;
-        const cityObj = city ? cities.find(c => c.id === city) : null;
-        
-        if (cityObj && countyObj) {
-            return `${cityObj.name}, ${countyObj.name}`;
-        } else if (cityObj) {
-            return cityObj.name;
-        } else if (countyObj) {
-            return countyObj.name;
+        if (selectedCity) {
+            const cityObj = cities.find(c => c.id === selectedCity);
+            return cityObj ? cityObj.name : 'Utah';
+        } else if (selectedCounty) {
+            const countyObj = counties.find(c => c.id === selectedCounty);
+            return countyObj ? countyObj.name : 'Utah';
         }
         return 'Utah';
     };
 
     const formatTitle = () => {
-        // Get the category and type from URL parameters
-        const categoryObj = categories.find(cat => cat.id === category);
-        const typeObj = type && categoryObj ? categoryTypes[categoryObj.id]?.find(t => t.id === type) : null;
+        const categoryObj = categories.find(cat => cat.id === selectedCategory);
+        const typeObj = selectedType && categoryObj ? categoryTypes[categoryObj.id]?.find(t => t.id === selectedType) : null;
         const locationText = formatLocation();
         
         let titleParts = [];
@@ -196,11 +300,7 @@ const LocationBasedVendors = () => {
         // Handle the category and type combination
         if (categoryObj) {
             if (typeObj) {
-                if (categoryObj.id === 'photography') {
-                    titleParts.push(`${typeObj.name} ${categoryObj.name}s`);
-                } else {
-                    titleParts.push(`${typeObj.name} ${categoryObj.name}s`);
-                }
+                titleParts.push(`${typeObj.name} ${categoryObj.name}s`);
             } else {
                 titleParts.push(`${categoryObj.name}s`);
             }
@@ -214,9 +314,8 @@ const LocationBasedVendors = () => {
     };
 
     const formatHeading = () => {
-        // Get the category and type from URL parameters
-        const categoryObj = categories.find(cat => cat.id === category);
-        const typeObj = type && categoryObj ? categoryTypes[categoryObj.id]?.find(t => t.id === type) : null;
+        const categoryObj = categories.find(cat => cat.id === selectedCategory);
+        const typeObj = selectedType && categoryObj ? categoryTypes[categoryObj.id]?.find(t => t.id === selectedType) : null;
         const locationText = formatLocation();
         
         let headingParts = [];
@@ -225,11 +324,7 @@ const LocationBasedVendors = () => {
         // Handle the category and type combination
         if (categoryObj) {
             if (typeObj) {
-                if (categoryObj.id === 'photography') {
-                    headingParts.push(`${typeObj.name} ${categoryObj.name}s`);
-                } else {
-                    headingParts.push(`${typeObj.name} ${categoryObj.name}s`);
-                }
+                headingParts.push(`${typeObj.name} ${categoryObj.name}s`);
             } else {
                 headingParts.push(`${categoryObj.name}s`);
             }
@@ -243,24 +338,19 @@ const LocationBasedVendors = () => {
     };
 
     const formatDescription = () => {
-        const categoryName = category 
-            ? categories.find(cat => cat.id === category)?.name || ''
+        const categoryName = selectedCategory 
+            ? categories.find(cat => cat.id === selectedCategory)?.name || ''
             : 'Wedding Vendors';
 
-        const typeString = (type && type !== 'all')
-            ? (categoryTypes[category]?.find(t => t.id === type)?.name || '') + ' '
+        const typeString = (selectedType && selectedType !== 'all')
+            ? (categoryTypes[selectedCategory]?.find(t => t.id === selectedType)?.name || '') + ' '
             : '';
         
-        const formattedCounty = county ? counties.find(c => c.id === county)?.name || '' : '';
-        const formattedCity = city ? cities.find(c => c.id === city)?.name || '' : '';
-        
         let locationString = '';
-        if (formattedCity && formattedCounty) {
-            locationString = `${formattedCity}, ${formattedCounty}`;
-        } else if (formattedCity) {
-            locationString = formattedCity;
-        } else if (formattedCounty) {
-            locationString = formattedCounty;
+        if (selectedCity) {
+            locationString = cities.find(c => c.id === selectedCity)?.name || '';
+        } else if (selectedCounty) {
+            locationString = counties.find(c => c.id === selectedCounty)?.name || '';
         } else {
             locationString = 'Utah';
         }
@@ -271,12 +361,11 @@ const LocationBasedVendors = () => {
 
     const handleCategoryChange = (newCategory) => {
         setSelectedCategory(newCategory);
+        setSelectedType(''); // Reset type when category changes
         let path = '/';
         const segments = [];
         
         if (newCategory) segments.push(newCategory);
-        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
-        if (selectedCounty) segments.push(selectedCounty);
         if (selectedCity) segments.push(selectedCity);
         
         path += segments.join('/');
@@ -289,8 +378,7 @@ const LocationBasedVendors = () => {
         const segments = [];
         
         if (selectedCategory) segments.push(selectedCategory);
-        if (newType && newType !== 'all') segments.unshift(newType);
-        if (selectedCounty) segments.push(selectedCounty);
+        if (newType && newType !== 'all') segments.push(newType);
         if (selectedCity) segments.push(selectedCity);
         
         path += segments.join('/');
@@ -317,8 +405,7 @@ const LocationBasedVendors = () => {
         const segments = [];
         
         if (selectedCategory) segments.push(selectedCategory);
-        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
-        if (selectedCounty) segments.push(selectedCounty);
+        if (selectedType && selectedType !== 'all') segments.push(selectedType);
         if (newCity) segments.push(newCity);
         
         path += segments.join('/');
@@ -383,200 +470,299 @@ const LocationBasedVendors = () => {
         navigate(path || '/');
     };
 
-    const toggleFilter = (filterName) => {
-        setOpenFilter(openFilter === filterName ? null : filterName);
+    // Generate structured data for the page
+    const generateStructuredData = () => {
+        const categoryObj = categories.find(cat => cat.id === selectedCategory);
+        const typeObj = selectedType && categoryObj ? categoryTypes[categoryObj.id]?.find(t => t.id === selectedType) : null;
+        const locationText = formatLocation();
+
+        return {
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            "name": formatTitle().replace(" | Bidi", ""),
+            "description": formatDescription(),
+            "areaServed": {
+                "@type": "State",
+                "name": "Utah",
+                "containsPlace": {
+                    "@type": selectedCity ? "City" : "County",
+                    "name": locationText
+                }
+            },
+            "serviceType": categoryObj ? `${typeObj ? typeObj.name + ' ' : ''}${categoryObj.name}` : "Wedding Vendor",
+            "url": window.location.href
+        };
     };
 
     return (
-        <div className="location-based-vendors" style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+        <div className="location-based-vendors">
             <Helmet>
                 <title>{formatTitle()}</title>
                 <meta name="description" content={formatDescription()} />
                 <meta property="og:title" content={formatTitle()} />
                 <meta property="og:description" content={formatDescription()} />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={window.location.href} />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={formatTitle()} />
+                <meta name="twitter:description" content={formatDescription()} />
+                <link rel="canonical" href={window.location.href} />
+                <meta name="robots" content="index, follow" />
+                <script type="application/ld+json">
+                    {JSON.stringify(generateStructuredData())}
+                </script>
             </Helmet>
             
-            <h1 style={{fontFamily:'Outfit', fontWeight:"bold"}}>
-                {formatHeading()}
-            </h1>
+            {/* Breadcrumb Navigation */}
+            <nav aria-label="breadcrumb" className="breadcrumb-container">
+                <ol className="breadcrumb">
+                    <li className="breadcrumb-item"><a href="/">Home</a></li>
+                    {selectedCategory && (
+                        <li className="breadcrumb-item">
+                            <a href={`/${selectedCategory}`}>
+                                {categories.find(cat => cat.id === selectedCategory)?.name}s
+                            </a>
+                        </li>
+                    )}
+                    {selectedType && selectedType !== 'all' && (
+                        <li className="breadcrumb-item">
+                            <a href={`/${selectedCategory}/${selectedType}`}>
+                                {categoryTypes[selectedCategory]?.find(t => t.id === selectedType)?.name}
+                            </a>
+                        </li>
+                    )}
+                    {selectedCity && (
+                        <li className="breadcrumb-item active" aria-current="page">
+                            {cities.find(c => c.id === selectedCity)?.name}
+                        </li>
+                    )}
+                </ol>
+            </nav>
             
-            <div className="filters-container-SEO">
-                <div className="filter-accordion">
-                    <div 
-                        className={`filter-header ${openFilter === 'category' ? 'open' : ''}`}
-                        onClick={() => toggleFilter('category')}
-                    >
-                        <h3 className='filter-title'>
-                            {selectedCategory ? 
-                                `Selected: ${categories.find(cat => cat.id === selectedCategory)?.name}` : 
-                                'Select Service Type'}
-                            <span className="dropdown-arrow">▼</span>
-                        </h3>
+            <header>
+                <h1 style={{fontFamily:'Outfit', fontWeight:"bold"}} className="page-title">
+                    {formatHeading()}
+                </h1>
+                <p className="lead text-center location-description">
+                    {formatDescription()}
+                </p>
+            </header>
+            
+            <main style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
+                <section className="filters-section">
+                    <h2 className="visually-hidden">Search Filters</h2>
+                    <div className="filters-container-SEO">
+                        <div className="filter-accordion" data-filter="category">
+                            <div 
+                                className={`filter-header ${openFilter === 'category' ? 'open' : ''}`}
+                                onClick={() => toggleFilter('category')}
+                            >
+                                <h3 className='filter-title'>
+                                    {selectedCategory ? 
+                                        `Selected: ${categories.find(cat => cat.id === selectedCategory)?.name}` : 
+                                        'Select Service Type'}
+                                    <span className="dropdown-arrow">▼</span>
+                                </h3>
+                                {selectedCategory && (
+                                    <button 
+                                        className="reset-filter-button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleResetCategory();
+                                        }}
+                                        aria-label="Reset category filter"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+                            <div className={`filter-content ${openFilter === 'category' ? 'open' : ''}`}>
+                                <input
+                                    type="text"
+                                    className="filter-search"
+                                    placeholder="Search services..."
+                                    value={categorySearch}
+                                    onChange={(e) => setCategorySearch(e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                                <div className="filter-content-grid">
+                                    {getFilteredCategories().map(cat => (
+                                        <button
+                                            key={cat.id}
+                                            className={`filter-button-SEO ${selectedCategory === cat.id ? 'active' : ''}`}
+                                            onClick={() => {
+                                                handleCategoryChange(cat.id);
+                                                toggleFilter(null);
+                                            }}
+                                        >
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
                         {selectedCategory && (
-                            <button 
-                                className="reset-filter-button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleResetCategory();
-                                }}
-                                aria-label="Reset category filter"
-                            >
-                                ✕
-                            </button>
-                        )}
-                    </div>
-                    <div className={`filter-content ${openFilter === 'category' ? 'open' : ''}`}>
-                        {categories.map(cat => (
-                            <button
-                                key={cat.id}
-                                className={`filter-button-SEO ${selectedCategory === cat.id ? 'active' : ''}`}
-                                onClick={() => {
-                                    handleCategoryChange(cat.id);
-                                    toggleFilter(null);
-                                }}
-                            >
-                                {cat.name}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {selectedCategory && (
-                    <div className="filter-accordion">
-                        <div 
-                            className={`filter-header ${openFilter === 'type' ? 'open' : ''}`}
-                            onClick={() => toggleFilter('type')}
-                        >
-                            <h3 className='filter-title'>
-                                {selectedType ? 
-                                    `Selected: ${categoryTypes[selectedCategory]?.find(t => t.id === selectedType)?.name}` : 
-                                    'Select Service Specialization'}
-                                <span className="dropdown-arrow">▼</span>
-                            </h3>
-                            {selectedType && selectedType !== 'all' && (
-                                <button 
-                                    className="reset-filter-button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleResetType();
-                                    }}
-                                    aria-label="Reset type filter"
+                            <div className="filter-accordion" data-filter="type">
+                                <div 
+                                    className={`filter-header ${openFilter === 'type' ? 'open' : ''}`}
+                                    onClick={() => toggleFilter('type')}
                                 >
-                                    ✕
-                                </button>
-                            )}
-                        </div>
-                        <div className={`filter-content ${openFilter === 'type' ? 'open' : ''}`}>
-                            {getTypesForCategory().map(t => (
-                                <button
-                                    key={t.id}
-                                    className={`filter-button-SEO ${selectedType === t.id ? 'active' : ''}`}
-                                    onClick={() => {
-                                        handleTypeChange(t.id);
-                                        toggleFilter(null);
-                                    }}
-                                >
-                                    {t.name}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                <div className="filter-accordion">
-                    <div 
-                        className={`filter-header ${openFilter === 'county' ? 'open' : ''}`}
-                        onClick={() => toggleFilter('county')}
-                    >
-                        <h3 className='filter-title'>
-                            {selectedCounty ? 
-                                `Selected: ${counties.find(c => c.id === selectedCounty)?.name}` : 
-                                'Select County'}
-                            <span className="dropdown-arrow">▼</span>
-                        </h3>
-                        {selectedCounty && (
-                            <button 
-                                className="reset-filter-button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleResetCounty();
-                                }}
-                                aria-label="Reset county filter"
-                            >
-                                ✕
-                            </button>
+                                    <h3 className='filter-title'>
+                                        {selectedType && selectedType !== 'all' ? 
+                                            `Selected: ${categoryTypes[selectedCategory]?.find(t => t.id === selectedType)?.name}` : 
+                                            'Pick a specialization'}
+                                        <span className="dropdown-arrow">▼</span>
+                                    </h3>
+                                    {selectedType && selectedType !== 'all' && (
+                                        <button 
+                                            className="reset-filter-button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleResetType();
+                                            }}
+                                            aria-label="Reset type filter"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
+                                <div className={`filter-content ${openFilter === 'type' ? 'open' : ''}`}>
+                                    <input
+                                        type="text"
+                                        className="filter-search"
+                                        placeholder="Search specializations..."
+                                        value={typeSearch}
+                                        onChange={(e) => setTypeSearch(e.target.value)}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                    <div className="filter-content-grid">
+                                        {getFilteredTypes().map(t => (
+                                            <button
+                                                key={t.id}
+                                                className={`filter-button-SEO ${selectedType === t.id ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    handleTypeChange(t.id);
+                                                    toggleFilter(null);
+                                                }}
+                                            >
+                                                {t.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         )}
-                    </div>
-                    <div className={`filter-content ${openFilter === 'county' ? 'open' : ''}`}>
-                        {counties.map(county => (
-                            <button
-                                key={county.id}
-                                className={`filter-button-SEO ${selectedCounty === county.id ? 'active' : ''}`}
-                                onClick={() => {
-                                    handleCountyChange(county.id);
-                                    toggleFilter(null);
-                                }}
-                            >
-                                {county.name}
-                            </button>
-                        ))}
-                    </div>
-                </div>
 
-                <div className="filter-accordion">
-                    <div 
-                        className={`filter-header ${openFilter === 'city' ? 'open' : ''}`}
-                        onClick={() => toggleFilter('city')}
-                    >
-                        <h3 className='filter-title'>
-                            {selectedCity ? 
-                                `Selected: ${cities.find(c => c.id === selectedCity)?.name}` : 
-                                'Select City'}
-                            <span className="dropdown-arrow">▼</span>
-                        </h3>
-                        {selectedCity && (
-                            <button 
-                                className="reset-filter-button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleResetCity();
-                                }}
-                                aria-label="Reset city filter"
+                        <div className="filter-accordion" data-filter="county">
+                            <div 
+                                className={`filter-header ${openFilter === 'county' ? 'open' : ''}`}
+                                onClick={() => toggleFilter('county')}
                             >
-                                ✕
-                            </button>
-                        )}
-                    </div>
-                    <div className={`filter-content ${openFilter === 'city' ? 'open' : ''}`}>
-                        {filteredCities.map(city => (
-                            <button
-                                key={city.id}
-                                className={`filter-button-SEO ${selectedCity === city.id ? 'active' : ''}`}
-                                onClick={() => {
-                                    handleCityChange(city.id);
-                                    toggleFilter(null);
-                                }}
-                            >
-                                {city.name}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </div>
+                                <h3 className='filter-title'>
+                                    {selectedCounty ? 
+                                        `Selected: ${counties.find(c => c.id === selectedCounty)?.name}` : 
+                                        'Select County'}
+                                    <span className="dropdown-arrow">▼</span>
+                                </h3>
+                                {selectedCounty && (
+                                    <button 
+                                        className="reset-filter-button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleResetCounty();
+                                        }}
+                                        aria-label="Reset county filter"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+                            <div className={`filter-content ${openFilter === 'county' ? 'open' : ''}`}>
+                                {counties.map(county => (
+                                    <button
+                                        key={county.id}
+                                        className={`filter-button-SEO ${selectedCounty === county.id ? 'active' : ''}`}
+                                        onClick={() => {
+                                            handleCountyChange(county.id);
+                                            toggleFilter(null);
+                                        }}
+                                    >
+                                        {county.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
-            <VendorList 
-                selectedCategory={selectedCategory}
-                sortOrder="recommended"
-                location={selectedCity || selectedCounty}
-                categoryType={selectedType === 'all' ? '' : selectedType}
-                currentPage={currentPage}
-                vendorsPerPage={vendorsPerPage}
-                setCurrentPage={setCurrentPage}
-                totalCount={totalCount}
-                setTotalCount={setTotalCount}
-                preferredLocation={selectedCity || selectedCounty}
-                preferredType={selectedType}
-            />
+                        <div className="filter-accordion" data-filter="city">
+                            <div 
+                                className={`filter-header ${openFilter === 'city' ? 'open' : ''}`}
+                                onClick={() => toggleFilter('city')}
+                            >
+                                <h3 className='filter-title'>
+                                    {selectedCity ? 
+                                        `Selected: ${cities.find(c => c.id === selectedCity)?.name}` : 
+                                        'Select City'}
+                                    <span className="dropdown-arrow">▼</span>
+                                </h3>
+                                {selectedCity && (
+                                    <button 
+                                        className="reset-filter-button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleResetCity();
+                                        }}
+                                        aria-label="Reset city filter"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+                            <div className={`filter-content ${openFilter === 'city' ? 'open' : ''}`}>
+                                <input
+                                    type="text"
+                                    className="filter-search"
+                                    placeholder="Search cities..."
+                                    value={citySearch}
+                                    onChange={(e) => setCitySearch(e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                                <div className="filter-content-grid">
+                                    {getFilteredCities().map(city => (
+                                        <button
+                                            key={city.id}
+                                            className={`filter-button-SEO ${selectedCity === city.id ? 'active' : ''}`}
+                                            onClick={() => {
+                                                handleCityChange(city.id);
+                                                toggleFilter(null);
+                                            }}
+                                        >
+                                            {city.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="vendors-section">
+                    <h2 className="visually-hidden">Vendor Results</h2>
+                    <VendorList 
+                        selectedCategory={selectedCategory}
+                        sortOrder="recommended"
+                        location={selectedCity}
+                        categoryType={selectedType === 'all' ? '' : selectedType}
+                        currentPage={currentPage}
+                        vendorsPerPage={vendorsPerPage}
+                        setCurrentPage={setCurrentPage}
+                        totalCount={totalCount}
+                        setTotalCount={setTotalCount}
+                        preferredLocation={selectedCity}
+                        preferredType={selectedType}
+                    />
+                </section>
+            </main>
         </div>
     );
 };
