@@ -125,10 +125,23 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
         setIsVerified(!!profile.verified_at);
         setActiveCoupon(existingCoupon || null); // Set the active coupon if it exists
         setProfileDetails(profile);
-        setCurrentMinPrice(profileDetails.minimum_price);
+        setCurrentMinPrice(profile.minimum_price || null); // Use profile.minimum_price directly
+        setMinimumPrice(profile.minimum_price || ""); // Set the minimum price for the modal input
 
-        if (profileDetails.bid_template) {
-          setBidTemplate(profileDetails.bid_template);
+        if (profile.down_payment_type) {
+          setPaymentType(profile.down_payment_type); // Set the payment type (percentage or flat fee)
+          setDownPaymentNumber(
+            profile.down_payment_type === "flat fee" ? profile.amount : ""
+          ); // Set flat fee amount
+          setPercentage(
+            profile.down_payment_type === "percentage"
+              ? profile.amount * 100
+              : ""
+          );
+        }
+
+        if (profile.bid_template) {
+          setBidTemplate(profile.bid_template); // Set the bid template content
           setSetupProgress((prev) => ({ ...prev, bidTemplate: true }));
         }
       } catch (error) {
@@ -715,7 +728,9 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
             onClick={() => setShowMinPriceModal(true)}
           >
             <i className="fas fa-tag" style={{ marginRight: "8px" }}></i>
-            Set Minimum Price {currentMinPrice ? `($${currentMinPrice})` : ""}
+            {currentMinPrice !== null
+              ? `Set Minimum Price ($${currentMinPrice})`
+              : "Set Minimum Price"}
           </button>
         </div>
 

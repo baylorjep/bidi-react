@@ -11,8 +11,11 @@ import Modal from "react-modal"; // Import the modal library
 import { convertHeicToJpeg } from "../../../utils/imageUtils";
 import LoadingSpinner from "../../LoadingSpinner"; // Import the loading spinner component
 
-const Portfolio = () => {
-  const [businessId, setBusinessId] = useState(null);
+const Portfolio = ({ businessId: propBusinessId }) => {
+  const { businessId: paramBusinessId } = useParams();
+  const [businessId, setBusinessId] = useState(
+    propBusinessId || paramBusinessId || null
+  );
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
   const [portfolioPics, setPortfolioPics] = useState([]);
@@ -35,6 +38,8 @@ const Portfolio = () => {
 
   useEffect(() => {
     const fetchBusinessId = async () => {
+      if (businessId) return; // Skip if businessId is already set
+
       try {
         // Get the logged-in user
         const {
@@ -66,7 +71,7 @@ const Portfolio = () => {
     };
 
     fetchBusinessId();
-  }, []);
+  }, [businessId]);
 
   const fetchBusinessData = async () => {
     const { data: businessData, error: businessError } = await supabase
@@ -221,7 +226,7 @@ const Portfolio = () => {
   const handleProfilePicEdit = () => {
     openEditModal({
       story: business.story,
-      business_owner: business.business_owner
+      business_owner: business.business_owner,
     });
   };
 
@@ -593,14 +598,16 @@ const Portfolio = () => {
                   </p>
                 </div>
                 {isOwner && (
-                  <button 
-                    className="edit-icon" 
-                    style={{ position: 'absolute', right: '10px', top: '10px' }}
-                    onClick={() => openEditModal({
-                      business_owner: business.business_owner,
-                      story: business.story,
-                      profile_picture: true  // Add this flag to show profile picture section
-                    })}
+                  <button
+                    className="edit-icon"
+                    style={{ position: "absolute", right: "10px", top: "10px" }}
+                    onClick={() =>
+                      openEditModal({
+                        business_owner: business.business_owner,
+                        story: business.story,
+                        profile_picture: true, // Add this flag to show profile picture section
+                      })
+                    }
                   >
                     ✎
                   </button>
@@ -610,57 +617,61 @@ const Portfolio = () => {
 
             <div className="section-divider"></div>
 
-            {business.specializations &&
-              business.specializations.length > 0 && (
-                <div className="section-container-specialties">
-                  <h2 className="section-header">Specialties</h2>
-                  <div className="specialties-section">
-                    {business.specializations.map((specialty, index) => (
-                      <span key={index} className="specialty-item">
-                        • {specialty}
-                      </span>
-                    ))}
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      width: "100%",
-                    }}
-                  >
-                    {isOwner && (
-                      <button
-                        className="edit-icon"
-                        onClick={() =>
-                          openEditModal({
-                            specializations: business.specializations,
-                          })
-                        }
-                      >
-                        ✎
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-          </div>
-
-          <div className="section-right">
-            <div className="get-a-bid-container">
-              <h2 className="get-quote-header">Need a Bid?</h2>
+            <div className="section-container-specialties">
+              <h2 className="section-header">Specialties</h2>
+              <div className="specialties-section">
+                {business.specializations &&
+                business.specializations.length > 0 ? (
+                  business.specializations.map((specialty, index) => (
+                    <span key={index} className="specialty-item">
+                      • {specialty}
+                    </span>
+                  ))
+                ) : (
+                  <p className="no-specialties-text">No specialties yet.</p>
+                )}
+              </div>
               <div
                 style={{
-                  width: "100%",
                   display: "flex",
-                  justifyContent: "center",
+                  justifyContent: "flex-end",
+                  width: "100%",
                 }}
               >
-                <button className="vendor-button" onClick={handleGetQuote}>
-                  Get a Tailored Bid
-                </button>
+                {isOwner && (
+                  <button
+                    className="edit-icon"
+                    onClick={() =>
+                      openEditModal({
+                        specializations: business.specializations,
+                      })
+                    }
+                  >
+                    ✎
+                  </button>
+                )}
               </div>
             </div>
           </div>
+
+          {!isOwner && (
+            <div className="section-right">
+              <div className="get-a-bid-container">
+                <h2 className="get-quote-header">Need a Bid?</h2>
+                <div
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <button className="vendor-button" onClick={handleGetQuote}>
+                    Get a Tailored Bid
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="section-divider"></div>
