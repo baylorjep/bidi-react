@@ -444,7 +444,10 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       src={convertedUrls[item] || item}
                       alt={`Portfolio ${index}`}
                       className="portfolio-image-portfolio"
-                      onClick={() => handleImageClick(item)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleImageClick(item);
+                      }}
                     />
                   );
                 })}
@@ -655,19 +658,15 @@ const Portfolio = ({ businessId: propBusinessId }) => {
           </div>
 
           {!isOwner && (
-            <div className="section-right">
-              <div className="get-a-bid-container">
-                <h2 className="get-quote-header">Need a Bid?</h2>
-                <div
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
-                >
-                  <button className="vendor-button" onClick={handleGetQuote}>
-                    Get a Tailored Bid
-                  </button>
+            <div className="sticky-footer-wrapper">
+              <div className="section-right sticky-footer">
+                <div className="get-a-bid-container">
+                  <h2 className="get-quote-header">Need a Bid?</h2>
+                  <div className="vendor-button-container">
+                    <button className="vendor-button" onClick={handleGetQuote}>
+                      Get a Tailored Bid
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
