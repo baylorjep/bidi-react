@@ -30,6 +30,7 @@ export default function BidsPage() {
     const [newCouponCode, setNewCouponCode] = useState('');
     const [activeCoupon, setActiveCoupon] = useState(null);
     const [calculatorAmount, setCalculatorAmount] = useState('');
+    const [showShareSection, setShowShareSection] = useState(true);
     const navigate = useNavigate();
 
     const isNew = (createdAt) => {
@@ -126,23 +127,40 @@ export default function BidsPage() {
             }));
 
             const allRequests = [
-                ...(regularRequests || []),
-                ...transformedPhotoRequests,
+                ...(regularRequests || []).map(req => ({
+                    ...req,
+                    type: 'regular'
+                })),
+                ...transformedPhotoRequests.map(req => ({
+                    ...req,
+                    type: 'photography'
+                })),
                 ...(djRequests || []).map(req => ({
                     ...req,
+                    type: 'dj',
                     service_title: req.title || req.event_title || `${req.event_type} DJ Request`,
                     price_range: req.budget_range,
                     service_date: req.start_date
                 })),
                 ...(cateringRequests || []).map(req => ({
                     ...req,
+                    type: 'catering',
                     service_title: req.title || req.event_title || `${req.event_type} Catering Request`,
                     price_range: req.budget_range || req.price_range,
                     service_date: req.start_date || req.date
                 })),
-                ...(beautyRequests || []),
-                ...(videoRequests || []),
-                ...(floristRequests || [])
+                ...(beautyRequests || []).map(req => ({
+                    ...req,
+                    type: 'beauty'
+                })),
+                ...(videoRequests || []).map(req => ({
+                    ...req,
+                    type: 'videography'
+                })),
+                ...(floristRequests || []).map(req => ({
+                    ...req,
+                    type: 'florist'
+                }))
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
             console.log('All requests loaded:', allRequests);
@@ -724,6 +742,95 @@ export default function BidsPage() {
         }
     };
 
+    const handleEdit = (request) => {
+        navigate(`/edit-request/${request.type}/${request.id}`);
+    };
+
+    const toggleRequestStatus = async (request) => {
+        try {
+            // Determine the request type based on request properties
+            let requestType;
+            if (request.event_type) {
+                requestType = "photography";
+            } else if (request.service_category === "dj") {
+                requestType = "dj";
+            } else if (request.service_category === "catering") {
+                requestType = "catering";
+            } else if (request.service_category === "beauty") {
+                requestType = "beauty";
+            } else if (request.service_category === "videography") {
+                requestType = "videography";
+            } else if (request.service_category === "florist") {
+                requestType = "florist";
+            } else {
+                requestType = "regular";
+            }
+
+            const tableMap = {
+                regular: "requests",
+                photography: "photography_requests",
+                dj: "dj_requests",
+                catering: "catering_requests",
+                beauty: "beauty_requests",
+                videography: "videography_requests",
+                florist: "florist_requests",
+            };
+
+            const tableName = tableMap[requestType];
+            
+            if (!tableName) {
+                console.error("Invalid request type:", requestType);
+                setError("Invalid request type");
+                return;
+            }
+
+            // Handle both legacy and new request formats
+            let updateData;
+            if (request.hasOwnProperty("open")) {
+                // Legacy request using 'open' column
+                updateData = { open: !request.open };
+            } else {
+                // New request using 'status' column
+                const newStatus = request.status === "open" ? "closed" : "open";
+                updateData = { status: newStatus };
+            }
+
+            console.log("Updating table:", tableName, "with data:", updateData);
+
+            const { error } = await supabase
+                .from(tableName)
+                .update(updateData)
+                .eq("id", request.id);
+
+            if (error) {
+                console.error("Supabase error:", error);
+                throw error;
+            }
+
+            // Update local state
+            setRequests(requests.map(req => {
+                if (req.id === request.id) {
+                    if (req.hasOwnProperty("open")) {
+                        return {
+                            ...req,
+                            open: !req.open,
+                            status: !req.open ? "open" : "closed" // Update status for UI consistency
+                        };
+                    } else {
+                        return {
+                            ...req,
+                            status: req.status === "open" ? "closed" : "open"
+                        };
+                    }
+                }
+                return req;
+            }));
+        } catch (error) {
+            console.error("Error toggling request status:", error);
+            setError("Failed to update request status");
+        }
+    };
+
     const renderBidCard = (bid) => {
         const handleProfileClick = () => {
             navigate(`/portfolio/${bid.business_profiles.id}`);
@@ -975,15 +1082,30 @@ export default function BidsPage() {
 
     const renderRequestCard = (request) => {
         const requestTitle = request.event_title || request.title || 'Untitled Request';
+        const isOpen = request.status === "open" || request.status === "pending" || request.open;
+        
         if (request.event_type) {
             // Photo request card
             return (
                 <div className="request-card">
                     <div className="request-header">
                         <h2 className="request-title">{requestTitle}</h2>
-                        {isNew(request.created_at) && (
-                            <div className="request-status">New</div>
-                        )}
+                        <div className="request-status-container" style={{ display: 'flex', gap: '10px' }}>
+                            {isNew(request.created_at) && (
+                                <div className="request-status" style={{ 
+                                    backgroundColor: '#9633eb',
+                                    color: 'white'
+                                }}>New</div>
+                            )}
+                            <div className="request-status" style={{ 
+                                backgroundColor: isOpen ? '#9633eb' : 'white',
+                                color: isOpen ? 'white' : '#9633eb',
+                                border: isOpen ? 'none' : '1px solid #9633eb',
+                                marginLeft: isNew(request.created_at) ? '0' : 'auto'
+                            }}>
+                                {isOpen ? 'Open' : 'Closed'}
+                            </div>
+                        </div>
                     </div>
                     <div className="request-details">
                         <div className="detail-row">
@@ -1003,6 +1125,22 @@ export default function BidsPage() {
                             <span className="detail-value">${request.price_range}</span>
                         </div>
                     </div>
+                    <div className="request-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
+                        <button
+                            className="btn-danger"
+                            onClick={() => handleEdit(request)}
+                            style={{ padding: '8px 16px', fontSize: '14px' }}
+                        >
+                            Edit
+                        </button>
+                        <button
+                            className="btn-success"
+                            onClick={() => toggleRequestStatus(request)}
+                            style={{ padding: '8px 16px', fontSize: '14px' }}
+                        >
+                            {isOpen ? "Close" : "Reopen"}
+                        </button>
+                    </div>
                 </div>
             );
         }
@@ -1012,9 +1150,22 @@ export default function BidsPage() {
             <div className="request-card">
                 <div className="request-header">
                     <h2 className="request-title">{requestTitle}</h2>
-                    {isNew(request.created_at) && (
-                        <div className="request-status">New</div>
-                    )}
+                    <div className="request-status-container" style={{ display: 'flex', gap: '10px' }}>
+                        {isNew(request.created_at) && (
+                            <div className="request-status" style={{ 
+                                backgroundColor: '#9633eb',
+                                color: 'white'
+                            }}>New</div>
+                        )}
+                        <div className="request-status" style={{ 
+                            backgroundColor: isOpen ? '#9633eb' : 'white',
+                            color: isOpen ? 'white' : '#9633eb',
+                            border: isOpen ? 'none' : '1px solid #9633eb',
+                            marginLeft: isNew(request.created_at) ? '0' : 'auto'
+                        }}>
+                            {isOpen ? 'Open' : 'Closed'}
+                        </div>
+                    </div>
                 </div>
                 <div className="request-details">
                     <div className="detail-row">
@@ -1033,6 +1184,22 @@ export default function BidsPage() {
                         <span className="detail-label">Budget:</span>
                         <span className="detail-value">${request.price_range}</span>
                     </div>
+                </div>
+                <div className="request-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
+                    <button
+                        className="btn-danger"
+                        onClick={() => handleEdit(request)}
+                        style={{ padding: '8px 16px', fontSize: '14px' }}
+                    >
+                        Edit
+                    </button>
+                    <button
+                        className="btn-success"
+                        onClick={() => toggleRequestStatus(request)}
+                        style={{ padding: '8px 16px', fontSize: '14px' }}
+                    >
+                        {isOpen ? "Close" : "Reopen"}
+                    </button>
                 </div>
             </div>
         );
@@ -1086,39 +1253,57 @@ export default function BidsPage() {
                 <meta name="keywords" content="bids, wedding vendors, Bidi, manage bids" />
             </Helmet>
             <div className="bids-page">
-                <div className="share-earn-section" style={{ 
-                    padding: '20px',
-                    marginBottom: '20px',
-                    background: '#f8f9fa',
-                    borderRadius: '8px',
-                    textAlign: 'center'
-                }}>
-                    <h2 style={{ marginBottom: '15px', color: '#333' }}>
-                        Share Bidi & Earn
-                    </h2>
-                    <p style={{ marginBottom: '20px', color: '#666' }}>
-                        Share Bidi with your friends! They get $50 off their vendor, and you get $50 when they book!
-                    </p>
-                    <div style={{display: 'flex', justifyContent: 'center'}}>
-                        <button
-                        className="btn-primary"
-                        onClick={handleShareAndEarn}
-                        style={{
-                            padding: '12px 24px',
-                            fontSize: '16px',
-                            fontWeight: 'bold',
-                            color: '#9633eb',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
-                        Get Your Referral Code
-                    </button>
-                    </div>
+                {showShareSection && (
+                    <div className="share-earn-section" style={{ 
+                        padding: '20px',
+                        marginBottom: '20px',
+                        background: '#f8f9fa',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        position: 'relative'
+                    }}>
+                        <button 
+                            onClick={() => setShowShareSection(false)}
+                            style={{
+                                position: 'absolute',
+                                right: '10px',
+                                top: '10px',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '20px',
+                                cursor: 'pointer',
+                                color: '#666'
+                            }}
+                        >
+                            ×
+                        </button>
+                        <h2 style={{ marginBottom: '15px', color: '#333' }}>
+                            Share Bidi & Earn
+                        </h2>
+                        <p style={{ marginBottom: '20px', color: '#666' }}>
+                            Share Bidi with your friends! They get $50 off their vendor, and you get $50 when they book!
+                        </p>
+                        <div style={{display: 'flex', justifyContent: 'center'}}>
+                            <button
+                            className="btn-primary"
+                            onClick={handleShareAndEarn}
+                            style={{
+                                padding: '12px 24px',
+                                fontSize: '16px',
+                                fontWeight: 'bold',
+                                color: '#9633eb',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
+                            Get Your Referral Code
+                        </button>
+                        </div>
 
-                </div>
+                    </div>
+                )}
 
                 <h1 className="section-title">Your Service Requests</h1>
                 <p className="section-description">

@@ -119,32 +119,10 @@ function Navbar() {
             )}
 
             {(userRole === "individual" || userRole === "both") && (
-              <li className="nav-item dropdown">
-                <a
-                  className="nav-link dropdown-toggle me-lg-3"
-                  href="#"
-                  id="individualDropdown"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >
+              <li className="nav-item">
+                <Link className="nav-link me-lg-3" to="/bids">
                   Your Bids
-                </a>
-                <ul
-                  className="dropdown-menu"
-                  aria-labelledby="individualDropdown"
-                >
-                  <li>
-                    <Link className="dropdown-item" to="/bids">
-                      View Bids
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/my-requests">
-                      My Requests
-                    </Link>
-                  </li>
-                </ul>
+                </Link>
               </li>
             )}
 
