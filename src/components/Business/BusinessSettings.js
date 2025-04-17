@@ -43,6 +43,8 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [bidTemplate, setBidTemplate] = useState("");
   const [showBidTemplateModal, setShowBidTemplateModal] = useState(false);
   const [bidTemplateError, setBidTemplateError] = useState("");
+  const [showDefaultExpirationModal, setShowDefaultExpirationModal] = useState(false);
+  const [defaultExpirationDays, setDefaultExpirationDays] = useState("");
 
   // Add these modules for the editor
   const modules = {
@@ -88,7 +90,7 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
         const { data: profile, error: profileError } = await supabase
           .from("business_profiles")
           .select("*")
-          .eq("id", user.id) // Match the user ID to the business profile
+          .eq("id", user.id)
           .single();
 
         if (profileError) {
@@ -98,6 +100,7 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
         }
 
         setIsAdmin(!!profile.is_admin);
+        setDefaultExpirationDays(profile.default_expiration_days || "");
 
         // Step 2: Use the business_id from the profile to fetch related data
         const { data: existingCoupon, error: couponError } = await supabase
@@ -474,6 +477,34 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
     }
   };
 
+  const handleDefaultExpirationSubmit = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("User not found. Please log in again.");
+      return;
+    }
+
+    if (!defaultExpirationDays || defaultExpirationDays <= 0) {
+      alert("Please enter a valid number of days.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("business_profiles")
+      .update({ default_expiration_days: parseInt(defaultExpirationDays) })
+      .eq("id", user.id);
+
+    if (error) {
+      console.error("Error updating default expiration days:", error);
+      alert("An error occurred while updating your default expiration days.");
+    } else {
+      setShowDefaultExpirationModal(false);
+    }
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -761,6 +792,21 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
             {bidTemplate ? "Edit Bid Template" : "Create Bid Template"}
           </button>
         </div>
+
+        {/* Set Default Bid Expiration Button */}
+        <div
+          className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
+          style={{ marginTop: "20px" }}
+        >
+          <button
+            style={{ fontWeight: "bold", color: "#9633eb" }}
+            className="btn-primary flex-fill"
+            onClick={() => setShowDefaultExpirationModal(true)}
+          >
+            <i className="fas fa-clock" style={{ marginRight: "8px" }}></i>
+            Set Default Bid Expiration
+          </button>
+        </div>
       </div>
 
       {/* Modal for Down Payment Setup */}
@@ -1023,6 +1069,47 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
             Close
           </button>
           <button className="btn-success" onClick={handleBidTemplateSubmit}>
+            Save
+          </button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Default Expiration Modal */}
+      <Modal
+        show={showDefaultExpirationModal}
+        onHide={() => setShowDefaultExpirationModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Set Default Bid Expiration</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <label htmlFor="defaultExpiration" className="form-label">
+              Enter default number of days until bid expiration:
+            </label>
+            <input
+              type="number"
+              className="form-control"
+              id="defaultExpiration"
+              value={defaultExpirationDays}
+              onChange={(e) => setDefaultExpirationDays(e.target.value)}
+              placeholder="Enter number of days"
+              min="1"
+            />
+          </div>
+          <p className="text-muted">
+            This will be the default number of days until a bid expires when you create new bids.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <button
+            className="btn-danger"
+            onClick={() => setShowDefaultExpirationModal(false)}
+          >
+            Close
+          </button>
+          <button className="btn-success" onClick={handleDefaultExpirationSubmit}>
             Save
           </button>
         </Modal.Footer>

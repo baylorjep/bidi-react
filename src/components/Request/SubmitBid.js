@@ -59,6 +59,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
     const [isLoading, setIsLoading] = useState(false);
     const [bidTemplate, setBidTemplate] = useState('');
     const [bidDescriptionError, setBidDescriptionError] = useState('');
+    const [defaultExpirationDays, setDefaultExpirationDays] = useState(null);
 
     useEffect(() => {
         const fetchRequestDetails = async () => {
@@ -112,7 +113,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
             if (user) {
                 const { data: profile } = await supabase
                     .from('business_profiles')
-                    .select('stripe_account_id, Bidi_Plus')
+                    .select('stripe_account_id, Bidi_Plus, default_expiration_days')
                     .eq('id', user.id)
                     .single();
 
@@ -121,6 +122,13 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                 }
                 if (profile?.Bidi_Plus) {
                     setBidiPlus(true);
+                }
+                if (profile?.default_expiration_days) {
+                    setDefaultExpirationDays(profile.default_expiration_days);
+                    // Set the default expiration date based on the number of days
+                    const expirationDate = new Date();
+                    expirationDate.setDate(expirationDate.getDate() + profile.default_expiration_days);
+                    setBidExpirationDate(expirationDate.toISOString().split('T')[0]);
                 }
                 // Show modal immediately if no Stripe account and no Bidi Plus
                 if (!profile?.stripe_account_id && !profile?.Bidi_Plus) {
