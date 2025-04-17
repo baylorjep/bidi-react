@@ -91,7 +91,13 @@
 html, body {
   margin: 0;
   padding: 0;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: visible;
+}
+
+@media (max-width: 540px) {
+  html, body {
+    overflow-x: hidden;
+  }
 }
 
 .gradient-badge {
@@ -11539,6 +11545,12 @@ footer a:hover, footer a:active, footer a:focus {
   border-radius: 553px;
   background: #FFADD9;
   filter: blur(50px);
+}
+
+@media (max-width: 1544px) {
+  .pink-splotch {
+    display: none; /* Hide the splotch on smaller screens */
+  }
 }
 
 .photo-section {

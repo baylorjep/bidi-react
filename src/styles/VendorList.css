@@ -394,16 +394,16 @@
 }
 
 @media screen and (max-width: 1024px) {
-    .modal-content {
-        max-width: 90vw;
-        max-height: 90vh;
-        border-radius: 20px;
-        padding: 8px;
-    }
-    .modal-content.video {
-        max-width: 90vw;
-        max-height: 90vh;
-    }
+  .modal-content {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 20px;
+    padding: 8px;
+  }
+  .modal-content.video {
+    max-width: 90vw;
+    max-height: 90vh;
+  }
 }
 
 .close {
