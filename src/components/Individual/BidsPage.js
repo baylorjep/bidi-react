@@ -237,7 +237,8 @@ export default function BidsPage() {
                         stripe_account_id
                     )
                 `)
-                .in('request_id', requestIds);
+                .in('request_id', requestIds)
+                .order('created_at', { ascending: false }); // Sort by creation date, newest first
 
             if (bidsError) {
                 console.error('Failed to fetch bids:', bidsError);
@@ -245,8 +246,16 @@ export default function BidsPage() {
             }
 
             if (bidsData) {
+                // Filter out expired and hidden bids
+                const now = new Date();
+                const validBids = bidsData.filter(bid => {
+                    if (bid.hidden) return false; // Skip hidden bids
+                    if (!bid.expiration_date) return true; // Keep bids with no expiration
+                    return new Date(bid.expiration_date) > now; // Only keep non-expired bids
+                });
+
                 // Fetch profile pictures for each business profile
-                const profilePicturePromises = bidsData.map(async (bid) => {
+                const profilePicturePromises = validBids.map(async (bid) => {
                     const { data: profilePhoto, error: profilePhotoError } = await supabase
                         .from('profile_photos')
                         .select('photo_url')
@@ -286,7 +295,7 @@ export default function BidsPage() {
                         if (activeTab === 'pending') {
                             return bid.status?.toLowerCase() === 'pending';
                         } else if (activeTab === 'approved') {
-                            return bid.status?.toLowerCase() === 'accepted'; // Note: 'accepted' not 'approved'
+                            return bid.status?.toLowerCase() === 'accepted';
                         } else if (activeTab === 'denied') {
                             return bid.status?.toLowerCase() === 'denied';
                         }
@@ -295,8 +304,8 @@ export default function BidsPage() {
                     .map(bid => ({
                         ...bid,
                         id: bid.id,
-                        bid_amount: bid.bid_amount || bid.amount, // Handle both field names
-                        message: bid.message || bid.bid_description, // Handle both field names
+                        bid_amount: bid.bid_amount || bid.amount,
+                        message: bid.message || bid.bid_description,
                         business_profiles: {
                             ...bid.business_profiles,
                             business_name: bid.business_profiles?.business_name || 'Unknown Business',
@@ -304,7 +313,8 @@ export default function BidsPage() {
                             amount: bid.business_profiles?.amount
                         },
                         viewed: bid.viewed,
-                        viewed_at: bid.viewed_at
+                        viewed_at: bid.viewed_at,
+                        isNew: !bid.viewed // Add isNew flag for unseen bids
                     }));
 
                 setBids(filteredBids);

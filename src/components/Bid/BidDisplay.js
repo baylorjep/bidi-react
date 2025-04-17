@@ -4,6 +4,7 @@ import bidiCheck from "../../assets/Frame 1162.svg";
 import StarIcon from "../../assets/star-duotone.svg";
 import { Link, useNavigate } from "react-router-dom";
 import "./BidDisplay.css";
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 function BidDisplay({ bid, handleApprove, handleDeny }) {
   const [isBidiVerified, setIsBidiVerified] = useState(false);
@@ -14,6 +15,23 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
   const [showBubble, setShowBubble] = useState(true); // State to control the visibility of the bubble
   const [averageRating, setAverageRating] = useState(null);
   const navigate = useNavigate();
+
+  const getExpirationStatus = (expirationDate) => {
+    if (!expirationDate) return null;
+    
+    const now = new Date();
+    const expiration = new Date(expirationDate);
+    const diffTime = expiration - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return { status: 'expired', text: 'Expired' };
+    if (diffDays <= 1) return { status: 'urgent', text: 'Expires today' };
+    if (diffDays <= 3) return { status: 'warning', text: `Expires in ${diffDays} days` };
+    return { status: 'normal', text: `Expires in ${diffDays} days` };
+  };
+
+  const expirationStatus = getExpirationStatus(bid.expiration_date);
+
   const handleProfileClick = () => {
     setShowBubble(false); // Hide the bubble when the profile image is clicked
     navigate(`/portfolio/${bid.business_profiles.id}`);
@@ -117,7 +135,7 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                 Click to view profile
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", marginLeft: "10px" }}>
               <Link
                 to={`/portfolio/${bid.business_profiles.id}`}
                 style={{
@@ -140,6 +158,9 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                   <img src={StarIcon} alt="Star" className="star-icon" />
                   {averageRating}
                 </span>
+              )}
+              {bid.isNew && (
+                <span className="new-badge">New</span>
               )}
             </div>
           </div>
@@ -185,10 +206,18 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
           )}
         </div>
         <div className="bid-display-btn-container">
-          <button className="bid-display-button" disabled>
-            ${bid.bid_amount}
-            <div className="tag-hole"></div>
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <button className="bid-display-button" disabled>
+              ${bid.bid_amount}
+              <div className="tag-hole"></div>
+            </button>
+            {expirationStatus && (
+              <div className={`expiration-badge ${expirationStatus.status}`}>
+                <AccessTimeIcon style={{ fontSize: '1rem', marginRight: '4px' }} />
+                {expirationStatus.text}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <hr />

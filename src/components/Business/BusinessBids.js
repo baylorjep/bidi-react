@@ -18,6 +18,20 @@ const BusinessBids = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
 
+  const getExpirationStatus = (expirationDate) => {
+    if (!expirationDate) return { status: 'normal', text: 'No expiration' };
+    
+    const now = new Date();
+    const expiration = new Date(expirationDate);
+    const diffTime = expiration - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return { status: 'expired', text: 'Expired' };
+    if (diffDays <= 1) return { status: 'urgent', text: 'Expires today' };
+    if (diffDays <= 3) return { status: 'warning', text: `Expires in ${diffDays} days` };
+    return { status: 'normal', text: `Expires in ${diffDays} days` };
+  };
+
   useEffect(() => {
     const handleResize = () => {
       setIsFullScreen(window.innerWidth > 1200);
@@ -228,6 +242,22 @@ const BusinessBids = () => {
       )}
     </div>
   );
+
+  const renderBidCard = (bid) => {
+    const expirationStatus = getExpirationStatus(bid.expiration_date);
+    return (
+      <BidDisplayMini
+        key={bid.id}
+        bid={{
+          ...bid,
+          expirationStatus: expirationStatus
+        }}
+        request={requests.find((req) => req.id === bid.request_id)}
+        onEditBid={(requestId, bidId) => navigate(`/edit-bid/${requestId}/${bidId}`)}
+        openWithdrawModal={openWithdrawModal}
+      />
+    );
+  };
 
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;

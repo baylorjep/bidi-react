@@ -154,19 +154,6 @@ function Navbar() {
                   Business Dashboard
                 </Link>
               </li>
-              //     <li className="nav-item dropdown">
-              //         <a className="nav-link dropdown-toggle me-lg-3" href="#" id="businessDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              //             Business
-              //         </a>
-              //         <ul className="dropdown-menu" aria-labelledby="businessDropdown">
-              //             <li>
-              //                 <Link className="dropdown-item" to="/dashboard">Dashboard</Link>
-              //             </li>
-              //             <li>
-              //                 <Link className="dropdown-item" to="/open-requests">Open Requests</Link>
-              //             </li>
-              //         </ul>
-              //     </li>
             )}
 
             <li className="nav-item">
@@ -175,15 +162,17 @@ function Navbar() {
               </Link>
             </li>
 
-            <li className="nav-item">
-              <Link className="nav-link me-lg-3" to="/contact-us">
-                Contact Us
-              </Link>
-            </li>
+            {(!user || (userRole !== "business" && userRole !== "individual")) && (
+              <li className="nav-item">
+                <Link className="nav-link me-lg-3" to="/for-vendors">
+                  For Vendors
+                </Link>
+              </li>
+            )}
 
             <li className="nav-item">
-              <Link className="nav-link me-lg-3" to="/about-us">
-                About Us
+              <Link className="nav-link me-lg-3" to="/about">
+                About & Contact
               </Link>
             </li>
           </ul>
