@@ -1,85 +1,122 @@
 // src/components/MessagingView.js
 import React, { useState, useEffect } from "react";
-import { socket } from "../../socket.js";
+import { socket } from "../../socket";
 import { supabase } from "../../supabaseClient";
 import "../../styles/messaging.css";
 
 const MessagingView = () => {
-  const [currentUserId, setCurrentUserId] = useState("");
-  const [businesses, setBusinesses] = useState([]);
+  const [currentUserId, setCurrentUserId]     = useState("");
+  const [businesses, setBusinesses]           = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [messages, setMessages]               = useState([]);
+  const [newMessage, setNewMessage]           = useState("");
 
-  // Retrieve the current user (bride/groom) from Supabase
+  // Fetch the current user and join their room
   useEffect(() => {
-    const getCurrentUser = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
+    (async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
-        // Join the room for the current user
         socket.emit("join", user.id);
       } else {
         console.error("No user found", error);
       }
-    };
-    getCurrentUser();
+    })();
   }, []);
 
-  // Fetch businesses from Supabase for selection
+  // Fetch the list of businesses for selection
   useEffect(() => {
-    const fetchBusinesses = async () => {
-      // Adjust table name/columns as needed
-      const { data, error } = await supabase.from("business_profiles").select("id, business_name");
+    (async () => {
+      const { data, error } = await supabase
+        .from("business_profiles")
+        .select("id, business_name");
       if (error) {
         console.error("Error fetching businesses:", error);
-      } else if (data) {
+      } else {
         setBusinesses(data);
       }
-    };
-    fetchBusinesses();
+    })();
   }, []);
 
-  // Listen for incoming messages
+  // Fetch persisted messages for the selected conversation
   useEffect(() => {
-    socket.on("receive_message", (data) => {
-      // Only add the message if it involves the current conversation
+    const fetchMessages = async () => {
+      if (!currentUserId || !selectedBusiness) return;
+
+      // 1) Messages I sent
+      const { data: outRows = [], error: outErr } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("sender_id", currentUserId)
+        .eq("receiver_id", selectedBusiness);
+
+      // 2) Messages the business sent me
+      const { data: inRows = [], error: inErr } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("sender_id", selectedBusiness)
+        .eq("receiver_id", currentUserId);
+
+      if (outErr || inErr) {
+        console.error("Error fetching messages:", outErr || inErr);
+        return;
+      }
+
+      // Normalize and merge
+      const allRows = [...outRows, ...inRows].map((r) => ({
+        id:         r.id,
+        senderId:   r.sender_id,
+        receiverId: r.receiver_id,
+        message:    r.message,
+        createdAt:  r.created_at,
+      }));
+
+      // Sort oldest→newest
+      allRows.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+      setMessages(allRows);
+    };
+
+    fetchMessages();
+  }, [currentUserId, selectedBusiness]);
+
+  // Listen for incoming socket messages
+  useEffect(() => {
+    const handleReceive = (data) => {
       if (
         (data.senderId === selectedBusiness && data.receiverId === currentUserId) ||
         (data.senderId === currentUserId && data.receiverId === selectedBusiness)
       ) {
         setMessages((prev) => [...prev, data]);
       }
-    });
-    return () => {
-      socket.off("receive_message");
     };
-  }, [selectedBusiness, currentUserId]);
+    socket.on("receive_message", handleReceive);
+    return () => {
+      socket.off("receive_message", handleReceive);
+    };
+  }, [currentUserId, selectedBusiness]);
 
   const sendMessage = () => {
-    if (newMessage.trim() === "" || selectedBusiness === "") return;
-    const messageData = {
-      senderId: currentUserId,
+    if (!newMessage.trim() || !selectedBusiness) return;
+    const payload = {
+      senderId:   currentUserId,
       receiverId: selectedBusiness,
-      message: newMessage,
+      message:    newMessage,
     };
-    // Emit the message to the backend via Socket.IO
-    socket.emit("send_message", messageData);
-
-    // Optimistic update: add it locally
-    setMessages((prev) => [...prev, messageData]);
+    socket.emit("send_message", payload);
     setNewMessage("");
   };
 
   return (
     <div className="messaging-container">
       <h2>Chat with a Business</h2>
+
       <div style={{ marginBottom: "1rem" }}>
         <label>Select Business: </label>
-        <select value={selectedBusiness} onChange={(e) => setSelectedBusiness(e.target.value)}>
+        <select
+          value={selectedBusiness}
+          onChange={(e) => setSelectedBusiness(e.target.value)}
+        >
           <option value="">-- Select a Business --</option>
           {businesses.map((b) => (
             <option key={b.id} value={b.id}>
@@ -88,17 +125,21 @@ const MessagingView = () => {
           ))}
         </select>
       </div>
+
       <div>
         <h3>Messages:</h3>
         <ul>
-          {messages.map((msg, index) => (
-            <li key={index}>
-              <strong>{msg.senderId === currentUserId ? "You" : "Business"}: </strong>
+          {messages.map((msg) => (
+            <li key={msg.id}>
+              <strong>
+                {msg.senderId === currentUserId ? "You" : "Business"}:
+              </strong>{" "}
               {msg.message}
             </li>
           ))}
         </ul>
       </div>
+
       <div>
         <input
           type="text"
