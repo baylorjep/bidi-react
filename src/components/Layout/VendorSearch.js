@@ -172,7 +172,7 @@ const VendorSearch = () => {
     return (
         <div className="vendor-search" ref={dropdownRef}>
             <button className="search-button" onClick={() => setIsOpen(!isOpen)}>
-                <i className="fas fa-search"></i> Find Vendors
+                <i className="fas fa-search"></i> Browse Vendors
             </button>
 
             {isOpen && (

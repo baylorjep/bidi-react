@@ -408,8 +408,8 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
             </div>
  
             <div className='newsletter-button-container'>
-                <Link className="newsletter-button"to="/signin">
-                    <div>Sign Up</div>
+                <Link className="newsletter-button"to="/for-vendors">
+                    <div>Learn More</div>
                 </Link>
             </div>
 

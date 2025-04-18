@@ -14,7 +14,7 @@
   white-space: nowrap;
   transition: all 0.3s ease;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .bids-button:hover {
@@ -39,8 +39,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    max-width: 160px;
-    font-size: 16px;
+    max-width: 200px;
+    font-size: 14px;
     height: 38px;
     font-weight: 600;
 }
@@ -163,3 +163,4 @@
     position: relative;
   }
 }
+
