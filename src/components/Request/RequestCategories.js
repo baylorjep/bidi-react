@@ -1,102 +1,98 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function RequestCategories() {
-    const navigate = useNavigate();
-    const [category, setCategory] = useState('');
+  const navigate = useNavigate();
+  const [selectedCategories, setSelectedCategories] = useState([]);
 
-    const categories = [
-        'Photography',
-        'Videography',
-        'DJ Services',
-        'Hair and Makeup Artist',
-        'Florist',
-        'Catering'
-    ];
+  const categories = [
+    "Photography",
+    "Videography",
+    "DJ Services",
+    "Hair and Makeup Artist",
+    "Florist",
+    "Catering",
+  ];
 
-    const handleSelection = () => {
-        // Store in localStorage
-        localStorage.setItem('serviceType', category);
-        localStorage.setItem('specificService', category);
-        
-        // Store in request form data
-        const requestFormData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
-        localStorage.setItem('requestFormData', JSON.stringify({
-            ...requestFormData,
-            serviceType: category,
-            specificService: category
-        }));
-        
-        // Dynamic navigation based on category
-        const dedicatedFormCategories = ['photography', 'videography', 'dj services', 'hair and makeup artist', 'florist', 'catering']; // Add 'catering'
-        if (dedicatedFormCategories.includes(category)) {
-            // Convert category names to route paths
-            const routeMap = {
-                'photography': 'photography',
-                'videography': 'videography',
-                'dj services': 'dj',
-                'hair and makeup artist': 'beauty',
-                'florist': 'florist',
-                'catering': 'catering' // Add 'catering'
-            };
-            const routePath = routeMap[category];
-            navigate(`/request/${routePath}`);
-        } else {
-            navigate('/request-form', { 
-                state: { 
-                    category,
-                    serviceType: category,
-                    specificService: category
-                } 
-            });
-        }
-    };
-
-    const handleBack = () => {
-        navigate('/createaccount');  // Adjust the route for going back
-    };
-
-    return (
-        <div style={{display:'flex', flexDirection:'row', gap:'64px', justifyContent:'center', alignItems:'center',height:'85vh'}}>
-
-            <div className="request-form-container-details">
-                <div className="request-form-header" style={{marginTop:'20px'}}>What would you like to get done today?</div>
-                <div className="Sign-Up-Page-Subheader" style={{marginTop:'20px', marginBottom:'20px'}}>Please select one</div>
-                
-                {/* Grid Container for Category Buttons */}
-                <div className="event-grid-container">
-                    {categories.map((cat, index) => (
-                        <button
-                            key={index}
-                            className={`selector-buttons ${category === cat.toLowerCase() ? 'selected-event' : ''}`}
-                            onClick={() => setCategory(cat.toLowerCase())}
-                        >
-                            {cat}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="form-button-container">
-                    <button className="request-form-back-and-foward-btn" onClick={handleBack}>
-                        Back
-                    </button>
-                    <button
-                        className={`request-form-back-and-foward-btn ${category ? 'selected-border' : ''}`}
-                        onClick={handleSelection}
-                        disabled={!category}
-                        style={{
-                            backgroundColor: !category ? "#9F8AB3" : "#a328f4", // Lighter purple when disabled
-                            cursor: !category ? "not-allowed" : "pointer",
-                        }}
-                    >
-                        Next
-                    </button>
-
-                </div>
-            </div>
-        
-        </div>
+  const toggleCategory = (category) => {
+    setSelectedCategories(
+      (prev) =>
+        prev.includes(category)
+          ? prev.filter((c) => c !== category) // Remove category if already selected
+          : [...prev, category] // Add category if not selected
     );
+  };
+
+  const handleNext = () => {
+    if (selectedCategories.length > 0) {
+      // Pass selected categories to the next step
+      navigate("/master-request-flow", { state: { selectedCategories } });
+    }
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        gap: "64px",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "85vh",
+      }}
+    >
+      <div className="request-form-container-details">
+        <div className="request-form-header" style={{ marginTop: "20px" }}>
+          What would you like to get done today?
+        </div>
+        <div
+          className="Sign-Up-Page-Subheader"
+          style={{ marginTop: "20px", marginBottom: "20px" }}
+        >
+          Please select one or more
+        </div>
+
+        {/* Grid Container for Category Buttons */}
+        <div className="event-grid-container">
+          {categories.map((cat, index) => (
+            <button
+              key={index}
+              className={`selector-buttons ${
+                selectedCategories.includes(cat) ? "selected-event" : ""
+              }`}
+              onClick={() => toggleCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="form-button-container">
+          <button
+            className="request-form-back-and-foward-btn"
+            onClick={() => navigate("/createaccount")} // Adjust the route for going back
+          >
+            Back
+          </button>
+          <button
+            className={`request-form-back-and-foward-btn ${
+              selectedCategories.length > 0 ? "selected-border" : ""
+            }`}
+            onClick={handleNext}
+            disabled={selectedCategories.length === 0}
+            style={{
+              backgroundColor:
+                selectedCategories.length === 0 ? "#9F8AB3" : "#a328f4", // Lighter purple when disabled
+              cursor:
+                selectedCategories.length === 0 ? "not-allowed" : "pointer",
+            }}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default RequestCategories;

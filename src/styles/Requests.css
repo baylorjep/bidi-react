@@ -1,0 +1,5 @@
+.request-stepper-content {
+  flex: 1; /* Take up remaining space */
+  /* padding: 20px; */
+  margin-top: 0px;
+}

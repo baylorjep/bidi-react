@@ -14185,7 +14185,7 @@ text-align: left;
   flex-direction:row;
   justify-content:center;
   align-items:center;
-  height:85vh;
+  /* height:85vh; */
   gap:40px
 }
 
@@ -14193,8 +14193,8 @@ text-align: left;
 
 
 .request-form-container-details {
-  width: 50vw; /* Takes up half of the viewport width */
-  height: 75vh; /* 75% of the viewport height */
+  width: 50vw;
+  height: 75vh;
   margin: 0 auto; /* Centers horizontally */
   display: flex; /* Enables flexbox layout */
   flex-direction: column; /* Arrange children in a column */

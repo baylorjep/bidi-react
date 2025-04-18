@@ -1,0 +1,57 @@
+/* Container for the entire RequestStepper */
+.request-stepper-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Full viewport height */
+}
+
+/* Scrollable content area */
+.request-stepper-content {
+  flex: 1; /* Take up remaining space */
+  overflow-y: auto; /* Enable scrolling for content */
+  /* padding: 20px; */
+}
+
+/* Sticky footer for buttons */
+.request-stepper-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background-color: #fff;
+  border-top: 1px solid #ccc;
+  position: sticky;
+  bottom: 0;
+  z-index: 1000;
+}
+
+/* Back button styling */
+.request-form-back-btn {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.request-form-back-btn:hover {
+  background-color: #e0e0e0;
+}
+
+/* Next/Submit button styling */
+.request-form-back-and-foward-btn {
+  background-color: #a328f4;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.request-form-back-and-foward-btn:hover {
+  background-color: #8e23d4;
+}
