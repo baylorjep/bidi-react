@@ -5,6 +5,13 @@ import BudgetRecommendation from "./BudgetRecommendation";
 function MasterRequestForm({ formData, setFormData, onNext }) {
   const [currentStep, setCurrentStep] = useState(0);
 
+  const getDetailsSteps = () => [
+    "Event Details",
+    "Budget Details",
+    "Personal Details",
+    "Inspiration",
+  ];
+
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -325,43 +332,39 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
     }
   };
 
+  const renderEventDetails = () => {
+    const subSteps = getDetailsSteps();
+
+    return (
+      <div>
+        <div className="sub-steps-indicator">
+          {subSteps.map((step, index) => (
+            <div
+              key={index}
+              className={`sub-step ${index === currentStep ? "active" : ""} 
+                                      ${
+                                        index < currentStep ? "completed" : ""
+                                      }`}
+              onClick={() => setCurrentStep(index)}
+            >
+              {step}
+            </div>
+          ))}
+        </div>
+
+        {renderStep()}
+      </div>
+    );
+  };
+
   return (
     <div className="request-form-overall-container">
       <div className="request-form-container-details">
         <div className="form-header-section">
-          {/* <h2 className="request-form-header">Event Details</h2> */}
-          {/* <StatusBar
-            steps={[
-              "Event Details",
-              "Budget Details",
-              "Personal Details",
-              "Inspiration",
-            ]}
-            currentStep={currentStep}
-          /> */}
+          <h2 className="request-form-header">Master Request Form</h2>
         </div>
 
-        <div className="form-scrollable-content">
-          {renderStep()}
-          <div className="form-button-container">
-            {currentStep > 0 && (
-              <button
-                className="request-form-back-btn"
-                onClick={() => setCurrentStep((prev) => prev - 1)}
-              >
-                Back
-              </button>
-            )}
-            <button
-              className="request-form-back-and-foward-btn"
-              onClick={() =>
-                currentStep < 3 ? setCurrentStep((prev) => prev + 1) : onNext()
-              }
-            >
-              {currentStep < 3 ? "Next" : "Submit"}
-            </button>
-          </div>
-        </div>
+        <div className="form-scrollable-content">{renderEventDetails()}</div>
       </div>
     </div>
   );

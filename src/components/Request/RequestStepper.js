@@ -7,9 +7,13 @@ import FloristRequest from "../Request/Florist/FloristRequest";
 import CateringRequest from "../Request/Catering/CateringRequest";
 // import { submitRequests } from "../../api/requests"; // Adjust the path as needed
 
-function RequestStepper({ formData, setFormData, onSubmit }) {
-  const [currentStep, setCurrentStep] = useState(0);
-
+function RequestStepper({
+  formData,
+  setFormData,
+  currentStep,
+  setCurrentStep,
+  onSubmit,
+}) {
   const requestComponents = {
     Photography: PhotographyRequest,
     Videography: VideographyRequest,
@@ -19,8 +23,12 @@ function RequestStepper({ formData, setFormData, onSubmit }) {
     Catering: CateringRequest,
   };
 
-  const CurrentRequestForm =
-    requestComponents[formData.selectedRequests[currentStep]];
+  // const CurrentRequestForm =
+  //   requestComponents[formData.selectedRequests[currentStep]];
+
+  // Get the current request type based on the current step
+  const currentRequestType = formData.selectedRequests[currentStep];
+  const CurrentRequestForm = requestComponents[currentRequestType];
 
   const handleNext = () => {
     if (currentStep < formData.selectedRequests.length - 1) {
@@ -64,19 +72,21 @@ function RequestStepper({ formData, setFormData, onSubmit }) {
 
   return (
     <div>
-      <h2>
-        {/* Step {currentStep + 1} of {formData.selectedRequests.length}:{" "} */}
-        {/* {formData.selectedRequests[currentStep]} Details */}
-      </h2>
-      <CurrentRequestForm
-        formData={formData}
-        setFormData={(data) =>
-          updateRequestData(formData.selectedRequests[currentStep], data)
-        }
-        onNext={handleNext}
-      />
+      {/* <h2>
+        Step {currentStep + 1} of {formData.selectedRequests.length}:{" "}
+        {currentRequestType} Details
+      </h2> */}
+      {CurrentRequestForm ? (
+        <CurrentRequestForm
+          formData={formData.requests[currentRequestType] || {}}
+          setFormData={(data) => updateRequestData(currentRequestType, data)}
+          onNext={handleNext}
+        />
+      ) : (
+        <p>Error: Unable to load the request form for {currentRequestType}.</p>
+      )}
       {/* <div style={{ marginTop: "20px" }}>
-        {currentStep >= 0 && (
+        {currentStep > 0 && (
           <button onClick={handleBack} className="request-form-back-btn">
             Back
           </button>
