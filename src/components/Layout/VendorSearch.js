@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../../styles/VendorSearch.css';
 
 const categories = [
     { id: 'photography', name: 'Photographer' },

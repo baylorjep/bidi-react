@@ -1,0 +1,165 @@
+/* Navbar button styles */
+.bids-button {
+  background: none;
+  border: 1px solid #A328F4;
+  color: #A328F4;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.bids-button:hover {
+  background: #A328F4;
+  color: white;
+}
+
+/* Vendor Search Styles */
+.vendor-search {
+    position: relative;
+    margin-right: 20px;
+}
+
+.search-button {
+    background: none;
+    border: 1px solid #FF008A;
+    color: #FF008A;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 160px;
+    font-size: 16px;
+    height: 38px;
+    font-weight: 600;
+}
+
+.search-button:hover {
+    background: #FF008A;
+    color: white;
+}
+
+.search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 16px;
+    width: 350px;  /* Increased width to accommodate longer location names */
+    margin-top: 8px;
+    z-index: 1000;
+}
+
+.search-section {
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+}
+
+.search-section label {
+    display: block;
+    margin-bottom: 4px;
+    font-family: 'Outfit', sans-serif;
+    color: #666;
+}
+
+.search-section select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Outfit', sans-serif;
+    margin-bottom: 8px;
+}
+
+.search-submit {
+    width: 100%;
+    padding: 10px;
+    background: #FF008A;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+}
+
+.search-submit:hover {
+    background: #e6007c;
+}
+
+/* Ensure consistent button styling between bids and search buttons */
+.bids-button,
+.search-button {
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Hamburger menu styling */
+.navbar-toggler {
+  border: none;
+  padding: 0.5rem;
+  font-size: 1.5rem;
+  color: #333;
+  background: transparent;
+}
+
+.navbar-toggler:focus {
+  box-shadow: none;
+  outline: none;
+}
+
+.navbar-toggler .bi-list {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* Add this to make the icon lines thicker */
+.bi-list::before {
+  content: "\f479";
+  font-weight: 700;
+  display: inline-block;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 991px) {
+  .bids-button, 
+  .search-button {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  
+  .navbar-nav {
+    align-items: stretch;
+    width: 100%;
+  }
+  
+  .nav-item {
+    width: 100%;
+  }
+  
+  .vendor-search {
+    width: 100%;
+    margin-right: 0;
+  }
+  
+  .search-dropdown {
+    width: 100%;
+    position: relative;
+  }
+}

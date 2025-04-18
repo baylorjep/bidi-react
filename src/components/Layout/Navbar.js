@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import logo from "../../assets/images/Bidi-Logo.svg";
 import "../../App.css";
+import "../../styles/Navbar.css";
 import VendorSearch from "./VendorSearch";
 
 function Navbar() {
@@ -102,22 +103,30 @@ function Navbar() {
           aria-expanded="false"
           aria-label="Toggle navigation"
         >
-          Menu
           <i className="bi-list"></i>
         </button>
         <div className="collapse navbar-collapse" id="navbarResponsive">
           <ul className="navbar-nav ms-auto me-4 my-3 my-lg-0">
-            <VendorSearch />
             {(!userRole ||
               userRole === "individual" ||
               userRole === "both") && (
-              <li className="nav-item">
-                <Link className="nav-link me-lg-3" to="/request-categories">
-                  Hire a Pro
+              <li className="nav-item d-flex align-items-center mb-2 mb-lg-0 me-lg-3">
+                <Link 
+                  className="nav-link p-0 w-100" 
+                  to="/request-categories"
+                  onClick={closeMenu}
+                >
+                  <button className="bids-button w-100">
+                    <i className="bi bi-clipboard-check me-1"></i> Get Bids from Pros
+                  </button>
                 </Link>
               </li>
             )}
-
+            
+            <li className="nav-item d-flex align-items-center mb-2 mb-lg-0">
+              <VendorSearch />
+            </li>
+            
             {(userRole === "individual" || userRole === "both") && (
               <li className="nav-item dropdown">
                 <a
@@ -154,19 +163,6 @@ function Navbar() {
                   Business Dashboard
                 </Link>
               </li>
-              //     <li className="nav-item dropdown">
-              //         <a className="nav-link dropdown-toggle me-lg-3" href="#" id="businessDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              //             Business
-              //         </a>
-              //         <ul className="dropdown-menu" aria-labelledby="businessDropdown">
-              //             <li>
-              //                 <Link className="dropdown-item" to="/dashboard">Dashboard</Link>
-              //             </li>
-              //             <li>
-              //                 <Link className="dropdown-item" to="/open-requests">Open Requests</Link>
-              //             </li>
-              //         </ul>
-              //     </li>
             )}
 
             <li className="nav-item">
@@ -206,7 +202,6 @@ function Navbar() {
             </Link>
           )}
 
-          {/* Conditionally render the Sign Up button */}
           {!user && (
             <Link
               className="btn-nav-secondary"
