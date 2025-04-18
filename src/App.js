@@ -72,6 +72,7 @@ import AboutUs from "./components/AboutUs";
 
 // Messaging imports
 import MessagingView from "./components/Messaging/MessagingView";
+import ChatInterface from "./components/Messaging/ChatInterface";
 
 // Spanish imports
 import HomepageES from "./components/HomepageES";
@@ -114,6 +115,7 @@ import VendorList from './components/VendorList/VendorList';
 import VendorListWithFilters from './components/VendorListWithFilters/VendorListWithFilters';
 import LocationBasedVendors from './pages/LocationBasedVendors';
 import WeddingVibeQuizPage from './pages/WeddingVibeQuiz';
+
 
 function App() {
   const [eventType, setEventType] = useState("");
@@ -190,6 +192,8 @@ function App() {
                             
                             {/* Messaging Routes */}
                             <Route path="/messaging" element={<MessagingView />} />
+                            <Route path="/chat" element={<ChatInterface />} />
+                            
 
                             {/* Spanish Routes */}
                             <Route path="/inicio" element={<HomepageES />} />
