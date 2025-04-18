@@ -128,32 +128,10 @@ function Navbar() {
             </li>
             
             {(userRole === "individual" || userRole === "both") && (
-              <li className="nav-item dropdown">
-                <a
-                  className="nav-link dropdown-toggle me-lg-3"
-                  href="#"
-                  id="individualDropdown"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >
+              <li className="nav-item">
+                <Link className="nav-link me-lg-3" to="/bids">
                   Your Bids
-                </a>
-                <ul
-                  className="dropdown-menu"
-                  aria-labelledby="individualDropdown"
-                >
-                  <li>
-                    <Link className="dropdown-item" to="/bids">
-                      View Bids
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/my-requests">
-                      My Requests
-                    </Link>
-                  </li>
-                </ul>
+                </Link>
               </li>
             )}
 
@@ -171,15 +149,17 @@ function Navbar() {
               </Link>
             </li>
 
-            <li className="nav-item">
-              <Link className="nav-link me-lg-3" to="/contact-us">
-                Contact Us
-              </Link>
-            </li>
+            {(!user || (userRole !== "business" && userRole !== "individual")) && (
+              <li className="nav-item">
+                <Link className="nav-link me-lg-3" to="/for-vendors">
+                  For Vendors
+                </Link>
+              </li>
+            )}
 
             <li className="nav-item">
-              <Link className="nav-link me-lg-3" to="/about-us">
-                About Us
+              <Link className="nav-link me-lg-3" to="/about">
+                About & Contact
               </Link>
             </li>
           </ul>

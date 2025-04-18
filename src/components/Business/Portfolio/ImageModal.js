@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import Modal from "react-modal";
+// import Modal from "react-modal";
+import { Modal } from "react-bootstrap";
 import { convertHeicToJpeg } from "../../../utils/imageUtils";
 
 const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose }) => {
   const [convertedUrl, setConvertedUrl] = useState(mediaUrl);
   const [isConverting, setIsConverting] = useState(false);
+  console.log("Modal isOpen:", isOpen);
 
   useEffect(() => {
     const handleHeicImage = async () => {
@@ -29,22 +31,13 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose }) => {
   }, [mediaUrl, isVideo]);
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onRequestClose={onClose}
-      className="image-modal"
-      overlayClassName="image-modal-overlay"
-      ariaHideApp={false}
-    >
-      <button onClick={onClose} className="close-modal-button">×</button>
-      <div className="modal-content">
+    <Modal show={isOpen} onHide={onClose} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>Media Preview</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
         {isVideo ? (
-          <video
-            src={mediaUrl}
-            controls
-            autoPlay
-            className="modal-media"
-          >
+          <video src={mediaUrl} controls autoPlay className="modal-media">
             Your browser does not support the video tag.
           </video>
         ) : (
@@ -58,12 +51,12 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose }) => {
               <img
                 src={convertedUrl}
                 alt="Portfolio item"
-                className="modal-media"
+                className="modal-media img-fluid"
               />
             )}
           </>
         )}
-      </div>
+      </Modal.Body>
     </Modal>
   );
 };

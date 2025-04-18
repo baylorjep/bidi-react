@@ -1,115 +1,117 @@
 // src/components/MessagingView.js
 import React, { useState, useEffect } from "react";
-import { socket } from "../../socket.js";
+import { socket } from "../../socket";
 import { supabase } from "../../supabaseClient";
-import "../../styles/messaging.css";
+import "../../styles/chat.css";
 
-const MessagingView = () => {
-  const [currentUserId, setCurrentUserId] = useState("");
-  const [businesses, setBusinesses] = useState([]);
-  const [selectedBusiness, setSelectedBusiness] = useState("");
+export default function MessagingView({
+  currentUserId,
+  businessId,
+  businessName = "Business",
+}) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
-  // Retrieve the current user (bride/groom) from Supabase
+  // 1) Fetch & normalize persisted messages
   useEffect(() => {
-    const getCurrentUser = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
-        // Join the room for the current user
-        socket.emit("join", user.id);
-      } else {
-        console.error("No user found", error);
-      }
-    };
-    getCurrentUser();
-  }, []);
+    if (!currentUserId || !businessId) return;
 
-  // Fetch businesses from Supabase for selection
-  useEffect(() => {
-    const fetchBusinesses = async () => {
-      // Adjust table name/columns as needed
-      const { data, error } = await supabase.from("business_profiles").select("id, business_name");
-      if (error) {
-        console.error("Error fetching businesses:", error);
-      } else if (data) {
-        setBusinesses(data);
-      }
-    };
-    fetchBusinesses();
-  }, []);
+    const fetchMessages = async () => {
+      // outgoing
+      const { data: out = [] } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("sender_id", currentUserId)
+        .eq("receiver_id", businessId);
 
-  // Listen for incoming messages
+      // incoming
+      const { data: incoming = [] } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("sender_id", businessId)
+        .eq("receiver_id", currentUserId);
+
+      // normalize & merge
+      const all = [...out, ...incoming].map((r) => ({
+        id: r.id,
+        senderId: r.sender_id,
+        receiverId: r.receiver_id,
+        message: r.message,
+        createdAt: r.created_at,
+      }));
+
+      // sort by time
+      all.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      setMessages(all);
+    };
+
+    fetchMessages();
+  }, [currentUserId, businessId]);
+
+  // 2) Listen for live messages
   useEffect(() => {
-    socket.on("receive_message", (data) => {
-      // Only add the message if it involves the current conversation
+    const handler = (msg) => {
+      // only if this chat
       if (
-        (data.senderId === selectedBusiness && data.receiverId === currentUserId) ||
-        (data.senderId === currentUserId && data.receiverId === selectedBusiness)
+        (msg.senderId === businessId && msg.receiverId === currentUserId) ||
+        (msg.senderId === currentUserId && msg.receiverId === businessId)
       ) {
-        setMessages((prev) => [...prev, data]);
+        setMessages((prev) => [...prev, msg]);
       }
-    });
-    return () => {
-      socket.off("receive_message");
     };
-  }, [selectedBusiness, currentUserId]);
 
+    socket.on("receive_message", handler);
+    return () => void socket.off("receive_message", handler);
+  }, [currentUserId, businessId]);
+
+  // 3) Send new message
   const sendMessage = () => {
-    if (newMessage.trim() === "" || selectedBusiness === "") return;
-    const messageData = {
+    if (!newMessage.trim()) return;
+    const payload = {
       senderId: currentUserId,
-      receiverId: selectedBusiness,
-      message: newMessage,
+      receiverId: businessId,
+      message: newMessage.trim(),
     };
-    // Emit the message to the backend via Socket.IO
-    socket.emit("send_message", messageData);
-
-    // Optimistic update: add it locally
-    setMessages((prev) => [...prev, messageData]);
+    socket.emit("send_message", payload);
     setNewMessage("");
   };
 
   return (
-    <div className="messaging-container">
-      <h2>Chat with a Business</h2>
-      <div style={{ marginBottom: "1rem" }}>
-        <label>Select Business: </label>
-        <select value={selectedBusiness} onChange={(e) => setSelectedBusiness(e.target.value)}>
-          <option value="">-- Select a Business --</option>
-          {businesses.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.business_name}
-            </option>
-          ))}
-        </select>
+    <div className="chat-main">
+      <header>{businessName}</header>
+
+      <div className="chat-body">
+        {messages.map((m) => (
+          <div
+            key={m.id}
+            className={`message-bubble ${
+              m.senderId === currentUserId ? "sent" : "received"
+            }`}
+          >
+            {m.message}
+            <div className="message-time">
+              {new Date(m.createdAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </div>
+          </div>
+        ))}
       </div>
-      <div>
-        <h3>Messages:</h3>
-        <ul>
-          {messages.map((msg, index) => (
-            <li key={index}>
-              <strong>{msg.senderId === currentUserId ? "You" : "Business"}: </strong>
-              {msg.message}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
+
+      <footer className="chat-footer">
         <input
+          className="chat-input"
           type="text"
-          placeholder="Type your message..."
+          placeholder="Type your message…"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
-        <button onClick={sendMessage}>Send</button>
-      </div>
+        <button className="chat-send-btn" onClick={sendMessage}>
+          Send
+        </button>
+      </footer>
     </div>
   );
-};
-
-export default MessagingView;
+}

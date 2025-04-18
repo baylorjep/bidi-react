@@ -58,7 +58,7 @@ function EditRequest() {
         special_songs: { playlists: '', requests: '' },
         equipment_needed: '',
         additional_services: [],
-        additional_info: '',
+        special_requests: '',  // Changed from additional_info to special_requests
         budget_range: '',
 
         // Beauty request fields
@@ -91,71 +91,82 @@ function EditRequest() {
                 'regular': 'requests'
             };
             const table = tableMap[type] || 'requests';
-            const { data, error } = await supabase
-                .from(table)
-                .select('*')
-                .eq('id', id)
-                .single();
+            
+            try {
+                const { data, error } = await supabase
+                    .from(table)
+                    .select('*')
+                    .eq('id', id);
 
-            if (error) {
-                setError('Failed to fetch request');
-                console.error(error);
-            } else {
+                if (error) {
+                    throw error;
+                }
+
+                if (!data || data.length === 0) {
+                    setError('Request not found');
+                    navigate('/my-requests'); // Redirect to requests list
+                    return;
+                }
+
                 // Format dates for input field
                 const formattedData = {
-                    ...data,
-                    service_date: data.service_date?.split('T')[0],
-                    end_date: data.end_date?.split('T')[0],
-                    start_date: data.start_date?.split('T')[0],
+                    ...data[0],
+                    service_date: data[0].service_date?.split('T')[0],
+                    end_date: data[0].end_date?.split('T')[0],
+                    start_date: data[0].start_date?.split('T')[0],
                 };
                 
                 // Parse JSON strings if they exist
                 if (type === 'photography') {
-                    formattedData.style_preferences = typeof data.style_preferences === 'string' 
-                        ? JSON.parse(data.style_preferences)
-                        : data.style_preferences || {};
-                    formattedData.deliverables = typeof data.deliverables === 'string'
-                        ? JSON.parse(data.deliverables)
-                        : data.deliverables || {};
-                    formattedData.wedding_details = typeof data.wedding_details === 'string'
-                        ? JSON.parse(data.wedding_details)
-                        : data.wedding_details || {};
+                    formattedData.style_preferences = typeof data[0].style_preferences === 'string' 
+                        ? JSON.parse(data[0].style_preferences)
+                        : data[0].style_preferences || {};
+                    formattedData.deliverables = typeof data[0].deliverables === 'string'
+                        ? JSON.parse(data[0].deliverables)
+                        : data[0].deliverables || {};
+                    formattedData.wedding_details = typeof data[0].wedding_details === 'string'
+                        ? JSON.parse(data[0].wedding_details)
+                        : data[0].wedding_details || {};
                 } else if (type === 'florist') {
-                    formattedData.floral_arrangements = typeof data.floral_arrangements === 'string'
-                        ? JSON.parse(data.floral_arrangements)
-                        : data.floral_arrangements || {};
-                    formattedData.flower_preferences = typeof data.flower_preferences === 'string'
-                        ? JSON.parse(data.flower_preferences)
-                        : data.flower_preferences || {};
-                    formattedData.additional_services = typeof data.additional_services === 'string'
-                        ? JSON.parse(data.additional_services)
-                        : data.additional_services || {};
-                    formattedData.colors = typeof data.colors === 'string'
-                        ? JSON.parse(data.colors)
-                        : data.colors || [];
+                    formattedData.floral_arrangements = typeof data[0].floral_arrangements === 'string'
+                        ? JSON.parse(data[0].floral_arrangements)
+                        : data[0].floral_arrangements || {};
+                    formattedData.flower_preferences = typeof data[0].flower_preferences === 'string'
+                        ? JSON.parse(data[0].flower_preferences)
+                        : data[0].flower_preferences || {};
+                    formattedData.additional_services = typeof data[0].additional_services === 'string'
+                        ? JSON.parse(data[0].additional_services)
+                        : data[0].additional_services || {};
+                    formattedData.colors = typeof data[0].colors === 'string'
+                        ? JSON.parse(data[0].colors)
+                        : data[0].colors || [];
                 } else if (type === 'catering') {
-                    formattedData.food_preferences = typeof data.food_preferences === 'string' 
-                        ? JSON.parse(data.food_preferences)
-                        : data.food_preferences || {};
+                    formattedData.food_preferences = typeof data[0].food_preferences === 'string' 
+                        ? JSON.parse(data[0].food_preferences)
+                        : data[0].food_preferences || {};
                         
                     // Don't parse these as JSON, just use the values directly
-                    formattedData.dining_items = data.dining_items || null;
-                    formattedData.setup_cleanup = data.setup_cleanup || null;
-                    formattedData.food_service_type = data.food_service_type || null;
-                    formattedData.serving_staff = data.serving_staff || null;
+                    formattedData.dining_items = data[0].dining_items || null;
+                    formattedData.setup_cleanup = data[0].setup_cleanup || null;
+                    formattedData.food_service_type = data[0].food_service_type || null;
+                    formattedData.serving_staff = data[0].serving_staff || null;
                 }
                 
                 // Only set special_songs for DJ requests
                 if (type === 'dj') {
-                    formattedData.special_songs = data.special_songs || { playlists: '', requests: '' };
+                    formattedData.special_songs = data[0].special_songs || { playlists: '', requests: '' };
                 }
                 
                 setFormData(formattedData);
+            } catch (error) {
+                console.error('Error fetching request:', error);
+                setError('Failed to fetch request. Please try again later.');
+                navigate('/my-requests'); // Redirect to requests list
             }
         };
 
         fetchRequest();
-    }, [id, type]);
+    }, [id, type, navigate]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -304,15 +315,15 @@ function EditRequest() {
             setError('Failed to update request');
             console.error(error);
         } else {
-            navigate('/my-requests');
+            navigate('/bids');
         }
     };
 
     if (!formData) return <div className="container mt-5">Loading...</div>;
 
     return (
-        <div className="container px-5 mt-5">
-            <h2 className="Sign-Up-Page-Header mb-4">Edit Request</h2>
+        <div className="container px-3 px-md-5" style={{ minHeight: "80vh" }}>
+            <div className="Sign-Up-Page-Header">Edit Request</div>
             {error && <div className="alert alert-danger">{error}</div>}
             
             <form onSubmit={handleSubmit} className="mb-5">
@@ -735,22 +746,22 @@ function EditRequest() {
                 {type === 'dj' && (
                     <>
                         <div className="mb-3">
+                            <label className="form-label">Event Title</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="event_title"
+                                value={formData.event_title}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="mb-3">
                             <label className="form-label">Event Type</label>
                             <input
                                 type="text"
                                 className="form-control"
                                 name="event_type"
                                 value={formData.event_type}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Event Title</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="event_title"
-                                value={formData.title}
                                 onChange={handleInputChange}
                             />
                         </div>
@@ -762,6 +773,21 @@ function EditRequest() {
                                 name="location"
                                 value={formData.location}
                                 onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="mb-3">
+                            <label className="form-label">Special Requests</label>
+                            <ReactQuill
+                                value={formData.special_requests}
+                                onChange={(value) => setFormData(prev => ({ ...prev, special_requests: value }))}
+                                modules={{
+                                    toolbar: [
+                                        ['bold', 'italic', 'underline', 'strike'],
+                                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                        ['link', 'image'],
+                                        ['clean']
+                                    ]
+                                }}
                             />
                         </div>
                         <div className="custom-input-container">
@@ -1327,17 +1353,6 @@ function EditRequest() {
                                 />
                                 <label className="form-check-label">Other</label>
                             </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Special Requests</label>
-                            <ReactQuill
-                                theme="snow"
-                                value={formData.special_requests || ''}
-                                onChange={(content) => setFormData(prev => ({
-                                    ...prev,
-                                    additional_info: content
-                                }))}
-                            />
                         </div>
 
                     </>
@@ -2613,7 +2628,7 @@ function EditRequest() {
 
                 <div className="d-flex gap-2 mt-4">
                     <button type="submit" className="btn-primary" style={{width: '100%'}}>Save Changes</button>
-                    <button type="button" className="btn-secondary" style={{width: '100%'}} onClick={() => navigate('/my-requests')}>Cancel</button>
+                    <button type="button" className="btn-secondary" style={{width: '100%'}} onClick={() => navigate('/bids')}>Cancel</button>
                 </div>
             </form>
         </div>

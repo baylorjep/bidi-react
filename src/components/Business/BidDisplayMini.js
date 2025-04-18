@@ -19,6 +19,11 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal }) => {
           }}
         >
           <h2 className="request-title">{getTitle()}</h2>
+          {bid.expirationStatus && (
+            <div className={`expiration-badge ${bid.expirationStatus.status}`}>
+              {bid.expirationStatus.text}
+            </div>
+          )}
         </div>
 
         <div className="details-grid">

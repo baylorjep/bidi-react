@@ -91,7 +91,13 @@
 html, body {
   margin: 0;
   padding: 0;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: visible;
+}
+
+@media (max-width: 540px) {
+  html, body {
+    overflow-x: hidden;
+  }
 }
 
 .gradient-badge {
@@ -11541,6 +11547,12 @@ footer a:hover, footer a:active, footer a:focus {
   filter: blur(50px);
 }
 
+@media (max-width: 1544px) {
+  .pink-splotch {
+    display: none; /* Hide the splotch on smaller screens */
+  }
+}
+
 .photo-section {
   position: relative; /* Ensure the photo-section is positioned relative */
   z-index: 1; /* Ensure it is above the pink splotch */
@@ -13750,18 +13762,11 @@ background-clip: text;
 -webkit-background-clip: text;
 -webkit-text-fill-color: transparent;
 font-family: Outfit;
-font-size: 64px;
 font-style: normal;
 font-weight: 700;
 line-height: normal;
 }
 
-.team-member-container {
-  display: flex;
-  flex-direction: row;
-  margin-left: 10rem;
-  margin-bottom: 3rem;
-}
 
 .team-member-image-container{
   height: auto;
@@ -13776,7 +13781,7 @@ line-height: normal;
 
 .about-us-text {
   color: #000;
-font-family: Outfit;
+font-family: Inter;
 font-size: 16px;
 font-style: normal;
 font-weight: 400;
@@ -13789,7 +13794,7 @@ text-align: left;
 }
 
 .about-us-text-baylor {
-  font-family: Outfit;
+  font-family: Inter;
   font-size: 20px;
   font-weight: 400;
   line-height: 26.38px;
@@ -16099,6 +16104,10 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 4px 8px 0px rgba(52, 
   border: 1px solid var(--Border-primary, #000);
 }
 
+.try-now-box.vendor {
+  height: 100%;
+}
+
 .try-now-title {
   color: var(--Text-primary, #000);
   text-align: center;
@@ -16625,6 +16634,7 @@ label {
   .bid-display-button {
     width: 100%;
     padding: 10px 0;
+    min-width: 100px;
   }
   .bid-display-btn-container {
     width: 100%;

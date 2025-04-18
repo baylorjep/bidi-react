@@ -47,6 +47,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
     const [requestType, setRequestType] = useState(''); // To track the request type
     const [bidAmount, setBidAmount] = useState('');
     const [bidDescription, setBidDescription] = useState('');
+    const [bidExpirationDate, setBidExpirationDate] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [eventPhotos, setEventPhotos] = useState([]);
@@ -58,6 +59,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
     const [isLoading, setIsLoading] = useState(false);
     const [bidTemplate, setBidTemplate] = useState('');
     const [bidDescriptionError, setBidDescriptionError] = useState('');
+    const [defaultExpirationDays, setDefaultExpirationDays] = useState(null);
 
     useEffect(() => {
         const fetchRequestDetails = async () => {
@@ -111,7 +113,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
             if (user) {
                 const { data: profile } = await supabase
                     .from('business_profiles')
-                    .select('stripe_account_id, Bidi_Plus')
+                    .select('stripe_account_id, Bidi_Plus, default_expiration_days')
                     .eq('id', user.id)
                     .single();
 
@@ -120,6 +122,13 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                 }
                 if (profile?.Bidi_Plus) {
                     setBidiPlus(true);
+                }
+                if (profile?.default_expiration_days) {
+                    setDefaultExpirationDays(profile.default_expiration_days);
+                    // Set the default expiration date based on the number of days
+                    const expirationDate = new Date();
+                    expirationDate.setDate(expirationDate.getDate() + profile.default_expiration_days);
+                    setBidExpirationDate(expirationDate.toISOString().split('T')[0]);
                 }
                 // Show modal immediately if no Stripe account and no Bidi Plus
                 if (!profile?.stripe_account_id && !profile?.Bidi_Plus) {
@@ -196,6 +205,12 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
             return;
         }
 
+        // Validate expiration date
+        if (!bidExpirationDate) {
+            setError('Please set a bid expiration date');
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -228,6 +243,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                     bid_amount: bidAmount,
                     bid_description: bidDescription,
                     category: category,
+                    expiration_date: bidExpirationDate,
                 }]);
 
             if (insertError) throw insertError;
@@ -235,7 +251,8 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
             const subject = 'New Bid Received';
             const htmlContent = `<p>A new bid has been placed on your request.</p>
                                   <p><strong>Bid Amount:</strong> ${bidAmount}</p>
-                                  <p><strong>Description:</strong> ${bidDescription}</p>`;
+                                  <p><strong>Description:</strong> ${bidDescription}</p>
+                                  <p><strong>Expires:</strong> ${new Date(bidExpirationDate).toLocaleDateString()}</p>`;
 
             await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent);
             setSuccess('Bid successfully placed!');
@@ -291,6 +308,19 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                                 required
                             />
                             <label className="custom-label"htmlFor="bidAmount">Bid Price</label>
+                        </div>
+                        <div className="custom-input-container">
+                            <input
+                                className="custom-input"
+                                id="bidExpirationDate"
+                                name="bidExpirationDate"
+                                type="date"
+                                value={bidExpirationDate}
+                                onChange={(e) => setBidExpirationDate(e.target.value)}
+                                min={new Date().toISOString().split('T')[0]}
+                                required
+                            />
+                            <label className="custom-label" htmlFor="bidExpirationDate">Bid Expiration Date</label>
                         </div>
                         <div className="custom-input-container" style={{ marginBottom: '80px' }}>
                             {bidDescriptionError && (

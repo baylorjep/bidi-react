@@ -13,6 +13,7 @@ import Navbar from "./components/Layout/Navbar";
 import Footer from "./components/Layout/Footer";
 import PrivacyPolicy from "./components/Layout/PrivacyPolicy";
 import TermsOfUse from "./components/Layout/TermsOfUse";
+import AboutAndContact from "./components/AboutAndContact";
 
 // Admin Imports
 import AdminDashboard from "./components/admin/AdminDashboard";
@@ -71,6 +72,7 @@ import AboutUs from "./components/AboutUs";
 
 // Messaging imports
 import MessagingView from "./components/Messaging/MessagingView";
+import ChatInterface from "./components/Messaging/ChatInterface";
 
 // Spanish imports
 import HomepageES from "./components/HomepageES";
@@ -114,6 +116,7 @@ import VendorListWithFilters from './components/VendorListWithFilters/VendorList
 import LocationBasedVendors from './pages/LocationBasedVendors';
 import WeddingVibeQuizPage from './pages/WeddingVibeQuiz';
 
+
 function App() {
   const [eventType, setEventType] = useState("");
   const [eventDetails, setEventDetails] = useState({});
@@ -132,6 +135,7 @@ function App() {
                             <Route path="/for-vendors" element={<VendorHomepage />} />
                             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                             <Route path="/terms-of-use" element={<TermsOfUse />} />
+                            <Route path="/about" element={<AboutAndContact />} />
 
                             {/* Bid Routes */}
                             <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
@@ -188,6 +192,8 @@ function App() {
                             
                             {/* Messaging Routes */}
                             <Route path="/messaging" element={<MessagingView />} />
+                            <Route path="/chat" element={<ChatInterface />} />
+                            
 
                             {/* Spanish Routes */}
                             <Route path="/inicio" element={<HomepageES />} />

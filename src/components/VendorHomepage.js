@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import posthog from 'posthog-js';
 import RotatingText from './Layout/RotatingText';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import '../styles/animations.css';
 import '../styles/VendorComparison.css';
 import { Helmet } from 'react-helmet';
+import '../styles/VendorHomepage.css';
 
 // Import vendor-specific images (you'll need to add these to your assets)
 import VendorHero from '../assets/images/Landing Page Photo 6.jpg';
@@ -23,11 +24,15 @@ import LandingPagePhoto6 from '../assets/images/Landing Page Photo 6.jpg';
 function VendorHomepage() {
     const [user, setUser] = useState(null);
     const [role, setRole] = useState(null);
+    const [vendors, setVendors] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         activeRequests: 0,
         totalBids: 0,
         averageBidValue: 0
     });
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchSessionAndRole = async () => {
@@ -120,6 +125,73 @@ function VendorHomepage() {
         fetchStats();
     }, []);
 
+    useEffect(() => {
+        const fetchVendors = async () => {
+            setLoading(true);
+            try {
+                // First get all profile photos
+                const { data: allPhotos, error: photoError } = await supabase
+                    .from('profile_photos')
+                    .select('*')
+                    .eq('photo_type', 'profile');
+
+                if (photoError) throw photoError;
+
+                // Get user IDs that have profile photos
+                const userIdsWithPhotos = [...new Set(allPhotos.map(photo => photo.user_id))];
+
+                // Then fetch vendors that have profile photos
+                let query = supabase
+                    .from('business_profiles')
+                    .select(`
+                        *,
+                        reviews (
+                            rating
+                        )
+                    `)
+                    .in('id', userIdsWithPhotos)
+                    .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true')
+                    .in('business_category', ['photography', 'videography', 'dj', 'catering', 'florist', 'beauty'])
+                    .limit(100); // Fetch more vendors
+
+                const { data: allVendorData, error: vendorError } = await query;
+                if (vendorError) throw vendorError;
+
+                // Calculate average ratings and process vendors
+                const vendorsWithRatings = allVendorData.map(vendor => {
+                    const ratings = vendor.reviews?.map(review => review.rating) || [];
+                    const averageRating = ratings.length > 0 
+                        ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+                        : null;
+                    return {
+                        ...vendor,
+                        average_rating: averageRating
+                    };
+                });
+
+                // Process vendors with their photos
+                const vendorsWithPhotos = vendorsWithRatings.map(vendor => {
+                    const profilePhoto = allPhotos.find(photo => photo.user_id === vendor.id);
+                    return {
+                        ...vendor,
+                        profile_photo_url: profilePhoto?.photo_url || '/images/default.jpg'
+                    };
+                });
+
+                // Shuffle the array to show different vendors each time
+                const shuffledVendors = vendorsWithPhotos.sort(() => Math.random() - 0.5);
+
+                setVendors(shuffledVendors);
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching vendors:', error);
+                setLoading(false);
+            }
+        };
+
+        fetchVendors();
+    }, []);
+
     // Add refs for each section
     const [mastheadRef, mastheadVisible] = useIntersectionObserver();
     const [benefitsRef, benefitsVisible] = useIntersectionObserver();
@@ -133,6 +205,10 @@ function VendorHomepage() {
         setActiveIndex(activeIndex === index ? null : index);
     };
 
+    const handleVendorClick = (vendorId) => {
+        navigate(`/portfolio/${vendorId}`);
+    };
+
     return (
         <>
             <Helmet>
@@ -143,25 +219,32 @@ function VendorHomepage() {
 
             <div ref={mastheadRef} className={`masthead-index fade-in-section ${mastheadVisible ? 'is-visible' : ''}`} style={{
                 display: 'flex',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
                 alignItems: 'center',
                 padding: '2rem',
-                gap: '4rem',
+                gap: '6rem',
+                maxWidth: '2000px',
+                width: '100%',
+                margin: '0 auto',
                 flexDirection: window.innerWidth <= 768 ? 'column' : 'row'
             }}>
-                <div className='text-section' style={{ 
+                <div className='text-section vendor' style={{ 
                     flex: '1',
-                    width: window.innerWidth <= 768 ? '100%' : 'auto'
+                    width: window.innerWidth <= 768 ? '100%' : '50%',
+                    maxWidth: '800px',
+                    paddingRight: window.innerWidth <= 768 ? '0' : '2rem'
                 }}>
                     <h1 className='landing-page-title heading-reset' style={{
-                        fontSize: window.innerWidth <= 768 ? '2.5rem' : '3rem'
+                        fontSize: window.innerWidth <= 768 ? '2.5rem' : '3.5rem',
+                        maxWidth: '700px'
                     }}>
                         Stop Paying for Leads.<br></br>
                         <span className='highlight'>Only Pay When You Get Paid.</span>
                     </h1>
                     <h2 className='landing-page-subtitle heading-reset' style={{
                         marginTop:'20px',
-                        fontSize: window.innerWidth <= 768 ? '1rem' : '1.2rem'
+                        fontSize: window.innerWidth <= 768 ? '1rem' : '1.2rem',
+                        maxWidth: '700px'
                     }}>
                         Join Bidi to connect with local couples actively planning their weddings. With Bidi, you never pay for leads that don't result in money in your pocket.
                         Only pay a small commission when you win the job and get paid by the client.
@@ -242,111 +325,46 @@ function VendorHomepage() {
                     </div>
                 </div>
 
-                <div className='vendor-showcase' style={{
-                    flex: window.innerWidth <= 768 ? '0 0 auto' : '1',
-                    display: window.innerWidth <= 768 ? 'none' : 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '1rem',
-                    maxWidth: '600px',
+                <div className='vendor-waterfall' style={{
+                    flex: '1',
+                    display: window.innerWidth <= 768 ? 'none' : 'block',
+                    width: window.innerWidth <= 768 ? '100%' : '50%',
+                    maxWidth: '800px',
                     position: 'relative',
-                    marginTop: window.innerWidth <= 768 ? '2rem' : '0'
+                    marginTop: window.innerWidth <= 768 ? '2rem' : '0',
+                    height: '700px'
                 }}>
-                    <div className='vendor-category' style={{
-                        position: 'relative',
-                        borderRadius: '15px',
-                        overflow: 'hidden',
-                        aspectRatio: '1',
-                    }}>
-                        <img src={LandingPagePhoto2} alt="Wedding Photography" style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                        }} />
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            left: '0',
-                            right: '0',
-                            background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-                            padding: '1rem',
-                            color: 'white',
-                            fontWeight: 'bold'
-                        }}>
-                            Photography
+                    {loading ? (
+                        <div className="vendor-waterfall-loading">
+                            Loading vendor profiles...
                         </div>
-                    </div>
-                    <div className='vendor-category' style={{
-                        position: 'relative',
-                        borderRadius: '15px',
-                        overflow: 'hidden',
-                        aspectRatio: '1',
-                    }}>
-                        <img src={LandingPagePhoto3} alt="Wedding Videography" style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                        }} />
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            left: '0',
-                            right: '0',
-                            background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-                            padding: '1rem',
-                            color: 'white',
-                            fontWeight: 'bold'
-                        }}>
-                            Videography
+                    ) : (
+                        <div className="vendor-waterfall-grid">
+                            {/* Create 4 copies of the vendors array to ensure enough items for continuous flow */}
+                            {[...vendors, ...vendors, ...vendors, ...vendors].map((vendor, index) => (
+                                <div 
+                                    key={`${vendor.id}-${index}`} 
+                                    className="vendor-waterfall-item"
+                                    onClick={() => handleVendorClick(vendor.id)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <img 
+                                        src={vendor.profile_photo_url} 
+                                        alt={vendor.business_name}
+                                        onError={(e) => { e.target.src = '/images/default.jpg'; }}
+                                    />
+                                    <div className="vendor-waterfall-item-overlay">
+                                        <div className="vendor-waterfall-item-name">
+                                            {vendor.business_name}
+                                        </div>
+                                        <div className="vendor-waterfall-item-category">
+                                            {vendor.business_category}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    </div>
-                    <div className='vendor-category' style={{
-                        position: 'relative',
-                        borderRadius: '15px',
-                        overflow: 'hidden',
-                        aspectRatio: '1',
-                    }}>
-                        <img src={LandingPagePhoto4} alt="Wedding Catering" style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                        }} />
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            left: '0',
-                            right: '0',
-                            background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-                            padding: '1rem',
-                            color: 'white',
-                            fontWeight: 'bold'
-                        }}>
-                            Catering
-                        </div>
-                    </div>
-                    <div className='vendor-category' style={{
-                        position: 'relative',
-                        borderRadius: '15px',
-                        overflow: 'hidden',
-                        aspectRatio: '1',
-                    }}>
-                        <img src={LandingPagePhoto5} alt="Wedding Florist" style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                        }} />
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            left: '0',
-                            right: '0',
-                            background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-                            padding: '1rem',
-                            color: 'white',
-                            fontWeight: 'bold'
-                        }}>
-                            Florist
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
@@ -656,7 +674,7 @@ function VendorHomepage() {
             <div ref={ctaRef} className={`try-now-container fade-in-section ${ctaVisible ? 'is-visible' : ''}`} style={{
                 padding: window.innerWidth <= 768 ? '2rem 1rem' : '4rem 2rem'
             }}>
-                <div className='try-now-box' style={{
+                <div className='try-now-box vendor' style={{
                     padding: window.innerWidth <= 768 ? '3rem 1.5rem' : '3rem',
                     minHeight: window.innerWidth <= 768 ? '300px' : 'auto',
                     display: 'flex',
