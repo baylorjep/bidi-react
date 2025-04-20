@@ -49,3 +49,97 @@
 .image-modal-close:hover {
   background: rgba(0, 0, 0, 0.9);
 }
+
+.image-modal {
+  max-width: 90vw;
+  margin: 0 auto;
+}
+
+.image-modal .modal-content {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.image-modal .modal-header {
+  border-bottom: 1px solid #eee;
+  padding: 15px 20px;
+}
+
+.image-modal .modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.image-modal-body {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.video-container {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-media {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.modal-media.video {
+  width: 100%;
+  height: auto;
+  min-height: 400px;
+  background-color: #000;
+}
+
+.converting-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.converting-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .image-modal {
+    max-width: 95vw;
+  }
+  
+  .image-modal-body {
+    min-height: 50vh;
+    max-height: 70vh;
+  }
+  
+  .modal-media.video {
+    min-height: 300px;
+  }
+}

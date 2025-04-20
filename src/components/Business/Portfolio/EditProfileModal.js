@@ -545,17 +545,37 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       const croppedImage = await getCroppedImg(tempImageUrl, croppedAreaPixels);
       
       // Convert cropped image to WebP
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
       const img = await createImage(URL.createObjectURL(croppedImage));
       
       canvas.width = 400;
       canvas.height = 400;
       ctx.drawImage(img, 0, 0, 400, 400);
       
-        const webpBlob = await new Promise((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), 'image/webp', 0.8);
-      });
+      // Convert to WebP with better error handling
+      let webpBlob;
+      try {
+        webpBlob = await new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('Failed to convert to WebP'));
+                return;
+              }
+              resolve(blob);
+            },
+            'image/webp',
+            0.90 // Higher quality setting
+          );
+        });
+        console.log('Successfully converted to WebP');
+      } catch (conversionError) {
+        console.error('WebP conversion failed:', conversionError);
+        // Fall back to original image if WebP conversion fails
+        webpBlob = croppedImage;
+        console.log('Falling back to original image format');
+      }
 
       const fileName = `${uuidv4()}.webp`;
       const filePath = `${businessId}/${fileName}`;
@@ -589,12 +609,14 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       } else {
         await supabase
           .from('profile_photos')
-          .insert([{
-            user_id: businessId,
-            photo_url: photoUrl,
-            file_path: filePath,
-            photo_type: "profile"
-          }]);
+          .insert([
+            {
+              user_id: businessId,
+              photo_url: photoUrl,
+              file_path: filePath,
+              photo_type: "profile"
+            }
+          ]);
       }
 
       setProfilePic(photoUrl);
@@ -710,10 +732,12 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     }
   };
 
-  // Update the touch event handlers
+  // Update the touch event handlers to allow scrolling when not dragging
   const handleTouchStart = (e, url) => {
     // Only start drag if touching the drag handle
-    if (!e.target.closest('.drag-handle')) return;
+    if (!e.target.closest('.drag-handle')) {
+      return; // Allow default scrolling behavior
+    }
     
     const touch = e.touches[0];
     const element = e.currentTarget;
@@ -729,12 +753,14 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     // Add feedback element
     setDragFeedback('Hold and drag to reorder');
     
-    // Prevent scrolling while dragging
+    // Only prevent default when actually dragging
     e.preventDefault();
   };
 
   const handleTouchMove = (e) => {
-    if (!draggedElement) return;
+    if (!draggedElement) {
+      return; // Allow default scrolling behavior
+    }
     
     const touch = e.touches[0];
     const elements = Array.from(document.querySelectorAll('.image-container:not(.dragging)'));
@@ -774,6 +800,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       }
     }
     
+    // Only prevent default when actually dragging
     e.preventDefault();
   };
 
@@ -839,6 +866,122 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     setDraggedElement(null);
     setTouchStartY(null);
     setDragFeedback(null);
+  };
+
+  const handleMouseDown = (e, url) => {
+    if (!e.target.closest('.drag-handle')) return;
+    
+    const element = e.currentTarget;
+    setDraggedElement(element);
+    element.classList.add('dragging');
+    element.dataset.originalUrl = url;
+    element.dataset.initialX = element.getBoundingClientRect().left;
+    element.dataset.initialY = element.getBoundingClientRect().top;
+    setDragFeedback('Drag to reorder');
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!draggedElement) return;
+    
+    const elements = Array.from(document.querySelectorAll('.image-container:not(.dragging)'));
+    const deltaX = e.clientX - draggedElement.getBoundingClientRect().left;
+    const deltaY = e.clientY - draggedElement.getBoundingClientRect().top;
+    draggedElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+    
+    elements.forEach(el => el.classList.remove('drag-over-above', 'drag-over-below', 'drag-over-left', 'drag-over-right'));
+    
+    let closestElement = null;
+    let closestDistance = Infinity;
+    let position = '';
+
+    elements.forEach(el => {
+      const box = el.getBoundingClientRect();
+      const centerX = box.left + box.width / 2;
+      const centerY = box.top + box.height / 2;
+      const distanceX = Math.abs(e.clientX - centerX);
+      const distanceY = Math.abs(e.clientY - centerY);
+      const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+      
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestElement = el;
+        
+        // Determine position relative to the closest element
+        if (distanceX > distanceY) {
+          position = e.clientX < centerX ? 'left' : 'right';
+        } else {
+          position = e.clientY < centerY ? 'above' : 'below';
+        }
+      }
+    });
+    
+    if (closestElement) {
+      closestElement.classList.add(`drag-over-${position}`);
+      setDragFeedback(`Release to place ${position}`);
+    }
+  };
+
+  const handleMouseUp = async (e) => {
+    if (!draggedElement) return;
+    
+    const dropTarget = document.querySelector('.drag-over-above, .drag-over-below, .drag-over-left, .drag-over-right');
+    if (dropTarget) {
+      const draggedUrl = draggedElement.dataset.originalUrl;
+      const droppedUrl = dropTarget.querySelector('img, video').src;
+      const position = dropTarget.classList.contains('drag-over-above') ? 'above' :
+                      dropTarget.classList.contains('drag-over-below') ? 'below' :
+                      dropTarget.classList.contains('drag-over-left') ? 'left' : 'right';
+      
+      const newOrder = [...mediaOrder];
+      const draggedIndex = newOrder.indexOf(draggedUrl);
+      let droppedIndex = newOrder.indexOf(droppedUrl);
+      
+      // Adjust dropped index based on position
+      if (position === 'below' || position === 'right') {
+        droppedIndex += 1;
+      }
+      
+      newOrder.splice(draggedIndex, 1);
+      newOrder.splice(droppedIndex, 0, draggedUrl);
+      setMediaOrder(newOrder);
+      
+      try {
+        const { data: currentMedia } = await supabase
+          .from("profile_photos")
+          .select("photo_url, display_order")
+          .eq("user_id", businessId)
+          .or("photo_type.eq.portfolio,photo_type.eq.video")
+          .order("display_order", { ascending: true });
+
+        if (currentMedia) {
+          const updates = newOrder.map((url, index) => 
+            supabase
+              .from("profile_photos")
+              .update({ display_order: index })
+              .eq("user_id", businessId)
+              .eq("photo_url", url)
+          );
+          await Promise.all(updates);
+        }
+      } catch (error) {
+        console.error("Error updating order:", error);
+        setMediaOrder(mediaOrder);
+      }
+    }
+    
+    draggedElement.style.transform = '';
+    draggedElement.classList.remove('dragging');
+    document.querySelectorAll('.drag-over-above, .drag-over-below, .drag-over-left, .drag-over-right').forEach(el => {
+      el.classList.remove('drag-over-above', 'drag-over-below', 'drag-over-left', 'drag-over-right');
+    });
+    
+    setDraggedElement(null);
+    setDragFeedback(null);
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
   };
 
   return (
@@ -1015,51 +1158,46 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
             {initialData.portfolio && (
               <div className="portfolio-preview-container">
                 <h3>Portfolio Media</h3>
-                <div className="portfolio-preview">
+                
+                {/* Add Media Button at the top */}
+                <div className="upload-btn-container">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                    onChange={handleFileChange}
+                    multiple
+                  />
+                  <button
+                    className="upload-btn"
+                    onClick={() => fileInputRef.current.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? "Uploading..." : "Add Media"}
+                  </button>
+                </div>
+
+                {/* Upload Progress */}
+                {Object.entries(uploadProgress).map(([fileName, progress]) => (
+                  <div key={fileName} className="upload-progress-container">
+                    <span>{fileName}</span>
+                    <ProgressBar progress={progress} />
+                  </div>
+                ))}
+
+                <div className="portfolio-preview" style={{ touchAction: 'pan-y' }}>
                   {mediaOrder.map((url, index) => {
                     const isVideo = url.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
                     return (
                       <div 
                         key={url} 
                         className="image-container"
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.effectAllowed = 'move';
-                          e.dataTransfer.setData('text/plain', url);
-                          e.currentTarget.classList.add('dragging');
-                        }}
-                        onDragEnd={(e) => {
-                          e.currentTarget.classList.remove('dragging');
-                          e.currentTarget.style.transform = '';
-                        }}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.dataTransfer.dropEffect = 'move';
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const centerY = rect.top + rect.height / 2;
-                          
-                          if (e.clientY < centerY) {
-                              e.currentTarget.classList.add('drag-over-above');
-                              e.currentTarget.classList.remove('drag-over-below');
-                          } else {
-                              e.currentTarget.classList.add('drag-over-below');
-                              e.currentTarget.classList.remove('drag-over-above');
-                          }
-                        }}
-                        onDragLeave={(e) => {
-                          e.currentTarget.classList.remove('drag-over-above', 'drag-over-below');
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          e.currentTarget.classList.remove('drag-over-above', 'drag-over-below');
-                          const draggedUrl = e.dataTransfer.getData('text/plain');
-                          if (draggedUrl !== url) {
-                              handleReorder(draggedUrl, url);
-                          }
-                        }}
+                        style={{ touchAction: 'pan-y' }}
                         onTouchStart={(e) => handleTouchStart(e, url)}
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchEnd}
+                        onMouseDown={(e) => handleMouseDown(e, url)}
                       >
                         {isVideo ? (
                           <video 
@@ -1067,13 +1205,15 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                             className="portfolio-image video" 
                             controls
                             playsInline
+                            style={{ touchAction: 'pan-y' }}
                           />
                         ) : (
                           <img 
                             src={url} 
-                            alt={`Portfolio ${index}`} 
+                            alt={`Portfolio ${index + 1}`} 
                             className="portfolio-image" 
                             loading="lazy"
+                            style={{ touchAction: 'pan-y' }}
                           />
                         )}
                         <button 
@@ -1094,32 +1234,6 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                     );
                   })}
                 </div>
-
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  ref={fileInputRef}
-                  style={{ display: "none" }}
-                  onChange={handleFileChange}
-                  multiple
-                />
-                <div className="upload-btn-container">
-                  <button
-                    className="upload-btn"
-                    onClick={() => fileInputRef.current.click()}
-                    disabled={uploading}
-                  >
-                    {uploading ? "Uploading..." : "Add Media"}
-                  </button>
-                </div>
-
-                {/* Upload Progress */}
-                {Object.entries(uploadProgress).map(([fileName, progress]) => (
-                  <div key={fileName} className="upload-progress-container">
-                    <span>{fileName}</span>
-                    <ProgressBar progress={progress} />
-                  </div>
-                ))}
 
                 {dragFeedback && (
                   <div className="drag-feedback">

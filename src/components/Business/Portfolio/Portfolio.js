@@ -206,6 +206,11 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         converted.profile = await convertHeicToJpeg(profileImage);
       }
       for (const photo of portfolioPics) {
+        // Skip if already WebP
+        if (photo.toLowerCase().endsWith('.webp')) {
+          converted[photo] = photo;
+          continue;
+        }
         converted[photo] = await convertHeicToJpeg(photo);
       }
       setConvertedUrls(converted);
@@ -231,7 +236,13 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   };
 
   const openEditModal = (fields) => {
-    setEditFields(fields);
+    setEditFields({
+      ...fields,
+      portfolio: {
+        images: portfolioPics,
+        videos: portfolioVideos
+      }
+    });
     setModalOpen(true);
   };
 
@@ -273,9 +284,16 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     }
   };
 
-  const handleImageClick = (mediaUrl) => {
-    const isVideo = mediaUrl.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
-    setSelectedImage({ url: mediaUrl, isVideo });
+  const handleImageClick = (media) => {
+    // If media is already an object with url and isVideo properties
+    if (media && typeof media === 'object' && 'url' in media) {
+      setSelectedImage(media);
+    } 
+    // If media is just a URL string (for backward compatibility)
+    else if (typeof media === 'string') {
+      const isVideo = media.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
+      setSelectedImage({ url: media, isVideo });
+    }
   };
 
   const handleCloseImageModal = () => {
@@ -377,35 +395,47 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         >
           {/* Show first media item based on display_order */}
           {portfolioPics.length > 0 || portfolioVideos.length > 0 ? (
-            portfolioPics[0] ? (
-              <img
-                src={convertedUrls[portfolioPics[0]] || portfolioPics[0]}
-                alt="Main Portfolio"
-                className={`main-portfolio-image ${
-                  portfolioVideos.length + portfolioPics.length <= 1
-                    ? "single-media-item"
-                    : ""
-                }`}
-                onClick={() => handleImageClick(portfolioPics[0])}
-              />
-            ) : portfolioVideos[0] ? (
-              <video
-                src={portfolioVideos[0]}
-                className={`main-portfolio-image ${
-                  portfolioVideos.length + portfolioPics.length <= 1
-                    ? "single-media-item"
-                    : ""
-                }`}
-                controls
-                muted
-                autoPlay
-                loop
-                playsInline
-                onClick={() => handleImageClick(portfolioVideos[0])}
-              >
-                Your browser does not support the video tag.
-              </video>
-            ) : null
+            // Get the first item from the combined and sorted media array
+            (() => {
+              const allMedia = [...portfolioVideos, ...portfolioPics];
+              const firstMedia = allMedia[0];
+              const isVideo = firstMedia && portfolioVideos.includes(firstMedia);
+
+              if (isVideo) {
+                return (
+                  <video
+                    src={firstMedia}
+                    className={`main-portfolio-image ${
+                      portfolioVideos.length + portfolioPics.length <= 1
+                        ? "single-media-item"
+                        : ""
+                    }`}
+                    controls
+                    muted
+                    autoPlay
+                    loop
+                    playsInline
+                    onClick={() => handleImageClick({ url: firstMedia, isVideo: true })}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                );
+              } else if (firstMedia) {
+                return (
+                  <img
+                    src={convertedUrls[firstMedia] || firstMedia}
+                    alt="Main Portfolio"
+                    className={`main-portfolio-image ${
+                      portfolioVideos.length + portfolioPics.length <= 1
+                        ? "single-media-item"
+                        : ""
+                    }`}
+                    onClick={() => handleImageClick({ url: firstMedia, isVideo: false })}
+                  />
+                );
+              }
+              return null;
+            })()
           ) : (
             <img
               src="/images/portfolio.jpeg"
@@ -417,12 +447,10 @@ const Portfolio = ({ businessId: propBusinessId }) => {
           {/* Show remaining media items in grid */}
           {portfolioVideos.length + portfolioPics.length > 1 && (
             <div className="portfolio-grid">
-              {[...portfolioVideos.slice(1), ...portfolioPics.slice(1)]
-                .slice(0, 4)
+              {[...portfolioVideos, ...portfolioPics]
+                .slice(1, 5) // Show up to 4 more items (total of 5 including the first one)
                 .map((item, index) => {
-                  const isVideo = item
-                    .toLowerCase()
-                    .match(/\.(mp4|mov|avi|wmv|webm)$/);
+                  const isVideo = portfolioVideos.includes(item);
                   return isVideo ? (
                     <video
                       key={index}
@@ -434,7 +462,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       autoPlay
                       loop
                       playsInline
-                      onClick={() => handleImageClick(item)}
+                      onClick={() => handleImageClick({ url: item, isVideo: true })}
                     >
                       Your browser does not support the video tag.
                     </video>
@@ -444,10 +472,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       src={convertedUrls[item] || item}
                       alt={`Portfolio ${index}`}
                       className="portfolio-image-portfolio"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleImageClick(item);
-                      }}
+                      onClick={() => handleImageClick({ url: item, isVideo: false })}
                     />
                   );
                 })}
@@ -465,7 +490,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
           {isOwner && (
             <button
               className="edit-icon"
-              onClick={() => openEditModal({ portfolio: portfolioPics })}
+              onClick={() => openEditModal({ portfolio: { images: portfolioPics, videos: portfolioVideos } })}
             >
               ✎
             </button>

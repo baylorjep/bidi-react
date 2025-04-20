@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 // import Modal from "react-modal";
 import { Modal } from "react-bootstrap";
 import { convertHeicToJpeg } from "../../../utils/imageUtils";
+import "../../../styles/ImageModal.css";
 
 const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose }) => {
   const [convertedUrl, setConvertedUrl] = useState(mediaUrl);
@@ -31,15 +32,28 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose }) => {
   }, [mediaUrl, isVideo]);
 
   return (
-    <Modal show={isOpen} onHide={onClose} centered>
+    <Modal 
+      show={isOpen} 
+      onHide={onClose} 
+      centered
+      size="lg"
+      className="image-modal"
+    >
       <Modal.Header closeButton>
         <Modal.Title>Media Preview</Modal.Title>
       </Modal.Header>
-      <Modal.Body>
+      <Modal.Body className="image-modal-body">
         {isVideo ? (
-          <video src={mediaUrl} controls autoPlay className="modal-media">
-            Your browser does not support the video tag.
-          </video>
+          <div className="video-container">
+            <video 
+              src={mediaUrl} 
+              controls 
+              autoPlay 
+              className="modal-media video"
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
         ) : (
           <>
             {isConverting ? (

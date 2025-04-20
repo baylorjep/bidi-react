@@ -43,3 +43,182 @@
 .btn-group .btn:hover {
     opacity: 0.9;
 }
+
+.admin-dashboard-container {
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+.admin-dashboard-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-dashboard-title {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #333;
+    font-size: 2rem;
+}
+
+.admin-tabs-container {
+    width: 100%;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.admin-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+}
+
+.admin-tab {
+    padding: 12px 20px;
+    border: 2px solid #A328F4;
+    border-radius: 20px;
+    background-color: white;
+    color: #A328F4;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: 120px;
+    text-align: center;
+}
+
+.admin-tab.active {
+    background-color: #A328F4;
+    color: white;
+}
+
+.admin-content {
+    width: 100%;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.admin-card {
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-card-header {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.admin-card-header h5 {
+    margin: 0;
+    color: #333;
+}
+
+.admin-card-body {
+    padding: 15px;
+}
+
+.admin-table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.admin-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.user-email {
+    word-break: break-all;
+}
+
+.sign-in-button {
+    padding: 8px 16px;
+    background-color: #A328F4;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.sign-in-button:hover {
+    background-color: #8a1fd1;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .admin-dashboard-container {
+        padding: 10px;
+    }
+
+    .admin-dashboard-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .admin-tabs {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-tab {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .admin-content {
+        padding: 15px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .sign-in-button {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+    .admin-dashboard-title {
+        font-size: 1.25rem;
+    }
+
+    .admin-tab {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+
+    .admin-card-header h5 {
+        font-size: 16px;
+    }
+}

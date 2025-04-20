@@ -442,7 +442,7 @@
   /* display: flex; */
   justify-content: space-around;
   align-items: center;
-  padding: 0.5rem 0;
+  padding: 0.8rem 0;
   z-index: 1000;
 }
 
@@ -470,6 +470,9 @@
 
   .bottom-nav {
     display: flex; /* Show bottom navigation on mobile */
+    justify-content: space-around;
+    align-items: center;
+    margin:0;
   }
 
   .dashboard-main {

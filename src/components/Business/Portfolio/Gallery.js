@@ -43,21 +43,23 @@ const Gallery = () => {
   useEffect(() => {
     const convertImages = async () => {
       const converted = {};
-      for (const media of portfolioMedia) {
-        if (media.type === 'image' && media.url.toLowerCase().match(/\.heic$/)) {
-          setConvertingImages(prev => ({ ...prev, [media.url]: true }));
-          converted[media.url] = await convertHeicToJpeg(media.url);
-          setConvertingImages(prev => ({ ...prev, [media.url]: false }));
+      for (const photo of portfolioMedia.map(media => media.url)) {
+        // Skip if already WebP
+        if (photo.toLowerCase().endsWith('.webp')) {
+          converted[photo] = photo;
+          continue;
         }
+        converted[photo] = await convertHeicToJpeg(photo);
       }
       setConvertedUrls(converted);
     };
 
     convertImages();
 
+    // Cleanup function
     return () => {
-      Object.values(convertedUrls).forEach(url => {
-        if (url && url.startsWith('blob:')) {
+      Object.values(convertedUrls).forEach((url) => {
+        if (url && url.startsWith("blob:")) {
           URL.revokeObjectURL(url);
         }
       });

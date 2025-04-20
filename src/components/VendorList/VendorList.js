@@ -76,6 +76,7 @@ const VendorList = ({
 
         return new Promise((resolve) => {
             const img = new Image();
+            img.crossOrigin = 'anonymous'; // Add crossOrigin for WebP images
             
             img.onload = () => {
                 setMediaErrors(prev => ({
@@ -389,7 +390,7 @@ const VendorList = ({
         prevArrow: <SamplePrevArrow />,
         dots: false,
         beforeChange: (oldIndex, newIndex) => {
-            const currentVendor = vendors[Math.floor(newIndex / 10)]; // Changed from 6 to 10
+            const currentVendor = vendors[Math.floor(newIndex / 10)];
             
             console.log('Current slide:', newIndex);
             console.log('Current vendor:', currentVendor?.business_name);
@@ -416,6 +417,18 @@ const VendorList = ({
                     overlay.style.display = 'flex';
                 }
             });
+
+            // Play the current video
+            const currentVideo = document.querySelector(`.slick-current .portfolio-image.video`);
+            if (currentVideo) {
+                currentVideo.play().catch(error => {
+                    console.warn('Error playing video:', error);
+                });
+                const overlay = currentVideo.parentElement?.querySelector('.video-play-overlay');
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
         },
         // Add these settings to ensure proper slider behavior
         accessibility: true,
@@ -423,6 +436,8 @@ const VendorList = ({
         swipe: true,
         touchMove: true,
         waitForAnimate: true,
+        // Add touchAction to allow scrolling
+        touchAction: 'pan-y',
         // Add onInit callback
         onInit: () => {
             // Set initial dimensions based on first image
@@ -629,12 +644,13 @@ const VendorList = ({
                          display: 'flex',
                          alignItems: 'center',
                          justifyContent: 'center',
-                         background: '#f5f5f5'
+                         background: '#f5f5f5',
+                         touchAction: 'pan-y'
                      }}
                      onClick={() => openModal(item)}
                 >
                     {itemIsVideo ? (
-                        <div className="video-container">
+                        <div className="video-container-vendor-list " style={{ touchAction: 'pan-y' }}>
                             <video
                                 src={item}
                                 className="portfolio-image video"
@@ -643,6 +659,8 @@ const VendorList = ({
                                 playsInline
                                 loading="lazy"
                                 preload="metadata"
+                                autoPlay
+                                style={{ touchAction: 'pan-y' }}
                                 onError={(e) => {
                                     console.warn(`Failed to load video: ${item}`);
                                     setMediaErrors(prev => ({
@@ -652,43 +670,36 @@ const VendorList = ({
                                 }}
                             />
                             {!mediaErrors[item] && (
-                                <div className="video-play-overlay">
+                                <div className="video-play-overlay" style={{ touchAction: 'pan-y' }}>
                                     <button 
                                         className="play-button"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            try {
-                                                const container = e.currentTarget.closest('.video-container');
-                                                const video = container?.querySelector('video');
-                                                const overlay = e.currentTarget.closest('.video-play-overlay');
-                                                
-                                                if (!video || !overlay) return;
+                                            const video = e.currentTarget.closest('.video-container-vendor-list')?.querySelector('video');
+                                            if (!video) return;
 
-                                                // Pause all other videos
-                                                document.querySelectorAll('.portfolio-image.video').forEach(v => {
-                                                    if (v !== video) {
-                                                        v.pause();
-                                                        const otherOverlay = v.parentElement?.querySelector('.video-play-overlay');
-                                                        if (otherOverlay) {
-                                                            otherOverlay.style.display = 'flex';
-                                                        }
+                                            // Pause all other videos
+                                            document.querySelectorAll('.portfolio-image.video').forEach(v => {
+                                                if (v !== video) {
+                                                    v.pause();
+                                                    const otherOverlay = v.parentElement?.querySelector('.video-play-overlay');
+                                                    if (otherOverlay) {
+                                                        otherOverlay.style.display = 'flex';
                                                     }
-                                                });
-                                                
-                                                if (video.paused) {
-                                                    video.play()
-                                                        .then(() => {
-                                                            overlay.style.display = 'none';
-                                                        })
-                                                        .catch(error => {
-                                                            console.warn('Error playing video:', error);
-                                                        });
-                                                } else {
-                                                    video.pause();
-                                                    overlay.style.display = 'flex';
                                                 }
-                                            } catch (error) {
-                                                console.warn('Error handling play button click:', error);
+                                            });
+
+                                            if (video.paused) {
+                                                video.play()
+                                                    .then(() => {
+                                                        video.closest('.video-container-vendor-list').classList.add('playing');
+                                                    })
+                                                    .catch(error => {
+                                                        console.warn('Error playing video:', error);
+                                                    });
+                                            } else {
+                                                video.pause();
+                                                video.closest('.video-container-vendor-list').classList.remove('playing');
                                             }
                                         }}
                                     >
@@ -704,6 +715,7 @@ const VendorList = ({
                                     width="100%"
                                     height="100%"
                                     className="portfolio-image"
+                                    style={{ touchAction: 'pan-y' }}
                                 />
                             ) : (
                                 <img
@@ -721,7 +733,8 @@ const VendorList = ({
                                     }}
                                     style={{
                                         opacity: imageLoading[imageId] ? 0.5 : 1,
-                                        transition: 'opacity 0.3s ease-in-out'
+                                        transition: 'opacity 0.3s ease-in-out',
+                                        touchAction: 'pan-y'
                                     }}
                                 />
                             )}
