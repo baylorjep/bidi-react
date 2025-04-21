@@ -1253,10 +1253,113 @@ export default function BidsPage() {
                 <meta name="keywords" content="bids, wedding vendors, Bidi, manage bids" />
             </Helmet>
             <div className="bids-page">
+                <h1 className="section-title">Your Service Requests</h1>
+                <p className="section-description">
+                    Browse through your service requests using the arrows. Below, you'll find all bids received for the currently displayed request.
+                </p>
+
+                {requests.length > 0 ? (
+                    <>
+                        <div className="request-swiper-container">
+                            <div className="swipe-indicator">
+                                Swipe to view more requests
+                            </div>
+                            <Swiper
+                                modules={[Navigation]}
+                                navigation={true}
+                                onSlideChange={(swiper) => setCurrentRequestIndex(swiper.activeIndex)}
+                                spaceBetween={30}
+                                slidesPerView={1}
+                            >
+                                {requests.map((request, index) => (
+                                    <SwiperSlide key={request.id}>
+                                        <div className="request-slide">
+                                            {renderRequestCard(request)}
+                                        </div>
+                                    </SwiperSlide>
+                                ))}
+                            </Swiper>
+                        </div>
+
+                    </>
+                ) : (
+                    <div className="no-requests" style={{
+                        textAlign: 'center',
+                        padding: '40px 20px',
+                        background: '#f8f9fa',
+                        borderRadius: '8px',
+                        margin: '20px 0'
+                    }}>
+                        <h3 style={{ marginBottom: '15px', color: '#333' }}>No Active Requests Yet</h3>
+                        <p style={{ marginBottom: '20px', color: '#666' }}>
+                            Start your journey by creating your first service request. 
+                            Get matched with the perfect vendors for your event!
+                        </p>
+                        <button 
+                            onClick={() => navigate('/request-categories')}
+                            className="btn-primary"
+                            style={{
+                                padding: '12px 24px',
+                                fontSize: '16px',
+                                fontWeight: 'bold',
+                                backgroundColor: '#9633eb',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '40px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}
+                        >
+                            <i className="fas fa-plus"></i>
+                            Create Your First Request
+                        </button>
+                    </div>
+                )}
+
+                <h2 className="section-title" style={{ marginTop: '40px', textAlign:'center' }}>Bids for Selected Request</h2>
+                <p className="section-description">
+                    Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
+                </p>
+
+                <div className="tabs">
+                    <button 
+                        className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('pending')}
+                    >
+                        Pending Bids
+                    </button>
+                    <button 
+                        className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('approved')}
+                    >
+                        Approved Bids
+                    </button>
+                    <button 
+                        className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('denied')}
+                    >
+                        Denied Bids
+                    </button>
+                </div>
+
+                <div className="bids-container">
+                    {requests.length > 0 && currentRequestIndex >= 0 ? (
+                        <>
+                            {bids.filter(bid => bid.request_id === requests[currentRequestIndex].id)
+                                .map(bid => renderBidCard(bid))}
+                            {renderNoBidsMessage()}
+                        </>
+                    ) : (
+                        <p className="no-bids">No bids to display</p>
+                    )}
+                </div>
+
                 {showShareSection && (
                     <div className="share-earn-section" style={{ 
                         padding: '20px',
-                        marginBottom: '20px',
+                        marginTop: '40px',
                         background: '#f8f9fa',
                         borderRadius: '8px',
                         textAlign: 'center',
@@ -1301,82 +1404,8 @@ export default function BidsPage() {
                             Get Your Referral Code
                         </button>
                         </div>
-
                     </div>
                 )}
-
-                <h1 className="section-title">Your Service Requests</h1>
-                <p className="section-description">
-                    Browse through your service requests using the arrows. Below, you'll find all bids received for the currently displayed request.
-                </p>
-
-                {requests.length > 0 ? (
-                    <>
-                        <div className="request-swiper-container">
-                            <div className="swipe-indicator">
-                                Swipe to view more requests
-                            </div>
-                            <Swiper
-                                modules={[Navigation]}
-                                navigation={true}
-                                onSlideChange={(swiper) => setCurrentRequestIndex(swiper.activeIndex)}
-                                spaceBetween={30}
-                                slidesPerView={1}
-                            >
-                                {requests.map((request, index) => (
-                                    <SwiperSlide key={request.id}>
-                                        <div className="request-slide">
-                                            {renderRequestCard(request)}
-                                        </div>
-                                    </SwiperSlide>
-                                ))}
-                            </Swiper>
-                        </div>
-
-                    </>
-                ) : (
-                    <div className="no-requests">
-                        No active requests found
-                    </div>
-                )}
-
-                <h2 className="section-title" style={{ marginTop: '40px', textAlign:'center' }}>Bids for Selected Request</h2>
-                <p className="section-description">
-                    Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
-                </p>
-
-                <div className="tabs">
-                    <button 
-                        className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('pending')}
-                    >
-                        Pending Bids
-                    </button>
-                    <button 
-                        className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('approved')}
-                    >
-                        Approved Bids
-                    </button>
-                    <button 
-                        className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('denied')}
-                    >
-                        Denied Bids
-                    </button>
-                </div>
-
-                <div className="bids-container">
-                    {requests.length > 0 && currentRequestIndex >= 0 ? (
-                        <>
-                            {bids.filter(bid => bid.request_id === requests[currentRequestIndex].id)
-                                .map(bid => renderBidCard(bid))}
-                            {renderNoBidsMessage()}
-                        </>
-                    ) : (
-                        <p className="no-bids">No bids to display</p>
-                    )}
-                </div>
             </div>
 
             {showAcceptModal && (

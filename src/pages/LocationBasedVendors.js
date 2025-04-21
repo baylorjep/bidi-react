@@ -181,10 +181,106 @@ const LocationBasedVendors = () => {
     const { category, county, city, type } = useParams();
     const navigate = useNavigate();
 
-    const [selectedCategory, setSelectedCategory] = useState(category || '');
-    const [selectedType, setSelectedType] = useState(type || 'all');
+    // Helper function to check if a string is a valid category
+    const isValidCategory = (str) => categories.some(cat => cat.id === str);
+
+    // Helper function to check if a string is a valid type for any category
+    const isValidType = (typeStr) => {
+        return Object.values(categoryTypes).some(types => 
+            types.some(t => t.id === typeStr)
+        );
+    };
+
+    // Helper function to check if a string is a valid type for a specific category
+    const isValidTypeForCategory = (typeStr, categoryStr) => {
+        if (!categoryStr || !categoryTypes[categoryStr]) return false;
+        return categoryTypes[categoryStr].some(t => t.id === typeStr);
+    };
+
+    // Helper function to check if a string is a valid city
+    const isValidCity = (str) => cities.some(c => c.id === str);
+
+    // Helper function to check if a string is a valid county
+    const isValidCounty = (str) => counties.some(c => c.id === str);
+
+    // Helper function to check if a string is a valid location (city or county)
+    const isValidLocation = (str) => isValidCity(str) || isValidCounty(str);
+
+    // Determine the correct category, type, and location from URL parameters
+    const determineInitialValues = () => {
+        console.log('URL Parameters:', { type, category, city, county }); // Debug log
+
+        // Case 1: /type/category/location (city or county)
+        if (type && category && (city || county)) {
+            const location = city || county;
+            // First check if the category is valid
+            if (isValidCategory(category)) {
+                // Then check if the type is valid for this category
+                if (isValidTypeForCategory(type, category)) {
+                    // Finally check if the location is valid
+                    if (isValidLocation(location)) {
+                        console.log('Case 1 matched:', { category, type, location }); // Debug log
+                        return {
+                            category: category,
+                            type: type,
+                            location: location
+                        };
+                    }
+                }
+            }
+        }
+
+        // Case 2: /type/category
+        if (type && category && !city && !county) {
+            if (isValidCategory(category) && isValidTypeForCategory(type, category)) {
+                console.log('Case 2 matched:', { category, type }); // Debug log
+                return {
+                    category: category,
+                    type: type,
+                    location: ''
+                };
+            }
+        }
+
+        // Case 3: /category/location
+        if (category && !type && (city || county)) {
+            const location = city || county;
+            if (isValidCategory(category) && isValidLocation(location)) {
+                console.log('Case 3 matched:', { category, location }); // Debug log
+                return {
+                    category: category,
+                    type: '',
+                    location: location
+                };
+            }
+        }
+
+        // Case 4: /category
+        if (category && !type && !city && !county) {
+            if (isValidCategory(category)) {
+                console.log('Case 4 matched:', { category }); // Debug log
+                return {
+                    category: category,
+                    type: '',
+                    location: ''
+                };
+            }
+        }
+
+        // Default case: empty values if no valid pattern is matched
+        console.log('No case matched, using default values'); // Debug log
+        return {
+            category: '',
+            type: '',
+            location: ''
+        };
+    };
+
+    const initialValues = determineInitialValues();
+    const [selectedCategory, setSelectedCategory] = useState(initialValues.category);
+    const [selectedType, setSelectedType] = useState(initialValues.type);
     const [selectedCounty, setSelectedCounty] = useState(county || '');
-    const [selectedCity, setSelectedCity] = useState(city || '');
+    const [selectedCity, setSelectedCity] = useState(city || initialValues.location);
     const [openFilter, setOpenFilter] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
@@ -360,56 +456,75 @@ const LocationBasedVendors = () => {
     };
 
     const handleCategoryChange = (newCategory) => {
+        if (!isValidCategory(newCategory)) return;
+        
         setSelectedCategory(newCategory);
         setSelectedType(''); // Reset type when category changes
-        let path = '/';
-        const segments = [];
         
-        if (newCategory) segments.push(newCategory);
-        if (selectedCity) segments.push(selectedCity);
+        let path = `/${newCategory}`;
         
-        path += segments.join('/');
-        navigate(path || '/');
+        // Add location if exists and is valid
+        if (selectedCity && isValidCity(selectedCity)) {
+            path += `/${selectedCity}`;
+        } else if (selectedCounty && isValidCounty(selectedCounty)) {
+            path += `/${selectedCounty}`;
+        }
+        
+        navigate(path);
     };
 
     const handleTypeChange = (newType) => {
+        if (!isValidType(newType) || !isValidTypeForCategory(newType, selectedCategory)) return;
+        
         setSelectedType(newType);
-        let path = '/';
-        const segments = [];
         
-        if (selectedCategory) segments.push(selectedCategory);
-        if (newType && newType !== 'all') segments.push(newType);
-        if (selectedCity) segments.push(selectedCity);
+        let path = `/${newType}/${selectedCategory}`;
         
-        path += segments.join('/');
-        navigate(path || '/');
+        // Add location if it exists and is valid
+        if (selectedCity && isValidCity(selectedCity)) {
+            path += `/${selectedCity}`;
+        } else if (selectedCounty && isValidCounty(selectedCounty)) {
+            path += `/${selectedCounty}`;
+        }
+        
+        navigate(path);
     };
 
     const handleCountyChange = (newCounty) => {
+        if (!isValidCounty(newCounty)) return;
+        
         setSelectedCounty(newCounty);
         setSelectedCity(''); // Reset city when county changes
+        
         let path = '/';
-        const segments = [];
         
-        if (selectedCategory) segments.push(selectedCategory);
-        if (selectedType && selectedType !== 'all') segments.unshift(selectedType);
-        if (newCounty) segments.push(newCounty);
+        // Add type and category if they exist
+        if (selectedType && selectedCategory && isValidTypeForCategory(selectedType, selectedCategory)) {
+            path += `${selectedType}/${selectedCategory}/`;
+        } else if (selectedCategory && isValidCategory(selectedCategory)) {
+            path += `${selectedCategory}/`;
+        }
         
-        path += segments.join('/');
-        navigate(path || '/');
+        path += newCounty;
+        navigate(path);
     };
 
     const handleCityChange = (newCity) => {
+        if (!isValidCity(newCity)) return;
+        
         setSelectedCity(newCity);
+        
         let path = '/';
-        const segments = [];
         
-        if (selectedCategory) segments.push(selectedCategory);
-        if (selectedType && selectedType !== 'all') segments.push(selectedType);
-        if (newCity) segments.push(newCity);
+        // Add type and category if they exist
+        if (selectedType && selectedCategory && isValidTypeForCategory(selectedType, selectedCategory)) {
+            path += `${selectedType}/${selectedCategory}/`;
+        } else if (selectedCategory && isValidCategory(selectedCategory)) {
+            path += `${selectedCategory}/`;
+        }
         
-        path += segments.join('/');
-        navigate(path || '/');
+        path += newCity;
+        navigate(path);
     };
 
     // Get the types for the selected category

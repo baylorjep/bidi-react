@@ -240,22 +240,19 @@ function App() {
                             <Route path="/request/videography" element={<VideographyRequest />} />
                             <Route path="/request/dj" element={<DjRequest />} />
                             <Route path="/request/beauty" element={<HairAndMakeUpRequest />} />
-                            <Route path="/request/florist" element={<FloristRequest />} /> {/* Add this route */}
-                            <Route path="/request/catering" element={<CateringRequest />} /> {/* Add this route */}
+                            <Route path="/request/florist" element={<FloristRequest />} />
+                            <Route path="/request/catering" element={<CateringRequest />} />
                             <Route path="/welcome" element={<NewsletterLanding />} />
                             <Route path="/unsubscribe" element={<Unsubscribe />} />
                             <Route path="/wedding-market-guide" element={<WeddingMarketGuide />} />
                             <Route path="/vendors" element={<VendorListWithFilters />} />
-                            <Route path="/:category" element={<LocationBasedVendors />} />
+                            
+                            {/* LocationBasedVendors Routes - Order matters! Most specific to least specific */}
+                            <Route path="/:type/:category/:city" element={<LocationBasedVendors />} />
                             <Route path="/:type/:category" element={<LocationBasedVendors />} />
-                            <Route path="/:category/:county/:city" element={<LocationBasedVendors />} />
-                            <Route path="/:type/:category/:county/:city" element={<LocationBasedVendors />} />
-                            <Route path="/:location" element={<LocationBasedVendors />} />
-                            <Route path="/:type" element={<LocationBasedVendors />} />
-                            <Route path="/:type/:category/:location" element={<LocationBasedVendors />} />
-                            <Route path="/:category/:location" element={<LocationBasedVendors />} />
-                            <Route path="/:category/:location" element={<LocationBasedVendors />} />
-                            <Route path="/:type/:category/:location" element={<LocationBasedVendors />} />
+                            <Route path="/:category/:city" element={<LocationBasedVendors />} />
+                            <Route path="/:category" element={<LocationBasedVendors />} />
+                            
                             <Route path="/wedding-vibe-quiz" element={<WeddingVibeQuizPage />} />
 
                         </Routes>

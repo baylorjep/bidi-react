@@ -53,7 +53,7 @@ function RequestCategories() {
     };
 
     const handleBack = () => {
-        navigate('/createaccount');  // Adjust the route for going back
+        navigate(-1);  // Go back one step in history
     };
 
     return (
