@@ -11553,11 +11553,6 @@ footer a:hover, footer a:active, footer a:focus {
   }
 }
 
-.photo-section {
-  position: relative; /* Ensure the photo-section is positioned relative */
-  z-index: 1; /* Ensure it is above the pink splotch */
-}
-
 .photo-item {
   text-align: center;
   width: 212px;
@@ -11593,29 +11588,17 @@ footer a:hover, footer a:active, footer a:focus {
     overflow: hidden;
     place-items: center;
   }
+
+  .photo-item {
+    width: 160px;
+    height: 223px;
+  }
   .photo-item.offset {
     margin-top: 0px;
   }
 }
 
 @media (max-width:1100px) {
-  .landing-page-title {
-    font-size: 48px;
-  }
-  .text-section {
-    padding: 40px 20px;
-  }
-  .photo-section {
-    grid-template-columns: repeat(1, 1fr);
-    overflow: hidden;
-    place-items: center;
-  }
-  .photo-item.offset {
-    margin-top: 0px;
-  }
-}
-
-@media (max-width:860px) {
   .landing-page-title {
     font-size: 48px;
   }
