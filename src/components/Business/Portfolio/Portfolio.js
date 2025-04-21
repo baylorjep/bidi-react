@@ -232,12 +232,13 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     openEditModal({
       story: business.story,
       business_owner: business.business_owner,
-    });
+    }, 'profile');
   };
 
-  const openEditModal = (fields) => {
+  const openEditModal = (fields, section) => {
     setEditFields({
       ...fields,
+      currentSection: section,
       portfolio: {
         images: portfolioPics,
         videos: portfolioVideos
@@ -490,7 +491,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
           {isOwner && (
             <button
               className="edit-icon"
-              onClick={() => openEditModal({ portfolio: { images: portfolioPics, videos: portfolioVideos } })}
+              onClick={() => openEditModal({ portfolio: { images: portfolioPics, videos: portfolioVideos } }, 'portfolio')}
             >
               ✎
             </button>
@@ -546,8 +547,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       openEditModal({
                         business_name: business.business_name,
                         business_description: business.business_description,
-                      })
-                    }
+                      }, 'business_info')}
                   >
                     ✎
                   </button>
@@ -591,8 +591,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       openEditModal({
                         business_address: business.business_address,
                         minimum_price: business.minimum_price,
-                      })
-                    }
+                      }, 'business_details')}
                   >
                     ✎
                   </button>
@@ -633,9 +632,8 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       openEditModal({
                         business_owner: business.business_owner,
                         story: business.story,
-                        profile_picture: true, // Add this flag to show profile picture section
-                      })
-                    }
+                        profile_picture: true,
+                      }, 'profile')}
                   >
                     ✎
                   </button>
@@ -659,26 +657,17 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                   <p className="no-specialties-text">No specialties yet.</p>
                 )}
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  width: "100%",
-                }}
-              >
-                {isOwner && (
-                  <button
-                    className="edit-icon"
-                    onClick={() =>
-                      openEditModal({
-                        specializations: business.specializations,
-                      })
-                    }
-                  >
-                    ✎
-                  </button>
-                )}
-              </div>
+              {isOwner && (
+                <button
+                  className="edit-icon"
+                  onClick={() =>
+                    openEditModal({
+                      specializations: business.specializations,
+                    }, 'specialties')}
+                >
+                  ✎
+                </button>
+              )}
             </div>
           </div>
 

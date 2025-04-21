@@ -117,10 +117,13 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   // 🔹 Handle saving data back to Supabase
   const handleSave = async () => {
     try {
+      // Create a copy of formData and remove UI-only fields
       const updatedData = { ...formData };
       delete updatedData.portfolio; // Remove portfolio field if it exists
-      delete updatedData.profile_picture; // Remove profile_picture flag before saving
+      delete updatedData.profile_picture; // Remove profile_picture flag
+      delete updatedData.currentSection; // Remove currentSection field
 
+      // Only proceed if there are actual business profile fields to update
       if (Object.keys(updatedData).length > 0) {
         const { error } = await supabase
           .from("business_profiles")
@@ -989,7 +992,25 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       <div className="edit-portfolio-modal">
         <div className="modal-overlay">
           <div className="modal-content">
-            <h2>Edit {initialData.portfolio ? "Portfolio" : "Profile"}</h2>
+            {/* Dynamic header based on section */}
+            <h2>
+              {(() => {
+                switch (initialData.currentSection) {
+                  case 'portfolio':
+                    return 'Edit Portfolio';
+                  case 'business_info':
+                    return 'Edit Business Information';
+                  case 'business_details':
+                    return 'Edit Business Details';
+                  case 'profile':
+                    return 'Edit Profile';
+                  case 'specialties':
+                    return 'Edit Specialties';
+                  default:
+                    return 'Edit Profile';
+                }
+              })()}
+            </h2>
 
             {/* Cropping Modal */}
             {isCropping && (
@@ -1023,14 +1044,14 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
             )}
 
             {/* Profile Picture Section */}
-            {!initialData.portfolio && initialData.profile_picture && !isCropping && (
+            {initialData.currentSection === 'profile' && initialData.profile_picture && !isCropping && (
               <div className="profile-picture-container">
                 <label>Profile Picture</label>
                 <div className="profile-pic-wrapper">
                   <img 
                     src={profilePic || "/images/default.jpg"}
                     alt="Profile"
-                    className="profile-pic"
+                    className="profile-pic-modal"
                   />
                   <div className="profile-pic-buttons">
                     <input 
@@ -1061,101 +1082,129 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
               </div>
             )}
 
-            {/* Dynamic Form Fields (Non-Portfolio Data) */}
-            {Object.keys(formData).length > 0 && !formData.portfolio && (
+            {/* Business Info Section */}
+            {initialData.currentSection === 'business_info' && (
               <div>
-                {Object.entries(formData)
-                  .filter(([key]) => !['portfolio', 'profile_picture'].includes(key)) // Filter out portfolio and profile_picture
-                  .map(([key, value]) => (
-                  <div key={key} className="modal-input-group">
-                    <label>{key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</label>
-                    {key === 'story' ? (
-                      <div>
-                        <textarea
-                          name={key}
-                          value={value || ""}
-                          onChange={handleChange}
-                          rows={6}
-                          placeholder="Write about you, your business, your story..."
-                          style={{ resize: 'vertical', minHeight: '150px' }}
-                        />
-                      </div>
-                    ) : key === 'business_description' ? (
-                      <div>
-                        <input
-                          type="text"
-                          name={key}
-                          value={value || ""}
-                          onChange={handleChange}
-                          maxLength={50}
-                          placeholder="Brief description of your business"
-                        />
-                        <div className="character-count">
-                          {50 - (value?.length || 0)} characters remaining
-                        </div>
-                      </div>
-                    ) : key === 'specializations' ? (
-                      <div className="specializations-container">
-                        <div className="specializations-list">
-                          {value?.map((specialty, index) => (
-                            <div key={index} className="specialization-item">
-                              {specialty}
-                              <button
-                                type="button"
-                                className="remove-button"
-                                onClick={() => handleSpecializationRemove(index)}
-                              >
-                                ✖
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="specialization-input">
-                          <input
-                            type="text"
-                            placeholder="Add a specialization..."
-                            value={newSpecialization}
-                            onChange={(e) => setNewSpecialization(e.target.value)}
-                            onKeyPress={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                handleSpecializationAdd();
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="add-button"
-                            onClick={handleSpecializationAdd}
-                          >
-                            Add
-                          </button>
-                        </div>
-                      </div>
-                    ) : key === 'business_address' ? (
-                      <input
-                        type="text"
-                        name={key}
-                        value={value || ""}
-                        onChange={handleChange}
-                        placeholder="Enter the areas you cover (e.g., Utah)"
-                      />
-                      
-                    ) : (
-                      <input
-                        type="text"
-                        name={key}
-                        value={value || ""}
-                        onChange={handleChange}
-                      />
-                    )}
+                <div className="modal-input-group">
+                  <label>Business Name</label>
+                  <input
+                    type="text"
+                    name="business_name"
+                    value={formData.business_name || ""}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="modal-input-group">
+                  <label>Business Description</label>
+                  <input
+                    type="text"
+                    name="business_description"
+                    value={formData.business_description || ""}
+                    onChange={handleChange}
+                    maxLength={50}
+                    placeholder="Brief description of your business"
+                  />
+                  <div className="character-count">
+                    {50 - (formData.business_description?.length || 0)} characters remaining
                   </div>
-                ))}
+                </div>
               </div>
             )}
 
-            {/* 🔹 Portfolio Images Section */}
-            {initialData.portfolio && (
+            {/* Business Details Section */}
+            {initialData.currentSection === 'business_details' && (
+              <div>
+                <div className="modal-input-group">
+                  <label>Location</label>
+                  <input
+                    type="text"
+                    name="business_address"
+                    value={formData.business_address || ""}
+                    onChange={handleChange}
+                    placeholder="Enter the areas you cover (e.g., Utah)"
+                  />
+                </div>
+                <div className="modal-input-group">
+                  <label>Base Price</label>
+                  <input
+                    type="text"
+                    name="minimum_price"
+                    value={formData.minimum_price || ""}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Profile Section */}
+            {initialData.currentSection === 'profile' && (
+              <div>
+                <div className="modal-input-group">
+                  <label>Business Owner</label>
+                  <input
+                    type="text"
+                    name="business_owner"
+                    value={formData.business_owner || ""}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="modal-input-group">
+                  <label>Story</label>
+                  <textarea
+                    name="story"
+                    value={formData.story || ""}
+                    onChange={handleChange}
+                    rows={6}
+                    placeholder="Write about you, your business, your story..."
+                    style={{ resize: 'vertical', minHeight: '150px' }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Specialties Section */}
+            {initialData.currentSection === 'specialties' && (
+              <div className="specializations-container">
+                <div className="specializations-list">
+                  {formData.specializations?.map((specialty, index) => (
+                    <div key={index} className="specialization-item">
+                      {specialty}
+                      <button
+                        type="button"
+                        className="remove-button"
+                        onClick={() => handleSpecializationRemove(index)}
+                      >
+                        ✖
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="specialization-input">
+                  <input
+                    type="text"
+                    placeholder="Add a specialization..."
+                    value={newSpecialization}
+                    onChange={(e) => setNewSpecialization(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSpecializationAdd();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="add-button"
+                    onClick={handleSpecializationAdd}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Portfolio Section */}
+            {initialData.currentSection === 'portfolio' && (
               <div className="portfolio-preview-container">
                 <h3>Portfolio Media</h3>
                 
