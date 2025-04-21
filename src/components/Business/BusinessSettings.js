@@ -406,29 +406,31 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   };
 
   const validateBidTemplate = (template) => {
-    // Regular expressions to detect contact information
-    const phoneRegex = /(\+\d{1,3}[-.]?)?\(?\d{3}\)?[-.]?\d{3}[-.]?\d{4}/g;
-    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-    const websiteRegex =
-      /(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?/g;
-    const socialMediaRegex =
-      /(?:@|(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|facebook\.com|linkedin\.com|twitter\.com)\/)[a-zA-Z0-9._-]+/g;
+    // More robust regex patterns to catch obfuscated contact information
+    const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?(?:\d{3})\)?[-.\s]?\d{3}[-.\s]?\d{4}|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\d{10}/g;
+    const emailRegex = /[a-zA-Z0-9._%+-]+\s*[@＠]\s*[a-zA-Z0-9.-]+\s*\.\s*[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+\s*\(?at\)?\s*[a-zA-Z0-9.-]+\s*\(?dot\)?\s*[a-zA-Z]{2,}/gi;
+    const websiteRegex = /(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?|[a-zA-Z0-9-]+\s*\.\s*(com|net|org|edu|gov|io|co|uk|us)/gi;
+    const socialMediaRegex = /(?:@|(?:https?:\/\/)?(?:www\.)?(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)(?:\.com)?\/)[a-zA-Z0-9._-]+|(?:(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s*(?::|is|at|handle|profile|account)?:?\s*[@]?[a-zA-Z0-9._-]+)|(?:my\s+(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s+(?:is|handle|profile|account)?:?\s*[@]?[a-zA-Z0-9._-]+)|(?:find\s+(?:me|us)\s+on\s+(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s*[@]?[a-zA-Z0-9._-]+)/gi;
 
-    // Check for any matches
-    const hasPhone = phoneRegex.test(template);
+    // Remove spaces and special characters for additional checking
+    const normalizedTemplate = template.toLowerCase().replace(/[\s\-.()\[\]]/g, '');
+
+    // Additional checks for common obfuscation patterns
+    const hasPhone = phoneRegex.test(template) || /\d{10}/.test(normalizedTemplate);
     const hasEmail = emailRegex.test(template);
     const hasWebsite = websiteRegex.test(template);
     const hasSocialMedia = socialMediaRegex.test(template);
 
     if (hasPhone || hasEmail || hasWebsite || hasSocialMedia) {
-      let errorMessage =
-        "Please remove the following contact information from your template:";
-      if (hasPhone) errorMessage += "\n- Phone numbers";
-      if (hasEmail) errorMessage += "\n- Email addresses";
-      if (hasWebsite) errorMessage += "\n- Website URLs";
-      if (hasSocialMedia) errorMessage += "\n- Social media handles/links";
-      errorMessage +=
-        "\n\nAll contact information should be managed through your Bidi profile. The user can see your work on your profile and will get your contact information after accepting your bid.";
+      const errorMessage = [
+        "Please remove the following contact information from your template:",
+        hasPhone && "- Phone numbers (including spaced or formatted numbers)",
+        hasEmail && "- Email addresses (including formatted or spelled out addresses)",
+        hasWebsite && "- Website URLs (including spelled out domains)",
+        hasSocialMedia && "- Social media handles/links (including profile references and abbreviations like 'IG' or 'FB')",
+        "\nAll contact information should be managed through your Bidi profile. The user can see your work on your profile and will get your contact information after accepting your bid."
+      ].filter(Boolean).join("\n");
+
       setBidTemplateError(errorMessage);
       return { isValid: false, message: errorMessage };
     }
