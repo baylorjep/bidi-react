@@ -115,6 +115,10 @@ import VendorList from './components/VendorList/VendorList';
 import VendorListWithFilters from './components/VendorListWithFilters/VendorListWithFilters';
 import LocationBasedVendors from './pages/LocationBasedVendors';
 import WeddingVibeQuizPage from './pages/WeddingVibeQuiz';
+import UtahCateringCosts from './components/Article/UtahCateringCosts';
+import UtahDJCosts from './components/Article/UtahDJCosts';
+import RelatedArticles from './components/Article/RelatedArticles';
+import WeddingVibeQuiz from './pages/WeddingVibeQuiz';
 
 
 function App() {
@@ -225,6 +229,11 @@ function App() {
                             <Route path="/articles" element={<ArticleNavigation />} />
                             <Route path="/articles/:articleId" element={<ArticleDetail />} />
                             <Route path="/articles/utah-wedding-videographer-guide" element={<UtahWeddingVideographerGuide />} />
+                            <Route path="/articles/utah-catering-costs" element={<UtahCateringCosts />} />
+                            <Route path="/articles/utah-dj-costs" element={<UtahDJCosts />} />
+                            <Route path="/articles/wedding-market-guide" element={<WeddingMarketGuide />} />
+                            <Route path="/articles/wedding-vibe-quiz" element={<WeddingVibeQuiz />} />
+                            <Route path="/articles/related-articles" element={<RelatedArticles />} />
 
                             {/* Photography Routes */}
                             <Route path="/request/photography" element={<PhotographyRequest />} />
