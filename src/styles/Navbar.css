@@ -113,6 +113,11 @@
   font-size: 1.5rem;
   color: #333;
   background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
 }
 
 .navbar-toggler:focus {
@@ -121,17 +126,24 @@
 }
 
 .navbar-toggler .bi-list {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: bold;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Add this to make the icon lines thicker */
+/* Add this to make the icon lines thicker and ensure consistent rendering */
 .bi-list::before {
   content: "\f479";
   font-weight: 700;
   display: inline-block;
   text-rendering: auto;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Mobile responsiveness */
