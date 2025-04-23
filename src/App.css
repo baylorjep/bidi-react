@@ -16234,13 +16234,14 @@ a .try-now-button {
 }
 
 .bidi-img-logo {
-  height: 64px;
+  height: 72px;
   width: 100%;
 }
 
 @media screen and (max-width: 768px) {
   .bidi-img-logo {
-    height: 48px;
+    height: 56px;
+    width: auto;
   }
   
 }
