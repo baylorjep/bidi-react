@@ -240,27 +240,40 @@ const BusinessDashSidebar = () => {
 
           {/* Sidebar Links */}
           <ul className="sidebar-links">
-            <li onClick={() => setActiveSection("dashboard")}>
+            <li 
+              onClick={() => setActiveSection("dashboard")}
+              className={activeSection === "dashboard" ? "active" : ""}
+            >
               <img src={dashboardIcon} alt="Requests" />
               <span>Requests</span>
             </li>
-            <li onClick={() => setActiveSection("bids")}>
+            <li 
+              onClick={() => setActiveSection("bids")}
+              className={activeSection === "bids" ? "active" : ""}
+            >
               <img src={bidsIcon} alt="Bids" />
               <span>Bids</span>
             </li>
-            <li onClick={() => setActiveSection("messages")}>
+            <li 
+              onClick={() => setActiveSection("messages")}
+              className={activeSection === "messages" ? "active" : ""}
+            >
               <img src={messageIcon} alt="Message" />
               <span>Message</span>
             </li>
             <li
               onClick={() => {
-                handleViewPortfolio(); // Trigger the function when clicking the button
+                handleViewPortfolio();
               }}
+              className={activeSection === "portfolio" ? "active" : ""}
             >
               <img src={profileIcon} alt="Portfolio" />
               <span>Portfolio</span>
             </li>
-            <li onClick={() => setActiveSection("settings")}>
+            <li 
+              onClick={() => setActiveSection("settings")}
+              className={activeSection === "settings" ? "active" : ""}
+            >
               <img src={settingsIcon} alt="Settings" />
               <span>Settings</span>
             </li>
@@ -326,31 +339,46 @@ const BusinessDashSidebar = () => {
 
         {/* Bottom Navigation Bar */}
         <nav className="bottom-nav">
-          <button onClick={() => setActiveSection("dashboard")}>
+          <button 
+            onClick={() => setActiveSection("dashboard")}
+            className={activeSection === "dashboard" ? "active" : ""}
+          >
             <div className="nav-item">
               <img src={dashboardIcon} alt="Dashboard" />
               <span className="nav-label">Requests</span>
             </div>
           </button>
-          <button onClick={() => setActiveSection("bids")}>
+          <button 
+            onClick={() => setActiveSection("bids")}
+            className={activeSection === "bids" ? "active" : ""}
+          >
             <div className="nav-item">
               <img src={bidsIcon} alt="Bids" />
               <span className="nav-label">Bids</span>
             </div>
           </button>
-          <button onClick={() => setActiveSection("messages")}>
+          <button 
+            onClick={() => setActiveSection("messages")}
+            className={activeSection === "messages" ? "active" : ""}
+          >
             <div className="nav-item">
               <img src={messageIcon} alt="Message" />
               <span className="nav-label">Messages</span>
             </div>
           </button>
-          <button onClick={() => handleViewPortfolio()}>
+          <button 
+            onClick={() => handleViewPortfolio()}
+            className={activeSection === "portfolio" ? "active" : ""}
+          >
             <div className="nav-item profile-nav-item">
               <img src={profileIcon} alt="Portfolio" className="profile-icon" />
               <span className="nav-label">Portfolio</span>
             </div>
           </button>
-          <button onClick={() => setActiveSection("settings")}>
+          <button 
+            onClick={() => setActiveSection("settings")}
+            className={activeSection === "settings" ? "active" : ""}
+          >
             <div className="nav-item">
               <img
                 src={settingsIcon}

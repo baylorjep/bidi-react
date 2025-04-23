@@ -88,10 +88,14 @@
   font-size: 1.2vw;
   margin-left: 2.5vw;
   cursor: pointer;
+  transition: all 0.3s ease;
+  color: #333; /* Default text color */
 }
-.sidebar-links li img {
+.sidebar-links li img,
+.bottom-nav button img {
   width: 1.5vw;
   margin-right: 1vw;
+  color: #a328f4; /* Purple outline by default */
 }
 .sidebar-links li a {
   text-decoration: none;
@@ -463,6 +467,23 @@
   margin-top: 4px;
 }
 
+.sidebar-links li.active,
+.bottom-nav button.active {
+  background: #f6eafe;
+  border-radius: 0.5vw;
+  color: #a328f4; /* Purple text when active */
+}
+
+.sidebar-links li.active img,
+.bottom-nav button.active img {
+  color: #a328f4; /* Keep purple outline when active */
+  fill: #a328f4; /* Fill the white space with purple when active */
+}
+
+.bottom-nav button.active .nav-label {
+  color: #a328f4;
+}
+
 @media (max-width: 768px) {
   .sidebar {
     display: none; /* Hide sidebar on mobile */
@@ -544,5 +565,17 @@
     display: block; /* Forces the text to appear on a new line */
     text-align: center;
     font-family: inherit;
+  }
+
+  .sidebar-links li.active,
+  .bottom-nav button.active {
+    background: #f6eafe;
+    border-radius: 0.5rem;
+  }
+  
+  .sidebar-links li.active img,
+  .bottom-nav button.active img {
+    color: #a328f4;
+    fill: #a328f4;
   }
 }
