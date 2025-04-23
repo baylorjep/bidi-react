@@ -1,54 +1,216 @@
+/* Request Header */
+.request-header {
+  text-align: left;
+  width: 100%;
+  padding: 0 10px;
+  margin-bottom: 20px;
+}
+
+.request-title {
+  font-size: 1.4rem;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+/* Bid Info Title */
+.bid-info-title {
+  font-size: 1.2rem;
+  color: #495057;
+  margin-bottom: 20px;
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+/* Request Display Mini */
+.request-display-mini {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.request-display-mini:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.request-content {
+  padding: 20px;
+}
+
+/* Details Grid */
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .request-title {
+    font-size: 1.2rem;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .view-btn-card {
+    width: 100%;
+  }
+}
+
+/* Contact Information Section */
+.contact-info-section {
+  margin-top: 25px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.contact-info-title {
+  font-size: 1.2rem;
+  color: #495057;
+  margin-bottom: 20px;
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.contact-info-section .detail-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 12px 15px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.contact-info-section .detail-label {
+  min-width: 100px;
+  font-weight: 500;
+  color: #6c757d;
+  font-size: 0.95rem;
+}
+
+.contact-info-section .detail-value {
+  flex: 1;
+  color: #212529;
+  word-break: break-all;
+  font-size: 0.95rem;
+  margin-right: 15px;
+}
+
+/* Contact Buttons */
+.contact-btn {
+  margin-left: auto;
+  padding: 8px 15px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.email-btn {
+  background-color: #9633eb;
+  color: white;
+}
+
+.email-btn:hover {
+  background-color: #7a29b8;
+  transform: translateY(-1px);
+}
+
+.text-btn {
+  background-color: #9633eb;
+  color: white;
+}
+
+.text-btn:hover {
+  background-color: #7a29b8;
+  transform: translateY(-1px);
+}
+
 /* Bid Info Box */
 .bid-info-box {
-  border: 1px solid #ddd; /* Light gray border */
-  border-radius: 8px; /* Rounded corners */
-  padding: 16px; /* Padding inside the box */
-  background-color: #f9f9f9; /* Slightly off-white background */
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  margin-top: 20px;
 }
 
 /* Detail Item Styling */
 .detail-item {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px; /* Space between items */
+  margin-bottom: 12px;
+  padding: 8px 0;
 }
 
 .detail-label {
-  font-weight: bold;
-  color: #555; /* Darker text for labels */
+  font-weight: 500;
+  color: #555;
+  font-size: 0.95rem;
 }
 
 .detail-value {
-  color: #333; /* Slightly darker text for values */
+  color: #333;
+  font-size: 0.95rem;
 }
 
 /* Buttons */
 .view-btn-card {
   background-color: #9633eb;
-  color: #fff; /* White text */
+  color: #fff;
   border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
+  border-radius: 6px;
+  padding: 10px 20px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  min-width: 120px;
 }
 
 .view-btn-card:hover {
   background-color: #7a29b8;
-}
-
-.request-display-mini {
-  height: 90%;
+  transform: translateY(-1px);
 }
 
 /* Expiration Badge Styles */
 .expiration-badge {
   display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  margin-top: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 10px;
 }
 
 .expiration-badge.normal {
@@ -75,5 +237,26 @@
 @media (max-width: 768px) {
   .view-btn-card {
     font-size: 1rem; /* Larger font size for mobile */
+  }
+
+  .contact-info-section {
+    padding: 15px;
+  }
+
+  .contact-info-section .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .contact-info-section .detail-label {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .contact-btn {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
   }
 }
