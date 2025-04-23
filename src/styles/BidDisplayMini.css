@@ -26,10 +26,10 @@
 
 /* Action Buttons */
 .action-buttons {
+  margin-top: 25px;
   display: flex;
   justify-content: center;
   gap: 15px;
-  margin-bottom: 15px;
 }
 
 /* Request Display Mini */
@@ -38,6 +38,7 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 90%;
 }
 
 .request-display-mini:hover {
@@ -50,31 +51,89 @@
 }
 
 /* Details Grid */
-.details-grid {
+.bid-details-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 15px;
   margin-bottom: 25px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .request-title {
-    font-size: 1.2rem;
-  }
+/* Detail Item Styling */
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 8px 0;
+}
 
-  .details-grid {
-    grid-template-columns: 1fr;
-  }
+.detail-label {
+  font-weight: 500;
+  color: #555;
+  font-size: 0.95rem;
+}
 
-  .action-buttons {
-    flex-direction: column;
-    gap: 10px;
-  }
+.detail-value {
+  color: #333;
+  font-size: 0.95rem;
+}
 
-  .view-btn-card {
-    width: 100%;
-  }
+.detail-value-long {
+  color: #333;
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+/* Status Badges */
+.request-status-bid {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.promotion-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #fff3e0;
+  color: #f57c00;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Hide Button */
+.hide-button {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 5px;
+  font-size: 1.2rem;
+  transition: color 0.2s ease;
+}
+
+.hide-button:hover {
+  color: #dc3545;
+}
+
+
+.bid-button-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Bid Info Box */
+.bid-info-box {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  margin-top: 20px;
 }
 
 /* Contact Information Section */
@@ -124,7 +183,6 @@
 
 /* Contact Buttons */
 .contact-btn {
-  margin-left: auto;
   padding: 8px 15px;
   border-radius: 6px;
   border: none;
@@ -157,36 +215,8 @@
   transform: translateY(-1px);
 }
 
-/* Bid Info Box */
-.bid-info-box {
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 20px;
-  background-color: #f9f9f9;
-  margin-top: 20px;
-}
-
-/* Detail Item Styling */
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  padding: 8px 0;
-}
-
-.detail-label {
-  font-weight: 500;
-  color: #555;
-  font-size: 0.95rem;
-}
-
-.detail-value {
-  color: #333;
-  font-size: 0.95rem;
-}
-
 /* Buttons */
-.view-btn-card {
+.withdraw-btn {
   background-color: #9633eb;
   color: #fff;
   border: none;
@@ -198,7 +228,7 @@
   min-width: 120px;
 }
 
-.view-btn-card:hover {
+.withdraw-btn:hover {
   background-color: #7a29b8;
   transform: translateY(-1px);
 }
@@ -233,10 +263,23 @@
   color: #757575;
 }
 
-/* Mobile Adjustments */
+/* Responsive adjustments */
 @media (max-width: 768px) {
+  .request-title {
+    font-size: 1.2rem;
+  }
+
+  .bid-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
   .view-btn-card {
-    font-size: 1rem; /* Larger font size for mobile */
+    width: 100%;
   }
 
   .contact-info-section {

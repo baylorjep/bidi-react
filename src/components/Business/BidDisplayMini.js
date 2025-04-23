@@ -119,13 +119,13 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal }) => {
 
           <div className="action-buttons">
             <button
-              className="view-btn-card"
+              className="withdraw-btn"
               onClick={() => openWithdrawModal(bid.id)}
             >
               Withdraw
             </button>
             <button
-              className="view-btn-card"
+              className="withdraw-btn"
               onClick={() => onEditBid(bid.request_id, bid.id)}
             >
               Edit
