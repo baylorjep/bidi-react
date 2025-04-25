@@ -406,34 +406,54 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   };
 
   const validateBidTemplate = (template) => {
-    // More robust regex patterns to catch obfuscated contact information
-    const socialMediaPattern = /(?:@|(?:https?:\/\/)?(?:www\.)?(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)(?:\.com)?\/)[a-zA-Z0-9._-]+|(?:(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s*(?::|is|at|handle|profile|account)?:?\s*[@]?[a-zA-Z0-9._-]+)|(?:my\s+(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s+(?:is|handle|profile|account)?:?\s*[@]?[a-zA-Z0-9._-]+)|(?:find\s+(?:me|us)\s+on\s+(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s*[@]?[a-zA-Z0-9._-]+)/gi;
-
-    const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?(?:\d{3})\)?[-.\s]?\d{3}[-.\s]?\d{4}|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\d{10}/g;
-    const emailRegex = /[a-zA-Z0-9._%+-]+\s*[@＠]\s*[a-zA-Z0-9.-]+\s*\.\s*[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+\s*\(?at\)?\s*[a-zA-Z0-9.-]+\s*\(?dot\)?\s*[a-zA-Z]{2,}/gi;
-    const websiteRegex = /(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?|[a-zA-Z0-9-]+\s*\.\s*(com|net|org|edu|gov|io|co|uk|us)/gi;
+    // More precise regex patterns to catch contact information
+    const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?(?:\d{3})\)?[-.\s]?\d{3}[-.\s]?\d{4}|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\d{10}(?=\D|$)/g;
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+\s*\(?at\)?\s*[a-zA-Z0-9.-]+\s*\(?dot\)?\s*[a-zA-Z]{2,}/gi;
+    const websiteRegex = /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?|(?:my\s+)?website(?:\s+is)?\s*:\s*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/gi;
+    const socialMediaRegex = /(?:@|(?:https?:\/\/)?(?:www\.)?(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)(?:\.com)?\/)[a-zA-Z0-9._-]+|(?:(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s*(?::|is|at|handle|profile|account)?:?\s*[@]?[a-zA-Z0-9._-]+)|(?:my\s+(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s+(?:is|handle|profile|account)?:?\s*[@]?[a-zA-Z0-9._-]+)|(?:find\s+(?:me|us)\s+on\s+(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s*[@]?[a-zA-Z0-9._-]+)/gi;
 
     // Remove spaces and special characters for additional checking
     const normalizedTemplate = template.toLowerCase().replace(/[\s\-.()\[\]]/g, '');
 
     // Additional checks for common obfuscation patterns
-    const hasPhone = phoneRegex.test(template) || /\d{10}/.test(normalizedTemplate);
+    const hasPhone = phoneRegex.test(template) || /\d{10}(?=\D|$)/.test(normalizedTemplate);
     const hasEmail = emailRegex.test(template);
     const hasWebsite = websiteRegex.test(template);
-    const hasSocialMedia = socialMediaPattern.test(template);
+    const hasSocialMedia = socialMediaRegex.test(template);
 
-    if (hasPhone || hasEmail || hasWebsite || hasSocialMedia) {
-      const errorMessage = [
-        "Please remove the following contact information from your template:",
-        hasPhone && "- Phone numbers (including spaced or formatted numbers)",
-        hasEmail && "- Email addresses (including formatted or spelled out addresses)",
-        hasWebsite && "- Website URLs (including spelled out domains)",
-        hasSocialMedia && "- Social media handles/links (including profile references and abbreviations like 'IG' or 'FB')",
-        "\nAll contact information should be managed through your Bidi profile. The user can see your work on your profile and will get your contact information after accepting your bid."
-      ].filter(Boolean).join("\n");
+    // Check if the content contains actual contact information
+    const containsContactInfo = hasPhone || hasEmail || hasWebsite || hasSocialMedia;
 
-      setBidTemplateError(errorMessage);
-      return { isValid: false, message: errorMessage };
+    // Check for false positives - common phrases that might trigger the regex but aren't actually contact info
+    const falsePositives = [
+        /phone call/i,
+        /call me/i,
+        /give me a call/i,
+        /reach out/i,
+        /contact me/i,
+        /get in touch/i,
+        /\$?\d+(?:\.\d{2})?(?:\s*(?:dollars|USD))?/i, // Price mentions
+        /\d+(?:\s*(?:years|yrs|photos|pictures|hours|hrs|minutes|mins|days))?/i, // Numbers with units
+        /second shooter/i,
+        /second photographer/i
+    ];
+
+    // If we found contact info, check if it's a false positive
+    if (containsContactInfo) {
+        const isFalsePositive = falsePositives.some(pattern => pattern.test(template));
+        if (!isFalsePositive) {
+            const errorMessage = [
+                "Please remove the following contact information from your template:",
+                hasPhone && "- Phone numbers (including spaced or formatted numbers)",
+                hasEmail && "- Email addresses (including formatted or spelled out addresses)",
+                hasWebsite && "- Website URLs (including spelled out domains)",
+                hasSocialMedia && "- Social media handles/links (including profile references and abbreviations like 'IG' or 'FB')",
+                "\nAll contact information should be managed through your Bidi profile. The user can see your work on your profile and will get your contact information after accepting your bid."
+            ].filter(Boolean).join("\n");
+
+            setBidTemplateError(errorMessage);
+            return { isValid: false, message: errorMessage };
+        }
     }
 
     setBidTemplateError("");
@@ -515,7 +535,7 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   return (
     <div className="business-settings-container">
       {/* Setup Progress Box */}
-      {(!setupProgress.paymentAccount ||
+      {setupProgress && (!setupProgress.paymentAccount ||
         !setupProgress.downPayment ||
         !setupProgress.minimumPrice ||
         !setupProgress.affiliateCoupon ||

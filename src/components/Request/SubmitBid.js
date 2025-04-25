@@ -159,30 +159,51 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
     }, [requestId, requestType]);
 
     const validateBidDescription = (content) => {
-        // More robust regex patterns to catch obfuscated contact information
-        const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?(?:\d{3})\)?[-.\s]?\d{3}[-.\s]?\d{4}|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\d{10}/g;
-        const emailRegex = /[a-zA-Z0-9._%+-]+\s*[@＠]\s*[a-zA-Z0-9.-]+\s*\.\s*[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+\s*\(?at\)?\s*[a-zA-Z0-9.-]+\s*\(?dot\)?\s*[a-zA-Z]{2,}/gi;
-        const websiteRegex = /(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?|[a-zA-Z0-9-]+\s*\.\s*(com|net|org|edu|gov|io|co|uk|us)/gi;
+        // More precise regex patterns to catch contact information
+        const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?(?:\d{3})\)?[-.\s]?\d{3}[-.\s]?\d{4}|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\d{10}(?=\D|$)/g;
+        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+\s*\(?at\)?\s*[a-zA-Z0-9.-]+\s*\(?dot\)?\s*[a-zA-Z]{2,}/gi;
+        const websiteRegex = /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?|(?:my\s+)?website(?:\s+is)?\s*:\s*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/gi;
         const socialMediaRegex = /(?:@|(?:https?:\/\/)?(?:www\.)?(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)(?:\.com)?\/)[a-zA-Z0-9._-]+|(?:(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s*(?::|is|at|handle|profile|account)?:?\s*[@]?[a-zA-Z0-9._-]+)|(?:my\s+(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s+(?:is|handle|profile|account)?:?\s*[@]?[a-zA-Z0-9._-]+)|(?:find\s+(?:me|us)\s+on\s+(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s*[@]?[a-zA-Z0-9._-]+)/gi;
 
         // Remove spaces and special characters for additional checking
         const normalizedContent = content.toLowerCase().replace(/[\s\-.()\[\]]/g, '');
 
         // Additional checks for common obfuscation patterns
-        const hasPhone = phoneRegex.test(content) || /\d{10}/.test(normalizedContent);
+        const hasPhone = phoneRegex.test(content) || /\d{10}(?=\D|$)/.test(normalizedContent);
         const hasEmail = emailRegex.test(content);
         const hasWebsite = websiteRegex.test(content);
         const hasSocialMedia = socialMediaRegex.test(content);
 
-        if (hasPhone || hasEmail || hasWebsite || hasSocialMedia) {
-            let errorMessage = "Please remove the following contact information from your bid:";
-            if (hasPhone) errorMessage += "\n- Phone numbers (including spaced or formatted numbers)";
-            if (hasEmail) errorMessage += "\n- Email addresses (including formatted or spelled out addresses)";
-            if (hasWebsite) errorMessage += "\n- Website URLs (including spelled out domains)";
-            if (hasSocialMedia) errorMessage += "\n- Social media handles/links (including profile references and abbreviations like 'IG' or 'FB')";
-            errorMessage += "\n\nAll contact information should be managed through your Bidi profile. The user can see your work on your profile and will get your contact information after accepting your bid.";
-            setBidDescriptionError(errorMessage);
-            return false;
+        // Check if the content contains actual contact information
+        const containsContactInfo = hasPhone || hasEmail || hasWebsite || hasSocialMedia;
+
+        // Check for false positives - common phrases that might trigger the regex but aren't actually contact info
+        const falsePositives = [
+            /phone call/i,
+            /call me/i,
+            /give me a call/i,
+            /reach out/i,
+            /contact me/i,
+            /get in touch/i,
+            /\$?\d+(?:\.\d{2})?(?:\s*(?:dollars|USD))?/i, // Price mentions
+            /\d+(?:\s*(?:years|yrs|photos|pictures|hours|hrs|minutes|mins|days))?/i, // Numbers with units
+            /second shooter/i,
+            /second photographer/i
+        ];
+
+        // If we found contact info, check if it's a false positive
+        if (containsContactInfo) {
+            const isFalsePositive = falsePositives.some(pattern => pattern.test(content));
+            if (!isFalsePositive) {
+                let errorMessage = "Please remove the following contact information from your bid:";
+                if (hasPhone) errorMessage += "\n- Phone numbers (including spaced or formatted numbers)";
+                if (hasEmail) errorMessage += "\n- Email addresses (including formatted or spelled out addresses)";
+                if (hasWebsite) errorMessage += "\n- Website URLs (including spelled out domains)";
+                if (hasSocialMedia) errorMessage += "\n- Social media handles/links (including profile references and abbreviations like 'IG' or 'FB')";
+                errorMessage += "\n\nAll contact information should be managed through your Bidi profile. The user can see your work on your profile and will get your contact information after accepting your bid.";
+                setBidDescriptionError(errorMessage);
+                return false;
+            }
         }
 
         setBidDescriptionError('');
@@ -205,12 +226,6 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
 
         // Validate bid description
         if (!validateBidDescription(bidDescription)) {
-            return;
-        }
-
-        // Validate expiration date
-        if (!bidExpirationDate) {
-            setError('Please set a bid expiration date');
             return;
         }
 
@@ -246,7 +261,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                     bid_amount: bidAmount,
                     bid_description: bidDescription,
                     category: category,
-                    expiration_date: bidExpirationDate,
+                    ...(bidExpirationDate && { expiration_date: bidExpirationDate }),
                 }]);
 
             if (insertError) throw insertError;
@@ -321,7 +336,6 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                                 value={bidExpirationDate}
                                 onChange={(e) => setBidExpirationDate(e.target.value)}
                                 min={new Date().toISOString().split('T')[0]}
-                                required
                             />
                             <label className="custom-label" htmlFor="bidExpirationDate">Bid Expiration Date</label>
                         </div>
