@@ -14,7 +14,11 @@ const BusinessBids = () => {
   const [selectedBidId, setSelectedBidId] = useState(null);
   const [activeTab, setActiveTab] = useState("pending");
   const [isFullScreen, setIsFullScreen] = useState(window.innerWidth > 1200);
-  const filteredBids = bids.filter((bid) => bid.status === activeTab);
+  const filteredBids = bids.filter((bid) => 
+    activeTab === "approved" 
+      ? bid.status === "approved" || bid.status === "accepted"
+      : bid.status === activeTab
+  );
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -85,9 +89,11 @@ const BusinessBids = () => {
 
         let allRequests = [];
         for (const [table, ids] of Object.entries(requestMap)) {
+          // Select the appropriate ID field based on the table
+          const idField = table === 'photography_requests' ? 'profile_id' : 'user_id';
           const { data: requestData, error: requestError } = await supabase
             .from(table)
-            .select("*")
+            .select(`*, ${idField}`)
             .in("id", ids);
 
           if (requestError) {
@@ -95,7 +101,48 @@ const BusinessBids = () => {
             continue;
           }
 
-          allRequests = [...allRequests, ...requestData];
+          // Fetch user contact information for each request
+          const requestsWithContactInfo = await Promise.all(
+            requestData.map(async (request) => {
+              const userId = request[idField];
+              
+              if (!userId) {
+                console.warn(`⚠️ No user ID found for request ${request.id}`);
+                return request;
+              }
+
+              // Fetch email from profiles table
+              const { data: profileData, error: profileError } = await supabase
+                .from("profiles")
+                .select("email")
+                .eq("id", userId)
+                .single();
+
+              // Fetch phone from individual_profiles table
+              const { data: individualProfileData, error: individualProfileError } = await supabase
+                .from("individual_profiles")
+                .select("phone, first_name, last_name")
+                .eq("id", userId)
+                .single();
+
+              if (profileError) {
+                console.error(`❌ Error fetching profile info for request ${request.id}:`, profileError);
+              }
+              if (individualProfileError) {
+                console.error(`❌ Error fetching individual profile info for request ${request.id}:`, individualProfileError);
+              }
+
+              return {
+                ...request,
+                user_email: profileData?.email,
+                user_phone: individualProfileData?.phone,
+                user_first_name: individualProfileData?.first_name,
+                user_last_name: individualProfileData?.last_name
+              };
+            })
+          );
+
+          allRequests = [...allRequests, ...requestsWithContactInfo];
         }
 
         setRequests(allRequests);
@@ -150,7 +197,7 @@ const BusinessBids = () => {
 
   // Group bids by status
   const pendingBids = bids.filter((bid) => bid.status === "pending");
-  const approvedBids = bids.filter((bid) => bid.status === "approved");
+  const approvedBids = bids.filter((bid) => bid.status === "approved" || bid.status === "accepted");
   const deniedBids = bids.filter((bid) => bid.status === "denied");
 
   // Function to format date
@@ -174,7 +221,9 @@ const BusinessBids = () => {
           onClick={() => setActiveTab(status)}
         >
           {status.charAt(0).toUpperCase() + status.slice(1)} (
-          {bids.filter((bid) => bid.status === status).length})
+          {status === "approved" 
+            ? bids.filter((bid) => bid.status === "approved" || bid.status === "accepted").length
+            : bids.filter((bid) => bid.status === status).length})
         </button>
       ))}
     </div>

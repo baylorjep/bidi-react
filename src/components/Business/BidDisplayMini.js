@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/BidDisplayMini.css";
+import { FaEnvelope, FaSms } from "react-icons/fa";
 
 const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal }) => {
   const navigate = useNavigate();
@@ -10,14 +11,7 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal }) => {
   return (
     <div className="request-display-mini text-center mb-4">
       <div className="request-content p-3">
-        <div
-          style={{
-            textAlign: "left",
-            width: "100%",
-            padding: "0 10px",
-            marginBottom: "20px",
-          }}
-        >
+        <div className="request-header">
           <h2 className="request-title">{getTitle()}</h2>
           {bid.expirationStatus && (
             <div className={`expiration-badge ${bid.expirationStatus.status}`}>
@@ -59,48 +53,79 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal }) => {
           )}
         </div>
 
-        {/* Bid Info */}
         <div className="bid-info-box">
-          Your Bid:
+          <h3 className="bid-info-title">Your Bid</h3>
           {bid?.bid_amount && (
             <div className="detail-item">
-              <span className="detail-label">Amount: ${bid.bid_amount}</span>
+              <span className="detail-label">Amount</span>
+              <span className="detail-value">${bid.bid_amount}</span>
             </div>
           )}
           {bid?.description && (
             <div className="detail-item">
-              <span className="detail-label">
-                Description: {bid.description}
-              </span>
+              <span className="detail-label">Description</span>
+              <span className="detail-value">{bid.description}</span>
             </div>
           )}
           {bid?.status && (
             <div className="detail-item">
-              <span className="detail-label">Status: {bid.status}</span>
+              <span className="detail-label">Status</span>
+              <span className="detail-value">{bid.status}</span>
             </div>
           )}
           {!bid?.viewed && (
             <div className="detail-item">
-              <span className="detail-label">Not viewed yet</span>
+              <span className="detail-label">Status</span>
+              <span className="detail-value">Not viewed yet</span>
             </div>
           )}
-          {/* Buttons */}
-          <div
-            style={{
-              marginTop: "20px",
-              display: "flex",
-              justifyContent: "center",
-              gap: "10px",
-            }}
-          >
+
+          {/* Show contact information for accepted bids */}
+          {(bid.status === "accepted" || bid.status === "approved") && (
+            <div className="contact-info-section">
+              <h3 className="contact-info-title">Client Contact Information</h3>
+              {request?.user_first_name && request?.user_last_name && (
+                <div className="detail-item">
+                  <span className="detail-label">Name</span>
+                  <span className="detail-value">{`${request.user_first_name} ${request.user_last_name}`}</span>
+                </div>
+              )}
+              {request?.user_email && (
+                <div className="detail-item">
+                  <span className="detail-label">Email</span>
+                  <span className="detail-value">{request.user_email}</span>
+                  <button 
+                    className="contact-btn email-btn"
+                    onClick={() => window.location.href = `mailto:${request.user_email}`}
+                  >
+                    <FaEnvelope /> Email
+                  </button>
+                </div>
+              )}
+              {request?.user_phone && (
+                <div className="detail-item">
+                  <span className="detail-label">Phone</span>
+                  <span className="detail-value">{request.user_phone}</span>
+                  <button 
+                    className="contact-btn text-btn"
+                    onClick={() => window.location.href = `sms:${request.user_phone}`}
+                  >
+                    <FaSms /> Text
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="action-buttons">
             <button
-              className="view-btn-card"
+              className="withdraw-btn"
               onClick={() => openWithdrawModal(bid.id)}
             >
               Withdraw
             </button>
             <button
-              className="view-btn-card"
+              className="withdraw-btn"
               onClick={() => onEditBid(bid.request_id, bid.id)}
             >
               Edit
