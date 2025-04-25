@@ -8,7 +8,7 @@ function BidSuccess() {
                 <br/>
                 <h2>Bid Submitted Successfully!</h2>
                 <p>Your bid has been submitted. We will notify you if your bid is selected.</p>
-                <Link className="btn btn-secondary" to="/open-requests">Back to Open Requests</Link>
+                <Link className="btn btn-secondary" to="/dashboard">Back to Dashboard</Link>
             </div>
         </div>
     );
