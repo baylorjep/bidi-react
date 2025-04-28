@@ -3,3 +3,48 @@
   /* padding: 20px; */
   margin-top: 0px;
 }
+
+.catering-stepper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.sub-steps-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.catering-stepper-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px;
+  max-height: 55vh;
+}
+
+.catering-stepper-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.catering-stepper-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.catering-stepper-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.catering-stepper-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

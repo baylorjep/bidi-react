@@ -1,105 +1,90 @@
-import React, { useState } from "react";
-import PhotographyRequest from "../Request/Photography/PhotographyRequest";
-import VideographyRequest from "../Request/Videography/VideographyRequest";
-import DjRequest from "../Request/DJ/DjRequest";
-import HairAndMakeUpRequest from "../Request/Beauty/HairAndMakeUpRequest";
-import FloristRequest from "../Request/Florist/FloristRequest";
-import CateringRequest from "../Request/Catering/CateringRequest";
-// import { submitRequests } from "../../api/requests"; // Adjust the path as needed
+import React from "react";
+import PhotographyStepper from "./Photography/PhotographyStepper";
+import VideographyStepper from "./Videography/VideographyStepper";
+import CateringStepper from "./Catering/CateringStepper";
+import "../../styles/Requests.css";
 
-function RequestStepper({
-  formData,
-  setFormData,
-  currentStep,
-  setCurrentStep,
-  onSubmit,
-}) {
-  const requestComponents = {
-    Photography: PhotographyRequest,
-    Videography: VideographyRequest,
-    "DJ Services": DjRequest,
-    "Hair and Makeup Artist": HairAndMakeUpRequest,
-    Florist: FloristRequest,
-    Catering: CateringRequest,
-  };
-
-  // const CurrentRequestForm =
-  //   requestComponents[formData.selectedRequests[currentStep]];
-
-  // Get the current request type based on the current step
-  const currentRequestType = formData.selectedRequests[currentStep];
-  const CurrentRequestForm = requestComponents[currentRequestType];
-
-  const handleNext = () => {
-    if (currentStep < formData.selectedRequests.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    } else {
-      handleSubmit();
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  };
-
-  const handleSubmit = async () => {
-    const { commonDetails, requests } = formData;
-    const payload = formData.selectedRequests.map((type) => ({
-      ...commonDetails,
-      ...requests[type],
-    }));
-
-    try {
-      //   await submitRequests(payload);
-      alert("Requests submitted successfully!");
-      onSubmit(); // Call the parent onSubmit function to reset or navigate
-    } catch (error) {
-      console.error("Error submitting requests:", error);
-    }
-  };
-
-  const updateRequestData = (type, data) => {
+function RequestStepper({ formData, setFormData, onSubmit, currentStep, setCurrentStep }) {
+  const handleInputChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
       requests: {
         ...prev.requests,
-        [type]: data,
+        [field]: value,
       },
     }));
   };
 
   return (
-    <div>
-      {/* <h2>
-        Step {currentStep + 1} of {formData.selectedRequests.length}:{" "}
-        {currentRequestType} Details
-      </h2> */}
-      {CurrentRequestForm ? (
-        <CurrentRequestForm
-          formData={formData.requests[currentRequestType] || {}}
-          setFormData={(data) => updateRequestData(currentRequestType, data)}
-          onNext={handleNext}
-        />
-      ) : (
-        <p>Error: Unable to load the request form for {currentRequestType}.</p>
-      )}
-      {/* <div style={{ marginTop: "20px" }}>
-        {currentStep > 0 && (
-          <button onClick={handleBack} className="request-form-back-btn">
-            Back
-          </button>
-        )}
-        <button
-          onClick={handleNext}
-          className="request-form-back-and-foward-btn"
-        >
-          {currentStep < formData.selectedRequests.length - 1
-            ? "Next"
-            : "Submit"}
+    <div className="request-stepper">
+      <div className="form-grid">
+        <div className="wedding-details-container">
+          <div className="custom-input-container">
+            <input
+              type="text"
+              name="eventTitle"
+              value={formData.requests.eventTitle || ""}
+              onChange={(e) => handleInputChange("eventTitle", e.target.value)}
+              placeholder="Event Title"
+              className="custom-input"
+            />
+            <label htmlFor="eventTitle" className="custom-label">
+              Event Title
+            </label>
+          </div>
+
+          <div className="custom-input-container">
+            <input
+              type="text"
+              name="location"
+              value={formData.requests.location || ""}
+              onChange={(e) => handleInputChange("location", e.target.value)}
+              placeholder="Event Location"
+              className="custom-input"
+            />
+            <label htmlFor="location" className="custom-label">
+              Event Location
+            </label>
+          </div>
+
+          <div className="custom-input-container">
+            <input
+              type="date"
+              name="date"
+              value={formData.requests.date || ""}
+              onChange={(e) => handleInputChange("date", e.target.value)}
+              className="custom-input"
+            />
+            <label htmlFor="date" className="custom-label">
+              Event Date
+            </label>
+          </div>
+
+          <div className="custom-input-container">
+            <input
+              type="number"
+              name="numGuests"
+              value={formData.requests.numGuests || ""}
+              onChange={(e) => handleInputChange("numGuests", e.target.value)}
+              placeholder="Number of Guests"
+              className="custom-input"
+              min="1"
+            />
+            <label htmlFor="numGuests" className="custom-label">
+              Number of Guests
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-button-container">
+        <button className="request-form-back-btn" onClick={() => setCurrentStep(currentStep - 1)}>
+          Back
         </button>
-      </div> */}
+        <button className="request-form-back-and-foward-btn" onClick={onSubmit}>
+          Submit
+        </button>
+      </div>
     </div>
   );
 }

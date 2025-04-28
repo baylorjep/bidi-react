@@ -8,8 +8,8 @@ function RequestCategories() {
   const categories = [
     "Photography",
     "Videography",
-    "DJ Services",
-    "Hair and Makeup Artist",
+    "DJ",
+    "HairAndMakeup",
     "Florist",
     "Catering",
   ];
@@ -27,6 +27,17 @@ function RequestCategories() {
     if (selectedCategories.length > 0) {
       // Pass selected categories to the next step
       navigate("/master-request-flow", { state: { selectedCategories } });
+    }
+  };
+
+  const getDisplayName = (category) => {
+    switch (category) {
+      case "DJ":
+        return "DJ Services";
+      case "HairAndMakeup":
+        return "Hair and Makeup Artist";
+      default:
+        return category;
     }
   };
 
@@ -62,7 +73,7 @@ function RequestCategories() {
               }`}
               onClick={() => toggleCategory(cat)}
             >
-              {cat}
+              {getDisplayName(cat)}
             </button>
           ))}
         </div>
@@ -70,7 +81,7 @@ function RequestCategories() {
         <div className="form-button-container">
           <button
             className="request-form-back-and-foward-btn"
-            onClick={() => navigate("/createaccount")} // Adjust the route for going back
+            onClick={() => navigate("/")} // Changed to go to home page
           >
             Back
           </button>
@@ -82,7 +93,7 @@ function RequestCategories() {
             disabled={selectedCategories.length === 0}
             style={{
               backgroundColor:
-                selectedCategories.length === 0 ? "#9F8AB3" : "#a328f4", // Lighter purple when disabled
+                selectedCategories.length === 0 ? "#9F8AB3" : "#a328f4",
               cursor:
                 selectedCategories.length === 0 ? "not-allowed" : "pointer",
             }}
