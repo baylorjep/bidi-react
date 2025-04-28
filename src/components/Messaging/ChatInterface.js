@@ -1,4 +1,3 @@
-// src/components/ChatInterface.jsx
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import MessagingView from "./MessagingView";
@@ -7,62 +6,96 @@ import "../../styles/chat.css";
 
 export default function ChatInterface() {
   const [currentUserId, setCurrentUserId] = useState("");
-  const [chats, setChats] = useState([]); // [{ business_id, business_name, last_message }]
+  const [userType, setUserType] = useState("");
+  const [chats, setChats] = useState([]);
   const [activeBusiness, setActiveBusiness] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  // 1) Load current user
+  // 1) Load current user & determine user type
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) setCurrentUserId(user.id);
+      if (!user) return;
+
+      setCurrentUserId(user.id);
+
+      // Determine if user is an individual or business
+      const { data: individual } = await supabase
+        .from("individual_profiles")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+      if (individual) {
+        setUserType("individual");
+      } else {
+        setUserType("business");
+      }
     })();
   }, []);
 
-  // 2) Fetch all businesses I’ve messaged
+  // 2) Fetch chat history
   useEffect(() => {
-    if (!currentUserId) return;
+    if (!currentUserId || !userType) return;
 
     (async () => {
-      const { data = [] } = await supabase
+      const { data: messages = [], error: messagesError } = await supabase
         .from("messages")
         .select("receiver_id, sender_id, message, created_at")
         .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
         .order("created_at", { ascending: false });
 
+      if (messagesError) {
+        console.error("Error fetching messages:", messagesError);
+        return;
+      }
+
       const latestMap = {};
-      data.forEach((msg) => {
+      messages.forEach((msg) => {
         const otherId = msg.sender_id === currentUserId
           ? msg.receiver_id
           : msg.sender_id;
         if (!latestMap[otherId]) latestMap[otherId] = msg;
       });
 
-      const businessIds = Object.keys(latestMap);
-      if (businessIds.length === 0) return setChats([]);
+      const otherIds = Object.keys(latestMap);
+      if (otherIds.length === 0) return setChats([]);
 
-      const { data: profiles = [] } = await supabase
-        .from("business_profiles")
-        .select("id, business_name")
-        .in("id", businessIds);
+      const otherTable = userType === "individual"
+        ? "business_profiles"
+        : "individual_profiles";
+
+      const { data: profiles = [], error: profilesError } = await supabase
+        .from(otherTable)
+        .select(userType === "individual" ? "id, business_name" : "id, first_name, last_name")
+        .in("id", otherIds);
+
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        return;
+      }
 
       const formatted = profiles.map((p) => ({
         business_id: p.id,
-        business_name: p.business_name,
+        business_name:
+          userType === "individual"
+            ? p.business_name || "Business"
+            : `${p.first_name || ""} ${p.last_name || ""}`.trim() || "User",
         last_message: latestMap[p.id]?.message || "",
       }));
 
       setChats(formatted);
     })();
-  }, [currentUserId]);
+  }, [currentUserId, userType]);
 
   return (
     <div className="chat-app">
-      {/* Sidebar */}
       <aside className="chat-sidebar">
         <header>
           <span>Your Chats</span>
-          <button onClick={() => setShowModal(true)}>＋</button>
+          {userType === "individual" && (
+            <button onClick={() => setShowModal(true)}>＋</button>
+          )}
         </header>
 
         <ul>
@@ -79,7 +112,6 @@ export default function ChatInterface() {
         </ul>
       </aside>
 
-      {/* Main chat window */}
       <main className="chat-main">
         {activeBusiness ? (
           <MessagingView
@@ -88,6 +120,7 @@ export default function ChatInterface() {
             businessName={
               chats.find((c) => c.business_id === activeBusiness)?.business_name
             }
+            userType={userType}
           />
         ) : (
           <div style={{ padding: "2rem", color: "var(--bidi-muted)" }}>
@@ -96,7 +129,6 @@ export default function ChatInterface() {
         )}
       </main>
 
-      {/* Modal */}
       {showModal && (
         <StartNewChatModal
           currentUserId={currentUserId}

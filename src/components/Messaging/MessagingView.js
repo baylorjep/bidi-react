@@ -1,5 +1,4 @@
-// src/components/MessagingView.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { socket } from "../../socket";
 import { supabase } from "../../supabaseClient";
 import "../../styles/chat.css";
@@ -8,30 +7,29 @@ export default function MessagingView({
   currentUserId,
   businessId,
   businessName = "Business",
+  userType, // NEW
 }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const chatEndRef = useRef(null);
 
   // 1) Fetch & normalize persisted messages
   useEffect(() => {
     if (!currentUserId || !businessId) return;
 
     const fetchMessages = async () => {
-      // outgoing
       const { data: out = [] } = await supabase
         .from("messages")
         .select("*")
         .eq("sender_id", currentUserId)
         .eq("receiver_id", businessId);
 
-      // incoming
       const { data: incoming = [] } = await supabase
         .from("messages")
         .select("*")
         .eq("sender_id", businessId)
         .eq("receiver_id", currentUserId);
 
-      // normalize & merge
       const all = [...out, ...incoming].map((r) => ({
         id: r.id,
         senderId: r.sender_id,
@@ -40,7 +38,6 @@ export default function MessagingView({
         createdAt: r.created_at,
       }));
 
-      // sort by time
       all.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
       setMessages(all);
     };
@@ -51,7 +48,6 @@ export default function MessagingView({
   // 2) Listen for live messages
   useEffect(() => {
     const handler = (msg) => {
-      // only if this chat
       if (
         (msg.senderId === businessId && msg.receiverId === currentUserId) ||
         (msg.senderId === currentUserId && msg.receiverId === businessId)
@@ -61,18 +57,45 @@ export default function MessagingView({
     };
 
     socket.on("receive_message", handler);
-    return () => void socket.off("receive_message", handler);
+    return () => socket.off("receive_message", handler);
   }, [currentUserId, businessId]);
 
-  // 3) Send new message
-  const sendMessage = () => {
+  // Auto-scroll when new messages come in
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // 3) Send a new message
+  const sendMessage = async () => {
     if (!newMessage.trim()) return;
-    const payload = {
-      senderId: currentUserId,
-      receiverId: businessId,
-      message: newMessage.trim(),
+  
+    const { data, error } = await supabase.from("messages").insert([
+      {
+        sender_id: currentUserId,
+        receiver_id: businessId,
+        message: newMessage.trim(),
+      },
+    ]).select("*").single(); // 👈 Get the inserted message back immediately
+  
+    if (error) {
+      console.error("Error saving message:", error);
+      return;
+    }
+  
+    const sentMessage = {
+      id: data.id,
+      senderId: data.sender_id,
+      receiverId: data.receiver_id,
+      message: data.message,
+      createdAt: data.created_at,
     };
-    socket.emit("send_message", payload);
+  
+    // Emit the real database message
+    socket.emit("send_message", sentMessage);
+  
+    // Add to UI
+    setMessages((prev) => [...prev, sentMessage]);
+  
     setNewMessage("");
   };
 
@@ -97,6 +120,7 @@ export default function MessagingView({
             </div>
           </div>
         ))}
+        <div ref={chatEndRef} />
       </div>
 
       <footer className="chat-footer">
