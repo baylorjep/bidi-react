@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import AuthModal from './Request/Authentication/AuthModal';
 
 const PrivateRoute = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
     useEffect(() => {
         checkUser();
@@ -12,6 +13,9 @@ const PrivateRoute = ({ children }) => {
             async (event, session) => {
                 setUser(session?.user ?? null);
                 setLoading(false);
+                if (session?.user) {
+                    setShowAuthModal(false);
+                }
             }
         );
 
@@ -26,6 +30,9 @@ const PrivateRoute = ({ children }) => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             setUser(session?.user ?? null);
+            if (!session?.user) {
+                setShowAuthModal(true);
+            }
         } catch (error) {
             console.error('Error checking auth:', error);
         } finally {
@@ -38,7 +45,19 @@ const PrivateRoute = ({ children }) => {
     }
 
     if (!user) {
-        return <Navigate to="/signin" />;
+        return (
+            <>
+                {children}
+                <AuthModal 
+                    setIsModalOpen={setShowAuthModal} 
+                    onSuccess={() => {
+                        setShowAuthModal(false);
+                        // Only refresh after successful authentication
+                        window.location.reload();
+                    }}
+                />
+            </>
+        );
     }
 
     return children;

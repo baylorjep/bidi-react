@@ -176,3 +176,113 @@
   }
 }
 
+/* Mobile Auth Buttons */
+.mobile-auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 8px;
+}
+
+.mobile-auth-buttons .btn-nav-primary,
+.mobile-auth-buttons .btn-nav-secondary {
+    padding: 2px 8px;
+    font-size: 11px;
+    white-space: nowrap;
+    min-width: unset;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    width: 80px;
+}
+
+.mobile-auth-buttons .btn-text,
+.mobile-auth-buttons .btn-text-secondary {
+    font-size: 11px;
+    line-height: 1;
+    padding: 0;
+    margin: 0;
+}
+
+.mobile-auth-buttons .btn-text .small,
+.mobile-auth-buttons .btn-text-secondary .small {
+    font-size: 11px;
+    padding: 0;
+    margin: 0;
+}
+
+/* Ensure the navbar has enough space for the mobile buttons */
+@media (max-width: 991.98px) {
+    .navbar {
+        padding: 8px;
+    }
+    
+    .navbar-brand {
+        margin-right: 0;
+    }
+
+    .navbar-toggler {
+        margin-left: 4px;
+    }
+    
+    .mobile-auth-buttons {
+        margin-right: 4px;
+    }
+
+    /* Remove any extra padding/margins from button spans */
+    .mobile-auth-buttons span {
+        padding: 0;
+        margin: 0;
+    }
+}
+
+/* Adjust button sizes for very small screens */
+@media (max-width: 360px) {
+    .mobile-auth-buttons .btn-nav-primary,
+    .mobile-auth-buttons .btn-nav-secondary {
+        padding: 2px 6px;
+        font-size: 10px;
+        height: 22px;
+    }
+    
+    .mobile-auth-buttons {
+        gap: 3px;
+    }
+
+    .mobile-auth-buttons .btn-text .small,
+    .mobile-auth-buttons .btn-text-secondary .small {
+        font-size: 10px;
+    }
+}
+
+/* Profile Toggle Button */
+.profile-toggler {
+    padding: 0 !important;
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 50% !important;
+    overflow: hidden;
+    border: 1px solid #ddd !important;
+    background: white !important;
+}
+
+.profile-toggle-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Mobile menu logout button */
+@media (max-width: 991.98px) {
+    .profile-toggler {
+        margin-left: 8px;
+    }
+
+    .nav-item .btn-nav-primary {
+        margin: 10px 15px;
+        width: calc(100% - 30px) !important;
+    }
+}
+

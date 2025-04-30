@@ -3096,7 +3096,6 @@ background: linear-gradient(246deg, rgba(255, 0, 138, 0.79) 15.35%, #A328F4 85.5
 }
 @media (max-width: 990px) {
   .btn-nav-secondary {
-    margin-top:12px;
     margin-left: 0;
   }
 }

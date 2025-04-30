@@ -142,7 +142,11 @@ function App() {
                             <Route path="/about" element={<AboutAndContact />} />
 
                             {/* Bid Routes */}
-                            <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
+                            <Route path="/submit-bid/:requestId" element={
+                                <PrivateRoute>
+                                    <SubmitBid />
+                                </PrivateRoute>
+                            } />
                             <Route path="/bid-accepted" element={<BidAccepted />} />
                             <Route path="/bid-success" element={<BidSuccess />} />
 
@@ -177,13 +181,29 @@ function App() {
                             <Route path="/edit-request/:type/:id" element={<EditRequest />} />
                             
                             {/* Test API Routes */}
-                             <Route path="/test-email" element={<TestEmail />} />
+                            <Route path="/test-email" element={<TestEmail />} />
                             
                             {/* Business Routes */}
-                            <Route path="/open-requests" element={<OpenRequests />} />
-                            <Route path="/dashboard" element={<BusinessDashboard />} />
-                            <Route path="/edit-bid/:requestId/:bidId" element={<EditBid />} /> {/* Dynamic URL for editing bids */}
-                            <Route path="/verification-application" element={<VerificationApplication />} />
+                            <Route path="/open-requests" element={
+                                <PrivateRoute>
+                                    <OpenRequests />
+                                </PrivateRoute>
+                            } />
+                            <Route path="/dashboard" element={
+                                <PrivateRoute>
+                                    <BusinessDashboard />
+                                </PrivateRoute>
+                            } />
+                            <Route path="/edit-bid/:requestId/:bidId" element={
+                                <PrivateRoute>
+                                    <EditBid />
+                                </PrivateRoute>
+                            } />
+                            <Route path="/verification-application" element={
+                                <PrivateRoute>
+                                    <VerificationApplication />
+                                </PrivateRoute>
+                            } />
                             
                             {/* Dynamic URL for viewing portfolio */}
                             <Route path="/portfolio/:businessId" element={<Portfolio />} />

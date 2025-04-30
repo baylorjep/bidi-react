@@ -87,6 +87,11 @@ function CreateAccount() {
                             Offer my skills to others
                         </button>
                     </div>
+                    <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#666', position: 'relative', background: '#fff', padding: '0 20px', fontFamily: 'Inter' }}>
+                        <div>
+                            Trying to log in? <a href='/signin' style={{ color: '#000',}}>Click here</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </>
