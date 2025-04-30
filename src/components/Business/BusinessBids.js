@@ -82,18 +82,18 @@ const BusinessBids = () => {
 
         const requestMap = {};
         businessBids.forEach((bid) => {
-          const categoryTable = `${bid.category.toLowerCase()}_requests`;
+          // Handle both category-specific tables and the general requests table
+          const categoryTable = bid.category === 'General' ? 'requests' : `${bid.category.toLowerCase()}_requests`;
           if (!requestMap[categoryTable]) requestMap[categoryTable] = [];
           requestMap[categoryTable].push(bid.request_id);
         });
 
         let allRequests = [];
         for (const [table, ids] of Object.entries(requestMap)) {
-          // Select the appropriate ID field based on the table
-          const idField = table === 'photography_requests' ? 'profile_id' : 'user_id';
+          // Fetch requests from the appropriate table
           const { data: requestData, error: requestError } = await supabase
             .from(table)
-            .select(`*, ${idField}`)
+            .select('*')
             .in("id", ids);
 
           if (requestError) {
@@ -104,7 +104,8 @@ const BusinessBids = () => {
           // Fetch user contact information for each request
           const requestsWithContactInfo = await Promise.all(
             requestData.map(async (request) => {
-              const userId = request[idField];
+              // Get the user ID based on the table type
+              const userId = request.user_id || request.profile_id;
               
               if (!userId) {
                 console.warn(`⚠️ No user ID found for request ${request.id}`);
