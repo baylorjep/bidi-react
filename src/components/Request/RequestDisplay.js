@@ -886,7 +886,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
             {/* Basic Event Information */}
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                 <div className="request-subtype">Event Type</div>
-                <div class="request-info">{request.event_type || 'Not specified'}</div>
+                <div className="request-info">{request.event_type || 'Not specified'}</div>
             </div>
 
             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -963,7 +963,8 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                     </div>
                 </div>
             )}
-            {/* Update Colors Display */}
+
+            {/* Colors Display */}
             {request.colors && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
                     <div className="request-subtype">Color Preferences</div>
@@ -977,7 +978,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 </div>
             )}
 
-            {/* Update Floral Arrangements Display */}
+            {/* Floral Arrangements */}
             {request.floral_arrangements && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
                     <div className="request-subtype">Floral Arrangements</div>
@@ -1010,7 +1011,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 </div>
             )}
 
-            {/* Update Flower Preferences Display */}
+            {/* Flower Preferences */}
             {request.flower_preferences && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
                     <div className="request-subtype">Flower Preferences</div>
@@ -1022,14 +1023,14 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                                     .replace(/([A-Z])/g, ' $1')
                                     .toLowerCase()
                                     .replace(/^./, str => str.toUpperCase()))
-                                    .join(', ')
+                                .join(', ')
                             : Object.entries(request.flower_preferences)
                                 .filter(([_, value]) => value === true)
                                 .map(([key]) => key
                                     .replace(/([A-Z])/g, ' $1')
                                     .toLowerCase()
                                     .replace(/^./, str => str.toUpperCase()))
-                                    .join(', ') || 'Not specified'}
+                                .join(', ') || 'Not specified'}
                     </div>
                 </div>
             )}
@@ -1040,6 +1041,33 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                     <div className="request-subtype">Additional Comments</div>
                     <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
                 </div>
+            )}
+
+            {/* Inspiration Photos */}
+            {filteredPhotos && filteredPhotos.length > 0 && (
+                <>
+                    <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
+                        Inspiration Photos
+                    </div>
+                    <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
+                        {filteredPhotos.map((photo, index) => {
+                            const publicUrl = getPublicUrl(photo.file_path);
+                            return (
+                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
+                                    <img
+                                        src={publicUrl || photo.photo_url}
+                                        className="photo"
+                                        alt={`Photo ${index + 1}`}
+                                        onError={(e) => {
+                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
+                                        }}
+                                        loading="lazy"
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+                </>
             )}
         </div>
     );
