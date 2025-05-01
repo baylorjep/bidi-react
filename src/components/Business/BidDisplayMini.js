@@ -6,7 +6,10 @@ import { FaEnvelope, FaSms } from "react-icons/fa";
 const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal }) => {
   const navigate = useNavigate();
 
-  const getTitle = () => request?.service_title || request?.event_title || "Untitled Request";
+  const getTitle = () => {
+    if (request?.title) return request.title;
+    return request?.service_title || request?.event_title || "Untitled Request";
+  };
 
   return (
     <div className="request-display-mini text-center mb-4">
