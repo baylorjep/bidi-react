@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import RequestDisplay from "../Request/RequestDisplay";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const EditBid = () => {
   const { bidId, requestId } = useParams();
@@ -87,6 +89,25 @@ const EditBid = () => {
     navigate(-1);
   };
 
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'color': [] }, { 'background': [] }],
+      ['link'],
+      ['clean']
+    ],
+  };
+
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike',
+    'list', 'bullet',
+    'color', 'background',
+    'link'
+  ];
+
   return (
     <div className="container">
       <h2 className="dashboard-title">Edit Bid</h2>
@@ -112,15 +133,16 @@ const EditBid = () => {
             <label className='custom-label' htmlFor="bidAmount">Bid Amount</label>
           </div>
 
-          <div className="custom-input-container">
-            <textarea
-              id="bidDescription"
-              className="custom-input"
+          <div className="custom-input-container" style={{ marginTop: '20px' }}>
+            <label className="custom-label" style={{ marginBottom: '10px' }}>Bid Description</label>
+            <ReactQuill
+              theme="snow"
               value={bidDescription}
-              style={{ height: "120px" }}
-              onChange={(e) => setBidDescription(e.target.value)}
+              onChange={setBidDescription}
+              modules={modules}
+              formats={formats}
+              style={{ height: '200px', marginBottom: '50px' }}
             />
-            <label className="custom-label" htmlFor="bidDescription">Bid Description</label>
           </div>
 
           <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
