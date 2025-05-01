@@ -269,7 +269,7 @@ function MasterRequestFlow() {
         } else if (isRequestType(currentRequest, "Videography")) {
           return videographySubStep === 3;
         } else if (isRequestType(currentRequest, "Catering")) {
-          return cateringSubStep === 2;
+          return cateringSubStep === 1; // Changed from 2 to 1 since we only have 2 steps
         } else if (isRequestType(currentRequest, "DJ")) {
           return djSubStep === 2;
         } else if (isRequestType(currentRequest, "Florist")) {
@@ -594,6 +594,71 @@ function MasterRequestFlow() {
 
                         await Promise.all(uploadPromises);
                     }
+                } else if (category === 'Catering') {
+                    // Handle Catering requests
+                    const cateringRequestData = {
+                        user_id: user.id,
+                        status: 'pending',
+                        event_type: formData.commonDetails.eventType,
+                        title: `${user.user_metadata?.full_name || user.email}'s Catering Request`,
+                        location: formData.commonDetails.location,
+                        date_flexibility: formData.commonDetails.dateFlexibility,
+                        start_date: formData.commonDetails.startDate,
+                        end_date: formData.commonDetails.endDate,
+                        date_timeframe: formData.commonDetails.dateTimeframe,
+                        estimated_guests: formData.commonDetails.numGuests,
+                        food_service_type: formData.eventDetails?.foodService,
+                        food_preferences: formData.eventDetails?.cuisineTypes,
+                        dietary_restrictions: formData.eventDetails?.dietaryRestrictions,
+                        other_dietary_details: formData.eventDetails?.otherDietaryDetails,
+                        equipment_needed: formData.eventDetails?.equipmentNeeded,
+                        equipment_notes: formData.eventDetails?.equipmentNotes,
+                        setup_cleanup: formData.eventDetails?.setupCleanup,
+                        serving_staff: formData.eventDetails?.servingStaff,
+                        dining_items: formData.eventDetails?.diningItems,
+                        dining_items_notes: formData.eventDetails?.diningItemsNotes,
+                        special_requests: formData.eventDetails?.specialRequests,
+                        budget_range: formData.eventDetails?.priceRange || '',
+                        additional_info: formData.eventDetails?.additionalInfo
+                    };
+
+                    const { data: newCateringRequest, error: cateringRequestError } = await supabase
+                        .from('catering_requests')
+                        .insert([cateringRequestData])
+                        .select()
+                        .single();
+
+                    if (cateringRequestError) throw cateringRequestError;
+
+                    // Handle photo uploads for catering
+                    if (formData.eventDetails?.photos && formData.eventDetails.photos.length > 0) {
+                        const uploadPromises = formData.eventDetails.photos.map(async (photo) => {
+                            const fileExt = photo.name.split('.').pop();
+                            const fileName = `${uuidv4()}.${fileExt}`;
+                            const filePath = `${user.id}/${newCateringRequest.id}/${fileName}`;
+
+                            const { error: uploadError } = await supabase.storage
+                                .from('request-media')
+                                .upload(filePath, photo.file);
+
+                            if (uploadError) throw uploadError;
+
+                            const { data: { publicUrl } } = supabase.storage
+                                .from('request-media')
+                                .getPublicUrl(filePath);
+
+                            return supabase
+                                .from('event_photos')
+                                .insert([{
+                                    request_id: newCateringRequest.id,
+                                    user_id: user.id,
+                                    photo_url: publicUrl,
+                                    file_path: filePath
+                                }]);
+                        });
+
+                        await Promise.all(uploadPromises);
+                    }
                 }
                 // Add other request type handlers here as needed
             }
@@ -897,11 +962,57 @@ function MasterRequestFlow() {
 
       // Handle arrays
       if (Array.isArray(value)) {
-        return value.length > 0 ? value.join(', ') : 'Not specified';
+        if (value.length === 0) return 'Not specified';
+        // Special handling for cuisine types and dietary restrictions
+        if (key === 'cuisineTypes' || key === 'dietaryRestrictions') {
+          return value.map(item => item.charAt(0).toUpperCase() + item.slice(1)).join(', ');
+        }
+        return value.join(', ');
       }
 
       // Handle objects with boolean values (like style preferences)
       if (typeof value === 'object' && value !== null) {
+        // Special handling for food style
+        if (key === 'foodStyle') {
+          if (!value) return 'Not specified';
+          return value.charAt(0).toUpperCase() + value.slice(1);
+        }
+
+        // Special handling for setup and cleanup
+        if (key === 'setupCleanup') {
+          if (!value) return 'Not specified';
+          const labels = {
+            'setupOnly': 'Setup Only',
+            'cleanupOnly': 'Cleanup Only',
+            'both': 'Both Setup & Cleanup',
+            'neither': 'Neither'
+          };
+          return labels[value] || 'Not specified';
+        }
+
+        // Special handling for serving staff
+        if (key === 'servingStaff') {
+          if (!value) return 'Not specified';
+          const labels = {
+            'fullService': 'Full Service Staff',
+            'partialService': 'Partial Service',
+            'noService': 'No Staff Needed',
+            'unsure': 'Not Sure'
+          };
+          return labels[value] || 'Not specified';
+        }
+
+        // Special handling for dining items
+        if (key === 'diningItems') {
+          if (!value) return 'Not specified';
+          const labels = {
+            'provided': 'Provided by Caterer',
+            'notProvided': 'Not Needed',
+            'partial': 'Partial'
+          };
+          return labels[value] || 'Not specified';
+        }
+
         // Special handling for makeup style preferences
         if (key === 'makeupStylePreferences') {
           if (typeof value === 'string') {
@@ -1025,10 +1136,14 @@ function MasterRequestFlow() {
           };
           break;
         case 'catering':
+          const eventDetails = formData.eventDetails || {};
           categoryDetails = {
-            'Food Style': formatArrayValue(categoryData.foodStyle, 'foodStyle'),
-            'Cuisine Types': formatArrayValue(categoryData.cuisineTypes, 'cuisineTypes'),
-            'Dietary Restrictions': formatArrayValue(categoryData.dietaryRestrictions, 'dietaryRestrictions'),
+            'Food Style': formatArrayValue(eventDetails.foodStyle, 'foodStyle'),
+            'Cuisine Types': formatArrayValue(eventDetails.cuisineTypes, 'cuisineTypes'),
+            'Dietary Restrictions': formatArrayValue(eventDetails.dietaryRestrictions, 'dietaryRestrictions'),
+            'Setup & Cleanup': formatArrayValue(eventDetails.setupCleanup, 'setupCleanup'),
+            'Serving Staff': formatArrayValue(eventDetails.servingStaff, 'servingStaff'),
+            'Dining Items': formatArrayValue(eventDetails.diningItems, 'diningItems'),
             'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
           };
           break;
