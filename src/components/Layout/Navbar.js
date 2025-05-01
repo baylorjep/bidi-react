@@ -124,7 +124,7 @@ function Navbar() {
     <nav className="navbar navbar-expand-lg" id="mainNav" ref={navbarRef}>
       <div className="container">
         <Link className="navbar-brand fw-bold" to="/">
-          <img src={logo} alt="Bidi Logo" className="bidi-img-logo" />
+          <img src={logo} alt="Bidi Logo" className="bidi-img-logo mobile-logo" />
         </Link>
 
         {/* Mobile Auth Buttons - Only visible on mobile */}

@@ -16233,13 +16233,13 @@ a .try-now-button {
 }
 
 .bidi-img-logo {
-  height: 72px;
+  height: 60px;
   width: 100%;
 }
 
 @media screen and (max-width: 768px) {
   .bidi-img-logo {
-    height: 56px;
+    height: 48px !important;
     width: auto;
   }
   

@@ -214,13 +214,18 @@
 }
 
 /* Ensure the navbar has enough space for the mobile buttons */
-@media (max-width: 991.98px) {
+@media (max-width: 1200px) {
     .navbar {
         padding: 8px;
     }
     
     .navbar-brand {
         margin-right: 0;
+    }
+
+    .mobile-logo {
+        max-height: 30px;
+        width: auto;
     }
 
     .navbar-toggler {
@@ -245,6 +250,7 @@
         padding: 2px 6px;
         font-size: 10px;
         height: 22px;
+        width: 60px;
     }
     
     .mobile-auth-buttons {
@@ -255,6 +261,7 @@
     .mobile-auth-buttons .btn-text-secondary .small {
         font-size: 10px;
     }
+
 }
 
 /* Profile Toggle Button */
@@ -275,7 +282,7 @@
 }
 
 /* Mobile menu logout button */
-@media (max-width: 991.98px) {
+@media (max-width: 1200px) {
     .profile-toggler {
         margin-left: 8px;
     }
