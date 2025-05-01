@@ -612,7 +612,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
               </div>
             )}
 
-            {isOwner && (
+
+          </div>
+          {isOwner && (
               <button
                 className="edit-icon"
                 onClick={() => openEditModal({ portfolio: { images: portfolioPics, videos: portfolioVideos } }, 'portfolio')}
@@ -620,7 +622,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 ✎
               </button>
             )}
-          </div>
 
           <div className="section-container">
             <div className="section-left">
