@@ -12,7 +12,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
   }, [formData, category, priceQualityPreference]);
 
   const getBudgetRanges = () => {
-    switch (category) {
+    switch (category.toLowerCase()) {
       case 'photography':
       case 'videography':
         return [
@@ -85,9 +85,9 @@ const BudgetForm = ({ formData, setFormData, category }) => {
 
   const calculateRecommendedBudget = () => {
     let basePrice = 0;
-    const requestData = formData.requests[category.charAt(0).toUpperCase() + category.slice(1)] || {};
+    const requestData = formData.requests[category] || {};
 
-    if (category === 'photography') {
+    if (category.toLowerCase() === 'photography') {
       // Base price based on duration
       if (requestData.duration) {
         basePrice = requestData.duration * 200; // $200 per hour base rate
@@ -111,7 +111,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
       if (deliverables.rawFiles) basePrice += 300;
       if (deliverables.engagement) basePrice += 500;
 
-    } else if (category === 'videography') {
+    } else if (category.toLowerCase() === 'videography') {
       // Base price based on duration
       if (requestData.duration) {
         basePrice = requestData.duration * 300; // $300 per hour base rate
@@ -137,7 +137,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
       if (deliverables.rawFootage) basePrice += 400;
       if (deliverables.droneFootage) basePrice += 600;
       if (deliverables.sameDayEdit) basePrice += 1000;
-    } else if (category === 'dj') {
+    } else if (category.toLowerCase() === 'dj') {
       // Base price for DJ services
       basePrice = 1000; // Base rate for a standard DJ service
 
@@ -163,6 +163,64 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         const coveragePoints = Object.values(weddingDetails).filter(Boolean).length;
         basePrice += coveragePoints * 200; // $200 per coverage point
       }
+    } else if (category.toLowerCase() === 'hairandmakeup') {
+      // Base price for number of people
+      const numPeople = parseInt(formData.requests.HairAndMakeup?.numPeople) || 1;
+      
+      // Base rate per person with volume discount
+      let basePricePerPerson = 150;
+      if (numPeople > 10) {
+        basePricePerPerson = 120; // Volume discount for large groups
+      } else if (numPeople > 5) {
+        basePricePerPerson = 130; // Slight discount for medium groups
+      }
+      
+      basePrice = numPeople * basePricePerPerson;
+
+      // Service type adjustments
+      const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+      if (serviceType === 'both') {
+        basePrice *= 1.5; // Both services cost more than individual services
+      }
+
+      // Hair-specific adjustments
+      if (serviceType === 'both' || serviceType === 'hair') {
+        if (formData.requests.HairAndMakeup?.extensionsNeeded === 'yes') {
+          basePrice += 200 * numPeople; // Additional cost for extensions per person
+        }
+        if (formData.requests.HairAndMakeup?.trialSessionHair === 'yes') {
+          basePrice += 150 * numPeople; // Additional cost for hair trial per person
+        }
+      }
+
+      // Makeup-specific adjustments
+      if (serviceType === 'both' || serviceType === 'makeup') {
+        if (formData.requests.HairAndMakeup?.lashesIncluded === 'yes') {
+          basePrice += 50 * numPeople; // Additional cost for lashes per person
+        }
+        if (formData.requests.HairAndMakeup?.trialSessionMakeup === 'yes') {
+          basePrice += 150 * numPeople; // Additional cost for makeup trial per person
+        }
+      }
+
+      // Location adjustment
+      if (formData.requests.HairAndMakeup?.serviceLocation?.toLowerCase().includes('hotel')) {
+        basePrice += 100 * numPeople; // Additional cost for hotel service per person
+      }
+
+      // Minimum base price for large groups
+      if (numPeople > 5) {
+        basePrice = Math.max(basePrice, numPeople * 200); // Ensure minimum $200 per person for groups
+      }
+
+      // Debug log to check the calculation
+      console.log('Hair and Makeup Budget Calculation:', {
+        numPeople,
+        basePricePerPerson,
+        serviceType,
+        basePrice,
+        finalPrice: basePrice
+      });
     }
 
     // Calculate range based on price quality preference
@@ -172,10 +230,15 @@ const BudgetForm = ({ formData, setFormData, category }) => {
 
     setRecommendedBudget({ min: minPrice, max: maxPrice });
 
+    // Removed the logic that automatically sets the priceRange based on calculation
+    // The priceRange should only be updated by the user's explicit selection
+    // in the handleBudgetRangeChange function.
+
+    /* // --- Start of removed block --- 
     // Only update budget range if it hasn't been manually set
-    const currentPriceRange = category === 'dj' 
+    const currentPriceRange = category.toLowerCase() === 'dj' // Use lower case for comparison
       ? formData.eventDetails?.priceRange 
-      : formData.requests[category.charAt(0).toUpperCase() + category.slice(1)]?.priceRange;
+      : formData.requests[category]?.priceRange; // Use category directly
 
     if (!currentPriceRange) {
       const ranges = getBudgetRanges();
@@ -185,7 +248,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
       );
 
       if (matchingRange) {
-        if (category === 'dj') {
+        if (category.toLowerCase() === 'dj') { // Use lower case for comparison
           setFormData(prev => ({
             ...prev,
             eventDetails: {
@@ -194,12 +257,12 @@ const BudgetForm = ({ formData, setFormData, category }) => {
             }
           }));
         } else {
-          setFormData(prev => ({
+          setFormData(prev => ({ // Use category directly
             ...prev,
             requests: {
               ...prev.requests,
-              [category.charAt(0).toUpperCase() + category.slice(1)]: {
-                ...prev.requests[category.charAt(0).toUpperCase() + category.slice(1)],
+              [category]: {
+                ...prev.requests[category],
                 priceRange: matchingRange.value
               }
             }
@@ -207,13 +270,14 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         }
       }
     }
+    // --- End of removed block --- */
   };
 
   const updateBudgetInsights = () => {
     const insights = getBudgetInsights(
-      category === 'dj' 
+      category.toLowerCase() === 'dj'
         ? formData.eventDetails?.priceRange 
-        : formData.requests[category.charAt(0).toUpperCase() + category.slice(1)]?.priceRange, 
+        : formData.requests[category]?.priceRange,
       category
     );
     setBudgetInsights(insights);
@@ -222,7 +286,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
   const getBudgetInsights = (range, category) => {
     const insights = [];
     
-    if (category === 'photography') {
+    if (category.toLowerCase() === 'photography') {
       switch (range) {
         case 'under-2000':
           insights.push({
@@ -262,7 +326,61 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         default:
           break;
       }
-    } else if (category === 'videography') {
+    } else if (category.toLowerCase() === 'hairandmakeup') {
+      switch (range) {
+        case '0-300':
+          insights.push({
+            icon: '⚠️',
+            text: 'Limited options in this range. Consider increasing budget for better quality.',
+            type: 'warning'
+          });
+          break;
+        case '300-500':
+          insights.push({
+            icon: '💇‍♀️',
+            text: 'Good range for basic hair and makeup services.',
+            type: 'info'
+          });
+          break;
+        case '500-750':
+          insights.push({
+            icon: '💇‍♀️',
+            text: 'Standard range for experienced beauty professionals.',
+            type: 'info'
+          });
+          break;
+        case '750-1000':
+          insights.push({
+            icon: '💇‍♀️',
+            text: 'Premium range with experienced artists and additional services.',
+            type: 'info'
+          });
+          break;
+        case '1000-1500':
+          insights.push({
+            icon: '💇‍♀️',
+            text: 'High-end range with top-tier beauty professionals.',
+            type: 'info'
+          });
+          break;
+        case '1500-2000':
+          insights.push({
+            icon: '💇‍♀️',
+            text: 'Luxury range with renowned artists and full customization.',
+            type: 'info'
+          });
+          break;
+        case '2000+':
+          insights.push({
+            icon: '💇‍♀️',
+            text: 'Elite range with celebrity beauty professionals.',
+            type: 'info'
+          });
+          break;
+        default:
+          break;
+      }
+    } else if (category.toLowerCase() === 'videography') {
       switch (range) {
         case 'under-3000':
           insights.push({
@@ -302,7 +420,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         default:
           break;
       }
-    } else if (category === 'dj') {
+    } else if (category.toLowerCase() === 'dj') {
       switch (range) {
         case '0-500':
           insights.push({
@@ -378,7 +496,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
   };
 
   const handleBudgetRangeChange = (e) => {
-    if (category === 'dj') {
+    if (category.toLowerCase() === 'dj') {
       setFormData(prev => ({
         ...prev,
         eventDetails: {
@@ -391,8 +509,8 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         ...prev,
         requests: {
           ...prev.requests,
-          [category.charAt(0).toUpperCase() + category.slice(1)]: {
-            ...prev.requests[category.charAt(0).toUpperCase() + category.slice(1)],
+          [category]: {
+            ...prev.requests[category],
             priceRange: e.target.value
           }
         }
@@ -410,7 +528,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         <p className="budget-explanation">
           This recommendation is based on:
           <ul>
-            {category === 'photography' && (
+            {category.toLowerCase() === 'photography' && (
               <>
                 {formData.requests.Photography?.duration && (
                   <li>{formData.requests.Photography.duration} hours of coverage</li>
@@ -432,7 +550,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
                 )}
               </>
             )}
-            {category === 'videography' && (
+            {category.toLowerCase() === 'videography' && (
               <>
                 {formData.requests.Videography?.duration && (
                   <li>{formData.requests.Videography.duration} hours of coverage</li>
@@ -463,7 +581,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
                 )}
               </>
             )}
-            {category === 'dj' && (
+            {category.toLowerCase() === 'dj' && (
               <>
                 <li>Standard DJ service</li>
                 {formData.eventDetails?.additionalServices?.mcServices && (
@@ -514,6 +632,31 @@ const BudgetForm = ({ formData, setFormData, category }) => {
                 )}
               </>
             )}
+            {category.toLowerCase() === 'hairandmakeup' && (
+              <>
+                {formData.requests.HairAndMakeup?.numPeople && (
+                  <li>{formData.requests.HairAndMakeup.numPeople} people needing services</li>
+                )}
+                {formData.requests.HairAndMakeup?.serviceType && (
+                  <li>{formData.requests.HairAndMakeup.serviceType === 'both' ? 'Hair & Makeup' : formData.requests.HairAndMakeup.serviceType === 'hair' ? 'Hair Only' : 'Makeup Only'} services</li>
+                )}
+                {formData.requests.HairAndMakeup?.extensionsNeeded === 'yes' && (
+                  <li>Hair extensions</li>
+                )}
+                {formData.requests.HairAndMakeup?.trialSessionHair === 'yes' && (
+                  <li>Hair trial session</li>
+                )}
+                {formData.requests.HairAndMakeup?.lashesIncluded === 'yes' && (
+                  <li>Lashes included</li>
+                )}
+                {formData.requests.HairAndMakeup?.trialSessionMakeup === 'yes' && (
+                  <li>Makeup trial session</li>
+                )}
+                {formData.requests.HairAndMakeup?.serviceLocation?.toLowerCase().includes('hotel') && (
+                  <li>Hotel service location</li>
+                )}
+              </>
+            )}
           </ul>
         </p>
       </div>
@@ -542,9 +685,9 @@ const BudgetForm = ({ formData, setFormData, category }) => {
           <label className="custom-label">Budget Range</label>
           <select
             className="custom-input"
-            value={category === 'dj' 
+            value={category.toLowerCase() === 'dj'
               ? formData.eventDetails?.priceRange || '' 
-              : formData.requests[category.charAt(0).toUpperCase() + category.slice(1)]?.priceRange || ''}
+              : formData.requests[category]?.priceRange || ''}
             onChange={handleBudgetRangeChange}
           >
             <option value="">Select a budget range</option>

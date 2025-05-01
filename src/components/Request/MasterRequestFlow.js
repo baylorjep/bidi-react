@@ -47,6 +47,40 @@ function MasterRequestFlow() {
           reception: false,
           afterParty: false
         }
+      },
+      HairAndMakeup: {
+        location: '',
+        dateFlexibility: '',
+        startDate: '',
+        endDate: '',
+        dateTimeframe: '',
+        startTime: '',
+        endTime: '',
+        startTimeUnknown: false,
+        endTimeUnknown: false,
+        numPeople: '',
+        numPeopleUnknown: false,
+        specificTimeNeeded: '',
+        specificTime: '',
+        hairstylePreferences: '',
+        hairLengthType: '',
+        extensionsNeeded: '',
+        trialSessionHair: '',
+        makeupStylePreferences: {},
+        skinTypeConcerns: '',
+        preferredProductsAllergies: '',
+        lashesIncluded: '',
+        trialSessionMakeup: '',
+        groupDiscountInquiry: '',
+        onSiteServiceNeeded: '',
+        priceQualityPreference: '2',
+        priceRange: '',
+        additionalInfo: '',
+        pinterestBoard: '',
+        serviceLocation: '',
+        serviceTime: '',
+        serviceTimeUnknown: false,
+        serviceType: 'both'
       }
     },
     selectedRequests: selectedCategories,
@@ -114,7 +148,16 @@ function MasterRequestFlow() {
           "Florist - Services & Budget"
         );
       } else if (isRequestType(request, "HairAndMakeup")) {
-        steps.push("Hair and Makeup - Basic Details", "Hair and Makeup - Style & Deliverables");
+        const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+        steps.push("Hair and Makeup - Basic Details");
+        if (serviceType === 'both' || serviceType === 'hair') {
+          steps.push("Hair and Makeup - Hair Services");
+        }
+        if (serviceType === 'both' || serviceType === 'makeup') {
+          steps.push("Hair and Makeup - Makeup Services");
+        }
+        steps.push("Hair and Makeup - Inspiration");
+        steps.push("Hair and Makeup - Budget");
       } else {
         steps.push(`${request} Details`);
       }
@@ -144,7 +187,7 @@ function MasterRequestFlow() {
         } else if (isRequestType(request, "Florist")) {
           index += floristSubStep;
         } else if (isRequestType(request, "HairAndMakeup")) {
-          index += 2; // Assuming Hair and Makeup is always the last two steps
+          index += hairAndMakeupSubStep;
         }
         foundCurrent = true;
         break;
@@ -162,7 +205,7 @@ function MasterRequestFlow() {
       } else if (isRequestType(request, "Florist")) {
         index += 3;
       } else if (isRequestType(request, "HairAndMakeup")) {
-        index += 2;
+        index += 5;
       } else {
         index += 1;
       }
@@ -179,76 +222,18 @@ function MasterRequestFlow() {
     if (!commonDetails.eventType) requiredFields.push("Event Type");
     if (!commonDetails.location) requiredFields.push("Location");
     if (!commonDetails.numGuests) requiredFields.push("Number of Guests");
-    if (commonDetails.dateFlexibility === "specific" && !commonDetails.startDate) {
-      requiredFields.push("Event Date");
-    }
-    if (commonDetails.dateFlexibility === "range" && (!commonDetails.startDate || !commonDetails.endDate)) {
-      requiredFields.push("Date Range");
-    }
-    if (commonDetails.dateFlexibility === "flexible" && !commonDetails.dateTimeframe) {
-      requiredFields.push("Preferred Timeframe");
-    }
-
-    setMissingFields(requiredFields);
-    return requiredFields.length === 0;
-  };
-
-  const validateCurrentStep = () => {
-    const requiredFields = [];
-    const currentRequest = formData.selectedRequests[currentStep - 1];
-
-    if (currentRequest === "Photography") {
-      const photographyData = formData.requests.Photography || {};
-      
-      // Only validate the current sub-step
-      if (currentStep === 1) { // First step of photography
-        if (!photographyData.duration && !photographyData.durationUnknown) {
-          requiredFields.push("Hours of Coverage");
-        }
-        if (!photographyData.secondPhotographer) {
-          requiredFields.push("Second Photographer Preference");
-        }
-      } else if (currentStep === 2) { // Second step of photography
-        if (!photographyData.stylePreferences || Object.keys(photographyData.stylePreferences).length === 0) {
-          requiredFields.push("Style Preferences");
-        }
-        if (!photographyData.deliverables || Object.keys(photographyData.deliverables).length === 0) {
-          requiredFields.push("Deliverables");
-        }
-      }
-      // Third step (additional info and photos) doesn't have required fields
-    } else if (currentRequest === "Videography") {
-      const videographyData = formData.requests.Videography || {};
-      
-      // Only validate the current sub-step
-      if (currentStep === 1) { // First step of videography
-        if (!videographyData.duration && !videographyData.durationUnknown) {
-          requiredFields.push("Hours of Coverage");
-        }
-        if (!videographyData.stylePreferences || Object.keys(videographyData.stylePreferences).length === 0) {
-          requiredFields.push("Style Preferences");
-        }
-      } else if (currentStep === 2) { // Second step of videography
-        if (!videographyData.deliverables || Object.keys(videographyData.deliverables).length === 0) {
-          requiredFields.push("Deliverables");
-        }
-      }
-      // Third step (additional info and videos) doesn't have required fields
-    } else if (currentRequest === "Catering") {
-      // Validation for catering
-      // ... existing validation logic ...
-    } else if (currentRequest === "DJ") {
-      // Validation for DJ
-      // ... existing validation logic ...
-    } else if (currentRequest === "Florist") {
-      // Validation for florist
-      // ... existing validation logic ...
-    } else if (currentRequest === "HairAndMakeup") {
-      // Validation for hair and makeup
-      // ... existing validation logic ...
+    if (!commonDetails.dateFlexibility) {
+      requiredFields.push("Date Flexibility (Event Logistics)");
     } else {
-      // Validation for other request types
-      // ... existing validation logic ...
+      if (commonDetails.dateFlexibility === "specific" && !commonDetails.startDate) {
+        requiredFields.push("Event Date");
+      }
+      if (commonDetails.dateFlexibility === "range" && (!commonDetails.startDate || !commonDetails.endDate)) {
+        requiredFields.push("Date Range");
+      }
+      if (commonDetails.dateFlexibility === "flexible" && !commonDetails.dateTimeframe) {
+        requiredFields.push("Preferred Timeframe");
+      }
     }
 
     setMissingFields(requiredFields);
@@ -289,7 +274,13 @@ function MasterRequestFlow() {
         } else if (isRequestType(currentRequest, "Florist")) {
           return floristSubStep === 2;
         } else if (isRequestType(currentRequest, "HairAndMakeup")) {
-          return hairAndMakeupSubStep === 3;
+          const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+          if (serviceType === 'hair') {
+            return hairAndMakeupSubStep === 3; // Basic -> Hair -> Inspiration -> Budget
+          } else if (serviceType === 'makeup') {
+            return hairAndMakeupSubStep === 3; // Basic -> Makeup -> Inspiration -> Budget
+          }
+          return hairAndMakeupSubStep === 4; // Basic -> Hair -> Makeup -> Inspiration -> Budget
         }
         return true;
       };
@@ -328,7 +319,16 @@ function MasterRequestFlow() {
         } else if (isRequestType(currentRequest, "Florist")) {
           setFloristSubStep(floristSubStep + 1);
         } else if (isRequestType(currentRequest, "HairAndMakeup")) {
-          setHairAndMakeupSubStep(hairAndMakeupSubStep + 1);
+          const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+          if (serviceType === 'hair' && hairAndMakeupSubStep === 1) {
+            // Skip makeup step when hair only is selected
+            setHairAndMakeupSubStep(hairAndMakeupSubStep + 1);
+          } else if (serviceType === 'makeup' && hairAndMakeupSubStep === 0) {
+            // Skip hair step when makeup only is selected
+            setHairAndMakeupSubStep(hairAndMakeupSubStep + 1);
+          } else {
+            setHairAndMakeupSubStep(hairAndMakeupSubStep + 1);
+          }
         }
         setVisitedSteps(prev => new Set([...prev, getCurrentStepIndex() + 1]));
       }
@@ -460,23 +460,38 @@ function MasterRequestFlow() {
   };
 
   const handleSubmit = async () => {
-    console.log("Starting submission...");
+    console.log("--- handleSubmit triggered ---"); // Log start
     setIsSubmitting(true);
     setError(null);
 
     try {
+      // --- Step 1: Validate Common Logistics Fields ---
+      console.log("Validating logistics form...");
+      if (!validateLogisticsForm()) {
+        console.log("Logistics form validation FAILED.");
+        setError("Please fill in all required Event Logistics fields (including Date Flexibility).");
+        setCurrentStep(0); // Go back to logistics step
+        setIsSubmitting(false);
+        return;
+      }
+      console.log("Logistics form validation PASSED.");
+
+      // --- Step 4 -> Now Step 2: Check Authentication ---
+      console.log("Checking authentication...");
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      console.log("User:", user);
-      
+
       if (!user) {
-        console.log("No user found, showing auth modal");
+        console.log("Authentication FAILED. No user found, showing auth modal");
         setIsAuthModalOpen(true);
+        setIsSubmitting(false); // Make sure to reset submitting state
         return;
       }
+      console.log("Authentication PASSED. User ID:", user.id);
 
       // Get the user's profile data
+      console.log("Fetching user profile...");
       const { data: userData, error: userError } = await supabase
         .from("individual_profiles")
         .select("first_name")
@@ -487,91 +502,203 @@ function MasterRequestFlow() {
         console.error("Error fetching user profile:", userError);
         throw userError;
       }
-
-      console.log("User profile:", userData);
+      console.log("User profile fetched:", userData);
 
       // Generate event title
       const firstName = userData.first_name || "Unknown";
       const generatedEventTitle = `${firstName}'s ${formData.commonDetails.eventType} Event`;
+      console.log("Generated Event Title:", generatedEventTitle);
 
-      console.log("Form data:", formData);
-      console.log("Completed categories:", completedCategories);
+      console.log("Processing requests for categories:", formData.selectedRequests);
 
-      // Create request data for each category
-      const requests = await Promise.all(
-        completedCategories.map(async (category) => {
-          console.log(`Processing category: ${category}`);
-          const categoryData = formData.requests[category] || {};
-          const commonDetails = formData.commonDetails || {};
+      // Create request data for each selected category
+      const requests = await Promise.all(formData.selectedRequests.map(async (category) => {
+        console.log(`--- Processing category: ${category} ---`);
+        const categoryData = formData.requests[category] || {};
+        const commonDetails = formData.commonDetails || {};
 
-          if (category === "DJ") {
-            const requestData = {
-              user_id: user.id,
-              title: generatedEventTitle,
-              event_type: commonDetails.eventType,
-              date_flexibility: commonDetails.dateFlexibility,
-              start_date: commonDetails.dateFlexibility !== 'flexible' ? commonDetails.startDate : null,
-              end_date: commonDetails.dateFlexibility === 'range' ? commonDetails.endDate : null,
-              date_timeframe: commonDetails.dateFlexibility === 'flexible' ? commonDetails.dateTimeframe : null,
-              event_duration: commonDetails.durationUnknown ? null : 
-                            commonDetails.duration ? parseInt(commonDetails.duration) : null,
-              estimated_guests: commonDetails.numPeopleUnknown ? null : 
-                              commonDetails.numPeople ? parseInt(commonDetails.numPeople) : null,
-              location: commonDetails.location,
-              music_preferences: categoryData.musicPreferences || {},
-              special_songs: {
-                playlist: categoryData.playlist || null,
-                requests: categoryData.specialSongs || null
-              },
-              budget_range: categoryData.priceRange,
-              equipment_needed: (() => {
-                switch (categoryData.equipmentNeeded) {
-                  case 'venueProvided':
-                    return 'The venue provides sound and lighting equipment';
-                  case 'djBringsAll':
-                    return 'The DJ needs to bring all equipment';
-                  case 'djBringsSome':
-                    return categoryData.equipmentNotes || 'The DJ needs to bring some equipment';
-                  case 'unknown':
-                    return 'Equipment requirements to be discussed';
-                  default:
-                    return null;
-                }
-              })(),
-              additional_services: Object.entries(categoryData.additionalServices || {})
-                .filter(([_, value]) => value)
-                .map(([key, _]) => key),
-              special_requests: categoryData.additionalInfo,
-              status: 'pending',
-              indoor_outdoor: commonDetails.indoorOutdoor,
-              coupon_code: appliedCoupon?.code || null
-            };
+        // --- Step 1: Construct Base Request Data ---
+        let requestData = {
+          user_id: user.id,
+          event_type: commonDetails.eventType,
+          event_title: generatedEventTitle, // Use title generated above
+          location: categoryData.location || commonDetails.location, // Use category location first, then common
+          start_date: null, // Initialize dates
+          end_date: null,
+          date_flexibility: categoryData.dateFlexibility || commonDetails.dateFlexibility, // Use category first
+          date_timeframe: null,
+          specific_time_needed: categoryData.specificTimeNeeded === 'yes',
+          specific_time: categoryData.specificTimeNeeded === 'yes' ? categoryData.specificTime : null,
+          price_range: categoryData.priceRange, // From category specific step
+          additional_comments: categoryData.additionalInfo || commonDetails.additionalInfo || null, // Combine? Or prefer category?
+          pinterest_link: categoryData.pinterestBoard || null,
+          status: 'pending',
+          coupon_code: appliedCoupon ? appliedCoupon.code : null,
+          // Removed price_quality_preference from base object
+          // vendor_id: categoryData.vendor_id || null,
+        };
 
-            const { data: request, error: requestError } = await supabase
-              .from('dj_requests')
-              .insert([requestData])
-              .select()
-              .single();
+        // Set date fields based on flexibility (prefer category specific)
+        const flexibility = requestData.date_flexibility;
+        const catStartDate = categoryData.startDate;
+        const catEndDate = categoryData.endDate;
+        const catTimeframe = categoryData.dateTimeframe;
+        const comStartDate = commonDetails.startDate;
+        const comEndDate = commonDetails.endDate;
+        const comTimeframe = commonDetails.dateTimeframe;
 
-            if (requestError) {
-              console.error('Error submitting DJ request:', requestError);
-              throw requestError;
+        if (flexibility === 'specific') {
+            requestData.start_date = catStartDate || comStartDate;
+        } else if (flexibility === 'range') {
+            requestData.start_date = catStartDate || comStartDate;
+            requestData.end_date = catEndDate || comEndDate;
+        } else if (flexibility === 'flexible') {
+            requestData.date_timeframe = catTimeframe || comTimeframe;
+        }
+
+        // --- Step 2: Add Category-Specific Fields ---
+        let photoTableName = null;
+        let requestTableName = `${category.toLowerCase()}_requests`;
+
+        switch (category) {
+          case "HairAndMakeup":
+            requestTableName = 'beauty_requests';
+            photoTableName = 'beauty_photos';
+            Object.assign(requestData, {
+              // ... HairAndMakeup specific fields (NO price_quality_preference here)
+              service_type: categoryData.serviceType || 'both',
+              hairstyle_preferences: categoryData.hairstylePreferences || '',
+              hair_length_type: categoryData.hairLengthType || '',
+              extensions_needed: categoryData.extensionsNeeded || '',
+              trial_session_hair: categoryData.trialSessionHair || '',
+              makeup_style_preferences: categoryData.makeupStylePreferences || {}, 
+              skin_type_concerns: categoryData.skinTypeConcerns || '',
+              preferred_products_allergies: categoryData.preferredProductsAllergies || '',
+              lashes_included: categoryData.lashesIncluded || '',
+              trial_session_makeup: categoryData.trialSessionMakeup || '',
+              group_discount_inquiry: categoryData.groupDiscountInquiry || '',
+              on_site_service_needed: categoryData.onSiteServiceNeeded || '',
+              num_people: categoryData.numPeopleUnknown ? null : (categoryData.numPeople ? parseInt(categoryData.numPeople) : null)
+            });
+            break;
+          case "Photography":
+            requestTableName = 'photography_requests';
+            photoTableName = 'photography_photos';
+             Object.assign(requestData, {
+               duration: categoryData.durationUnknown ? null : (categoryData.duration ? parseInt(categoryData.duration) : null),
+               second_photographer: categoryData.secondPhotographer || 'undecided',
+               style_preferences: categoryData.stylePreferences || {},
+               deliverables: categoryData.deliverables || {},
+               wedding_details: commonDetails.eventType === 'Wedding' ? categoryData.weddingDetails : null,
+             });
+            break;
+          case "Videography":
+             requestTableName = 'videography_requests';
+             photoTableName = 'videography_photos';
+             Object.assign(requestData, {
+                duration: categoryData.durationUnknown ? null : (categoryData.duration ? parseInt(categoryData.duration) : null),
+                second_videographer: categoryData.secondVideographer || 'undecided',
+                style_preferences: categoryData.stylePreferences || {},
+                deliverables: categoryData.deliverables || {},
+             });
+             break;
+          // ... (Other cases: DJ, Catering, Florist - Add price_quality_preference if their tables have it)
+          default:
+            console.warn(`Unhandled category in handleSubmit: ${category}. Using default table name.`);
+        }
+
+        // --- Step 3: Insert Request Data ---
+        console.log(`Attempting to insert into ${requestTableName} for category ${category}`);
+        const { data: request, error: requestError } = await supabase
+          .from(requestTableName)
+          .insert([requestData])
+          .select()
+          .single();
+
+        if (requestError) {
+            console.error(`Error inserting into ${requestTableName} for category ${category}:`, requestError);
+            throw requestError; // Propagate error to stop Promise.all
+        }
+        console.log(`Successfully inserted request ID ${request.id} into ${requestTableName}`);
+
+        // --- Step 4: Handle Photo Uploads (if applicable) ---
+        const photosToUpload = categoryData.photos || [];
+        if (photoTableName && photosToUpload.length > 0) {
+          console.log(`Starting photo uploads for category ${category}, request ID ${request.id}...`);
+          const uploadPromises = photosToUpload.map(async (photo) => {
+            if (!photo.file) {
+                console.warn("Skipping photo upload, file object missing:", photo);
+                return; // Skip if file object isn't present
+            }
+            const fileExt = photo.name.split('.').pop();
+            const fileName = `${uuidv4()}.${fileExt}`;
+            // Consistent file path structure
+            const filePath = `${user.id}/${request.id}/${fileName}`;
+
+            console.log(`Uploading ${fileName} to ${filePath}`);
+            const { error: uploadError } = await supabase.storage
+                .from('request-media')
+                .upload(filePath, photo.file);
+
+            if (uploadError) {
+                console.error(`Error uploading ${fileName}:`, uploadError);
+                throw uploadError; // Stop if one upload fails
             }
 
-            return request;
-          }
-          // ... handle other categories ...
-        })
-      );
+            const { data: urlData } = supabase.storage
+                .from('request-media')
+                .getPublicUrl(filePath);
+
+             if (!urlData || !urlData.publicUrl) {
+                console.error(`Failed to get public URL for ${filePath}`);
+                throw new Error(`Failed to get public URL for ${filePath}`);
+             }
+             const publicUrl = urlData.publicUrl;
+             console.log(`Got public URL for ${fileName}: ${publicUrl}`);
+
+            // Insert photo metadata
+            console.log(`Inserting photo metadata into ${photoTableName}`);
+            const { error: dbError } = await supabase
+                .from(photoTableName)
+                .insert([{
+                    request_id: request.id, // Ensure this matches the foreign key column name
+                    user_id: user.id,
+                    photo_url: publicUrl,
+                    file_path: filePath
+                }]);
+
+             if (dbError) {
+                console.error(`Error inserting photo metadata for ${fileName} into ${photoTableName}:`, dbError);
+                // Decide if this should throw or just log
+                // For now, let's log and continue, maybe some photos fail but request is in
+                 console.error(`Failed to insert photo metadata for ${publicUrl} into ${photoTableName}.`);
+             } else {
+                 console.log(`Successfully inserted photo metadata for ${fileName}`);
+             }
+          });
+
+          // Wait for all photo uploads and metadata inserts for this request
+          await Promise.all(uploadPromises);
+          console.log(`Finished photo uploads for category ${category}, request ID ${request.id}`);
+        } else {
+            console.log(`No photos to upload for category ${category}`);
+        }
+
+        console.log(`--- Finished processing category: ${category} ---`);
+        return request; // Return the successful request object
+      }));
 
       console.log("All requests submitted successfully:", requests);
 
-      // Send email notification
+      // Send email notification (Add logging)
+      console.log("Attempting to send email notification...");
       try {
-        const emailPayload = { 
-          category: completedCategories[0].toLowerCase(),
+        const emailPayload = {
+          // Ensure completedCategories is populated correctly or adjust logic
+          category: requests.length > 0 ? formData.selectedRequests[0].toLowerCase() : 'general',
           requestIds: requests.map(r => r.id)
         };
+        console.log("Email payload:", emailPayload);
         const response = await fetch('https://bidi-express.vercel.app/send-resend-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -579,7 +706,7 @@ function MasterRequestFlow() {
         });
 
         if (!response.ok) {
-          console.error('Failed to send email:', await response.json());
+          console.error('Failed to send email:', await response.text()); // Log response text
         } else {
           console.log('Emails sent successfully!');
         }
@@ -587,30 +714,21 @@ function MasterRequestFlow() {
         console.error('Error sending email:', error);
       }
 
-      // Check if there are more categories to complete
-      const remainingCategories = selectedCategories.filter(
-        cat => !completedCategories.includes(cat)
-      );
+      // Navigate to success page
+      console.log("Navigating to success page...");
+      navigate("/success-request", {
+        state: {
+          requestIds: requests.map(r => r.id),
+          category: requests.length > 0 ? formData.selectedRequests[0].toLowerCase() : 'general',
+          message: "Your requests have been submitted successfully!"
+        }
+      });
 
-      console.log("Remaining categories:", remainingCategories);
-
-      if (remainingCategories.length > 0) {
-        console.log("Continuing to next category");
-        handleContinueToNextCategory();
-      } else {
-        console.log("All categories completed, navigating to success page");
-        navigate("/success-request", {
-          state: {
-            requestIds: requests.map(r => r.id),
-            category: completedCategories[0].toLowerCase(),
-            message: "Your requests have been submitted successfully!"
-          }
-        });
-      }
     } catch (err) {
-      console.error("Error in handleSubmit:", err);
-      setError("Failed to submit request. Please try again.");
+      console.error("--- ERROR in handleSubmit: ---", err);
+      setError(`Failed to submit request: ${err.message || 'Please try again.'}`);
     } finally {
+      console.log("--- handleSubmit finally block --- Setting isSubmitting to false.");
       setIsSubmitting(false);
     }
   };
@@ -660,12 +778,12 @@ function MasterRequestFlow() {
         }
         currentIndex += 3;
       } else if (isRequestType(request, "HairAndMakeup")) {
-        if (stepIndex < currentIndex + 4) {
+        if (stepIndex < currentIndex + 5) {
           setCurrentStep(i + 1);
           setHairAndMakeupSubStep(stepIndex - currentIndex);
           return;
         }
-        currentIndex += 4;
+        currentIndex += 5;
       } else {
         if (stepIndex === currentIndex) {
           setCurrentStep(i + 1);
@@ -695,7 +813,14 @@ function MasterRequestFlow() {
       } else if (isRequestType(request, "Florist")) {
         requestOffset += 3;
       } else if (isRequestType(request, "HairAndMakeup")) {
-        requestOffset += 4;
+        const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+        if (serviceType === 'hair') {
+          requestOffset += 4; // Basic -> Hair -> Inspiration -> Budget
+        } else if (serviceType === 'makeup') {
+          requestOffset += 4; // Basic -> Makeup -> Inspiration -> Budget
+        } else {
+          requestOffset += 5; // Basic -> Hair -> Makeup -> Inspiration -> Budget
+        }
       } else {
         requestOffset += 1;
       }
@@ -703,10 +828,32 @@ function MasterRequestFlow() {
     
     // Check if we're on the budget step for any request type
     const isBudgetStep = (requestType) => {
-      if (isRequestType(requestType, "Photography") || isRequestType(requestType, "Videography") || isRequestType(requestType, "HairAndMakeup")) {
+      if (isRequestType(requestType, "Photography") || isRequestType(requestType, "Videography")) {
         return stepIndex === requestOffset + 3;
       } else if (isRequestType(requestType, "Catering") || isRequestType(requestType, "DJ") || isRequestType(requestType, "Florist")) {
         return stepIndex === requestOffset + 2;
+      } else if (isRequestType(requestType, "HairAndMakeup")) {
+        const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+        if (serviceType === 'hair') {
+          return stepIndex === requestOffset + 3; // Budget is the 4th step
+        } else if (serviceType === 'makeup') {
+          return stepIndex === requestOffset + 3; // Budget is the 4th step
+        }
+        return stepIndex === requestOffset + 4; // Budget is the 5th step
+      }
+      return false;
+    };
+
+    // Check if we're on the inspiration step for Hair and Makeup
+    const isInspirationStep = (requestType) => {
+      if (isRequestType(requestType, "HairAndMakeup")) {
+        const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+        if (serviceType === 'hair') {
+          return stepIndex === requestOffset + 2; // Inspiration is the 3rd step
+        } else if (serviceType === 'makeup') {
+          return stepIndex === requestOffset + 2; // Inspiration is the 3rd step
+        }
+        return stepIndex === requestOffset + 3; // Inspiration is the 4th step
       }
       return false;
     };
@@ -717,7 +864,7 @@ function MasterRequestFlow() {
           <BudgetForm
             formData={formData}
             setFormData={setFormData}
-            category={currentRequest.toLowerCase()}
+            category={currentRequest}
           />
         </div>
       );
@@ -800,6 +947,16 @@ function MasterRequestFlow() {
     }
 
     if (isRequestType(currentRequest, "HairAndMakeup")) {
+      const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+      let adjustedSubStep = hairAndMakeupSubStep;
+      
+      // Adjust the subStep for HairAndMakeup based on service type
+      if (serviceType === 'hair' && hairAndMakeupSubStep >= 2) {
+        adjustedSubStep = hairAndMakeupSubStep + 1; // Skip makeup step
+      } else if (serviceType === 'makeup' && hairAndMakeupSubStep >= 1) {
+        adjustedSubStep = hairAndMakeupSubStep + 1; // Skip hair step
+      }
+
       return (
         <div className="form-scrollable-content">
           <HairAndMakeupStepper
@@ -807,7 +964,7 @@ function MasterRequestFlow() {
             setFormData={setFormData}
             currentStep={currentStep}
             setCurrentStep={setCurrentStep}
-            subStep={hairAndMakeupSubStep}
+            subStep={adjustedSubStep}
             setSubStep={setHairAndMakeupSubStep}
           />
         </div>
@@ -818,6 +975,67 @@ function MasterRequestFlow() {
   };
 
   const renderReviewScreen = () => {
+    const formatArrayValue = (value, key) => {
+      if (value === null || value === undefined) {
+        return 'Not specified';
+      }
+
+      // Handle budget ranges
+      if (key === 'priceRange') {
+        if (!value) return 'Not specified';
+        if (value.includes('-')) {
+          const [min, max] = value.split('-');
+          if (max === '+') {
+            return `$${min}+`;
+          }
+          return `$${min} - $${max}`;
+        }
+        return `$${value}`;
+      }
+
+      // Handle dates
+      if (key === 'startDate' || key === 'endDate') {
+        return value ? new Date(value).toLocaleDateString() : 'Not specified';
+      }
+
+      // Handle arrays
+      if (Array.isArray(value)) {
+        return value.length > 0 ? value.join(', ') : 'Not specified';
+      }
+
+      // Handle objects with boolean values (like style preferences)
+      if (typeof value === 'object' && value !== null) {
+        // Special handling for makeup style preferences
+        if (key === 'makeupStylePreferences') {
+          if (typeof value === 'string') {
+            return value;
+          }
+          const selectedOptions = Object.entries(value)
+            .filter(([_, val]) => val === true)
+            .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1));
+          return selectedOptions.length > 0 ? selectedOptions.join(', ') : 'Not specified';
+        }
+        
+        // Handle other object types
+        const selectedOptions = Object.entries(value)
+          .filter(([_, val]) => val === true)
+          .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1));
+        return selectedOptions.length > 0 ? selectedOptions.join(', ') : 'Not specified';
+      }
+
+      // Handle boolean values
+      if (typeof value === 'boolean') {
+        return value ? 'Yes' : 'No';
+      }
+
+      // Handle strings
+      if (typeof value === 'string') {
+        return value || 'Not specified';
+      }
+
+      return 'Not specified';
+    };
+
     const getCategoryDetails = (category) => {
       const categoryData = formData.requests[category] || {};
       const commonDetails = formData.commonDetails || {};
@@ -826,52 +1044,17 @@ function MasterRequestFlow() {
       console.log(`Review data for ${category}:`, {
         categoryData,
         priceRange: categoryData.priceRange,
-        fullFormData: formData
+        fullFormData: formData,
+        hairAndMakeupData: category === 'HairAndMakeup' ? formData.requests.HairAndMakeup : null
       });
 
-      const formatArrayValue = (value, key) => {
-        if (value === null || value === undefined) {
-          return 'Not specified';
-        }
-
-        // Handle budget ranges
-        if (key === 'priceRange') {
-          console.log('Formatting price range:', value);
-          if (value && value.includes('-')) {
-            const [min, max] = value.split('-');
-            if (max === '+') {
-              return `$${min}+`;
-            }
-            return `$${min} - $${max}`;
-          }
-          return value ? `$${value}` : 'Not specified';
-        }
-
-        // Handle dates
-        if (key === 'startDate' || key === 'endDate') {
-          return value ? new Date(value).toLocaleDateString() : 'Not specified';
-        }
-
-        // Handle arrays
-        if (Array.isArray(value)) {
-          return value.length > 0 ? value.join(', ') : 'Not specified';
-        }
-
-        // Handle objects with boolean values (like style preferences)
-        if (typeof value === 'object' && value !== null) {
-          const selectedOptions = Object.entries(value)
-            .filter(([_, val]) => val === true)
-            .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1));
-          return selectedOptions.length > 0 ? selectedOptions.join(', ') : 'Not specified';
-        }
-
-        // Handle boolean values
-        if (typeof value === 'boolean') {
-          return value ? 'Yes' : 'No';
-        }
-
-        return value || 'Not specified';
-      };
+      // Additional debug for HairAndMakeup
+      if (category === 'HairAndMakeup') {
+        console.log('HairAndMakeup specific debug:', {
+          rawPriceRange: formData.requests.HairAndMakeup?.priceRange,
+          formattedPriceRange: formatArrayValue(formData.requests.HairAndMakeup?.priceRange, 'priceRange')
+        });
+      }
 
       // Get event details
       const eventDetails = {
@@ -894,20 +1077,15 @@ function MasterRequestFlow() {
             'Second Photographer': formatArrayValue(categoryData.secondPhotographer, 'secondPhotographer'),
             'Style': formatArrayValue(categoryData.stylePreferences, 'stylePreferences'),
             'Deliverables': formatArrayValue(categoryData.deliverables, 'deliverables'),
-            'Budget Range': formatArrayValue(formData.requests[category]?.budget?.priceRange || categoryData.priceRange, 'priceRange')
+            'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
           };
-          console.log('Photography details with budget:', {
-            categoryDetails,
-            budget: formData.requests[category]?.budget,
-            rawPriceRange: formData.requests[category]?.budget?.priceRange
-          });
           break;
         case 'videography':
           categoryDetails = {
             'Coverage Duration': formatArrayValue(categoryData.duration, 'duration'),
             'Style': formatArrayValue(categoryData.stylePreferences, 'stylePreferences'),
             'Deliverables': formatArrayValue(categoryData.deliverables, 'deliverables'),
-            'Budget Range': formatArrayValue(formData.requests[category]?.budget?.priceRange || categoryData.priceRange, 'priceRange')
+            'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
           };
           break;
         case 'catering':
@@ -937,8 +1115,24 @@ function MasterRequestFlow() {
         case 'hairandmakeup':
           categoryDetails = {
             'Number of People': formatArrayValue(categoryData.numPeople, 'numPeople'),
-            'Hair Style': formatArrayValue(categoryData.hairStyle, 'hairStyle'),
-            'Makeup Style': formatArrayValue(categoryData.makeupStyle, 'makeupStyle'),
+            'Hair Style': formatArrayValue(
+              typeof categoryData.hairstylePreferences === 'string' 
+                ? categoryData.hairstylePreferences 
+                : Object.entries(categoryData.hairstylePreferences || {})
+                    .filter(([_, val]) => val === true)
+                    .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
+                    .join(', '),
+              'hairstylePreferences'
+            ),
+            'Makeup Style': formatArrayValue(
+              typeof categoryData.makeupStylePreferences === 'string' 
+                ? categoryData.makeupStylePreferences 
+                : Object.entries(categoryData.makeupStylePreferences || {})
+                    .filter(([_, val]) => val === true)
+                    .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
+                    .join(', '),
+              'makeupStylePreferences'
+            ),
             'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
           };
           break;
@@ -1118,9 +1312,12 @@ function MasterRequestFlow() {
           >
             Back
           </button>
-          <button 
+          <button
             className="submit-continue-btn"
-            onClick={handleSubmit}
+            onClick={() => {
+              console.log('Submit button clicked!');
+              handleSubmit();
+            }}
             style={{
               backgroundColor: '#d84888',
               color: 'white',
@@ -1134,6 +1331,7 @@ function MasterRequestFlow() {
             }}
             onMouseOver={(e) => e.target.style.backgroundColor = '#c73d7a'}
             onMouseOut={(e) => e.target.style.backgroundColor = '#d84888'}
+            disabled={isSubmitting}
           >
             {isSubmitting ? <Spinner size="sm" /> : "Submit and Continue"}
           </button>

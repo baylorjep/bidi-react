@@ -7,6 +7,13 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [hairAndMakeupSubStep, setHairAndMakeupSubStep] = useState(0);
+  const [photographySubStep, setPhotographySubStep] = useState(0);
+  const [videographySubStep, setVideographySubStep] = useState(0);
+  const [cateringSubStep, setCateringSubStep] = useState(0);
+  const [djSubStep, setDjSubStep] = useState(0);
+  const [floristSubStep, setFloristSubStep] = useState(0);
 
   // Load saved data from localStorage on component mount
   useEffect(() => {
@@ -136,6 +143,101 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
       console.error('Error submitting request:', err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Helper function to check request type case-insensitively
+  const isRequestType = (request, type) => {
+    if (type === "DJ") {
+      return request?.toLowerCase().includes("dj");
+    }
+    return request?.toLowerCase() === type.toLowerCase();
+  };
+
+  const validateLogisticsForm = () => {
+    const requiredFields = [];
+    const { commonDetails } = formData;
+
+    // Validate required logistics fields
+    if (!commonDetails.eventType) requiredFields.push("Event Type");
+    if (!commonDetails.location) requiredFields.push("Location");
+    if (!commonDetails.numGuests) requiredFields.push("Number of Guests");
+    if (commonDetails.dateFlexibility === "specific" && !commonDetails.startDate) {
+      requiredFields.push("Event Date");
+    }
+    if (commonDetails.dateFlexibility === "range" && (!commonDetails.startDate || !commonDetails.endDate)) {
+      requiredFields.push("Date Range");
+    }
+    if (commonDetails.dateFlexibility === "flexible" && !commonDetails.dateTimeframe) {
+      requiredFields.push("Preferred Timeframe");
+    }
+
+    return requiredFields.length === 0;
+  };
+
+  const handleNext = () => {
+    if (currentStep === 0) {
+      // Validate event logistics form
+      if (!validateLogisticsForm()) {
+        return;
+      }
+      setCurrentStep(1);
+    } else {
+      const currentRequest = formData.selectedRequests[currentStep - 1];
+      
+      if (isRequestType(currentRequest, "HairAndMakeup")) {
+        const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+        if (serviceType === 'hair' && hairAndMakeupSubStep === 1) {
+          // Skip makeup step when hair only is selected
+          setHairAndMakeupSubStep(hairAndMakeupSubStep + 2);
+        } else if (serviceType === 'makeup' && hairAndMakeupSubStep === 0) {
+          // Skip hair step when makeup only is selected
+          setHairAndMakeupSubStep(hairAndMakeupSubStep + 2);
+        } else {
+          setHairAndMakeupSubStep(hairAndMakeupSubStep + 1);
+        }
+      } else if (isRequestType(currentRequest, "Photography")) {
+        setPhotographySubStep(photographySubStep + 1);
+      } else if (isRequestType(currentRequest, "Videography")) {
+        setVideographySubStep(videographySubStep + 1);
+      } else if (isRequestType(currentRequest, "Catering")) {
+        setCateringSubStep(cateringSubStep + 1);
+      } else if (isRequestType(currentRequest, "DJ")) {
+        setDjSubStep(djSubStep + 1);
+      } else if (isRequestType(currentRequest, "Florist")) {
+        setFloristSubStep(floristSubStep + 1);
+      }
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep === 0) {
+      return;
+    }
+    
+    const currentRequest = formData.selectedRequests[currentStep - 1];
+    
+    if (isRequestType(currentRequest, "HairAndMakeup")) {
+      const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+      if (serviceType === 'hair' && hairAndMakeupSubStep === 3) {
+        // Skip back over makeup step when hair only is selected
+        setHairAndMakeupSubStep(hairAndMakeupSubStep - 2);
+      } else if (serviceType === 'makeup' && hairAndMakeupSubStep === 2) {
+        // Skip back over hair step when makeup only is selected
+        setHairAndMakeupSubStep(hairAndMakeupSubStep - 2);
+      } else {
+        setHairAndMakeupSubStep(hairAndMakeupSubStep - 1);
+      }
+    } else if (isRequestType(currentRequest, "Photography")) {
+      setPhotographySubStep(photographySubStep - 1);
+    } else if (isRequestType(currentRequest, "Videography")) {
+      setVideographySubStep(videographySubStep - 1);
+    } else if (isRequestType(currentRequest, "Catering")) {
+      setCateringSubStep(cateringSubStep - 1);
+    } else if (isRequestType(currentRequest, "DJ")) {
+      setDjSubStep(djSubStep - 1);
+    } else if (isRequestType(currentRequest, "Florist")) {
+      setFloristSubStep(floristSubStep - 1);
     }
   };
 
