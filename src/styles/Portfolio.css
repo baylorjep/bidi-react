@@ -559,7 +559,7 @@
 .vendor-profile-image-portfolio {
   width: 120px !important;
   height: 120px !important;
-  border-radius: 8px;
+  border-radius: 50%;
   object-fit: cover;
   margin: 0;
 }
