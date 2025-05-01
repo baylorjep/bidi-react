@@ -137,6 +137,32 @@ const BudgetForm = ({ formData, setFormData, category }) => {
       if (deliverables.rawFootage) basePrice += 400;
       if (deliverables.droneFootage) basePrice += 600;
       if (deliverables.sameDayEdit) basePrice += 1000;
+    } else if (category === 'dj') {
+      // Base price for DJ services
+      basePrice = 1000; // Base rate for a standard DJ service
+
+      // Add for additional services
+      const additionalServices = formData.eventDetails?.additionalServices || {};
+      if (additionalServices.mcServices) basePrice += 200;
+      if (additionalServices.liveMixing) basePrice += 300;
+      if (additionalServices.uplighting) basePrice += 400;
+      if (additionalServices.fogMachine) basePrice += 150;
+      if (additionalServices.specialFx) basePrice += 500;
+      if (additionalServices.photoBooth) basePrice += 800;
+      if (additionalServices.eventRecording) basePrice += 300;
+      if (additionalServices.karaoke) basePrice += 200;
+
+      // Add for equipment needs
+      const equipmentNeeded = formData.eventDetails?.equipmentNeeded;
+      if (equipmentNeeded === 'djBringsAll') basePrice += 500;
+      if (equipmentNeeded === 'djBringsSome') basePrice += 300;
+
+      // Add for wedding coverage
+      if (formData.commonDetails?.eventType === 'Wedding') {
+        const weddingDetails = formData.eventDetails?.weddingDetails || {};
+        const coveragePoints = Object.values(weddingDetails).filter(Boolean).length;
+        basePrice += coveragePoints * 200; // $200 per coverage point
+      }
     }
 
     // Calculate range based on price quality preference
@@ -146,29 +172,50 @@ const BudgetForm = ({ formData, setFormData, category }) => {
 
     setRecommendedBudget({ min: minPrice, max: maxPrice });
 
-    // Update budget range based on calculated prices
-    const ranges = getBudgetRanges();
-    const matchingRange = ranges.find(range => 
-      (minPrice >= range.min && minPrice < range.max) || 
-      (maxPrice >= range.min && maxPrice < range.max)
-    );
+    // Only update budget range if it hasn't been manually set
+    const currentPriceRange = category === 'dj' 
+      ? formData.eventDetails?.priceRange 
+      : formData.requests[category.charAt(0).toUpperCase() + category.slice(1)]?.priceRange;
 
-    if (matchingRange && formData.requests[category.charAt(0).toUpperCase() + category.slice(1)]?.priceRange !== matchingRange.value) {
-      setFormData(prev => ({
-        ...prev,
-        requests: {
-          ...prev.requests,
-          [category.charAt(0).toUpperCase() + category.slice(1)]: {
-            ...prev.requests[category.charAt(0).toUpperCase() + category.slice(1)],
-            priceRange: matchingRange.value
-          }
+    if (!currentPriceRange) {
+      const ranges = getBudgetRanges();
+      const matchingRange = ranges.find(range => 
+        (minPrice >= range.min && minPrice < range.max) || 
+        (maxPrice >= range.min && maxPrice < range.max)
+      );
+
+      if (matchingRange) {
+        if (category === 'dj') {
+          setFormData(prev => ({
+            ...prev,
+            eventDetails: {
+              ...prev.eventDetails,
+              priceRange: matchingRange.value
+            }
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            requests: {
+              ...prev.requests,
+              [category.charAt(0).toUpperCase() + category.slice(1)]: {
+                ...prev.requests[category.charAt(0).toUpperCase() + category.slice(1)],
+                priceRange: matchingRange.value
+              }
+            }
+          }));
         }
-      }));
+      }
     }
   };
 
   const updateBudgetInsights = () => {
-    const insights = getBudgetInsights(formData.requests[category.charAt(0).toUpperCase() + category.slice(1)]?.priceRange, category);
+    const insights = getBudgetInsights(
+      category === 'dj' 
+        ? formData.eventDetails?.priceRange 
+        : formData.requests[category.charAt(0).toUpperCase() + category.slice(1)]?.priceRange, 
+      category
+    );
     setBudgetInsights(insights);
   };
 
@@ -255,6 +302,60 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         default:
           break;
       }
+    } else if (category === 'dj') {
+      switch (range) {
+        case '0-500':
+          insights.push({
+            icon: '⚠️',
+            text: 'Limited options in this range. Consider increasing budget for better quality.',
+            type: 'warning'
+          });
+          break;
+        case '500-1000':
+          insights.push({
+            icon: '🎵',
+            text: 'Good range for entry-level DJs with basic equipment.',
+            type: 'info'
+          });
+          break;
+        case '1000-1500':
+          insights.push({
+            icon: '🎵',
+            text: 'Standard range for experienced DJs with good equipment.',
+            type: 'info'
+          });
+          break;
+        case '1500-2000':
+          insights.push({
+            icon: '🎵',
+            text: 'Premium range with experienced DJs and professional equipment.',
+            type: 'info'
+          });
+          break;
+        case '2000-2500':
+          insights.push({
+            icon: '🎵',
+            text: 'High-end range with top-tier DJs and premium equipment.',
+            type: 'info'
+          });
+          break;
+        case '2500-3000':
+          insights.push({
+            icon: '🎵',
+            text: 'Luxury range with renowned DJs and extensive equipment.',
+            type: 'info'
+          });
+          break;
+        case '3000+':
+          insights.push({
+            icon: '🎵',
+            text: 'Elite range with celebrity DJs and full production setup.',
+            type: 'info'
+          });
+          break;
+        default:
+          break;
+      }
     }
 
     return insights;
@@ -277,16 +378,26 @@ const BudgetForm = ({ formData, setFormData, category }) => {
   };
 
   const handleBudgetRangeChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      requests: {
-        ...prev.requests,
-        [category.charAt(0).toUpperCase() + category.slice(1)]: {
-          ...prev.requests[category.charAt(0).toUpperCase() + category.slice(1)],
+    if (category === 'dj') {
+      setFormData(prev => ({
+        ...prev,
+        eventDetails: {
+          ...prev.eventDetails,
           priceRange: e.target.value
         }
-      }
-    }));
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        requests: {
+          ...prev.requests,
+          [category.charAt(0).toUpperCase() + category.slice(1)]: {
+            ...prev.requests[category.charAt(0).toUpperCase() + category.slice(1)],
+            priceRange: e.target.value
+          }
+        }
+      }));
+    }
   };
 
   return (
@@ -352,6 +463,57 @@ const BudgetForm = ({ formData, setFormData, category }) => {
                 )}
               </>
             )}
+            {category === 'dj' && (
+              <>
+                <li>Standard DJ service</li>
+                {formData.eventDetails?.additionalServices?.mcServices && (
+                  <li>MC Services</li>
+                )}
+                {formData.eventDetails?.additionalServices?.liveMixing && (
+                  <li>Live Mixing / Scratching</li>
+                )}
+                {formData.eventDetails?.additionalServices?.uplighting && (
+                  <li>Uplighting Package</li>
+                )}
+                {formData.eventDetails?.additionalServices?.fogMachine && (
+                  <li>Fog Machine</li>
+                )}
+                {formData.eventDetails?.additionalServices?.specialFx && (
+                  <li>Special FX</li>
+                )}
+                {formData.eventDetails?.additionalServices?.photoBooth && (
+                  <li>Photo Booth Service</li>
+                )}
+                {formData.eventDetails?.additionalServices?.eventRecording && (
+                  <li>Event Recording</li>
+                )}
+                {formData.eventDetails?.additionalServices?.karaoke && (
+                  <li>Karaoke Setup</li>
+                )}
+                {formData.eventDetails?.equipmentNeeded === 'djBringsAll' && (
+                  <li>DJ brings all equipment</li>
+                )}
+                {formData.eventDetails?.equipmentNeeded === 'djBringsSome' && (
+                  <li>DJ brings some equipment</li>
+                )}
+                {formData.commonDetails?.eventType === 'Wedding' && (
+                  <>
+                    {formData.eventDetails?.weddingDetails?.ceremony && (
+                      <li>Ceremony coverage</li>
+                    )}
+                    {formData.eventDetails?.weddingDetails?.cocktailHour && (
+                      <li>Cocktail hour coverage</li>
+                    )}
+                    {formData.eventDetails?.weddingDetails?.reception && (
+                      <li>Reception coverage</li>
+                    )}
+                    {formData.eventDetails?.weddingDetails?.afterParty && (
+                      <li>After party coverage</li>
+                    )}
+                  </>
+                )}
+              </>
+            )}
           </ul>
         </p>
       </div>
@@ -380,7 +542,9 @@ const BudgetForm = ({ formData, setFormData, category }) => {
           <label className="custom-label">Budget Range</label>
           <select
             className="custom-input"
-            value={formData.requests[category.charAt(0).toUpperCase() + category.slice(1)]?.priceRange || ''}
+            value={category === 'dj' 
+              ? formData.eventDetails?.priceRange || '' 
+              : formData.requests[category.charAt(0).toUpperCase() + category.slice(1)]?.priceRange || ''}
             onChange={handleBudgetRangeChange}
           >
             <option value="">Select a budget range</option>
