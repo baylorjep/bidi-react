@@ -131,7 +131,6 @@ function MasterRequestFlow() {
         );
       } else if (isRequestType(request, "Catering")) {
         steps.push(
-          "Catering - Basic Details",
           "Catering - Logistics & Extra",
           "Catering - Budget & Additional Info"
         );
@@ -145,7 +144,9 @@ function MasterRequestFlow() {
         steps.push(
           "Florist - Floral Arrangements",
           "Florist - Color & Flower Preferences",
-          "Florist - Services & Budget"
+          "Florist - Services",
+          "Florist - Inspiration",
+          "Florist - Budget"
         );
       } else if (isRequestType(request, "HairAndMakeup")) {
         const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
@@ -203,7 +204,7 @@ function MasterRequestFlow() {
       } else if (isRequestType(request, "DJ")) {
         index += 3;
       } else if (isRequestType(request, "Florist")) {
-        index += 3;
+        index += 5; // Changed from 4 to 5 to account for the inspiration step
       } else if (isRequestType(request, "HairAndMakeup")) {
         index += 5;
       } else {
@@ -272,7 +273,7 @@ function MasterRequestFlow() {
         } else if (isRequestType(currentRequest, "DJ")) {
           return djSubStep === 2;
         } else if (isRequestType(currentRequest, "Florist")) {
-          return floristSubStep === 2;
+          return floristSubStep === 4; // Changed from 3 to 4 to account for the inspiration step
         } else if (isRequestType(currentRequest, "HairAndMakeup")) {
           const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
           if (serviceType === 'hair') {
@@ -460,276 +461,157 @@ function MasterRequestFlow() {
   };
 
   const handleSubmit = async () => {
-    console.log("--- handleSubmit triggered ---"); // Log start
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // --- Step 1: Validate Common Logistics Fields ---
-      console.log("Validating logistics form...");
-      if (!validateLogisticsForm()) {
-        console.log("Logistics form validation FAILED.");
-        setError("Please fill in all required Event Logistics fields (including Date Flexibility).");
-        setCurrentStep(0); // Go back to logistics step
-        setIsSubmitting(false);
-        return;
-      }
-      console.log("Logistics form validation PASSED.");
-
-      // --- Step 4 -> Now Step 2: Check Authentication ---
-      console.log("Checking authentication...");
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        console.log("Authentication FAILED. No user found, showing auth modal");
-        setIsAuthModalOpen(true);
-        setIsSubmitting(false); // Make sure to reset submitting state
-        return;
-      }
-      console.log("Authentication PASSED. User ID:", user.id);
-
-      // Get the user's profile data
-      console.log("Fetching user profile...");
-      const { data: userData, error: userError } = await supabase
-        .from("individual_profiles")
-        .select("first_name")
-        .eq("id", user.id)
-        .single();
-
-      if (userError) {
-        console.error("Error fetching user profile:", userError);
-        throw userError;
-      }
-      console.log("User profile fetched:", userData);
-
-      // Generate event title
-      const firstName = userData.first_name || "Unknown";
-      const generatedEventTitle = `${firstName}'s ${formData.commonDetails.eventType} Event`;
-      console.log("Generated Event Title:", generatedEventTitle);
-
-      console.log("Processing requests for categories:", formData.selectedRequests);
-
-      // Create request data for each selected category
-      const requests = await Promise.all(formData.selectedRequests.map(async (category) => {
-        console.log(`--- Processing category: ${category} ---`);
-        const categoryData = formData.requests[category] || {};
-        const commonDetails = formData.commonDetails || {};
-
-        // --- Step 1: Construct Base Request Data ---
-        let requestData = {
-          user_id: user.id,
-          event_type: commonDetails.eventType,
-          event_title: generatedEventTitle, // Use title generated above
-          location: categoryData.location || commonDetails.location, // Use category location first, then common
-          start_date: null, // Initialize dates
-          end_date: null,
-          date_flexibility: categoryData.dateFlexibility || commonDetails.dateFlexibility, // Use category first
-          date_timeframe: null,
-          specific_time_needed: categoryData.specificTimeNeeded === 'yes',
-          specific_time: categoryData.specificTimeNeeded === 'yes' ? categoryData.specificTime : null,
-          price_range: categoryData.priceRange, // From category specific step
-          additional_comments: categoryData.additionalInfo || commonDetails.additionalInfo || null, // Combine? Or prefer category?
-          pinterest_link: categoryData.pinterestBoard || null,
-          status: 'pending',
-          coupon_code: appliedCoupon ? appliedCoupon.code : null,
-          // Removed price_quality_preference from base object
-          // vendor_id: categoryData.vendor_id || null,
-        };
-
-        // Set date fields based on flexibility (prefer category specific)
-        const flexibility = requestData.date_flexibility;
-        const catStartDate = categoryData.startDate;
-        const catEndDate = categoryData.endDate;
-        const catTimeframe = categoryData.dateTimeframe;
-        const comStartDate = commonDetails.startDate;
-        const comEndDate = commonDetails.endDate;
-        const comTimeframe = commonDetails.dateTimeframe;
-
-        if (flexibility === 'specific') {
-            requestData.start_date = catStartDate || comStartDate;
-        } else if (flexibility === 'range') {
-            requestData.start_date = catStartDate || comStartDate;
-            requestData.end_date = catEndDate || comEndDate;
-        } else if (flexibility === 'flexible') {
-            requestData.date_timeframe = catTimeframe || comTimeframe;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            setIsAuthModalOpen(true);
+            return;
         }
 
-        // --- Step 2: Add Category-Specific Fields ---
-        let photoTableName = null;
-        let requestTableName = `${category.toLowerCase()}_requests`;
+        // Get the current request type from the selectedRequests array
+        const currentRequestType = formData.selectedRequests[currentStep - 1];
 
-        switch (category) {
-          case "HairAndMakeup":
-            requestTableName = 'beauty_requests';
-            photoTableName = 'beauty_photos';
-            Object.assign(requestData, {
-              // ... HairAndMakeup specific fields (NO price_quality_preference here)
-              service_type: categoryData.serviceType || 'both',
-              hairstyle_preferences: categoryData.hairstylePreferences || '',
-              hair_length_type: categoryData.hairLengthType || '',
-              extensions_needed: categoryData.extensionsNeeded || '',
-              trial_session_hair: categoryData.trialSessionHair || '',
-              makeup_style_preferences: categoryData.makeupStylePreferences || {}, 
-              skin_type_concerns: categoryData.skinTypeConcerns || '',
-              preferred_products_allergies: categoryData.preferredProductsAllergies || '',
-              lashes_included: categoryData.lashesIncluded || '',
-              trial_session_makeup: categoryData.trialSessionMakeup || '',
-              group_discount_inquiry: categoryData.groupDiscountInquiry || '',
-              on_site_service_needed: categoryData.onSiteServiceNeeded || '',
-              num_people: categoryData.numPeopleUnknown ? null : (categoryData.numPeople ? parseInt(categoryData.numPeople) : null)
-            });
-            break;
-          case "Photography":
-            requestTableName = 'photography_requests';
-            photoTableName = 'photography_photos';
-             Object.assign(requestData, {
-               duration: categoryData.durationUnknown ? null : (categoryData.duration ? parseInt(categoryData.duration) : null),
-               second_photographer: categoryData.secondPhotographer || 'undecided',
-               style_preferences: categoryData.stylePreferences || {},
-               deliverables: categoryData.deliverables || {},
-               wedding_details: commonDetails.eventType === 'Wedding' ? categoryData.weddingDetails : null,
-             });
-            break;
-          case "Videography":
-             requestTableName = 'videography_requests';
-             photoTableName = 'videography_photos';
-             Object.assign(requestData, {
-                duration: categoryData.durationUnknown ? null : (categoryData.duration ? parseInt(categoryData.duration) : null),
-                second_videographer: categoryData.secondVideographer || 'undecided',
-                style_preferences: categoryData.stylePreferences || {},
-                deliverables: categoryData.deliverables || {},
-             });
-             break;
-          // ... (Other cases: DJ, Catering, Florist - Add price_quality_preference if their tables have it)
-          default:
-            console.warn(`Unhandled category in handleSubmit: ${category}. Using default table name.`);
-        }
+        // Handle each request type based on the current stepper
+        for (const [category, request] of Object.entries(formData.requests)) {
+            if (!request) continue;
 
-        // --- Step 3: Insert Request Data ---
-        console.log(`Attempting to insert into ${requestTableName} for category ${category}`);
-        const { data: request, error: requestError } = await supabase
-          .from(requestTableName)
-          .insert([requestData])
-          .select()
-          .single();
+            // Only process the request type that matches the current stepper
+            if (category === currentRequestType) {
+                if (category === 'Florist') {
+                    // Create florist request data
+                    const floristRequestData = {
+                        user_id: user.id,
+                        event_type: formData.commonDetails.eventType,
+                        event_title: formData.commonDetails.eventName || 'Floral Arrangement Request',
+                        location: formData.commonDetails.location,
+                        date_flexibility: formData.commonDetails.dateFlexibility,
+                        start_date: formData.commonDetails.startDate,
+                        end_date: formData.commonDetails.endDate,
+                        date_timeframe: formData.commonDetails.dateTimeframe,
+                        indoor_outdoor: formData.commonDetails.indoorOutdoor,
+                        specific_time_needed: formData.requests?.Florist?.specificTimeNeeded || false,
+                        specific_time: formData.requests?.Florist?.specificTime || null,
+                        colors: request.colorPreferences,
+                        pinterest_link: request.pinterestBoard,
+                        additional_comments: request.additionalInfo || '',
+                        price_range: request.priceRange || 'Not specified',
+                        flower_preferences_text: request.flowerPreferences?.text || '',
+                        status: 'pending'
+                    };
 
-        if (requestError) {
-            console.error(`Error inserting into ${requestTableName} for category ${category}:`, requestError);
-            throw requestError; // Propagate error to stop Promise.all
-        }
-        console.log(`Successfully inserted request ID ${request.id} into ${requestTableName}`);
+                    // Insert into florist_requests table
+                    const { data: newFloristRequest, error: floristRequestError } = await supabase
+                        .from('florist_requests')
+                        .insert([floristRequestData])
+                        .select()
+                        .single();
 
-        // --- Step 4: Handle Photo Uploads (if applicable) ---
-        const photosToUpload = categoryData.photos || [];
-        if (photoTableName && photosToUpload.length > 0) {
-          console.log(`Starting photo uploads for category ${category}, request ID ${request.id}...`);
-          const uploadPromises = photosToUpload.map(async (photo) => {
-            if (!photo.file) {
-                console.warn("Skipping photo upload, file object missing:", photo);
-                return; // Skip if file object isn't present
+                    if (floristRequestError) throw floristRequestError;
+
+                    // Handle photo uploads for florist
+                    if (request.photos && request.photos.length > 0) {
+                        const uploadPromises = request.photos.map(async (photo) => {
+                            const fileExt = photo.name.split('.').pop();
+                            const fileName = `${uuidv4()}.${fileExt}`;
+                            const filePath = `${user.id}/${newFloristRequest.id}/${fileName}`;
+
+                            const { error: uploadError } = await supabase.storage
+                                .from('request-media')
+                                .upload(filePath, photo.file);
+
+                            if (uploadError) throw uploadError;
+
+                            const { data: { publicUrl } } = supabase.storage
+                                .from('request-media')
+                                .getPublicUrl(filePath);
+
+                            // Store photo information in florist_photos table
+                            return supabase
+                                .from('florist_photos')
+                                .insert([{
+                                    request_id: newFloristRequest.id,
+                                    user_id: user.id,
+                                    photo_url: publicUrl,
+                                    file_path: filePath
+                                }]);
+                        });
+
+                        await Promise.all(uploadPromises);
+                    }
+                } else if (category === 'DJ') {
+                    // Handle DJ requests
+                    const djRequestData = {
+                        user_id: user.id,
+                        status: 'pending',
+                        equipment_needed: request.equipmentNeeded,
+                        equipment_notes: request.equipmentNotes,
+                        additional_services: request.additionalServices,
+                        music_preferences: request.musicPreferences,
+                        playlist: request.playlist,
+                        special_songs: request.specialSongs,
+                        price_range: request.priceRange,
+                        additional_comments: request.additionalInfo,
+                        wedding_details: request.weddingDetails
+                    };
+
+                    const { data: newDjRequest, error: djRequestError } = await supabase
+                        .from('dj_requests')
+                        .insert([djRequestData])
+                        .select()
+                        .single();
+
+                    if (djRequestError) throw djRequestError;
+
+                    // Handle photo uploads for DJ
+                    if (request.photos && request.photos.length > 0) {
+                        const uploadPromises = request.photos.map(async (photo) => {
+                            const fileExt = photo.name.split('.').pop();
+                            const fileName = `${uuidv4()}.${fileExt}`;
+                            const filePath = `${user.id}/${newDjRequest.id}/${fileName}`;
+
+                            const { error: uploadError } = await supabase.storage
+                                .from('request-media')
+                                .upload(filePath, photo.file);
+
+                            if (uploadError) throw uploadError;
+
+                            const { data: { publicUrl } } = supabase.storage
+                                .from('request-media')
+                                .getPublicUrl(filePath);
+
+                            return supabase
+                                .from('event_photos')
+                                .insert([{
+                                    request_id: newDjRequest.id,
+                                    user_id: user.id,
+                                    photo_url: publicUrl,
+                                    file_path: filePath
+                                }]);
+                        });
+
+                        await Promise.all(uploadPromises);
+                    }
+                }
+                // Add other request type handlers here as needed
             }
-            const fileExt = photo.name.split('.').pop();
-            const fileName = `${uuidv4()}.${fileExt}`;
-            // Consistent file path structure
-            const filePath = `${user.id}/${request.id}/${fileName}`;
-
-            console.log(`Uploading ${fileName} to ${filePath}`);
-            const { error: uploadError } = await supabase.storage
-                .from('request-media')
-                .upload(filePath, photo.file);
-
-            if (uploadError) {
-                console.error(`Error uploading ${fileName}:`, uploadError);
-                throw uploadError; // Stop if one upload fails
-            }
-
-            const { data: urlData } = supabase.storage
-                .from('request-media')
-                .getPublicUrl(filePath);
-
-             if (!urlData || !urlData.publicUrl) {
-                console.error(`Failed to get public URL for ${filePath}`);
-                throw new Error(`Failed to get public URL for ${filePath}`);
-             }
-             const publicUrl = urlData.publicUrl;
-             console.log(`Got public URL for ${fileName}: ${publicUrl}`);
-
-            // Insert photo metadata
-            console.log(`Inserting photo metadata into ${photoTableName}`);
-            const { error: dbError } = await supabase
-                .from(photoTableName)
-                .insert([{
-                    request_id: request.id, // Ensure this matches the foreign key column name
-                    user_id: user.id,
-                    photo_url: publicUrl,
-                    file_path: filePath
-                }]);
-
-             if (dbError) {
-                console.error(`Error inserting photo metadata for ${fileName} into ${photoTableName}:`, dbError);
-                // Decide if this should throw or just log
-                // For now, let's log and continue, maybe some photos fail but request is in
-                 console.error(`Failed to insert photo metadata for ${publicUrl} into ${photoTableName}.`);
-             } else {
-                 console.log(`Successfully inserted photo metadata for ${fileName}`);
-             }
-          });
-
-          // Wait for all photo uploads and metadata inserts for this request
-          await Promise.all(uploadPromises);
-          console.log(`Finished photo uploads for category ${category}, request ID ${request.id}`);
-        } else {
-            console.log(`No photos to upload for category ${category}`);
         }
 
-        console.log(`--- Finished processing category: ${category} ---`);
-        return request; // Return the successful request object
-      }));
-
-      console.log("All requests submitted successfully:", requests);
-
-      // Send email notification (Add logging)
-      console.log("Attempting to send email notification...");
-      try {
-        const emailPayload = {
-          // Ensure completedCategories is populated correctly or adjust logic
-          category: requests.length > 0 ? formData.selectedRequests[0].toLowerCase() : 'general',
-          requestIds: requests.map(r => r.id)
-        };
-        console.log("Email payload:", emailPayload);
-        const response = await fetch('https://bidi-express.vercel.app/send-resend-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(emailPayload),
+        // Clear form data and navigate to success page
+        localStorage.removeItem('masterRequest');
+        navigate('/success-request', { 
+            state: { 
+                message: 'Your requests have been submitted successfully!'
+            }
         });
 
-        if (!response.ok) {
-          console.error('Failed to send email:', await response.text()); // Log response text
-        } else {
-          console.log('Emails sent successfully!');
-        }
-      } catch (error) {
-        console.error('Error sending email:', error);
-      }
-
-      // Navigate to success page
-      console.log("Navigating to success page...");
-      navigate("/success-request", {
-        state: {
-          requestIds: requests.map(r => r.id),
-          category: requests.length > 0 ? formData.selectedRequests[0].toLowerCase() : 'general',
-          message: "Your requests have been submitted successfully!"
-        }
-      });
-
     } catch (err) {
-      console.error("--- ERROR in handleSubmit: ---", err);
-      setError(`Failed to submit request: ${err.message || 'Please try again.'}`);
+        setError('Failed to submit requests. Please try again.');
+        console.error('Error submitting requests:', err);
     } finally {
-      console.log("--- handleSubmit finally block --- Setting isSubmitting to false.");
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
   };
 
@@ -771,12 +653,12 @@ function MasterRequestFlow() {
         }
         currentIndex += 3;
       } else if (isRequestType(request, "Florist")) {
-        if (stepIndex < currentIndex + 3) {
+        if (stepIndex < currentIndex + 4) {
           setCurrentStep(i + 1);
           setFloristSubStep(stepIndex - currentIndex);
           return;
         }
-        currentIndex += 3;
+        currentIndex += 4;
       } else if (isRequestType(request, "HairAndMakeup")) {
         if (stepIndex < currentIndex + 5) {
           setCurrentStep(i + 1);
@@ -807,19 +689,19 @@ function MasterRequestFlow() {
       } else if (isRequestType(request, "Videography")) {
         requestOffset += 4;
       } else if (isRequestType(request, "Catering")) {
-        requestOffset += 3;
+        requestOffset += 2; // Changed from 3 to 2 since we now have 2 steps
       } else if (isRequestType(request, "DJ")) {
         requestOffset += 3;
       } else if (isRequestType(request, "Florist")) {
-        requestOffset += 3;
+        requestOffset += 5;
       } else if (isRequestType(request, "HairAndMakeup")) {
         const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
         if (serviceType === 'hair') {
-          requestOffset += 4; // Basic -> Hair -> Inspiration -> Budget
+          requestOffset += 4;
         } else if (serviceType === 'makeup') {
-          requestOffset += 4; // Basic -> Makeup -> Inspiration -> Budget
+          requestOffset += 4;
         } else {
-          requestOffset += 5; // Basic -> Hair -> Makeup -> Inspiration -> Budget
+          requestOffset += 5;
         }
       } else {
         requestOffset += 1;
@@ -830,34 +712,49 @@ function MasterRequestFlow() {
     const isBudgetStep = (requestType) => {
       if (isRequestType(requestType, "Photography") || isRequestType(requestType, "Videography")) {
         return stepIndex === requestOffset + 3;
-      } else if (isRequestType(requestType, "Catering") || isRequestType(requestType, "DJ") || isRequestType(requestType, "Florist")) {
+      } else if (isRequestType(requestType, "Catering")) {
+        return stepIndex === requestOffset + 1; // Changed from +2 to +1 since budget is now the second step
+      } else if (isRequestType(requestType, "DJ")) {
         return stepIndex === requestOffset + 2;
+      } else if (isRequestType(requestType, "Florist")) {
+        return stepIndex === requestOffset + 4;
       } else if (isRequestType(requestType, "HairAndMakeup")) {
         const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
         if (serviceType === 'hair') {
-          return stepIndex === requestOffset + 3; // Budget is the 4th step
+          return stepIndex === requestOffset + 3;
         } else if (serviceType === 'makeup') {
-          return stepIndex === requestOffset + 3; // Budget is the 4th step
+          return stepIndex === requestOffset + 3;
         }
-        return stepIndex === requestOffset + 4; // Budget is the 5th step
+        return stepIndex === requestOffset + 4;
       }
       return false;
     };
 
-    // Check if we're on the inspiration step for Hair and Makeup
+    // Check if we're on the inspiration step for Florist
     const isInspirationStep = (requestType) => {
-      if (isRequestType(requestType, "HairAndMakeup")) {
-        const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
-        if (serviceType === 'hair') {
-          return stepIndex === requestOffset + 2; // Inspiration is the 3rd step
-        } else if (serviceType === 'makeup') {
-          return stepIndex === requestOffset + 2; // Inspiration is the 3rd step
-        }
-        return stepIndex === requestOffset + 3; // Inspiration is the 4th step
+      if (isRequestType(requestType, "Florist")) {
+        return stepIndex === requestOffset + 3; // Inspiration is the 4th step (after offset)
       }
       return false;
     };
 
+    // First check if we're on the inspiration step
+    if (isInspirationStep(currentRequest)) {
+      return (
+        <div className="form-scrollable-content">
+          <FloristStepper
+            formData={formData}
+            setFormData={setFormData}
+            currentStep={currentStep}
+            setCurrentStep={setCurrentStep}
+            subStep={floristSubStep}
+            setSubStep={setFloristSubStep}
+          />
+        </div>
+      );
+    }
+
+    // Then check if we're on the budget step
     if (isBudgetStep(currentRequest)) {
       return (
         <div className="form-scrollable-content">
@@ -870,7 +767,7 @@ function MasterRequestFlow() {
       );
     }
 
-    // Render the appropriate stepper for non-budget steps
+    // Render the appropriate stepper for other steps
     if (isRequestType(currentRequest, "Photography")) {
       return (
         <div className="form-scrollable-content">
@@ -1016,6 +913,45 @@ function MasterRequestFlow() {
           return selectedOptions.length > 0 ? selectedOptions.join(', ') : 'Not specified';
         }
         
+        // Special handling for floral arrangements
+        if (key === 'floralArrangements') {
+          const arrangements = [];
+          if (value.bridalBouquet) arrangements.push('Bridal Bouquet');
+          if (value.bridesmaidBouquets) arrangements.push(`${value.bridesmaidBouquetsQuantity || 1} Bridesmaid Bouquet(s)`);
+          if (value.boutonnieres) arrangements.push(`${value.boutonnieresQuantity || 1} Boutonniere(s)`);
+          if (value.corsages) arrangements.push(`${value.corsagesQuantity || 1} Corsage(s)`);
+          if (value.centerpieces) arrangements.push(`${value.centerpiecesQuantity || 1} Centerpiece(s)`);
+          if (value.ceremonyArchFlowers) arrangements.push('Ceremony Arch Flowers');
+          if (value.aisleDecorations) arrangements.push('Aisle Decorations');
+          if (value.floralInstallations) arrangements.push('Floral Installations');
+          if (value.cakeFlowers) arrangements.push('Cake Flowers');
+          if (value.loosePetals) arrangements.push('Loose Petals');
+          return arrangements.length > 0 ? arrangements.join(', ') : 'Not specified';
+        }
+
+        // Special handling for flower preferences
+        if (key === 'flowerPreferences') {
+          // If it's a ReactQuill object with text property
+          if (value && typeof value === 'object' && value.text) {
+            // Strip HTML tags and trim whitespace
+            const strippedText = value.text.replace(/<[^>]*>/g, '').trim();
+            // Check if the content is just empty HTML tags
+            if (strippedText === '' || strippedText === '<p><br></p>') {
+              return 'Not specified';
+            }
+            return strippedText;
+          }
+          // If it's a direct string
+          if (typeof value === 'string') {
+            const strippedText = value.replace(/<[^>]*>/g, '').trim();
+            if (strippedText === '' || strippedText === '<p><br></p>') {
+              return 'Not specified';
+            }
+            return strippedText;
+          }
+          return 'Not specified';
+        }
+        
         // Handle other object types
         const selectedOptions = Object.entries(value)
           .filter(([_, val]) => val === true)
@@ -1030,7 +966,7 @@ function MasterRequestFlow() {
 
       // Handle strings
       if (typeof value === 'string') {
-        return value || 'Not specified';
+        return value.trim() || 'Not specified';
       }
 
       return 'Not specified';
@@ -1106,9 +1042,10 @@ function MasterRequestFlow() {
           break;
         case 'florist':
           categoryDetails = {
-            'Arrangement Types': formatArrayValue(categoryData.arrangementTypes, 'arrangementTypes'),
+            'Arrangement Types': formatArrayValue(categoryData.floralArrangements, 'floralArrangements'),
             'Color Preferences': formatArrayValue(categoryData.colorPreferences, 'colorPreferences'),
-            'Flower Preferences': formatArrayValue(categoryData.flowerPreferences, 'flowerPreferences'),
+            'Flower Preferences': formatArrayValue(categoryData.flowerPreferences?.text || categoryData.flowerPreferences, 'flowerPreferences'),
+            'Additional Services': formatArrayValue(categoryData.additionalServices, 'additionalServices'),
             'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
           };
           break;

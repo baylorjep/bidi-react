@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
+import { v4 as uuidv4 } from 'uuid';
 
 function MasterRequestForm({ formData, setFormData, onNext }) {
   const navigate = useNavigate();
@@ -56,93 +57,75 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
-    setError(null);
-
     try {
+      // Get user authentication
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setIsModalOpen(true);
         return;
       }
 
-      // Get user's first name for the title
-      const { data: userData, error: userError } = await supabase
-        .from('individual_profiles')
-        .select('first_name')
-        .eq('id', user.id)
-        .single();
+      // Process each request type
+      for (const [category, request] of Object.entries(formData.requests)) {
+        if (!request) continue;
 
-      if (userError) throw userError;
+        // Create request data
+        const requestData = {
+          user_id: user.id,
+          category: category,
+          status: 'pending',
+          ...request
+        };
 
-      // Create title
-      const eventTitle = `${userData.first_name}'s ${formData.commonDetails.eventType} DJ Request`;
+        // Insert request into database
+        const { data: newRequest, error: requestError } = await supabase
+          .from('requests')
+          .insert([requestData])
+          .select()
+          .single();
 
-      // Format data according to the table schema
-      const requestData = {
-        user_id: user.id,
-        title: eventTitle,
-        event_type: formData.commonDetails.eventType,
-        date_flexibility: formData.commonDetails.dateFlexibility,
-        start_date: formData.commonDetails.dateFlexibility !== 'flexible' ? formData.commonDetails.startDate : null,
-        end_date: formData.commonDetails.dateFlexibility === 'range' ? formData.commonDetails.endDate : null,
-        date_timeframe: formData.commonDetails.dateFlexibility === 'flexible' ? formData.commonDetails.dateTimeframe : null,
-        event_duration: formData.commonDetails.durationUnknown ? null : 
-                      formData.commonDetails.duration ? parseInt(formData.commonDetails.duration) : null,
-        estimated_guests: formData.commonDetails.numPeopleUnknown ? null : 
-                        formData.commonDetails.numPeople ? parseInt(formData.commonDetails.numPeople) : null,
-        location: formData.commonDetails.location,
-        music_preferences: formData.requests.DJ?.musicPreferences || {},
-        special_songs: {
-          playlist: formData.requests.DJ?.playlist || null,
-          requests: formData.requests.DJ?.specialSongs || null
-        },
-        budget_range: formData.requests.DJ?.priceRange,
-        equipment_needed: (() => {
-          switch (formData.requests.DJ?.equipmentNeeded) {
-            case 'venueProvided':
-              return 'The venue provides sound and lighting equipment';
-            case 'djBringsAll':
-              return 'The DJ needs to bring all equipment';
-            case 'djBringsSome':
-              return formData.requests.DJ?.equipmentNotes || 'The DJ needs to bring some equipment';
-            case 'unknown':
-              return 'Equipment requirements to be discussed';
-            default:
-              return null;
-          }
-        })(),
-        additional_services: Object.entries(formData.requests.DJ?.additionalServices || {})
-          .filter(([_, value]) => value)
-          .map(([key, _]) => key),
-        special_requests: formData.requests.DJ?.additionalInfo,
-        status: 'pending',
-        indoor_outdoor: formData.commonDetails.indoorOutdoor,
-      };
+        if (requestError) throw requestError;
 
-      // Insert the request
-      const { data: request, error: requestError } = await supabase
-        .from('dj_requests')
-        .insert([requestData])
-        .select()
-        .single();
+        // Handle photo uploads if any
+        if (request.photos && request.photos.length > 0) {
+          const uploadPromises = request.photos.map(async (photo) => {
+            const fileExt = photo.name.split('.').pop();
+            const fileName = `${uuidv4()}.${fileExt}`;
+            const filePath = `${user.id}/${newRequest.id}/${fileName}`;
 
-      if (requestError) throw requestError;
+            const { error: uploadError } = await supabase.storage
+              .from('request-media')
+              .upload(filePath, photo.file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('request-media')
+              .getPublicUrl(filePath);
+
+            // Store photo information in appropriate table based on category
+            const photoTable = category === 'Florist' ? 'florist_photos' : 'event_photos';
+            return supabase
+              .from(photoTable)
+              .insert([{
+                request_id: newRequest.id,
+                user_id: user.id,
+                photo_url: publicUrl,
+                file_path: filePath
+              }]);
+          });
+
+          await Promise.all(uploadPromises);
+        }
+      }
 
       // Clear form data and navigate to success page
-      localStorage.removeItem('djRequest');
-      navigate('/success-request', { 
-        state: { 
-          requestId: request.id,
-          category: 'dj',
-          message: 'Your DJ request has been submitted successfully!'
-        } 
-      });
+      localStorage.removeItem('masterRequest');
+      onNext();
+
     } catch (err) {
-      setError('Failed to submit request. Please try again.');
-      console.error('Error submitting request:', err);
-    } finally {
-      setIsSubmitting(false);
+      console.error('Error submitting form:', err);
+      setError('Failed to submit form. Please try again.');
     }
   };
 
@@ -188,10 +171,8 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
       if (isRequestType(currentRequest, "HairAndMakeup")) {
         const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
         if (serviceType === 'hair' && hairAndMakeupSubStep === 1) {
-          // Skip makeup step when hair only is selected
           setHairAndMakeupSubStep(hairAndMakeupSubStep + 2);
         } else if (serviceType === 'makeup' && hairAndMakeupSubStep === 0) {
-          // Skip hair step when makeup only is selected
           setHairAndMakeupSubStep(hairAndMakeupSubStep + 2);
         } else {
           setHairAndMakeupSubStep(hairAndMakeupSubStep + 1);
@@ -220,10 +201,8 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
     if (isRequestType(currentRequest, "HairAndMakeup")) {
       const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
       if (serviceType === 'hair' && hairAndMakeupSubStep === 3) {
-        // Skip back over makeup step when hair only is selected
         setHairAndMakeupSubStep(hairAndMakeupSubStep - 2);
       } else if (serviceType === 'makeup' && hairAndMakeupSubStep === 2) {
-        // Skip back over hair step when makeup only is selected
         setHairAndMakeupSubStep(hairAndMakeupSubStep - 2);
       } else {
         setHairAndMakeupSubStep(hairAndMakeupSubStep - 1);

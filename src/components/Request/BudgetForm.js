@@ -221,6 +221,188 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         basePrice,
         finalPrice: basePrice
       });
+    } else if (category.toLowerCase() === 'florist') {
+      // Initialize insights array for Florist
+      const insights = [];
+      
+      // Base prices for floral arrangements
+      const floralArrangements = formData.requests.Florist?.floralArrangements || {};
+      
+      // Bridal bouquet
+      if (floralArrangements.bridalBouquet) {
+        basePrice += 200;
+      }
+      
+      // Bridesmaid bouquets
+      if (floralArrangements.bridesmaidBouquets) {
+        const quantity = floralArrangements.bridesmaidBouquetsQuantity || 1;
+        basePrice += quantity * 100;
+      }
+      
+      // Boutonnieres
+      if (floralArrangements.boutonnieres) {
+        const quantity = floralArrangements.boutonnieresQuantity || 1;
+        basePrice += quantity * 25;
+      }
+      
+      // Corsages
+      if (floralArrangements.corsages) {
+        const quantity = floralArrangements.corsagesQuantity || 1;
+        basePrice += quantity * 40;
+      }
+      
+      // Centerpieces
+      if (floralArrangements.centerpieces) {
+        const quantity = floralArrangements.centerpiecesQuantity || 1;
+        basePrice += quantity * 75;
+      }
+      
+      // Ceremony arch flowers
+      if (floralArrangements.ceremonyArchFlowers) {
+        basePrice += 500;
+      }
+      
+      // Aisle decorations
+      if (floralArrangements.aisleDecorations) {
+        basePrice += 300;
+      }
+      
+      // Floral installations
+      if (floralArrangements.floralInstallations) {
+        basePrice += 800;
+      }
+      
+      // Cake flowers
+      if (floralArrangements.cakeFlowers) {
+        basePrice += 150;
+      }
+      
+      // Loose petals
+      if (floralArrangements.loosePetals) {
+        basePrice += 100;
+      }
+
+      // Additional services
+      const additionalServices = formData.requests.Florist?.additionalServices || {};
+      if (additionalServices.setup) basePrice += 200;
+      if (additionalServices.delivery) basePrice += 150;
+      if (additionalServices.cleanup) basePrice += 100;
+      if (additionalServices.consultation) basePrice += 150;
+
+      // Debug log to check the calculation
+      console.log('Florist Budget Calculation:', {
+        floralArrangements,
+        additionalServices,
+        basePrice,
+        finalPrice: basePrice
+      });
+
+      // Add budget insights for Florist
+      if (floralArrangements.bridalBouquet) {
+        insights.push({
+          icon: '💐',
+          text: 'Bridal bouquet',
+          type: 'info'
+        });
+      }
+      if (floralArrangements.bridesmaidBouquets) {
+        const quantity = floralArrangements.bridesmaidBouquetsQuantity || 1;
+        insights.push({
+          icon: '💐',
+          text: `${quantity} bridesmaid bouquet(s)`,
+          type: 'info'
+        });
+      }
+      if (floralArrangements.boutonnieres) {
+        const quantity = floralArrangements.boutonnieresQuantity || 1;
+        insights.push({
+          icon: '💐',
+          text: `${quantity} boutonniere(s)`,
+          type: 'info'
+        });
+      }
+      if (floralArrangements.corsages) {
+        const quantity = floralArrangements.corsagesQuantity || 1;
+        insights.push({
+          icon: '💐',
+          text: `${quantity} corsage(s)`,
+          type: 'info'
+        });
+      }
+      if (floralArrangements.centerpieces) {
+        const quantity = floralArrangements.centerpiecesQuantity || 1;
+        insights.push({
+          icon: '💐',
+          text: `${quantity} centerpiece(s)`,
+          type: 'info'
+        });
+      }
+      if (floralArrangements.ceremonyArchFlowers) {
+        insights.push({
+          icon: '💐',
+          text: 'Ceremony arch flowers',
+          type: 'info'
+        });
+      }
+      if (floralArrangements.aisleDecorations) {
+        insights.push({
+          icon: '💐',
+          text: 'Aisle decorations',
+          type: 'info'
+        });
+      }
+      if (floralArrangements.floralInstallations) {
+        insights.push({
+          icon: '💐',
+          text: 'Floral installations',
+          type: 'info'
+        });
+      }
+      if (floralArrangements.cakeFlowers) {
+        insights.push({
+          icon: '💐',
+          text: 'Cake flowers',
+          type: 'info'
+        });
+      }
+      if (floralArrangements.loosePetals) {
+        insights.push({
+          icon: '💐',
+          text: 'Loose petals',
+          type: 'info'
+        });
+      }
+      if (additionalServices.setup) {
+        insights.push({
+          icon: '⚙️',
+          text: 'Setup & installation service',
+          type: 'info'
+        });
+      }
+      if (additionalServices.delivery) {
+        insights.push({
+          icon: '🚚',
+          text: 'Delivery service',
+          type: 'info'
+        });
+      }
+      if (additionalServices.cleanup) {
+        insights.push({
+          icon: '🧹',
+          text: 'Cleanup service',
+          type: 'info'
+        });
+      }
+      if (additionalServices.consultation) {
+        insights.push({
+          icon: '💬',
+          text: 'In-person consultation',
+          type: 'info'
+        });
+      }
+
+      // Set the insights for display
+      setBudgetInsights(insights);
     }
 
     // Calculate range based on price quality preference
@@ -632,6 +814,52 @@ const BudgetForm = ({ formData, setFormData, category }) => {
                 )}
               </>
             )}
+            {category.toLowerCase() === 'florist' && (
+              <>
+                {formData.requests.Florist?.floralArrangements?.bridalBouquet && (
+                  <li>Bridal bouquet</li>
+                )}
+                {formData.requests.Florist?.floralArrangements?.bridesmaidBouquets && (
+                  <li>{formData.requests.Florist?.floralArrangements?.bridesmaidBouquetsQuantity || 1} bridesmaid bouquet(s)</li>
+                )}
+                {formData.requests.Florist?.floralArrangements?.boutonnieres && (
+                  <li>{formData.requests.Florist?.floralArrangements?.boutonnieresQuantity || 1} boutonniere(s)</li>
+                )}
+                {formData.requests.Florist?.floralArrangements?.corsages && (
+                  <li>{formData.requests.Florist?.floralArrangements?.corsagesQuantity || 1} corsage(s)</li>
+                )}
+                {formData.requests.Florist?.floralArrangements?.centerpieces && (
+                  <li>{formData.requests.Florist?.floralArrangements?.centerpiecesQuantity || 1} centerpiece(s)</li>
+                )}
+                {formData.requests.Florist?.floralArrangements?.ceremonyArchFlowers && (
+                  <li>Ceremony arch flowers</li>
+                )}
+                {formData.requests.Florist?.floralArrangements?.aisleDecorations && (
+                  <li>Aisle decorations</li>
+                )}
+                {formData.requests.Florist?.floralArrangements?.floralInstallations && (
+                  <li>Floral installations</li>
+                )}
+                {formData.requests.Florist?.floralArrangements?.cakeFlowers && (
+                  <li>Cake flowers</li>
+                )}
+                {formData.requests.Florist?.floralArrangements?.loosePetals && (
+                  <li>Loose petals</li>
+                )}
+                {formData.requests.Florist?.additionalServices?.setup && (
+                  <li>Setup & installation service</li>
+                )}
+                {formData.requests.Florist?.additionalServices?.delivery && (
+                  <li>Delivery service</li>
+                )}
+                {formData.requests.Florist?.additionalServices?.cleanup && (
+                  <li>Cleanup service</li>
+                )}
+                {formData.requests.Florist?.additionalServices?.consultation && (
+                  <li>In-person consultation</li>
+                )}
+              </>
+            )}
             {category.toLowerCase() === 'hairandmakeup' && (
               <>
                 {formData.requests.HairAndMakeup?.numPeople && (
@@ -699,20 +927,6 @@ const BudgetForm = ({ formData, setFormData, category }) => {
           </select>
         </div>
       </div>
-
-      {budgetInsights.length > 0 && (
-        <div className="budget-insights">
-          <h4 className="budget-insight-header">Budget Insights</h4>
-          <div className="budget-insight-details">
-            {budgetInsights.map((insight, index) => (
-              <div key={index} className="insight-item">
-                <span className="insight-icon">{insight.icon}</span>
-                <span className="insight-text">{insight.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

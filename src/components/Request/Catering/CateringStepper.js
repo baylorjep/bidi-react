@@ -8,17 +8,6 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
       setFormData(prev => ({
         ...prev,
         eventDetails: {
-          location: '',
-          dateFlexibility: '',
-          startDate: '',
-          endDate: '',
-          dateTimeframe: '',
-          startTime: '',
-          endTime: '',
-          startTimeUnknown: false,
-          endTimeUnknown: false,
-          indoorOutdoor: '',
-          numPeople: '',
           setupCleanup: '',
           servingStaff: '',
           diningItems: '',
@@ -30,7 +19,9 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
           cuisineTypes: [],
           customCuisineDetails: '',
           dietaryRestrictions: [],
-          otherDietaryDetails: ''
+          otherDietaryDetails: '',
+          equipmentNeeded: 'unknown',
+          equipmentNotes: ''
         }
       }));
     }
@@ -40,13 +31,68 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
     switch (formData.commonDetails?.eventType) {
       case 'Wedding':
         return [
-          'Basic Details',
           'Logistics & Extra',
           'Budget & Additional Info'
         ];
       default:
-        return ['Basic Info', 'Coverage', 'Food & Equipment', 'Additional Details'];
+        return ['Coverage', 'Food & Equipment', 'Additional Details'];
     }
+  };
+
+  const calculateRecommendedBudget = () => {
+    let basePrice = 0;
+    const eventDetails = formData.eventDetails || {};
+    const commonDetails = formData.commonDetails || {};
+    const priceQualityPreference = formData.requests.Catering?.priceQualityPreference || "2";
+
+    // Base price based on number of guests
+    const numGuests = parseInt(commonDetails.numGuests) || 0;
+    if (numGuests > 0) {
+      basePrice = numGuests * 50; // $50 per person base rate
+    }
+
+    // Add for food style
+    if (eventDetails.foodStyle === 'plated') {
+      basePrice *= 1.2; // 20% increase for plated service
+    } else if (eventDetails.foodStyle === 'stations') {
+      basePrice *= 1.3; // 30% increase for food stations
+    }
+
+    // Add for dietary restrictions
+    const dietaryRestrictions = eventDetails.dietaryRestrictions || [];
+    if (dietaryRestrictions.length > 0) {
+      basePrice *= 1.1; // 10% increase for dietary restrictions
+    }
+
+    // Add for setup and cleanup
+    if (eventDetails.setupCleanup === 'both') {
+      basePrice += 500; // $500 for full setup and cleanup
+    } else if (eventDetails.setupCleanup === 'setupOnly' || eventDetails.setupCleanup === 'cleanupOnly') {
+      basePrice += 250; // $250 for partial service
+    }
+
+    // Add for serving staff
+    if (eventDetails.servingStaff === 'fullService') {
+      basePrice += numGuests * 10; // $10 per person for full service staff
+    } else if (eventDetails.servingStaff === 'partialService') {
+      basePrice += numGuests * 5; // $5 per person for partial service
+    }
+
+    // Add for dining items
+    if (eventDetails.diningItems === 'provided') {
+      basePrice += numGuests * 15; // $15 per person for full dining items
+    } else if (eventDetails.diningItems === 'partial') {
+      basePrice += numGuests * 8; // $8 per person for partial items
+    }
+
+    // Adjust based on price quality preference
+    if (priceQualityPreference === "1") {
+      basePrice *= 0.8; // 20% reduction for budget-conscious
+    } else if (priceQualityPreference === "3") {
+      basePrice *= 1.3; // 30% increase for quality-focused
+    }
+
+    return Math.round(basePrice);
   };
 
   const renderSubStep = () => {
@@ -54,267 +100,83 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
     const eventDetails = formData.eventDetails || {};
 
     switch (subStep) {
-      case 0: // Basic Details/Basic Info
-        return (
-          <div className='form-grid'>
-            <div className="custom-input-container">
-              <input
-                type="text"
-                name="location"
-                value={eventDetails.location || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  eventDetails: {
-                    ...prev.eventDetails,
-                    location: e.target.value
-                  }
-                }))}
-                placeholder='Can be a city, county, address, or venue name'
-                className="custom-input"
-              />
-              <label htmlFor="location" className="custom-label">
-                Location
-              </label>
-            </div>
-
-            <div className="custom-input-container">
-              <select
-                name="dateFlexibility"
-                value={eventDetails.dateFlexibility || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  eventDetails: {
-                    ...prev.eventDetails,
-                    dateFlexibility: e.target.value
-                  }
-                }))}
-                className="custom-input"
-              >
-                <option value="">Select</option>
-                <option value="specific">Specific Date</option>
-                <option value="range">Date Range</option>
-                <option value="flexible">I'm Flexible</option>
-              </select>
-              <label htmlFor="dateFlexibility" className="custom-label">
-                Date Flexibility
-              </label>
-            </div>
-
-            {eventDetails.dateFlexibility === 'specific' && (
-              <div className="custom-input-container">
-                <input
-                  type="date"
-                  name="startDate"
-                  value={eventDetails.startDate || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    eventDetails: {
-                      ...prev.eventDetails,
-                      startDate: e.target.value
-                    }
-                  }))}
-                  className="custom-input"
-                />
-                <label htmlFor="startDate" className="custom-label">
-                  Event Date
-                </label>
-              </div>
-            )}
-
-            {eventDetails.dateFlexibility === 'range' && (
-              <>
-                <div className="custom-input-container">
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={eventDetails.startDate || ''}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      eventDetails: {
-                        ...prev.eventDetails,
-                        startDate: e.target.value
-                      }
-                    }))}
-                    className="custom-input"
-                  />
-                  <label htmlFor="startDate" className="custom-label">
-                    Earliest Date
-                  </label>
-                </div>
-
-                <div className="custom-input-container">
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={eventDetails.endDate || ''}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      eventDetails: {
-                        ...prev.eventDetails,
-                        endDate: e.target.value
-                      }
-                    }))}
-                    className="custom-input"
-                  />
-                  <label htmlFor="endDate" className="custom-label">
-                    Latest Date
-                  </label>
-                </div>
-              </>
-            )}
-
-            {eventDetails.dateFlexibility === 'flexible' && (
-              <div className="custom-input-container">
-                <select
-                  name="dateTimeframe"
-                  value={eventDetails.dateTimeframe || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    eventDetails: {
-                      ...prev.eventDetails,
-                      dateTimeframe: e.target.value
-                    }
-                  }))}
-                  className="custom-input"
-                >
-                  <option value="">Select timeframe</option>
-                  <option value="3months">Within 3 months</option>
-                  <option value="6months">Within 6 months</option>
-                  <option value="1year">Within 1 year</option>
-                  <option value="more">More than 1 year</option>
-                </select>
-                <label htmlFor="dateTimeframe" className="custom-label">
-                  Preferred Timeframe
-                </label>
-              </div>
-            )}
-
-            <div style={{display:'flex', justifyContent:'space-between', gap:'8px'}}>
-              <div className="custom-input-container">
-                <div className="input-with-unknown">
-                  <input
-                    type="time"
-                    name="startTime"
-                    value={eventDetails.startTime || ''}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      eventDetails: {
-                        ...prev.eventDetails,
-                        startTime: e.target.value,
-                        startTimeUnknown: false
-                      }
-                    }))}
-                    className="custom-input"
-                    disabled={eventDetails.startTimeUnknown}
-                  />
-                  <label className="unknown-checkbox-container">
-                    <input
-                      type="checkbox"
-                      checked={eventDetails.startTimeUnknown || false}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        eventDetails: {
-                          ...prev.eventDetails,
-                          startTime: '',
-                          startTimeUnknown: e.target.checked
-                        }
-                      }))}
-                    />
-                    <span className="unknown-checkbox-label">Not sure</span>
-                  </label>
-                </div>
-                <label htmlFor="startTime" className="custom-label">
-                  Start Time
-                </label>
-              </div>
-
-              <div className="custom-input-container">
-                <div className="input-with-unknown">
-                  <input
-                    type="time"
-                    name="endTime"
-                    value={eventDetails.endTime || ''}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      eventDetails: {
-                        ...prev.eventDetails,
-                        endTime: e.target.value,
-                        endTimeUnknown: false
-                      }
-                    }))}
-                    className="custom-input"
-                    disabled={eventDetails.endTimeUnknown}
-                  />
-                  <label className="unknown-checkbox-container">
-                    <input
-                      type="checkbox"
-                      checked={eventDetails.endTimeUnknown || false}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        eventDetails: {
-                          ...prev.eventDetails,
-                          endTime: '',
-                          endTimeUnknown: e.target.checked
-                        }
-                      }))}
-                    />
-                    <span className="unknown-checkbox-label">Not sure</span>
-                  </label>
-                </div>
-                <label htmlFor="endTime" className="custom-label">
-                  End Time
-                </label>
-              </div>
-            </div>
-
-            <div className="custom-input-container">
-              <select
-                name="indoorOutdoor"
-                value={eventDetails.indoorOutdoor || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  eventDetails: {
-                    ...prev.eventDetails,
-                    indoorOutdoor: e.target.value
-                  }
-                }))}
-                className="custom-input"
-              >
-                <option value="">Select</option>
-                <option value="indoor">Indoor</option>
-                <option value="outdoor">Outdoor</option>
-                <option value="both">Both</option>
-              </select>
-              <label htmlFor="indoorOutdoor" className="custom-label">
-                Indoor or Outdoor
-              </label>
-            </div>
-
-            <div className="custom-input-container">
-              <input
-                type="number"
-                name="numPeople"
-                value={eventDetails.numPeople || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  eventDetails: {
-                    ...prev.eventDetails,
-                    numPeople: e.target.value
-                  }
-                }))}
-                placeholder='Number of guests'
-                className="custom-input"
-              />
-              <label htmlFor="numPeople" className="custom-label">
-                Number of Guests
-              </label>
-            </div>
-          </div>
-        );
-
-      case 1: // Logistics & Extra/Coverage
+      case 0: // Logistics & Extra/Coverage
         return (
           <div className="event-details-container" style={{display:'flex', flexDirection:'column', gap:'20px'}}>
+            <div className="event-photo-options">
+              <div className='photo-options-header'>Kitchen Equipment Requirements</div>
+              <div className="equipment-options">
+                <button
+                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'venueProvided' ? 'selected' : ''}`}
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    eventDetails: {
+                      ...prev.eventDetails,
+                      equipmentNeeded: 'venueProvided'
+                    }
+                  }))}
+                >
+                  ✅ The venue provides kitchen equipment
+                </button>
+                <button
+                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'catererBringsAll' ? 'selected' : ''}`}
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    eventDetails: {
+                      ...prev.eventDetails,
+                      equipmentNeeded: 'catererBringsAll'
+                    }
+                  }))}
+                >
+                  🍳 The caterer needs to bring all equipment
+                </button>
+                <button
+                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'catererBringsSome' ? 'selected' : ''}`}
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    eventDetails: {
+                      ...prev.eventDetails,
+                      equipmentNeeded: 'catererBringsSome'
+                    }
+                  }))}
+                >
+                  🔪 The caterer needs to bring some equipment
+                </button>
+                <button
+                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'unknown' ? 'selected' : ''}`}
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    eventDetails: {
+                      ...prev.eventDetails,
+                      equipmentNeeded: 'unknown'
+                    }
+                  }))}
+                >
+                  ❓ I'm not sure about the equipment requirements
+                </button>
+              </div>
+
+              {eventDetails.equipmentNeeded === 'catererBringsSome' && (
+                <div className="custom-input-container" style={{ marginTop: '20px' }}>
+                  <textarea
+                    value={eventDetails.equipmentNotes || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      eventDetails: {
+                        ...prev.eventDetails,
+                        equipmentNotes: e.target.value
+                      }
+                    }))}
+                    placeholder="Please specify what equipment the caterer needs to bring..."
+                    className="custom-input"
+                  />
+                  <label htmlFor="equipmentNotes" className="custom-label">
+                    Equipment Details
+                  </label>
+                </div>
+              )}
+            </div>
+
             <div className="event-photo-options">
               <div className='photo-options-header'>Food Type & Style</div>
               <div className="photo-options-grid">
@@ -573,9 +435,38 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
           </div>
         );
 
-      case 2: // Budget & Additional Info/Food & Equipment
+      case 1: // Budget & Additional Info
+        const recommendedBudget = calculateRecommendedBudget();
         return (
           <div className='form-grid'>
+            <div className="budget-recommendation-container">
+              <h3>Recommended Budget</h3>
+              <p className="budget-amount">${recommendedBudget.toLocaleString()}</p>
+              <p className="budget-explanation">
+                This recommendation is based on:
+                <ul>
+                  {formData.commonDetails?.numGuests && (
+                    <li>{formData.commonDetails.numGuests} guests</li>
+                  )}
+                  {eventDetails.foodStyle && (
+                    <li>{eventDetails.foodStyle} service style</li>
+                  )}
+                  {eventDetails.dietaryRestrictions?.length > 0 && (
+                    <li>Dietary restrictions</li>
+                  )}
+                  {eventDetails.setupCleanup && eventDetails.setupCleanup !== 'neither' && (
+                    <li>{eventDetails.setupCleanup} service</li>
+                  )}
+                  {eventDetails.servingStaff && eventDetails.servingStaff !== 'noService' && (
+                    <li>{eventDetails.servingStaff} staff</li>
+                  )}
+                  {eventDetails.diningItems && eventDetails.diningItems !== 'notProvided' && (
+                    <li>{eventDetails.diningItems} dining items</li>
+                  )}
+                </ul>
+              </p>
+            </div>
+
             <div className="price-quality-slider-container">
               <div className="slider-header">What matters most to you?</div>
               <div className="slider-labels">
@@ -587,16 +478,36 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
                 min="1"
                 max="3"
                 step="1"
-                value={eventDetails.priceQualityPreference || "2"}
+                value={formData.requests.Catering?.priceQualityPreference || "2"}
                 onChange={(e) => setFormData(prev => ({
                   ...prev,
-                  eventDetails: {
-                    ...prev.eventDetails,
-                    priceQualityPreference: e.target.value
+                  requests: {
+                    ...prev.requests,
+                    Catering: {
+                      ...prev.requests.Catering,
+                      priceQualityPreference: e.target.value
+                    }
                   }
                 }))}
                 className="price-quality-slider"
               />
+              <div className="preference-description">
+                <div className="preference-detail">
+                  {formData.requests.Catering?.priceQualityPreference === "1" && (
+                    <p>👉 Focus on finding budget-friendly catering options while maintaining good quality</p>
+                  )}
+                  {formData.requests.Catering?.priceQualityPreference === "2" && (
+                    <p>Balanced</p>
+                  )}
+                  {formData.requests.Catering?.priceQualityPreference === "3" && (
+                    <>
+                      <p>👉 Priority on culinary excellence and presentation</p>
+                      <p>👉 Access to premium catering services</p>
+                      <p>👉 Ideal for those seeking exceptional dining experiences</p>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="custom-input-container required">
