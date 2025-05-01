@@ -18,6 +18,7 @@ function DjStepper({ formData, setFormData, currentStep, setCurrentStep, subStep
           priceQualityPreference: '2',
           priceRange: '',
           additionalInfo: '',
+          indoorOutdoor: '',
           weddingDetails: {
             ceremony: false,
             cocktailHour: false,
@@ -82,6 +83,10 @@ function DjStepper({ formData, setFormData, currentStep, setCurrentStep, subStep
       eventDetails: {
         ...prev.eventDetails,
         ...updates
+      },
+      commonDetails: {
+        ...prev.commonDetails,
+        ...(updates.indoorOutdoor ? { indoorOutdoor: updates.indoorOutdoor } : {})
       },
       requests: {
         ...prev.requests,
@@ -287,6 +292,29 @@ function DjStepper({ formData, setFormData, currentStep, setCurrentStep, subStep
                 Special Song Requests
               </label>
             </div>
+
+            <div className="custom-input-container">
+              <select
+                name="indoorOutdoor"
+                value={eventDetails.indoorOutdoor || ''}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  eventDetails: {
+                    ...prev.eventDetails,
+                    indoorOutdoor: e.target.value
+                  }
+                }))}
+                className="custom-input"
+              >
+                <option value="">Select</option>
+                <option value="indoor">Indoor</option>
+                <option value="outdoor">Outdoor</option>
+                <option value="both">Both</option>
+              </select>
+              <label htmlFor="indoorOutdoor" className="custom-label">
+                Indoor or Outdoor
+              </label>
+            </div>
           </div>
         );
 
@@ -398,13 +426,9 @@ function DjStepper({ formData, setFormData, currentStep, setCurrentStep, subStep
             <div className="custom-input-container">
               <textarea
                 value={eventDetails.additionalInfo || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  eventDetails: {
-                    ...prev.eventDetails,
-                    additionalInfo: e.target.value
-                  }
-                }))}
+                onChange={(e) => updateDjData({
+                  additionalInfo: e.target.value
+                })}
                 placeholder="Any special requests or additional information DJs should know..."
                 className="custom-input"
               />
@@ -445,6 +469,14 @@ function DjStepper({ formData, setFormData, currentStep, setCurrentStep, subStep
                         return 'Not specified';
                     }
                   })()}
+                </div>
+              </div>
+
+              {/* Indoor/Outdoor */}
+              <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Venue Type</div>
+                <div className="request-info">
+                  {formData.eventDetails?.indoorOutdoor || 'Not specified'}
                 </div>
               </div>
 

@@ -631,18 +631,6 @@ function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentSt
 
   return (
     <div className="hair-and-makeup-stepper">
-      <div className="sub-steps-indicator">
-        {getSubSteps().map((step, index) => (
-          <div
-            key={index}
-            className={`sub-step ${index === subStep ? 'active' : ''} 
-                      ${index < subStep ? 'completed' : ''}`}
-            onClick={() => setSubStep(index)}
-          >
-            {step}
-          </div>
-        ))}
-      </div>
       <div className="hair-and-makeup-stepper-content">
         {renderSubStep()}
       </div>

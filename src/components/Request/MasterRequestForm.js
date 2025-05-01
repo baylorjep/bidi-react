@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 
@@ -8,14 +8,44 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Load saved data from localStorage on component mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('eventLogistics');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setFormData(prev => ({
+          ...prev,
+          commonDetails: {
+            ...prev.commonDetails,
+            ...parsedData
+          }
+        }));
+      } catch (err) {
+        console.error('Error loading saved data:', err);
+      }
+    }
+  }, [setFormData]);
+
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      commonDetails: {
-        ...prev.commonDetails,
-        [field]: value,
-      },
-    }));
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        commonDetails: {
+          ...prev.commonDetails,
+          [field]: value,
+        },
+      };
+      
+      // Save to localStorage whenever data changes
+      try {
+        localStorage.setItem('eventLogistics', JSON.stringify(newData.commonDetails));
+      } catch (err) {
+        console.error('Error saving to localStorage:', err);
+      }
+      
+      return newData;
+    });
   };
 
   const handleSubmit = async () => {
