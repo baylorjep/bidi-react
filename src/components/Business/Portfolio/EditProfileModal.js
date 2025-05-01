@@ -483,40 +483,64 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     });
 
   const getCroppedImg = async (imageSrc, pixelCrop) => {
-    const image = await createImage(imageSrc);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    try {
+      const image = await createImage(imageSrc);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
 
-    // Set canvas size to desired dimensions
-    canvas.width = 400;  // Fixed width
-    canvas.height = 400; // Fixed height
+      // Set canvas size to desired dimensions
+      canvas.width = 400;
+      canvas.height = 400;
 
-    // Calculate scaling factors
-    const scaleX = image.width / pixelCrop.width;
-    const scaleY = image.height / pixelCrop.height;
-    const scale = Math.min(scaleX, scaleY);
+      // Calculate scaling factors
+      const scaleX = image.width / pixelCrop.width;
+      const scaleY = image.height / pixelCrop.height;
+      const scale = Math.min(scaleX, scaleY);
 
-    // Calculate dimensions to maintain aspect ratio
-    const cropWidth = pixelCrop.width * scale;
-    const cropHeight = pixelCrop.height * scale;
+      // Calculate dimensions to maintain aspect ratio
+      const cropWidth = pixelCrop.width * scale;
+      const cropHeight = pixelCrop.height * scale;
 
-    ctx.drawImage(
-      image,
-      pixelCrop.x * scale,
-      pixelCrop.y * scale,
-      cropWidth,
-      cropHeight,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+      // Ensure crop coordinates are within bounds
+      const maxX = image.width - cropWidth;
+      const maxY = image.height - cropHeight;
+      const cropX = Math.max(0, Math.min(pixelCrop.x * scale, maxX));
+      const cropY = Math.max(0, Math.min(pixelCrop.y * scale, maxY));
 
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        resolve(blob);
-      }, 'image/jpeg', 0.95);
-    });
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw the image
+      ctx.drawImage(
+        image,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      // Convert to JPEG first
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Canvas is empty'));
+              return;
+            }
+            resolve(blob);
+          },
+          'image/jpeg',
+          0.95
+        );
+      });
+    } catch (error) {
+      console.error('Error in getCroppedImg:', error);
+      throw error;
+    }
   };
 
   // Modify handleProfilePicChange to show cropper
@@ -545,21 +569,45 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const handleCropConfirm = async () => {
     try {
       setUploadingProfile(true);
+      
+      if (!croppedAreaPixels) {
+        throw new Error('No crop area selected');
+      }
+
+      // Ensure crop area is valid
+      if (croppedAreaPixels.width <= 0 || croppedAreaPixels.height <= 0) {
+        throw new Error('Invalid crop area');
+      }
+
+      // Get the cropped image as JPEG
       const croppedImage = await getCroppedImg(tempImageUrl, croppedAreaPixels);
       
-      // Convert cropped image to WebP
+      // Create a new canvas for final processing
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const img = await createImage(URL.createObjectURL(croppedImage));
       
+      // Create an image from the cropped blob
+      const img = new Image();
+      const imgUrl = URL.createObjectURL(croppedImage);
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = imgUrl;
+      });
+      
+      // Set canvas dimensions
       canvas.width = 400;
       canvas.height = 400;
-      ctx.drawImage(img, 0, 0, 400, 400);
       
-      // Convert to WebP with better error handling
-      let webpBlob;
+      // Clear and draw the image
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      // Try to convert to WebP, but fall back to JPEG if needed
+      let finalBlob;
       try {
-        webpBlob = await new Promise((resolve, reject) => {
+        finalBlob = await new Promise((resolve, reject) => {
           canvas.toBlob(
             (blob) => {
               if (!blob) {
@@ -569,24 +617,22 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
               resolve(blob);
             },
             'image/webp',
-            0.90 // Higher quality setting
+            0.90
           );
         });
-        console.log('Successfully converted to WebP');
-      } catch (conversionError) {
-        console.error('WebP conversion failed:', conversionError);
-        // Fall back to original image if WebP conversion fails
-        webpBlob = croppedImage;
-        console.log('Falling back to original image format');
+      } catch (error) {
+        console.log('WebP conversion failed, using JPEG instead');
+        finalBlob = croppedImage;
       }
 
-      const fileName = `${uuidv4()}.webp`;
+      const fileExt = finalBlob.type === 'image/webp' ? 'webp' : 'jpg';
+      const fileName = `${uuidv4()}.${fileExt}`;
       const filePath = `${businessId}/${fileName}`;
 
-      // Upload cropped and converted image
+      // Upload the final image
       const { error: uploadError } = await supabase.storage
         .from('profile-photos')
-        .upload(filePath, webpBlob, { upsert: true });
+        .upload(filePath, finalBlob, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -625,6 +671,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       setProfilePic(photoUrl);
       setIsCropping(false);
       URL.revokeObjectURL(tempImageUrl);
+      URL.revokeObjectURL(imgUrl);
       setTempImageUrl(null);
     } catch (error) {
       console.error("Error processing profile picture:", error);
@@ -987,6 +1034,13 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     document.removeEventListener('mouseup', handleMouseUp);
   };
 
+  // Add function to handle zoom changes
+  const handleZoomChange = (newZoom) => {
+    // Limit maximum zoom to prevent black image issue
+    const maxZoom = 3;
+    setZoom(Math.min(newZoom, maxZoom));
+  };
+
   return (
     isOpen && (
       <div className="edit-portfolio-modal">
@@ -1021,8 +1075,34 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                   zoom={zoom}
                   aspect={1}
                   onCropChange={setCrop}
-                  onZoomChange={setZoom}
+                  onZoomChange={handleZoomChange}
                   onCropComplete={onCropComplete}
+                  showGrid={true}
+                  restrictPosition={false}
+                  cropShape="rect"
+                  style={{
+                    containerStyle: {
+                      width: '100%',
+                      height: '100%',
+                      position: 'relative',
+                      touchAction: 'none'
+                    },
+                    mediaStyle: {
+                      width: '100%',
+                      height: '100%',
+                      touchAction: 'none'
+                    },
+                    cropAreaStyle: {
+                      width: '100%',
+                      height: '100%',
+                      touchAction: 'none'
+                    }
+                  }}
+                  classes={{
+                    containerClassName: 'cropper-container',
+                    mediaClassName: 'cropper-media',
+                    cropAreaClassName: 'cropper-area'
+                  }}
                 />
                 <div className="cropper-controls">
                   <input
@@ -1032,7 +1112,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                     max={3}
                     step={0.1}
                     aria-labelledby="Zoom"
-                    onChange={(e) => setZoom(parseFloat(e.target.value))}
+                    onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
                     className="zoom-slider"
                   />
                   <button onClick={handleCropConfirm} disabled={uploadingProfile}>
