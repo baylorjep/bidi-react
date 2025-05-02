@@ -1,21 +1,17 @@
-const CACHE_NAME = 'webp-conversion-cache-v1';
-const IMAGE_CACHE_NAME = 'converted-images-v1';
+const CACHE_NAME = "webp-conversion-cache-v1";
+const IMAGE_CACHE_NAME = "converted-images-v1";
 
 // Install event - cache static assets
-self.addEventListener('install', (event) => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll([
-        '/',
-        '/index.html',
-        '/images/default.jpg'
-      ]);
+      return cache.addAll(["/", "/index.html", "/images/default.jpg"]);
     })
   );
 });
 
 // Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -28,7 +24,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // Fetch event - handle image requests
-self.addEventListener('fetch', (event) => {
+self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
   // Check if it's an image request
@@ -43,7 +39,11 @@ self.addEventListener('fetch', (event) => {
         // Fetch and cache the image
         return fetch(event.request).then((response) => {
           // Don't cache if not successful
-          if (!response || response.status !== 200 || response.type !== 'basic') {
+          if (
+            !response ||
+            response.status !== 200 ||
+            response.type !== "basic"
+          ) {
             return response;
           }
 
@@ -69,27 +69,25 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-self.addEventListener('push', function(event) {
+self.addEventListener("push", function (event) {
   const options = {
     body: event.data.text(),
-    icon: '/Bidi-Favicon.png',
-    badge: '/Bidi-Favicon.png',
+    icon: "/Bidi-Favicon.png",
+    badge: "/Bidi-Favicon.png",
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: 1
-    }
+      primaryKey: 1,
+    },
   };
 
   event.waitUntil(
-    self.registration.showNotification('Bidi Notification', options)
+    self.registration.showNotification("Bidi Notification", options)
   );
 });
 
 // Handle notification click
-self.addEventListener('notificationclick', function(event) {
+self.addEventListener("notificationclick", function (event) {
   event.notification.close();
-  event.waitUntil(
-    clients.openWindow('/open-requests')
-  );
-}); 
+  event.waitUntil(clients.openWindow("/open-requests"));
+});
