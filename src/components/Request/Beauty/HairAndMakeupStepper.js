@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../../../styles/Requests.css';
 
 function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentStep, subStep, setSubStep }) {
@@ -48,55 +48,127 @@ function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentSt
     }
   }, [formData.requests.HairAndMakeup, setFormData]);
 
-  const getSubSteps = () => {
-    const subSteps = ['Basic Information'];
-    const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+  const [recommendedBudget, setRecommendedBudget] = useState({ min: 0, max: 0 });
+  const [priceQualityPreference, setPriceQualityPreference] = useState(50);
 
-    if (serviceType === 'both' || serviceType === 'hair') {
+  const calculateRecommendedBudget = () => {
+    const requestData = formData.requests.HairAndMakeup || {};
+    const serviceType = requestData.serviceType;
+    const numPeople = parseInt(requestData.numPeople) || 0;
+
+    if (!serviceType || numPeople <= 0) {
+      return { min: 0, max: 0 };
+    }
+
+    // Base rates
+    const baseRates = {
+      'both': 200,    // $200 per person for both services
+      'hair': 150,    // $150 per person for hair only
+      'makeup': 100   // $100 per person for makeup only
+    };
+
+    // Calculate base cost
+    const baseCost = baseRates[serviceType] * numPeople;
+
+    // Add costs for additional services
+    let additionalCosts = 0;
+    if (requestData.extensionsNeeded === 'yes') {
+      additionalCosts += 100 * numPeople; // $100 per person for extensions
+    }
+    if (requestData.trialSessionHair === 'yes') {
+      additionalCosts += 150 * numPeople; // $150 per person for hair trial
+    }
+    if (requestData.lashesIncluded === 'yes') {
+      additionalCosts += 50 * numPeople; // $50 per person for lashes
+    }
+    if (requestData.trialSessionMakeup === 'yes') {
+      additionalCosts += 150 * numPeople; // $150 per person for makeup trial
+    }
+
+    const totalCost = baseCost + additionalCosts;
+
+    // Calculate range based on price quality preference
+    const qualityMultiplier = 1 + (priceQualityPreference / 100);
+    const minPrice = Math.round(totalCost * (qualityMultiplier - 0.2));
+    const maxPrice = Math.round(totalCost * (qualityMultiplier + 0.2));
+
+    return { min: minPrice, max: maxPrice };
+  };
+
+  useEffect(() => {
+    const budget = calculateRecommendedBudget();
+    setRecommendedBudget(budget);
+  }, [formData.requests.HairAndMakeup, priceQualityPreference]);
+
+  const handlePriceQualityChange = (e) => {
+    const value = parseInt(e.target.value);
+    setPriceQualityPreference(value);
+    setFormData(prev => ({
+      ...prev,
+      requests: {
+        ...prev.requests,
+        HairAndMakeup: {
+          ...prev.requests.HairAndMakeup,
+          priceQualityPreference: value.toString()
+        }
+      }
+    }));
+  };
+
+  const getPriceQualityDescription = (value) => {
+    if (value < 25) return 'Budget-friendly';
+    if (value < 50) return 'Balanced';
+    if (value < 75) return 'Premium';
+    return 'Luxury';
+  };
+
+  const getSubSteps = () => {
+    const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+    const subSteps = ['Basic Information'];
+
+    // For hair only
+    if (serviceType === 'hair') {
       subSteps.push('Hair Services');
+      subSteps.push('Inspiration');
+      subSteps.push('Budget');
     }
-    if (serviceType === 'both' || serviceType === 'makeup') {
+    // For makeup only
+    else if (serviceType === 'makeup') {
       subSteps.push('Makeup Services');
+      subSteps.push('Inspiration');
+      subSteps.push('Budget');
     }
-    subSteps.push('Inspiration');
-    subSteps.push('Budget');
+    // For both services
+    else {
+      subSteps.push('Hair Services');
+      subSteps.push('Makeup Services');
+      subSteps.push('Inspiration');
+      subSteps.push('Budget');
+    }
+
     return subSteps;
   };
 
   const renderSubStep = () => {
     const subSteps = getSubSteps();
-    const hairAndMakeupData = formData.requests.HairAndMakeup || {};
-    const commonDetails = formData.commonDetails || {};
-    const currentServiceType = hairAndMakeupData.serviceType || 'both';
+    const currentStepName = subSteps[subStep];
+    
+    // Debug log to check step progression
+    console.log('Available Steps:', subSteps);
+    console.log('Current Step:', currentStepName);
+    console.log('Service Type:', formData.requests.HairAndMakeup?.serviceType);
+    console.log('SubStep Index:', subStep);
 
-    // Calculate the actual step based on service type
-    let actualStep = subStep;
-    if (currentServiceType === 'hair') {
-      if (subStep === 2) {
-        actualStep = 3; // Show inspiration after hair services
-      } else if (subStep === 3) {
-        actualStep = 4; // Show budget after inspiration
-      }
-    } else if (currentServiceType === 'makeup') {
-      if (subStep === 1) {
-        actualStep = 2; // Show makeup services
-      } else if (subStep === 2) {
-        actualStep = 3; // Show inspiration after makeup services
-      } else if (subStep === 3) {
-        actualStep = 4; // Show budget after inspiration
-      }
-    }
-
-    switch (actualStep) {
-      case 0: // Basic Information
+    switch (currentStepName) {
+      case 'Basic Information':
         return renderBasicInfoStep();
-      case 1: // Hair Services
+      case 'Hair Services':
         return renderHairServicesStep();
-      case 2: // Makeup Services
+      case 'Makeup Services':
         return renderMakeupServicesStep();
-      case 3: // Inspiration
+      case 'Inspiration':
         return renderInspirationStep();
-      case 4: // Budget
+      case 'Budget':
         return renderBudgetStep();
       default:
         return null;
@@ -267,6 +339,26 @@ function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentSt
           </select>
           <label htmlFor="onSiteServiceNeeded" className="custom-label">
             On-Site Service Needed?
+          </label>
+        </div>
+        <div className="custom-input-container">
+          <textarea
+            value={hairAndMakeupData.additionalInfo || ''}
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              requests: {
+                ...prev.requests,
+                HairAndMakeup: {
+                  ...prev.requests.HairAndMakeup,
+                  additionalInfo: e.target.value
+                }
+              }
+            }))}
+            placeholder="Any special requests or additional information..."
+            className="custom-input"
+          />
+          <label htmlFor="additionalInfo" className="custom-label">
+            Additional Information
           </label>
         </div>
       </div>
@@ -611,26 +703,7 @@ function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentSt
           </label>
         </div>
 
-        <div className="custom-input-container">
-          <textarea
-            value={hairAndMakeupData.additionalInfo || ''}
-            onChange={(e) => setFormData(prev => ({
-              ...prev,
-              requests: {
-                ...prev.requests,
-                HairAndMakeup: {
-                  ...prev.requests.HairAndMakeup,
-                  additionalInfo: e.target.value
-                }
-              }
-            }))}
-            placeholder="Any special requests or additional information..."
-            className="custom-input"
-          />
-          <label htmlFor="additionalInfo" className="custom-label">
-            Additional Information
-          </label>
-        </div>
+
       </div>
     );
   };
@@ -649,61 +722,84 @@ function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentSt
   };
 
   const renderBudgetStep = () => {
-    const hairAndMakeupData = formData.requests.HairAndMakeup || {};
     return (
-      <div className='form-grid'>
+      <div className="form-scrollable-content">
+        <div className="budget-recommendation-container">
+          <h3>Recommended Budget Range</h3>
+          <div className="budget-amount">
+            ${recommendedBudget.min.toLocaleString()} - ${recommendedBudget.max.toLocaleString()}
+          </div>
+          <p className="budget-explanation">
+            This recommendation is based on:
+            <ul>
+              {formData.requests.HairAndMakeup?.numPeople && (
+                <li>{formData.requests.HairAndMakeup.numPeople} people needing services</li>
+              )}
+              {formData.requests.HairAndMakeup?.serviceType && (
+                <li>{formData.requests.HairAndMakeup.serviceType === 'both' ? 'Hair & Makeup' : formData.requests.HairAndMakeup.serviceType === 'hair' ? 'Hair Only' : 'Makeup Only'} services</li>
+              )}
+              {formData.requests.HairAndMakeup?.extensionsNeeded === 'yes' && (
+                <li>Hair extensions</li>
+              )}
+              {formData.requests.HairAndMakeup?.trialSessionHair === 'yes' && (
+                <li>Hair trial session</li>
+              )}
+              {formData.requests.HairAndMakeup?.lashesIncluded === 'yes' && (
+                <li>Lashes included</li>
+              )}
+              {formData.requests.HairAndMakeup?.trialSessionMakeup === 'yes' && (
+                <li>Makeup trial session</li>
+              )}
+            </ul>
+          </p>
+        </div>
+
         <div className="price-quality-slider-container">
-          <div className="slider-header">What matters most to you?</div>
+          <h3 className="slider-header">Price vs. Quality Preference</h3>
           <div className="slider-labels">
-            <span>Budget Conscious</span>
-            <span>Quality Focused</span>
+            <span>Budget-friendly</span>
+            <span>Luxury</span>
           </div>
           <input
             type="range"
-            min="1"
-            max="3"
-            step="1"
-            value={hairAndMakeupData.priceQualityPreference || "2"}
-            onChange={(e) => handleInputChange("priceQualityPreference", e.target.value)}
+            min="0"
+            max="100"
+            value={priceQualityPreference}
+            onChange={handlePriceQualityChange}
             className="price-quality-slider"
           />
+          <div className="preference-detail">
+            <p>Your preference: {getPriceQualityDescription(priceQualityPreference)}</p>
+          </div>
         </div>
 
-        <div className="custom-input-container required">
-          <select
-            name="priceRange"
-            value={hairAndMakeupData.priceRange || ""}
-            onChange={(e) => handleInputChange("priceRange", e.target.value)}
-            className="custom-input"
-          >
-            <option value="">Select Budget Range</option>
-            <option value="0-300">$0 - $300</option>
-            <option value="300-500">$300 - $500</option>
-            <option value="500-750">$500 - $750</option>
-            <option value="750-1000">$750 - $1,000</option>
-            <option value="1000-1500">$1,000 - $1,500</option>
-            <option value="1500-2000">$1,500 - $2,000</option>
-            <option value="2000+">$2,000+</option>
-          </select>
-          <label htmlFor="priceRange" className="custom-label">
-            Budget Range
-          </label>
-        </div>
-
-        <div className="custom-input-container">
-          <select
-            name="groupDiscountInquiry"
-            value={hairAndMakeupData.groupDiscountInquiry || ""}
-            onChange={(e) => handleInputChange("groupDiscountInquiry", e.target.value)}
-            className="custom-input"
-          >
-            <option value="">Select</option>
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
-          <label htmlFor="groupDiscountInquiry" className="custom-label">
-            Group Discount Inquiry?
-          </label>
+        <div className="budget-range-selector">
+          <div className="custom-input-container">
+            <label className="custom-label">Budget Range</label>
+            <select
+              className="custom-input"
+              value={formData.requests.HairAndMakeup?.priceRange || ''}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                requests: {
+                  ...prev.requests,
+                  HairAndMakeup: {
+                    ...prev.requests.HairAndMakeup,
+                    priceRange: e.target.value
+                  }
+                }
+              }))}
+            >
+              <option value="">Select a budget range</option>
+              <option value="0-300">$0 - $300</option>
+              <option value="300-500">$300 - $500</option>
+              <option value="500-750">$500 - $750</option>
+              <option value="750-1000">$750 - $1,000</option>
+              <option value="1000-1500">$1,000 - $1,500</option>
+              <option value="1500-2000">$1,500 - $2,000</option>
+              <option value="2000+">$2,000+</option>
+            </select>
+          </div>
         </div>
       </div>
     );

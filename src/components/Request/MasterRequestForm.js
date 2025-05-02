@@ -182,7 +182,12 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
       } else if (isRequestType(currentRequest, "Videography")) {
         setVideographySubStep(videographySubStep + 1);
       } else if (isRequestType(currentRequest, "Catering")) {
-        setCateringSubStep(cateringSubStep + 1);
+        if (cateringSubStep < 2) {
+          setCateringSubStep(cateringSubStep + 1);
+        } else {
+          setCateringSubStep(0);
+          setCurrentStep(currentStep + 1);
+        }
       } else if (isRequestType(currentRequest, "DJ")) {
         setDjSubStep(djSubStep + 1);
       } else if (isRequestType(currentRequest, "Florist")) {
@@ -212,7 +217,12 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
     } else if (isRequestType(currentRequest, "Videography")) {
       setVideographySubStep(videographySubStep - 1);
     } else if (isRequestType(currentRequest, "Catering")) {
-      setCateringSubStep(cateringSubStep - 1);
+      if (cateringSubStep > 0) {
+        setCateringSubStep(cateringSubStep - 1);
+      } else {
+        setCurrentStep(currentStep - 1);
+        setCateringSubStep(2);
+      }
     } else if (isRequestType(currentRequest, "DJ")) {
       setDjSubStep(djSubStep - 1);
     } else if (isRequestType(currentRequest, "Florist")) {

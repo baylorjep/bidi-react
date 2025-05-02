@@ -48,3 +48,34 @@
 .catering-stepper-content::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+.photo-preview-container {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .photo-preview-container.desktop-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+  }
+
+  .photo-preview-container.desktop-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .photo-preview-container.desktop-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  .photo-preview-container.desktop-scroll::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+
+  .photo-preview-container.desktop-scroll::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+}

@@ -1,5 +1,17 @@
 import React from 'react';
 import '../../../styles/Requests.css';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+
+const modules = {
+  toolbar: [
+    [{ 'header': [1, 2, false] }],
+    ['bold', 'italic', 'underline'],
+    ['blockquote', 'code-block'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['clean']
+  ]
+};
 
 function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, subStep, setSubStep }) {
   // Initialize eventDetails if it doesn't exist
@@ -21,7 +33,8 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
           dietaryRestrictions: [],
           otherDietaryDetails: '',
           equipmentNeeded: 'unknown',
-          equipmentNotes: ''
+          equipmentNotes: '',
+          specialRequests: ''
         }
       }));
     }
@@ -31,11 +44,12 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
     switch (formData.commonDetails?.eventType) {
       case 'Wedding':
         return [
-          'Logistics & Extra',
+          'Food & Special Requests',
+          'Logistics & Setup',
           'Budget & Additional Info'
         ];
       default:
-        return ['Coverage', 'Food & Equipment', 'Additional Details'];
+        return ['Food & Special Requests', 'Logistics & Setup', 'Additional Details'];
     }
   };
 
@@ -100,83 +114,9 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
     const eventDetails = formData.eventDetails || {};
 
     switch (subStep) {
-      case 0: // Logistics & Extra/Coverage
+      case 0: // Food & Special Requests
         return (
           <div className="event-details-container" style={{display:'flex', flexDirection:'column', gap:'20px'}}>
-            <div className="event-photo-options">
-              <div className='photo-options-header'>Kitchen Equipment Requirements</div>
-              <div className="equipment-options">
-                <button
-                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'venueProvided' ? 'selected' : ''}`}
-                  onClick={() => setFormData(prev => ({
-                    ...prev,
-                    eventDetails: {
-                      ...prev.eventDetails,
-                      equipmentNeeded: 'venueProvided'
-                    }
-                  }))}
-                >
-                  ✅ The venue provides kitchen equipment
-                </button>
-                <button
-                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'catererBringsAll' ? 'selected' : ''}`}
-                  onClick={() => setFormData(prev => ({
-                    ...prev,
-                    eventDetails: {
-                      ...prev.eventDetails,
-                      equipmentNeeded: 'catererBringsAll'
-                    }
-                  }))}
-                >
-                  🍳 The caterer needs to bring all equipment
-                </button>
-                <button
-                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'catererBringsSome' ? 'selected' : ''}`}
-                  onClick={() => setFormData(prev => ({
-                    ...prev,
-                    eventDetails: {
-                      ...prev.eventDetails,
-                      equipmentNeeded: 'catererBringsSome'
-                    }
-                  }))}
-                >
-                  🔪 The caterer needs to bring some equipment
-                </button>
-                <button
-                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'unknown' ? 'selected' : ''}`}
-                  onClick={() => setFormData(prev => ({
-                    ...prev,
-                    eventDetails: {
-                      ...prev.eventDetails,
-                      equipmentNeeded: 'unknown'
-                    }
-                  }))}
-                >
-                  ❓ I'm not sure about the equipment requirements
-                </button>
-              </div>
-
-              {eventDetails.equipmentNeeded === 'catererBringsSome' && (
-                <div className="custom-input-container" style={{ marginTop: '20px' }}>
-                  <textarea
-                    value={eventDetails.equipmentNotes || ''}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      eventDetails: {
-                        ...prev.eventDetails,
-                        equipmentNotes: e.target.value
-                      }
-                    }))}
-                    placeholder="Please specify what equipment the caterer needs to bring..."
-                    className="custom-input"
-                  />
-                  <label htmlFor="equipmentNotes" className="custom-label">
-                    Equipment Details
-                  </label>
-                </div>
-              )}
-            </div>
-
             <div className="event-photo-options">
               <div className='photo-options-header'>Food Type & Style</div>
               <div className="photo-options-grid">
@@ -327,6 +267,103 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
               </div>
             )}
 
+            <div className="custom-input-container optional">
+              <ReactQuill
+                value={eventDetails.specialRequests || ''}
+                onChange={(content) => setFormData(prev => ({
+                  ...prev,
+                  eventDetails: {
+                    ...prev.eventDetails,
+                    specialRequests: content
+                  }
+                }))}
+                modules={modules}
+                placeholder="List any special dietary requirements or specific requests..."
+              />
+              <label htmlFor="specialRequests" className="custom-label">
+                Special Requests
+              </label>
+            </div>
+          </div>
+        );
+
+      case 1: // Logistics & Setup
+        return (
+          <div className="event-details-container" style={{display:'flex', flexDirection:'column', gap:'20px'}}>
+            <div className="event-photo-options">
+              <div className='photo-options-header'>Kitchen Equipment Requirements</div>
+              <div className="equipment-options">
+                <button
+                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'venueProvided' ? 'selected' : ''}`}
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    eventDetails: {
+                      ...prev.eventDetails,
+                      equipmentNeeded: 'venueProvided'
+                    }
+                  }))}
+                >
+                  ✅ The venue provides kitchen equipment
+                </button>
+                <button
+                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'catererBringsAll' ? 'selected' : ''}`}
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    eventDetails: {
+                      ...prev.eventDetails,
+                      equipmentNeeded: 'catererBringsAll'
+                    }
+                  }))}
+                >
+                  🍳 The caterer needs to bring all equipment
+                </button>
+                <button
+                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'catererBringsSome' ? 'selected' : ''}`}
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    eventDetails: {
+                      ...prev.eventDetails,
+                      equipmentNeeded: 'catererBringsSome'
+                    }
+                  }))}
+                >
+                  🔪 The caterer needs to bring some equipment
+                </button>
+                <button
+                  className={`equipment-option-button ${eventDetails.equipmentNeeded === 'unknown' ? 'selected' : ''}`}
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    eventDetails: {
+                      ...prev.eventDetails,
+                      equipmentNeeded: 'unknown'
+                    }
+                  }))}
+                >
+                  ❓ I'm not sure about the equipment requirements
+                </button>
+              </div>
+
+              {eventDetails.equipmentNeeded === 'catererBringsSome' && (
+                <div className="custom-input-container" style={{ marginTop: '20px' }}>
+                  <textarea
+                    value={eventDetails.equipmentNotes || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      eventDetails: {
+                        ...prev.eventDetails,
+                        equipmentNotes: e.target.value
+                      }
+                    }))}
+                    placeholder="Please specify what equipment the caterer needs to bring..."
+                    className="custom-input"
+                  />
+                  <label htmlFor="equipmentNotes" className="custom-label">
+                    Equipment Details
+                  </label>
+                </div>
+              )}
+            </div>
+
             <div className="event-photo-options">
               <div className='photo-options-header'>Setup & Cleanup Required?</div>
               <div className="photo-options-grid">
@@ -435,7 +472,7 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
           </div>
         );
 
-      case 1: // Budget & Additional Info
+      case 2: // Budget & Additional Info
         const recommendedBudget = calculateRecommendedBudget();
         return (
           <div className='form-grid'>
@@ -549,7 +586,7 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
                     additionalInfo: e.target.value
                   }
                 }))}
-                placeholder="Any special requests or additional information caterers should know..."
+                placeholder="Any other additional information caterers should know..."
                 className="custom-input"
               />
               <label htmlFor="additionalInfo" className="custom-label">

@@ -131,7 +131,8 @@ function MasterRequestFlow() {
         );
       } else if (isRequestType(request, "Catering")) {
         steps.push(
-          "Catering - Logistics & Extra",
+          "Catering - Food & Special Requests",
+          "Catering - Logistics & Setup",
           "Catering - Budget & Additional Info"
         );
       } else if (isRequestType(request, "DJ")) {
@@ -151,14 +152,26 @@ function MasterRequestFlow() {
       } else if (isRequestType(request, "HairAndMakeup")) {
         const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
         steps.push("Hair and Makeup - Basic Details");
-        if (serviceType === 'both' || serviceType === 'hair') {
+        
+        // For hair only
+        if (serviceType === 'hair') {
           steps.push("Hair and Makeup - Hair Services");
+          steps.push("Hair and Makeup - Inspiration");
+          steps.push("Hair and Makeup - Budget");
         }
-        if (serviceType === 'both' || serviceType === 'makeup') {
+        // For makeup only
+        else if (serviceType === 'makeup') {
           steps.push("Hair and Makeup - Makeup Services");
+          steps.push("Hair and Makeup - Inspiration");
+          steps.push("Hair and Makeup - Budget");
         }
-        steps.push("Hair and Makeup - Inspiration");
-        steps.push("Hair and Makeup - Budget");
+        // For both services
+        else {
+          steps.push("Hair and Makeup - Hair Services");
+          steps.push("Hair and Makeup - Makeup Services");
+          steps.push("Hair and Makeup - Inspiration");
+          steps.push("Hair and Makeup - Budget");
+        }
       } else {
         steps.push(`${request} Details`);
       }
@@ -200,11 +213,11 @@ function MasterRequestFlow() {
       } else if (isRequestType(request, "Videography")) {
         index += 4;
       } else if (isRequestType(request, "Catering")) {
-        index += 3;
+        index += 3; // Changed from 2 to 3 to account for the new step
       } else if (isRequestType(request, "DJ")) {
         index += 3;
       } else if (isRequestType(request, "Florist")) {
-        index += 5; // Changed from 4 to 5 to account for the inspiration step
+        index += 5;
       } else if (isRequestType(request, "HairAndMakeup")) {
         index += 5;
       } else {
@@ -269,7 +282,7 @@ function MasterRequestFlow() {
         } else if (isRequestType(currentRequest, "Videography")) {
           return videographySubStep === 3;
         } else if (isRequestType(currentRequest, "Catering")) {
-          return cateringSubStep === 1; // Changed from 2 to 1 since we only have 2 steps
+          return cateringSubStep === 2; // Changed from 2 to 2 since we only have 3 steps
         } else if (isRequestType(currentRequest, "DJ")) {
           return djSubStep === 2;
         } else if (isRequestType(currentRequest, "Florist")) {
@@ -725,12 +738,22 @@ function MasterRequestFlow() {
         }
         currentIndex += 4;
       } else if (isRequestType(request, "HairAndMakeup")) {
-        if (stepIndex < currentIndex + 5) {
+        const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+        let maxSteps;
+        if (serviceType === 'hair') {
+          maxSteps = 4; // Basic -> Hair -> Inspiration -> Budget
+        } else if (serviceType === 'makeup') {
+          maxSteps = 4; // Basic -> Makeup -> Inspiration -> Budget
+        } else {
+          maxSteps = 5; // Basic -> Hair -> Makeup -> Inspiration -> Budget
+        }
+        
+        if (stepIndex < currentIndex + maxSteps) {
           setCurrentStep(i + 1);
           setHairAndMakeupSubStep(stepIndex - currentIndex);
           return;
         }
-        currentIndex += 5;
+        currentIndex += maxSteps;
       } else {
         if (stepIndex === currentIndex) {
           setCurrentStep(i + 1);
@@ -754,7 +777,7 @@ function MasterRequestFlow() {
       } else if (isRequestType(request, "Videography")) {
         requestOffset += 4;
       } else if (isRequestType(request, "Catering")) {
-        requestOffset += 2; // Changed from 3 to 2 since we now have 2 steps
+        requestOffset += 3; // Changed from 2 to 3 to account for the new step
       } else if (isRequestType(request, "DJ")) {
         requestOffset += 3;
       } else if (isRequestType(request, "Florist")) {
@@ -778,7 +801,7 @@ function MasterRequestFlow() {
       if (isRequestType(requestType, "Photography") || isRequestType(requestType, "Videography")) {
         return stepIndex === requestOffset + 3;
       } else if (isRequestType(requestType, "Catering")) {
-        return stepIndex === requestOffset + 1; // Changed from +2 to +1 since budget is now the second step
+        return stepIndex === requestOffset + 2; // Changed from +2 to +2 since budget is now the second step
       } else if (isRequestType(requestType, "DJ")) {
         return stepIndex === requestOffset + 2;
       } else if (isRequestType(requestType, "Florist")) {
@@ -786,50 +809,90 @@ function MasterRequestFlow() {
       } else if (isRequestType(requestType, "HairAndMakeup")) {
         const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
         if (serviceType === 'hair') {
-          return stepIndex === requestOffset + 3;
+          return stepIndex === requestOffset + 3; // Basic -> Hair -> Inspiration -> Budget
         } else if (serviceType === 'makeup') {
-          return stepIndex === requestOffset + 3;
+          return stepIndex === requestOffset + 3; // Basic -> Makeup -> Inspiration -> Budget
+        } else {
+          return stepIndex === requestOffset + 4; // Basic -> Hair -> Makeup -> Inspiration -> Budget
         }
-        return stepIndex === requestOffset + 4;
       }
       return false;
     };
 
-    // Check if we're on the inspiration step for Florist
+    // Check if we're on the inspiration step for Florist or HairAndMakeup
     const isInspirationStep = (requestType) => {
       if (isRequestType(requestType, "Florist")) {
         return stepIndex === requestOffset + 3; // Inspiration is the 4th step (after offset)
+      } else if (isRequestType(requestType, "HairAndMakeup")) {
+        const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+        if (serviceType === 'hair') {
+          return stepIndex === requestOffset + 2; // Basic -> Hair -> Inspiration -> Budget
+        } else if (serviceType === 'makeup') {
+          return stepIndex === requestOffset + 2; // Basic -> Makeup -> Inspiration -> Budget
+        } else {
+          return stepIndex === requestOffset + 3; // Basic -> Hair -> Makeup -> Inspiration -> Budget
+        }
       }
       return false;
     };
 
     // First check if we're on the inspiration step
     if (isInspirationStep(currentRequest)) {
-      return (
-        <div className="form-scrollable-content">
-          <FloristStepper
-            formData={formData}
-            setFormData={setFormData}
-            currentStep={currentStep}
-            setCurrentStep={setCurrentStep}
-            subStep={floristSubStep}
-            setSubStep={setFloristSubStep}
-          />
-        </div>
-      );
+      if (isRequestType(currentRequest, "HairAndMakeup")) {
+        return (
+          <div className="form-scrollable-content">
+            <HairAndMakeupStepper
+              formData={formData}
+              setFormData={setFormData}
+              currentStep={currentStep}
+              setCurrentStep={setCurrentStep}
+              subStep={hairAndMakeupSubStep}
+              setSubStep={setHairAndMakeupSubStep}
+            />
+          </div>
+        );
+      } else if (isRequestType(currentRequest, "Florist")) {
+        return (
+          <div className="form-scrollable-content">
+            <FloristStepper
+              formData={formData}
+              setFormData={setFormData}
+              currentStep={currentStep}
+              setCurrentStep={setCurrentStep}
+              subStep={floristSubStep}
+              setSubStep={setFloristSubStep}
+            />
+          </div>
+        );
+      }
     }
 
     // Then check if we're on the budget step
     if (isBudgetStep(currentRequest)) {
-      return (
-        <div className="form-scrollable-content">
-          <BudgetForm
-            formData={formData}
-            setFormData={setFormData}
-            category={currentRequest}
-          />
-        </div>
-      );
+      if (isRequestType(currentRequest, "HairAndMakeup")) {
+        return (
+          <div className="form-scrollable-content">
+            <HairAndMakeupStepper
+              formData={formData}
+              setFormData={setFormData}
+              currentStep={currentStep}
+              setCurrentStep={setCurrentStep}
+              subStep={hairAndMakeupSubStep}
+              setSubStep={setHairAndMakeupSubStep}
+            />
+          </div>
+        );
+      } else {
+        return (
+          <div className="form-scrollable-content">
+            <BudgetForm
+              formData={formData}
+              setFormData={setFormData}
+              category={currentRequest}
+            />
+          </div>
+        );
+      }
     }
 
     // Render the appropriate stepper for other steps
@@ -1144,7 +1207,7 @@ function MasterRequestFlow() {
             'Setup & Cleanup': formatArrayValue(eventDetails.setupCleanup, 'setupCleanup'),
             'Serving Staff': formatArrayValue(eventDetails.servingStaff, 'servingStaff'),
             'Dining Items': formatArrayValue(eventDetails.diningItems, 'diningItems'),
-            'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
+            'Budget Range': formatArrayValue(eventDetails.priceRange, 'priceRange')
           };
           break;
         case 'dj':

@@ -804,7 +804,15 @@ const BudgetForm = ({ formData, setFormData, category }) => {
   };
 
   const handleBudgetRangeChange = (e) => {
-    if (category.toLowerCase() === 'dj' || category.toLowerCase() === 'catering') {
+    if (category.toLowerCase() === 'catering') {
+      setFormData(prev => ({
+        ...prev,
+        eventDetails: {
+          ...prev.eventDetails,
+          priceRange: e.target.value
+        }
+      }));
+    } else if (category.toLowerCase() === 'dj') {
       setFormData(prev => ({
         ...prev,
         eventDetails: {
@@ -1064,7 +1072,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
           <label className="custom-label">Budget Range</label>
           <select
             className="custom-input"
-            value={category.toLowerCase() === 'dj'
+            value={category.toLowerCase() === 'catering' || category.toLowerCase() === 'dj'
               ? formData.eventDetails?.priceRange || '' 
               : formData.requests[category]?.priceRange || ''}
             onChange={handleBudgetRangeChange}
