@@ -58,12 +58,12 @@ import MyRequests from "./components/Individual/MyRequests";
 import EditRequest from "./components/Individual/EditRequest";
 //
 // Business Imports
-import BusinessDashboard from './components/Business/BusinessDashboard';
-import EditBid from './components/Business/EditBid';
-import Portfolio from './components/Business/Portfolio/Portfolio';
-import Gallery from './components/Business/Portfolio/Gallery';
-import VerificationApplication from './components/Business/VerificationApplication';
-import VendorHomepage from './components/VendorHomepage';
+import BusinessDashboard from "./components/Business/BusinessDashboard";
+import EditBid from "./components/Business/EditBid";
+import Portfolio from "./components/Business/Portfolio/Portfolio";
+import Gallery from "./components/Business/Portfolio/Gallery";
+import VerificationApplication from "./components/Business/VerificationApplication";
+import VendorHomepage from "./components/VendorHomepage";
 
 // Misc Imports
 import Homepage from "./components/Homepage";
@@ -90,41 +90,256 @@ import PaymentStatus from "./components/Stripe/PaymentStatus";
 import ScrollToTop from "./components/ScrollToTop";
 
 // Add this import
-import BidsPage from './components/Individual/BidsPage'
-import PrivateRoute from './components/PrivateRoute';
-import ArticleNavigation from './components/Article/ArticleNavigation';
-import ArticleDetail from './components/Article/ArticleDetail';
-import WeddingPhotographerCostGuide from './components/Article/WeddingPhotographerCostGuide';
-import WeddingVideographerCostGuide from './components/Article/WeddingVideographerCostGuide';
-import WeddingCateringCostGuide from './components/Article/WeddingCateringCostGuide';
-import VideographyRequest from './components/Request/Videography/VideographyRequest';
-import DjRequest from './components/Request/DJ/DjRequest';
-import HairAndMakeUpRequest from './components/Request/Beauty/HairAndMakeUpRequest';
-import FloristRequest from './components/Request/Florist/FloristRequest'; // Add this import
-import CateringRequest from './components/Request/Catering/CateringRequest'; // Add this import
-import WeddingFloristCostGuide from './components/Article/WeddingFloristCostGuide';
-import WeddingDJCostGuide from './components/Article/WeddingDJCostGuide';
-import WeddingHairMakeupCostGuide from './components/Article/WeddingHairMakeupCostGuide';
-import UtahPhotographyCostGuide from './components/Article/UtahPhotographyCostGuide';
-import NewsletterLanding from './components/NewsletterLanding';
-import Unsubscribe from './components/Unsubscribe';
-import LocationBanner from './components/LocationBanner/LocationBanner';
-import UtahWeddingVideographerGuide from './components/Article/UtahWeddingVideographerGuide';
-import WeddingMarketGuide from './components/WeddingGuide/WeddingMarketGuide';
-import VendorList from './components/VendorList/VendorList';
-import VendorListWithFilters from './components/VendorListWithFilters/VendorListWithFilters';
-import LocationBasedVendors from './pages/LocationBasedVendors';
-import WeddingVibeQuizPage from './pages/WeddingVibeQuiz';
-import UtahCateringCosts from './components/Article/UtahCateringCosts';
-import UtahDJCosts from './components/Article/UtahDJCosts';
-import RelatedArticles from './components/Article/RelatedArticles';
-import WeddingVibeQuiz from './pages/WeddingVibeQuiz';
-
+import BidsPage from "./components/Individual/BidsPage";
+import PrivateRoute from "./components/PrivateRoute";
+import ArticleNavigation from "./components/Article/ArticleNavigation";
+import ArticleDetail from "./components/Article/ArticleDetail";
+import WeddingPhotographerCostGuide from "./components/Article/WeddingPhotographerCostGuide";
+import WeddingVideographerCostGuide from "./components/Article/WeddingVideographerCostGuide";
+import WeddingCateringCostGuide from "./components/Article/WeddingCateringCostGuide";
+import VideographyRequest from "./components/Request/Videography/VideographyRequest";
+import DjRequest from "./components/Request/DJ/DjRequest";
+import HairAndMakeUpRequest from "./components/Request/Beauty/HairAndMakeUpRequest";
+import FloristRequest from "./components/Request/Florist/FloristRequest"; // Add this import
+import CateringRequest from "./components/Request/Catering/CateringRequest"; // Add this import
+import WeddingFloristCostGuide from "./components/Article/WeddingFloristCostGuide";
+import WeddingDJCostGuide from "./components/Article/WeddingDJCostGuide";
+import WeddingHairMakeupCostGuide from "./components/Article/WeddingHairMakeupCostGuide";
+import UtahPhotographyCostGuide from "./components/Article/UtahPhotographyCostGuide";
+import NewsletterLanding from "./components/NewsletterLanding";
+import Unsubscribe from "./components/Unsubscribe";
+import LocationBanner from "./components/LocationBanner/LocationBanner";
+import UtahWeddingVideographerGuide from "./components/Article/UtahWeddingVideographerGuide";
+import WeddingMarketGuide from "./components/WeddingGuide/WeddingMarketGuide";
+import VendorList from "./components/VendorList/VendorList";
+import VendorListWithFilters from "./components/VendorListWithFilters/VendorListWithFilters";
+import LocationBasedVendors from "./pages/LocationBasedVendors";
+import WeddingVibeQuizPage from "./pages/WeddingVibeQuiz";
+import UtahCateringCosts from "./components/Article/UtahCateringCosts";
+import UtahDJCosts from "./components/Article/UtahDJCosts";
+import RelatedArticles from "./components/Article/RelatedArticles";
+import WeddingVibeQuiz from "./pages/WeddingVibeQuiz";
+import { subscribeToPush } from './hooks/usePushNotification';
 
 function App() {
+  subscribeToPush();
   const [eventType, setEventType] = useState("");
   const [eventDetails, setEventDetails] = useState({});
 
+  return (
+    <HelmetProvider>
+      <Router>
+        <ScrollToTop />
+        <div className="app-container">
+          <LocationBanner />
+          <Navbar />
+          <div className="content">
+            <Routes>
+              {/* Layout Routes */}
+              <Route path="/" element={<Homepage />} />
+              <Route path="/for-vendors" element={<VendorHomepage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-use" element={<TermsOfUse />} />
+              <Route path="/about" element={<AboutAndContact />} />
+              {/* Bid Routes */}
+              <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
+              <Route path="/bid-accepted" element={<BidAccepted />} />
+              <Route path="/bid-success" element={<BidSuccess />} />
+              {/* Request Routes */}
+              <Route
+                path="/request-categories"
+                element={<RequestCategories />}
+              />
+              <Route path="/success-request" element={<SuccessRequest />} />
+              {/* New Staged Request Routes */}
+              <Route path="/request-form" element={<MultiStepRequestForm />} />
+              <Route path="/success-request" element={<SuccessRequest />} />
+              {/* Event Routes */}
+              <Route
+                path="/select-event"
+                element={<SelectEvent setEventType={setEventType} />}
+              />
+              <Route
+                path="/event-details"
+                element={
+                  <EventDetails
+                    eventType={eventType}
+                    setEventDetails={setEventDetails}
+                  />
+                }
+              />
+              <Route
+                path="/event-photos"
+                element={
+                  <EventPhotos
+                    eventType={eventType}
+                    setEventDetails={setEventDetails}
+                  />
+                }
+              />
+              <Route
+                path="/personal-details"
+                element={
+                  <PersonalDetails
+                    eventType={eventType}
+                    setEventDetails={setEventDetails}
+                  />
+                }
+              />
+              <Route
+                path="/event-summary"
+                element={
+                  <EventSummary
+                    eventType={eventType}
+                    eventDetails={eventDetails}
+                  />
+                }
+              />
+              {/* Profile Routes */}
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/success-signup" element={<SuccessSignup />} />
+              <Route
+                path="/choose-pricing-plan"
+                element={<ChoosePricingPlan />}
+              />
+              <Route path="/signin" element={<SignIn />} />
+              <Route
+                path="/request-password-reset"
+                element={<ResetPassword />}
+              />
+              <Route path="/reset-password" element={<UpdatePassword />} />
+              <Route path="/createaccount" element={<CreateAccount />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              {/* Individual Routes */}
+              <Route path="/my-dashboard" element={<MyDashboard />} />
+              <Route path="/my-requests" element={<MyRequests />} />
+              <Route path="/edit-request/:type/:id" element={<EditRequest />} />
+              {/* Test API Routes */}
+              <Route path="/test-email" element={<TestEmail />} />
+              {/* Business Routes */}
+              <Route path="/open-requests" element={<OpenRequests />} />
+              <Route path="/dashboard" element={<BusinessDashboard />} />
+              <Route
+                path="/edit-bid/:requestId/:bidId"
+                element={<EditBid />}
+              />{" "}
+              {/* Dynamic URL for editing bids */}
+              <Route
+                path="/verification-application"
+                element={<VerificationApplication />}
+              />
+              {/* Dynamic URL for viewing portfolio */}
+              <Route path="/portfolio/:businessId" element={<Portfolio />} />
+              <Route
+                path="/portfolio/:businessId/gallery"
+                element={<Gallery />}
+              />
+              {/* Misc Routes */}
+              <Route path="/contact-us" element={<ContactForm />} />
+              <Route path="/about-us" element={<AboutUs />} />
+              {/* Messaging Routes */}
+              <Route path="/messaging" element={<MessagingView />} />
+              <Route path="/chat" element={<ChatInterface />} />
+              {/* Spanish Routes */}
+              <Route path="/inicio" element={<HomepageES />} />
+              <Route path="/contactenos" element={<ContactFormES />} />
+              {/* Stripe Routes */}
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/stripe-setup" element={<StripeOnboarding />} />
+              <Route path="/checkout" element={<EmbeddedCheckoutForm />} />
+              <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+              <Route path="/payment-successful" element={<SuccessPayment />} />
+              <Route path="/payment-status" element={<PaymentStatus />} />
+              {/* Admin Routes */}
+              <Route
+                path="/admin-dashboard"
+                element={
+                  <PrivateRoute>
+                    <AdminDashboard />
+                  </PrivateRoute>
+                }
+              />
+              {/* Combined Bids Route */}
+              <Route
+                path="/bids"
+                element={
+                  <PrivateRoute>
+                    <BidsPage />
+                  </PrivateRoute>
+                }
+              />
+              {/* Articles Route */}
+              <Route path="/articles" element={<ArticleNavigation />} />
+              <Route path="/articles/:articleId" element={<ArticleDetail />} />
+              <Route
+                path="/articles/utah-wedding-videographer-guide"
+                element={<UtahWeddingVideographerGuide />}
+              />
+              <Route
+                path="/articles/utah-catering-costs"
+                element={<UtahCateringCosts />}
+              />
+              <Route path="/articles/utah-dj-costs" element={<UtahDJCosts />} />
+              <Route
+                path="/articles/wedding-market-guide"
+                element={<WeddingMarketGuide />}
+              />
+              <Route
+                path="/articles/wedding-vibe-quiz"
+                element={<WeddingVibeQuiz />}
+              />
+              <Route
+                path="/articles/related-articles"
+                element={<RelatedArticles />}
+              />
+              {/* Photography Routes */}
+              <Route
+                path="/request/photography"
+                element={<PhotographyRequest />}
+              />
+              <Route
+                path="/request/videography"
+                element={<VideographyRequest />}
+              />
+              <Route path="/request/dj" element={<DjRequest />} />
+              <Route
+                path="/request/beauty"
+                element={<HairAndMakeUpRequest />}
+              />
+              <Route path="/request/florist" element={<FloristRequest />} />
+              <Route path="/request/catering" element={<CateringRequest />} />
+              <Route path="/welcome" element={<NewsletterLanding />} />
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
+              <Route
+                path="/wedding-market-guide"
+                element={<WeddingMarketGuide />}
+              />
+              <Route path="/vendors" element={<VendorListWithFilters />} />
+              {/* LocationBasedVendors Routes - Order matters! Most specific to least specific */}
+              <Route
+                path="/:type/:category/:city"
+                element={<LocationBasedVendors />}
+              />
+              <Route
+                path="/:type/:category"
+                element={<LocationBasedVendors />}
+              />
+              <Route
+                path="/:category/:city"
+                element={<LocationBasedVendors />}
+              />
+              <Route path="/:category" element={<LocationBasedVendors />} />
+              <Route
+                path="/wedding-vibe-quiz"
+                element={<WeddingVibeQuizPage />}
+              />
+            </Routes>
+          </div>
+          <Footer />
+        </div>
+      </Router>
+    </HelmetProvider>
+  );
     return (
         <HelmetProvider>
             <Router>
