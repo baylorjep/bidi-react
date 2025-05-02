@@ -17,6 +17,7 @@
 /* Portfolio Layout */
 .portfolio-layout {
   display: flex;
+  flex-direction: column;
   gap: 10px;
   min-height: 410px;
   width: 100%;
@@ -1073,7 +1074,7 @@
   }
 
   .portfolio-images-desktop {
-    display: block;
+    display: flex;
   }
 }
 
