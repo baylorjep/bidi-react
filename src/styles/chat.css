@@ -6,6 +6,52 @@
   --bidi-bg-light: #f8f9fa;
 }
 
+
+.dashboard-main .chat-app {
+  height: auto; /* Let dashboard handle height */
+  display: flex;
+  background: transparent; /* Let dashboard control bg */
+}
+
+.dashboard-main .chat-sidebar {
+  border-right: none;
+  background: none;
+  padding: 0;
+}
+
+.dashboard-main .chat-main {
+  background: #f9f6fb;
+  padding: 0;
+}
+
+/* Optional: override bubble colors to match mockup */
+.dashboard-main .message-bubble.sent {
+  background: #a328f4;
+  border-radius: 1.2rem 1.2rem 0 1.2rem; /* subtle tail shape */
+}
+.dashboard-main .message-bubble.received {
+  background: #efecf8;
+  border-radius: 1.2rem 1.2rem 1.2rem 0;
+}
+
+/* Adjust message input bar */
+.dashboard-main .chat-footer {
+  border-top: 1px solid #eee;
+  background: white;
+}
+
+/* Scale down fonts inside */
+.dashboard-main .chat-app,
+.dashboard-main .chat-sidebar,
+.dashboard-main .chat-main {
+  font-size: 0.95rem;
+}
+
+/* Prevent overlap with typing indicator */
+.dashboard-main .chat-body {
+  padding-bottom: 3rem; /* space for input bar */
+}
+
 /* Main layout */
 .chat-app {
   display: flex;

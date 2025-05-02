@@ -97,7 +97,7 @@ export default function MessagingView({
 
   // Auto-scroll when new messages come in
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages, isTyping]);
 
   // 3) Send a new message
