@@ -544,7 +544,8 @@ function MasterRequestFlow() {
           wedding_details: formData.commonDetails.eventType === 'Wedding' ? JSON.stringify(request.weddingDetails || {}) : null,
           num_people: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
           date_type: formData.commonDetails.dateFlexibility || null,
-          indoor_outdoor: formData.commonDetails.indoorOutdoor || null
+          indoor_outdoor: formData.commonDetails.indoorOutdoor || null,
+          coupon_code: appliedCoupon?.code || null
         };
 
         // Insert into photography_requests table
@@ -695,7 +696,8 @@ function MasterRequestFlow() {
           wedding_details: formData.commonDetails.eventType === 'Wedding' ? JSON.stringify(request.weddingDetails || {}) : null,
           num_people: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
           date_type: formData.commonDetails.dateFlexibility || null,
-          indoor_outdoor: formData.commonDetails.indoorOutdoor || null
+          indoor_outdoor: formData.commonDetails.indoorOutdoor || null,
+          coupon_code: appliedCoupon?.code || null
         };
 
         console.log('Preparing to insert videography request:', videographyRequestData);
@@ -846,7 +848,8 @@ function MasterRequestFlow() {
           additional_comments: request.additionalInfo || '',
           price_range: request.priceRange || 'Not specified',
           flower_preferences_text: request.flowerPreferences?.text || '',
-          floral_arrangements: request.floralArrangements || {}
+          floral_arrangements: request.floralArrangements || {},
+          coupon_code: appliedCoupon?.code || null
         };
 
         // Insert into florist_requests table
@@ -921,7 +924,8 @@ function MasterRequestFlow() {
           lashes_included: request.lashesIncluded || '',
           trial_session_makeup: request.trialSessionMakeup || '',
           group_discount_inquiry: request.groupDiscountInquiry || '',
-          on_site_service_needed: request.onSiteServiceNeeded || ''
+          on_site_service_needed: request.onSiteServiceNeeded || '',
+          coupon_code: appliedCoupon?.code || null
         };
 
         // Insert into beauty_requests table
@@ -999,7 +1003,8 @@ function MasterRequestFlow() {
           estimated_guests: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
           date_flexibility: formData.commonDetails.dateFlexibility || null,
           indoor_outdoor: formData.commonDetails.indoorOutdoor || null,
-          special_requests: request.additionalInfo || null
+          special_requests: request.additionalInfo || null,
+          coupon_code: appliedCoupon?.code || null
         };
 
         console.log('Preparing to insert DJ request:', djRequestData);
@@ -1043,7 +1048,8 @@ function MasterRequestFlow() {
           special_requests: request.specialRequests || null,
           additional_info: request.additionalInfo || null,
           budget_range: request.priceRange || 'Not specified',
-          indoor_outdoor: formData.commonDetails.indoorOutdoor || null
+          indoor_outdoor: formData.commonDetails.indoorOutdoor || null,
+          coupon_code: appliedCoupon?.code || null
         };
 
         console.log('Inserting catering request:', cateringRequestData);
