@@ -14,16 +14,23 @@ const BudgetForm = ({ formData, setFormData, category }) => {
   const getBudgetRanges = () => {
     switch (category.toLowerCase()) {
       case 'photography':
+        return [
+          { min: 0, max: 1000, value: '0-1000', label: '$0 - $1,000' },
+          { min: 1000, max: 2000, value: '1000-2000', label: '$1,000 - $2,000' },
+          { min: 2000, max: 3000, value: '2000-3000', label: '$2,000 - $3,000' },
+          { min: 3000, max: 4000, value: '3000-4000', label: '$3,000 - $4,000' },
+          { min: 4000, max: 5000, value: '4000-5000', label: '$4,000 - $5,000' },
+          { min: 5000, max: Infinity, value: '5000+', label: '$5,000+' }
+        ];
       case 'videography':
         return [
           { min: 0, max: 500, value: '0-500', label: '$0 - $500' },
           { min: 500, max: 1000, value: '500-1000', label: '$500 - $1,000' },
           { min: 1000, max: 1500, value: '1000-1500', label: '$1,000 - $1,500' },
           { min: 1500, max: 2000, value: '1500-2000', label: '$1,500 - $2,000' },
-          { min: 2000, max: 4000, value: '2000-4000', label: '$2,000 - $4,000' },
-          { min: 4000, max: 6000, value: '4000-6000', label: '$4,000 - $6,000' },
-          { min: 6000, max: 8000, value: '6000-8000', label: '$6,000 - $8,000' },
-          { min: 8000, max: Infinity, value: '8000+', label: '$8,000+' }
+          { min: 2000, max: 2500, value: '2000-2500', label: '$2,000 - $2,500' },
+          { min: 2500, max: 3000, value: '2500-3000', label: '$2,500 - $3,000' },
+          { min: 3000, max: Infinity, value: '3000+', label: '$3,000+' }
         ];
       case 'catering':
         return [
@@ -111,6 +118,12 @@ const BudgetForm = ({ formData, setFormData, category }) => {
       if (deliverables.rawFiles) basePrice += 300;
       if (deliverables.engagement) basePrice += 500;
 
+      // Calculate range based on price quality preference
+      const qualityMultiplier = 1 + (priceQualityPreference / 100);
+      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
+      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
+
+      setRecommendedBudget({ min: minPrice, max: maxPrice });
     } else if (category.toLowerCase() === 'videography') {
       // Base price based on duration
       if (requestData.duration) {
@@ -137,6 +150,13 @@ const BudgetForm = ({ formData, setFormData, category }) => {
       if (deliverables.rawFootage) basePrice += 400;
       if (deliverables.droneFootage) basePrice += 600;
       if (deliverables.sameDayEdit) basePrice += 1000;
+
+      // Calculate range based on price quality preference
+      const qualityMultiplier = 1 + (priceQualityPreference / 100);
+      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
+      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
+
+      setRecommendedBudget({ min: minPrice, max: maxPrice });
     } else if (category.toLowerCase() === 'dj') {
       // Base price for DJ services
       basePrice = 1000; // Base rate for a standard DJ service
@@ -163,6 +183,13 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         const coveragePoints = Object.values(weddingDetails).filter(Boolean).length;
         basePrice += coveragePoints * 200; // $200 per coverage point
       }
+
+      // Calculate range based on price quality preference
+      const qualityMultiplier = 1 + (priceQualityPreference / 100);
+      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
+      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
+
+      setRecommendedBudget({ min: minPrice, max: maxPrice });
     } else if (category.toLowerCase() === 'hairandmakeup') {
       // Base price for number of people
       const numPeople = parseInt(formData.requests.HairAndMakeup?.numPeople) || 1;
@@ -213,14 +240,12 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         basePrice = Math.max(basePrice, numPeople * 200); // Ensure minimum $200 per person for groups
       }
 
-      // Debug log to check the calculation
-      console.log('Hair and Makeup Budget Calculation:', {
-        numPeople,
-        basePricePerPerson,
-        serviceType,
-        basePrice,
-        finalPrice: basePrice
-      });
+      // Calculate range based on price quality preference
+      const qualityMultiplier = 1 + (priceQualityPreference / 100);
+      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
+      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
+
+      setRecommendedBudget({ min: minPrice, max: maxPrice });
     } else if (category.toLowerCase() === 'florist') {
       // Initialize insights array for Florist
       const insights = [];
@@ -289,13 +314,12 @@ const BudgetForm = ({ formData, setFormData, category }) => {
       if (additionalServices.cleanup) basePrice += 100;
       if (additionalServices.consultation) basePrice += 150;
 
-      // Debug log to check the calculation
-      console.log('Florist Budget Calculation:', {
-        floralArrangements,
-        additionalServices,
-        basePrice,
-        finalPrice: basePrice
-      });
+      // Calculate range based on price quality preference
+      const qualityMultiplier = 1 + (priceQualityPreference / 100);
+      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
+      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
+
+      setRecommendedBudget({ min: minPrice, max: maxPrice });
 
       // Add budget insights for Florist
       if (floralArrangements.bridalBouquet) {
@@ -458,8 +482,8 @@ const BudgetForm = ({ formData, setFormData, category }) => {
 
       // Calculate range based on price quality preference
       const qualityMultiplier = 1 + (priceQualityPreference / 100);
-      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.15)); // Reduced from 0.2 to 0.15
-      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.15)); // Reduced from 0.2 to 0.15
+      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
+      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
 
       setRecommendedBudget({ min: minPrice, max: maxPrice });
 
@@ -737,18 +761,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
     setPriceQualityPreference(value);
     
     // Update the form data with the new price quality preference
-    if (category.toLowerCase() === 'catering') {
-      setFormData(prev => ({
-        ...prev,
-        requests: {
-          ...prev.requests,
-          Catering: {
-            ...prev.requests.Catering,
-            priceQualityPreference: value.toString()
-          }
-        }
-      }));
-    } else if (category.toLowerCase() === 'photography') {
+    if (category.toLowerCase() === 'photography') {
       setFormData(prev => ({
         ...prev,
         requests: {
@@ -804,15 +817,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
   };
 
   const handleBudgetRangeChange = (e) => {
-    if (category.toLowerCase() === 'catering') {
-      setFormData(prev => ({
-        ...prev,
-        eventDetails: {
-          ...prev.eventDetails,
-          priceRange: e.target.value
-        }
-      }));
-    } else if (category.toLowerCase() === 'dj') {
+    if (category.toLowerCase() === 'catering' || category.toLowerCase() === 'dj') {
       setFormData(prev => ({
         ...prev,
         eventDetails: {

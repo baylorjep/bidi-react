@@ -75,31 +75,125 @@
 
 /* Add styles for the mobile version */
 .mobile-status-bar {
-  padding: 20px;
-  margin: 0 auto;
   width: 100%;
+  margin-bottom: 20px;
 }
 
-/* Style the progress bar container */
-.mobile-status-bar .RSPBprogressBar {
-  height: 12px; /* Increased from 4px */
-  background-color: #d9d9d9;
-  margin: 10px 0;
+.desktop-status-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Style the progress bar filled portion */
-.mobile-status-bar .RSPBprogression {
-  background: #a328f4;
-  height: 12px;
+.step-category {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-/* Remove dot styles as they're no longer needed */
-/* Media query for mobile */
+.step-category.active {
+  background: rgba(163, 40, 244, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.category-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #A328F4;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.step-category.completed .category-indicator {
+  background: #ea3389;
+}
+
+.category-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+}
+
+.category-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 0px;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.step-item:hover {
+  background: rgba(163, 40, 244, 0.05);
+}
+
+.step-item.active {
+  background: rgba(163, 40, 244, 0.1);
+}
+
+.step-item.completed {
+  opacity: 0.8;
+}
+
+.step-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #E0E0E0;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.step-item.completed .step-indicator {
+  background: #ea3389;
+  color: white;
+}
+
+.step-name {
+  color: #666;
+  font-size: 14px;
+}
+
+.step-item.active .step-name {
+  color: #333;
+  font-weight: 500;
+}
+
+/* Mobile styles */
 @media (max-width: 1350px) {
-  .status-bar-container {
+  .desktop-status-bar {
     display: none;
   }
-
+  
   .mobile-status-bar {
     display: block;
   }

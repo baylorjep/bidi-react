@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import { v4 as uuidv4 } from 'uuid';
+import { saveFormData, loadFormData, clearFormData } from '../../utils/localStorage';
 
 function MasterRequestForm({ formData, setFormData, onNext }) {
   const navigate = useNavigate();
@@ -18,20 +19,12 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
 
   // Load saved data from localStorage on component mount
   useEffect(() => {
-    const savedData = localStorage.getItem('eventLogistics');
+    const savedData = loadFormData();
     if (savedData) {
-      try {
-        const parsedData = JSON.parse(savedData);
-        setFormData(prev => ({
-          ...prev,
-          commonDetails: {
-            ...prev.commonDetails,
-            ...parsedData
-          }
-        }));
-      } catch (err) {
-        console.error('Error loading saved data:', err);
-      }
+      setFormData(prev => ({
+        ...prev,
+        ...savedData
+      }));
     }
   }, [setFormData]);
 
@@ -46,11 +39,7 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
       };
       
       // Save to localStorage whenever data changes
-      try {
-        localStorage.setItem('eventLogistics', JSON.stringify(newData.commonDetails));
-      } catch (err) {
-        console.error('Error saving to localStorage:', err);
-      }
+      saveFormData(newData);
       
       return newData;
     });
@@ -119,8 +108,8 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
         }
       }
 
-      // Clear form data and navigate to success page
-      localStorage.removeItem('masterRequest');
+      // Clear form data after successful submission
+      clearFormData();
       onNext();
 
     } catch (err) {
