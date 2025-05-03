@@ -203,7 +203,7 @@ function Navbar() {
 
             {(userRole === "individual" || userRole === "both") && (
               <li className="nav-item">
-                <Link className="nav-link me-lg-3" to="/messages" onClick={closeMenu}>
+                <Link className="nav-link me-lg-3" to="/chat" onClick={closeMenu}>
                   Messages
                 </Link>
               </li>
