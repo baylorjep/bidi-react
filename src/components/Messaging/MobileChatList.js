@@ -67,6 +67,21 @@ export default function MobileChatList({ currentUserId, userType }) {
     <div style={{ padding: "1rem" }}>
       <h2>Messages</h2>
       <ul style={{ listStyle: "none", padding: 0 }}>
+      {chats.length === 0 && (
+        <div style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
+            <p style={{ fontSize: "1.1rem" }}>📨 No messages yet.</p>
+            <p style={{ fontSize: "0.9rem" }}>
+            You can message a vendor from your{" "}
+            <span
+                style={{ color: "#A328F4", textDecoration: "underline", cursor: "pointer" }}
+                onClick={() => navigate("/bids")}
+            >
+                Bids page
+            </span>
+            .
+            </p>
+        </div>
+        )}
         {chats.map((chat) => (
           <li
             key={chat.id}
@@ -87,6 +102,7 @@ export default function MobileChatList({ currentUserId, userType }) {
         ))}
       </ul>
     {/* Bottom Navigation Bar */}
+    {userType === "business" && (
     <nav className="bottom-nav">
   <button onClick={() => { localStorage.setItem("activeSection", "dashboard"); navigate("/dashboard"); }}>
     <div className="nav-item">
@@ -119,6 +135,7 @@ export default function MobileChatList({ currentUserId, userType }) {
     </div>
   </button>
 </nav>
+)}
     </div>
   );
 }

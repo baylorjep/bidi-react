@@ -201,6 +201,14 @@ function Navbar() {
               </li>
             )}
 
+            {(userRole === "individual" || userRole === "both") && (
+              <li className="nav-item">
+                <Link className="nav-link me-lg-3" to="/messages" onClick={closeMenu}>
+                  Messages
+                </Link>
+              </li>
+            )}
+
             {(userRole === "business" || userRole === "both") && (
               <li className="nav-item">
                 <Link className="nav-link me-lg-3" to="/dashboard" onClick={closeMenu}>
