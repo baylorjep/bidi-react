@@ -1075,6 +1075,7 @@
 
   .portfolio-images-desktop {
     display: flex;
+    gap: 10px;
   }
 }
 

@@ -21,9 +21,9 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const [draggedElement, setDraggedElement] = useState(null);
   const [dragFeedback, setDragFeedback] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isCropping, setIsCropping] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState(null);
 
   useEffect(() => {
@@ -492,25 +492,23 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       canvas.width = 400;
       canvas.height = 400;
 
-      // Calculate scaling factors
+      // Calculate scaling factors based on the original image and crop area
       const scaleX = image.width / pixelCrop.width;
       const scaleY = image.height / pixelCrop.height;
       const scale = Math.min(scaleX, scaleY);
 
-      // Calculate dimensions to maintain aspect ratio
+      // Calculate the actual crop dimensions in the original image
       const cropWidth = pixelCrop.width * scale;
       const cropHeight = pixelCrop.height * scale;
 
-      // Ensure crop coordinates are within bounds
-      const maxX = image.width - cropWidth;
-      const maxY = image.height - cropHeight;
-      const cropX = Math.max(0, Math.min(pixelCrop.x * scale, maxX));
-      const cropY = Math.max(0, Math.min(pixelCrop.y * scale, maxY));
+      // Calculate the actual crop position in the original image
+      const cropX = pixelCrop.x * scale;
+      const cropY = pixelCrop.y * scale;
 
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw the image
+      // Draw the cropped portion of the image
       ctx.drawImage(
         image,
         cropX,
@@ -565,7 +563,28 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
 
-  // Add function to handle crop confirmation
+  // Modify handleResizeProfilePic to remove zoom calculations
+  const handleResizeProfilePic = async () => {
+    try {
+      if (!profilePic || profilePic === "/images/default.jpg") {
+        alert("No profile picture to resize");
+        return;
+      }
+
+      // Create a temporary URL for the cropper
+      const response = await fetch(profilePic);
+      const blob = await response.blob();
+      const imageUrl = URL.createObjectURL(blob);
+      setTempImageUrl(imageUrl);
+      setIsResizing(true);
+      setIsCropping(true);
+    } catch (error) {
+      console.error("Error preparing image for resize:", error);
+      alert("Failed to prepare image for resizing. Please try again.");
+    }
+  };
+
+  // Modify handleCropConfirm to handle both new uploads and resizing
   const handleCropConfirm = async () => {
     try {
       setUploadingProfile(true);
@@ -651,6 +670,14 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
         .single();
 
       if (existingProfile) {
+        // Delete old file if resizing
+        if (isResizing) {
+          const oldFilePath = profilePic.split("/profile-photos/")[1];
+          await supabase.storage
+            .from('profile-photos')
+            .remove([oldFilePath]);
+        }
+
         await supabase
           .from('profile_photos')
           .update({ photo_url: photoUrl, file_path: filePath })
@@ -670,6 +697,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
 
       setProfilePic(photoUrl);
       setIsCropping(false);
+      setIsResizing(false);
       URL.revokeObjectURL(tempImageUrl);
       URL.revokeObjectURL(imgUrl);
       setTempImageUrl(null);
@@ -681,9 +709,10 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     }
   };
 
-  // Add function to handle crop cancellation
+  // Modify handleCropCancel to handle resizing state
   const handleCropCancel = () => {
     setIsCropping(false);
+    setIsResizing(false);
     URL.revokeObjectURL(tempImageUrl);
     setTempImageUrl(null);
   };
@@ -1034,13 +1063,6 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     document.removeEventListener('mouseup', handleMouseUp);
   };
 
-  // Add function to handle zoom changes
-  const handleZoomChange = (newZoom) => {
-    // Limit maximum zoom to prevent black image issue
-    const maxZoom = 3;
-    setZoom(Math.min(newZoom, maxZoom));
-  };
-
   return (
     isOpen && (
       <div className="edit-portfolio-modal">
@@ -1072,10 +1094,9 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                 <Cropper
                   image={tempImageUrl}
                   crop={crop}
-                  zoom={zoom}
+                  zoom={1}
                   aspect={1}
                   onCropChange={setCrop}
-                  onZoomChange={handleZoomChange}
                   onCropComplete={onCropComplete}
                   showGrid={true}
                   restrictPosition={false}
@@ -1090,7 +1111,8 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                     mediaStyle: {
                       width: '100%',
                       height: '100%',
-                      touchAction: 'none'
+                      touchAction: 'none',
+                      objectFit: 'contain'
                     },
                     cropAreaStyle: {
                       width: '100%',
@@ -1105,16 +1127,6 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                   }}
                 />
                 <div className="cropper-controls">
-                  <input
-                    type="range"
-                    value={zoom}
-                    min={1}
-                    max={3}
-                    step={0.1}
-                    aria-labelledby="Zoom"
-                    onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
-                    className="zoom-slider"
-                  />
                   <button onClick={handleCropConfirm} disabled={uploadingProfile}>
                     {uploadingProfile ? "Saving..." : "Save"}
                   </button>
@@ -1149,13 +1161,22 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                       {uploadingProfile ? "Uploading..." : "Edit Profile Picture"}
                     </button>
                     {profilePic && profilePic !== "/images/default.jpg" && (
-                      <button
-                        className="remove-profile-button"
-                        onClick={handleRemoveProfilePic}
-                        disabled={uploadingProfile}
-                      >
-                        Remove Picture
-                      </button>
+                      <>
+                        <button
+                          className="resize-profile-button"
+                          onClick={handleResizeProfilePic}
+                          disabled={uploadingProfile}
+                        >
+                          Resize Picture
+                        </button>
+                        <button
+                          className="remove-profile-button"
+                          onClick={handleRemoveProfilePic}
+                          disabled={uploadingProfile}
+                        >
+                          Remove Picture
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
