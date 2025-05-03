@@ -1200,7 +1200,22 @@ function HairAndMakeUpRequest() {
                         <>
                             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
                                 <div className="request-subtype">Makeup Style Preferences</div>
-                                <div className="request-info">{formData.eventDetails.makeupStylePreferences}</div>
+                                <div className="request-info">
+                                    {Object.entries(formData.eventDetails.makeupStylePreferences || {})
+                                        .filter(([_, value]) => value)
+                                        .map(([key]) => {
+                                            const styleNames = {
+                                                traditional: 'Classic Bridal',
+                                                natural: 'Natural & Fresh',
+                                                glamorous: 'Glamorous',
+                                                bohemian: 'Boho Beauty',
+                                                elegant: 'Elegant',
+                                                fresh: 'Fresh & Dewy'
+                                            };
+                                            return styleNames[key] || key;
+                                        })
+                                        .join(', ')}
+                                </div>
                             </div>
 
                             <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
