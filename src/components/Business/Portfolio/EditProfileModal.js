@@ -165,7 +165,14 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     for (const file of files) {
       console.log('Processing file:', file.name);
       const fileType = file.type.startsWith('video/') ? 'video' : 'portfolio';
-      const fileName = `${Date.now()}_${file.name}`;
+      
+      // Sanitize the file name by removing spaces and special characters
+      const sanitizedFileName = file.name
+        .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
+        .replace(/_+/g, '_') // Replace multiple underscores with single
+        .replace(/^_+|_+$/g, ''); // Remove leading/trailing underscores
+      
+      const fileName = `${Date.now()}_${sanitizedFileName}`;
       const filePath = `${businessId}/${fileName}`;
       console.log('File path:', filePath);
 
