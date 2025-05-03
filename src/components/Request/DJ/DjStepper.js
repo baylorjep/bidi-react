@@ -292,29 +292,6 @@ function DjStepper({ formData, setFormData, currentStep, setCurrentStep, subStep
                 Special Song Requests
               </label>
             </div>
-
-            <div className="custom-input-container">
-              <select
-                name="indoorOutdoor"
-                value={eventDetails.indoorOutdoor || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  eventDetails: {
-                    ...prev.eventDetails,
-                    indoorOutdoor: e.target.value
-                  }
-                }))}
-                className="custom-input"
-              >
-                <option value="">Select</option>
-                <option value="indoor">Indoor</option>
-                <option value="outdoor">Outdoor</option>
-                <option value="both">Both</option>
-              </select>
-              <label htmlFor="indoorOutdoor" className="custom-label">
-                Indoor or Outdoor
-              </label>
-            </div>
           </div>
         );
 

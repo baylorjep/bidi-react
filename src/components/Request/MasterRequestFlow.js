@@ -152,26 +152,28 @@ function MasterRequestFlow() {
         );
       } else if (isRequestType(request, "HairAndMakeup")) {
         const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
-        steps.push("Hair and Makeup - Basic Details");
-        
-        // For hair only
         if (serviceType === 'hair') {
-          steps.push("Hair and Makeup - Hair Services");
-          steps.push("Hair and Makeup - Inspiration");
-          steps.push("Hair and Makeup - Budget");
-        }
-        // For makeup only
-        else if (serviceType === 'makeup') {
-          steps.push("Hair and Makeup - Makeup Services");
-          steps.push("Hair and Makeup - Inspiration");
-          steps.push("Hair and Makeup - Budget");
-        }
-        // For both services
-        else {
-          steps.push("Hair and Makeup - Hair Services");
-          steps.push("Hair and Makeup - Makeup Services");
-          steps.push("Hair and Makeup - Inspiration");
-          steps.push("Hair and Makeup - Budget");
+          steps.push(
+            "Hair and Makeup - Basic Details",
+            "Hair and Makeup - Hair Services",
+            "Hair and Makeup - Inspiration",
+            "Hair and Makeup - Budget"
+          );
+        } else if (serviceType === 'makeup') {
+          steps.push(
+            "Hair and Makeup - Basic Details",
+            "Hair and Makeup - Makeup Services",
+            "Hair and Makeup - Inspiration",
+            "Hair and Makeup - Budget"
+          );
+        } else {
+          steps.push(
+            "Hair and Makeup - Basic Details",
+            "Hair and Makeup - Hair Services",
+            "Hair and Makeup - Makeup Services",
+            "Hair and Makeup - Inspiration",
+            "Hair and Makeup - Budget"
+          );
         }
       } else {
         steps.push(`${request} Details`);
@@ -204,11 +206,11 @@ function MasterRequestFlow() {
         } else if (isRequestType(request, "HairAndMakeup")) {
           const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
           if (serviceType === 'hair') {
-            return hairAndMakeupSubStep === 3; // Basic -> Hair -> Inspiration -> Budget
+            index += hairAndMakeupSubStep;
           } else if (serviceType === 'makeup') {
-            return hairAndMakeupSubStep === 3; // Basic -> Makeup -> Inspiration -> Budget
+            index += hairAndMakeupSubStep;
           }
-          return hairAndMakeupSubStep === 4; // Basic -> Hair -> Makeup -> Inspiration -> Budget
+          return index;
         }
         foundCurrent = true;
         break;
@@ -220,13 +222,18 @@ function MasterRequestFlow() {
       } else if (isRequestType(request, "Videography")) {
         index += 4;
       } else if (isRequestType(request, "Catering")) {
-        index += 3; // Changed from 2 to 3 to account for the new step
+        index += 3;
       } else if (isRequestType(request, "DJ")) {
         index += 3;
       } else if (isRequestType(request, "Florist")) {
         index += 5;
       } else if (isRequestType(request, "HairAndMakeup")) {
-        index += 5;
+        const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+        if (serviceType === 'hair' || serviceType === 'makeup') {
+          index += 4;
+        } else {
+          index += 5;
+        }
       } else {
         index += 1;
       }
@@ -492,307 +499,612 @@ function MasterRequestFlow() {
         return;
       }
 
+      // Get user's first name from individual_profiles
+      const { data: userData, error: userError } = await supabase
+        .from("individual_profiles")
+        .select("first_name")
+        .eq("id", user.id)
+        .single();
+
+      if (userError) throw userError;
+
       // Get the current request type from the selectedRequests array
       const currentRequestType = formData.selectedRequests[currentStep - 1];
 
-      // Handle each request type based on the current stepper
-      for (const [category, request] of Object.entries(formData.requests)) {
-        if (!request) continue;
+      // Generate title for the current request
+      const requestTitle = `${userData.first_name}'s ${currentRequestType} Request`;
 
-        // Only process the request type that matches the current stepper
-        if (category === currentRequestType) {
-          if (category === 'Florist') {
-            // Create florist request data
-            const floristRequestData = {
-              user_id: user.id,
-              event_type: formData.commonDetails.eventType,
-              event_title: formData.commonDetails.eventName || 'Floral Arrangement Request',
-              location: formData.commonDetails.location,
-              date_flexibility: formData.commonDetails.dateFlexibility,
-              start_date: formData.commonDetails.startDate,
-              end_date: formData.commonDetails.endDate,
-              date_timeframe: formData.commonDetails.dateTimeframe,
-              indoor_outdoor: formData.commonDetails.indoorOutdoor,
-              specific_time_needed: formData.requests?.Florist?.specificTimeNeeded || false,
-              specific_time: formData.requests?.Florist?.specificTimeNeeded === 'yes' ? formData.requests?.Florist?.specificTime : null,
-              colors: request.colorPreferences,
-              pinterest_link: request.pinterestBoard,
-              additional_comments: request.additionalInfo || '',
-              price_range: request.priceRange || 'Not specified',
-              flower_preferences_text: request.flowerPreferences?.text || '',
-              status: 'pending'
-            };
+      let submissionSuccess = false;
 
-            // Insert into florist_requests table
-            const { data: newFloristRequest, error: floristRequestError } = await supabase
-              .from('florist_requests')
-              .insert([floristRequestData])
-              .select()
-              .single();
+      // Handle each category type
+      if (isRequestType(currentRequestType, "Photography")) {
+        const request = formData.requests.Photography || {};
+        const photographyRequestData = {
+          profile_id: user.id,
+          event_title: requestTitle,
+          status: 'open',
+          event_type: formData.commonDetails.eventType,
+          location: formData.commonDetails.location,
+          date_flexibility: formData.commonDetails.dateFlexibility,
+          start_date: formData.commonDetails.startDate,
+          end_date: formData.commonDetails.endDate,
+          date_timeframe: formData.commonDetails.dateTimeframe,
+          time_of_day: formData.commonDetails.timeOfDay,
+          start_time: formData.commonDetails.startTime,
+          end_time: formData.commonDetails.endTime,
+          duration: request.duration ? parseInt(request.duration, 10) : null,
+          duration_unknown: request.durationUnknown || false,
+          second_photographer: request.secondPhotographer || 'no',
+          second_photographer_unknown: request.secondPhotographerUnknown || false,
+          style_preferences: JSON.stringify(request.stylePreferences || {}),
+          deliverables: JSON.stringify(request.deliverables || {}),
+          additional_info: request.additionalInfo || '',
+          price_range: request.priceRange || 'Not specified',
+          pinterest_link: request.pinterestBoard || '',
+          wedding_details: formData.commonDetails.eventType === 'Wedding' ? JSON.stringify(request.weddingDetails || {}) : null,
+          num_people: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
+          date_type: formData.commonDetails.dateFlexibility || null,
+          indoor_outdoor: formData.commonDetails.indoorOutdoor || null
+        };
 
-            if (floristRequestError) throw floristRequestError;
+        // Insert into photography_requests table
+        const { data: newPhotographyRequest, error: photographyRequestError } = await supabase
+          .from('photography_requests')
+          .insert([photographyRequestData])
+          .select()
+          .single();
 
-            // Handle photo uploads for florist
-            if (request.photos && request.photos.length > 0) {
-              const uploadPromises = request.photos.map(async (photo) => {
-                const fileExt = photo.name.split('.').pop();
-                const fileName = `${uuidv4()}.${fileExt}`;
-                const filePath = `${user.id}/${newFloristRequest.id}/${fileName}`;
-
-                const { error: uploadError } = await supabase.storage
-                  .from('request-media')
-                  .upload(filePath, photo.file);
-
-                if (uploadError) throw uploadError;
-
-                const { data: { publicUrl } } = supabase.storage
-                  .from('request-media')
-                  .getPublicUrl(filePath);
-
-                // Store photo information in florist_photos table
-                return supabase
-                  .from('florist_photos')
-                  .insert([{
-                    request_id: newFloristRequest.id,
-                    user_id: user.id,
-                    photo_url: publicUrl,
-                    file_path: filePath
-                  }]);
-              });
-
-              await Promise.all(uploadPromises);
-            }
-          } else if (category === 'DJ') {
-            // Handle DJ requests
-            const djRequestData = {
-              user_id: user.id,
-              status: 'pending',
-              equipment_needed: request.equipmentNeeded,
-              equipment_notes: request.equipmentNotes,
-              additional_services: request.additionalServices,
-              music_preferences: request.musicPreferences,
-              playlist: request.playlist,
-              special_songs: request.specialSongs,
-              price_range: request.priceRange,
-              additional_comments: request.additionalInfo,
-              wedding_details: request.weddingDetails
-            };
-
-            const { data: newDjRequest, error: djRequestError } = await supabase
-              .from('dj_requests')
-              .insert([djRequestData])
-              .select()
-              .single();
-
-            if (djRequestError) throw djRequestError;
-
-            // Handle photo uploads for DJ
-            if (request.photos && request.photos.length > 0) {
-              const uploadPromises = request.photos.map(async (photo) => {
-                const fileExt = photo.name.split('.').pop();
-                const fileName = `${uuidv4()}.${fileExt}`;
-                const filePath = `${user.id}/${newDjRequest.id}/${fileName}`;
-
-                const { error: uploadError } = await supabase.storage
-                  .from('request-media')
-                  .upload(filePath, photo.file);
-
-                if (uploadError) throw uploadError;
-
-                const { data: { publicUrl } } = supabase.storage
-                  .from('request-media')
-                  .getPublicUrl(filePath);
-
-                return supabase
-                  .from('event_photos')
-                  .insert([{
-                    request_id: newDjRequest.id,
-                    user_id: user.id,
-                    photo_url: publicUrl,
-                    file_path: filePath
-                  }]);
-              });
-
-              await Promise.all(uploadPromises);
-            }
-          } else if (category === 'Catering') {
-            // Handle Catering requests
-            const cateringRequestData = {
-              user_id: user.id,
-              status: 'pending',
-              event_type: formData.commonDetails.eventType,
-              title: `${user.user_metadata?.full_name || user.email}'s Catering Request`,
-              location: formData.commonDetails.location,
-              date_flexibility: formData.commonDetails.dateFlexibility,
-              start_date: formData.commonDetails.startDate,
-              end_date: formData.commonDetails.endDate,
-              date_timeframe: formData.commonDetails.dateTimeframe,
-              estimated_guests: formData.commonDetails.numGuests,
-              food_service_type: formData.eventDetails?.foodService,
-              food_preferences: formData.eventDetails?.cuisineTypes,
-              dietary_restrictions: formData.eventDetails?.dietaryRestrictions,
-              other_dietary_details: formData.eventDetails?.otherDietaryDetails,
-              equipment_needed: formData.eventDetails?.equipmentNeeded,
-              equipment_notes: formData.eventDetails?.equipmentNotes,
-              setup_cleanup: formData.eventDetails?.setupCleanup,
-              serving_staff: formData.eventDetails?.servingStaff,
-              dining_items: formData.eventDetails?.diningItems,
-              dining_items_notes: formData.eventDetails?.diningItemsNotes,
-              special_requests: formData.eventDetails?.specialRequests,
-              budget_range: formData.eventDetails?.priceRange || '',
-              additional_info: formData.eventDetails?.additionalInfo
-            };
-
-            const { data: newCateringRequest, error: cateringRequestError } = await supabase
-              .from('catering_requests')
-              .insert([cateringRequestData])
-              .select()
-              .single();
-
-            if (cateringRequestError) throw cateringRequestError;
-
-            // Handle photo uploads for catering
-            if (formData.eventDetails?.photos && formData.eventDetails.photos.length > 0) {
-              const uploadPromises = formData.eventDetails.photos.map(async (photo) => {
-                const fileExt = photo.name.split('.').pop();
-                const fileName = `${uuidv4()}.${fileExt}`;
-                const filePath = `${user.id}/${newCateringRequest.id}/${fileName}`;
-
-                const { error: uploadError } = await supabase.storage
-                  .from('request-media')
-                  .upload(filePath, photo.file);
-
-                if (uploadError) throw uploadError;
-
-                const { data: { publicUrl } } = supabase.storage
-                  .from('request-media')
-                  .getPublicUrl(filePath);
-
-                return supabase
-                  .from('event_photos')
-                  .insert([{
-                    request_id: newCateringRequest.id,
-                    user_id: user.id,
-                    photo_url: publicUrl,
-                    file_path: filePath
-                  }]);
-              });
-
-              await Promise.all(uploadPromises);
-            }
-          } else if (category === 'HairAndMakeup') {
-            // Create beauty request data
-            const beautyRequestData = {
-              user_id: user.id,
-              event_type: formData.commonDetails.eventType,
-              event_title: `${user.user_metadata?.full_name || user.email}'s Beauty Request`,
-              location: formData.commonDetails.location,
-              date_flexibility: formData.commonDetails.dateFlexibility,
-              start_date: formData.commonDetails.startDate,
-              end_date: formData.commonDetails.endDate,
-              date_timeframe: formData.commonDetails.dateTimeframe,
-              specific_time_needed: request.specificTimeNeeded === 'yes',
-              specific_time: request.specificTimeNeeded === 'yes' ? request.specificTime : null,
-              num_people: request.numPeopleUnknown ? null : 
-                        request.numPeople ? parseInt(request.numPeople) : null,
-              price_range: request.priceRange,
-              additional_comments: request.additionalInfo || null,
-              pinterest_link: request.pinterestBoard || null,
-              status: 'pending',
-              service_type: request.serviceType,
-              hairstyle_preferences: request.hairstylePreferences || '',
-              hair_length_type: request.hairLengthType || '',
-              extensions_needed: request.extensionsNeeded || '',
-              trial_session_hair: request.trialSessionHair || '',
-              makeup_style_preferences: request.makeupStylePreferences || '',
-              skin_type_concerns: request.skinTypeConcerns || '',
-              preferred_products_allergies: request.preferredProductsAllergies || '',
-              lashes_included: request.lashesIncluded || '',
-              trial_session_makeup: request.trialSessionMakeup || '',
-              group_discount_inquiry: request.groupDiscountInquiry || '',
-              on_site_service_needed: request.onSiteServiceNeeded || ''
-            };
-
-            const { data: newBeautyRequest, error: beautyRequestError } = await supabase
-              .from('beauty_requests')
-              .insert([beautyRequestData])
-              .select()
-              .single();
-
-            if (beautyRequestError) throw beautyRequestError;
-
-            // Handle photo uploads for beauty requests
-            if (request.photos && request.photos.length > 0) {
-              const uploadPromises = request.photos.map(async (photo) => {
-                const fileExt = photo.name.split('.').pop();
-                const fileName = `${uuidv4()}.${fileExt}`;
-                const filePath = `${user.id}/${newBeautyRequest.id}/${fileName}`;
-
-                const { error: uploadError } = await supabase.storage
-                  .from('request-media')
-                  .upload(filePath, photo.file);
-
-                if (uploadError) throw uploadError;
-
-                const { data: { publicUrl } } = supabase.storage
-                  .from('request-media')
-                  .getPublicUrl(filePath);
-
-                // Store photo information in beauty_photos table
-                return supabase
-                  .from('beauty_photos')
-                  .insert([{
-                    request_id: newBeautyRequest.id,
-                    user_id: user.id,
-                    photo_url: publicUrl,
-                    file_path: filePath
-                  }]);
-              });
-
-              await Promise.all(uploadPromises);
-            }
-          }
-          // Add other request type handlers here as needed
+        if (photographyRequestError) {
+          console.error('Photography request error:', photographyRequestError);
+          throw photographyRequestError;
         }
+
+        // Handle photo uploads if any
+        if (request.photos && request.photos.length > 0) {
+          const uploadPromises = request.photos.map(async (photo) => {
+            try {
+              // Ensure we have the file object
+              if (!photo.file) {
+                console.error('Photo object missing file property:', photo);
+                throw new Error('Invalid photo object');
+              }
+
+              const fileExt = photo.file.name.split('.').pop();
+              const fileName = `${uuidv4()}.${fileExt}`;
+              const filePath = `photography/${user.id}/${newPhotographyRequest.id}/${fileName}`;
+              
+              console.log('Starting photo upload process:', {
+                filePath,
+                fileName,
+                fileType: photo.file.type,
+                fileSize: photo.file.size,
+                bucket: 'request-media',
+                fullPath: `request-media/${filePath}`
+              });
+
+              // First check if the bucket exists and is accessible
+              const { data: bucketList, error: bucketError } = await supabase.storage
+                .listBuckets();
+              
+              console.log('Available buckets:', bucketList);
+              
+              if (bucketError) {
+                console.error('Error listing buckets:', bucketError);
+                throw bucketError;
+              }
+
+              // Upload the file
+              const { error: uploadError, data: uploadData } = await supabase.storage
+                .from('request-media')
+                .upload(filePath, photo.file, {
+                  cacheControl: '3600',
+                  upsert: false
+                });
+
+              if (uploadError) {
+                console.error('Photo upload error details:', {
+                  error: uploadError,
+                  filePath,
+                  fileName,
+                  fileType: photo.file.type,
+                  fileSize: photo.file.size
+                });
+                throw uploadError;
+              }
+
+              console.log('Photo upload successful:', uploadData);
+
+              const { data: { publicUrl } } = supabase.storage
+                .from('request-media')
+                .getPublicUrl(filePath);
+
+              console.log('Generated public URL:', publicUrl);
+
+              console.log('Inserting photo record:', {
+                request_id: newPhotographyRequest.id,
+                profile_id: user.id,
+                photo_url: publicUrl,
+                file_path: filePath
+              });
+
+              const { error: photoInsertError, data: insertData } = await supabase
+                .from('event_photos')
+                .insert([{
+                  request_id: newPhotographyRequest.id,
+                  user_id: user.id,
+                  photo_url: publicUrl,
+                  file_path: filePath
+                }])
+                .select();
+
+              if (photoInsertError) {
+                console.error('Photo insert error details:', {
+                  error: photoInsertError,
+                  data: {
+                    request_id: newPhotographyRequest.id,
+                    profile_id: user.id,
+                    photo_url: publicUrl,
+                    file_path: filePath
+                  }
+                });
+                throw photoInsertError;
+              }
+
+              console.log('Photo record inserted successfully:', insertData);
+            } catch (err) {
+              console.error('Error in photo upload process:', err);
+              throw err;
+            }
+          });
+
+          try {
+            await Promise.all(uploadPromises);
+          } catch (err) {
+            console.error('Error in photo upload batch:', err);
+            throw err;
+          }
+        }
+
+        submissionSuccess = true;
+      } else if (isRequestType(currentRequestType, "Videography")) {
+        console.log('Starting videography request submission...');
+        const request = formData.requests.Videography || {};
+        console.log('Videography request data:', request);
+        
+        const videographyRequestData = {
+          user_id: user.id,
+          event_title: requestTitle,
+          status: 'open',
+          event_type: formData.commonDetails.eventType,
+          location: formData.commonDetails.location,
+          date_flexibility: formData.commonDetails.dateFlexibility,
+          start_date: formData.commonDetails.startDate,
+          end_date: formData.commonDetails.endDate,
+          date_timeframe: formData.commonDetails.dateTimeframe,
+          time_of_day: formData.commonDetails.timeOfDay,
+          start_time: formData.commonDetails.startTime,
+          end_time: formData.commonDetails.endTime,
+          duration: request.duration ? parseInt(request.duration, 10) : null,
+          duration_unknown: request.durationUnknown || false,
+          second_photographer: request.secondPhotographer || 'no',
+          style_preferences: JSON.stringify(request.stylePreferences || {}),
+          deliverables: JSON.stringify(request.deliverables || {}),
+          additional_comments: request.additionalInfo || '',
+          price_range: request.priceRange || 'Not specified',
+          pinterest_link: request.pinterestBoard || '',
+          wedding_details: formData.commonDetails.eventType === 'Wedding' ? JSON.stringify(request.weddingDetails || {}) : null,
+          num_people: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
+          date_type: formData.commonDetails.dateFlexibility || null,
+          indoor_outdoor: formData.commonDetails.indoorOutdoor || null
+        };
+
+        console.log('Preparing to insert videography request:', videographyRequestData);
+
+        // Insert into videography_requests table
+        const { data: newVideographyRequest, error: videographyRequestError } = await supabase
+          .from('videography_requests')
+          .insert([videographyRequestData])
+          .select()
+          .single();
+
+        if (videographyRequestError) {
+          console.error('Videography request error:', videographyRequestError);
+          throw videographyRequestError;
+        }
+
+        console.log('Videography request inserted successfully:', newVideographyRequest);
+
+        // Handle video uploads if any
+        if (request.videos && request.videos.length > 0) {
+          console.log('Found videos to upload:', request.videos.length);
+          const uploadPromises = request.videos.map(async (video) => {
+            try {
+              console.log('Processing video:', video);
+              // Ensure we have the file object
+              if (!video.file) {
+                console.error('Video object missing file property:', video);
+                throw new Error('Invalid video object');
+              }
+
+              const fileExt = video.file.name.split('.').pop();
+              const fileName = `${uuidv4()}.${fileExt}`;
+              const filePath = `videography/${user.id}/${newVideographyRequest.id}/${fileName}`;
+              
+              console.log('Starting video upload process:', {
+                filePath,
+                fileName,
+                fileType: video.file.type,
+                fileSize: video.file.size,
+                bucket: 'request-media',
+                fullPath: `request-media/${filePath}`
+              });
+
+              // First check if the bucket exists and is accessible
+              const { data: bucketList, error: bucketError } = await supabase.storage
+                .listBuckets();
+              
+              console.log('Available buckets:', bucketList);
+              
+              if (bucketError) {
+                console.error('Error listing buckets:', bucketError);
+                throw bucketError;
+              }
+
+              // Upload the file
+              const { error: uploadError, data: uploadData } = await supabase.storage
+                .from('request-media')
+                .upload(filePath, video.file, {
+                  cacheControl: '3600',
+                  upsert: false
+                });
+
+              if (uploadError) {
+                console.error('Video upload error details:', {
+                  error: uploadError,
+                  filePath,
+                  fileName,
+                  fileType: video.file.type,
+                  fileSize: video.file.size
+                });
+                throw uploadError;
+              }
+
+              console.log('Video upload successful:', uploadData);
+
+              const { data: { publicUrl } } = supabase.storage
+                .from('request-media')
+                .getPublicUrl(filePath);
+
+              console.log('Generated public URL:', publicUrl);
+
+              console.log('Inserting video record:', {
+                request_id: newVideographyRequest.id,
+                user_id: user.id,
+                photo_url: publicUrl,
+                file_path: filePath
+              });
+
+              const { error: videoInsertError, data: insertData } = await supabase
+                .from('videography_photos')
+                .insert([{
+                  request_id: newVideographyRequest.id,
+                  user_id: user.id,
+                  photo_url: publicUrl,
+                  file_path: filePath
+                }])
+                .select();
+
+              if (videoInsertError) {
+                console.error('Video insert error details:', {
+                  error: videoInsertError,
+                  data: {
+                    request_id: newVideographyRequest.id,
+                    user_id: user.id,
+                    photo_url: publicUrl,
+                    file_path: filePath
+                  }
+                });
+                throw videoInsertError;
+              }
+
+              console.log('Video record inserted successfully:', insertData);
+            } catch (err) {
+              console.error('Error in video upload process:', err);
+              throw err;
+            }
+          });
+
+          try {
+            await Promise.all(uploadPromises);
+            console.log('All video uploads completed successfully');
+          } catch (err) {
+            console.error('Error in video upload batch:', err);
+            throw err;
+          }
+        } else {
+          console.log('No videos to upload');
+        }
+
+        submissionSuccess = true;
+      } else if (isRequestType(currentRequestType, "Florist")) {
+        const request = formData.requests.Florist || {};
+        const floristRequestData = {
+          user_id: user.id,
+          event_title: requestTitle,
+          status: 'pending',
+          event_type: formData.commonDetails.eventType,
+          location: formData.commonDetails.location,
+          date_flexibility: formData.commonDetails.dateFlexibility,
+          start_date: formData.commonDetails.startDate,
+          end_date: formData.commonDetails.endDate,
+          date_timeframe: formData.commonDetails.dateTimeframe,
+          indoor_outdoor: formData.commonDetails.indoorOutdoor,
+          specific_time_needed: request.specificTimeNeeded === 'yes',
+          specific_time: request.specificTimeNeeded === 'yes' ? request.specificTime : null,
+          colors: request.colorPreferences,
+          pinterest_link: request.pinterestBoard,
+          additional_comments: request.additionalInfo || '',
+          price_range: request.priceRange || 'Not specified',
+          flower_preferences_text: request.flowerPreferences?.text || '',
+          floral_arrangements: request.floralArrangements || {}
+        };
+
+        // Insert into florist_requests table
+        const { data: newFloristRequest, error: floristRequestError } = await supabase
+          .from('florist_requests')
+          .insert([floristRequestData])
+          .select()
+          .single();
+
+        if (floristRequestError) throw floristRequestError;
+
+        // Handle photo uploads for florist
+        if (request.photos && request.photos.length > 0) {
+          const uploadPromises = request.photos.map(async (photo) => {
+            const fileExt = photo.name.split('.').pop();
+            const fileName = `${uuidv4()}.${fileExt}`;
+            const filePath = `${user.id}/${newFloristRequest.id}/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+              .from('request-media')
+              .upload(filePath, photo.file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('request-media')
+              .getPublicUrl(filePath);
+
+            const { error: photoInsertError } = await supabase
+              .from('florist_photos')
+              .insert([{
+                request_id: newFloristRequest.id,
+                user_id: user.id,
+                photo_url: publicUrl,
+                file_path: filePath
+              }]);
+
+            if (photoInsertError) throw photoInsertError;
+          });
+
+          await Promise.all(uploadPromises);
+        }
+
+        submissionSuccess = true;
+      } else if (isRequestType(currentRequestType, "HairAndMakeup")) {
+        const request = formData.requests.HairAndMakeup || {};
+        const hairAndMakeupRequestData = {
+          user_id: user.id,
+          event_title: requestTitle,
+          status: 'pending',
+          event_type: formData.commonDetails.eventType,
+          location: formData.commonDetails.location,
+          date_flexibility: formData.commonDetails.dateFlexibility,
+          start_date: formData.commonDetails.startDate,
+          end_date: formData.commonDetails.endDate,
+          date_timeframe: formData.commonDetails.dateTimeframe,
+          specific_time_needed: request.specificTimeNeeded === 'yes',
+          specific_time: request.specificTimeNeeded === 'yes' ? request.specificTime : null,
+          num_people: request.numPeopleUnknown ? null : 
+                    request.numPeople ? parseInt(request.numPeople) : null,
+          price_range: request.priceRange,
+          additional_comments: request.additionalInfo || null,
+          pinterest_link: request.pinterestBoard || null,
+          service_type: request.serviceType,
+          hairstyle_preferences: request.hairstylePreferences || '',
+          hair_length_type: request.hairLengthType || '',
+          extensions_needed: request.extensionsNeeded || '',
+          trial_session_hair: request.trialSessionHair || '',
+          makeup_style_preferences: request.makeupStylePreferences || {},
+          skin_type_concerns: request.skinTypeConcerns || '',
+          preferred_products_allergies: request.preferredProductsAllergies || '',
+          lashes_included: request.lashesIncluded || '',
+          trial_session_makeup: request.trialSessionMakeup || '',
+          group_discount_inquiry: request.groupDiscountInquiry || '',
+          on_site_service_needed: request.onSiteServiceNeeded || ''
+        };
+
+        // Insert into beauty_requests table
+        const { data: newBeautyRequest, error: beautyRequestError } = await supabase
+          .from('beauty_requests')
+          .insert([hairAndMakeupRequestData])
+          .select()
+          .single();
+
+        if (beautyRequestError) throw beautyRequestError;
+
+        // Handle photo uploads for beauty
+        if (request.photos && request.photos.length > 0) {
+          const uploadPromises = request.photos.map(async (photo) => {
+            const fileExt = photo.name.split('.').pop();
+            const fileName = `${uuidv4()}.${fileExt}`;
+            const filePath = `${user.id}/${newBeautyRequest.id}/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+              .from('request-media')
+              .upload(filePath, photo.file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('request-media')
+              .getPublicUrl(filePath);
+
+            const { error: photoInsertError } = await supabase
+              .from('beauty_photos')
+              .insert([{
+                request_id: newBeautyRequest.id,
+                user_id: user.id,
+                photo_url: publicUrl,
+                file_path: filePath
+              }]);
+
+            if (photoInsertError) throw photoInsertError;
+          });
+
+          await Promise.all(uploadPromises);
+        }
+
+        submissionSuccess = true;
+      } else if (isRequestType(currentRequestType, "DJ")) {
+        console.log('Starting DJ request submission...');
+        const request = formData.requests.DJ || {};
+        console.log('DJ request data:', request);
+        console.log('Special requests data:', request.specialRequests);
+
+        const djRequestData = {
+          user_id: user.id,
+          title: requestTitle,
+          status: 'open',
+          event_type: formData.commonDetails.eventType,
+          location: formData.commonDetails.location,
+          date_flexibility: formData.commonDetails.dateFlexibility,
+          start_date: formData.commonDetails.startDate,
+          end_date: formData.commonDetails.endDate,
+          date_timeframe: formData.commonDetails.dateTimeframe,
+          event_duration: formData.commonDetails.duration ? parseInt(formData.commonDetails.duration, 10) : null,
+          equipment_needed: request.equipmentNeeded || '',
+          equipment_notes: request.equipmentNotes || '',
+          additional_services: Object.entries(request.additionalServices || {}).map(([key, value]) => key),
+          music_preferences: JSON.stringify(
+            Object.fromEntries(
+              Object.entries(request.musicPreferences || {}).map(([key, value]) => [key, true])
+            )
+          ),
+          special_songs: JSON.stringify({
+            playlist: request.playlist || null,
+            requests: request.specialSongs || null
+          }),
+          budget_range: formData.eventDetails?.priceRange || 'Not specified',
+          estimated_guests: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
+          date_flexibility: formData.commonDetails.dateFlexibility || null,
+          indoor_outdoor: formData.commonDetails.indoorOutdoor || null,
+          special_requests: request.additionalInfo || null
+        };
+
+        console.log('Preparing to insert DJ request:', djRequestData);
+
+        // Insert into dj_requests table
+        const { data: newDjRequest, error: djRequestError } = await supabase
+          .from('dj_requests')
+          .insert([djRequestData])
+          .select()
+          .single();
+
+        if (djRequestError) {
+          console.error('DJ request error:', djRequestError);
+          throw djRequestError;
+        }
+
+        console.log('DJ request inserted successfully:', newDjRequest);
+        submissionSuccess = true;
+      } else if (isRequestType(currentRequestType, "Catering")) {
+        const request = formData.requests.Catering || {};
+        const cateringRequestData = {
+          user_id: user.id,
+          title: requestTitle,
+          status: 'pending',
+          event_type: formData.commonDetails.eventType,
+          location: formData.commonDetails.location,
+          date_flexibility: formData.commonDetails.dateFlexibility,
+          start_date: formData.commonDetails.startDate,
+          end_date: formData.commonDetails.endDate,
+          date_timeframe: formData.commonDetails.dateTimeframe,
+          estimated_guests: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
+          food_service_type: request.foodStyle || null,
+          food_preferences: request.cuisineTypes || [],
+          dietary_restrictions: request.dietaryRestrictions || [],
+          setup_cleanup: request.setupCleanup || null,
+          serving_staff: request.servingStaff || null,
+          dining_items: request.diningItems || null,
+          dining_items_notes: request.diningItemsNotes || null,
+          equipment_needed: request.equipmentNeeded || null,
+          equipment_notes: request.equipmentNotes || null,
+          special_requests: request.specialRequests || null,
+          additional_info: request.additionalInfo || null,
+          budget_range: request.priceRange || 'Not specified',
+          indoor_outdoor: formData.commonDetails.indoorOutdoor || null
+        };
+
+        console.log('Inserting catering request:', cateringRequestData);
+
+        const { data: newCateringRequest, error: cateringError } = await supabase
+          .from('catering_requests')
+          .insert([cateringRequestData])
+          .select()
+          .single();
+
+        if (cateringError) {
+          console.error('Error inserting catering request:', cateringError);
+          throw cateringError;
+        }
+
+        console.log('Successfully inserted catering request:', newCateringRequest);
+        submissionSuccess = true;
       }
 
-      // Add current category to completed categories
-      setCompletedCategories(prev => {
-        if (!prev.includes(currentRequestType)) {
-          return [...prev, currentRequestType];
+      // Only proceed if submission was successful
+      if (submissionSuccess) {
+        // Add the current request type to completed categories
+        setCompletedCategories(prev => [...prev, currentRequestType]);
+
+        // Check if there are more categories to complete
+        const remainingCategories = formData.selectedRequests.filter(
+          cat => !completedCategories.includes(cat) && cat !== currentRequestType
+        );
+
+        if (remainingCategories.length > 0) {
+          // Move to the next category
+          const nextCategoryIndex = formData.selectedRequests.indexOf(remainingCategories[0]);
+          setCurrentStep(nextCategoryIndex + 1);
+          setShowReview(false);
+          // Reset sub-steps for the new category
+          setPhotographySubStep(0);
+          setVideographySubStep(0);
+          setCateringSubStep(0);
+          setDjSubStep(0);
+          setFloristSubStep(0);
+          setHairAndMakeupSubStep(0);
+          // Update visited steps
+          setVisitedSteps(prev => new Set([...prev, nextCategoryIndex + 1]));
+        } else {
+          // All categories completed, clear form data and navigate to success page
+          clearFormData();
+          navigate('/success-request', { 
+            state: { 
+              message: 'Your requests have been submitted successfully!'
+            }
+          });
         }
-        return prev;
-      });
-
-      // Check if there are more categories to complete
-      const remainingCategories = formData.selectedRequests.filter(
-        cat => !completedCategories.includes(cat) && cat !== currentRequestType
-      );
-
-      if (remainingCategories.length > 0) {
-        // Move to the next category
-        const nextCategoryIndex = formData.selectedRequests.indexOf(remainingCategories[0]);
-        setCurrentStep(nextCategoryIndex + 1);
-        // Reset sub-steps for the new category
-        setPhotographySubStep(0);
-        setVideographySubStep(0);
-        setCateringSubStep(0);
-        setDjSubStep(0);
-        setFloristSubStep(0);
-        setHairAndMakeupSubStep(0);
       } else {
-        // All categories completed, clear form data and navigate to success page
-        clearFormData();
-        navigate('/success-request', { 
-          state: { 
-            message: 'Your requests have been submitted successfully!'
-          }
-        });
+        throw new Error('Submission failed - no success flag was set');
       }
 
     } catch (err) {
       console.error('Error submitting form:', err);
       setError('Failed to submit form. Please try again.');
+      // Don't proceed to next category if there was an error
+      return;
     } finally {
       setIsSubmitting(false);
     }
@@ -1265,22 +1577,6 @@ function MasterRequestFlow() {
       const commonDetails = formData.commonDetails || {};
       const eventDetails = formData.eventDetails || {};
 
-      // Debug log to see what data we have
-      console.log(`Review data for ${category}:`, {
-        categoryData,
-        priceRange: categoryData.priceRange,
-        fullFormData: formData,
-        hairAndMakeupData: category === 'HairAndMakeup' ? formData.requests.HairAndMakeup : null
-      });
-
-      // Additional debug for HairAndMakeup
-      if (category === 'HairAndMakeup') {
-        console.log('HairAndMakeup specific debug:', {
-          rawPriceRange: formData.requests.HairAndMakeup?.priceRange,
-          formattedPriceRange: formatArrayValue(formData.requests.HairAndMakeup?.priceRange, 'priceRange')
-        });
-      }
-
       // Get event details
       const eventDetailsDisplay = {
         'Event Type': formatArrayValue(commonDetails.eventType, 'eventType'),
@@ -1290,83 +1586,77 @@ function MasterRequestFlow() {
           ? formatArrayValue(commonDetails.startDate, 'startDate')
           : commonDetails.dateFlexibility === 'range'
             ? `${formatArrayValue(commonDetails.startDate, 'startDate')} to ${formatArrayValue(commonDetails.endDate, 'endDate')}`
-            : formatArrayValue(commonDetails.dateTimeframe, 'dateTimeframe')
+            : formatArrayValue(commonDetails.dateTimeframe, 'dateTimeframe'),
+        'Indoor/Outdoor': formatArrayValue(commonDetails.indoorOutdoor, 'indoorOutdoor')
       };
 
       // Get category-specific details
       let categoryDetails = {};
-      switch (category.toLowerCase()) {
-        case 'photography':
-          categoryDetails = {
-            'Coverage Duration': formatArrayValue(categoryData.duration, 'duration'),
-            'Second Photographer': formatArrayValue(categoryData.secondPhotographer, 'secondPhotographer'),
-            'Style': formatArrayValue(categoryData.stylePreferences, 'stylePreferences'),
-            'Deliverables': formatArrayValue(categoryData.deliverables, 'deliverables'),
-            'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
-          };
-          break;
-        case 'videography':
-          categoryDetails = {
-            'Coverage Duration': formatArrayValue(categoryData.duration, 'duration'),
-            'Style': formatArrayValue(categoryData.stylePreferences, 'stylePreferences'),
-            'Deliverables': formatArrayValue(categoryData.deliverables, 'deliverables'),
-            'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
-          };
-          break;
-        case 'catering':
-          categoryDetails = {
-            'Food Style': formatArrayValue(eventDetails.foodStyle, 'foodStyle'),
-            'Cuisine Types': formatArrayValue(eventDetails.cuisineTypes, 'cuisineTypes'),
-            'Dietary Restrictions': formatArrayValue(eventDetails.dietaryRestrictions, 'dietaryRestrictions'),
-            'Setup & Cleanup': formatArrayValue(eventDetails.setupCleanup, 'setupCleanup'),
-            'Serving Staff': formatArrayValue(eventDetails.servingStaff, 'servingStaff'),
-            'Dining Items': formatArrayValue(eventDetails.diningItems, 'diningItems'),
-            'Budget Range': formatArrayValue(eventDetails.priceRange, 'priceRange')
-          };
-          break;
-        case 'dj':
-          categoryDetails = {
-            'Performance Duration': formatArrayValue(commonDetails.duration, 'duration'),
-            'Equipment Needed': formatArrayValue(categoryData.equipmentNeeded, 'equipmentNeeded'),
-            'Music Style': formatArrayValue(categoryData.musicPreferences, 'musicPreferences'),
-            'Budget Range': formatArrayValue(eventDetails.priceRange, 'priceRange')
-          };
-          break;
-        case 'florist':
-          categoryDetails = {
-            'Arrangement Types': formatArrayValue(categoryData.floralArrangements, 'floralArrangements'),
-            'Color Preferences': formatArrayValue(categoryData.colorPreferences, 'colorPreferences'),
-            'Flower Preferences': formatArrayValue(categoryData.flowerPreferences?.text || categoryData.flowerPreferences, 'flowerPreferences'),
-            'Additional Services': formatArrayValue(categoryData.additionalServices, 'additionalServices'),
-            'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
-          };
-          break;
-        case 'hairandmakeup':
-          categoryDetails = {
-            'Number of People': formatArrayValue(categoryData.numPeople, 'numPeople'),
-            'Hair Style': formatArrayValue(
-              typeof categoryData.hairstylePreferences === 'string' 
-                ? categoryData.hairstylePreferences 
-                : Object.entries(categoryData.hairstylePreferences || {})
-                    .filter(([_, val]) => val === true)
-                    .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
-                    .join(', '),
-              'hairstylePreferences'
-            ),
-            'Makeup Style': formatArrayValue(
-              typeof categoryData.makeupStylePreferences === 'string' 
-                ? categoryData.makeupStylePreferences 
-                : Object.entries(categoryData.makeupStylePreferences || {})
-                    .filter(([_, val]) => val === true)
-                    .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
-                    .join(', '),
-              'makeupStylePreferences'
-            ),
-            'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
-          };
-          break;
-        default:
-          categoryDetails = {};
+      const currentRequest = formData.selectedRequests[currentStep - 1];
+      
+      if (isRequestType(currentRequest, "Photography")) {
+        categoryDetails = {
+          'Coverage Duration': formatArrayValue(categoryData.duration, 'duration'),
+          'Second Photographer': formatArrayValue(categoryData.secondPhotographer, 'secondPhotographer'),
+          'Style': formatArrayValue(categoryData.stylePreferences, 'stylePreferences'),
+          'Deliverables': formatArrayValue(categoryData.deliverables, 'deliverables'),
+          'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
+        };
+      } else if (isRequestType(currentRequest, "Videography")) {
+        categoryDetails = {
+          'Coverage Duration': formatArrayValue(categoryData.duration, 'duration'),
+          'Style': formatArrayValue(categoryData.stylePreferences, 'stylePreferences'),
+          'Deliverables': formatArrayValue(categoryData.deliverables, 'deliverables'),
+          'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
+        };
+      } else if (isRequestType(currentRequest, "Catering")) {
+        categoryDetails = {
+          'Food Style': formatArrayValue(eventDetails.foodStyle, 'foodStyle'),
+          'Cuisine Types': formatArrayValue(eventDetails.cuisineTypes, 'cuisineTypes'),
+          'Dietary Restrictions': formatArrayValue(eventDetails.dietaryRestrictions, 'dietaryRestrictions'),
+          'Setup & Cleanup': formatArrayValue(eventDetails.setupCleanup, 'setupCleanup'),
+          'Serving Staff': formatArrayValue(eventDetails.servingStaff, 'servingStaff'),
+          'Dining Items': formatArrayValue(eventDetails.diningItems, 'diningItems'),
+          'Budget Range': formatArrayValue(eventDetails.priceRange, 'priceRange')
+        };
+      } else if (isRequestType(currentRequest, "DJ")) {
+        categoryDetails = {
+          'Performance Duration': formatArrayValue(commonDetails.duration, 'duration'),
+          'Equipment Needed': formatArrayValue(categoryData.equipmentNeeded, 'equipmentNeeded'),
+          'Music Style': formatArrayValue(categoryData.musicPreferences, 'musicPreferences'),
+          'Budget Range': formatArrayValue(eventDetails.priceRange, 'priceRange')
+        };
+      } else if (isRequestType(currentRequest, "Florist")) {
+        categoryDetails = {
+          'Arrangement Types': formatArrayValue(categoryData.floralArrangements, 'floralArrangements'),
+          'Color Preferences': formatArrayValue(categoryData.colorPreferences, 'colorPreferences'),
+          'Flower Preferences': formatArrayValue(categoryData.flowerPreferences?.text || categoryData.flowerPreferences, 'flowerPreferences'),
+          'Additional Services': formatArrayValue(categoryData.additionalServices, 'additionalServices'),
+          'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
+        };
+      } else if (isRequestType(currentRequest, "HairAndMakeup")) {
+        categoryDetails = {
+          'Number of People': formatArrayValue(categoryData.numPeople, 'numPeople'),
+          'Hair Style': formatArrayValue(
+            typeof categoryData.hairstylePreferences === 'string' 
+              ? categoryData.hairstylePreferences 
+              : Object.entries(categoryData.hairstylePreferences || {})
+                  .filter(([_, val]) => val === true)
+                  .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
+                  .join(', '),
+            'hairstylePreferences'
+          ),
+          'Makeup Style': formatArrayValue(
+            typeof categoryData.makeupStylePreferences === 'string' 
+              ? categoryData.makeupStylePreferences 
+              : Object.entries(categoryData.makeupStylePreferences || {})
+                  .filter(([_, val]) => val === true)
+                  .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
+                  .join(', '),
+            'makeupStylePreferences'
+          ),
+          'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
+        };
       }
 
       return {
@@ -1392,87 +1682,20 @@ function MasterRequestFlow() {
             Event Details
           </h3>
           <div className="event-details-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
-            <div className="detail-item">
-              <span className="detail-label" style={{ color: '#666', display: 'block', marginBottom: '5px' }}>Event Type</span>
-              <span className="detail-value" style={{ color: '#333', fontWeight: '500' }}>{formData.commonDetails.eventType || 'Not specified'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label" style={{ color: '#666', display: 'block', marginBottom: '5px' }}>Location</span>
-              <span className="detail-value" style={{ color: '#333', fontWeight: '500' }}>{formData.commonDetails.location || 'Not specified'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label" style={{ color: '#666', display: 'block', marginBottom: '5px' }}>Number of Guests</span>
-              <span className="detail-value" style={{ color: '#333', fontWeight: '500' }}>{formData.commonDetails.numGuests || 'Not specified'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label" style={{ color: '#666', display: 'block', marginBottom: '5px' }}>Date</span>
-              <span className="detail-value" style={{ color: '#333', fontWeight: '500' }}>
-                {formData.commonDetails.dateFlexibility === 'specific' 
-                  ? new Date(formData.commonDetails.startDate).toLocaleDateString()
-                  : formData.commonDetails.dateFlexibility === 'range'
-                    ? `${new Date(formData.commonDetails.startDate).toLocaleDateString()} to ${new Date(formData.commonDetails.endDate).toLocaleDateString()}`
-                    : formData.commonDetails.dateTimeframe || 'Not specified'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="completed-categories" style={{ marginBottom: '30px' }}>
-          <h3 style={{ color: '#333', marginBottom: '15px', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>
-            Completed Categories
-          </h3>
-          {completedCategories.map((category, index) => {
-            const details = getCategoryDetails(category);
-            return (
-              <div 
-                key={index} 
-                className="category-review" 
-                style={{ 
-                  backgroundColor: '#fff',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  marginBottom: '20px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                  <h4 style={{ color: '#333', margin: '0' }}>{category}</h4>
-                  <button 
-                    className="edit-category-btn"
-                    onClick={() => handleEditCategory(category)}
-                    style={{
-                      backgroundColor: '#f8f9fa',
-                      border: '1px solid #ddd',
-                      padding: '8px 16px',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      color: '#333',
-                      transition: 'all 0.3s ease'
-                    }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#e9ecef'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-                  >
-                    Edit
-                  </button>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-                  {Object.entries(details).map(([key, value]) => (
-                    <div key={key} className="category-detail">
-                      <span className="detail-label" style={{ color: '#666', display: 'block', marginBottom: '5px' }}>{key}</span>
-                      <span className="detail-value" style={{ color: '#333', fontWeight: '500' }}>{value}</span>
-                    </div>
-                  ))}
-                </div>
+            {Object.entries(getCategoryDetails(formData.selectedRequests[currentStep - 1])).map(([key, value]) => (
+              <div key={key} className="detail-item">
+                <span className="detail-label" style={{ color: '#666', display: 'block', marginBottom: '5px' }}>{key}</span>
+                <span className="detail-value" style={{ color: '#333', fontWeight: '500' }}>{value}</span>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
 
         <div className="coupon-section" style={{ marginBottom: '30px' }}>
           <h3 style={{ color: '#333', marginBottom: '15px', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>
             Apply Coupon
           </h3>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexDirection: 'column' }}>
             <input
               type="text"
               value={couponCode}
