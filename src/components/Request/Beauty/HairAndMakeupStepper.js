@@ -159,19 +159,52 @@ function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentSt
     console.log('Service Type:', formData.requests.HairAndMakeup?.serviceType);
     console.log('SubStep Index:', subStep);
 
-    switch (currentStepName) {
-      case 'Basic Information':
-        return renderBasicInfoStep();
-      case 'Hair Services':
-        return renderHairServicesStep();
-      case 'Makeup Services':
-        return renderMakeupServicesStep();
-      case 'Inspiration':
-        return renderInspirationStep();
-      case 'Budget':
-        return renderBudgetStep();
-      default:
-        return null;
+    // For makeup-only service type
+    if (formData.requests.HairAndMakeup?.serviceType === 'makeup') {
+      switch (subStep) {
+        case 0:
+          return renderBasicInfoStep();
+        case 1:
+          return renderMakeupServicesStep();
+        case 2:
+          return renderInspirationStep();
+        case 3:
+          return renderBudgetStep();
+        default:
+          return null;
+      }
+    }
+    // For hair-only service type
+    else if (formData.requests.HairAndMakeup?.serviceType === 'hair') {
+      switch (subStep) {
+        case 0:
+          return renderBasicInfoStep();
+        case 1:
+          return renderHairServicesStep();
+        case 2:
+          return renderInspirationStep();
+        case 3:
+          return renderBudgetStep();
+        default:
+          return null;
+      }
+    }
+    // For both services
+    else {
+      switch (currentStepName) {
+        case 'Basic Information':
+          return renderBasicInfoStep();
+        case 'Hair Services':
+          return renderHairServicesStep();
+        case 'Makeup Services':
+          return renderMakeupServicesStep();
+        case 'Inspiration':
+          return renderInspirationStep();
+        case 'Budget':
+          return renderBudgetStep();
+        default:
+          return null;
+      }
     }
   };
 
@@ -184,16 +217,19 @@ function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentSt
           <select
             name="serviceType"
             value={currentServiceType}
-            onChange={(e) => setFormData(prev => ({
-              ...prev,
-              requests: {
-                ...prev.requests,
-                HairAndMakeup: {
-                  ...prev.requests.HairAndMakeup,
-                  serviceType: e.target.value
+            onChange={(e) => {
+              setFormData(prev => ({
+                ...prev,
+                requests: {
+                  ...prev.requests,
+                  HairAndMakeup: {
+                    ...prev.requests.HairAndMakeup,
+                    serviceType: e.target.value
+                  }
                 }
-              }
-            }))}
+              }));
+              setSubStep(0); // Reset to first step when service type changes
+            }}
             className="custom-input"
           >
             <option value="both">Hair & Makeup</option>
@@ -729,9 +765,7 @@ function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentSt
           <div className="budget-amount">
             ${recommendedBudget.min.toLocaleString()} - ${recommendedBudget.max.toLocaleString()}
           </div>
-          <p className="budget-explanation">
-            This recommendation is based on:
-            <ul>
+            <div className="explanation-items">
               {formData.requests.HairAndMakeup?.numPeople && (
                 <li>{formData.requests.HairAndMakeup.numPeople} people needing services</li>
               )}
@@ -750,8 +784,7 @@ function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentSt
               {formData.requests.HairAndMakeup?.trialSessionMakeup === 'yes' && (
                 <li>Makeup trial session</li>
               )}
-            </ul>
-          </p>
+            </div>
         </div>
 
         <div className="price-quality-slider-container">

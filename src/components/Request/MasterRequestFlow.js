@@ -282,11 +282,11 @@ function MasterRequestFlow() {
         } else if (isRequestType(currentRequest, "Videography")) {
           return videographySubStep === 3;
         } else if (isRequestType(currentRequest, "Catering")) {
-          return cateringSubStep === 2; // Changed from 2 to 2 since we only have 3 steps
+          return cateringSubStep === 2;
         } else if (isRequestType(currentRequest, "DJ")) {
           return djSubStep === 2;
         } else if (isRequestType(currentRequest, "Florist")) {
-          return floristSubStep === 4; // Changed from 3 to 4 to account for the inspiration step
+          return floristSubStep === 4;
         } else if (isRequestType(currentRequest, "HairAndMakeup")) {
           const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
           if (serviceType === 'hair') {
@@ -334,13 +334,14 @@ function MasterRequestFlow() {
           setFloristSubStep(floristSubStep + 1);
         } else if (isRequestType(currentRequest, "HairAndMakeup")) {
           const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
-          if (serviceType === 'hair' && hairAndMakeupSubStep === 1) {
-            // Skip makeup step when hair only is selected
+          if (serviceType === 'hair') {
+            // For hair only: Basic -> Hair -> Inspiration -> Budget
             setHairAndMakeupSubStep(hairAndMakeupSubStep + 1);
-          } else if (serviceType === 'makeup' && hairAndMakeupSubStep === 0) {
-            // Skip hair step when makeup only is selected
+          } else if (serviceType === 'makeup') {
+            // For makeup only: Basic -> Makeup -> Inspiration -> Budget
             setHairAndMakeupSubStep(hairAndMakeupSubStep + 1);
           } else {
+            // For both: Basic -> Hair -> Makeup -> Inspiration -> Budget
             setHairAndMakeupSubStep(hairAndMakeupSubStep + 1);
           }
         }
@@ -672,6 +673,77 @@ function MasterRequestFlow() {
 
                         await Promise.all(uploadPromises);
                     }
+                } else if (category === 'HairAndMakeup') {
+                    // Create beauty request data
+                    const beautyRequestData = {
+                        user_id: user.id,
+                        event_type: formData.commonDetails.eventType,
+                        event_title: `${user.user_metadata?.full_name || user.email}'s Beauty Request`,
+                        location: formData.commonDetails.location,
+                        date_flexibility: formData.commonDetails.dateFlexibility,
+                        start_date: formData.commonDetails.startDate,
+                        end_date: formData.commonDetails.endDate,
+                        date_timeframe: formData.commonDetails.dateTimeframe,
+                        specific_time_needed: request.specificTimeNeeded === 'yes',
+                        specific_time: request.specificTimeNeeded === 'yes' ? request.specificTime : null,
+                        num_people: request.numPeopleUnknown ? null : 
+                                  request.numPeople ? parseInt(request.numPeople) : null,
+                        price_range: request.priceRange,
+                        additional_comments: request.additionalInfo || null,
+                        pinterest_link: request.pinterestBoard || null,
+                        status: 'pending',
+                        service_type: request.serviceType,
+                        hairstyle_preferences: request.hairstylePreferences || '',
+                        hair_length_type: request.hairLengthType || '',
+                        extensions_needed: request.extensionsNeeded || '',
+                        trial_session_hair: request.trialSessionHair || '',
+                        makeup_style_preferences: request.makeupStylePreferences || '',
+                        skin_type_concerns: request.skinTypeConcerns || '',
+                        preferred_products_allergies: request.preferredProductsAllergies || '',
+                        lashes_included: request.lashesIncluded || '',
+                        trial_session_makeup: request.trialSessionMakeup || '',
+                        group_discount_inquiry: request.groupDiscountInquiry || '',
+                        on_site_service_needed: request.onSiteServiceNeeded || ''
+                    };
+
+                    const { data: newBeautyRequest, error: beautyRequestError } = await supabase
+                        .from('beauty_requests')
+                        .insert([beautyRequestData])
+                        .select()
+                        .single();
+
+                    if (beautyRequestError) throw beautyRequestError;
+
+                    // Handle photo uploads for beauty requests
+                    if (request.photos && request.photos.length > 0) {
+                        const uploadPromises = request.photos.map(async (photo) => {
+                            const fileExt = photo.name.split('.').pop();
+                            const fileName = `${uuidv4()}.${fileExt}`;
+                            const filePath = `${user.id}/${newBeautyRequest.id}/${fileName}`;
+
+                            const { error: uploadError } = await supabase.storage
+                                .from('request-media')
+                                .upload(filePath, photo.file);
+
+                            if (uploadError) throw uploadError;
+
+                            const { data: { publicUrl } } = supabase.storage
+                                .from('request-media')
+                                .getPublicUrl(filePath);
+
+                            // Store photo information in beauty_photos table
+                            return supabase
+                                .from('beauty_photos')
+                                .insert([{
+                                    request_id: newBeautyRequest.id,
+                                    user_id: user.id,
+                                    photo_url: publicUrl,
+                                    file_path: filePath
+                                }]);
+                        });
+
+                        await Promise.all(uploadPromises);
+                    }
                 }
                 // Add other request type handlers here as needed
             }
@@ -777,7 +849,7 @@ function MasterRequestFlow() {
       } else if (isRequestType(request, "Videography")) {
         requestOffset += 4;
       } else if (isRequestType(request, "Catering")) {
-        requestOffset += 3; // Changed from 2 to 3 to account for the new step
+        requestOffset += 3;
       } else if (isRequestType(request, "DJ")) {
         requestOffset += 3;
       } else if (isRequestType(request, "Florist")) {
@@ -795,13 +867,32 @@ function MasterRequestFlow() {
         requestOffset += 1;
       }
     }
+
+    // Check if we're on the makeup services step for HairAndMakeup
+    if (isRequestType(currentRequest, "HairAndMakeup")) {
+      const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
+      if (serviceType === 'makeup' && stepIndex === requestOffset + 1) {
+        return (
+          <div className="form-scrollable-content">
+            <HairAndMakeupStepper
+              formData={formData}
+              setFormData={setFormData}
+              currentStep={currentStep}
+              setCurrentStep={setCurrentStep}
+              subStep={hairAndMakeupSubStep}
+              setSubStep={setHairAndMakeupSubStep}
+            />
+          </div>
+        );
+      }
+    }
     
     // Check if we're on the budget step for any request type
     const isBudgetStep = (requestType) => {
       if (isRequestType(requestType, "Photography") || isRequestType(requestType, "Videography")) {
         return stepIndex === requestOffset + 3;
       } else if (isRequestType(requestType, "Catering")) {
-        return stepIndex === requestOffset + 2; // Changed from +2 to +2 since budget is now the second step
+        return stepIndex === requestOffset + 2;
       } else if (isRequestType(requestType, "DJ")) {
         return stepIndex === requestOffset + 2;
       } else if (isRequestType(requestType, "Florist")) {
@@ -809,11 +900,11 @@ function MasterRequestFlow() {
       } else if (isRequestType(requestType, "HairAndMakeup")) {
         const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
         if (serviceType === 'hair') {
-          return stepIndex === requestOffset + 3; // Basic -> Hair -> Inspiration -> Budget
+          return stepIndex === requestOffset + 3;
         } else if (serviceType === 'makeup') {
-          return stepIndex === requestOffset + 3; // Basic -> Makeup -> Inspiration -> Budget
+          return stepIndex === requestOffset + 3;
         } else {
-          return stepIndex === requestOffset + 4; // Basic -> Hair -> Makeup -> Inspiration -> Budget
+          return stepIndex === requestOffset + 4;
         }
       }
       return false;
@@ -822,15 +913,15 @@ function MasterRequestFlow() {
     // Check if we're on the inspiration step for Florist or HairAndMakeup
     const isInspirationStep = (requestType) => {
       if (isRequestType(requestType, "Florist")) {
-        return stepIndex === requestOffset + 3; // Inspiration is the 4th step (after offset)
+        return stepIndex === requestOffset + 3;
       } else if (isRequestType(requestType, "HairAndMakeup")) {
         const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
         if (serviceType === 'hair') {
-          return stepIndex === requestOffset + 2; // Basic -> Hair -> Inspiration -> Budget
+          return stepIndex === requestOffset + 2;
         } else if (serviceType === 'makeup') {
-          return stepIndex === requestOffset + 2; // Basic -> Makeup -> Inspiration -> Budget
+          return stepIndex === requestOffset + 2;
         } else {
-          return stepIndex === requestOffset + 3; // Basic -> Hair -> Makeup -> Inspiration -> Budget
+          return stepIndex === requestOffset + 3;
         }
       }
       return false;
@@ -972,16 +1063,6 @@ function MasterRequestFlow() {
     }
 
     if (isRequestType(currentRequest, "HairAndMakeup")) {
-      const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
-      let adjustedSubStep = hairAndMakeupSubStep;
-      
-      // Adjust the subStep for HairAndMakeup based on service type
-      if (serviceType === 'hair' && hairAndMakeupSubStep >= 2) {
-        adjustedSubStep = hairAndMakeupSubStep + 1; // Skip makeup step
-      } else if (serviceType === 'makeup' && hairAndMakeupSubStep >= 1) {
-        adjustedSubStep = hairAndMakeupSubStep + 1; // Skip hair step
-      }
-
       return (
         <div className="form-scrollable-content">
           <HairAndMakeupStepper
@@ -989,7 +1070,7 @@ function MasterRequestFlow() {
             setFormData={setFormData}
             currentStep={currentStep}
             setCurrentStep={setCurrentStep}
-            subStep={adjustedSubStep}
+            subStep={hairAndMakeupSubStep}
             setSubStep={setHairAndMakeupSubStep}
           />
         </div>

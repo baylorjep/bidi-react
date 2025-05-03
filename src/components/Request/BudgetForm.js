@@ -841,133 +841,134 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         <div className="budget-amount">
           ${recommendedBudget.min.toLocaleString()} - ${recommendedBudget.max.toLocaleString()}
         </div>
-        <p className="budget-explanation">
-          This recommendation is based on:
-          <ul>
+        <span className="explanation-label">Based on: </span>
+        <div className="budget-explanation">
+
+          <div className="explanation-items">
             {category.toLowerCase() === 'catering' && (
               <>
                 {formData.commonDetails?.numGuests && (
-                  <li>{formData.commonDetails.numGuests} guests</li>
+                  <span className="explanation-item">{formData.commonDetails.numGuests} guests</span>
                 )}
                 {formData.eventDetails?.foodStyle && (
-                  <li>{formData.eventDetails.foodStyle.charAt(0).toUpperCase() + formData.eventDetails.foodStyle.slice(1)} service</li>
+                  <span className="explanation-item">{formData.eventDetails.foodStyle.charAt(0).toUpperCase() + formData.eventDetails.foodStyle.slice(1)} service</span>
                 )}
                 {formData.eventDetails?.dietaryRestrictions?.length > 0 && (
-                  <li>{formData.eventDetails.dietaryRestrictions.length} dietary restrictions</li>
+                  <span className="explanation-item">{formData.eventDetails.dietaryRestrictions.length} dietary restrictions</span>
                 )}
                 {formData.eventDetails?.setupCleanup && (
-                  <li>{formData.eventDetails.setupCleanup === 'both' ? 'Full' : 'Partial'} setup and cleanup service</li>
+                  <span className="explanation-item">{formData.eventDetails.setupCleanup === 'both' ? 'Full' : 'Partial'} setup/cleanup</span>
                 )}
                 {formData.eventDetails?.servingStaff && (
-                  <li>{formData.eventDetails.servingStaff === 'fullService' ? 'Full' : 'Partial'} service staff</li>
+                  <span className="explanation-item">{formData.eventDetails.servingStaff === 'fullService' ? 'Full' : 'Partial'} service staff</span>
                 )}
                 {formData.eventDetails?.diningItems && (
-                  <li>{formData.eventDetails.diningItems === 'provided' ? 'Full' : 'Partial'} dining items</li>
+                  <span className="explanation-item">{formData.eventDetails.diningItems === 'provided' ? 'Full' : 'Partial'} dining items</span>
                 )}
                 {formData.requests.Catering?.priceQualityPreference && (
-                  <li>{formData.requests.Catering.priceQualityPreference === "1" ? "Budget-conscious" : formData.requests.Catering.priceQualityPreference === "3" ? "Quality-focused" : "Balanced"} quality preference</li>
+                  <span className="explanation-item">{formData.requests.Catering.priceQualityPreference === "1" ? "Budget-conscious" : formData.requests.Catering.priceQualityPreference === "3" ? "Quality-focused" : "Balanced"} quality preference</span>
                 )}
               </>
             )}
             {category.toLowerCase() === 'photography' && (
               <>
                 {formData.requests.Photography?.duration && (
-                  <li>{formData.requests.Photography.duration} hours of coverage</li>
+                  <span className="explanation-item">{formData.requests.Photography.duration} hours of coverage</span>
                 )}
                 {formData.requests.Photography?.secondPhotographer === 'yes' && (
-                  <li>Second photographer</li>
+                  <span className="explanation-item">Second photographer</span>
                 )}
                 {formData.commonDetails.eventType === 'Wedding' && (
-                  <li>Wedding coverage points</li>
+                  <span className="explanation-item">Wedding coverage points</span>
                 )}
                 {formData.requests.Photography?.deliverables?.weddingAlbum && (
-                  <li>Wedding album</li>
+                  <span className="explanation-item">Wedding album</span>
                 )}
                 {formData.requests.Photography?.deliverables?.rawFiles && (
-                  <li>RAW files</li>
+                  <span className="explanation-item">RAW files</span>
                 )}
                 {formData.requests.Photography?.deliverables?.engagement && (
-                  <li>Engagement session</li>
+                  <span className="explanation-item">Engagement session</span>
                 )}
               </>
             )}
             {category.toLowerCase() === 'videography' && (
               <>
                 {formData.requests.Videography?.duration && (
-                  <li>{formData.requests.Videography.duration} hours of coverage</li>
+                  <span className="explanation-item">{formData.requests.Videography.duration} hours of coverage</span>
                 )}
                 {formData.requests.Videography?.secondVideographer === 'yes' && (
-                  <li>Second videographer</li>
+                  <span className="explanation-item">Second videographer</span>
                 )}
                 {formData.commonDetails.eventType === 'Wedding' && (
-                  <li>Wedding coverage points</li>
+                  <span className="explanation-item">Wedding coverage points</span>
                 )}
                 {formData.requests.Videography?.deliverables?.highlightReel && (
-                  <li>Highlight reel</li>
+                  <span className="explanation-item">Highlight reel</span>
                 )}
                 {formData.requests.Videography?.deliverables?.fullCeremony && (
-                  <li>Full ceremony</li>
+                  <span className="explanation-item">Full ceremony</span>
                 )}
                 {formData.requests.Videography?.deliverables?.fullReception && (
-                  <li>Full reception</li>
+                  <span className="explanation-item">Full reception</span>
                 )}
                 {formData.requests.Videography?.deliverables?.rawFootage && (
-                  <li>Raw footage</li>
+                  <span className="explanation-item">Raw footage</span>
                 )}
                 {formData.requests.Videography?.deliverables?.droneFootage && (
-                  <li>Drone footage</li>
+                  <span className="explanation-item">Drone footage</span>
                 )}
                 {formData.requests.Videography?.deliverables?.sameDayEdit && (
-                  <li>Same day edit</li>
+                  <span className="explanation-item">Same day edit</span>
                 )}
               </>
             )}
             {category.toLowerCase() === 'dj' && (
               <>
-                <li>Standard DJ service</li>
+                <span className="explanation-item">Standard DJ service</span>
                 {formData.eventDetails?.additionalServices?.mcServices && (
-                  <li>MC Services</li>
+                  <span className="explanation-item">MC Services</span>
                 )}
                 {formData.eventDetails?.additionalServices?.liveMixing && (
-                  <li>Live Mixing / Scratching</li>
+                  <span className="explanation-item">Live Mixing / Scratching</span>
                 )}
                 {formData.eventDetails?.additionalServices?.uplighting && (
-                  <li>Uplighting Package</li>
+                  <span className="explanation-item">Uplighting Package</span>
                 )}
                 {formData.eventDetails?.additionalServices?.fogMachine && (
-                  <li>Fog Machine</li>
+                  <span className="explanation-item">Fog Machine</span>
                 )}
                 {formData.eventDetails?.additionalServices?.specialFx && (
-                  <li>Special FX</li>
+                  <span className="explanation-item">Special FX</span>
                 )}
                 {formData.eventDetails?.additionalServices?.photoBooth && (
-                  <li>Photo Booth Service</li>
+                  <span className="explanation-item">Photo Booth Service</span>
                 )}
                 {formData.eventDetails?.additionalServices?.eventRecording && (
-                  <li>Event Recording</li>
+                  <span className="explanation-item">Event Recording</span>
                 )}
                 {formData.eventDetails?.additionalServices?.karaoke && (
-                  <li>Karaoke Setup</li>
+                  <span className="explanation-item">Karaoke Setup</span>
                 )}
                 {formData.eventDetails?.equipmentNeeded === 'djBringsAll' && (
-                  <li>DJ brings all equipment</li>
+                  <span className="explanation-item">DJ brings all equipment</span>
                 )}
                 {formData.eventDetails?.equipmentNeeded === 'djBringsSome' && (
-                  <li>DJ brings some equipment</li>
+                  <span className="explanation-item">DJ brings some equipment</span>
                 )}
                 {formData.commonDetails?.eventType === 'Wedding' && (
                   <>
                     {formData.eventDetails?.weddingDetails?.ceremony && (
-                      <li>Ceremony coverage</li>
+                      <span className="explanation-item">Ceremony coverage</span>
                     )}
                     {formData.eventDetails?.weddingDetails?.cocktailHour && (
-                      <li>Cocktail hour coverage</li>
+                      <span className="explanation-item">Cocktail hour coverage</span>
                     )}
                     {formData.eventDetails?.weddingDetails?.reception && (
-                      <li>Reception coverage</li>
+                      <span className="explanation-item">Reception coverage</span>
                     )}
                     {formData.eventDetails?.weddingDetails?.afterParty && (
-                      <li>After party coverage</li>
+                      <span className="explanation-item">After party coverage</span>
                     )}
                   </>
                 )}
@@ -976,76 +977,76 @@ const BudgetForm = ({ formData, setFormData, category }) => {
             {category.toLowerCase() === 'florist' && (
               <>
                 {formData.requests.Florist?.floralArrangements?.bridalBouquet && (
-                  <li>Bridal bouquet</li>
+                  <span className="explanation-item">Bridal bouquet</span>
                 )}
                 {formData.requests.Florist?.floralArrangements?.bridesmaidBouquets && (
-                  <li>{formData.requests.Florist?.floralArrangements?.bridesmaidBouquetsQuantity || 1} bridesmaid bouquet(s)</li>
+                  <span className="explanation-item">{formData.requests.Florist?.floralArrangements?.bridesmaidBouquetsQuantity || 1} bridesmaid bouquet(s)</span>
                 )}
                 {formData.requests.Florist?.floralArrangements?.boutonnieres && (
-                  <li>{formData.requests.Florist?.floralArrangements?.boutonnieresQuantity || 1} boutonniere(s)</li>
+                  <span className="explanation-item">{formData.requests.Florist?.floralArrangements?.boutonnieresQuantity || 1} boutonniere(s)</span>
                 )}
                 {formData.requests.Florist?.floralArrangements?.corsages && (
-                  <li>{formData.requests.Florist?.floralArrangements?.corsagesQuantity || 1} corsage(s)</li>
+                  <span className="explanation-item">{formData.requests.Florist?.floralArrangements?.corsagesQuantity || 1} corsage(s)</span>
                 )}
                 {formData.requests.Florist?.floralArrangements?.centerpieces && (
-                  <li>{formData.requests.Florist?.floralArrangements?.centerpiecesQuantity || 1} centerpiece(s)</li>
+                  <span className="explanation-item">{formData.requests.Florist?.floralArrangements?.centerpiecesQuantity || 1} centerpiece(s)</span>
                 )}
                 {formData.requests.Florist?.floralArrangements?.ceremonyArchFlowers && (
-                  <li>Ceremony arch flowers</li>
+                  <span className="explanation-item">Ceremony arch flowers</span>
                 )}
                 {formData.requests.Florist?.floralArrangements?.aisleDecorations && (
-                  <li>Aisle decorations</li>
+                  <span className="explanation-item">Aisle decorations</span>
                 )}
                 {formData.requests.Florist?.floralArrangements?.floralInstallations && (
-                  <li>Floral installations</li>
+                  <span className="explanation-item">Floral installations</span>
                 )}
                 {formData.requests.Florist?.floralArrangements?.cakeFlowers && (
-                  <li>Cake flowers</li>
+                  <span className="explanation-item">Cake flowers</span>
                 )}
                 {formData.requests.Florist?.floralArrangements?.loosePetals && (
-                  <li>Loose petals</li>
+                  <span className="explanation-item">Loose petals</span>
                 )}
                 {formData.requests.Florist?.additionalServices?.setup && (
-                  <li>Setup & installation service</li>
+                  <span className="explanation-item">Setup & installation service</span>
                 )}
                 {formData.requests.Florist?.additionalServices?.delivery && (
-                  <li>Delivery service</li>
+                  <span className="explanation-item">Delivery service</span>
                 )}
                 {formData.requests.Florist?.additionalServices?.cleanup && (
-                  <li>Cleanup service</li>
+                  <span className="explanation-item">Cleanup service</span>
                 )}
                 {formData.requests.Florist?.additionalServices?.consultation && (
-                  <li>In-person consultation</li>
+                  <span className="explanation-item">In-person consultation</span>
                 )}
               </>
             )}
             {category.toLowerCase() === 'hairandmakeup' && (
               <>
                 {formData.requests.HairAndMakeup?.numPeople && (
-                  <li>{formData.requests.HairAndMakeup.numPeople} people needing services</li>
+                  <span className="explanation-item">{formData.requests.HairAndMakeup.numPeople} people needing services</span>
                 )}
                 {formData.requests.HairAndMakeup?.serviceType && (
-                  <li>{formData.requests.HairAndMakeup.serviceType === 'both' ? 'Hair & Makeup' : formData.requests.HairAndMakeup.serviceType === 'hair' ? 'Hair Only' : 'Makeup Only'} services</li>
+                  <span className="explanation-item">{formData.requests.HairAndMakeup.serviceType === 'both' ? 'Hair & Makeup' : formData.requests.HairAndMakeup.serviceType === 'hair' ? 'Hair Only' : 'Makeup Only'} services</span>
                 )}
                 {formData.requests.HairAndMakeup?.extensionsNeeded === 'yes' && (
-                  <li>Hair extensions</li>
+                  <span className="explanation-item">Hair extensions</span>
                 )}
                 {formData.requests.HairAndMakeup?.trialSessionHair === 'yes' && (
-                  <li>Hair trial session</li>
+                  <span className="explanation-item">Hair trial session</span>
                 )}
                 {formData.requests.HairAndMakeup?.lashesIncluded === 'yes' && (
-                  <li>Lashes included</li>
+                  <span className="explanation-item">Lashes included</span>
                 )}
                 {formData.requests.HairAndMakeup?.trialSessionMakeup === 'yes' && (
-                  <li>Makeup trial session</li>
+                  <span className="explanation-item">Makeup trial session</span>
                 )}
                 {formData.requests.HairAndMakeup?.serviceLocation?.toLowerCase().includes('hotel') && (
-                  <li>Hotel service location</li>
+                  <span className="explanation-item">Hotel service location</span>
                 )}
               </>
             )}
-          </ul>
-        </p>
+          </div>
+        </div>
       </div>
 
       <div className="price-quality-slider-container">
