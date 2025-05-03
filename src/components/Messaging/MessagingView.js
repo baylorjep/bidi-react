@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { socket } from "../../socket";
 import { supabase } from "../../supabaseClient";
 import "../../styles/chat.css";
+import { FaArrowLeft } from "react-icons/fa";
 
 export default function MessagingView({
   currentUserId,
@@ -15,6 +16,8 @@ export default function MessagingView({
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [initialLetter, setInitialLetter] = useState("");
 
   // 1) Fetch & normalize persisted messages
   useEffect(() => {
@@ -130,9 +133,78 @@ export default function MessagingView({
     }, 1500);
   };
 
+  useEffect(() => {
+    const fetchProfilePhoto = async () => {
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", businessId)
+          .single();
+  
+        if (profileError) throw profileError;
+  
+        let fetchedPhoto = null;
+        let letter = "";
+  
+        if (profileData.role === "business") {
+          const { data: businessData, error: businessError } = await supabase
+            .from("business_profiles")
+            .select("profile_pic, business_name")
+            .eq("id", businessId)
+            .single();
+  
+          if (businessError) throw businessError;
+  
+          fetchedPhoto = businessData?.profile_pic;
+          letter = businessData?.business_name?.charAt(0)?.toUpperCase() || "";
+  
+        } else {
+          const { data: userData, error: userError } = await supabase
+            .from("individual_profiles")
+            .select("first_name")
+            .eq("id", businessId)
+            .single();
+  
+          if (userError) throw userError;
+  
+          // ⚠️ Only fetch first_name because individual_profiles has no profile_pic
+          letter = userData?.first_name?.charAt(0)?.toUpperCase() || "";
+        }
+  
+        setProfilePhoto(fetchedPhoto);  // will be null for individual
+        setInitialLetter(letter);
+  
+      } catch (error) {
+        console.error("Error fetching profile info:", error);
+  
+        // ✅ Still set the fallback letter if available from error context
+        setProfilePhoto(null);
+        if (!initialLetter) setInitialLetter(businessName?.charAt(0)?.toUpperCase() || "");
+      }
+    };
+  
+    fetchProfilePhoto();
+  }, [businessId, businessName]);
+  
+
   return (
-    <div className="chat-main">
-      <header>{businessName}</header>
+    <div className="messaging-view chat-main">
+      <header className="chat-header">
+  <button className="back-button" onClick={() => window.history.back()}>
+    <FaArrowLeft />
+  </button>
+  <div className="header-center">
+    <div className="profile-circle">
+      {profilePhoto ? (
+        <img src={profilePhoto} alt="Profile" className="profile-image" />
+      ) : (
+        <span className="initial-letter">{initialLetter}</span>
+      )}
+    </div>
+    <span className="business-name">{businessName}</span>
+  </div>
+</header>
 
       <div className="chat-body">
         {messages.map((m) => (

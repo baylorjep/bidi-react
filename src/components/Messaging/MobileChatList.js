@@ -1,17 +1,21 @@
-// src/components/MobileChatList.js
+// src/components/Messaging/MobileChatList.js
 import React, { useState, useEffect } from "react";
-import { supabase } from "../../supabaseClient";
-import "../../styles/chat.css";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../../supabaseClient";
+import dashboardIcon from "../../assets/images/Icons/dashboard.svg";
+import bidsIcon from "../../assets/images/Icons/bids.svg";
+import messageIcon from "../../assets/images/Icons/message.svg";
+import profileIcon from "../../assets/images/Icons/profile.svg";
+import settingsIcon from "../../assets/images/Icons/settings.svg";
 
 export default function MobileChatList({ currentUserId, userType }) {
   const [chats, setChats] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!currentUserId || !userType) return;
+    const fetchChats = async () => {
+      if (!currentUserId || !userType) return;
 
-    (async () => {
       const { data: messages = [], error: messagesError } = await supabase
         .from("messages")
         .select("receiver_id, sender_id, message, created_at")
@@ -25,22 +29,18 @@ export default function MobileChatList({ currentUserId, userType }) {
 
       const latestMap = {};
       messages.forEach((msg) => {
-        const otherId = msg.sender_id === currentUserId
-          ? msg.receiver_id
-          : msg.sender_id;
+        const otherId = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id;
         if (!latestMap[otherId]) latestMap[otherId] = msg;
       });
 
       const otherIds = Object.keys(latestMap);
       if (otherIds.length === 0) return setChats([]);
 
-      const otherTable = userType === "individual"
-        ? "business_profiles"
-        : "individual_profiles";
+      const otherTable = userType === "individual" ? "business_profiles" : "individual_profiles";
 
       const { data: profiles = [], error: profilesError } = await supabase
         .from(otherTable)
-        .select(userType === "individual" ? "id, business_name, profile_photo" : "id, first_name, last_name, profile_photo")
+        .select(userType === "individual" ? "id, business_name" : "id, first_name, last_name")
         .in("id", otherIds);
 
       if (profilesError) {
@@ -50,35 +50,75 @@ export default function MobileChatList({ currentUserId, userType }) {
 
       const formatted = profiles.map((p) => ({
         id: p.id,
-        name: userType === "individual" ? p.business_name : `${p.first_name} ${p.last_name}`,
-        profile_photo: p.profile_photo,
+        name:
+          userType === "individual"
+            ? p.business_name || "Business"
+            : `${p.first_name || ""} ${p.last_name || ""}`.trim() || "User",
         last_message: latestMap[p.id]?.message || "",
-        last_time: latestMap[p.id]?.created_at || "",
       }));
 
       setChats(formatted);
-    })();
+    };
+
+    fetchChats();
   }, [currentUserId, userType]);
 
   return (
-    <div className="mobile-chat-list">
+    <div style={{ padding: "1rem" }}>
       <h2>Messages</h2>
-      {chats.map((chat) => (
-        <div 
-          key={chat.id} 
-          className="chat-list-item" 
-          onClick={() => navigate(`/messages/${chat.id}`)}
-        >
-          <img src={chat.profile_photo || "/default-profile.png"} alt="Profile" className="chat-list-avatar" />
-          <div className="chat-list-info">
-            <div className="chat-list-name">{chat.name}</div>
-            <div className="chat-list-preview">{chat.last_message}</div>
-          </div>
-          <div className="chat-list-time">
-            {new Date(chat.last_time).toLocaleDateString()}
-          </div>
-        </div>
-      ))}
+      <ul style={{ listStyle: "none", padding: 0 }}>
+        {chats.map((chat) => (
+          <li
+            key={chat.id}
+            style={{
+              background: "#f6eafe",
+              padding: "1rem",
+              borderRadius: "1rem",
+              marginBottom: "1rem",
+              cursor: "pointer"
+            }}
+            onClick={() => navigate(`/messages/${chat.id}`)}
+          >
+            <strong>{chat.name}</strong>
+            <div style={{ color: "#666", fontSize: "0.85rem" }}>
+              {chat.last_message}
+            </div>
+          </li>
+        ))}
+      </ul>
+    {/* Bottom Navigation Bar */}
+    <nav className="bottom-nav">
+  <button onClick={() => { localStorage.setItem("activeSection", "dashboard"); navigate("/dashboard"); }}>
+    <div className="nav-item">
+      <img src={dashboardIcon} alt="Dashboard" />
+      <span className="nav-label">Requests</span>
+    </div>
+  </button>
+  <button onClick={() => { localStorage.setItem("activeSection", "bids"); navigate("/dashboard"); }}>
+    <div className="nav-item">
+      <img src={bidsIcon} alt="Bids" />
+      <span className="nav-label">Bids</span>
+    </div>
+  </button>
+  <button onClick={() => { localStorage.setItem("activeSection", "messages"); navigate("/dashboard"); }}>
+    <div className="nav-item">
+      <img src={messageIcon} alt="Message" />
+      <span className="nav-label">Messages</span>
+    </div>
+  </button>
+  <button onClick={() => { localStorage.setItem("activeSection", "portfolio"); navigate("/dashboard"); }}>
+    <div className="nav-item profile-nav-item">
+      <img src={profileIcon} alt="Portfolio" className="profile-icon" />
+      <span className="nav-label">Portfolio</span>
+    </div>
+  </button>
+  <button onClick={() => { localStorage.setItem("activeSection", "settings"); navigate("/dashboard"); }}>
+    <div className="nav-item">
+      <img src={settingsIcon} alt="Settings" className="settings-icon" />
+      <span className="nav-label">Settings</span>
+    </div>
+  </button>
+</nav>
     </div>
   );
 }

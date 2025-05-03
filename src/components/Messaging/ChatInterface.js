@@ -10,6 +10,14 @@ export default function ChatInterface() {
   const [chats, setChats] = useState([]);
   const [activeBusiness, setActiveBusiness] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // 1) Load current user & determine user type
   useEffect(() => {
@@ -113,21 +121,38 @@ export default function ChatInterface() {
       </aside>
 
       <main className="chat-main">
-        {activeBusiness ? (
-          <MessagingView
-            currentUserId={currentUserId}
-            businessId={activeBusiness}
-            businessName={
-              chats.find((c) => c.business_id === activeBusiness)?.business_name
-            }
-            userType={userType}
-          />
-        ) : (
-          <div style={{ padding: "2rem", color: "var(--bidi-muted)" }}>
-            Select a chat to start messaging
-          </div>
-        )}
-      </main>
+  {isMobile && activeBusiness && (
+    <button
+      onClick={() => setActiveBusiness(null)}
+      style={{
+        background: "none",
+        border: "none",
+        fontSize: "1.2rem",
+        margin: "1rem",
+        display: "flex",
+        alignItems: "center",
+        cursor: "pointer"
+      }}
+    >
+      ← Back
+    </button>
+  )}
+
+  {activeBusiness ? (
+    <MessagingView
+      currentUserId={currentUserId}
+      businessId={activeBusiness}
+      businessName={
+        chats.find((c) => c.business_id === activeBusiness)?.business_name
+      }
+      userType={userType}
+    />
+  ) : (
+    <div style={{ padding: "2rem", color: "var(--bidi-muted)" }}>
+      Select a chat to start messaging
+    </div>
+  )}
+</main>
 
       {showModal && (
         <StartNewChatModal

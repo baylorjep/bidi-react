@@ -1,12 +1,13 @@
 // App Imports
 import "./App.css";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./i18n";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { HelmetProvider } from "react-helmet-async";
+import { supabase } from "./supabaseClient";
 
 // Layout Imports
 import Navbar from "./components/Layout/Navbar";
@@ -73,6 +74,8 @@ import AboutUs from "./components/AboutUs";
 // Messaging imports
 import MessagingView from "./components/Messaging/MessagingView";
 import ChatInterface from "./components/Messaging/ChatInterface";
+import MobileChatList from "./components/Messaging/MobileChatList";
+import MessagingViewWrapper from "./components/Messaging/MessagingViewWrapper";
 
 // Spanish imports
 import HomepageES from "./components/HomepageES";
@@ -125,6 +128,31 @@ function App() {
   subscribeToPush();
   const [eventType, setEventType] = useState("");
   const [eventDetails, setEventDetails] = useState({});
+  const [userId, setUserId] = useState(null);
+  const [userType, setUserType] = useState(null);
+
+// grab user so we dont have to do it in every component
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+
+        const { data: individual } = await supabase
+          .from("individual_profiles")
+          .select("id")
+          .eq("id", user.id)
+          .single();
+
+        if (individual) {
+          setUserType("individual");
+        } else {
+          setUserType("business");
+        }
+      }
+    };
+    fetchUser();
+  }, []);
 
   return (
     <HelmetProvider>
@@ -240,6 +268,9 @@ function App() {
               {/* Messaging Routes */}
               <Route path="/messaging" element={<MessagingView />} />
               <Route path="/chat" element={<ChatInterface />} />
+              <Route path="/messages" element={<MobileChatList currentUserId={userId} userType={userType} />} />
+              <Route path="/messages/:businessId" element={<MessagingViewWrapper currentUserId={userId} />} />
+
               {/* Spanish Routes */}
               <Route path="/inicio" element={<HomepageES />} />
               <Route path="/contactenos" element={<ContactFormES />} />

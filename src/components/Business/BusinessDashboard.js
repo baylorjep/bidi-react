@@ -22,6 +22,7 @@ import PortfolioPage from "../Business/Portfolio/Portfolio.js";
 import Onboarding from "../../components/Stripe/Onboarding.js";
 import OpenRequests from "../../components/Request/OpenRequests.js";
 import LoadingSpinner from "../LoadingSpinner.js";
+import ChatInterface from "../Messaging/ChatInterface.js";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -134,6 +135,14 @@ const BusinessDashSidebar = () => {
   useEffect(() => {
     localStorage.setItem("activeSection", activeSection);
   }, [activeSection]);
+
+  const handleMessagesClick = () => {
+    if (isMobile) {
+      navigate("/messages");
+    } else {
+      setActiveSection("messages");
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -255,7 +264,7 @@ const BusinessDashSidebar = () => {
               <span>Bids</span>
             </li>
             <li 
-              onClick={() => setActiveSection("messages")}
+              onClick={handleMessagesClick}
               className={activeSection === "messages" ? "active" : ""}
             >
               <img src={messageIcon} alt="Message" />
@@ -314,8 +323,7 @@ const BusinessDashSidebar = () => {
             // </section>
             <OpenRequests requests={requests} />
           ) : activeSection === "messages" ? (
-            // <MessagingView />
-            <div className="coming-soon">Coming Soon!</div>
+            <ChatInterface />     
           ) : activeSection === "bids" ? (
             <BusinessBids bids={bids} />
           ) : activeSection === "onboarding" ? (
@@ -358,7 +366,7 @@ const BusinessDashSidebar = () => {
             </div>
           </button>
           <button 
-            onClick={() => setActiveSection("messages")}
+            onClick={handleMessagesClick}
             className={activeSection === "messages" ? "active" : ""}
           >
             <div className="nav-item">
