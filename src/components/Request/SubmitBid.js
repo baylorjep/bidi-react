@@ -159,51 +159,30 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
     }, [requestId, requestType]);
 
     const validateBidDescription = (content) => {
-        // More precise regex patterns to catch contact information
-        const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?(?:\d{3})\)?[-.\s]?\d{3}[-.\s]?\d{4}|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\d{10}(?=\D|$)/g;
-        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+\s*\(?at\)?\s*[a-zA-Z0-9.-]+\s*\(?dot\)?\s*[a-zA-Z]{2,}/gi;
-        const websiteRegex = /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?|(?:my\s+)?website(?:\s+is)?\s*:\s*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/gi;
-        const socialMediaRegex = /(?:@|(?:https?:\/\/)?(?:www\.)?(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)(?:\.com)?\/)[a-zA-Z0-9._-]+|(?:(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s*(?::|is|at|handle|profile|account)?:?\s*[@]?[a-zA-Z0-9._-]+)|(?:my\s+(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s+(?:is|handle|profile|account)?:?\s*[@]?[a-zA-Z0-9._-]+)|(?:find\s+(?:me|us)\s+on\s+(?:instagram|insta|ig|facebook|fb|linkedin|twitter|x|tiktok|tt|snapchat|snap)\s*[@]?[a-zA-Z0-9._-]+)/gi;
+        // Simple regex patterns for basic contact info
+        const phoneRegex = /\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/g;
+        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+        const linkRegex = /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?/g;
+        
+        // Check for specific social media terms
+        const socialMediaTerms = /\b(?:IG|instagram|FB|facebook)\b/i;
 
-        // Remove spaces and special characters for additional checking
-        const normalizedContent = content.toLowerCase().replace(/[\s\-.()\[\]]/g, '');
-
-        // Additional checks for common obfuscation patterns
-        const hasPhone = phoneRegex.test(content) || /\d{10}(?=\D|$)/.test(normalizedContent);
+        // Check if the content contains any of these
+        const hasPhone = phoneRegex.test(content);
         const hasEmail = emailRegex.test(content);
-        const hasWebsite = websiteRegex.test(content);
-        const hasSocialMedia = socialMediaRegex.test(content);
+        const hasLink = linkRegex.test(content);
+        const hasSocialMedia = socialMediaTerms.test(content);
 
-        // Check if the content contains actual contact information
-        const containsContactInfo = hasPhone || hasEmail || hasWebsite || hasSocialMedia;
-
-        // Check for false positives - common phrases that might trigger the regex but aren't actually contact info
-        const falsePositives = [
-            /phone call/i,
-            /call me/i,
-            /give me a call/i,
-            /reach out/i,
-            /contact me/i,
-            /get in touch/i,
-            /\$?\d+(?:\.\d{2})?(?:\s*(?:dollars|USD))?/i, // Price mentions
-            /\d+(?:\s*(?:years|yrs|photos|pictures|hours|hrs|minutes|mins|days))?/i, // Numbers with units
-            /second shooter/i,
-            /second photographer/i
-        ];
-
-        // If we found contact info, check if it's a false positive
-        if (containsContactInfo) {
-            const isFalsePositive = falsePositives.some(pattern => pattern.test(content));
-            if (!isFalsePositive) {
-                let errorMessage = "Please remove the following contact information from your bid:";
-                if (hasPhone) errorMessage += "\n- Phone numbers (including spaced or formatted numbers)";
-                if (hasEmail) errorMessage += "\n- Email addresses (including formatted or spelled out addresses)";
-                if (hasWebsite) errorMessage += "\n- Website URLs (including spelled out domains)";
-                if (hasSocialMedia) errorMessage += "\n- Social media handles/links (including profile references and abbreviations like 'IG' or 'FB')";
-                errorMessage += "\n\nAll contact information should be managed through your Bidi profile. The user can see your work on your profile and will get your contact information after accepting your bid.";
-                setBidDescriptionError(errorMessage);
-                return false;
-            }
+        // If we found any of these, show an error
+        if (hasPhone || hasEmail || hasLink || hasSocialMedia) {
+            let errorMessage = "Please remove the following from your bid:";
+            if (hasPhone) errorMessage += "\n- Phone numbers";
+            if (hasEmail) errorMessage += "\n- Email addresses";
+            if (hasLink) errorMessage += "\n- Website links";
+            if (hasSocialMedia) errorMessage += "\n- Social media references (IG, Instagram, FB, Facebook)";
+            errorMessage += "\n\nAll contact information should be managed through your Bidi profile.";
+            setBidDescriptionError(errorMessage);
+            return false;
         }
 
         setBidDescriptionError('');

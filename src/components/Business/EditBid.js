@@ -14,6 +14,43 @@ const EditBid = () => {
   const [requestDetails, setRequestDetails] = useState(null);
   const [requestType, setRequestType] = useState('');
   const [error, setError] = useState('');
+  const [bidDescriptionError, setBidDescriptionError] = useState('');
+
+  const validateBidDescription = (content) => {
+    // Simple regex patterns for basic contact info
+    const phoneRegex = /\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/g;
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    const linkRegex = /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?/g;
+    
+    // Check for specific social media terms
+    const socialMediaTerms = /\b(?:IG|instagram|FB|facebook)\b/i;
+
+    // Check if the content contains any of these
+    const hasPhone = phoneRegex.test(content);
+    const hasEmail = emailRegex.test(content);
+    const hasLink = linkRegex.test(content);
+    const hasSocialMedia = socialMediaTerms.test(content);
+
+    // If we found any of these, show an error
+    if (hasPhone || hasEmail || hasLink || hasSocialMedia) {
+      let errorMessage = "Please remove the following from your bid:";
+      if (hasPhone) errorMessage += "\n- Phone numbers";
+      if (hasEmail) errorMessage += "\n- Email addresses";
+      if (hasLink) errorMessage += "\n- Website links";
+      if (hasSocialMedia) errorMessage += "\n- Social media references (IG, Instagram, FB, Facebook)";
+      errorMessage += "\n\nAll contact information should be managed through your Bidi profile.";
+      setBidDescriptionError(errorMessage);
+      return false;
+    }
+
+    setBidDescriptionError('');
+    return true;
+  };
+
+  const handleBidDescriptionChange = (content) => {
+    setBidDescription(content);
+    validateBidDescription(content);
+  };
 
   // Fetch bid details and request details
   useEffect(() => {
@@ -68,6 +105,11 @@ const EditBid = () => {
 
     if (!bidAmount || !bidDescription) {
       alert("Please fill in all the fields.");
+      return;
+    }
+
+    // Validate bid description before submitting
+    if (!validateBidDescription(bidDescription)) {
       return;
     }
 
@@ -135,10 +177,17 @@ const EditBid = () => {
 
           <div className="custom-input-container" style={{ marginTop: '20px' }}>
             <label className="custom-label" style={{ marginBottom: '10px' }}>Bid Description</label>
+            {bidDescriptionError && (
+              <div className="alert alert-warning" role="alert">
+                {bidDescriptionError.split('\n').map((line, index) => (
+                  <div key={index}>{line}</div>
+                ))}
+              </div>
+            )}
             <ReactQuill
               theme="snow"
               value={bidDescription}
-              onChange={setBidDescription}
+              onChange={handleBidDescriptionChange}
               modules={modules}
               formats={formats}
               style={{ height: '200px', marginBottom: '50px' }}
