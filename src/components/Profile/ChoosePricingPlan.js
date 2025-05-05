@@ -96,7 +96,7 @@ function ChoosePricingPlan() {
                 <div className="payment-plan-container two-column">
                     <div className="plan-card">
                         <div>
-                            <div className="plan-title">Free</div>
+                            <div className="plan-title">Basic</div>
                             <div className="plan-subheader">
                                 Get started with Bidi and only pay when you win jobs.
                             </div>
