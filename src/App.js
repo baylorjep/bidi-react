@@ -315,7 +315,7 @@ function App() {
                 path="/bids"
                 element={
                   <PrivateRoute>
-                    <BidsPage />
+                    <IndividualDashboard />
                   </PrivateRoute>
                 }
               />

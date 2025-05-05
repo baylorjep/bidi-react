@@ -163,7 +163,7 @@ export default function ChatInterface({ initialChat }) {
               onClick={() => handleChatSelect(c)}
             >
               <div>{c.business_name}</div>
-              <div className="message-time">{c.last_message}</div>
+              <div className="message-time" style={{ color: "black" }}>{c.last_message}</div>
             </li>
           ))}
         </ul>

@@ -44,11 +44,14 @@ const IndividualDashboard = () => {
     if (location.state?.activeSection) {
       setActiveSection(location.state.activeSection);
       localStorage.setItem("activeSection", location.state.activeSection);
+    } else if (location.pathname === '/bids') {
+      setActiveSection('bids');
+      localStorage.setItem("activeSection", 'bids');
     }
     if (location.state?.selectedChat) {
       setSelectedChat(location.state.selectedChat);
     }
-  }, [location.state]);
+  }, [location.state, location.pathname]);
 
   useEffect(() => {
     const fetchData = async () => {

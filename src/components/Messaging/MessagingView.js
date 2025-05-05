@@ -24,6 +24,11 @@ export default function MessagingView({
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Get profile image from navigation state
   useEffect(() => {
     if (location.state?.profileImage) {
