@@ -160,9 +160,16 @@
 
 .message-time {
   font-size: 0.75rem;
-  color: var(--bidi-text-muted);
   margin-top: 4px;
   text-align: right;
+}
+
+.message-bubble.sent .message-time {
+  color: rgba(255, 255, 255, 0.8); /* Lighter color for sent messages */
+}
+
+.message-bubble.received .message-time {
+  color: var(--bidi-text-muted); /* Darker color for received messages */
 }
 
 /* Chat Footer */
@@ -586,7 +593,7 @@
 
 .message-time {
   font-size: 0.8rem;
-  color: #666;
+  color: white;
   margin-top: 0.25rem;
 }
 
