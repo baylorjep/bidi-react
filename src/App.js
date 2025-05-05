@@ -57,6 +57,7 @@ import ProfilePage from "./components/Profile/Profile";
 import MyDashboard from "./components/Individual/MyDashboard";
 import MyRequests from "./components/Individual/MyRequests";
 import EditRequest from "./components/Individual/EditRequest";
+import IndividualDashboard from "./components/Individual/IndividualDashboard";
 //
 // Business Imports
 import BusinessDashboard from "./components/Business/BusinessDashboard";
@@ -137,6 +138,7 @@ function App() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
+        console.log('App - User ID:', user.id); // Debug log
 
         const { data: individual } = await supabase
           .from("individual_profiles")
@@ -144,9 +146,13 @@ function App() {
           .eq("id", user.id)
           .single();
 
+        console.log('App - Individual profile:', individual); // Debug log
+
         if (individual) {
+          console.log('App - Setting userType to individual'); // Debug log
           setUserType("individual");
         } else {
+          console.log('App - Setting userType to business'); // Debug log
           setUserType("business");
         }
       }
@@ -239,7 +245,15 @@ function App() {
               <Route path="/createaccount" element={<CreateAccount />} />
               <Route path="/profile" element={<ProfilePage />} />
               {/* Individual Routes */}
-              <Route path="/my-dashboard" element={<MyDashboard />} />
+              <Route path="/my-dashboard" element={
+                <PrivateRoute>
+                  {userType === "individual" ? (
+                    <IndividualDashboard />
+                  ) : (
+                    <BusinessDashboard />
+                  )}
+                </PrivateRoute>
+              } />
               <Route path="/my-requests" element={<MyRequests />} />
               <Route path="/edit-request/:type/:id" element={<EditRequest />} />
               {/* Test API Routes */}
@@ -266,10 +280,16 @@ function App() {
               <Route path="/contact-us" element={<ContactForm />} />
               <Route path="/about-us" element={<AboutUs />} />
               {/* Messaging Routes */}
-              <Route path="/messaging" element={<MessagingView />} />
-              <Route path="/chat" element={<ChatInterface />} />
-              <Route path="/messages" element={<MobileChatList currentUserId={userId} userType={userType} />} />
-              <Route path="/messages/:businessId" element={<MessagingViewWrapper currentUserId={userId} />} />
+              <Route path="/messages" element={
+                <PrivateRoute>
+                  <MessagingViewWrapper currentUserId={userId} userType={userType} />
+                </PrivateRoute>
+              } />
+              <Route path="/messages/:businessId" element={
+                <PrivateRoute>
+                  <MessagingViewWrapper currentUserId={userId} userType={userType} />
+                </PrivateRoute>
+              } />
 
               {/* Spanish Routes */}
               <Route path="/inicio" element={<HomepageES />} />
@@ -371,163 +391,6 @@ function App() {
       </Router>
     </HelmetProvider>
   );
-    return (
-        <HelmetProvider>
-            <Router>
-                <ScrollToTop />
-                <div className="app-container">
-                    <LocationBanner />
-                    <Navbar />
-                    <div className='content'>
-                        <Routes>
-                            {/* Layout Routes */}
-                            <Route path="/" element={<Homepage />} />
-                            <Route path="/for-vendors" element={<VendorHomepage />} />
-                            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                            <Route path="/terms-of-use" element={<TermsOfUse />} />
-                            <Route path="/about" element={<AboutAndContact />} />
-
-                            {/* Bid Routes */}
-                            <Route path="/submit-bid/:requestId" element={
-                                <PrivateRoute>
-                                    <SubmitBid />
-                                </PrivateRoute>
-                            } />
-                            <Route path="/bid-accepted" element={<BidAccepted />} />
-                            <Route path="/bid-success" element={<BidSuccess />} />
-
-                            {/* Request Routes */}
-                            <Route path="/request-categories" element={<RequestCategories />} />
-                            <Route path="/success-request" element={<SuccessRequest />} />
-
-                            {/* New Staged Request Routes */}
-                            <Route path="/request-form" element={<MultiStepRequestForm />} />
-                            <Route path="/success-request" element={<SuccessRequest />} />
-
-                            {/* Event Routes */}
-                            <Route path="/select-event" element={<SelectEvent setEventType={setEventType} />} />
-                            <Route path="/event-details" element={<EventDetails eventType={eventType} setEventDetails={setEventDetails} />} />
-                            <Route path="/event-photos" element={<EventPhotos eventType={eventType} setEventDetails={setEventDetails} />} />
-                            <Route path="/personal-details" element={<PersonalDetails eventType={eventType} setEventDetails={setEventDetails} />} />
-                            <Route path="/event-summary" element={<EventSummary eventType={eventType} eventDetails={eventDetails} />} />
-
-                            {/* Profile Routes */}
-                            <Route path="/signup" element={<Signup />} />
-                            <Route path="/success-signup" element={<SuccessSignup />} />
-                            <Route path='/choose-pricing-plan' element={<ChoosePricingPlan/>} />
-                            <Route path="/signin" element={<SignIn />} />
-                            <Route path="/request-password-reset" element={<ResetPassword />} />
-                            <Route path="/reset-password" element={<UpdatePassword />} />
-                            <Route path="/createaccount" element={<CreateAccount />} />
-                            <Route path="/profile" element={<ProfilePage />} />
-
-                            {/* Individual Routes */}
-                            <Route path="/my-dashboard" element={<MyDashboard />} />
-                            <Route path="/my-requests" element={<MyRequests />} />
-                            <Route path="/edit-request/:type/:id" element={<EditRequest />} />
-                            
-                            {/* Test API Routes */}
-                            <Route path="/test-email" element={<TestEmail />} />
-                            
-                            {/* Business Routes */}
-                            <Route path="/open-requests" element={
-                                <PrivateRoute>
-                                    <OpenRequests />
-                                </PrivateRoute>
-                            } />
-                            <Route path="/dashboard" element={
-                                <PrivateRoute>
-                                    <BusinessDashboard />
-                                </PrivateRoute>
-                            } />
-                            <Route path="/edit-bid/:requestId/:bidId" element={
-                                <PrivateRoute>
-                                    <EditBid />
-                                </PrivateRoute>
-                            } />
-                            <Route path="/verification-application" element={
-                                <PrivateRoute>
-                                    <VerificationApplication />
-                                </PrivateRoute>
-                            } />
-                            
-                            {/* Dynamic URL for viewing portfolio */}
-                            <Route path="/portfolio/:businessId" element={<Portfolio />} />
-                            <Route path="/portfolio/:businessId/gallery" element={<Gallery />} />
-
-
-                            {/* Misc Routes */}
-                            <Route path="/contact-us" element={<ContactForm />} />
-                            <Route path="/about-us" element={<AboutUs />} />
-                            
-                            {/* Messaging Routes */}
-                            <Route path="/messaging" element={<MessagingView />} />
-                            <Route path="/chat" element={<ChatInterface />} />
-                            
-
-                            {/* Spanish Routes */}
-                            <Route path="/inicio" element={<HomepageES />} />
-                            <Route path="/contactenos" element={<ContactFormES />} />
-
-                            {/* Stripe Routes */}
-                            <Route path="/onboarding" element={<Onboarding />} />
-                            <Route path="/stripe-setup" element={<StripeOnboarding />} />
-                            <Route path="/checkout" element={<EmbeddedCheckoutForm />} />
-                            <Route path="/payment-cancelled" element={<PaymentCancelled />} />
-                            <Route path="/payment-successful" element={<SuccessPayment />} />
-                            <Route path="/payment-status" element={<PaymentStatus />} />
-
-                            {/* Admin Routes */}
-                            <Route path="/admin-dashboard" element={
-                                <PrivateRoute>
-                                    <AdminDashboard />
-                                </PrivateRoute>
-                            } />
-
-                            {/* Combined Bids Route */}
-                            <Route path="/bids" element={
-                                <PrivateRoute>
-                                    <BidsPage />
-                                </PrivateRoute>
-                            } />
-
-                            {/* Articles Route */}
-                            <Route path="/articles" element={<ArticleNavigation />} />
-                            <Route path="/articles/:articleId" element={<ArticleDetail />} />
-                            <Route path="/articles/utah-wedding-videographer-guide" element={<UtahWeddingVideographerGuide />} />
-                            <Route path="/articles/utah-catering-costs" element={<UtahCateringCosts />} />
-                            <Route path="/articles/utah-dj-costs" element={<UtahDJCosts />} />
-                            <Route path="/articles/wedding-market-guide" element={<WeddingMarketGuide />} />
-                            <Route path="/articles/wedding-vibe-quiz" element={<WeddingVibeQuiz />} />
-                            <Route path="/articles/related-articles" element={<RelatedArticles />} />
-
-                            {/* Photography Routes */}
-                            <Route path="/request/photography" element={<PhotographyRequest />} />
-                            <Route path="/request/videography" element={<VideographyRequest />} />
-                            <Route path="/request/dj" element={<DjRequest />} />
-                            <Route path="/request/beauty" element={<HairAndMakeUpRequest />} />
-                            <Route path="/request/florist" element={<FloristRequest />} />
-                            <Route path="/request/catering" element={<CateringRequest />} />
-                            <Route path="/welcome" element={<NewsletterLanding />} />
-                            <Route path="/unsubscribe" element={<Unsubscribe />} />
-                            <Route path="/wedding-market-guide" element={<WeddingMarketGuide />} />
-                            <Route path="/vendors" element={<VendorListWithFilters />} />
-                            
-                            {/* LocationBasedVendors Routes - Order matters! Most specific to least specific */}
-                            <Route path="/:type/:category/:city" element={<LocationBasedVendors />} />
-                            <Route path="/:type/:category" element={<LocationBasedVendors />} />
-                            <Route path="/:category/:city" element={<LocationBasedVendors />} />
-                            <Route path="/:category" element={<LocationBasedVendors />} />
-                            
-                            <Route path="/wedding-vibe-quiz" element={<WeddingVibeQuizPage />} />
-
-                        </Routes>
-                    </div>
-                    <Footer />
-                </div>
-            </Router>
-        </HelmetProvider>
-    );
 }
 
 export default App;

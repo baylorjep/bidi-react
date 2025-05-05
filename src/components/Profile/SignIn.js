@@ -57,10 +57,11 @@ const SignIn = ({ onSuccess }) => {
             if (onSuccess) {
                 onSuccess();
             } else {
-                navigate(redirectTo, {
+                navigate('/my-dashboard', {
                     state: { 
                         source: requestSource || requestFormData.source || 'general',
-                        from: 'signin'
+                        from: 'signin',
+                        activeSection: 'bids'
                     }
                 });
             }
@@ -222,12 +223,13 @@ const SignIn = ({ onSuccess }) => {
                         if (onSuccess) {
                             onSuccess();
                         } else {
-                            navigate(redirectTo, {
+                            navigate('/my-dashboard', {
                                 state: { 
                                     source: localStorage.getItem('requestSource') || 
                                            JSON.parse(localStorage.getItem('requestFormData') || '{}').source || 
                                            'general',
-                                    from: 'signin'
+                                    from: 'signin',
+                                    activeSection: 'bids'
                                 }
                             });
                         }

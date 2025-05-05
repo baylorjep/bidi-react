@@ -1,26 +1,196 @@
+.request-display {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  opacity: 1;
+}
+
+.request-display.fade-out {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.bid-display-head-container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  width: 100%;
+}
+
+.bid-display-head {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: nowrap;
+}
+
+.business-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  width: auto;
+  margin-top: 20px;
+}
+
+.business-actions button {
+  width: auto;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn-danger {
+  background-color: white;
+  color: #A328F4;
+  border: 1px solid #A328F4;
+}
+
+.btn-danger:hover {
+  background-color: #A328F4;
+  color: white;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.btn-chat {
+  background-color: #9633eb;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  width: auto;
+  justify-content: center;
+}
+
+.btn-chat svg {
+  font-size: 1.2rem;
+}
+
+.bid-display-button {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 30px;
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+  cursor: default;
+  position: relative;
+  width: auto;
+  text-align: center;
+  min-width: 200px;
+  background-color: #A328F4;
+  color: white;
+  border: none;
+}
+
+.bid-display-button:hover {
+  background-color: #8a1fd4;
+}
+
+.tag-hole {
+  display: none;
+}
+
+.vendor-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.star-icon {
+  width: 16px;
+  height: 16px;
+}
+
 .profile-tooltip {
-    position: absolute;
-    left: 50%;
-    bottom: -30px;
-    transform: translateX(-50%);
-    background-color: #f0f0f0;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    color: #666;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: absolute;
+  left: 50%;
+  bottom: -30px;
+  transform: translateX(-50%);
+  background-color: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: #666;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1;
+}
+
+.vendor-profile-image {
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.request-title {
+  margin-bottom: 0;
+  text-align: left;
+  position: relative;
+  width: 100%;
+}
+
+.bid-description-content {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  font-family: 'Inter';
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Expiration Badge Styles */
 .expiration-badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 8px;
+  padding: 8px 16px;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: bold;
-  margin-top: 8px;
+  width: auto;
+  justify-content: center;
+  min-width: 200px;
 }
 
 .expiration-badge svg {
@@ -58,9 +228,202 @@
   margin-left: 8px;
 }
 
-@media (max-width: 768px) {
-    .profile-tooltip {
-        bottom: auto;
-        top: -30px;
-    }
+/* Mobile Styles */
+@media screen and (max-width: 500px) {
+  .request-display {
+    padding: 15px;
+  }
+
+  .bid-display-head-container {
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bid-display-head {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .business-actions {
+    flex-direction: column;
+    width: 100%;
+    margin-top: 15px;
+  }
+
+  .business-actions button {
+    width: 100%;
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .bid-display-button {
+    width: 100%;
+    padding: 10px 20px;
+    font-size: 1.1rem;
+    min-width: unset;
+  }
+
+  .expiration-badge {
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    min-width: unset;
+  }
+
+  .profile-tooltip {
+    display: none;
+  }
+
+  .vendor-rating {
+    font-size: 0.8rem;
+  }
+
+  .star-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .new-badge {
+    font-size: 0.65rem;
+    padding: 2px 4px;
+  }
+
+  .btn-chat {
+    width: 100%;
+  }
+
+  .coupon-section .btn-secondary {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .request-display {
+    padding: 12px;
+  }
+
+  .business-actions button {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .bid-display-button {
+    padding: 8px 16px;
+    font-size: 1rem;
+  }
+
+  .expiration-badge {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+.profile-image-container {
+  position: relative;
+}
+
+.business-info {
+  display: flex;
+  flex-direction: row;
+  align-items: left;
+  justify-content: left;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.business-name {
+  text-decoration: none;
+  color: inherit;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.business-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.bidi-check-icon {
+  height: 20px;
+  width: auto;
+}
+
+.bidi-verified-info {
+  text-align: left;
+  padding: 0;
+  margin-top: 8px;
+}
+
+.bidi-verified-title {
+  font-size: 0.9rem;
+  margin: 0;
+  font-weight: bold;
+  text-align: left;
+  font-family: Outfit;
+  color: #a328f4;
+}
+
+.bidi-verified-subtitle {
+  font-size: 0.8rem;
+  margin: 5px 0 0;
+  font-style: italic;
+  text-align: left;
+  font-family: Outfit;
+  color: #a328f4;
+}
+
+.bid-amount-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+}
+
+.request-category {
+  text-align: left;
+  margin-bottom: 10px;
+}
+
+.request-description {
+  text-align: left;
+  margin-bottom: 10px;
+}
+
+.coupon-section {
+  text-align: left;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.coupon-section .btn-secondary {
+  padding: 8px 16px;
+  font-size: 14px;
+  width: auto;
+  min-width: 200px;
+}
+
+.coupon-section .fas {
+  margin-right: 8px;
+}
+
+.coupon-applied-info {
+  margin-top: 8px;
+  text-align: left;
+  color: #a328f4;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.action-buttons-spacer {
+  margin-bottom: 20px;
 } 

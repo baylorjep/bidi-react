@@ -638,7 +638,7 @@ const VendorList = ({
 
         return (
             <div key={index} style={{ height: '100%' }}>
-                <div className="image-container" 
+                <div className="image-container-vendor-list" 
                      style={{ 
                          height: '100%',
                          display: 'flex',

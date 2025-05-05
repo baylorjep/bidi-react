@@ -183,7 +183,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                             {user ? (
                                 // Conditionally render different routes based on the role
                                 role === 'individual' ? (
-                                <Link to="/bids" onClick={() => posthog.capture('client_dashboard')}>
+                                <Link to="/my-dashboard" onClick={() => posthog.capture('client_dashboard')}>
                                     <button className='landing-page-button'>See Your Bids</button>
                                 </Link>
                                 ) : role === 'business' ? (

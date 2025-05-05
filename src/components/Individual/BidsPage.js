@@ -13,7 +13,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import { Helmet } from 'react-helmet';
 
-export default function BidsPage() {
+export default function BidsPage({ onOpenChat }) {
     const [requests, setRequests] = useState([]);
     const [currentRequestIndex, setCurrentRequestIndex] = useState(0);
     const [bids, setBids] = useState([]);
@@ -31,6 +31,8 @@ export default function BidsPage() {
     const [activeCoupon, setActiveCoupon] = useState(null);
     const [calculatorAmount, setCalculatorAmount] = useState('');
     const [showShareSection, setShowShareSection] = useState(true);
+    const [activeSection, setActiveSection] = useState("messages");
+    const [selectedChat, setSelectedChat] = useState(null);
     const navigate = useNavigate();
 
     const isNew = (createdAt) => {
@@ -838,234 +840,57 @@ export default function BidsPage() {
 
         const profileImage = bid.business_profiles.profile_image || '/images/default.jpg'; // Default image if none
 
+        // Common props for all states
+        const commonProps = {
+            key: bid.id,
+            bid: {
+                ...bid,
+                business_profiles: {
+                    ...bid.business_profiles,
+                    profile_image: profileImage
+                }
+            },
+            showActions: true,
+            onViewCoupon: handleViewCoupon,
+            onMessage: onOpenChat
+        };
+
+        // State-specific props
         if (activeTab === 'pending') {
             return (
                 <BidDisplay
-                    key={bid.id}
-                    bid={bid}
+                    {...commonProps}
                     handleApprove={() => handleAcceptBidClick(bid)}
-                    handleDeny={() => handleMoveToDenied(bid)} // Direct denial without modal
-                    showActions={true}
-                >
-                    <img 
-                        src={profileImage} 
-                        alt={`${bid.business_profiles.business_name} profile`} 
-                        className="vendor-profile-image" 
-                        onClick={handleProfileClick} 
-                        style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%' }}
-                    />
-                </BidDisplay>
+                    handleDeny={() => handleMoveToDenied(bid)}
+                />
             );
         }
 
         if (activeTab === 'approved') {
-            const isBidiVerified = ["Plus", "Verified"].includes(bid.business_profiles.membership_tier);
-            const downPayment = calculateDownPayment(bid);
-            
             return (
-                <div key={bid.id} className="approved-bid-card" style={{ width: '100%', maxWidth: '1000px' }}>
-                    <div className="title-and-price">
-                        <div>
-                            <div className="request-title" style={{ marginBottom: '0', textAlign: 'left', wordBreak: 'break-word' }}>
-                                <img 
-                                    src={profileImage} 
-                                    alt={`${bid.business_profiles.business_name} profile`} 
-                                    className="vendor-profile-image" 
-                                    onClick={handleProfileClick} 
-                                    style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%', marginRight: '10px' }}
-                                />
-                                {bid.business_profiles.business_name}
-                                {isBidiVerified && (
-                                    <img
-                                        src={bidiCheck}
-                                        style={{ height: '40px', width: 'auto', padding: '0px', marginLeft: '4px' }}
-                                        alt="Bidi Verified Icon"
-                                    />
-                                )}
-                                {isBidiVerified && (
-                                    <div style={{ textAlign: 'left', padding: '0px 0px' }}>
-                                        <div style={{ fontSize: '0.9rem', margin: '0', fontWeight: 'bold' }}>
-                                            Bidi Verified
-                                        </div>
-                                        <div style={{ fontSize: '0.8rem', margin: '5px 0 0', fontStyle: 'italic' }}>
-                                            100% Money-Back Guarantee When You Pay Through Bidi
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <button className="bid-button" disabled>
-                            ${bid.bid_amount || 0}
-                        </button>
-                    </div>
-
-                    <p className="request-description" style={{ textAlign: 'left' }}>
-                        <strong>Description:</strong> 
-                        <div 
-                            className="bid-description-content"
-                            dangerouslySetInnerHTML={{ __html: bid.bid_description }} 
-                            style={{
-                                maxHeight: '400px',
-                                overflowY: 'auto',
-                                marginTop: '12px',
-                                padding: '12px',
-                                border: '1px solid #eee',
-                                borderRadius: '8px',
-                                backgroundColor: '#f9f9f9',
-                                fontFamily: 'Inter, sans-serif',
-                                fontSize: '14px',
-                                lineHeight: '1.6',
-                                color: '#333'
-                            }}
-                        />
-                    </p>
-                    <p style={{ textAlign: 'left' }}>
-                        <strong>Phone:</strong> {bid.business_profiles.phone}
-                    </p>
-
-                    {bid.coupon_code && (
-                        <div style={{ textAlign: 'left', marginTop: '8px' }}>
-                            <button
-                                className="btn-secondary"
-                                style={{ padding: '4px 8px', fontSize: '14px' }}
-                                onClick={() => handleViewCoupon(bid)}
-                            >
-                                <i className="fas fa-ticket-alt" style={{ marginRight: '8px' }}></i>
-                                View Applied Coupon
-                            </button>
-                        </div>
-                    )}
-
-                    {downPayment && (
-                        <p style={{ marginTop: '8px', textAlign: 'left' }}>
-                            <strong>Down Payment:</strong>{' '}
-                            {downPayment.display}
-                        </p>
-                    )}
-
-                    <div className="pay-and-message-container">
-                        <button 
-                            className="btn-danger flex-fill"
-                            onClick={() => handleMoveToPending(bid)}
-                            style={{fontSize:'14px'}}
-                        > 
-                            Move to Pending
-                        </button>
-                        {downPayment && (
-                            <button
-                                className="btn-success flex-fill"
-                                onClick={() => handleDownPayNow(bid)}
-                                style={{fontSize:'14px'}}
-                            >
-                                Pay {downPayment.display}
-                            </button>
-                        )}
-                        <button
-                            className="btn-success flex-fill"
-                            onClick={() => handlePayNow(bid)}
-                            style={{fontSize:'14px'}}
-                        >
-                            {downPayment ? 'Pay In Full' : 'Pay'}
-                        </button>
-                        <button
-                            className="btn-success flex-fill"
-                            onClick={() => handleMessageText(bid)}
-                            style={{fontSize:'14px'}}
-                        >
-                            Message
-                        </button>   
-                    </div>
-                </div>
+                <BidDisplay
+                    {...commonProps}
+                    handleApprove={() => handleMoveToPending(bid)}
+                    handleDeny={() => handlePayNow(bid)}
+                    showPaymentOptions={true}
+                    downPayment={calculateDownPayment(bid)}
+                    onDownPayment={() => handleDownPayNow(bid)}
+                />
             );
         }
 
         if (activeTab === 'denied') {
             return (
-                <div key={bid.id} className="approved-bid-card" style={{ width: '100%', maxWidth: '1000px' }}>
-                    <div className="title-and-price">
-                        <div>
-                            <div className="request-title" style={{ marginBottom: '0', textAlign: 'left', wordBreak: 'break-word' }}>
-                                <img 
-                                    src={profileImage} 
-                                    alt={`${bid.business_profiles.business_name} profile`} 
-                                    className="vendor-profile-image" 
-                                    onClick={handleProfileClick} 
-                                    style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%', marginRight: '10px' }}
-                                />
-                                {bid.business_profiles.business_name}
-                            </div>
-                        </div>
-                        <button className="bid-button" disabled>
-                            ${bid.bid_amount || 0}
-                        </button>
-                    </div>
-
-                    <p className="request-description" style={{ textAlign: 'left' }}>
-                        <strong>Description:</strong> 
-                        <div 
-                            className="bid-description-content"
-                            dangerouslySetInnerHTML={{ __html: bid.bid_description }} 
-                            style={{
-                                maxHeight: '400px',
-                                overflowY: 'auto',
-                                marginTop: '12px',
-                                padding: '12px',
-                                border: '1px solid #eee',
-                                borderRadius: '8px',
-                                backgroundColor: '#f9f9f9',
-                                fontFamily: 'Inter, sans-serif',
-                                fontSize: '14px',
-                                lineHeight: '1.6',
-                                color: '#333'
-                            }}
-                        />
-                    </p>
-                    <p style={{ textAlign: 'left' }}>
-                        <strong>Phone:</strong> {bid.business_profiles.phone}
-                    </p>
-
-                    <div className="pay-and-message-container">
-                        <button 
-                            className="btn-danger flex-fill"
-                            style={{width: '100%', marginBottom: '10px', fontSize:'14px'}}
-                            onClick={() => handleMoveToPending(bid)}
-                        >
-                            Move to Pending
-                        </button>
-                        <button 
-                            className="btn-success flex-fill"
-                            style={{width: '100%'}}
-                            onClick={() => handleAcceptBidClick(bid)} // Use the modal when accepting from denied tab
-                        >
-                            Accept
-                        </button>
-                    </div>
-                </div>
+                <BidDisplay
+                    {...commonProps}
+                    handleApprove={() => handleAcceptBidClick(bid)}
+                    handleDeny={() => handleMoveToPending(bid)}
+                    showReopen={true}
+                />
             );
         }
 
-        // For pending and denied bids, use the original BidDisplay
-        return (
-            <BidDisplay
-                key={bid.id}
-                bid={{
-                    ...bid,
-                    requestTitle: bid.title,
-                    bidAmount: bid.amount,
-                    createdAt: new Date(bid.created_at),
-                    requestType: bid.requestType
-                }}
-                showActions={false}
-            >
-                <img 
-                    src={profileImage} 
-                    alt={`${bid.business_profiles.business_name} profile`} 
-                    className="vendor-profile-image" 
-                    onClick={handleProfileClick} 
-                    style={{ cursor: 'pointer', width: '50px', height: '50px', borderRadius: '50%' }}
-                />
-            </BidDisplay>
-        );
+        return null;
     };
 
     const getDate = (request) => {
@@ -1245,6 +1070,11 @@ export default function BidsPage() {
         }
     };
 
+    const handleOpenChat = (chat) => {
+        setActiveSection("messages");
+        setSelectedChat(chat);
+    };
+
     return (
         <>
             <Helmet>
@@ -1394,7 +1224,8 @@ export default function BidsPage() {
                                 padding: '12px 24px',
                                 fontSize: '16px',
                                 fontWeight: 'bold',
-                                color: '#9633eb',
+                                background: '#9633eb',
+                                color:'white',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'

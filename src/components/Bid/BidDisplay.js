@@ -5,15 +5,26 @@ import StarIcon from "../../assets/star-duotone.svg";
 import { Link, useNavigate } from "react-router-dom";
 import "./BidDisplay.css";
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ChatIcon from '@mui/icons-material/Chat';
 
-function BidDisplay({ bid, handleApprove, handleDeny }) {
+function BidDisplay({ 
+  bid, 
+  handleApprove, 
+  handleDeny, 
+  showActions = true,
+  showPaymentOptions = false,
+  showReopen = false,
+  downPayment = null,
+  onDownPayment = null,
+  onMessage = null,
+  onViewCoupon = null
+}) {
   const [isBidiVerified, setIsBidiVerified] = useState(false);
-  const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState(null); // Error state
-  const [downPayment, setDownPayment] = useState(null); // New state for down payment
-  const [downPaymentAmount, setDownPaymentAmount] = useState(null); // New state for down payment
-  const [showBubble, setShowBubble] = useState(true); // State to control the visibility of the bubble
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [averageRating, setAverageRating] = useState(null);
+  const [showBubble, setShowBubble] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
   const navigate = useNavigate();
 
   const getExpirationStatus = (expirationDate) => {
@@ -66,8 +77,6 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
         // Check if membership-tier is "Plus" or "Verified"
         const tier = data?.["membership_tier"];
         setIsBidiVerified(tier === "Plus" || tier === "Verified");
-        setDownPayment(data?.["down_payment_type"]);
-        setDownPaymentAmount(data?.["amount"]);
       } catch (error) {
         console.error("Error fetching membership tier:", error.message);
         setError("Failed to fetch membership tier"); // Set a friendly error message
@@ -104,27 +113,113 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
     fetchRating();
   }, [bid.business_profiles.id]);
 
-  return (
-    <div className="request-display">
-      <div className="bid-display-head-container">
-        <div
-          className="request-title"
-          style={{ marginBottom: "0", textAlign: "left", position: "relative" }}
+  const handleAction = (action, id) => {
+    setIsAnimating(true);
+    setTimeout(() => {
+      action(id);
+    }, 300); // Match this with the CSS animation duration
+  };
+
+  const renderActionButtons = () => {
+    if (!showActions) return null;
+
+    const renderChatButton = (onClick) => (
+      <button
+        className="btn-chat"
+        onClick={() => {
+          console.log("Opening chat with business:", bid.business_profiles.id);
+          if (onMessage) {
+            onMessage({
+              id: bid.business_profiles.id,
+              name: bid.business_profiles.business_name,
+              profileImage: bid.business_profiles.profile_image
+            });
+          }
+        }}
+      >
+        <ChatIcon />
+        Chat
+      </button>
+    );
+
+    if (showPaymentOptions) {
+      return (
+        <div className="business-actions">
+          <button 
+            className="btn-danger"
+            onClick={() => handleAction(handleApprove, bid.id)}
+          >
+            Move to Pending
+          </button>
+          {downPayment && (
+            <button
+              className="btn-success"
+              onClick={() => handleAction(onDownPayment, bid)}
+            >
+              Pay Deposit
+            </button>
+          )}
+          <button
+            className="btn-success"
+            onClick={() => handleAction(handleDeny, bid.id)}
+          >
+            Pay Full
+          </button>
+          {renderChatButton()}
+        </div>
+      );
+    }
+
+    if (showReopen) {
+      return (
+        <div className="business-actions">
+          <button 
+            className="btn-danger"
+            onClick={() => handleAction(handleDeny, bid.id)}
+          >
+            Move to Pending
+          </button>
+          <button
+            className="btn-success"
+            onClick={() => handleAction(handleApprove, bid.id)}
+          >
+            Accept
+          </button>
+          {renderChatButton()}
+        </div>
+      );
+    }
+
+    return (
+      <div className="business-actions">
+        <button 
+          className="btn-danger"
+          onClick={() => handleAction(handleDeny, bid.id)}
         >
+          Deny
+        </button>
+        <button
+          className="btn-success"
+          onClick={() => handleAction(handleApprove, bid.id)}
+        >
+          Accept
+        </button>
+        {renderChatButton()}
+      </div>
+    );
+  };
+
+  return (
+    <div className={`request-display ${isAnimating ? 'fade-out' : ''}`}>
+      <div className="bid-display-head-container">
+        <div className="request-title">
           <div className="bid-display-head">
-            <div style={{ position: "relative" }}>
+            <div className="profile-image-container">
               <img
                 src={profileImage}
                 alt={`${bid.business_profiles.business_name} profile`}
                 className="vendor-profile-image"
                 onClick={handleProfileClick}
-                style={{
-                  cursor: "pointer",
-                  width: "50px",
-                  height: "50px",
-                  borderRadius: "50%",
-                }}
-                title="Click to view full profile"
               />
               <div
                 className="profile-tooltip"
@@ -135,33 +230,31 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
                 Click to view profile
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "4px", marginLeft: "10px" }}>
+            <div className="business-info">
               <Link
                 to={`/portfolio/${bid.business_profiles.id}`}
-                style={{
-                  textDecoration: "none",
-                  color: "inherit",
-                  fontWeight: "bold",
-                }}
+                className="business-name-bid-display"
               >
                 {bid.business_profiles.business_name}
               </Link>
-              {isBidiVerified && (
-                <img
-                  src={bidiCheck}
-                  style={{ height: "20px", width: "auto" }}
-                  alt="Bidi Verified Icon"
-                />
-              )}
-              {averageRating && (
-                <span className="vendor-rating">
-                  <img src={StarIcon} alt="Star" className="star-icon" />
-                  {averageRating}
-                </span>
-              )}
-              {bid.isNew && (
-                <span className="new-badge">New</span>
-              )}
+              <div className="business-badges">
+                {isBidiVerified && (
+                  <img
+                    src={bidiCheck}
+                    className="bidi-check-icon"
+                    alt="Bidi Verified Icon"
+                  />
+                )}
+                {averageRating && (
+                  <span className="vendor-rating">
+                    <img src={StarIcon} alt="Star" className="star-icon" />
+                    {averageRating}
+                  </span>
+                )}
+                {bid.isNew && (
+                  <span className="new-badge">New</span>
+                )}
+              </div>
             </div>
           </div>
           {loading ? (
@@ -170,35 +263,11 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
             <p>{error}</p>
           ) : (
             isBidiVerified && (
-              <div
-                style={{
-                  textAlign: "left",
-                  padding: "0px 0px",
-                  marginTop: "8px",
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: "0.9rem",
-                    margin: "0",
-                    fontWeight: "bold",
-                    textAlign: "left",
-                    fontFamily: "Outfit",
-                    color: "#a328f4",
-                  }}
-                >
+              <div className="bidi-verified-info">
+                <p className="bidi-verified-title">
                   Bidi Verified
                 </p>
-                <p
-                  style={{
-                    fontSize: "0.8rem",
-                    margin: "5px 0 0",
-                    fontStyle: "italic",
-                    textAlign: "left",
-                    fontFamily: "Outfit",
-                    color: "#a328f4",
-                  }}
-                >
+                <p className="bidi-verified-subtitle">
                   100% Money-Back Guarantee When You Pay Through Bidi
                 </p>
               </div>
@@ -206,14 +275,14 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
           )}
         </div>
         <div className="bid-display-btn-container">
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <div className="bid-amount-container">
             <button className="bid-display-button" disabled>
               ${bid.bid_amount}
               <div className="tag-hole"></div>
             </button>
             {expirationStatus && (
               <div className={`expiration-badge ${expirationStatus.status}`}>
-                <AccessTimeIcon style={{ fontSize: '1rem', marginRight: '4px' }} />
+                <AccessTimeIcon />
                 {expirationStatus.text}
               </div>
             )}
@@ -222,49 +291,38 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
       </div>
       <hr />
       <div className="request-content">
-        <p className="request-category" style={{ textAlign: "left" }}>
+        <p className="request-category">
           <strong>Category:</strong> {bid.business_profiles.business_category}
         </p>
-        <p className="request-description" style={{ textAlign: "left" }}>
+        <p className="request-description">
           <strong>Description:</strong>{" "}
           <div 
             className="bid-description-content"
             dangerouslySetInnerHTML={{ __html: bid.bid_description }}
-            style={{
-              maxHeight: '400px',
-              overflowY: 'auto',
-              marginTop: '12px',
-              padding: '12px',
-              border: '1px solid #eee',
-              borderRadius: '8px',
-              backgroundColor: '#f9f9f9',
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '14px',
-              lineHeight: '1.6',
-              color: '#333'
-            }}
           />
         </p>
-        {/* Display down payment information */}
-        {downPayment && downPaymentAmount !== null && (
-          <p className="request-comments" style={{ textAlign: "left" }}>
+        {downPayment && (
+          <p className="request-comments">
             <strong>Down Payment:</strong>{" "}
-            {downPayment === "percentage"
-              ? `$${(bid.bid_amount * downPaymentAmount).toFixed(2)} (${
-                  downPaymentAmount * 100
-                }%)`
-              : `$${downPaymentAmount}`}
+            {downPayment.display}
           </p>
         )}
-        {/* Add coupon discount display */}
+        {bid.coupon_code && (
+          <div className="coupon-section">
+            <button
+              className="btn-secondary"
+              onClick={() => onViewCoupon(bid)}
+            >
+              <i className="fas fa-ticket-alt"></i>
+              View Applied Coupon
+            </button>
+          </div>
+        )}
         {bid.coupon_applied && (
-          <div
-            style={{ marginTop: "8px", textAlign: "left", color: "#a328f4" }}
-          >
+          <div className="coupon-applied-info">
             <strong>Coupon Applied:</strong> {bid.coupon_code}
             <br />
-            <strong>Original Price:</strong> $
-            {(bid.original_amount || 0).toFixed(2)}
+            <strong>Original Price:</strong> ${(bid.original_amount || 0).toFixed(2)}
             <br />
             <strong>Discount:</strong> ${(bid.discount_amount || 0).toFixed(2)}
             <br />
@@ -273,21 +331,8 @@ function BidDisplay({ bid, handleApprove, handleDeny }) {
         )}
       </div>
 
-      {/* Adding space between the last line of content and the buttons */}
-      <div style={{ marginBottom: "30px" }}></div>
-
-      {/* Approve/Deny Buttons, separated from the main content */}
-      <div className="business-actions">
-        <button className="btn-danger" onClick={() => handleDeny(bid.id)}>
-          Deny
-        </button>
-        <button
-          className="btn-success"
-          onClick={() => handleApprove(bid.id, bid.request_id)} // Pass both bidId and requestId
-        >
-          Accept
-        </button>
-      </div>
+      <div className="action-buttons-spacer"></div>
+      {renderActionButtons()}
     </div>
   );
 }

@@ -5,11 +5,12 @@ import { socket } from "../../socket";
 import { supabase } from "../../supabaseClient";
 import "../../styles/chat.css";
 import { FaArrowLeft } from "react-icons/fa";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function MessagingView({
   currentUserId,
   businessId,
-  businessName = "Business",
+  onBack
 }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -17,35 +18,103 @@ export default function MessagingView({
   const chatEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const [profilePhoto, setProfilePhoto] = useState(null);
+  const [businessName, setBusinessName] = useState("");
   const [initialLetter, setInitialLetter] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get profile image from navigation state
+  useEffect(() => {
+    if (location.state?.profileImage) {
+      setProfilePhoto(location.state.profileImage);
+    }
+  }, [location.state]);
+
+  // Fetch business information
+  useEffect(() => {
+    const fetchBusinessInfo = async () => {
+      console.log("Fetching business info for ID:", businessId);
+      try {
+        // First get the business name
+        const { data: businessData, error: businessError } = await supabase
+          .from("business_profiles")
+          .select("business_name")
+          .eq("id", businessId)
+          .single();
+
+        if (businessError) throw businessError;
+
+        // Then get the profile photo
+        const { data: photoData, error: photoError } = await supabase
+          .from("profile_photos")
+          .select("photo_url")
+          .eq("user_id", businessId)
+          .eq("photo_type", "profile")
+          .single();
+
+        console.log("Business data:", businessData);
+        console.log("Photo data:", photoData);
+
+        setBusinessName(businessData.business_name || "Business");
+        setProfilePhoto(photoData?.photo_url || null);
+        setInitialLetter(businessData.business_name?.charAt(0)?.toUpperCase() || "");
+      } catch (error) {
+        console.error("Error fetching business info:", error);
+        setBusinessName("Business");
+        setProfilePhoto(null);
+        setInitialLetter("B");
+      }
+    };
+
+    if (businessId) {
+      fetchBusinessInfo();
+    }
+  }, [businessId]);
 
   // 1) Fetch & normalize persisted messages
   useEffect(() => {
     if (!currentUserId || !businessId) return;
 
     const fetchMessages = async () => {
-      const { data: out = [] } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("sender_id", currentUserId)
-        .eq("receiver_id", businessId);
+      try {
+        const { data: out, error: outError } = await supabase
+          .from("messages")
+          .select("*")
+          .eq("sender_id", currentUserId)
+          .eq("receiver_id", businessId);
 
-      const { data: incoming = [] } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("sender_id", businessId)
-        .eq("receiver_id", currentUserId);
+        if (outError) {
+          console.error("Error fetching outgoing messages:", outError);
+          return;
+        }
 
-      const all = [...out, ...incoming].map((r) => ({
-        id: r.id,
-        senderId: r.sender_id,
-        receiverId: r.receiver_id,
-        message: r.message,
-        createdAt: r.created_at,
-      }));
+        const { data: incoming, error: incomingError } = await supabase
+          .from("messages")
+          .select("*")
+          .eq("sender_id", businessId)
+          .eq("receiver_id", currentUserId);
 
-      all.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      setMessages(all);
+        if (incomingError) {
+          console.error("Error fetching incoming messages:", incomingError);
+          return;
+        }
+
+        const outgoingMessages = out || [];
+        const incomingMessages = incoming || [];
+
+        const all = [...outgoingMessages, ...incomingMessages].map((r) => ({
+          id: r.id,
+          senderId: r.sender_id,
+          receiverId: r.receiver_id,
+          message: r.message,
+          createdAt: r.created_at,
+        }));
+
+        all.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        setMessages(all);
+      } catch (error) {
+        console.error("Error in fetchMessages:", error);
+      }
     };
 
     fetchMessages();
@@ -133,78 +202,42 @@ export default function MessagingView({
     }, 1500);
   };
 
-  useEffect(() => {
-    const fetchProfilePhoto = async () => {
-      try {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", businessId)
-          .single();
-  
-        if (profileError) throw profileError;
-  
-        let fetchedPhoto = null;
-        let letter = "";
-  
-        if (profileData.role === "business") {
-          const { data: businessData, error: businessError } = await supabase
-            .from("business_profiles")
-            .select("profile_pic, business_name")
-            .eq("id", businessId)
-            .single();
-  
-          if (businessError) throw businessError;
-  
-          fetchedPhoto = businessData?.profile_pic;
-          letter = businessData?.business_name?.charAt(0)?.toUpperCase() || "";
-  
-        } else {
-          const { data: userData, error: userError } = await supabase
-            .from("individual_profiles")
-            .select("first_name")
-            .eq("id", businessId)
-            .single();
-  
-          if (userError) throw userError;
-  
-          // ⚠️ Only fetch first_name because individual_profiles has no profile_pic
-          letter = userData?.first_name?.charAt(0)?.toUpperCase() || "";
-        }
-  
-        setProfilePhoto(fetchedPhoto);  // will be null for individual
-        setInitialLetter(letter);
-  
-      } catch (error) {
-        console.error("Error fetching profile info:", error);
-  
-        // ✅ Still set the fallback letter if available from error context
-        setProfilePhoto(null);
-        if (!initialLetter) setInitialLetter(businessName?.charAt(0)?.toUpperCase() || "");
-      }
-    };
-  
-    fetchProfilePhoto();
-  }, [businessId, businessName]);
-  
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate('/messages');
+    }
+  };
 
   return (
     <div className="messaging-view chat-main">
-      <header className="chat-header">
-  <button className="back-button" onClick={() => window.history.back()}>
-    <FaArrowLeft />
-  </button>
-  <div className="header-center">
-    <div className="profile-circle">
-      {profilePhoto ? (
-        <img src={profilePhoto} alt="Profile" className="profile-image" />
-      ) : (
-        <span className="initial-letter">{initialLetter}</span>
+      {!location.state?.fromDashboard && (
+        <header className="chat-header">
+          {window.innerWidth <= 768 && (
+            <button className="back-button-messaging" onClick={handleBack}>
+              <FaArrowLeft />
+              <span>Back</span>
+            </button>
+          )}
+          <div className="header-center">
+            <div 
+              className="profile-circle"
+              onClick={() => navigate(`/portfolio/${businessId}`)}
+              style={{ cursor: 'pointer' }}
+            >
+              {profilePhoto ? (
+                <img src={profilePhoto} alt="Profile" className="profile-image" />
+              ) : (
+                <span className="initial-letter">{initialLetter}</span>
+              )}
+            </div>
+            <div>
+              <span className="business-name-messaging">{businessName}</span>
+            </div>
+          </div>
+        </header>
       )}
-    </div>
-    <span className="business-name">{businessName}</span>
-  </div>
-</header>
 
       <div className="chat-body">
         {messages.map((m) => (

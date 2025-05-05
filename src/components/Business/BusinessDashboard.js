@@ -55,6 +55,9 @@ const BusinessDashSidebar = () => {
   });
   const [profileDetails, setProfileDetails] = useState(null);
   const [error, setError] = useState(null);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isHoveringSidebar, setIsHoveringSidebar] = useState(false);
+  const sidebarRef = React.useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -232,10 +235,37 @@ const BusinessDashSidebar = () => {
     );
   };
 
+  // Add mouse move event listener to detect when mouse is near sidebar
+  useEffect(() => {
+    if (isMobile) return; // Only apply on desktop
+
+    const handleMouseMove = (e) => {
+      if (!sidebarRef.current) return;
+      
+      const sidebarRect = sidebarRef.current.getBoundingClientRect();
+      const mouseX = e.clientX;
+      
+      // Show sidebar when mouse is within 50px of the left edge
+      if (mouseX <= 50) {
+        setIsSidebarVisible(true);
+      } else if (!isHoveringSidebar && mouseX > sidebarRect.right) {
+        setIsSidebarVisible(false);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [isMobile, isHoveringSidebar]);
+
   return (
     <div className="business-dashboard text-left">
       <div className="dashboard-container">
-        <aside className="sidebar">
+        <aside 
+          className={`sidebar ${isSidebarVisible ? 'visible' : 'hidden'}`}
+          ref={sidebarRef}
+          onMouseEnter={() => setIsHoveringSidebar(true)}
+          onMouseLeave={() => setIsHoveringSidebar(false)}
+        >
           {/* Profile Section */}
           <div className="profile-section">
             <img src={profileImage} alt="Vendor" className="profile-pic" />

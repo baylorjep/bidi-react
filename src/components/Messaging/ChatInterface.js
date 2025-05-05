@@ -3,21 +3,63 @@ import { supabase } from "../../supabaseClient";
 import MessagingView from "./MessagingView";
 import StartNewChatModal from "./StartNewChatModal";
 import "../../styles/chat.css";
+import { useLocation, useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 
-export default function ChatInterface() {
+export default function ChatInterface({ initialChat }) {
   const [currentUserId, setCurrentUserId] = useState("");
   const [userType, setUserType] = useState("");
   const [chats, setChats] = useState([]);
   const [activeBusiness, setActiveBusiness] = useState(null);
+  const [activeBusinessName, setActiveBusinessName] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const location = useLocation();
+  const navigate = useNavigate();
 
+  // Set active business from initialChat prop or navigation state
+  useEffect(() => {
+    if (initialChat) {
+      setActiveBusiness(initialChat.id);
+      setActiveBusinessName(initialChat.name);
+      
+      // Add to chats if not already present
+      if (!chats.some(chat => chat.business_id === initialChat.id)) {
+        setChats(prevChats => [...prevChats, {
+          business_id: initialChat.id,
+          business_name: initialChat.name,
+          last_message: ""
+        }]);
+      }
+    } else if (location.state?.businessId) {
+      setActiveBusiness(location.state.businessId);
+      setActiveBusinessName(location.state.businessName || "Business");
+      
+      // Add to chats if not already present
+      if (!chats.some(chat => chat.business_id === location.state.businessId)) {
+        setChats(prevChats => [...prevChats, {
+          business_id: location.state.businessId,
+          business_name: location.state.businessName || "Business",
+          last_message: ""
+        }]);
+      }
+    }
+  }, [initialChat, location.state]);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => {
+      const newIsMobile = window.innerWidth <= 768;
+      setIsMobile(newIsMobile);
+      // If switching to mobile and we have an active chat, navigate to the chat view
+      if (newIsMobile && activeBusiness) {
+        navigate(`/messages/${activeBusiness}`, {
+          state: { businessName: activeBusinessName }
+        });
+      }
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [activeBusiness, activeBusinessName, navigate]);
 
   // 1) Load current user & determine user type
   useEffect(() => {
@@ -96,14 +138,21 @@ export default function ChatInterface() {
     })();
   }, [currentUserId, userType]);
 
+  const handleChatSelect = (chat) => {
+    setActiveBusiness(chat.business_id);
+    setActiveBusinessName(chat.business_name);
+    if (isMobile) {
+      navigate(`/messages/${chat.business_id}`, {
+        state: { businessName: chat.business_name }
+      });
+    }
+  };
+
   return (
     <div className="chat-app">
       <aside className="chat-sidebar">
         <header>
           <span>Your Chats</span>
-          {userType === "individual" && (
-            <button onClick={() => setShowModal(true)}>＋</button>
-          )}
         </header>
 
         <ul>
@@ -111,7 +160,7 @@ export default function ChatInterface() {
             <li
               key={c.business_id}
               className={activeBusiness === c.business_id ? "active" : ""}
-              onClick={() => setActiveBusiness(c.business_id)}
+              onClick={() => handleChatSelect(c)}
             >
               <div>{c.business_name}</div>
               <div className="message-time">{c.last_message}</div>
@@ -121,44 +170,26 @@ export default function ChatInterface() {
       </aside>
 
       <main className="chat-main">
-  {isMobile && activeBusiness && (
-    <button
-      onClick={() => setActiveBusiness(null)}
-      style={{
-        background: "none",
-        border: "none",
-        fontSize: "1.2rem",
-        margin: "1rem",
-        display: "flex",
-        alignItems: "center",
-        cursor: "pointer"
-      }}
-    >
-      ← Back
-    </button>
-  )}
 
-  {activeBusiness ? (
-    <MessagingView
-      currentUserId={currentUserId}
-      businessId={activeBusiness}
-      businessName={
-        chats.find((c) => c.business_id === activeBusiness)?.business_name
-      }
-      userType={userType}
-    />
-  ) : (
-    <div style={{ padding: "2rem", color: "var(--bidi-muted)" }}>
-      Select a chat to start messaging
-    </div>
-  )}
-</main>
+        {activeBusiness ? (
+          <MessagingView
+            currentUserId={currentUserId}
+            businessId={activeBusiness}
+            businessName={activeBusinessName}
+            userType={userType}
+          />
+        ) : (
+          <div style={{ padding: "2rem", color: "var(--bidi-muted)" }}>
+            Select a chat to start messaging
+          </div>
+        )}
+      </main>
 
       {showModal && (
         <StartNewChatModal
           currentUserId={currentUserId}
           onClose={() => setShowModal(false)}
-          onStartChat={(bizId) => setActiveBusiness(bizId)}
+          onStartChat={(bizId) => handleChatSelect({ business_id: bizId, business_name: "New Chat" })}
         />
       )}
     </div>

@@ -1,20 +1,28 @@
-// src/components/Messaging/MobileChatList.js
+  // src/components/Messaging/MobileChatList.js
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import dashboardIcon from "../../assets/images/Icons/dashboard.svg";
 import bidsIcon from "../../assets/images/Icons/bids.svg";
 import messageIcon from "../../assets/images/Icons/message.svg";
 import profileIcon from "../../assets/images/Icons/profile.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
+import { FaArrowLeft } from "react-icons/fa";
 
-export default function MobileChatList({ currentUserId, userType }) {
+export default function MobileChatList({ currentUserId, userType, onChatSelect }) {
   const [chats, setChats] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  console.log('MobileChatList - userType:', userType); // Debug log
 
   useEffect(() => {
+    console.log('MobileChatList useEffect - userType:', userType); // Debug log
     const fetchChats = async () => {
-      if (!currentUserId || !userType) return;
+      if (!currentUserId || !userType) {
+        console.log('Missing required props:', { currentUserId, userType }); // Debug log
+        return;
+      }
 
       const { data: messages = [], error: messagesError } = await supabase
         .from("messages")
@@ -63,24 +71,43 @@ export default function MobileChatList({ currentUserId, userType }) {
     fetchChats();
   }, [currentUserId, userType]);
 
+  const handleChatSelect = (chat) => {
+    if (onChatSelect) {
+      onChatSelect(chat);
+    } else {
+      navigate(`/messages/${chat.id}`, {
+        state: { businessName: chat.name }
+      });
+    }
+  };
+
   return (
     <div style={{ padding: "1rem" }}>
-      <h2>Messages</h2>
+      <div style={{ 
+        display: "flex", 
+        alignItems: "center", 
+        marginBottom: "1rem",
+        gap: "1rem"
+      }}>
+
+        <h2 style={{ margin: 0 }}>Messages</h2>
+      </div>
+
       <ul style={{ listStyle: "none", padding: 0 }}>
-      {chats.length === 0 && (
-        <div style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
+        {chats.length === 0 && (
+          <div style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
             <p style={{ fontSize: "1.1rem" }}>📨 No messages yet.</p>
             <p style={{ fontSize: "0.9rem" }}>
-            You can message a vendor from your{" "}
-            <span
+              You can message a vendor from your{" "}
+              <span
                 style={{ color: "#A328F4", textDecoration: "underline", cursor: "pointer" }}
                 onClick={() => navigate("/bids")}
-            >
+              >
                 Bids page
-            </span>
-            .
+              </span>
+              .
             </p>
-        </div>
+          </div>
         )}
         {chats.map((chat) => (
           <li
@@ -92,7 +119,7 @@ export default function MobileChatList({ currentUserId, userType }) {
               marginBottom: "1rem",
               cursor: "pointer"
             }}
-            onClick={() => navigate(`/messages/${chat.id}`)}
+            onClick={() => handleChatSelect(chat)}
           >
             <strong>{chat.name}</strong>
             <div style={{ color: "#666", fontSize: "0.85rem" }}>
@@ -101,41 +128,8 @@ export default function MobileChatList({ currentUserId, userType }) {
           </li>
         ))}
       </ul>
-    {/* Bottom Navigation Bar */}
-    {userType === "business" && (
-    <nav className="bottom-nav">
-  <button onClick={() => { localStorage.setItem("activeSection", "dashboard"); navigate("/dashboard"); }}>
-    <div className="nav-item">
-      <img src={dashboardIcon} alt="Dashboard" />
-      <span className="nav-label">Requests</span>
-    </div>
-  </button>
-  <button onClick={() => { localStorage.setItem("activeSection", "bids"); navigate("/dashboard"); }}>
-    <div className="nav-item">
-      <img src={bidsIcon} alt="Bids" />
-      <span className="nav-label">Bids</span>
-    </div>
-  </button>
-  <button onClick={() => { localStorage.setItem("activeSection", "messages"); navigate("/dashboard"); }}>
-    <div className="nav-item">
-      <img src={messageIcon} alt="Message" />
-      <span className="nav-label">Messages</span>
-    </div>
-  </button>
-  <button onClick={() => { localStorage.setItem("activeSection", "portfolio"); navigate("/dashboard"); }}>
-    <div className="nav-item profile-nav-item">
-      <img src={profileIcon} alt="Portfolio" className="profile-icon" />
-      <span className="nav-label">Portfolio</span>
-    </div>
-  </button>
-  <button onClick={() => { localStorage.setItem("activeSection", "settings"); navigate("/dashboard"); }}>
-    <div className="nav-item">
-      <img src={settingsIcon} alt="Settings" className="settings-icon" />
-      <span className="nav-label">Settings</span>
-    </div>
-  </button>
-</nav>
-)}
+
+      {/* Remove the bottom navigation since it's handled by the dashboard */}
     </div>
   );
 }
