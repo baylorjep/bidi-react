@@ -45,6 +45,9 @@ const IndividualDashboard = () => {
       setActiveSection(location.state.activeSection);
       localStorage.setItem("activeSection", location.state.activeSection);
     }
+    if (location.state?.selectedChat) {
+      setSelectedChat(location.state.selectedChat);
+    }
   }, [location.state]);
 
   useEffect(() => {

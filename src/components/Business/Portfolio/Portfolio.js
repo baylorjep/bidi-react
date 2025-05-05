@@ -13,6 +13,8 @@ import LoadingSpinner from "../../LoadingSpinner"; // Import the loading spinner
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
+import ChatIcon from '@mui/icons-material/Chat';
+import AuthModal from "../../Request/Authentication/AuthModal";
 
 const Portfolio = ({ businessId: propBusinessId }) => {
   const { businessId: paramBusinessId } = useParams();
@@ -39,6 +41,8 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const navigate = useNavigate();
   const [convertedUrls, setConvertedUrls] = useState({});
   const [sliderDimensions, setSliderDimensions] = useState({ width: 0, height: 0 });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Add slider settings
   const sliderSettings = {
@@ -485,6 +489,46 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     }
   };
 
+  const handleChatClick = async () => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    navigate('/my-dashboard', {
+      state: {
+        activeSection: 'messages',
+        selectedChat: {
+          id: businessId,
+          name: business.business_name,
+          profileImage: profileImage
+        }
+      }
+    });
+  };
+
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+    navigate('/my-dashboard', {
+      state: {
+        activeSection: 'messages',
+        selectedChat: {
+          id: businessId,
+          name: business.business_name,
+          profileImage: profileImage
+        }
+      }
+    });
+  };
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+    };
+    checkAuth();
+  }, []);
+
   if (loading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -506,6 +550,13 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         isVideo={selectedImage?.isVideo}
         onClose={handleCloseImageModal}
       />
+
+      {isAuthModalOpen && (
+        <AuthModal 
+          setIsModalOpen={setIsAuthModalOpen}
+          onSuccess={handleAuthSuccess}
+        />
+      )}
 
       <div className="portfolio-container">
         <div className={`portfolio-layout ${portfolioVideos.length + portfolioPics.length <= 1 ? "single-media" : ""}`}>
@@ -805,6 +856,10 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       <button className="vendor-button" onClick={handleGetQuote}>
                         Get a Tailored Bid
                       </button>
+                      <button className="chat-button" onClick={handleChatClick}>
+                        <ChatIcon style={{ fontSize: '20px' }} />
+                        Chat with Vendor
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -839,142 +894,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       ))}
                     </div>
                   </div>
-                  <span className="review-count">({reviews.length} reviews)</span>
                 </div>
-              )}
-            </div>
-            {isIndividual && !isOwner && (
-              <div className="write-review-container">
-                <p className="write-review-title" style={{ textAlign: "left" }}>
-                  Rate the vendor and tell others what you think
-                </p>
-                <div className="star-and-write-review">
-                  <div className="write-review-stars">
-                    {[...Array(5)].map((_, index) => (
-                      <img
-                        key={index}
-                        src={EmptyStarIcon}
-                        alt="Star"
-                        className={`star-icon-portfolio ${
-                          index < newReview.rating ? "star-filled" : "star-empty"
-                        }`}
-                        onClick={() =>
-                          setNewReview({ ...newReview, rating: index + 1 })
-                        }
-                        style={{
-                          cursor: "pointer",
-                          height: "28px",
-                          width: "28px",
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    className="write-review-button"
-                    onClick={openReviewModal}
-                  >
-                    Write A Review
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Review Modal */}
-            <Modal
-              isOpen={isReviewModalOpen}
-              onRequestClose={closeReviewModal}
-              className="review-modal"
-              overlayClassName="review-modal-overlay"
-              ariaHideApp={false}
-            >
-              <h2 className="modal-title">Write a Review</h2>
-              <form onSubmit={handleReviewSubmit} className="review-form">
-                <div className="rating-input">
-                  {[...Array(5)].map((_, index) => (
-                    <img
-                      key={index}
-                      src={StarIcon}
-                      alt="Star"
-                      className={`star-icon-portfolio ${
-                        index < newReview.rating ? "star-filled" : "star-empty"
-                      }`}
-                      onClick={() =>
-                        setNewReview({ ...newReview, rating: index + 1 })
-                      }
-                      style={{ cursor: "pointer" }}
-                    />
-                  ))}
-                </div>
-                <textarea
-                  value={newReview.comment}
-                  onChange={(e) =>
-                    setNewReview({ ...newReview, comment: e.target.value })
-                  }
-                  placeholder="Write your review here..."
-                  required
-                  className="review-textarea"
-                />
-                <div className="modal-buttons">
-                  <button
-                    type="button"
-                    className="cancel-button"
-                    onClick={closeReviewModal}
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="submit-review-btn">
-                    Submit Review
-                  </button>
-                </div>
-              </form>
-            </Modal>
-
-            <div className="reviews-section">
-              {reviews.length > 0 ? (
-                reviews.map((review, index) => (
-                  <div key={index} className="review-item">
-                    <div className="review-header">
-                      <div className="review-info">
-                        <h4 className="reviewer-name">{review.first_name}</h4>
-                        <span className="review-date">
-                          {" "}
-                          - {new Date(review.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="review-rating">
-                        {[...Array(5)].map((_, starIndex) => (
-                          <img
-                            key={starIndex}
-                            src={StarIcon}
-                            alt="Star"
-                            className={`star-icon-portfolio ${
-                              starIndex < review.rating
-                                ? "star-filled"
-                                : "star-empty"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="review-text">
-                      {expandedReviews[index]
-                        ? review.comment
-                        : review.comment.length > 150
-                        ? `${review.comment.substring(0, 150)}...`
-                        : review.comment}
-                    </p>
-                    {review.comment.length > 150 && (
-                      <button
-                        onClick={() => toggleReview(index)}
-                        className="read-more-reviews"
-                      >
-                        {expandedReviews[index] ? "Read Less" : "Read More"}
-                      </button>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p>No reviews yet</p>
               )}
             </div>
           </div>

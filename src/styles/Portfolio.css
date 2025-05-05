@@ -517,7 +517,8 @@
 .vendor-button-container {
   width: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .down-payment-title {
@@ -1174,4 +1175,27 @@
 .portfolio-images-mobile .slick-dots li.slick-active button:before {
   color: white;
   opacity: 1;
+}
+
+/* Chat button specific styles */
+.chat-button {
+  padding: 8px 16px;
+  border-radius: 100px;
+  background: #f6eafe;
+  color: #a328f4;
+  border: none;
+  cursor: pointer;
+  width: 100% !important;
+  transition: 0.3s ease-in-out;
+  font-size: 14px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.chat-button:hover {
+  background-color: #f0e0fa;
+  transform: scale(1.02);
 }
