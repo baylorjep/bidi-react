@@ -6,146 +6,240 @@
 /* .step-label { ... } */
 
 .status-bar-container {
-    flex-direction: row;
-    justify-content: center;
-    padding:0px;
-    overflow-x: auto;
-    display: flex;
-    width: 100%;
+  flex-direction: row;
+  justify-content: center;
+  padding: 0px;
+  overflow-x: auto;
+  display: flex;
+  width: 100%;
 }
 
 .status-steps-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
 }
 
 .status-check-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #D9D9D9;
-    color: #4F4F4F;
-    font-size: 14px;
-    z-index: 1;  /* Ensure circles appear above lines */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #d9d9d9;
+  color: #4f4f4f;
+  font-size: 14px;
+  z-index: 1; /* Ensure circles appear above lines */
 }
 
 .status-line {
-    width: 2px;  /* Thin vertical line */
-    height: 60px;  /* Increased from 40px */
-    background: #D9D9D9;
+  width: 2px; /* Thin vertical line */
+  height: 60px; /* Increased from 40px */
+  background: #d9d9d9;
 }
 
 .status-text-container {
-    display: flex;
-    flex-direction: column;
-    gap: 64px;  /* Increased from 44px to match new line height */
+  display: flex;
+  flex-direction: column;
+  gap: 64px; /* Increased from 44px to match new line height */
 }
 
 .status-text {
-    color: #4F4F4F;
-    font-size: 14px;
-    white-space: nowrap;
-    height: 32px;  /* Match height of circles */
-    display: flex;
-    align-items: center;
+  color: #4f4f4f;
+  font-size: 14px;
+  white-space: nowrap;
+  height: 32px; /* Match height of circles */
+  display: flex;
+  align-items: center;
+  text-wrap: wrap;
 }
 
 /* Keep existing active/completed styles */
 .status-check-container.active,
 .status-check-container.completed {
-    background: #FF008A;
-    color: white;
+  background: #ff008a;
+  color: white;
 }
 
 .status-line.completed {
-    background: #FF008A;
+  background: #ff008a;
 }
 
 .status-text.active {
-    color: #FF008A;
-    font-weight: 600;
+  color: #ff008a;
+  font-weight: 600;
 }
 
 /* Add styles for the mobile version */
 .mobile-status-bar {
-    padding: 20px;
-    margin: 0 auto;
-    width: 100%;
+  width: 100%;
+  margin-bottom: 20px;
 }
 
-/* Style the progress bar container */
-.mobile-status-bar .RSPBprogressBar {
-    height: 12px;  /* Increased from 4px */
-    background-color: #D9D9D9;
-    margin: 10px 0;
+.desktop-status-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Style the progress bar filled portion */
-.mobile-status-bar .RSPBprogression {
-    background: #A328F4;
-    height: 12px;
+.step-category {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-/* Remove dot styles as they're no longer needed */
-/* Media query for mobile */
+.step-category.active {
+  background: rgba(163, 40, 244, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.category-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #A328F4;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.step-category.completed .category-indicator {
+  background: #ea3389;
+}
+
+.category-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+}
+
+.category-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 0px;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.step-item:hover {
+  background: rgba(163, 40, 244, 0.05);
+}
+
+.step-item.active {
+  background: rgba(163, 40, 244, 0.1);
+}
+
+.step-item.completed {
+  opacity: 0.8;
+}
+
+.step-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #E0E0E0;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.step-item.completed .step-indicator {
+  background: #ea3389;
+  color: white;
+}
+
+.step-name {
+  color: #666;
+  font-size: 14px;
+}
+
+.step-item.active .step-name {
+  color: #333;
+  font-weight: 500;
+}
+
+/* Mobile styles */
 @media (max-width: 1350px) {
-    .status-bar-container {
-        display: none;
-    }
-
-    .mobile-status-bar {
-        display: block;
-    }
+  .desktop-status-bar {
+    display: none;
+  }
+  
+  .mobile-status-bar {
+    display: block;
+  }
 }
 
 /* Hide mobile version on desktop */
 @media (min-width: 1351px) {
-    .mobile-status-bar {
-        display: none;
-    }
+  .mobile-status-bar {
+    display: none;
+  }
 }
 
 .request-form-status-container {
-    margin: 20px 0;  /* Add margin above and below the status bar */
-    display: flex;
-    flex-direction: row;
-    align-items: stretch; /* Changed from center to stretch */
-    padding: 20px;
-    border-radius: 8px;
-    background: #F7ECFF;
+  margin: 20px 0; /* Add margin above and below the status bar */
+  display: flex;
+  flex-direction: row;
+  align-items: stretch; /* Changed from center to stretch */
+  padding: 20px;
+  border-radius: 8px;
+  background: #f7ecff;
 }
 
 .request-form-box {
-    display: flex;
-    width: 100%;
-    height: 100%; /* Add this */
+  display: flex;
+  width: 100%;
+  height: 100%; /* Add this */
 }
 
 .desktop-only {
-    display: block;
+  display: block;
 }
 
 .mobile-only {
-    display: none;
-    background-color: #fafafa;
-    padding: 0px;
-    margin: 0;
-    width: 100%;
+  display: none;
+  background-color: #fafafa;
+  padding: 0px;
+  margin: 0;
+  width: 100%;
 }
 
 @media screen and (max-width: 1350px) {
-    .desktop-only {
-        display: none;
-    }
+  .desktop-only {
+    display: none;
+  }
 
-    .mobile-only {
-        display: block;
-    }
+  .mobile-only {
+    display: block;
+  }
 }
-

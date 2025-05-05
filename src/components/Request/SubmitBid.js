@@ -65,13 +65,14 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
         const fetchRequestDetails = async () => {
             // Array of all possible request tables
             const requestTables = [
-                { name: 'beauty_requests', type: 'beauty' },  // Move beauty_requests to the top
+                { name: 'beauty_requests', type: 'beauty' },
                 { name: 'requests', type: 'regular' },
                 { name: 'photography_requests', type: 'photography' },
                 { name: 'dj_requests', type: 'dj' },
                 { name: 'catering_requests', type: 'catering' },
                 { name: 'videography_requests', type: 'videography' },
-                { name: 'florist_requests', type: 'florist' }
+                { name: 'florist_requests', type: 'florist' },
+                { name: 'wedding_planning_requests', type: 'wedding planning' }
             ];
 
             // Try each table until we find the request
@@ -88,22 +89,23 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                     
                     // Add table_name to the request data
                     setRequestDetails({ ...data, table_name: table.name });
-                    setRequestType(table.name); // Use table.name instead of table.type
+                    setRequestType(table.name);
                     break;
                 }
             }
 
-            // Add photo fetching for videography requests
-            if (requestType === 'videography_requests') {
+            // Add photo fetching for videography and wedding planning requests
+            if (requestType === 'videography_requests' || requestType === 'wedding_planning_requests') {
+                const photoTable = requestType === 'videography_requests' ? 'videography_photos' : 'wedding_planning_photos';
                 const { data: photos, error } = await supabase
-                    .from('videography_photos')
+                    .from(photoTable)
                     .select('*')
                     .eq('request_id', requestId);
 
                 if (photos && !error) {
                     setServicePhotos(photos);
                 } else {
-                    console.error('Error fetching videography photos:', error);
+                    console.error(`Error fetching ${requestType} photos:`, error);
                 }
             }
         };
@@ -227,7 +229,8 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                 'catering_requests': 'Catering',
                 'videography_requests': 'Videography',
                 'florist_requests': 'Florist',
-                'beauty_requests': 'Beauty'
+                'beauty_requests': 'Beauty',
+                'wedding_planning_requests': 'Wedding Planning'
             };
 
             const category = categoryMap[requestType] || 'General';

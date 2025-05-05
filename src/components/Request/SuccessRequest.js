@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import StatusBar from './StatusBar';  // Add this import
 
 function SuccessRequest() {
     const [emailStatus, setEmailStatus] = useState(null);
     const location = useLocation();
     const { category, message } = location.state || {};
-
-    const steps = ['Service Details', 'Event Details', 'Personal Details', 'Preferences', 'Submit'];
 
     useEffect(() => {
         if (!category) {
@@ -45,18 +42,7 @@ function SuccessRequest() {
 
     return (
         <div className='request-form-overall-container'>
-            <div className="request-form-status-container desktop-only" style={{ height: '75vh', padding:'40px' }}>
-                <div className="request-form-box">
-                    <StatusBar steps={steps} currentStep={4} />
-                </div>
-            </div>  
             <div className='request-form-container-details'>
-                <div className="request-form-status-container mobile-only">
-                    <div className="request-form-box">
-                        <StatusBar steps={steps} currentStep={4} />
-                    </div>
-                </div>  
-
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '60px' }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
                         <path d="M24 44C29.5228 44 34.5228 41.7614 38.1421 38.1421C41.7614 34.5228 44 29.5228 44 24C44 18.4772 41.7614 13.4772 38.1421 9.85786C34.5228 6.23858 29.5228 4 24 4C18.4772 4 13.4772 6.23858 9.85786 9.85786C6.23858 13.4772 4 18.4772 4 24C4 29.5228 6.23858 34.5228 9.85786 38.1421C13.4772 41.7614 18.4772 44 24 44Z" fill="white" stroke="#FF008A" strokeWidth="4" strokeLinejoin="round" />

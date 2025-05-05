@@ -1,13 +1,18 @@
 import React from 'react';
 import '../../App.css';
 import { useIndividualUser } from './getIndividualUser';
+import LoadingSpinner from '../LoadingSpinner';
 
 function MyDashboard() {
     const { user, userError } = useIndividualUser();
 
     if (userError) {
         console.log(`Error fetching user or profile: ${userError.message}`);
-        return;
+        return <div>Error loading dashboard. Please try again later.</div>;
+    }
+
+    if (!user || !user.profile) {
+        return <LoadingSpinner />;
     }
 
     // for dev purposes, helps me see the user object
@@ -17,7 +22,7 @@ function MyDashboard() {
 
     return (
         <div class="row fill-page-grey-bg pt-5">
-            <h1 className='dashboard-title'>{user.profile?.first_name}'s Dashboard</h1>
+            <h1 className='dashboard-title'>{user.profile.first_name}'s Dashboard</h1>
             <div class="col-md-6">
                     <div class="DashboardPill">
                         You Have 3 new bids to view!

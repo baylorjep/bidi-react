@@ -29,6 +29,7 @@ import RequestCategories from "./components/Request/RequestCategories";
 import SuccessRequest from "./components/Request/SuccessRequest";
 import OpenRequests from "./components/Request/OpenRequests";
 import PhotographyRequest from "./components/Request/Photography/PhotographyRequest";
+import MasterRequestFlow from "./components/Request/MasterRequestFlow"; // Import the MasterRequestFlow component
 
 // New staged request imports
 import MultiStepRequestForm from "./components/Request/general requests/MultiStepRequestForm";
@@ -185,6 +186,11 @@ function App() {
                 element={<RequestCategories />}
               />
               <Route path="/success-request" element={<SuccessRequest />} />
+
+              <Route
+                path="/master-request-flow"
+                element={<MasterRequestFlow />}
+              />
               {/* New Staged Request Routes */}
               <Route path="/request-form" element={<MultiStepRequestForm />} />
               <Route path="/success-request" element={<SuccessRequest />} />
