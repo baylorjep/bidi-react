@@ -12,6 +12,24 @@ export default function MessagingViewWrapper({ currentUserId, userType }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Scroll to top when component mounts
+  useEffect(() => {
+    // Force scroll to top with multiple methods
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'instant'
+    });
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+    
+    // Additional mobile-specific scroll
+    if (window.innerWidth <= 768) {
+      window.scrollTo(0, 0);
+      document.body.scrollIntoView({ behavior: 'instant' });
+    }
+  }, []);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);

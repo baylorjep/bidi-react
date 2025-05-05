@@ -26,7 +26,20 @@ export default function MessagingView({
 
   // Scroll to top when component mounts
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Force scroll to top with multiple methods
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'instant'
+    });
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+    
+    // Additional mobile-specific scroll
+    if (window.innerWidth <= 768) {
+      window.scrollTo(0, 0);
+      document.body.scrollIntoView({ behavior: 'instant' });
+    }
   }, []);
 
   // Get profile image from navigation state

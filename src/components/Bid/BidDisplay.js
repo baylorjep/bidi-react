@@ -128,6 +128,8 @@ function BidDisplay({
         className="btn-chat"
         onClick={() => {
           console.log("Opening chat with business:", bid.business_profiles.id);
+          
+          // Handle the message first
           if (onMessage) {
             onMessage({
               id: bid.business_profiles.id,
@@ -135,6 +137,24 @@ function BidDisplay({
               profileImage: bid.business_profiles.profile_image
             });
           }
+
+          // Force scroll to top after a small delay
+          setTimeout(() => {
+            // Multiple scroll methods for maximum compatibility
+            window.scrollTo({
+              top: 0,
+              left: 0,
+              behavior: 'instant' // Use instant instead of smooth for more reliable scrolling
+            });
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+            
+            // Additional mobile-specific scroll
+            if (window.innerWidth <= 768) {
+              window.scrollTo(0, 0);
+              document.body.scrollIntoView({ behavior: 'instant' });
+            }
+          }, 100);
         }}
       >
         <ChatIcon />
