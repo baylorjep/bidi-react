@@ -269,10 +269,15 @@ export default function MessagingView({
           >
             {m.message}
             <div className="message-time">
-              {new Date(m.createdAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {(() => {
+                const date = new Date(m.createdAt);
+                const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+                return localDate.toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true
+                });
+              })()}
             </div>
           </div>
         ))}
