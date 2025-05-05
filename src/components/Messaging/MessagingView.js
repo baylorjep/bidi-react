@@ -20,6 +20,7 @@ export default function MessagingView({
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [businessName, setBusinessName] = useState("");
   const [initialLetter, setInitialLetter] = useState("");
+  const [isBusinessProfile, setIsBusinessProfile] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -30,21 +31,41 @@ export default function MessagingView({
     }
   }, [location.state]);
 
-  // Fetch business information
+  // Fetch business/individual information
   useEffect(() => {
-    const fetchBusinessInfo = async () => {
-      console.log("Fetching business info for ID:", businessId);
+    const fetchUserInfo = async () => {
+      console.log("Fetching user info for ID:", businessId);
       try {
-        // First get the business name
-        const { data: businessData, error: businessError } = await supabase
-          .from("business_profiles")
-          .select("business_name")
+        // First get the user info from individual_profiles
+        const { data: individualData, error: individualError } = await supabase
+          .from("individual_profiles")
+          .select("first_name, last_name")
           .eq("id", businessId)
           .single();
 
-        if (businessError) throw businessError;
+        let userData;
+        if (!individualError && individualData) {
+          // If we found an individual profile, use their name
+          setBusinessName(`${individualData.first_name} ${individualData.last_name}`.trim());
+          setInitialLetter(individualData.first_name?.charAt(0)?.toUpperCase() || "");
+          userData = individualData;
+          setIsBusinessProfile(false);
+        } else {
+          // If not found in individual_profiles, try business_profiles
+          const { data: businessData, error: businessError } = await supabase
+            .from("business_profiles")
+            .select("business_name")
+            .eq("id", businessId)
+            .single();
 
-        // Then get the profile photo
+          if (businessError) throw businessError;
+          setBusinessName(businessData.business_name || "Business");
+          setInitialLetter(businessData.business_name?.charAt(0)?.toUpperCase() || "");
+          userData = businessData;
+          setIsBusinessProfile(true);
+        }
+
+        // Get the profile photo
         const { data: photoData, error: photoError } = await supabase
           .from("profile_photos")
           .select("photo_url")
@@ -52,22 +73,21 @@ export default function MessagingView({
           .eq("photo_type", "profile")
           .single();
 
-        console.log("Business data:", businessData);
+        console.log("User data:", userData);
         console.log("Photo data:", photoData);
 
-        setBusinessName(businessData.business_name || "Business");
         setProfilePhoto(photoData?.photo_url || null);
-        setInitialLetter(businessData.business_name?.charAt(0)?.toUpperCase() || "");
       } catch (error) {
-        console.error("Error fetching business info:", error);
-        setBusinessName("Business");
+        console.error("Error fetching user info:", error);
+        setBusinessName("User");
         setProfilePhoto(null);
-        setInitialLetter("B");
+        setInitialLetter("U");
+        setIsBusinessProfile(false);
       }
     };
 
     if (businessId) {
-      fetchBusinessInfo();
+      fetchUserInfo();
     }
   }, [businessId]);
 
@@ -223,8 +243,8 @@ export default function MessagingView({
           <div className="header-center">
             <div 
               className="profile-circle"
-              onClick={() => navigate(`/portfolio/${businessId}`)}
-              style={{ cursor: 'pointer' }}
+              onClick={isBusinessProfile ? () => navigate(`/portfolio/${businessId}`) : undefined}
+              style={{ cursor: isBusinessProfile ? 'pointer' : 'default' }}
             >
               {profilePhoto ? (
                 <img src={profilePhoto} alt="Profile" className="profile-image" />

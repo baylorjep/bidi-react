@@ -23,6 +23,8 @@ import Onboarding from "../../components/Stripe/Onboarding.js";
 import OpenRequests from "../../components/Request/OpenRequests.js";
 import LoadingSpinner from "../LoadingSpinner.js";
 import ChatInterface from "../Messaging/ChatInterface.js";
+import MobileChatList from "../Messaging/MobileChatList.js";
+import MessagingView from "../Messaging/MessagingView.js";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -58,6 +60,7 @@ const BusinessDashSidebar = () => {
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isHoveringSidebar, setIsHoveringSidebar] = useState(false);
   const sidebarRef = React.useRef(null);
+  const [selectedChat, setSelectedChat] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -141,7 +144,8 @@ const BusinessDashSidebar = () => {
 
   const handleMessagesClick = () => {
     if (isMobile) {
-      navigate("/messages");
+      setActiveSection("messages");
+      setSelectedChat(null);
     } else {
       setActiveSection("messages");
     }
@@ -257,6 +261,14 @@ const BusinessDashSidebar = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [isMobile, isHoveringSidebar]);
 
+  const handleChatSelect = (chat) => {
+    setSelectedChat(chat);
+  };
+
+  const handleBackFromChat = () => {
+    setSelectedChat(null);
+  };
+
   return (
     <div className="business-dashboard text-left">
       <div className="dashboard-container">
@@ -353,7 +365,29 @@ const BusinessDashSidebar = () => {
             // </section>
             <OpenRequests requests={requests} />
           ) : activeSection === "messages" ? (
-            <ChatInterface />     
+            isMobile ? (
+              selectedChat ? (
+                <MessagingView
+                  currentUserId={user?.id}
+                  businessId={selectedChat.id}
+                  businessName={selectedChat.name}
+                  profileImage={selectedChat.profileImage}
+                  onBack={handleBackFromChat}
+                />
+              ) : (
+                <MobileChatList 
+                  currentUserId={user?.id} 
+                  userType="business"
+                  onChatSelect={handleChatSelect}
+                />
+              )
+            ) : (
+              <ChatInterface 
+                currentUserId={user?.id}
+                userType="business"
+                initialChat={selectedChat}
+              />
+            )
           ) : activeSection === "bids" ? (
             <BusinessBids bids={bids} />
           ) : activeSection === "onboarding" ? (
