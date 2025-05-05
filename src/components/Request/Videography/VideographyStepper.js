@@ -464,25 +464,6 @@ function VideographyStepper({ formData, setFormData, currentStep, setCurrentStep
               </p>
             </div>
 
-            <div className="price-quality-slider-container">
-              <div className="slider-header">What matters most to you?</div>
-              <div className="slider-labels">
-                <span>Budget Conscious</span>
-                <span>Quality Focused</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="3"
-                step="1"
-                value={formData.requests.Videography?.priceQualityPreference || "2"}
-                onChange={(e) =>
-                  handleInputChange("priceQualityPreference", e.target.value)
-                }
-                className="price-quality-slider"
-              />
-            </div>
-
             <div className="custom-input-container required">
               <select
                 name="priceRange"

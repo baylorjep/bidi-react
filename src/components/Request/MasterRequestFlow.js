@@ -12,6 +12,7 @@ import CateringStepper from './Catering/CateringStepper';
 import DjStepper from './DJ/DjStepper';
 import FloristStepper from './Florist/FloristStepper';
 import HairAndMakeupStepper from './Beauty/HairAndMakeupStepper';
+import WeddingPlanningStepper from './WeddingPlanning/WeddingPlanningStepper';
 import { supabase } from "../../supabaseClient";
 import AuthModal from "./Authentication/AuthModal";
 import SignInModal from "./Event/SignInModal";
@@ -96,6 +97,7 @@ function MasterRequestFlow() {
   const [djSubStep, setDjSubStep] = useState(0);
   const [floristSubStep, setFloristSubStep] = useState(0);
   const [hairAndMakeupSubStep, setHairAndMakeupSubStep] = useState(0);
+  const [weddingPlanningSubStep, setWeddingPlanningSubStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState(new Set([0]));
   const [couponCode, setCouponCode] = useState("");
   const [couponMessage, setCouponMessage] = useState("");
@@ -175,6 +177,13 @@ function MasterRequestFlow() {
             "Hair and Makeup - Budget"
           );
         }
+      } else if (isRequestType(request, "WeddingPlanning")) {
+        steps.push(
+          "Wedding Planning - Basic Details",
+          "Wedding Planning - Services",
+          "Wedding Planning - Inspiration",
+          "Wedding Planning - Preferences"
+        );
       } else {
         steps.push(`${request} Details`);
       }
@@ -211,6 +220,9 @@ function MasterRequestFlow() {
             index += hairAndMakeupSubStep;
           }
           return index;
+        } else if (isRequestType(request, "WeddingPlanning")) {
+          index += weddingPlanningSubStep;
+          return index;
         }
         foundCurrent = true;
         break;
@@ -234,6 +246,8 @@ function MasterRequestFlow() {
         } else {
           index += 5;
         }
+      } else if (isRequestType(request, "WeddingPlanning")) {
+        index += 4;
       } else {
         index += 1;
       }
@@ -309,6 +323,8 @@ function MasterRequestFlow() {
             return hairAndMakeupSubStep === 3; // Basic -> Makeup -> Inspiration -> Budget
           }
           return hairAndMakeupSubStep === 4; // Basic -> Hair -> Makeup -> Inspiration -> Budget
+        } else if (isRequestType(currentRequest, "WeddingPlanning")) {
+          return weddingPlanningSubStep === 3; // Basic -> Services -> Inspiration -> Preferences
         }
         return true;
       };
@@ -358,6 +374,8 @@ function MasterRequestFlow() {
             // For both: Basic -> Hair -> Makeup -> Inspiration -> Budget
             setHairAndMakeupSubStep(hairAndMakeupSubStep + 1);
           }
+        } else if (isRequestType(currentRequest, "WeddingPlanning")) {
+          setWeddingPlanningSubStep(weddingPlanningSubStep + 1);
         }
         setVisitedSteps(prev => new Set([...prev, getCurrentStepIndex() + 1]));
       }
@@ -380,6 +398,7 @@ function MasterRequestFlow() {
       setDjSubStep(0);
       setFloristSubStep(0);
       setHairAndMakeupSubStep(0);
+      setWeddingPlanningSubStep(0);
     }
   };
 
@@ -394,6 +413,7 @@ function MasterRequestFlow() {
     setDjSubStep(0);
     setFloristSubStep(0);
     setHairAndMakeupSubStep(0);
+    setWeddingPlanningSubStep(0);
   };
 
   const handleBack = () => {
@@ -443,6 +463,13 @@ function MasterRequestFlow() {
       } else {
         setCurrentStep(currentStep - 1);
         setHairAndMakeupSubStep(0);
+      }
+    } else if (isRequestType(currentRequest, "WeddingPlanning")) {
+      if (weddingPlanningSubStep > 0) {
+        setWeddingPlanningSubStep(weddingPlanningSubStep - 1);
+      } else {
+        setCurrentStep(currentStep - 1);
+        setWeddingPlanningSubStep(0);
       }
     } else {
       setCurrentStep(currentStep - 1);
@@ -511,8 +538,17 @@ function MasterRequestFlow() {
       // Get the current request type from the selectedRequests array
       const currentRequestType = formData.selectedRequests[currentStep - 1];
 
+      // Format the request type for display
+      const formatRequestType = (type) => {
+        return type
+          .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+          .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+          .replace(/\s+/g, ' ') // Remove extra spaces
+          .trim();
+      };
+
       // Generate title for the current request
-      const requestTitle = `${userData.first_name}'s ${currentRequestType} Request`;
+      const requestTitle = `${userData.first_name}'s ${formatRequestType(currentRequestType)} Request`;
 
       let submissionSuccess = false;
 
@@ -520,7 +556,7 @@ function MasterRequestFlow() {
       if (isRequestType(currentRequestType, "Photography")) {
         const request = formData.requests.Photography || {};
         const photographyRequestData = {
-          profile_id: user.id,
+          profile_id: user.id,  // Changed from profile_id to user_id for consistency
           event_title: requestTitle,
           status: 'open',
           event_type: formData.commonDetails.eventType,
@@ -529,13 +565,11 @@ function MasterRequestFlow() {
           start_date: formData.commonDetails.startDate,
           end_date: formData.commonDetails.endDate,
           date_timeframe: formData.commonDetails.dateTimeframe,
-          time_of_day: formData.commonDetails.timeOfDay,
           start_time: formData.commonDetails.startTime,
           end_time: formData.commonDetails.endTime,
-          duration: request.duration ? parseInt(request.duration, 10) : null,
+          duration: request.duration ? request.duration.toString() : null,
           duration_unknown: request.durationUnknown || false,
           second_photographer: request.secondPhotographer || 'no',
-          second_photographer_unknown: request.secondPhotographerUnknown || false,
           style_preferences: JSON.stringify(request.stylePreferences || {}),
           deliverables: JSON.stringify(request.deliverables || {}),
           additional_info: request.additionalInfo || '',
@@ -545,7 +579,13 @@ function MasterRequestFlow() {
           num_people: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
           date_type: formData.commonDetails.dateFlexibility || null,
           indoor_outdoor: formData.commonDetails.indoorOutdoor || null,
-          coupon_code: appliedCoupon?.code || null
+          coupon_code: appliedCoupon?.code || null,
+          start_time_unknown: formData.commonDetails.startTimeUnknown || false,
+          end_time_unknown: formData.commonDetails.endTimeUnknown || false,
+          second_photographer_unknown: request.secondPhotographerUnknown || false,
+          num_people_unknown: request.numPeopleUnknown || false,
+          time_of_day: request.timeOfDay || null,
+          additional_comments: request.additionalComments || null
         };
 
         // Insert into photography_requests table
@@ -562,6 +602,7 @@ function MasterRequestFlow() {
 
         // Handle photo uploads if any
         if (request.photos && request.photos.length > 0) {
+          console.log(`Processing ${request.photos.length} photos for Photography`);
           const uploadPromises = request.photos.map(async (photo) => {
             try {
               // Ensure we have the file object
@@ -582,17 +623,6 @@ function MasterRequestFlow() {
                 bucket: 'request-media',
                 fullPath: `request-media/${filePath}`
               });
-
-              // First check if the bucket exists and is accessible
-              const { data: bucketList, error: bucketError } = await supabase.storage
-                .listBuckets();
-              
-              console.log('Available buckets:', bucketList);
-              
-              if (bucketError) {
-                console.error('Error listing buckets:', bucketError);
-                throw bucketError;
-              }
 
               // Upload the file
               const { error: uploadError, data: uploadData } = await supabase.storage
@@ -621,15 +651,26 @@ function MasterRequestFlow() {
 
               console.log('Generated public URL:', publicUrl);
 
-              console.log('Inserting photo record:', {
-                request_id: newPhotographyRequest.id,
-                profile_id: user.id,
-                photo_url: publicUrl,
-                file_path: filePath
-              });
+              // Determine the correct photo table based on category
+              let photoTable;
+              switch('photography') {
+                case 'photography':
+                  photoTable = 'photography_photos';
+                  break;
+                case 'beauty':
+                  photoTable = 'beauty_photos';
+                  break;
+                case 'weddingplanning':
+                  photoTable = 'wedding_planning_photos';
+                  break;
+                default:
+                  throw new Error(`Unknown category for photo upload: photography`);
+              }
+
+              console.log('Inserting photo record into table:', photoTable);
 
               const { error: photoInsertError, data: insertData } = await supabase
-                .from('event_photos')
+                .from(photoTable)
                 .insert([{
                   request_id: newPhotographyRequest.id,
                   user_id: user.id,
@@ -643,7 +684,7 @@ function MasterRequestFlow() {
                   error: photoInsertError,
                   data: {
                     request_id: newPhotographyRequest.id,
-                    profile_id: user.id,
+                    user_id: user.id,
                     photo_url: publicUrl,
                     file_path: filePath
                   }
@@ -660,10 +701,13 @@ function MasterRequestFlow() {
 
           try {
             await Promise.all(uploadPromises);
+            console.log(`All photo uploads completed successfully for Photography`);
           } catch (err) {
             console.error('Error in photo upload batch:', err);
             throw err;
           }
+        } else {
+          console.log(`No photos to upload for Photography`);
         }
 
         submissionSuccess = true;
@@ -682,7 +726,6 @@ function MasterRequestFlow() {
           start_date: formData.commonDetails.startDate,
           end_date: formData.commonDetails.endDate,
           date_timeframe: formData.commonDetails.dateTimeframe,
-          time_of_day: formData.commonDetails.timeOfDay,
           start_time: formData.commonDetails.startTime,
           end_time: formData.commonDetails.endTime,
           duration: request.duration ? parseInt(request.duration, 10) : null,
@@ -690,14 +733,19 @@ function MasterRequestFlow() {
           second_photographer: request.secondPhotographer || 'no',
           style_preferences: JSON.stringify(request.stylePreferences || {}),
           deliverables: JSON.stringify(request.deliverables || {}),
-          additional_comments: request.additionalInfo || '',
+          additional_info: request.additionalInfo || '',
           price_range: request.priceRange || 'Not specified',
           pinterest_link: request.pinterestBoard || '',
           wedding_details: formData.commonDetails.eventType === 'Wedding' ? JSON.stringify(request.weddingDetails || {}) : null,
           num_people: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
           date_type: formData.commonDetails.dateFlexibility || null,
           indoor_outdoor: formData.commonDetails.indoorOutdoor || null,
-          coupon_code: appliedCoupon?.code || null
+          coupon_code: appliedCoupon?.code || null,
+          start_time_unknown: formData.commonDetails.startTimeUnknown || false,
+          end_time_unknown: formData.commonDetails.endTimeUnknown || false,
+          num_people_unknown: request.numPeopleUnknown || false,
+          coverage: JSON.stringify(request.coverage || {}),
+          additional_comments: request.additionalComments || null
         };
 
         console.log('Preparing to insert videography request:', videographyRequestData);
@@ -716,62 +764,50 @@ function MasterRequestFlow() {
 
         console.log('Videography request inserted successfully:', newVideographyRequest);
 
-        // Handle video uploads if any
-        if (request.videos && request.videos.length > 0) {
-          console.log('Found videos to upload:', request.videos.length);
-          const uploadPromises = request.videos.map(async (video) => {
+        // Handle photo uploads if any
+        if (request.photos && request.photos.length > 0) {
+          console.log(`Processing ${request.photos.length} photos for Videography`);
+          const uploadPromises = request.photos.map(async (photo) => {
             try {
-              console.log('Processing video:', video);
               // Ensure we have the file object
-              if (!video.file) {
-                console.error('Video object missing file property:', video);
-                throw new Error('Invalid video object');
+              if (!photo.file) {
+                console.error('Photo object missing file property:', photo);
+                throw new Error('Invalid photo object');
               }
 
-              const fileExt = video.file.name.split('.').pop();
+              const fileExt = photo.file.name.split('.').pop();
               const fileName = `${uuidv4()}.${fileExt}`;
               const filePath = `videography/${user.id}/${newVideographyRequest.id}/${fileName}`;
               
-              console.log('Starting video upload process:', {
+              console.log('Starting photo upload process:', {
                 filePath,
                 fileName,
-                fileType: video.file.type,
-                fileSize: video.file.size,
+                fileType: photo.file.type,
+                fileSize: photo.file.size,
                 bucket: 'request-media',
                 fullPath: `request-media/${filePath}`
               });
 
-              // First check if the bucket exists and is accessible
-              const { data: bucketList, error: bucketError } = await supabase.storage
-                .listBuckets();
-              
-              console.log('Available buckets:', bucketList);
-              
-              if (bucketError) {
-                console.error('Error listing buckets:', bucketError);
-                throw bucketError;
-              }
-
               // Upload the file
               const { error: uploadError, data: uploadData } = await supabase.storage
                 .from('request-media')
-                .upload(filePath, video.file, {
+                .upload(filePath, photo.file, {
                   cacheControl: '3600',
                   upsert: false
                 });
 
               if (uploadError) {
-                console.error('Video upload error details:', {
+                console.error('Photo upload error details:', {
                   error: uploadError,
                   filePath,
                   fileName,
-                  fileType: video.file.type,
-                  fileSize: video.file.size
+                  fileType: photo.file.type,
+                  fileSize: photo.file.size
                 });
                 throw uploadError;
               }
 
-              console.log('Video upload successful:', uploadData);
+              console.log('Photo upload successful:', uploadData);
 
               const { data: { publicUrl } } = supabase.storage
                 .from('request-media')
@@ -779,14 +815,9 @@ function MasterRequestFlow() {
 
               console.log('Generated public URL:', publicUrl);
 
-              console.log('Inserting video record:', {
-                request_id: newVideographyRequest.id,
-                user_id: user.id,
-                photo_url: publicUrl,
-                file_path: filePath
-              });
+              console.log('Inserting photo record into videography_photos table');
 
-              const { error: videoInsertError, data: insertData } = await supabase
+              const { error: photoInsertError, data: insertData } = await supabase
                 .from('videography_photos')
                 .insert([{
                   request_id: newVideographyRequest.id,
@@ -796,9 +827,9 @@ function MasterRequestFlow() {
                 }])
                 .select();
 
-              if (videoInsertError) {
-                console.error('Video insert error details:', {
-                  error: videoInsertError,
+              if (photoInsertError) {
+                console.error('Photo insert error details:', {
+                  error: photoInsertError,
                   data: {
                     request_id: newVideographyRequest.id,
                     user_id: user.id,
@@ -806,25 +837,25 @@ function MasterRequestFlow() {
                     file_path: filePath
                   }
                 });
-                throw videoInsertError;
+                throw photoInsertError;
               }
 
-              console.log('Video record inserted successfully:', insertData);
+              console.log('Photo record inserted successfully:', insertData);
             } catch (err) {
-              console.error('Error in video upload process:', err);
+              console.error('Error in photo upload process:', err);
               throw err;
             }
           });
 
           try {
             await Promise.all(uploadPromises);
-            console.log('All video uploads completed successfully');
+            console.log(`All photo uploads completed successfully for Videography`);
           } catch (err) {
-            console.error('Error in video upload batch:', err);
+            console.error('Error in photo upload batch:', err);
             throw err;
           }
         } else {
-          console.log('No videos to upload');
+          console.log(`No photos to upload for Videography`);
         }
 
         submissionSuccess = true;
@@ -863,34 +894,96 @@ function MasterRequestFlow() {
 
         // Handle photo uploads for florist
         if (request.photos && request.photos.length > 0) {
+          console.log(`Processing ${request.photos.length} photos for Florist`);
           const uploadPromises = request.photos.map(async (photo) => {
-            const fileExt = photo.name.split('.').pop();
-            const fileName = `${uuidv4()}.${fileExt}`;
-            const filePath = `${user.id}/${newFloristRequest.id}/${fileName}`;
+            try {
+              // Ensure we have the file object
+              if (!photo.file) {
+                console.error('Photo object missing file property:', photo);
+                throw new Error('Invalid photo object');
+              }
 
-            const { error: uploadError } = await supabase.storage
-              .from('request-media')
-              .upload(filePath, photo.file);
+              const fileExt = photo.file.name.split('.').pop();
+              const fileName = `${uuidv4()}.${fileExt}`;
+              const filePath = `florist/${user.id}/${newFloristRequest.id}/${fileName}`;
+              
+              console.log('Starting photo upload process:', {
+                filePath,
+                fileName,
+                fileType: photo.file.type,
+                fileSize: photo.file.size,
+                bucket: 'request-media',
+                fullPath: `request-media/${filePath}`
+              });
 
-            if (uploadError) throw uploadError;
+              // Upload the file
+              const { error: uploadError, data: uploadData } = await supabase.storage
+                .from('request-media')
+                .upload(filePath, photo.file, {
+                  cacheControl: '3600',
+                  upsert: false
+                });
 
-            const { data: { publicUrl } } = supabase.storage
-              .from('request-media')
-              .getPublicUrl(filePath);
+              if (uploadError) {
+                console.error('Photo upload error details:', {
+                  error: uploadError,
+                  filePath,
+                  fileName,
+                  fileType: photo.file.type,
+                  fileSize: photo.file.size
+                });
+                throw uploadError;
+              }
 
-            const { error: photoInsertError } = await supabase
-              .from('florist_photos')
-              .insert([{
-                request_id: newFloristRequest.id,
-                user_id: user.id,
-                photo_url: publicUrl,
-                file_path: filePath
-              }]);
+              console.log('Photo upload successful:', uploadData);
 
-            if (photoInsertError) throw photoInsertError;
+              const { data: { publicUrl } } = supabase.storage
+                .from('request-media')
+                .getPublicUrl(filePath);
+
+              console.log('Generated public URL:', publicUrl);
+
+              console.log('Inserting photo record into florist_photos table');
+
+              const { error: photoInsertError, data: insertData } = await supabase
+                .from('florist_photos')
+                .insert([{
+                  request_id: newFloristRequest.id,
+                  user_id: user.id,
+                  photo_url: publicUrl,
+                  file_path: filePath
+                }])
+                .select();
+
+              if (photoInsertError) {
+                console.error('Photo insert error details:', {
+                  error: photoInsertError,
+                  data: {
+                    request_id: newFloristRequest.id,
+                    user_id: user.id,
+                    photo_url: publicUrl,
+                    file_path: filePath
+                  }
+                });
+                throw photoInsertError;
+              }
+
+              console.log('Photo record inserted successfully:', insertData);
+            } catch (err) {
+              console.error('Error in photo upload process:', err);
+              throw err;
+            }
           });
 
-          await Promise.all(uploadPromises);
+          try {
+            await Promise.all(uploadPromises);
+            console.log('All photo uploads completed successfully for Florist');
+          } catch (err) {
+            console.error('Error in photo upload batch:', err);
+            throw err;
+          }
+        } else {
+          console.log('No photos to upload for Florist');
         }
 
         submissionSuccess = true;
@@ -939,6 +1032,7 @@ function MasterRequestFlow() {
 
         // Handle photo uploads for beauty
         if (request.photos && request.photos.length > 0) {
+          console.log(`Processing ${request.photos.length} photos for Beauty`);
           const uploadPromises = request.photos.map(async (photo) => {
             const fileExt = photo.name.split('.').pop();
             const fileName = `${uuidv4()}.${fileExt}`;
@@ -1067,6 +1161,77 @@ function MasterRequestFlow() {
 
         console.log('Successfully inserted catering request:', newCateringRequest);
         submissionSuccess = true;
+      } else if (isRequestType(currentRequestType, "WeddingPlanning")) {
+        const request = formData.requests.WeddingPlanning || {};
+        const weddingPlanningRequestData = {
+          user_id: user.id,
+          event_title: requestTitle,
+          status: 'pending',
+          event_type: formData.commonDetails.eventType,
+          location: formData.commonDetails.location,
+          start_date: formData.commonDetails.startDate,
+          end_date: formData.commonDetails.endDate,
+          date_flexibility: formData.commonDetails.dateFlexibility,
+          date_timeframe: formData.commonDetails.dateTimeframe,
+          start_time: formData.commonDetails.startTime,
+          end_time: formData.commonDetails.endTime,
+          indoor_outdoor: formData.commonDetails.indoorOutdoor,
+          budget_range: request.budgetRange || 'Not specified',
+          guest_count: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
+          venue_status: request.venueStatus || null,
+          vendor_preferences: request.vendorPreferences || {},
+          additional_events: request.additionalEvents || {},
+          wedding_style: request.weddingStyle || null,
+          color_scheme: request.colorScheme || null,
+          theme_preferences: request.themePreferences || null,
+          additional_comments: request.additionalInfo || null,
+          pinterest_link: request.pinterestBoard || null,
+          coupon_code: appliedCoupon?.code || null
+        };
+
+        // Insert into wedding_planning_requests table
+        const { data: newWeddingPlanningRequest, error: weddingPlanningRequestError } = await supabase
+          .from('wedding_planning_requests')
+          .insert([weddingPlanningRequestData])
+          .select()
+          .single();
+
+        if (weddingPlanningRequestError) throw weddingPlanningRequestError;
+
+        // Handle photo uploads for wedding planning
+        if (request.photos && request.photos.length > 0) {
+          console.log(`Processing ${request.photos.length} photos for Wedding Planning`);
+          const uploadPromises = request.photos.map(async (photo) => {
+            const fileExt = photo.name.split('.').pop();
+            const fileName = `${uuidv4()}.${fileExt}`;
+            const filePath = `${user.id}/${newWeddingPlanningRequest.id}/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+              .from('request-media')
+              .upload(filePath, photo.file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('request-media')
+              .getPublicUrl(filePath);
+
+            const { error: photoInsertError } = await supabase
+              .from('wedding_planning_photos')
+              .insert([{
+                request_id: newWeddingPlanningRequest.id,
+                user_id: user.id,
+                photo_url: publicUrl,
+                file_path: filePath
+              }]);
+
+            if (photoInsertError) throw photoInsertError;
+          });
+
+          await Promise.all(uploadPromises);
+        }
+
+        submissionSuccess = true;
       }
 
       // Only proceed if submission was successful
@@ -1091,6 +1256,7 @@ function MasterRequestFlow() {
           setDjSubStep(0);
           setFloristSubStep(0);
           setHairAndMakeupSubStep(0);
+          setWeddingPlanningSubStep(0);
           // Update visited steps
           setVisitedSteps(prev => new Set([...prev, nextCategoryIndex + 1]));
         } else {
@@ -1177,6 +1343,13 @@ function MasterRequestFlow() {
           return;
         }
         currentIndex += maxSteps;
+      } else if (isRequestType(request, "WeddingPlanning")) {
+        if (stepIndex < currentIndex + 4) {
+          setCurrentStep(i + 1);
+          setWeddingPlanningSubStep(stepIndex - currentIndex);
+          return;
+        }
+        currentIndex += 4;
       } else {
         if (stepIndex === currentIndex) {
           setCurrentStep(i + 1);
@@ -1214,6 +1387,8 @@ function MasterRequestFlow() {
         } else {
           requestOffset += 5;
         }
+      } else if (isRequestType(request, "WeddingPlanning")) {
+        requestOffset += 4;
       } else {
         requestOffset += 1;
       }
@@ -1423,6 +1598,21 @@ function MasterRequestFlow() {
             setCurrentStep={setCurrentStep}
             subStep={hairAndMakeupSubStep}
             setSubStep={setHairAndMakeupSubStep}
+          />
+        </div>
+      );
+    }
+
+    if (isRequestType(currentRequest, "WeddingPlanning")) {
+      return (
+        <div className="form-scrollable-content">
+          <WeddingPlanningStepper
+            formData={formData}
+            setFormData={setFormData}
+            currentStep={currentStep}
+            setCurrentStep={setCurrentStep}
+            subStep={weddingPlanningSubStep}
+            setSubStep={setWeddingPlanningSubStep}
           />
         </div>
       );
@@ -1662,6 +1852,34 @@ function MasterRequestFlow() {
             'makeupStylePreferences'
           ),
           'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
+        };
+      } else if (isRequestType(currentRequest, "WeddingPlanning")) {
+        categoryDetails = {
+          'Planning Level': formatArrayValue(categoryData.planningLevel, 'planningLevel'),
+          'Wedding Type': formatArrayValue(categoryData.weddingType, 'weddingType'),
+          'Theme': formatArrayValue(categoryData.theme, 'theme'),
+          'Additional Events': formatArrayValue(
+            Object.entries(categoryData.additionalEvents || {})
+              .filter(([_, val]) => val === true)
+              .map(([key]) => {
+                const labels = {
+                  'rehearsalDinner': 'Rehearsal Dinner',
+                  'dayAfterBrunch': 'Day After Brunch',
+                  'bachelorParty': 'Bachelor Party',
+                  'bridalParty': 'Bridal Party'
+                };
+                return labels[key] || key;
+              })
+              .join(', '),
+            'additionalEvents'
+          ),
+          'Vendor Preference': formatArrayValue(categoryData.vendorPreference, 'vendorPreference'),
+          'Existing Vendors': formatArrayValue(categoryData.existingVendors, 'existingVendors'),
+          'Overall Budget': formatArrayValue(categoryData.budgetRange, 'budgetRange'),
+          'Planner Budget': formatArrayValue(categoryData.plannerBudget, 'plannerBudget'),
+          'Experience Level': formatArrayValue(categoryData.experienceLevel, 'experienceLevel'),
+          'Communication Style': formatArrayValue(categoryData.communicationStyle, 'communicationStyle'),
+          'Additional Information': formatArrayValue(categoryData.additionalInfo, 'additionalInfo')
         };
       }
 

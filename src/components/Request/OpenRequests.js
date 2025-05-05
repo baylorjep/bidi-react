@@ -8,7 +8,7 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 
 const BUSINESS_TYPE_MAPPING = {
   cake: ["cake"],
-  "wedding planner/coordinator": ["wedding planner", "rental"],
+  "wedding planner/coordinator": ["wedding planning"],
   catering: ["catering"],
   florist: ["florist"],
   "hair and makeup artist": ["hair and makeup artist", "beauty"],
@@ -31,6 +31,7 @@ const SERVICE_CATEGORY_MAPPING = {
   beauty: { table: "beauty_requests", legacy: "hair and makeup artist" },
   videography: { table: "videography_requests", legacy: "videography" },
   florist: { table: "florist_requests", legacy: "florist" },
+  "wedding planner": { table: "wedding_planning_requests", legacy: "wedding planning" },
 };
 
 function OpenRequests() {
@@ -44,6 +45,7 @@ function OpenRequests() {
   const [hiddenRequests, setHiddenRequests] = useState(new Set());
   const [showHidden, setShowHidden] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Add this new function to fetch user's bids
   const fetchUserBids = async (userId) => {
@@ -75,6 +77,17 @@ function OpenRequests() {
 
         const userBidsSet = await fetchUserBids(userData.user.id);
         setUserBids(userBidsSet);
+
+        // Check if user is admin
+        const { data: adminData, error: adminError } = await supabase
+          .from("business_profiles")
+          .select("is_admin")
+          .eq("id", userData.user.id)
+          .single();
+
+        if (!adminError && adminData) {
+          setIsAdmin(adminData.is_admin);
+        }
 
         const { data: profileData, error: profileError } = await supabase
           .from("business_profiles")
@@ -158,7 +171,7 @@ function OpenRequests() {
   };
 
   useEffect(() => {
-    if (!businessType) return;
+    if (!businessType && !isAdmin) return;
 
     const fetchRequests = async () => {
       setIsLoading(true);
@@ -171,126 +184,11 @@ function OpenRequests() {
           "florist",
           "hair and makeup artist",
           "beauty",
+          "wedding planner"
         ];
 
-        // Check if current business type is in valid categories
-        const isValidCategory = validCategories.includes(
-          businessType.toLowerCase()
-        );
-        const isPhotoVideo = ["photography", "videography"].includes(
-          businessType.toLowerCase()
-        );
-
-        if (isValidCategory) {
-          if (isPhotoVideo) {
-            // Fetch both photography and videography requests
-            const [photoTableData, videoTableData, legacyRequestsData] =
-              await Promise.all([
-                supabase
-                  .from("photography_requests")
-                  .select("*")
-                  .in("status", ["pending", "open"])
-                  .order("created_at", { ascending: false }),
-                supabase
-                  .from("videography_requests")
-                  .select("*")
-                  .in("status", ["pending", "open"])
-                  .order("created_at", { ascending: false }),
-                supabase
-                  .from("requests")
-                  .select("*")
-                  .in("service_category", ["photography", "videography"])
-                  .eq("open", true)
-                  .order("created_at", { ascending: false }),
-              ]);
-
-            const combinedRequests = [
-              ...(photoTableData.data?.map((req) => ({
-                ...req,
-                table_name: "photography_requests",
-                service_title:
-                  req.title || req.event_title || "Photography Request",
-                service_category: "photography",
-              })) || []),
-              ...(videoTableData.data?.map((req) => ({
-                ...req,
-                table_name: "videography_requests",
-                service_title:
-                  req.title || req.event_title || "Videography Request",
-                service_category: "videography",
-              })) || []),
-              ...(legacyRequestsData.data?.map((req) => ({
-                ...req,
-                table_name: "requests",
-                service_title:
-                  req.service_title ||
-                  req.title ||
-                  `${req.service_category} Request`,
-              })) || []),
-            ];
-
-            setOpenPhotoRequests(combinedRequests);
-            setOpenRequests([]);
-          } else {
-            // Original logic for other categories
-            const categoryInfo =
-              SERVICE_CATEGORY_MAPPING[businessType.toLowerCase()];
-
-            const [specificTableData, legacyRequestsData] = await Promise.all([
-              supabase
-                .from(categoryInfo.table)
-                .select("*")
-                .in("status", ["pending", "open"])
-                .order("created_at", { ascending: false }),
-              supabase
-                .from("requests")
-                .select("*")
-                .eq("service_category", categoryInfo.legacy)
-                .eq("open", true)
-                .order("created_at", { ascending: false }),
-            ]);
-
-            console.log("Fetching requests for:", businessType);
-            console.log("From specific table:", categoryInfo.table);
-            console.log("Legacy category:", categoryInfo.legacy);
-            console.log(
-              "Specific table results:",
-              specificTableData.data?.length
-            );
-            console.log(
-              "Legacy table results:",
-              legacyRequestsData.data?.length
-            );
-
-            const combinedRequests = [
-              ...(specificTableData.data?.map((req) => ({
-                ...req,
-                table_name: categoryInfo.table,
-                service_title:
-                  req.title ||
-                  req.event_title ||
-                  `${req.event_type} ${businessType} Request`,
-                service_category: categoryInfo.legacy,
-              })) || []),
-              ...(legacyRequestsData.data?.map((req) => ({
-                ...req,
-                table_name: "requests",
-                service_title:
-                  req.service_title || req.title || `${businessType} Request`,
-                service_category: categoryInfo.legacy,
-              })) || []),
-            ];
-
-            if (businessType.toLowerCase() === "photography") {
-              setOpenPhotoRequests(combinedRequests);
-              setOpenRequests([]);
-            } else {
-              setOpenRequests(combinedRequests);
-              setOpenPhotoRequests([]);
-            }
-          }
-        } else {
-          // Fetch ALL requests when business type is not in valid categories
+        // If user is admin, fetch all requests
+        if (isAdmin) {
           const [
             photoData,
             djData,
@@ -298,6 +196,7 @@ function OpenRequests() {
             beautyData,
             videoData,
             floristData,
+            weddingPlanningData,
             legacyData,
           ] = await Promise.all([
             supabase
@@ -331,9 +230,14 @@ function OpenRequests() {
               .in("status", ["pending", "open"])
               .order("created_at", { ascending: false }),
             supabase
+              .from("wedding_planning_requests")
+              .select("*")
+              .in("status", ["pending", "open"])
+              .order("created_at", { ascending: false }),
+            supabase
               .from("requests")
               .select("*")
-              .eq("open", true) // Keep using boolean for legacy table
+              .eq("open", true)
               .order("created_at", { ascending: false }),
           ]);
 
@@ -374,11 +278,174 @@ function OpenRequests() {
               service_title: req.title || "Florist Request",
               service_category: "florist",
             })) || []),
+            ...(weddingPlanningData.data?.map((req) => ({
+              ...req,
+              table_name: "wedding_planning_requests",
+              service_title: req.event_title || "Wedding Planning Request",
+              service_category: "wedding planning",
+            })) || []),
             ...(legacyData.data || []),
           ];
 
           setOpenRequests(allRequests);
           setOpenPhotoRequests([]);
+          return;
+        }
+
+        // Check if current business type is in valid categories
+        const isValidCategory = validCategories.includes(
+          businessType.toLowerCase()
+        );
+        const isPhotoVideo = ["photography", "videography"].includes(
+          businessType.toLowerCase()
+        );
+
+        if (!isValidCategory) {
+          // If not a valid category and not admin, show no requests
+          setOpenRequests([]);
+          setOpenPhotoRequests([]);
+          return;
+        }
+
+        if (isPhotoVideo) {
+          // Fetch both photography and videography requests
+          const [photoTableData, videoTableData, legacyRequestsData] =
+            await Promise.all([
+              supabase
+                .from("photography_requests")
+                .select("*")
+                .in("status", ["pending", "open"])
+                .order("created_at", { ascending: false }),
+              supabase
+                .from("videography_requests")
+                .select("*")
+                .in("status", ["pending", "open"])
+                .order("created_at", { ascending: false }),
+              supabase
+                .from("requests")
+                .select("*")
+                .in("service_category", ["photography", "videography"])
+                .eq("open", true)
+                .order("created_at", { ascending: false }),
+            ]);
+
+            const combinedRequests = [
+              ...(photoTableData.data?.map((req) => ({
+                ...req,
+                table_name: "photography_requests",
+                service_title:
+                  req.title || req.event_title || "Photography Request",
+                service_category: "photography",
+              })) || []),
+              ...(videoTableData.data?.map((req) => ({
+                ...req,
+                table_name: "videography_requests",
+                service_title:
+                  req.title || req.event_title || "Videography Request",
+                service_category: "videography",
+              })) || []),
+              ...(legacyRequestsData.data?.map((req) => ({
+                ...req,
+                table_name: "requests",
+                service_title:
+                  req.service_title ||
+                  req.title ||
+                  `${req.service_category} Request`,
+              })) || []),
+            ];
+
+            setOpenPhotoRequests(combinedRequests);
+            setOpenRequests([]);
+        } else if (businessType.toLowerCase() === "wedding planner/coordinator") {
+          // Fetch only wedding planning requests
+          const [weddingPlanningData, legacyRequestsData] = await Promise.all([
+            supabase
+              .from("wedding_planning_requests")
+              .select("*")
+              .in("status", ["pending", "open"])
+              .order("created_at", { ascending: false }),
+            supabase
+              .from("requests")
+              .select("*")
+              .eq("service_category", "wedding planning")
+              .eq("open", true)
+              .order("created_at", { ascending: false }),
+          ]);
+
+          const combinedRequests = [
+            ...(weddingPlanningData.data?.map((req) => ({
+              ...req,
+              table_name: "wedding_planning_requests",
+              service_title: req.event_title || "Wedding Planning Request",
+              service_category: "wedding planning",
+            })) || []),
+            ...(legacyRequestsData.data?.map((req) => ({
+              ...req,
+              table_name: "requests",
+              service_title: req.service_title || req.title || "Wedding Planning Request",
+              service_category: "wedding planning",
+            })) || []),
+          ];
+
+          setOpenRequests(combinedRequests);
+          setOpenPhotoRequests([]);
+        } else {
+          // Original logic for other categories
+          const categoryInfo =
+            SERVICE_CATEGORY_MAPPING[businessType.toLowerCase()];
+
+          const [specificTableData, legacyRequestsData] = await Promise.all([
+            supabase
+              .from(categoryInfo.table)
+              .select("*")
+              .in("status", ["pending", "open"])
+              .order("created_at", { ascending: false }),
+            supabase
+              .from("requests")
+              .select("*")
+              .eq("service_category", categoryInfo.legacy)
+              .eq("open", true)
+              .order("created_at", { ascending: false }),
+          ]);
+
+          console.log("Fetching requests for:", businessType);
+          console.log("From specific table:", categoryInfo.table);
+          console.log("Legacy category:", categoryInfo.legacy);
+          console.log(
+            "Specific table results:",
+            specificTableData.data?.length
+          );
+          console.log(
+            "Legacy table results:",
+            legacyRequestsData.data?.length
+          );
+
+          const combinedRequests = [
+            ...(specificTableData.data?.map((req) => ({
+              ...req,
+              table_name: categoryInfo.table,
+              service_title:
+                req.title ||
+                req.event_title ||
+                `${req.event_type} ${businessType} Request`,
+              service_category: categoryInfo.legacy,
+            })) || []),
+            ...(legacyRequestsData.data?.map((req) => ({
+              ...req,
+              table_name: "requests",
+              service_title:
+                req.service_title || req.title || `${businessType} Request`,
+              service_category: categoryInfo.legacy,
+            })) || []),
+          ];
+
+          if (businessType.toLowerCase() === "photography") {
+            setOpenPhotoRequests(combinedRequests);
+            setOpenRequests([]);
+          } else {
+            setOpenRequests(combinedRequests);
+            setOpenPhotoRequests([]);
+          }
         }
       } catch (error) {
         console.error("Error in fetchRequests:", error);
@@ -389,7 +456,7 @@ function OpenRequests() {
     };
 
     fetchRequests();
-  }, [businessType]);
+  }, [businessType, isAdmin]);
 
   const meetsMinimumPrice = (request) => {
     if (!minimumPrice) return true; // If no minimum price set, show all requests

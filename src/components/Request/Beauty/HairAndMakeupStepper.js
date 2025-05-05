@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../../../styles/Requests.css';
+import BudgetForm from '../BudgetForm';
 
 function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentStep, subStep, setSubStep }) {
   // Initialize eventDetails if it doesn't exist
@@ -760,80 +761,11 @@ function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentSt
   const renderBudgetStep = () => {
     return (
       <div className="form-scrollable-content">
-        <div className="budget-recommendation-container">
-          <h3>Recommended Budget Range</h3>
-          <div className="budget-amount">
-            ${recommendedBudget.min.toLocaleString()} - ${recommendedBudget.max.toLocaleString()}
-          </div>
-            <div className="explanation-items">
-              {formData.requests.HairAndMakeup?.numPeople && (
-                <li>{formData.requests.HairAndMakeup.numPeople} people needing services</li>
-              )}
-              {formData.requests.HairAndMakeup?.serviceType && (
-                <li>{formData.requests.HairAndMakeup.serviceType === 'both' ? 'Hair & Makeup' : formData.requests.HairAndMakeup.serviceType === 'hair' ? 'Hair Only' : 'Makeup Only'} services</li>
-              )}
-              {formData.requests.HairAndMakeup?.extensionsNeeded === 'yes' && (
-                <li>Hair extensions</li>
-              )}
-              {formData.requests.HairAndMakeup?.trialSessionHair === 'yes' && (
-                <li>Hair trial session</li>
-              )}
-              {formData.requests.HairAndMakeup?.lashesIncluded === 'yes' && (
-                <li>Lashes included</li>
-              )}
-              {formData.requests.HairAndMakeup?.trialSessionMakeup === 'yes' && (
-                <li>Makeup trial session</li>
-              )}
-            </div>
-        </div>
-
-        <div className="price-quality-slider-container">
-          <h3 className="slider-header">Price vs. Quality Preference</h3>
-          <div className="slider-labels">
-            <span>Budget-friendly</span>
-            <span>Luxury</span>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={priceQualityPreference}
-            onChange={handlePriceQualityChange}
-            className="price-quality-slider"
-          />
-          <div className="preference-detail">
-            <p>Your preference: {getPriceQualityDescription(priceQualityPreference)}</p>
-          </div>
-        </div>
-
-        <div className="budget-range-selector">
-          <div className="custom-input-container">
-            <label className="custom-label">Budget Range</label>
-            <select
-              className="custom-input"
-              value={formData.requests.HairAndMakeup?.priceRange || ''}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                requests: {
-                  ...prev.requests,
-                  HairAndMakeup: {
-                    ...prev.requests.HairAndMakeup,
-                    priceRange: e.target.value
-                  }
-                }
-              }))}
-            >
-              <option value="">Select a budget range</option>
-              <option value="0-300">$0 - $300</option>
-              <option value="300-500">$300 - $500</option>
-              <option value="500-750">$500 - $750</option>
-              <option value="750-1000">$750 - $1,000</option>
-              <option value="1000-1500">$1,000 - $1,500</option>
-              <option value="1500-2000">$1,500 - $2,000</option>
-              <option value="2000+">$2,000+</option>
-            </select>
-          </div>
-        </div>
+        <BudgetForm 
+          formData={formData}
+          setFormData={setFormData}
+          category="HairAndMakeup"
+        />
       </div>
     );
   };

@@ -476,6 +476,61 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
         const recommendedBudget = calculateRecommendedBudget();
         return (
           <div className='form-grid'>
+            <div className="price-quality-slider-container">
+              <h3 className="slider-header">What matters most to you?</h3>
+              <div className="slider-labels">
+                <span>Budget Conscious</span>
+                <span>Balanced</span>
+                <span>Quality Focused</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="3"
+                step="1"
+                value={eventDetails.priceQualityPreference || "2"}
+                onChange={(e) => {
+                  const newPreference = e.target.value;
+                  setFormData(prev => {
+                    const newData = {
+                      ...prev,
+                      eventDetails: {
+                        ...prev.eventDetails,
+                        priceQualityPreference: newPreference
+                      }
+                    };
+                    // Save to localStorage
+                    localStorage.setItem('cateringRequest', JSON.stringify(newData));
+                    return newData;
+                  });
+                }}
+                className="price-quality-slider"
+              />
+              <div className="preference-description">
+                {eventDetails.priceQualityPreference === "1" && (
+                  <div className="preference-detail">
+                    <p>👉 Focus on finding budget-friendly catering options while maintaining good quality</p>
+                    <p>👉 May need to be flexible with menu options and service style</p>
+                    <p>👉 Good for those with strict budget constraints</p>
+                  </div>
+                )}
+                {eventDetails.priceQualityPreference === "2" && (
+                  <div className="preference-detail">
+                    <p>👉 Balance between quality and cost</p>
+                    <p>👉 Mix of experienced and emerging caterers</p>
+                    <p>👉 Best for most situations</p>
+                  </div>
+                )}
+                {eventDetails.priceQualityPreference === "3" && (
+                  <div className="preference-detail">
+                    <p>👉 Priority on culinary excellence and presentation</p>
+                    <p>👉 Access to premium catering services</p>
+                    <p>👉 Ideal for those seeking exceptional dining experiences</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="budget-recommendation-container">
               <h3>Recommended Budget</h3>
               <p className="budget-amount">${recommendedBudget.toLocaleString()}</p>
@@ -504,60 +559,22 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
               </p>
             </div>
 
-            <div className="price-quality-slider-container">
-              <div className="slider-header">What matters most to you?</div>
-              <div className="slider-labels">
-                <span>Budget Conscious</span>
-                <span>Quality Focused</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="3"
-                step="1"
-                value={formData.requests.Catering?.priceQualityPreference || "2"}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  requests: {
-                    ...prev.requests,
-                    Catering: {
-                      ...prev.requests.Catering,
-                      priceQualityPreference: e.target.value
-                    }
-                  }
-                }))}
-                className="price-quality-slider"
-              />
-              <div className="preference-description">
-                <div className="preference-detail">
-                  {formData.requests.Catering?.priceQualityPreference === "1" && (
-                    <p>👉 Focus on finding budget-friendly catering options while maintaining good quality</p>
-                  )}
-                  {formData.requests.Catering?.priceQualityPreference === "2" && (
-                    <p>Balanced</p>
-                  )}
-                  {formData.requests.Catering?.priceQualityPreference === "3" && (
-                    <>
-                      <p>👉 Priority on culinary excellence and presentation</p>
-                      <p>👉 Access to premium catering services</p>
-                      <p>👉 Ideal for those seeking exceptional dining experiences</p>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
             <div className="custom-input-container required">
               <select
                 name="priceRange"
                 value={eventDetails.priceRange || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  eventDetails: {
-                    ...prev.eventDetails,
-                    priceRange: e.target.value
-                  }
-                }))}
+                onChange={(e) => setFormData(prev => {
+                  const newData = {
+                    ...prev,
+                    eventDetails: {
+                      ...prev.eventDetails,
+                      priceRange: e.target.value
+                    }
+                  };
+                  // Save to localStorage
+                  localStorage.setItem('cateringRequest', JSON.stringify(newData));
+                  return newData;
+                })}
                 className="custom-input"
               >
                 <option value="">Select a range</option>
@@ -579,13 +596,18 @@ function CateringStepper({ formData, setFormData, currentStep, setCurrentStep, s
             <div className="custom-input-container optional">
               <textarea
                 value={eventDetails.additionalInfo || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  eventDetails: {
-                    ...prev.eventDetails,
-                    additionalInfo: e.target.value
-                  }
-                }))}
+                onChange={(e) => setFormData(prev => {
+                  const newData = {
+                    ...prev,
+                    eventDetails: {
+                      ...prev.eventDetails,
+                      additionalInfo: e.target.value
+                    }
+                  };
+                  // Save to localStorage
+                  localStorage.setItem('cateringRequest', JSON.stringify(newData));
+                  return newData;
+                })}
                 placeholder="Any other additional information caterers should know..."
                 className="custom-input"
               />

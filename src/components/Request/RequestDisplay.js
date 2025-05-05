@@ -17,6 +17,11 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         console.log('Table name:', request.table_name);
 
         // First, check if a specific type was passed as a prop
+            if (requestType === 'wedding_planning_requests') {
+            console.log('Using passed requestType: wedding_planning_requests');
+            return 'wedding_planning_requests';
+        }
+
         if (requestType === 'florist_requests') {
             console.log('Using passed requestType: florist_requests');
             return 'florist_requests';
@@ -29,6 +34,11 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         }
 
         // Then check if the request has a table_name property
+        if (request.table_name === 'wedding_planning_requests') {
+            console.log('Using table_name: wedding_planning_requests');
+            return 'wedding_planning_requests';
+        }
+
         if (request.table_name === 'florist_requests') {
             console.log('Using table_name: florist_requests');
             return 'florist_requests';
@@ -1202,6 +1212,211 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         </div>
     );
 
+    const renderWeddingPlanningRequest = () => (
+        <div className="request-summary-grid">
+            {/* Event Title */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                <div className="request-subtype">Event Title</div>
+                <div className="request-info">{request.event_title || 'Not specified'}</div>
+            </div>
+
+            {/* Basic Event Information */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Event Type</div>
+                <div className="request-info">{request.event_type || 'Not specified'}</div>
+            </div>
+
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Location</div>
+                <div className="request-info">{request.location || 'Not specified'}</div>
+            </div>
+
+            {/* Date Information */}
+            {request.date_flexibility === 'specific' ? (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Event Date</div>
+                    <div className="request-info">
+                        {request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Not specified'}
+                    </div>
+                </div>
+            ) : request.date_flexibility === 'range' ? (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Date Range</div>
+                    <div className="request-info">
+                        {request.start_date && request.end_date 
+                            ? `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                            : 'Not specified'}
+                    </div>
+                </div>
+            ) : (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Date Preference</div>
+                    <div className="request-info">
+                        {request.date_timeframe === '3months' ? 'Within 3 months' :
+                         request.date_timeframe === '6months' ? 'Within 6 months' :
+                         request.date_timeframe === '1year' ? 'Within 1 year' :
+                         request.date_timeframe === 'more' ? 'More than 1 year' :
+                         'Not specified'}
+                    </div>
+                </div>
+            )}
+
+            {/* Time Information */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Event Time</div>
+                <div className="request-info">
+                    {request.start_time ? `Start: ${request.start_time}` : 'Start time TBD'}
+                    <br />
+                    {request.end_time ? `End: ${request.end_time}` : 'End time TBD'}
+                </div>
+            </div>
+
+            {/* Venue Information */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Venue Type</div>
+                <div className="request-info">{request.indoor_outdoor || 'Not specified'}</div>
+            </div>
+
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Venue Status</div>
+                <div className="request-info">{request.venue_status || 'Not specified'}</div>
+            </div>
+
+            {/* Guest Count */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Expected Guests</div>
+                <div className="request-info">{request.guest_count || 'Not specified'}</div>
+            </div>
+
+            {/* Budget */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Budget Range</div>
+                <div className="request-info">${request.budget_range || 'Not specified'}</div>
+            </div>
+
+            {/* Wedding Style */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Wedding Style</div>
+                <div className="request-info">{request.wedding_style || 'Not specified'}</div>
+            </div>
+
+            {/* Color Scheme */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Color Scheme</div>
+                <div className="request-info">{request.color_scheme || 'Not specified'}</div>
+            </div>
+
+            {/* Theme Preferences */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                <div className="request-subtype">Theme Preferences</div>
+                <div className="request-info">{request.theme_preferences || 'Not specified'}</div>
+            </div>
+
+            {/* Vendor Preferences */}
+            {request.vendor_preferences && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                    <div className="request-subtype">Vendor Preferences</div>
+                    <div className="request-info">
+                        {typeof request.vendor_preferences === 'string'
+                            ? Object.entries(JSON.parse(request.vendor_preferences))
+                                .filter(([_, value]) => value)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ')
+                            : Object.entries(request.vendor_preferences)
+                                .filter(([_, value]) => value)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ') || 'Not specified'}
+                    </div>
+                </div>
+            )}
+
+            {/* Additional Events */}
+            {request.additional_events && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                    <div className="request-subtype">Additional Events</div>
+                    <div className="request-info">
+                        {typeof request.additional_events === 'string'
+                            ? Object.entries(JSON.parse(request.additional_events))
+                                .filter(([_, value]) => value)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ')
+                            : Object.entries(request.additional_events)
+                                .filter(([_, value]) => value)
+                                .map(([key]) => key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .toLowerCase()
+                                    .replace(/^./, str => str.toUpperCase()))
+                                .join(', ') || 'Not specified'}
+                    </div>
+                </div>
+            )}
+
+            {/* Pinterest Link */}
+            {request.pinterest_link && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Pinterest Board</div>
+                    <div className="request-info">
+                        <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
+                            View Board
+                        </a>
+                    </div>
+                </div>
+            )}
+
+            {/* Additional Comments */}
+            {request.additional_comments && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
+                    <div className="request-subtype">Additional Comments</div>
+                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
+                </div>
+            )}
+
+            {/* Coupon Code */}
+            {request.coupon_code && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <div className="request-subtype">Coupon Code</div>
+                    <div className="request-info">{request.coupon_code}</div>
+                </div>
+            )}
+
+            {/* Inspiration Photos */}
+            {filteredPhotos && filteredPhotos.length > 0 && (
+                <>
+                    <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
+                        Inspiration Photos
+                    </div>
+                    <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
+                        {filteredPhotos.map((photo, index) => {
+                            const publicUrl = getPublicUrl(photo.file_path);
+                            return (
+                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
+                                    <img
+                                        src={publicUrl || photo.photo_url}
+                                        className="photo"
+                                        alt={`Photo ${index + 1}`}
+                                        onError={(e) => {
+                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
+                                        }}
+                                        loading="lazy"
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+
     const renderDefaultRequest = () => (
         <div className="request-summary-grid">
             {/* Basic Info */}
@@ -1291,18 +1506,6 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 </div>
             )}
 
-            {/* Pinterest Link */}
-            {request.pinterest_link && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Pinterest Board</div>
-                    <div className="request-info">
-                        <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
-                            View Board
-                        </a>
-                    </div>
-                </div>
-            )}
-
             {/* Coupon Code */}
             {request.coupon_code && (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
@@ -1319,11 +1522,11 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                 </div>
             )}
 
-            {/* Inspiration Photos */}
+            {/* Photos */}
             {filteredPhotos && filteredPhotos.length > 0 && (
                 <>
                     <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
-                        Inspiration Photos
+                        Photos
                     </div>
                     <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
                         {filteredPhotos.map((photo, index) => {
@@ -1350,8 +1553,8 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
 
     const renderRequestDetails = () => {
         const type = getRequestType();
-        console.log('renderRequestDetails - type:', type); // Add this debug log
-        console.log('renderRequestDetails - request:', request); // Add this debug log
+        console.log('renderRequestDetails - type:', type);
+        console.log('renderRequestDetails - request:', request);
         
         switch (type) {
             case 'beauty_requests':
@@ -1363,12 +1566,14 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
             case 'catering_requests':
                 return renderCateringRequest();
             case 'florist_requests':
-                console.log('Rendering florist request...'); // Add this debug log
+                console.log('Rendering florist request...');
                 return renderFloristRequest();
             case 'videography_requests':
                 return renderVideographyRequest();
+            case 'wedding_planning_requests':
+                return renderWeddingPlanningRequest();
             default:
-                console.log('Falling back to default render...'); // Add this debug log
+                console.log('Falling back to default render...');
                 return renderDefaultRequest();
         }
     };
@@ -1479,49 +1684,46 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
 
     useEffect(() => {
         const fetchPhotos = async () => {
-            const type = getRequestType();
-            
-            if (!request?.id) return;
+            try {
+                let photoTable;
+                switch (getRequestType()) {
+                    case 'photography_requests':
+                        photoTable = 'photography_photos';
+                        break;
+                    case 'videography_requests':
+                        photoTable = 'videography_photos';
+                        break;
+                    case 'beauty_requests':
+                        photoTable = 'beauty_photos';
+                        break;
+                    case 'florist_requests':
+                        photoTable = 'florist_photos';
+                        break;
+                    case 'wedding_planning_requests':
+                        photoTable = 'wedding_planning_photos';
+                        break;
+                    default:
+                        console.log('No specific photo table for request type:', getRequestType());
+                        return;
+                }
 
-            let photos = [];
-            let error;
+                console.log('Fetching photos from table:', photoTable);
+                const { data: photos, error } = await supabase
+                    .from(photoTable)
+                    .select('*')
+                    .eq('request_id', request.id)
+                    .order('created_at', { ascending: false });
 
-            switch (type) {
-                case 'photography_requests':
-                    ({ data: photos, error } = await supabase
-                        .from('event_photos')
-                        .select('*')
-                        .eq('request_id', request.id));
-                    break;
+                if (error) {
+                    console.error('Error fetching photos:', error);
+                    return;
+                }
 
-                case 'videography_requests':
-                    ({ data: photos, error } = await supabase
-                        .from('videography_photos')
-                        .select('*')
-                        .eq('request_id', request.id));
-                    break;
-
-                case 'florist_requests':
-                    ({ data: photos, error } = await supabase
-                        .from('florist_photos')
-                        .select('*')
-                        .eq('request_id', request.id));
-                    break;
-
-                case 'beauty_requests':
-                    ({ data: photos, error } = await supabase
-                        .from('beauty_photos')
-                        .select('*')
-                        .eq('request_id', request.id));
-                    break;
+                console.log('Fetched photos:', photos);
+                setFilteredPhotos(photos);
+            } catch (err) {
+                console.error('Error in fetchPhotos:', err);
             }
-
-            if (error) {
-                console.error(`Error fetching ${type} photos:`, error);
-                return;
-            }
-
-            setFilteredPhotos(photos || []);
         };
 
         fetchPhotos();

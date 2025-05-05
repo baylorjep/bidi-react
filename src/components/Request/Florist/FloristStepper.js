@@ -749,33 +749,6 @@ function FloristStepper({ formData, setFormData, currentStep, setCurrentStep, su
               </div>
             </div>
 
-            <div className="price-quality-slider-container" style={{ marginBottom: '20px' }}>
-              <div className="slider-header" style={{ marginBottom: '10px' }}>What matters most to you?</div>
-              <div className="slider-labels" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                <span>Budget Conscious</span>
-                <span>Quality Focused</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="3"
-                step="1"
-                value={eventDetails.priceQualityPreference || "2"}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  requests: {
-                    ...prev.requests,
-                    Florist: {
-                      ...prev.requests?.Florist,
-                      priceQualityPreference: e.target.value
-                    }
-                  }
-                }))}
-                className="price-quality-slider"
-                style={{ width: '100%', marginBottom: '10px' }}
-              />
-            </div>
-
             <div className="custom-input-container required" style={{ marginBottom: '20px' }}>
               <select
                 name="priceRange"

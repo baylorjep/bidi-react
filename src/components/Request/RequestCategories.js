@@ -12,6 +12,7 @@ function RequestCategories() {
     "HairAndMakeup",
     "Florist",
     "Catering",
+    "WeddingPlanning"
   ];
 
   const toggleCategory = (category) => {
@@ -36,6 +37,8 @@ function RequestCategories() {
         return "DJ Services";
       case "HairAndMakeup":
         return "Hair and Makeup Artist";
+      case "WeddingPlanning":
+        return "Wedding Planning";
       default:
         return category;
     }

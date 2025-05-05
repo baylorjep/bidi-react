@@ -58,17 +58,131 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
       for (const [category, request] of Object.entries(formData.requests)) {
         if (!request) continue;
 
-        // Create request data
-        const requestData = {
+        // Create base request data with common fields
+        const baseRequestData = {
           user_id: user.id,
-          category: category,
           status: 'pending',
-          ...request
+          event_type: formData.commonDetails.eventType,
+          event_title: `${formData.commonDetails.eventTitle || formData.commonDetails.eventType} - ${category
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase())
+            .replace(/\s+/g, ' ')
+            .trim()} Request`,
+          location: formData.commonDetails.location,
+          date_flexibility: formData.commonDetails.dateFlexibility,
+          date_timeframe: formData.commonDetails.dateTimeframe,
+          indoor_outdoor: formData.commonDetails.indoorOutdoor,
+          price_range: formData.commonDetails.priceRange,
+          additional_comments: formData.commonDetails.additionalComments,
+          pinterest_link: formData.commonDetails.pinterestLink,
+          coupon_code: formData.commonDetails.couponCode
         };
 
-        // Insert request into database
+        // Add category-specific fields
+        let categorySpecificData = {};
+        switch(category.toLowerCase()) {
+          case 'beauty':
+            categorySpecificData = {
+              service_type: request.serviceType,
+              hairstyle_preferences: request.hairstylePreferences,
+              hair_length_type: request.hairLengthType,
+              extensions_needed: request.extensionsNeeded,
+              trial_session_hair: request.trialSessionHair,
+              makeup_style_preferences: request.makeupStylePreferences,
+              skin_type_concerns: request.skinTypeConcerns,
+              preferred_products_allergies: request.preferredProductsAllergies,
+              lashes_included: request.lashesIncluded,
+              trial_session_makeup: request.trialSessionMakeup,
+              group_discount_inquiry: request.groupDiscountInquiry,
+              on_site_service_needed: request.onSiteServiceNeeded
+            };
+            break;
+
+          case 'florist':
+            categorySpecificData = {
+              flower_preferences: request.flowerPreferences,
+              floral_arrangements: request.floralArrangements,
+              additional_services: request.additionalServices,
+              colors: request.colors,
+              flower_preferences_text: request.flowerPreferencesText
+            };
+            break;
+
+          case 'videography':
+            categorySpecificData = {
+              num_people: request.numPeople,
+              duration: request.duration,
+              style_preferences: request.stylePreferences,
+              deliverables: request.deliverables,
+              wedding_details: request.weddingDetails,
+              coverage: request.coverage,
+              time_of_day: request.timeOfDay,
+              additional_info: request.additionalInfo,
+              start_time_unknown: request.startTimeUnknown,
+              end_time_unknown: request.endTimeUnknown,
+              duration_unknown: request.durationUnknown,
+              num_people_unknown: request.numPeopleUnknown
+            };
+            break;
+
+          case 'photography':
+            categorySpecificData = {
+              num_people: request.numPeople,
+              extras: request.extras,
+              style_preferences: request.stylePreferences,
+              deliverables: request.deliverables,
+              wedding_details: request.weddingDetails,
+              duration: request.duration,
+              time_of_day: request.timeOfDay,
+              start_time_unknown: request.startTimeUnknown,
+              end_time_unknown: request.endTimeUnknown,
+              duration_unknown: request.durationUnknown,
+              num_people_unknown: request.numPeopleUnknown,
+              second_photographer_unknown: request.secondPhotographerUnknown
+            };
+            break;
+
+          case 'dj':
+            categorySpecificData = {
+              event_duration: request.eventDuration,
+              estimated_guests: request.estimatedGuests,
+              music_preferences: request.musicPreferences,
+              special_songs: request.specialSongs,
+              additional_services: request.additionalServices,
+              equipment_needed: request.equipmentNeeded,
+              equipment_notes: request.equipmentNotes,
+              special_requests: request.specialRequests
+            };
+            break;
+
+          case 'catering':
+            categorySpecificData = {
+              event_duration: request.eventDuration,
+              estimated_guests: request.estimatedGuests,
+              food_preferences: request.foodPreferences,
+              special_requests: request.specialRequests,
+              additional_services: request.additionalServices,
+              food_service_type: request.foodServiceType,
+              serving_staff: request.servingStaff,
+              dining_items: request.diningItems,
+              dietary_restrictions: request.dietaryRestrictions,
+              other_dietary_details: request.otherDietaryDetails,
+              equipment_needed: request.equipmentNeeded,
+              equipment_notes: request.equipmentNotes,
+              setup_cleanup: request.setupCleanup,
+            };
+            break;
+        }
+
+        // Combine base and category-specific data
+        const requestData = {
+          ...baseRequestData,
+          ...categorySpecificData
+        };
+
+        // Insert request into appropriate table
         const { data: newRequest, error: requestError } = await supabase
-          .from('requests')
+          .from(`${category.toLowerCase()}_requests`)
           .insert([requestData])
           .select()
           .single();
@@ -92,8 +206,9 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
               .from('request-media')
               .getPublicUrl(filePath);
 
-            // Store photo information in appropriate table based on category
-            const photoTable = category === 'Florist' ? 'florist_photos' : 'event_photos';
+            // Store photo information in appropriate table
+            const photoTable = `${category.toLowerCase()}_photos`;
+            
             return supabase
               .from(photoTable)
               .insert([{

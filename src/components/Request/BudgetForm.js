@@ -761,56 +761,19 @@ const BudgetForm = ({ formData, setFormData, category }) => {
     setPriceQualityPreference(value);
     
     // Update the form data with the new price quality preference
-    if (category.toLowerCase() === 'photography') {
+    if (category.toLowerCase() === 'catering') {
       setFormData(prev => ({
         ...prev,
         requests: {
           ...prev.requests,
-          Photography: {
-            ...prev.requests.Photography,
+          Catering: {
+            ...prev.requests.Catering,
             priceQualityPreference: value.toString()
           }
-        }
-      }));
-    } else if (category.toLowerCase() === 'videography') {
-      setFormData(prev => ({
-        ...prev,
-        requests: {
-          ...prev.requests,
-          Videography: {
-            ...prev.requests.Videography,
-            priceQualityPreference: value.toString()
-          }
-        }
-      }));
-    } else if (category.toLowerCase() === 'dj') {
-      setFormData(prev => ({
-        ...prev,
+        },
         eventDetails: {
           ...prev.eventDetails,
           priceQualityPreference: value.toString()
-        }
-      }));
-    } else if (category.toLowerCase() === 'florist') {
-      setFormData(prev => ({
-        ...prev,
-        requests: {
-          ...prev.requests,
-          Florist: {
-            ...prev.requests.Florist,
-            priceQualityPreference: value.toString()
-          }
-        }
-      }));
-    } else if (category.toLowerCase() === 'hairandmakeup') {
-      setFormData(prev => ({
-        ...prev,
-        requests: {
-          ...prev.requests,
-          HairAndMakeup: {
-            ...prev.requests.HairAndMakeup,
-            priceQualityPreference: value.toString()
-          }
         }
       }));
     }
