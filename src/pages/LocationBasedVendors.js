@@ -11,7 +11,8 @@ const categories = [
     { id: 'florist', name: 'Florist' },
     { id: 'catering', name: 'Caterer' },
     { id: 'dj', name: 'DJ' },
-    { id: 'beauty', name: 'Hair and Makeup Artist' }, // Updated category name
+    { id: 'beauty', name: 'Hair and Makeup Artist' },
+    { id: 'wedding planner/coordinator', name: 'Wedding Planner' }
 ];
 
 const categoryTypes = {
@@ -49,6 +50,12 @@ const categoryTypes = {
         { id: 'wedding', name: 'Wedding' },
         { id: 'event', name: 'Event' },
         { id: 'photoshoot', name: 'Photoshoot' }
+    ],
+    'wedding planner/coordinator': [
+        { id: 'full-service', name: 'Full Service' },
+        { id: 'partial-planning', name: 'Partial Planning' },
+        { id: 'day-of', name: 'Day of Coordination' },
+        { id: 'month-of', name: 'Month of Coordination' }
     ]
 };
 
@@ -181,20 +188,34 @@ const LocationBasedVendors = () => {
     const { category, county, city, type } = useParams();
     const navigate = useNavigate();
 
+    // Helper function to check if a string is a valid type for a specific category
+    const isValidTypeForCategory = (typeStr, categoryStr) => {
+        console.log('Checking type validity:', { typeStr, categoryStr }); // Debug log
+        if (!categoryStr || !categoryTypes[categoryStr]) {
+            console.log('Invalid category or no types found for category'); // Debug log
+            return false;
+        }
+        const isValid = categoryTypes[categoryStr].some(t => t.id === typeStr);
+        console.log('Type validity result:', isValid); // Debug log
+        return isValid;
+    };
+
     // Helper function to check if a string is a valid category
-    const isValidCategory = (str) => categories.some(cat => cat.id === str);
+    const isValidCategory = (str) => {
+        console.log('Checking category validity:', str); // Debug log
+        const isValid = categories.some(cat => cat.id === str);
+        console.log('Category validity result:', isValid); // Debug log
+        return isValid;
+    };
 
     // Helper function to check if a string is a valid type for any category
     const isValidType = (typeStr) => {
-        return Object.values(categoryTypes).some(types => 
+        console.log('Checking if type is valid for any category:', typeStr); // Debug log
+        const isValid = Object.values(categoryTypes).some(types => 
             types.some(t => t.id === typeStr)
         );
-    };
-
-    // Helper function to check if a string is a valid type for a specific category
-    const isValidTypeForCategory = (typeStr, categoryStr) => {
-        if (!categoryStr || !categoryTypes[categoryStr]) return false;
-        return categoryTypes[categoryStr].some(t => t.id === typeStr);
+        console.log('Type validity result:', isValid); // Debug log
+        return isValid;
     };
 
     // Helper function to check if a string is a valid city
@@ -210,19 +231,58 @@ const LocationBasedVendors = () => {
     const determineInitialValues = () => {
         console.log('URL Parameters:', { type, category, city, county }); // Debug log
 
+        // Decode the category parameter to handle spaces and slashes
+        const decodedCategory = category ? decodeURIComponent(category) : '';
+        const decodedType = type ? decodeURIComponent(type) : '';
+
+        console.log('Decoded parameters:', { decodedType, decodedCategory, city, county }); // Debug log
+
+        // Special handling for wedding planner/coordinator category
+        if (decodedCategory === 'wedding planner/coordinator' || decodedCategory === 'wedding planner') {
+            if (decodedType && (city || county)) {
+                const location = city || county;
+                if (isValidTypeForCategory(decodedType, 'wedding planner/coordinator') && isValidLocation(location)) {
+                    return {
+                        category: 'wedding planner/coordinator', // Use the full category name for database queries
+                        type: decodedType,
+                        location: location
+                    };
+                }
+            } else if (decodedType) {
+                if (isValidTypeForCategory(decodedType, 'wedding planner/coordinator')) {
+                    return {
+                        category: 'wedding planner/coordinator', // Use the full category name for database queries
+                        type: decodedType,
+                        location: ''
+                    };
+                }
+            }
+        }
+
         // Case 1: /type/category/location (city or county)
-        if (type && category && (city || county)) {
+        if (decodedType && decodedCategory && (city || county)) {
             const location = city || county;
+            console.log('Checking Case 1:', { decodedType, decodedCategory, location }); // Debug log
+            
             // First check if the category is valid
-            if (isValidCategory(category)) {
+            const isCategoryValid = isValidCategory(decodedCategory);
+            console.log('Category valid:', isCategoryValid); // Debug log
+            
+            if (isCategoryValid) {
                 // Then check if the type is valid for this category
-                if (isValidTypeForCategory(type, category)) {
+                const isTypeValid = isValidTypeForCategory(decodedType, decodedCategory);
+                console.log('Type valid for category:', isTypeValid); // Debug log
+                
+                if (isTypeValid) {
                     // Finally check if the location is valid
-                    if (isValidLocation(location)) {
-                        console.log('Case 1 matched:', { category, type, location }); // Debug log
+                    const isLocationValid = isValidLocation(location);
+                    console.log('Location valid:', isLocationValid); // Debug log
+                    
+                    if (isLocationValid) {
+                        console.log('Case 1 matched:', { category: decodedCategory, type: decodedType, location }); // Debug log
                         return {
-                            category: category,
-                            type: type,
+                            category: decodedCategory,
+                            type: decodedType,
                             location: location
                         };
                     }
@@ -231,24 +291,24 @@ const LocationBasedVendors = () => {
         }
 
         // Case 2: /type/category
-        if (type && category && !city && !county) {
-            if (isValidCategory(category) && isValidTypeForCategory(type, category)) {
-                console.log('Case 2 matched:', { category, type }); // Debug log
+        if (decodedType && decodedCategory && !city && !county) {
+            if (isValidCategory(decodedCategory) && isValidTypeForCategory(decodedType, decodedCategory)) {
+                console.log('Case 2 matched:', { category: decodedCategory, type: decodedType }); // Debug log
                 return {
-                    category: category,
-                    type: type,
+                    category: decodedCategory,
+                    type: decodedType,
                     location: ''
                 };
             }
         }
 
         // Case 3: /category/location
-        if (category && !type && (city || county)) {
+        if (decodedCategory && !decodedType && (city || county)) {
             const location = city || county;
-            if (isValidCategory(category) && isValidLocation(location)) {
-                console.log('Case 3 matched:', { category, location }); // Debug log
+            if (isValidCategory(decodedCategory) && isValidLocation(location)) {
+                console.log('Case 3 matched:', { category: decodedCategory, location }); // Debug log
                 return {
-                    category: category,
+                    category: decodedCategory,
                     type: '',
                     location: location
                 };
@@ -256,11 +316,11 @@ const LocationBasedVendors = () => {
         }
 
         // Case 4: /category
-        if (category && !type && !city && !county) {
-            if (isValidCategory(category)) {
-                console.log('Case 4 matched:', { category }); // Debug log
+        if (decodedCategory && !decodedType && !city && !county) {
+            if (isValidCategory(decodedCategory)) {
+                console.log('Case 4 matched:', { category: decodedCategory }); // Debug log
                 return {
-                    category: category,
+                    category: decodedCategory,
                     type: '',
                     location: ''
                 };
@@ -355,7 +415,10 @@ const LocationBasedVendors = () => {
                 .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
-                query = query.eq('business_category', selectedCategory);
+                // For wedding planner/coordinator category, ensure we're using the correct category name
+                const categoryToQuery = selectedCategory === 'wedding planner/coordinator' ? 
+                    'wedding planner/coordinator' : selectedCategory;
+                query = query.eq('business_category', categoryToQuery);
             }
 
             if (selectedCity) {
@@ -474,20 +537,20 @@ const LocationBasedVendors = () => {
     };
 
     const handleTypeChange = (newType) => {
-        if (!isValidType(newType) || !isValidTypeForCategory(newType, selectedCategory)) return;
-        
+        console.log('Type changed to:', newType);
         setSelectedType(newType);
         
-        let path = `/${newType}/${selectedCategory}`;
-        
-        // Add location if it exists and is valid
-        if (selectedCity && isValidCity(selectedCity)) {
-            path += `/${selectedCity}`;
-        } else if (selectedCounty && isValidCounty(selectedCounty)) {
-            path += `/${selectedCounty}`;
+        // Special handling for wedding planner/coordinator category
+        if (selectedCategory === 'wedding planner/coordinator') {
+            // For wedding planners, we want to keep the full category name
+            const path = `/${newType}/${encodeURIComponent('wedding planner/coordinator')}`;
+            const locationPath = selectedCity ? `/${encodeURIComponent(selectedCity)}` : '';
+            navigate(path + locationPath);
+        } else {
+            const path = `/${newType}/${encodeURIComponent(selectedCategory)}`;
+            const locationPath = selectedCity ? `/${encodeURIComponent(selectedCity)}` : '';
+            navigate(path + locationPath);
         }
-        
-        navigate(path);
     };
 
     const handleCountyChange = (newCounty) => {

@@ -20,42 +20,70 @@ function urlBase64ToUint8Array(base64String) {
 
 // The function to subscribe the user to push notifications
 export const subscribeToPush = async () => {
-  const permission = await Notification.requestPermission();
-  console.log("Permission result:", permission);
-  if (permission !== "granted") return;
+  try {
+    // Check if service workers are supported
+    if (!('serviceWorker' in navigator)) {
+      console.log('Service workers are not supported');
+      return;
+    }
 
-  const sw = await navigator.serviceWorker.ready;
+    // Check if push notifications are supported
+    if (!('PushManager' in window)) {
+      console.log('Push notifications are not supported');
+      return;
+    }
 
-  let subscription = await sw.pushManager.getSubscription();
-  if (subscription) {
-    await subscription.unsubscribe();
-    console.log("Unsubscribed from previous push subscription.");
+    const permission = await Notification.requestPermission();
+    console.log("Permission result:", permission);
+    if (permission !== "granted") {
+      console.log("Notification permission not granted");
+      return;
+    }
+
+    try {
+      const sw = await navigator.serviceWorker.ready;
+      console.log("Service worker ready:", sw);
+
+      let subscription = await sw.pushManager.getSubscription();
+      if (subscription) {
+        await subscription.unsubscribe();
+        console.log("Unsubscribed from previous push subscription.");
+      }
+
+      const applicationServerKey = urlBase64ToUint8Array(NEXT_VAPID_PUBLIC_KEY);
+
+      subscription = await sw.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey,
+      });
+
+      console.log("New push subscription:", subscription);
+
+      // Get the user ID from the auth session
+      const { data: { session } } = await supabase.auth.getSession();
+      const user_id = session?.user?.id;
+
+      if (!user_id) {
+        console.log("No user ID found — user must be logged in.");
+        return;
+      }
+
+      // Send the subscription and user_id to your backend
+      const response = await fetch("/api/save-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id, subscription }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log("Push notification subscription successful");
+    } catch (error) {
+      console.error("Error in service worker or push subscription:", error);
+    }
+  } catch (error) {
+    console.error("Error in push notification setup:", error);
   }
-
-  const applicationServerKey = urlBase64ToUint8Array(NEXT_VAPID_PUBLIC_KEY);
-
-  subscription = await sw.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey,
-  });
-
-  console.log("New push subscription:", subscription);
-
-  // 🔸 Get the user ID from the auth session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user_id = session?.user?.id;
-
-  if (!user_id) {
-    console.error("No user ID found — user must be logged in.");
-    return;
-  }
-
-  // Send the subscription and user_id to your backend
-  await fetch("/api/save-subscription", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id, subscription }),
-  });
 };

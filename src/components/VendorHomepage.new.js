@@ -28,6 +28,7 @@ import DJIcon from '../assets/images/Icons/music.svg';
 import FloristIcon from '../assets/images/Icons/flower.svg';
 import CateringIcon from '../assets/images/Icons/utensils.svg';
 import BeautyIcon from '../assets/images/Icons/makeup.svg';
+import PlanningIcon from '../assets/images/Icons/calendar.svg';
 
 const categories = [
     { id: 'photography', name: 'Photography', icon: PhotographyIcon },
@@ -35,7 +36,8 @@ const categories = [
     { id: 'dj', name: 'DJ', icon: DJIcon },
     { id: 'florist', name: 'Florist', icon: FloristIcon },
     { id: 'catering', name: 'Catering', icon: CateringIcon },
-    { id: 'beauty', name: 'Beauty', icon: BeautyIcon }
+    { id: 'beauty', name: 'Beauty', icon: BeautyIcon },
+    { id: 'planning', name: 'Wedding Planning', icon: PlanningIcon }
 ];
 
 function VendorHomepage() {
@@ -173,4 +175,4 @@ function VendorHomepage() {
     );
 }
 
-export default VendorHomepage; 
+export default VendorHomepage;

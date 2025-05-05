@@ -8,7 +8,8 @@ const categories = [
     { id: 'florist', name: 'Florist' },
     { id: 'catering', name: 'Caterer' },
     { id: 'dj', name: 'DJ' },
-    { id: 'beauty', name: 'Hair and Makeup Artist' }
+    { id: 'beauty', name: 'Hair and Makeup Artist' },
+    { id: 'wedding planner/coordinator', name: 'Wedding Planner' }
 ];
 
 // Define types for each category
@@ -47,6 +48,12 @@ const categoryTypes = {
         { id: 'wedding', name: 'Wedding' },
         { id: 'event', name: 'Event' },
         { id: 'photoshoot', name: 'Photoshoot' }
+    ],
+    'wedding-planner-coordinator': [
+        { id: 'full-service', name: 'Full Service' },
+        { id: 'partial-planning', name: 'Partial Planning' },
+        { id: 'day-of', name: 'Day of Coordination' },
+        { id: 'month-of', name: 'Month of Coordination' }
     ]
 };
 
@@ -178,10 +185,11 @@ const VendorSearch = ({ onLocationPage }) => {
         if (selectedType && selectedCategory) {
             // If both type and category are selected, type comes first
             segments.push(selectedType);
-            segments.push(selectedCategory);
+            // Replace spaces and slashes with hyphens for the category
+            segments.push(selectedCategory.replace(/[\s\/]/g, '-'));
         } else if (selectedCategory) {
             // If only category is selected
-            segments.push(selectedCategory);
+            segments.push(selectedCategory.replace(/[\s\/]/g, '-'));
         }
 
         // Add location (city takes precedence over county)

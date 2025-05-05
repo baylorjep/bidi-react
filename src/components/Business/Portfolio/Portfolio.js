@@ -395,19 +395,21 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       image: profileImage,
     };
 
-    if (business.business_category === "photography") {
-      navigate("/request/photography", { state: vendorData });
-    } else if (business.business_category === "dj") {
-      navigate("/request/dj", { state: vendorData });
-    } else if (business.business_category === "florist") {
-      navigate("/request/florist", { state: vendorData });
-    } else if (business.business_category === "catering") {
-      navigate("/request/catering", { state: vendorData });
-    } else if (business.business_category === "videography") {
-      navigate("/request/videography", { state: vendorData });
-    } else if (business.business_category === "beauty") {
-      navigate("/request/beauty", { state: vendorData });
-    }
+    // Format the category to match the expected format in RequestCategories.js
+    const formattedCategory = business.business_category === 'wedding planner/coordinator' 
+        ? 'WeddingPlanning'
+        : business.business_category === 'beauty'
+            ? 'HairAndMakeup'
+            : business.business_category.charAt(0).toUpperCase() + 
+              business.business_category.slice(1).toLowerCase();
+
+    // Navigate to the master request flow with the vendor data and selected category
+    navigate("/master-request-flow", { 
+        state: { 
+            vendor: vendorData,
+            selectedCategories: [formattedCategory]
+        }
+    });
   };
 
   const handleImageClick = (media) => {

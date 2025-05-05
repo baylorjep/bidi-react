@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import { v4 as uuidv4 } from 'uuid';
 import { saveFormData, loadFormData, clearFormData } from '../../utils/localStorage';
 
 function MasterRequestForm({ formData, setFormData, onNext }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const vendorData = location.state?.vendor || null;
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,10 +26,16 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
     if (savedData) {
       setFormData(prev => ({
         ...prev,
-        ...savedData
+        ...savedData,
+        vendor: vendorData
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        vendor: vendorData
       }));
     }
-  }, [setFormData]);
+  }, [setFormData, vendorData]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => {
@@ -61,6 +70,7 @@ function MasterRequestForm({ formData, setFormData, onNext }) {
         // Create base request data with common fields
         const baseRequestData = {
           user_id: user.id,
+          vendor_id: formData.vendor?.id || null,
           status: 'pending',
           event_type: formData.commonDetails.eventType,
           event_title: `${formData.commonDetails.eventTitle || formData.commonDetails.eventType} - ${category

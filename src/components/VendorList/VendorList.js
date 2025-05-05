@@ -216,6 +216,16 @@ const VendorList = ({
             const { data: allVendorData, error: vendorError } = await query;
             if (vendorError) throw vendorError;
 
+            // Add debug logging
+            console.log('Fetched vendors:', allVendorData.map(v => ({
+                id: v.id,
+                name: v.business_name,
+                category: v.business_category,
+                specializations: v.specializations,
+                location: v.business_address,
+                type: categoryType
+            })));
+
             // Calculate average ratings
             const vendorsWithRatings = allVendorData.map(vendor => {
                 const ratings = vendor.reviews?.map(review => review.rating) || [];
@@ -257,8 +267,8 @@ const VendorList = ({
             const sortedVendors = sortVendors(vendorsWithBasicInfo);
             
             // Get the current page vendors - using 5 vendors per page
-            const startIndex = (currentPage - 1) * 5; // Changed to hardcoded 5
-            const endIndex = startIndex + 5; // Changed to hardcoded 5
+            const startIndex = (currentPage - 1) * 5;
+            const endIndex = startIndex + 5;
             const currentPageVendors = sortedVendors.slice(startIndex, endIndex);
 
             // Process vendors with their photos
@@ -283,7 +293,7 @@ const VendorList = ({
                         if (!isVideo(photo)) {
                             await preloadImage(photo);
                         }
-                    })).catch(console.error); // Handle preload errors silently
+                    })).catch(console.error);
 
                     const hasMorePhotos = vendorPhotos.filter(photo => 
                         photo.photo_type === 'portfolio' || photo.photo_type === 'video'
@@ -299,7 +309,7 @@ const VendorList = ({
             );
 
             setVendors(vendorsWithPhotos);
-            setLoading(false); // Set loading to false after vendors are set
+            setLoading(false);
 
         } catch (error) {
             console.error('Error fetching vendors:', error);
@@ -313,26 +323,59 @@ const VendorList = ({
             name: v.business_name,
             photos: v.photo_count,
             videos: v.video_count,
-            verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true
+            verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true,
+            specializations: v.specializations,
+            location: v.business_address
         })));
 
         const sorted = [...vendors].sort((a, b) => {
-            const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
-            const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
+            // First priority: Has photos AND is verified
             const aHasPhotos = a.photo_count > 0;
             const bHasPhotos = b.photo_count > 0;
+            const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
+            const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
 
-            // First priority: Has photos
+            const aHasPhotosAndVerified = aHasPhotos && aIsVerified;
+            const bHasPhotosAndVerified = bHasPhotos && bIsVerified;
+
+            if (aHasPhotosAndVerified !== bHasPhotosAndVerified) {
+                return aHasPhotosAndVerified ? -1 : 1;
+            }
+
+            // Second priority: Has photos
             if (aHasPhotos !== bHasPhotos) {
                 return aHasPhotos ? -1 : 1;
             }
 
-            // Second priority: Verification status (within photo groups)
+            // Third priority: Is verified
             if (aIsVerified !== bIsVerified) {
                 return aIsVerified ? -1 : 1;
             }
 
-            // Third priority: Total media count
+            // Fourth priority: Has the selected specialization
+            if (categoryType && categoryType !== 'all') {
+                const aHasSpecialization = a.specializations?.includes(categoryType);
+                const bHasSpecialization = b.specializations?.includes(categoryType);
+                if (aHasSpecialization !== bHasSpecialization) {
+                    return aHasSpecialization ? -1 : 1;
+                }
+            }
+
+            // Fifth priority: Location match
+            if (preferredLocation) {
+                const aLocation = a.business_address?.toLowerCase() || '';
+                const bLocation = b.business_address?.toLowerCase() || '';
+                const searchLocation = preferredLocation.replace(/-/g, ' ').toLowerCase();
+                
+                const aMatchesLocation = aLocation.includes(searchLocation);
+                const bMatchesLocation = bLocation.includes(searchLocation);
+                
+                if (aMatchesLocation !== bMatchesLocation) {
+                    return aMatchesLocation ? -1 : 1;
+                }
+            }
+
+            // Sixth priority: Total media count
             const aTotalMedia = a.photo_count;
             const bTotalMedia = b.photo_count;
             if (aTotalMedia !== bTotalMedia) {
@@ -357,7 +400,9 @@ const VendorList = ({
             name: v.business_name,
             photos: v.photo_count,
             videos: v.video_count,
-            verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true
+            verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true,
+            specializations: v.specializations,
+            location: v.business_address
         })));
 
         return sorted;
@@ -556,20 +601,21 @@ const VendorList = ({
             image: vendor.profile_photo_url
         };
 
-        if (vendor.business_category === 'photography') {
-            navigate('/request/photography', { state: vendorData });
-        } else if (vendor.business_category === 'dj') {
-            navigate('/request/dj', { state: vendorData });
-        } else if (vendor.business_category === 'florist') {
-            navigate('/request/florist', { state: vendorData });
-        } else if (vendor.business_category === 'catering') {
-            navigate('/request/catering', { state: vendorData });
-        } else if (vendor.business_category === 'videography') {
-            navigate('/request/videography', { state: vendorData });
-        }
-        else if (vendor.business_category === 'beauty') {
-            navigate('/request/beauty', { state: vendorData });
-        }
+        // Format the category to match the expected format in RequestCategories.js
+        const formattedCategory = vendor.business_category === 'wedding planner/coordinator' 
+            ? 'WeddingPlanning'
+            : vendor.business_category === 'beauty'
+                ? 'HairAndMakeup'
+                : vendor.business_category.charAt(0).toUpperCase() + 
+                  vendor.business_category.slice(1).toLowerCase();
+
+        // Navigate to the master request flow with the vendor data and selected category
+        navigate("/master-request-flow", { 
+            state: { 
+                vendor: vendorData,
+                selectedCategories: [formattedCategory]
+            }
+        });
     };
 
     const handleMoreInfo = (vendor) => {

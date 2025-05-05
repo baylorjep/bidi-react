@@ -24,11 +24,13 @@ function MasterRequestFlow() {
   const navigate = useNavigate();
 
   const selectedCategories = location.state?.selectedCategories || [];
+  const vendorData = location.state?.vendor || null; // Add this line to capture vendor data
   const [completedCategories, setCompletedCategories] = useState([]);
   const [showReview, setShowReview] = useState(false);
 
-  // Debug log for selected categories
+  // Debug log for selected categories and vendor data
   console.log("Selected Categories:", selectedCategories);
+  console.log("Vendor Data:", vendorData);
 
   const [formData, setFormData] = useState({
     commonDetails: {},
@@ -111,6 +113,9 @@ function MasterRequestFlow() {
   const isRequestType = (request, type) => {
     if (type === "DJ") {
       return request?.toLowerCase().includes("dj");
+    }
+    if (type === "WeddingPlanning") {
+      return request?.toLowerCase().includes("wedding") && request?.toLowerCase().includes("planning");
     }
     return request?.toLowerCase() === type.toLowerCase();
   };
@@ -541,9 +546,9 @@ function MasterRequestFlow() {
       // Format the request type for display
       const formatRequestType = (type) => {
         return type
-          .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-          .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
-          .replace(/\s+/g, ' ') // Remove extra spaces
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, str => str.toUpperCase())
+          .replace(/\s+/g, ' ')
           .trim();
       };
 
@@ -556,7 +561,8 @@ function MasterRequestFlow() {
       if (isRequestType(currentRequestType, "Photography")) {
         const request = formData.requests.Photography || {};
         const photographyRequestData = {
-          profile_id: user.id,  // Changed from profile_id to user_id for consistency
+          profile_id: user.id,
+          vendor_id: vendorData?.id || null, // Add vendor_id here
           event_title: requestTitle,
           status: 'open',
           event_type: formData.commonDetails.eventType,
@@ -718,6 +724,7 @@ function MasterRequestFlow() {
         
         const videographyRequestData = {
           user_id: user.id,
+          vendor_id: vendorData?.id || null, // Add vendor_id here
           event_title: requestTitle,
           status: 'open',
           event_type: formData.commonDetails.eventType,
@@ -863,6 +870,7 @@ function MasterRequestFlow() {
         const request = formData.requests.Florist || {};
         const floristRequestData = {
           user_id: user.id,
+          vendor_id: vendorData?.id || null, // Add vendor_id here
           event_title: requestTitle,
           status: 'pending',
           event_type: formData.commonDetails.eventType,
@@ -991,6 +999,7 @@ function MasterRequestFlow() {
         const request = formData.requests.HairAndMakeup || {};
         const hairAndMakeupRequestData = {
           user_id: user.id,
+          vendor_id: vendorData?.id || null, // Add vendor_id here
           event_title: requestTitle,
           status: 'pending',
           event_type: formData.commonDetails.eventType,
@@ -1072,6 +1081,7 @@ function MasterRequestFlow() {
 
         const djRequestData = {
           user_id: user.id,
+          vendor_id: vendorData?.id || null, // Add vendor_id here
           title: requestTitle,
           status: 'open',
           event_type: formData.commonDetails.eventType,
@@ -1121,6 +1131,7 @@ function MasterRequestFlow() {
         const request = formData.requests.Catering || {};
         const cateringRequestData = {
           user_id: user.id,
+          vendor_id: vendorData?.id || null, // Add vendor_id here
           title: requestTitle,
           status: 'pending',
           event_type: formData.commonDetails.eventType,
@@ -1165,6 +1176,7 @@ function MasterRequestFlow() {
         const request = formData.requests.WeddingPlanning || {};
         const weddingPlanningRequestData = {
           user_id: user.id,
+          vendor_id: vendorData?.id || null, // Add vendor_id here
           event_title: requestTitle,
           status: 'pending',
           event_type: formData.commonDetails.eventType,
@@ -2093,6 +2105,27 @@ function MasterRequestFlow() {
               {showReview ? "Review Your Request" : getSteps()[getCurrentStepIndex()]}
             </h2>
           </div>
+
+          {/* Display selected vendor information */}
+          {vendorData && (
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              marginTop: '20px' 
+            }}>
+              <img 
+                src={vendorData.image} 
+                alt={vendorData.vendor.business_name} 
+                className="vendor-profile-image" 
+                style={{ marginRight: '8px' }}
+              />
+              <h3 className="selected-vendor-info">
+                {vendorData.vendor.business_name} will be notified
+              </h3>
+            </div>
+          )}
 
           {showReview ? (
             renderReviewScreen()

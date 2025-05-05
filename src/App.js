@@ -29,6 +29,11 @@ import RequestCategories from "./components/Request/RequestCategories";
 import SuccessRequest from "./components/Request/SuccessRequest";
 import OpenRequests from "./components/Request/OpenRequests";
 import PhotographyRequest from "./components/Request/Photography/PhotographyRequest";
+import VideographyRequest from "./components/Request/Videography/VideographyRequest";
+import DjRequest from "./components/Request/DJ/DjRequest";
+import HairAndMakeUpRequest from "./components/Request/Beauty/HairAndMakeUpRequest";
+import FloristRequest from "./components/Request/Florist/FloristRequest";
+import CateringRequest from "./components/Request/Catering/CateringRequest";
 import MasterRequestFlow from "./components/Request/MasterRequestFlow"; // Import the MasterRequestFlow component
 
 // New staged request imports
@@ -102,11 +107,6 @@ import ArticleDetail from "./components/Article/ArticleDetail";
 import WeddingPhotographerCostGuide from "./components/Article/WeddingPhotographerCostGuide";
 import WeddingVideographerCostGuide from "./components/Article/WeddingVideographerCostGuide";
 import WeddingCateringCostGuide from "./components/Article/WeddingCateringCostGuide";
-import VideographyRequest from "./components/Request/Videography/VideographyRequest";
-import DjRequest from "./components/Request/DJ/DjRequest";
-import HairAndMakeUpRequest from "./components/Request/Beauty/HairAndMakeUpRequest";
-import FloristRequest from "./components/Request/Florist/FloristRequest"; // Add this import
-import CateringRequest from "./components/Request/Catering/CateringRequest"; // Add this import
 import WeddingFloristCostGuide from "./components/Article/WeddingFloristCostGuide";
 import WeddingDJCostGuide from "./components/Article/WeddingDJCostGuide";
 import WeddingHairMakeupCostGuide from "./components/Article/WeddingHairMakeupCostGuide";
@@ -364,7 +364,7 @@ function App() {
                 element={<HairAndMakeUpRequest />}
               />
               <Route path="/request/florist" element={<FloristRequest />} />
-              <Route path="/request/catering" element={<CateringRequest />} />
+              <Route path="/request/catering" element={<CateringRequest />} />  
               <Route path="/welcome" element={<NewsletterLanding />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route
@@ -374,7 +374,23 @@ function App() {
               <Route path="/vendors" element={<VendorListWithFilters />} />
               {/* LocationBasedVendors Routes - Order matters! Most specific to least specific */}
               <Route
-                path="/:type/:category/:city"
+                path="/:type/wedding planner/coordinator/:location"
+                element={<LocationBasedVendors />}
+              />
+              <Route
+                path="/:type/wedding planner/coordinator"
+                element={<LocationBasedVendors />}
+              />
+              <Route
+                path="/:type/wedding planner/:location"
+                element={<LocationBasedVendors />}
+              />
+              <Route
+                path="/:type/wedding planner"
+                element={<LocationBasedVendors />}
+              />
+              <Route
+                path="/:type/:category/:location"
                 element={<LocationBasedVendors />}
               />
               <Route
@@ -382,10 +398,13 @@ function App() {
                 element={<LocationBasedVendors />}
               />
               <Route
-                path="/:category/:city"
+                path="/:category/:location"
                 element={<LocationBasedVendors />}
               />
-              <Route path="/:category" element={<LocationBasedVendors />} />
+              <Route 
+                path="/:category" 
+                element={<LocationBasedVendors />} 
+              />
               <Route
                 path="/wedding-vibe-quiz"
                 element={<WeddingVibeQuizPage />}

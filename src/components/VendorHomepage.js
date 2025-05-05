@@ -151,7 +151,7 @@ function VendorHomepage() {
                     `)
                     .in('id', userIdsWithPhotos)
                     .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true')
-                    .in('business_category', ['photography', 'videography', 'dj', 'catering', 'florist', 'beauty'])
+                    .in('business_category', ['photography', 'videography', 'dj', 'catering', 'florist', 'beauty', 'wedding planner/coordinator'])
                     .limit(100); // Fetch more vendors
 
                 const { data: allVendorData, error: vendorError } = await query;
