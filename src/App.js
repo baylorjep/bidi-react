@@ -1,7 +1,7 @@
 // App Imports
 import "./App.css";
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./i18n";
@@ -284,7 +284,7 @@ function App() {
               />
               {/* Misc Routes */}
               <Route path="/contact-us" element={<ContactForm />} />
-              <Route path="/about-us" element={<AboutUs />} />
+              <Route path="/about-us" element={<Navigate to="/about" replace />} />
               {/* Messaging Routes */}
               <Route path="/messages" element={
                 <PrivateRoute>
