@@ -85,11 +85,9 @@ export default function StripeOnboarding() {
         <div className="mb-5 text-center">
           <h1 className="OnboardingPageHeader">Set Up Your Payment Account</h1>
           <p>
-            To start making bids, you’ll need to set up a payment account. Bidi
-            will never charge you to talk to users or bid on jobs — you only pay
-            when you win. <br />
-            You can skip this step for now and set it up later from your
-            dashboard.
+            To receive payments for the jobs you win, you’ll need to set up a payment account. Bidi will never charge you to talk to users or place bids — a small service fee is only deducted after you’ve been paid.
+            <br />
+            You can skip this step for now and set it up later from your dashboard.
           </p>
         </div>
 

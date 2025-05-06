@@ -89,11 +89,10 @@ export default function Onboarding({ setActiveSection }) {
           <h1 className="dashboard-title color: black">Stripe Onboarding</h1>
           {!connectedAccountId && (
             <p>
-              To start making bids, you’ll need to set up a payment account.{" "}
-              <br />
-              Bidi will never charge you to talk to users or bid on jobs — you
-              only pay when you win.
-            </p>
+            To receive payments for the jobs you win, you’ll need to set up a payment account. Bidi will never charge you to talk to users or place bids — a small service fee is only deducted after you’ve been paid.
+            <br />
+            You can skip this step for now and set it up later from your dashboard.
+          </p>
           )}
           {connectedAccountId && !stripeConnectInstance && (
             <h2>Add your information to start accepting payments</h2>

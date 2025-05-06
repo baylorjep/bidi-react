@@ -422,9 +422,9 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                         <Modal.Title>Stripe Account Setup Required</Modal.Title>
                     </Modal.Header>
                     <Modal.Body className="d-flex flex-column align-items-center justify-content-center">
-                        <p className="text-center">
-                            To start making bids, you'll need to set up a payment account. Bidi will never charge you to talk to users or bid on jobs — you only pay when you win.
-                        </p>
+                    <p className="text-center">
+                    To place bids and get paid for jobs you win, you’ll need to set up a payment account. Bidi won’t charge you to talk to users or bid — a small fee is only deducted after you’ve been paid.
+                    </p>
                         <Button className="btn-secondary" onClick={() => navigate("/onboarding")}>
                             Set Up Account
                         </Button>
