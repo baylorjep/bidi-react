@@ -45,6 +45,10 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [bidTemplateError, setBidTemplateError] = useState("");
   const [showDefaultExpirationModal, setShowDefaultExpirationModal] = useState(false);
   const [defaultExpirationDays, setDefaultExpirationDays] = useState("");
+  const [showSupportBanner, setShowSupportBanner] = useState(() => {
+    const saved = localStorage.getItem('hideSupportBanner');
+    return saved !== 'true';
+  });
 
   // Add these modules for the editor
   const modules = {
@@ -528,12 +532,53 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
     }
   };
 
+  const handleDismissBanner = () => {
+    setShowSupportBanner(false);
+    localStorage.setItem('hideSupportBanner', 'true');
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
 
   return (
     <div className="business-settings-container">
+      {/* Vendor Support Group Banner */}
+      {showSupportBanner && (
+        <div className="vendor-support-banner container mt-4 mb-4">
+          <div className="card">
+            <div className="card-body">
+              <div className="d-flex align-items-center">
+                <i className="fab fa-instagram fa-2x me-3" style={{ color: '#E1306C' }}></i>
+                <div className="flex-grow-1">
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h4 className="mb-2">Join Our Vendor Support Group!</h4>
+                      <p className="mb-2">Connect with other vendors, boost each other's posts, and grow your business together. It's completely free!</p>
+                      <a 
+                        href="https://ig.me/j/Abb0JL3q_V3kfBS9/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="btn btn-primary"
+                        style={{ backgroundColor: '#E1306C', borderColor: '#E1306C' }}
+                      >
+                        Join Now
+                      </a>
+                    </div>
+                    <button 
+                      onClick={handleDismissBanner}
+                      className="btn-close"
+                      aria-label="Close"
+                      style={{ marginLeft: '1rem' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Setup Progress Box */}
       {setupProgress && (!setupProgress.paymentAccount ||
         !setupProgress.downPayment ||
