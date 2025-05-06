@@ -31,9 +31,7 @@ const BusinessDashSidebar = () => {
   const [businessName, setBusinessName] = useState("");
   const [BidiPlus, setBidiPlus] = useState(false);
   const [requests, setRequests] = useState([]); // Stores service requests
-  const [activeSection, setActiveSection] = useState(
-    localStorage.getItem("activeSection") || "dashboard"
-  );
+  const [activeSection, setActiveSection] = useState("dashboard");
   const [profileImage, setProfileImage] = useState("/images/default.jpg");
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -341,30 +339,8 @@ const BusinessDashSidebar = () => {
         </aside>
         {/* Main Dashboard */}
         <main className="dashboard-main">
-          {/* {activeSection === "dashboard" && !isMobile && <DashboardBanner />} */}
-          {/* find active sections */}
-          {activeSection === "dashboard" ? (
-            // <section className="job-listings">
-            //   {/* Section Header */}
-            //   <div className="job-listings-header">
-            //     <span className="job-title">Jobs for you</span>
-            //     <span className="job-subtext">
-            //       See the requests that you haven't bid on!
-            //     </span>
-            //     <br />
-            //   </div>
-
-            //   {/* Job Cards Grid */}
-            //   <div className="all-job-cards">
-            //     {requests.length > 0 ? (
-            //       <OpenRequests requests={requests} />
-            //     ) : (
-            //       <p className="no-jobs">No available jobs at this time.</p>
-            //     )}
-            //   </div>
-            // </section>
-            <OpenRequests requests={requests} />
-          ) : activeSection === "messages" ? (
+          {activeSection === "dashboard" && <OpenRequests />}
+          {activeSection === "messages" ? (
             isMobile ? (
               selectedChat ? (
                 <MessagingView
@@ -393,74 +369,69 @@ const BusinessDashSidebar = () => {
           ) : activeSection === "onboarding" ? (
             <Onboarding setActiveSection={setActiveSection} />
           ) : activeSection === "portfolio" ? (
-            <PortfolioPage profileId={profile} /> // Pass profileId as a prop
+            <PortfolioPage profileId={profile} />
           ) : activeSection === "settings" ? (
             <BusinessSettings
               setActiveSection={setActiveSection}
               connectedAccountId={connectedAccountId}
             />
-          ) : (
-            // ) : activeSection === "admin" ? (
-            //   <AdminDashboard
-            //     connectedAccountId={connectedAccountId}
-            //     setUnviewedBidCount={setUnviewedBidCount}
-            //   />
-            <div>An error occurred</div>
-          )}
+          ) : null}
         </main>
 
         {/* Bottom Navigation Bar */}
-        <nav className="bottom-nav">
-          <button 
-            onClick={() => setActiveSection("dashboard")}
-            className={activeSection === "dashboard" ? "active" : ""}
-          >
-            <div className="nav-item">
-              <img src={dashboardIcon} alt="Dashboard" />
-              <span className="nav-label">Requests</span>
-            </div>
-          </button>
-          <button 
-            onClick={() => setActiveSection("bids")}
-            className={activeSection === "bids" ? "active" : ""}
-          >
-            <div className="nav-item">
-              <img src={bidsIcon} alt="Bids" />
-              <span className="nav-label">Bids</span>
-            </div>
-          </button>
-          <button 
-            onClick={handleMessagesClick}
-            className={activeSection === "messages" ? "active" : ""}
-          >
-            <div className="nav-item">
-              <img src={messageIcon} alt="Message" />
-              <span className="nav-label">Messages</span>
-            </div>
-          </button>
-          <button 
-            onClick={() => handleViewPortfolio()}
-            className={activeSection === "portfolio" ? "active" : ""}
-          >
-            <div className="nav-item profile-nav-item">
-              <img src={profileIcon} alt="Portfolio" className="profile-icon" />
-              <span className="nav-label">Portfolio</span>
-            </div>
-          </button>
-          <button 
-            onClick={() => setActiveSection("settings")}
-            className={activeSection === "settings" ? "active" : ""}
-          >
-            <div className="nav-item">
-              <img
-                src={settingsIcon}
-                alt="Settings"
-                className="settings-icon"
-              />
-              <span className="nav-label">Settings</span>
-            </div>
-          </button>
-        </nav>
+        {isMobile && (
+          <nav className="bottom-nav">
+            <button 
+              onClick={() => setActiveSection("dashboard")}
+              className={activeSection === "dashboard" ? "active" : ""}
+            >
+              <div className="nav-item">
+                <img src={dashboardIcon} alt="Dashboard" />
+                <span className="nav-label">Requests</span>
+              </div>
+            </button>
+            <button 
+              onClick={() => setActiveSection("bids")}
+              className={activeSection === "bids" ? "active" : ""}
+            >
+              <div className="nav-item">
+                <img src={bidsIcon} alt="Bids" />
+                <span className="nav-label">Bids</span>
+              </div>
+            </button>
+            <button 
+              onClick={handleMessagesClick}
+              className={activeSection === "messages" ? "active" : ""}
+            >
+              <div className="nav-item">
+                <img src={messageIcon} alt="Message" />
+                <span className="nav-label">Messages</span>
+              </div>
+            </button>
+            <button 
+              onClick={() => handleViewPortfolio()}
+              className={activeSection === "portfolio" ? "active" : ""}
+            >
+              <div className="nav-item profile-nav-item">
+                <img src={profileIcon} alt="Portfolio" className="profile-icon" />
+                <span className="nav-label">Portfolio</span>
+              </div>
+            </button>
+            <button 
+              onClick={() => setActiveSection("settings")}
+              className={activeSection === "settings" ? "active" : ""}
+            >
+              <div className="nav-item">
+                <img
+                  src={settingsIcon}
+                  alt="Settings"
+                  className="settings-icon"
+                />
+                <span className="nav-label">Settings</span>
+              </div>
+            </button>
+          </nav>
+        )}
       </div>
     </div>
   );
