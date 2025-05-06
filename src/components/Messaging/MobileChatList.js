@@ -84,7 +84,28 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
     fetchChats();
   }, [currentUserId, userType]);
 
-  const handleChatSelect = (chat) => {
+  const handleChatSelect = async (chat) => {
+    // Mark messages as seen when chat is opened
+    const { error: updateError } = await supabase
+      .from('messages')
+      .update({ seen: true })
+      .eq('sender_id', currentUserId)
+      .eq('receiver_id', chat.id)
+      .eq('seen', false);
+
+    if (updateError) {
+      console.error('Error marking messages as seen:', updateError);
+    }
+
+    // Update the chats list to reflect seen status
+    setChats(prevChats => 
+      prevChats.map(c => 
+        c.id === chat.id 
+          ? { ...c, unseen_count: 0 }
+          : c
+      )
+    );
+
     if (onChatSelect) {
       onChatSelect(chat);
     } else {

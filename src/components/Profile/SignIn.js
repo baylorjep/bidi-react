@@ -23,50 +23,69 @@ const SignIn = ({ onSuccess }) => {
         const requestSource = localStorage.getItem('requestSource');
         const requestFormData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
 
-        const { data: { user }, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
+        try {
+            const { data: { user }, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
-        if (error) {
-            setErrorMessage(`Sign in error: ${error.message}`);
-            console.log(`Sign in error: ${error.message}`);
-            return;
-        }
-
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role, has_seen_source_modal')
-            .eq('id', user.id)
-            .single();
-
-        if (profileError) {
-            console.error('Fetch profile error:', profileError.message);
-            return;
-        }
-
-        setCurrentProfile(profile);
-
-        if (!profile.has_seen_source_modal) {
-            setCurrentUserId(user.id);
-            setShowSourceModal(true);
-            return;
-        }
-
-        if (profile.role === 'individual') {
-            if (onSuccess) {
-                onSuccess();
-            } else {
-                navigate('/my-dashboard', {
-                    state: { 
-                        source: requestSource || requestFormData.source || 'general',
-                        from: 'signin',
-                        activeSection: 'bids'
-                    }
-                });
+            if (error) {
+                setErrorMessage(`Sign in error: ${error.message}`);
+                console.log(`Sign in error: ${error.message}`);
+                return;
             }
-        } else if (profile.role === 'business') {
-            navigate('/dashboard');
+
+            if (!user) {
+                setErrorMessage('No user data received');
+                return;
+            }
+
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('role, has_seen_source_modal')
+                .eq('id', user.id)
+                .single();
+
+            if (profileError) {
+                console.error('Fetch profile error:', profileError.message);
+                setErrorMessage('Error loading profile data');
+                return;
+            }
+
+            if (!profile) {
+                setErrorMessage('Profile data not found');
+                return;
+            }
+
+            setCurrentProfile(profile);
+
+            if (!profile.has_seen_source_modal) {
+                setCurrentUserId(user.id);
+                setShowSourceModal(true);
+                return;
+            }
+
+            // Ensure we have the profile data before navigating
+            if (profile.role === 'individual') {
+                if (onSuccess) {
+                    onSuccess();
+                } else {
+                    navigate('/my-dashboard', {
+                        state: { 
+                            source: requestSource || requestFormData.source || 'general',
+                            from: 'signin',
+                            activeSection: 'bids'
+                        }
+                    });
+                }
+            } else if (profile.role === 'business') {
+                navigate('/dashboard');
+            } else {
+                setErrorMessage('Invalid user role');
+            }
+        } catch (err) {
+            console.error('Sign in error:', err);
+            setErrorMessage('An unexpected error occurred during sign in');
         }
     };
 
