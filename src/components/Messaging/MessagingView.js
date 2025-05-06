@@ -146,10 +146,25 @@ export default function MessagingView({
           receiverId: r.receiver_id,
           message: r.message,
           createdAt: r.created_at,
+          seen: r.seen || false
         }));
 
         all.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
         setMessages(all);
+
+        // Mark incoming messages as seen
+        const unreadMessages = incomingMessages.filter(msg => !msg.seen);
+        if (unreadMessages.length > 0) {
+          const messageIds = unreadMessages.map(msg => msg.id);
+          const { error: updateError } = await supabase
+            .from('messages')
+            .update({ seen: true })
+            .in('id', messageIds);
+
+          if (updateError) {
+            console.error('Error marking messages as seen:', updateError);
+          }
+        }
       } catch (error) {
         console.error("Error in fetchMessages:", error);
       }
@@ -283,7 +298,7 @@ export default function MessagingView({
             key={m.id}
             className={`message-bubble ${
               m.senderId === currentUserId ? "sent" : "received"
-            }`}
+            } ${!m.seen && m.senderId === currentUserId ? "unseen" : ""}`}
           >
             {m.message}
             <div className="message-time">
@@ -296,18 +311,21 @@ export default function MessagingView({
                   hour12: true
                 });
               })()}
+              {!m.seen && m.senderId === currentUserId && (
+                <span className="unseen-indicator">•</span>
+              )}
             </div>
           </div>
         ))}
         {isTyping && (
           <div
-          className="message-bubble received typing-indicator"
-          style={{ marginLeft: 0 }}
-        >
-          <span className="dot"></span>
-          <span className="dot"></span>
-          <span className="dot"></span>
-        </div>
+            className="message-bubble received typing-indicator"
+            style={{ marginLeft: 0 }}
+          >
+            <span className="dot"></span>
+            <span className="dot"></span>
+            <span className="dot"></span>
+          </div>
         )}
         <div ref={chatEndRef} />
       </div>

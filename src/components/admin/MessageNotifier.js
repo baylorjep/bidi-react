@@ -13,73 +13,101 @@ function MessageNotifier() {
     const fetchMessages = async () => {
         try {
             setLoading(true);
-            // Get all messages that haven't been notified about
+            console.log('Fetching messages...');
+            
+            // Get all messages that haven't been notified about AND haven't been seen
             const { data: messagesData, error: messagesError } = await supabase
                 .from('messages')
                 .select('*')
-                .eq('notified', false)
+                .or('notified.is.null,notified.eq.false')
+                .or('seen.is.null,seen.eq.false')
                 .order('created_at', { ascending: false });
 
-            if (messagesError) throw messagesError;
+            if (messagesError) {
+                console.error('Error fetching messages:', messagesError);
+                throw messagesError;
+            }
 
-            console.log('Raw messages data:', messagesData);
+            console.log('Fetched unnotified and unseen messages:', messagesData);
 
-            // Get unique receiver IDs
-            const receiverIds = [...new Set(messagesData.map(msg => msg.receiver_id))];
-            console.log('Receiver IDs:', receiverIds);
+            if (!messagesData || messagesData.length === 0) {
+                console.log('No unnotified and unseen messages found');
+                setMessages([]);
+                setLoading(false);
+                return;
+            }
 
-            // Get receiver profiles
+            // Get unique user IDs (both sender and receiver)
+            const userIds = [...new Set([
+                ...messagesData.map(msg => msg.sender_id),
+                ...messagesData.map(msg => msg.receiver_id)
+            ])];
+
+            console.log('User IDs to fetch:', userIds);
+
+            // Get all relevant profiles
             const { data: profiles, error: profilesError } = await supabase
                 .from('profiles')
                 .select('id, email, role')
-                .in('id', receiverIds);
+                .in('id', userIds);
 
-            if (profilesError) throw profilesError;
-            console.log('Profiles data:', profiles);
+            if (profilesError) {
+                console.error('Error fetching profiles:', profilesError);
+                throw profilesError;
+            }
+
+            console.log('Fetched profiles:', profiles);
 
             // Create a map of user IDs to their roles
             const userRoles = profiles.reduce((acc, profile) => {
                 acc[profile.id] = profile.role;
                 return acc;
             }, {});
-            console.log('User roles:', userRoles);
 
             // Fetch individual profiles
             const { data: individualProfiles, error: individualError } = await supabase
                 .from('individual_profiles')
                 .select('id, first_name, last_name, phone')
-                .in('id', receiverIds);
+                .in('id', userIds);
 
-            if (individualError) throw individualError;
-            console.log('Individual profiles:', individualProfiles);
+            if (individualError) {
+                console.error('Error fetching individual profiles:', individualError);
+                throw individualError;
+            }
+
+            console.log('Fetched individual profiles:', individualProfiles);
 
             // Fetch business profiles
             const { data: businessProfiles, error: businessError } = await supabase
                 .from('business_profiles')
                 .select('id, business_name, phone')
-                .in('id', receiverIds);
+                .in('id', userIds);
 
-            if (businessError) throw businessError;
-            console.log('Business profiles:', businessProfiles);
+            if (businessError) {
+                console.error('Error fetching business profiles:', businessError);
+                throw businessError;
+            }
+
+            console.log('Fetched business profiles:', businessProfiles);
 
             // Combine all the information
-            const contacts = profiles.reduce((acc, profile) => {
-                const role = userRoles[profile.id];
+            const contacts = userIds.reduce((acc, userId) => {
+                const role = userRoles[userId];
                 let displayName = '';
                 let phone = '';
 
                 if (role === 'individual') {
-                    const individualProfile = individualProfiles.find(p => p.id === profile.id);
+                    const individualProfile = individualProfiles.find(p => p.id === userId);
                     displayName = individualProfile ? `${individualProfile.first_name} ${individualProfile.last_name}` : 'N/A';
                     phone = individualProfile?.phone || 'Not provided';
                 } else if (role === 'business') {
-                    const businessProfile = businessProfiles.find(p => p.id === profile.id);
+                    const businessProfile = businessProfiles.find(p => p.id === userId);
                     displayName = businessProfile ? businessProfile.business_name : 'N/A';
                     phone = businessProfile?.phone || 'Not provided';
                 }
 
-                acc[profile.id] = {
-                    email: profile.email,
+                acc[userId] = {
+                    email: profiles.find(p => p.id === userId)?.email || 'N/A',
                     displayName: displayName,
                     role: role,
                     phone: phone
@@ -91,8 +119,8 @@ function MessageNotifier() {
             setUserContacts(contacts);
             setMessages(messagesData);
         } catch (error) {
-            console.error('Error:', error);
-            setError('Failed to fetch messages');
+            console.error('Error in fetchMessages:', error);
+            setError('Failed to fetch messages: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -106,22 +134,15 @@ function MessageNotifier() {
         const contact = userContacts[receiverId];
         if (!contact) return;
 
-        // Format phone number - remove any non-numeric characters
         const formattedPhone = contact.phone.replace(/\D/g, '');
         
-        // If there's no phone number, show an alert
         if (!formattedPhone || formattedPhone === 'Not provided' || formattedPhone === 'Unknown') {
             alert('No phone number available for this user');
             return;
         }
         
-        // Generate message template
         const message = `You have a new message on Bidi! Click here to view: https://www.savewithbidi.com/messages`;
-        
-        // Create the sms link
         const smsLink = `sms:${formattedPhone}?body=${encodeURIComponent(message)}`;
-        
-        // Open the link
         window.open(smsLink, '_blank');
     };
 
@@ -134,7 +155,6 @@ function MessageNotifier() {
 
             if (error) throw error;
 
-            // Update local state
             setMessages(prevMessages => 
                 prevMessages.filter(msg => msg.id !== messageId)
             );
@@ -143,7 +163,7 @@ function MessageNotifier() {
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (error) {
             console.error('Error marking message as notified:', error);
-            setError('Failed to mark message as notified');
+            setError('Failed to mark message as notified: ' + error.message);
             setTimeout(() => setError(''), 3000);
         }
     };
@@ -177,33 +197,61 @@ function MessageNotifier() {
             ) : (
                 <div className="messages-list">
                     {messages.map(message => {
-                        const contact = userContacts[message.receiver_id];
-                        console.log('Rendering message:', message);
-                        console.log('Contact for message:', contact);
+                        const sender = userContacts[message.sender_id];
+                        const receiver = userContacts[message.receiver_id];
+                        
                         return (
                             <div key={message.id} className="message-card">
                                 <div className="message-header">
-                                    <h5 className="recipient-name">
-                                        {contact ? contact.displayName : 'Unknown User'}
-                                        <small className="user-type">({contact?.role || 'unknown'})</small>
-                                    </h5>
-                                    <span className="message-time">
-                                        {new Date(message.created_at).toLocaleString()}
-                                    </span>
+                                    <div className="message-participants">
+                                        <div className="sender-info">
+                                            <h5 className="participant-name">
+                                                From: {sender ? sender.displayName : 'Unknown User'}
+                                                <small className="user-type">({sender?.role || 'unknown'})</small>
+                                            </h5>
+                                        </div>
+                                        <div className="receiver-info">
+                                            <h5 className="participant-name">
+                                                To: {receiver ? receiver.displayName : 'Unknown User'}
+                                                <small className="user-type">({receiver?.role || 'unknown'})</small>
+                                            </h5>
+                                        </div>
+                                    </div>
+                                    <div className="message-status">
+                                        <span className="message-time">
+                                            {new Date(message.created_at).toLocaleString()}
+                                        </span>
+                                        {!message.seen && (
+                                            <Badge bg="warning" className="status-badge">
+                                                Unseen
+                                            </Badge>
+                                        )}
+                                        {!message.notified && (
+                                            <Badge bg="danger" className="status-badge">
+                                                Unnotified
+                                            </Badge>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="message-body">
                                     <div className="message-content">
                                         <p className="message-text">{message.message}</p>
                                     </div>
                                     <div className="contact-info">
-                                        <p><strong>Email:</strong> {contact?.email || 'N/A'}</p>
-                                        <p><strong>Phone:</strong> {contact?.phone || 'Not provided'}</p>
+                                        <div className="sender-details">
+                                            <p><strong>Sender Email:</strong> {sender?.email || 'N/A'}</p>
+                                            <p><strong>Sender Phone:</strong> {sender?.phone || 'Not provided'}</p>
+                                        </div>
+                                        <div className="receiver-details">
+                                            <p><strong>Receiver Email:</strong> {receiver?.email || 'N/A'}</p>
+                                            <p><strong>Receiver Phone:</strong> {receiver?.phone || 'Not provided'}</p>
+                                        </div>
                                     </div>
                                     <div className="action-buttons">
                                         <button
                                             className="sms-button"
                                             onClick={() => handleSendSMS(message.receiver_id)}
-                                            disabled={!contact?.phone || contact.phone === 'Not provided'}
+                                            disabled={!receiver?.phone || receiver.phone === 'Not provided'}
                                         >
                                             <i className="fas fa-sms"></i> Send Text
                                         </button>

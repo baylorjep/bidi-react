@@ -84,14 +84,14 @@ export default function ChatInterface({ initialChat }) {
     })();
   }, []);
 
-  // 2) Fetch chat history
+  // 2) Fetch chat history with unseen message tracking
   useEffect(() => {
     if (!currentUserId || !userType) return;
 
     (async () => {
       const { data: messages = [], error: messagesError } = await supabase
         .from("messages")
-        .select("receiver_id, sender_id, message, created_at")
+        .select("receiver_id, sender_id, message, created_at, seen")
         .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
         .order("created_at", { ascending: false });
 
@@ -101,11 +101,22 @@ export default function ChatInterface({ initialChat }) {
       }
 
       const latestMap = {};
+      const unseenCountMap = {};
+
       messages.forEach((msg) => {
         const otherId = msg.sender_id === currentUserId
           ? msg.receiver_id
           : msg.sender_id;
-        if (!latestMap[otherId]) latestMap[otherId] = msg;
+
+        // Track latest message
+        if (!latestMap[otherId]) {
+          latestMap[otherId] = msg;
+        }
+
+        // Count unseen messages - messages received by current user that haven't been seen
+        if (msg.receiver_id === currentUserId && !msg.seen) {
+          unseenCountMap[otherId] = (unseenCountMap[otherId] || 0) + 1;
+        }
       });
 
       const otherIds = Object.keys(latestMap);
@@ -132,6 +143,8 @@ export default function ChatInterface({ initialChat }) {
             ? p.business_name || "Business"
             : `${p.first_name || ""} ${p.last_name || ""}`.trim() || "User",
         last_message: latestMap[p.id]?.message || "",
+        unseen_count: unseenCountMap[p.id] || 0,
+        last_message_time: latestMap[p.id]?.created_at
       }));
 
       setChats(formatted);
@@ -162,15 +175,30 @@ export default function ChatInterface({ initialChat }) {
               className={activeBusiness === c.business_id ? "active" : ""}
               onClick={() => handleChatSelect(c)}
             >
-              <div>{c.business_name}</div>
-              <div className="message-time" style={{ color: "black" }}>{c.last_message}</div>
+              <div className="chat-list-item-content">
+                <div className="chat-list-header">
+                  <span className="chat-name">{c.business_name}</span>
+                  {c.unseen_count > 0 && (
+                    <span className="unseen-badge">{c.unseen_count}</span>
+                  )}
+                </div>
+                <div className="chat-list-footer">
+                  <div className="message-preview">{c.last_message}</div>
+                  <div className="message-time">
+                    {new Date(c.last_message_time).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
+                  </div>
+                </div>
+              </div>
             </li>
           ))}
         </ul>
       </aside>
 
       <main className="chat-main">
-
         {activeBusiness ? (
           <MessagingView
             currentUserId={currentUserId}

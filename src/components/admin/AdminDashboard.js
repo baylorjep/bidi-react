@@ -206,7 +206,6 @@ function AdminDashboard() {
                     )}
                 </div>
             </div>
-            <MessageNotifier />
         </div>
     );
 }
