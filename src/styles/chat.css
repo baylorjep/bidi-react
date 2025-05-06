@@ -163,6 +163,10 @@
   font-size: 0.75rem;
   margin-top: 4px;
   text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
 .message-bubble.sent .message-time {
@@ -171,6 +175,16 @@
 
 .message-bubble.received .message-time {
   color: var(--bidi-text-muted); /* Darker color for received messages */
+}
+
+.seen-indicator {
+  margin-left: 4px;
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message-bubble.received .seen-indicator {
+  color: var(--bidi-text-muted);
 }
 
 /* Chat Footer */

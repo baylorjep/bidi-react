@@ -226,13 +226,14 @@ export default function MessagingView({
   }, [messages, isTyping]);
 
   // 3) Send a new message
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!newMessage.trim()) return;
 
     const payload = {
       senderId: currentUserId,
       receiverId: businessId,
       message: newMessage.trim(),
+      seen: false
     };
 
     socket.emit("send_message", payload);
@@ -293,35 +294,28 @@ export default function MessagingView({
       )}
 
       <div className="chat-body">
-        {messages.map((m) => (
+        {messages.map((msg, index) => (
           <div
-            key={m.id}
-            className={`message-bubble ${
-              m.senderId === currentUserId ? "sent" : "received"
-            } ${!m.seen && m.senderId === currentUserId ? "unseen" : ""}`}
+            key={index}
+            className={`message-bubble ${msg.senderId === currentUserId ? "sent" : "received"} ${!msg.seen && msg.senderId === currentUserId ? "unseen" : ""}`}
           >
-            {m.message}
+            {msg.message}
             <div className="message-time">
-              {(() => {
-                const date = new Date(m.createdAt);
-                const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
-                return localDate.toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true
-                });
-              })()}
-              {!m.seen && m.senderId === currentUserId && (
-                <span className="unseen-indicator">•</span>
+              {new Date(msg.createdAt).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+              })}
+              {msg.senderId === currentUserId && (
+                <span className="seen-indicator">
+                  {msg.seen ? "✓✓" : "✓"}
+                </span>
               )}
             </div>
           </div>
         ))}
         {isTyping && (
-          <div
-            className="message-bubble received typing-indicator"
-            style={{ marginLeft: 0 }}
-          >
+          <div className="typing-indicator">
             <span className="dot"></span>
             <span className="dot"></span>
             <span className="dot"></span>
