@@ -193,7 +193,7 @@ function Navbar() {
               <VendorSearch />
             </li>
             
-            {(userRole === "individual" || userRole === "both") && (
+            {userRole === "individual" && (
               <li className="nav-item">
                 <Link className="nav-link me-lg-3" to="/my-dashboard" onClick={closeMenu}>
                   Dashboard
@@ -201,12 +201,18 @@ function Navbar() {
               </li>
             )}
 
-
-
-            {(userRole === "business" || userRole === "both") && (
+            {userRole === "business" && (
               <li className="nav-item">
                 <Link className="nav-link me-lg-3" to="/dashboard" onClick={closeMenu}>
                   Business Dashboard
+                </Link>
+              </li>
+            )}
+
+            {userRole === "both" && (
+              <li className="nav-item">
+                <Link className="nav-link me-lg-3" to="/wedding-planner-dashboard" onClick={closeMenu}>
+                  Dashboard
                 </Link>
               </li>
             )}

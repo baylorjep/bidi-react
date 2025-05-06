@@ -80,6 +80,8 @@ const SignIn = ({ onSuccess }) => {
                 }
             } else if (profile.role === 'business') {
                 navigate('/dashboard');
+            } else if (profile.role === 'both') {
+                navigate('/wedding-planner-dashboard');
             } else {
                 setErrorMessage('Invalid user role');
             }
@@ -254,6 +256,8 @@ const SignIn = ({ onSuccess }) => {
                         }
                     } else if (currentProfile?.role === 'business') {
                         navigate('/dashboard');
+                    } else if (currentProfile?.role === 'both') {
+                        navigate('/wedding-planner-dashboard');
                     }
                 }}
                 userId={currentUserId}

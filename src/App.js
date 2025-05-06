@@ -125,6 +125,7 @@ import UtahDJCosts from "./components/Article/UtahDJCosts";
 import RelatedArticles from "./components/Article/RelatedArticles";
 import WeddingVibeQuiz from "./pages/WeddingVibeQuiz";
 import { subscribeToPush } from './hooks/usePushNotification';
+import WeddingPlannerDashboard from "./components/WeddingPlanner/WeddingPlannerDashboard";
 
 function App() {
   subscribeToPush();
@@ -255,9 +256,16 @@ function App() {
                 <PrivateRoute>
                   {userType === "individual" ? (
                     <IndividualDashboard />
+                  ) : userType === "both" ? (
+                    <WeddingPlannerDashboard />
                   ) : (
                     <BusinessDashboard />
                   )}
+                </PrivateRoute>
+              } />
+              <Route path="/wedding-planner-dashboard" element={
+                <PrivateRoute>
+                  <WeddingPlannerDashboard />
                 </PrivateRoute>
               } />
               <Route path="/my-requests" element={<MyRequests />} />
