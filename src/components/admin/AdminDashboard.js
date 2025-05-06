@@ -5,6 +5,7 @@ import UnviewedBids from './UnviewedBids';
 import VerificationApplications from './VerificationApplications';
 import AcceptedBids from './AcceptedBids';
 import ImageConverter from '../admin/ImageConverter';
+import MessageNotifier from './MessageNotifier';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 function AdminDashboard() {
@@ -18,13 +19,51 @@ function AdminDashboard() {
 
     const fetchUsers = async () => {
         try {
-            const { data, error } = await supabaseAdmin
+            // First get all profiles with their roles
+            const { data: profiles, error: profilesError } = await supabaseAdmin
                 .from('profiles')
-                .select('id, email')
+                .select('id, email, role')
                 .order('email');
 
-            if (error) throw error;
-            setUsers(data);
+            if (profilesError) throw profilesError;
+
+            // Get all user IDs
+            const userIds = profiles.map(profile => profile.id);
+
+            // Fetch individual profiles
+            const { data: individualProfiles, error: individualError } = await supabaseAdmin
+                .from('individual_profiles')
+                .select('id, first_name, last_name')
+                .in('id', userIds);
+
+            if (individualError) throw individualError;
+
+            // Fetch business profiles
+            const { data: businessProfiles, error: businessError } = await supabaseAdmin
+                .from('business_profiles')
+                .select('id, business_name')
+                .in('id', userIds);
+
+            if (businessError) throw businessError;
+
+            // Combine all the information
+            const usersWithDetails = profiles.map(profile => {
+                let displayName = '';
+                if (profile.role === 'individual') {
+                    const individualProfile = individualProfiles.find(p => p.id === profile.id);
+                    displayName = individualProfile ? `${individualProfile.first_name} ${individualProfile.last_name}` : 'N/A';
+                } else if (profile.role === 'business') {
+                    const businessProfile = businessProfiles.find(p => p.id === profile.id);
+                    displayName = businessProfile ? businessProfile.business_name : 'N/A';
+                }
+
+                return {
+                    ...profile,
+                    displayName
+                };
+            });
+
+            setUsers(usersWithDetails);
         } catch (error) {
             console.error('Error fetching users:', error.message);
         } finally {
@@ -98,6 +137,12 @@ function AdminDashboard() {
                         >
                             Image Converter
                         </button>
+                        <button
+                            className={`admin-tab ${activeTab === 'messages' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('messages')}
+                        >
+                            Message Notifier
+                        </button>
                     </div>
                 </div>
 
@@ -107,6 +152,16 @@ function AdminDashboard() {
                     {activeTab === 'verification' && <VerificationApplications />}
                     {activeTab === 'accepted' && <AcceptedBids />}
                     {activeTab === 'converter' && <ImageConverter />}
+                    {activeTab === 'messages' && (
+                        <div className="admin-card">
+                            <div className="admin-card-header">
+                                <h5>Message Notifier</h5>
+                            </div>
+                            <div className="admin-card-body">
+                                <MessageNotifier />
+                            </div>
+                        </div>
+                    )}
                     {activeTab === 'users' && (
                         <div className="admin-card">
                             <div className="admin-card-header">
@@ -120,14 +175,18 @@ function AdminDashboard() {
                                         <table className="admin-table">
                                             <thead>
                                                 <tr>
+                                                    <th>Name</th>
                                                     <th>Email</th>
+                                                    <th>Type</th>
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {users.map(user => (
                                                     <tr key={user.id}>
+                                                        <td className="user-name">{user.displayName}</td>
                                                         <td className="user-email">{user.email}</td>
+                                                        <td className="user-type">{user.role}</td>
                                                         <td>
                                                             <button 
                                                                 onClick={() => handleSignInAsUser(user.id)}
@@ -147,6 +206,7 @@ function AdminDashboard() {
                     )}
                 </div>
             </div>
+            <MessageNotifier />
         </div>
     );
 }

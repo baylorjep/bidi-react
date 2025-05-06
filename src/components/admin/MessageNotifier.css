@@ -1,0 +1,162 @@
+.message-notifier {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.message-notifier-container {
+    width: 100%;
+}
+
+.header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    margin: 0;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.count-badge {
+    font-size: 0.9rem;
+    padding: 5px 10px;
+}
+
+.refresh-button {
+    padding: 8px 16px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.refresh-button:hover {
+    background-color: #e9ecef;
+}
+
+.message-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.message-header {
+    padding: 16px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.recipient-name {
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-type {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.message-time {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.message-body {
+    padding: 16px;
+}
+
+.message-content {
+    margin-bottom: 16px;
+}
+
+.message-text {
+    margin: 0;
+    color: #333;
+    line-height: 1.5;
+}
+
+.contact-info {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.contact-info p {
+    margin: 4px 0;
+    color: #666;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.sms-button {
+    padding: 8px 16px;
+    background-color: #A328F4;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sms-button:hover {
+    background-color: #8a1fd1;
+}
+
+.sms-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.mark-button {
+    padding: 8px 16px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.mark-button:hover {
+    background-color: #218838;
+}
+
+.error-message {
+    background-color: #ff3875;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+} 
