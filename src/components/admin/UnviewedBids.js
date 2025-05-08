@@ -268,6 +268,77 @@ function UnviewedBids() {
                             console.log(`Catering request user_id: ${userId}`);
                         }
                     } 
+                    else if (category === 'weddingplanning' || category === 'wedding_planning' || category === 'wedding planning') {
+                        console.log(`Processing wedding planning bid ${bid.id} with request_id ${bid.request_id}`);
+                        console.log("Bid category:", category);
+                        console.log("Bid object:", bid);
+                        
+                        // Fetch wedding planning request details
+                        const { data: weddingPlanningData, error: weddingPlanningError } = await supabase
+                            .from('wedding_planning_requests')
+                            .select('*')
+                            .eq('id', bid.request_id)
+                            .single();
+                        
+                        console.log("Wedding planning request data:", weddingPlanningData);
+                        console.log("Wedding planning request error:", weddingPlanningError);
+                        
+                        if (!weddingPlanningError && weddingPlanningData) {
+                            requestTitle = weddingPlanningData.event_title;
+                            // Use the user_id from the wedding planning request (this is the individual's ID)
+                            userId = weddingPlanningData.user_id;
+                            console.log(`Found individual's user_id from wedding planning request: ${userId}`);
+                            
+                            if (!userId) {
+                                console.log("No user_id found in wedding planning request!");
+                                console.log("Full wedding planning request data:", weddingPlanningData);
+                                return {
+                                    ...bid,
+                                    request_title: requestTitle || `Request (${bid.category})`,
+                                    customer_email: 'Unknown',
+                                    customer_phone: 'Unknown',
+                                    user_id_debug: bid.user_id, // Use the vendor's user_id as fallback
+                                    debug_info: {
+                                        category: bid.category,
+                                        request_id: bid.request_id,
+                                        error: 'No user_id found in wedding planning request',
+                                        wedding_planning_data: weddingPlanningData
+                                    }
+                                };
+                            }
+                            
+                            // Get email from profiles table using the individual's user_id
+                            const { data: profileData, error: profileError } = await supabase
+                                .from('profiles')
+                                .select('email')
+                                .eq('id', userId)
+                                .single();
+                                
+                            console.log("Profile data for wedding planning:", profileData);
+                            console.log("Profile error for wedding planning:", profileError);
+                            
+                            if (!profileError && profileData) {
+                                customerEmail = profileData.email;
+                                console.log(`Found customer email for wedding planning: ${customerEmail}`);
+                            } else {
+                                console.log("Error fetching profile data for wedding planning:", profileError);
+                            }
+                        } else {
+                            console.log("Error fetching wedding planning request:", weddingPlanningError);
+                            return {
+                                ...bid,
+                                request_title: `Request (${bid.category})`,
+                                customer_email: 'Unknown',
+                                customer_phone: 'Unknown',
+                                user_id_debug: bid.user_id, // Use the vendor's user_id as fallback
+                                debug_info: {
+                                    category: bid.category,
+                                    request_id: bid.request_id,
+                                    error: weddingPlanningError?.message || 'Error fetching wedding planning request'
+                                }
+                            };
+                        }
+                    } 
                     else {
                         console.log(`Unknown category: ${bid.category} (lowercased: ${category})`);
                     }
