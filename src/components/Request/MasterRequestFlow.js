@@ -1176,7 +1176,7 @@ function MasterRequestFlow() {
         const request = formData.requests.WeddingPlanning || {};
         const weddingPlanningRequestData = {
           user_id: user.id,
-          vendor_id: vendorData?.id || null, // Add vendor_id here
+          vendor_id: vendorData?.id || null,
           event_title: requestTitle,
           status: 'pending',
           event_type: formData.commonDetails.eventType,
@@ -1191,14 +1191,21 @@ function MasterRequestFlow() {
           budget_range: request.budgetRange || 'Not specified',
           guest_count: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
           venue_status: request.venueStatus || null,
-          vendor_preferences: request.vendorPreferences || {},
+          vendor_preferences: {
+            preference: request.vendorPreference || null,
+            existing_vendors: request.existingVendors || null
+          },
           additional_events: request.additionalEvents || {},
-          wedding_style: request.weddingStyle || null,
-          color_scheme: request.colorScheme || null,
-          theme_preferences: request.themePreferences || null,
+          wedding_style: request.weddingType || null,
+          color_scheme: request.theme || null,
+          theme_preferences: request.theme || null,
           additional_comments: request.additionalInfo || null,
           pinterest_link: request.pinterestBoard || null,
-          coupon_code: appliedCoupon?.code || null
+          coupon_code: appliedCoupon?.code || null,
+          planning_level: request.planningLevel || null,
+          experience_level: request.experienceLevel || null,
+          communication_style: request.communicationStyle || null,
+          planner_budget: request.plannerBudget || null
         };
 
         // Insert into wedding_planning_requests table
@@ -1214,33 +1221,92 @@ function MasterRequestFlow() {
         if (request.photos && request.photos.length > 0) {
           console.log(`Processing ${request.photos.length} photos for Wedding Planning`);
           const uploadPromises = request.photos.map(async (photo) => {
-            const fileExt = photo.name.split('.').pop();
-            const fileName = `${uuidv4()}.${fileExt}`;
-            const filePath = `${user.id}/${newWeddingPlanningRequest.id}/${fileName}`;
+            try {
+              // Ensure we have the file object
+              if (!photo.file) {
+                console.error('Photo object missing file property:', photo);
+                throw new Error('Invalid photo object');
+              }
 
-            const { error: uploadError } = await supabase.storage
-              .from('request-media')
-              .upload(filePath, photo.file);
+              const fileExt = photo.file.name.split('.').pop();
+              const fileName = `${uuidv4()}.${fileExt}`;
+              const filePath = `wedding_planning/${user.id}/${newWeddingPlanningRequest.id}/${fileName}`;
+              
+              console.log('Starting photo upload process:', {
+                filePath,
+                fileName,
+                fileType: photo.file.type,
+                fileSize: photo.file.size,
+                bucket: 'request-media',
+                fullPath: `request-media/${filePath}`
+              });
 
-            if (uploadError) throw uploadError;
+              // Upload the file
+              const { error: uploadError, data: uploadData } = await supabase.storage
+                .from('request-media')
+                .upload(filePath, photo.file, {
+                  cacheControl: '3600',
+                  upsert: false
+                });
 
-            const { data: { publicUrl } } = supabase.storage
-              .from('request-media')
-              .getPublicUrl(filePath);
+              if (uploadError) {
+                console.error('Photo upload error details:', {
+                  error: uploadError,
+                  filePath,
+                  fileName,
+                  fileType: photo.file.type,
+                  fileSize: photo.file.size
+                });
+                throw uploadError;
+              }
 
-            const { error: photoInsertError } = await supabase
-              .from('wedding_planning_photos')
-              .insert([{
-                request_id: newWeddingPlanningRequest.id,
-                user_id: user.id,
-                photo_url: publicUrl,
-                file_path: filePath
-              }]);
+              console.log('Photo upload successful:', uploadData);
 
-            if (photoInsertError) throw photoInsertError;
+              const { data: { publicUrl } } = supabase.storage
+                .from('request-media')
+                .getPublicUrl(filePath);
+
+              console.log('Generated public URL:', publicUrl);
+
+              const { error: photoInsertError, data: insertData } = await supabase
+                .from('wedding_planning_photos')
+                .insert([{
+                  request_id: newWeddingPlanningRequest.id,
+                  user_id: user.id,
+                  photo_url: publicUrl,
+                  file_path: filePath
+                }])
+                .select();
+
+              if (photoInsertError) {
+                console.error('Photo insert error details:', {
+                  error: photoInsertError,
+                  data: {
+                    request_id: newWeddingPlanningRequest.id,
+                    user_id: user.id,
+                    photo_url: publicUrl,
+                    file_path: filePath
+                  }
+                });
+                throw photoInsertError;
+              }
+
+              console.log('Photo record inserted successfully:', insertData);
+            } catch (err) {
+              console.error('Error in photo upload process:', err);
+              throw err;
+            }
           });
 
-          await Promise.all(uploadPromises);
+          try {
+            await Promise.all(uploadPromises);
+            console.log(`All photo uploads completed successfully for Wedding Planning`);
+          } catch (err) {
+            console.error('Error in photo upload batch:', err);
+            throw err;
+          }
+        } else {
+          console.log(`No photos to upload for Wedding Planning`);
         }
 
         submissionSuccess = true;

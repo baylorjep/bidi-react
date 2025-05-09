@@ -75,7 +75,8 @@ export default function BidsPage({ onOpenChat }) {
                 { data: cateringRequests, error: cateringError },
                 { data: beautyRequests, error: beautyError },
                 { data: videoRequests, error: videoError },
-                { data: floristRequests, error: floristError }
+                { data: floristRequests, error: floristError },
+                { data: weddingPlanningRequests, error: weddingPlanningError }
             ] = await Promise.all([
                 supabase
                     .from('requests')
@@ -111,6 +112,11 @@ export default function BidsPage({ onOpenChat }) {
                     .from('florist_requests')
                     .select('*')
                     .eq('user_id', userId)
+                    .order('created_at', { ascending: false }),
+                supabase
+                    .from('wedding_planning_requests')
+                    .select('*')
+                    .eq('user_id', userId)
                     .order('created_at', { ascending: false })
             ]);
 
@@ -121,6 +127,7 @@ export default function BidsPage({ onOpenChat }) {
             if (beautyError) throw beautyError;
             if (videoError) throw videoError;
             if (floristError) throw floristError;
+            if (weddingPlanningError) throw weddingPlanningError;
 
             // Transform requests to match the same structure
             const transformedPhotoRequests = (photoRequests || []).map(request => ({
@@ -162,6 +169,13 @@ export default function BidsPage({ onOpenChat }) {
                 ...(floristRequests || []).map(req => ({
                     ...req,
                     type: 'florist'
+                })),
+                ...(weddingPlanningRequests || []).map(req => ({
+                    ...req,
+                    type: 'wedding_planning',
+                    service_title: req.event_title || 'Wedding Planning Request',
+                    price_range: req.budget_range,
+                    service_date: req.start_date
                 }))
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -189,7 +203,8 @@ export default function BidsPage({ onOpenChat }) {
                 { data: cateringRequests, error: cateringRequestError },
                 { data: beautyRequests, error: beautyRequestError },
                 { data: videoRequests, error: videoRequestError },
-                { data: floristRequests, error: floristRequestError }
+                { data: floristRequests, error: floristRequestError },
+                { data: weddingPlanningRequests, error: weddingPlanningRequestError }
             ] = await Promise.all([
                 supabase
                     .from('requests')
@@ -218,6 +233,10 @@ export default function BidsPage({ onOpenChat }) {
                 supabase
                     .from('florist_requests')
                     .select('id, coupon_code')
+                    .eq('user_id', user.id),
+                supabase
+                    .from('wedding_planning_requests')
+                    .select('id, coupon_code')
                     .eq('user_id', user.id)
             ]);
 
@@ -228,6 +247,7 @@ export default function BidsPage({ onOpenChat }) {
             if (beautyRequestError) throw beautyRequestError;
             if (videoRequestError) throw videoRequestError;
             if (floristRequestError) throw floristRequestError;
+            if (weddingPlanningRequestError) throw weddingPlanningRequestError;
 
             // Get all request IDs
             const requestIds = [
@@ -237,7 +257,8 @@ export default function BidsPage({ onOpenChat }) {
                 ...(cateringRequests || []).map(r => r.id),
                 ...(beautyRequests || []).map(r => r.id),
                 ...(videoRequests || []).map(r => r.id),
-                ...(floristRequests || []).map(r => r.id)
+                ...(floristRequests || []).map(r => r.id),
+                ...(weddingPlanningRequests || []).map(r => r.id)
             ];
 
             // Fetch all bids for these requests
@@ -764,6 +785,8 @@ export default function BidsPage({ onOpenChat }) {
                 requestType = "videography";
             } else if (request.service_category === "florist") {
                 requestType = "florist";
+            } else if (request.service_category === "wedding planning") {
+                requestType = "wedding_planning";
             } else {
                 requestType = "regular";
             }
@@ -776,6 +799,7 @@ export default function BidsPage({ onOpenChat }) {
                 beauty: "beauty_requests",
                 videography: "videography_requests",
                 florist: "florist_requests",
+                wedding_planning: "wedding_planning_requests"
             };
 
             const tableName = tableMap[requestType];

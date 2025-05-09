@@ -5,86 +5,292 @@ import 'react-quill/dist/quill.snow.css';
 import '../../App.css';
 import { supabase } from '../../supabaseClient';
 
+// Helper Components
+const InfoField = ({ label, value, gridColumn = 'auto' }) => (
+    <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn}}>
+        <div className="request-subtype">{label}</div>
+        <div className="request-info">{value || 'Not specified'}</div>
+    </div>
+);
+
+const PhotoGrid = ({ photos, onPhotoClick, getPublicUrl }) => (
+    <>
+        <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
+            Inspiration Photos
+        </div>
+        <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
+            {photos.map((photo, index) => {
+                const publicUrl = getPublicUrl(photo.file_path);
+                return (
+                    <div className="photo-grid-item" key={index} onClick={() => onPhotoClick(photo)}>
+                        <img
+                            src={publicUrl || photo.photo_url}
+                            className="photo"
+                            alt={`Photo ${index + 1}`}
+                            onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
+                            }}
+                            loading="lazy"
+                        />
+                    </div>
+                );
+            })}
+        </div>
+    </>
+);
+
+const PhotoModal = ({ photo, onClose, getPublicUrl }) => (
+    <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content-photo" onClick={e => e.stopPropagation()}>
+            <button 
+                className="remove-photo-button"
+                style={{ position: 'absolute', right: '10px', top: '10px' }}
+                onClick={onClose}
+            >
+                X
+            </button>
+            <img 
+                src={getPublicUrl(photo.file_path) || photo.photo_url} 
+                alt="Full size" 
+                style={{ maxWidth: '100%', maxHeight: '90vh' }}
+            />
+        </div>
+    </div>
+);
+
+// Request Type Specific Components
+const WeddingPlanningRequest = ({ request, filteredPhotos, onPhotoClick, getPublicUrl }) => {
+    const formatPlanningLevel = (level) => {
+        const levels = {
+            'full': 'Full Planning',
+            'partial': 'Partial Planning',
+            'elopement': 'Elopement',
+            'micro': 'Micro Wedding',
+            'month-of': 'Month-of Coordination',
+            'day-of': 'Day-of Coordination'
+        };
+        return levels[level] || level || 'Not specified';
+    };
+
+    const formatWeddingStyle = (style) => {
+        const styles = {
+            'backyard': 'Backyard',
+            'church': 'Church',
+            'event_center': 'Event Center',
+            'venue': 'Venue',
+            'other': 'Other'
+        };
+        return styles[style] || style || 'Not specified';
+    };
+
+    const formatVenueStatus = (status) => {
+        const statuses = {
+            'booked': 'Venue Booked',
+            'shortlist': 'Shortlist Selected',
+            'searching': 'Still Searching'
+        };
+        return statuses[status] || status || 'Not specified';
+    };
+
+    const formatVendorPreferences = (prefs) => {
+        if (!prefs) return 'Not specified';
+        
+        const preferences = typeof prefs === 'string' ? JSON.parse(prefs) : prefs;
+        const preferenceTypes = {
+            'existing': 'Use Existing Vendors',
+            'new': 'Find New Vendors',
+            'mix': 'Mix of Existing and New Vendors'
+        };
+        
+        let displayText = preferenceTypes[preferences.preference] || 'Not specified';
+        if (preferences.existing_vendors) {
+            displayText += `\nExisting Vendors: ${preferences.existing_vendors}`;
+        }
+        
+        return displayText;
+    };
+
+    const formatAdditionalEvents = (events) => {
+        if (!events) return 'None selected';
+        
+        const eventList = typeof events === 'string' ? JSON.parse(events) : events;
+        const eventTypes = {
+            'rehearsalDinner': 'Rehearsal Dinner',
+            'dayAfterBrunch': 'Day After Brunch',
+            'bachelorParty': 'Bachelor Party',
+            'bridalParty': 'Bridal Party'
+        };
+        
+        return Object.entries(eventList)
+            .filter(([_, value]) => value)
+            .map(([key]) => eventTypes[key] || key.replace(/([A-Z])/g, ' $1').trim())
+            .join(', ') || 'None selected';
+    };
+
+    const formatExperienceLevel = (level) => {
+        const levels = {
+            'beginner': 'Beginner',
+            'intermediate': 'Intermediate',
+            'expert': 'Expert'
+        };
+        return levels[level] || level || 'Not specified';
+    };
+
+    const formatCommunicationStyle = (style) => {
+        const styles = {
+            'email': 'Email',
+            'phone': 'Phone',
+            'text': 'Text',
+            'video': 'Video Call'
+        };
+        return styles[style] || style || 'Not specified';
+    };
+
+    return (
+        <div className="request-summary-grid">
+            <InfoField label="Event Title" value={request.event_title} gridColumn="1 / -1" />
+            <InfoField label="Event Type" value={request.event_type} />
+            <InfoField label="Location" value={request.location} />
+            <InfoField label="Planning Level" value={formatPlanningLevel(request.planning_level)} />
+            <InfoField label="Wedding Style" value={formatWeddingStyle(request.wedding_style)} />
+            
+            {/* Date Information */}
+            {request.date_flexibility === 'specific' ? (
+                <InfoField 
+                    label="Event Date" 
+                    value={request.start_date ? new Date(request.start_date).toLocaleDateString() : null} 
+                />
+            ) : request.date_flexibility === 'range' ? (
+                <InfoField 
+                    label="Date Range" 
+                    value={request.start_date && request.end_date 
+                        ? `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                        : null} 
+                />
+            ) : (
+                <InfoField 
+                    label="Date Preference" 
+                    value={request.date_timeframe === '3months' ? 'Within 3 months' :
+                           request.date_timeframe === '6months' ? 'Within 6 months' :
+                           request.date_timeframe === '1year' ? 'Within 1 year' :
+                           request.date_timeframe === 'more' ? 'More than 1 year' : null} 
+                />
+            )}
+
+            {/* Time Information */}
+            <InfoField 
+                label="Event Time" 
+                value={request.start_time || request.end_time 
+                    ? `${request.start_time ? `Start: ${request.start_time}` : 'Start time TBD'}
+                       ${request.end_time ? `\nEnd: ${request.end_time}` : '\nEnd time TBD'}`
+                    : null} 
+            />
+
+            <InfoField label="Venue Type" value={request.indoor_outdoor} />
+            <InfoField label="Venue Status" value={formatVenueStatus(request.venue_status)} />
+            <InfoField label="Expected Guests" value={request.guest_count} />
+            <InfoField label="Budget Range" value={request.budget_range ? `$${request.budget_range}` : null} />
+            <InfoField label="Planner Budget" value={request.planner_budget ? `$${request.planner_budget}` : null} />
+            <InfoField label="Color Scheme" value={request.color_scheme} />
+            <InfoField label="Theme Preferences" value={request.theme_preferences} />
+            
+            <InfoField 
+                label="Vendor Preferences" 
+                value={formatVendorPreferences(request.vendor_preferences)} 
+                gridColumn="1 / -1" 
+            />
+            
+            <InfoField 
+                label="Additional Events" 
+                value={formatAdditionalEvents(request.additional_events)} 
+                gridColumn="1 / -1" 
+            />
+            
+            <InfoField 
+                label="Experience Level" 
+                value={formatExperienceLevel(request.experience_level)} 
+            />
+            
+            <InfoField 
+                label="Communication Style" 
+                value={formatCommunicationStyle(request.communication_style)} 
+            />
+
+            {request.pinterest_link && (
+                <InfoField 
+                    label="Pinterest Board" 
+                    value={
+                        <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
+                            View Board
+                        </a>
+                    } 
+                />
+            )}
+
+            {request.additional_comments && (
+                <InfoField 
+                    label="Additional Comments" 
+                    value={<div dangerouslySetInnerHTML={{ __html: request.additional_comments }} />} 
+                    gridColumn="1 / -1" 
+                />
+            )}
+
+            {request.coupon_code && (
+                <InfoField label="Coupon Code" value={request.coupon_code} />
+            )}
+
+            {filteredPhotos && filteredPhotos.length > 0 && (
+                <PhotoGrid 
+                    photos={filteredPhotos} 
+                    onPhotoClick={onPhotoClick} 
+                    getPublicUrl={getPublicUrl} 
+                />
+            )}
+        </div>
+    );
+};
+
+// Main Component
 function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) {
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const [timeLeft, setTimeLeft] = useState('');
     const [filteredPhotos, setFilteredPhotos] = useState([]);
-    
+
+    const isNew = (createdAt) => {
+        if (!createdAt) return false;
+        const now = new Date();
+        const created = new Date(createdAt);
+        const diffInDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+        return diffInDays < 7;
+    };
+
     const getRequestType = () => {
-        // Add debug logging
-        console.log('Request:', request);
-        console.log('Passed requestType:', requestType);
-        console.log('Table name:', request.table_name);
-
-        // First, check if a specific type was passed as a prop
-            if (requestType === 'wedding_planning_requests') {
-            console.log('Using passed requestType: wedding_planning_requests');
-            return 'wedding_planning_requests';
-        }
-
-        if (requestType === 'florist_requests') {
-            console.log('Using passed requestType: florist_requests');
-            return 'florist_requests';
-        }
-
-        // Then check standard requestType prop
-        if (requestType) {
-            console.log('Using passed requestType:', requestType);
-            return requestType;
-        }
-
-        // Then check if the request has a table_name property
-        if (request.table_name === 'wedding_planning_requests') {
-            console.log('Using table_name: wedding_planning_requests');
-            return 'wedding_planning_requests';
-        }
-
-        if (request.table_name === 'florist_requests') {
-            console.log('Using table_name: florist_requests');
-            return 'florist_requests';
-        }
-
-        if (request.table_name) {
-            console.log('Using table_name:', request.table_name);
-            return request.table_name;
-        }
-
-        // Check for beauty-specific properties
-        if (request.service_type && 
-            (request.service_type === 'both' || 
-             request.service_type === 'hair' || 
-             request.service_type === 'makeup')) {
-            console.log('Detected beauty request');
+        if (requestType === 'wedding_planning_requests') return 'wedding_planning_requests';
+        if (requestType === 'florist_requests') return 'florist_requests';
+        if (requestType) return requestType;
+        if (request.table_name) return request.table_name;
+        
+        if (request.service_type && ['both', 'hair', 'makeup'].includes(request.service_type)) {
             return 'beauty_requests';
         }
-
-        // Check for photography-specific properties
+        
         if (request.hasOwnProperty('event_title') && !request.hasOwnProperty('floral_arrangements')) {
             return 'photography_requests';
         }
-
-        // Check for florist-specific properties - modify this section
+        
         if (request.hasOwnProperty('floral_arrangements') || 
             request.hasOwnProperty('flower_preferences') || 
             request.colors || 
             request.additional_services?.setupAndTakedown) {
-            console.log('Detected florist request with:', {
-                floral_arrangements: request.floral_arrangements,
-                flower_preferences: request.flower_preferences,
-                colors: request.colors
-            });
             return 'florist_requests';
         }
-
-        // Add videography check
+        
         if (request.hasOwnProperty('videographer_needed') || 
             request.hasOwnProperty('style_preferences') || 
             request.table_name === 'videography_requests') {
-            console.log('Detected videography request');
             return 'videography_requests';
         }
-
-        // Default case
+        
         return 'regular';
     };
 
@@ -108,1504 +314,6 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         }
     };
 
-    const getDate = () => {
-        // Add debug logging
-        console.log('getDate - Request:', request);
-        console.log('getDate - Date fields:', {
-            service_date: request.service_date,
-            date: request.date,
-            event_date: request.event_date,
-            start_date: request.start_date
-        });
-
-        const type = getRequestType();
-        console.log('getDate - Request type:', type);
-
-        // For beauty requests, prioritize start_date
-        if (type === 'beauty_requests') {
-            return request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Date not specified';
-        }
-
-        // For other requests, keep existing logic
-        const startDate = ['photography_requests', 'dj_requests', 'catering_requests'].includes(type) 
-            ? request.start_date 
-            : request.service_date || request.date || request.event_date || request.start_date;
-        
-        if (request.end_date) {
-            return `${new Date(startDate).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
-        }
-        return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
-    };
-
-    const renderBeautyRequest = () => (
-        <div className="request-summary-grid">
-
-            {/* Basic Event Information */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Type</div>
-                <div className="request-info">{request.event_type || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Location</div>
-                <div className="request-info">{request.location}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Date</div>
-                <div className="request-info">{request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Date not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Service Type</div>
-                <div className="request-info">{request.service_type}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Number of People</div>
-                <div className="request-info">{request.num_people || 'Not specified'}</div>
-            </div>
-
-            {/* Hair Services */}
-            {(request.service_type === 'both' || request.service_type === 'hair') && (
-                <>
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Hairstyle Preferences</div>
-                        <div className="request-info">{request.hairstyle_preferences || 'Not specified'}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Hair Length & Type</div>
-                        <div className="request-info">{request.hair_length_type || 'Not specified'}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Extensions Needed?</div>
-                        <div className="request-info">{request.extensions_needed || 'Not specified'}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Trial Session for Hair?</div>
-                        <div className="request-info">{request.trial_session_hair || 'Not specified'}</div>
-                    </div>
-                </>
-            )}
-
-            {/* Makeup Services */}
-            {(request.service_type === 'both' || request.service_type === 'makeup') && (
-                <>
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Makeup Style Preferences</div>
-                        <div className="request-info">{request.makeup_style_preferences || 'Not specified'}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Skin Type & Concerns</div>
-                        <div className="request-info">{request.skin_type_concerns || 'Not specified'}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Preferred Products or Allergies</div>
-                        <div className="request-info">{request.preferred_products_allergies || 'Not specified'}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Lashes Included?</div>
-                        <div className="request-info">{request.lashes_included || 'Not specified'}</div>
-                    </div>
-
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                        <div className="request-subtype">Trial Session for Makeup?</div>
-                        <div className="request-info">{request.trial_session_makeup || 'Not specified'}</div>
-                    </div>
-                </>
-            )}
-
-            {/* Additional Details */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Group Discount Inquiry?</div>
-                <div className="request-info">{request.group_discount_inquiry || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">On-Site Service Needed?</div>
-                <div className="request-info">{request.on_site_service_needed || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Budget Range</div>
-                <div className="request-info">${request.price_range}</div>
-            </div>
-
-            {request.pinterest_link && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Pinterest Board</div>
-                    <div className="request-info">
-                        <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
-                            View Board
-                        </a>
-                    </div>
-                </div>
-            )}
-
-            {/* Additional Information */}
-            {request.additional_info && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Information</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_info }} />
-                </div>
-            )}
-
-            {/* Inspiration Photos */}
-            {filteredPhotos && filteredPhotos.length > 0 && (
-                <>
-                    <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
-                        Inspiration Photos
-                    </div>
-                    <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
-                        {filteredPhotos.map((photo, index) => {
-                            const publicUrl = getPublicUrl(photo.file_path);
-                            return (
-                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
-                                    <img
-                                        src={publicUrl || photo.photo_url}
-                                        className="photo"
-                                        alt={`Photo ${index + 1}`}
-                                        onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
-                                        }}
-                                        loading="lazy"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </>
-            )}
-
-            {request.additional_comments && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Comments</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
-                </div>
-            )}
-        </div>
-    );
-
-    const renderPhotographyRequest = () => (
-        <div className="request-summary-grid">
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Type</div>
-                <div className="request-info">{request.event_type}</div>  
-            </div>  
-
-            {/* Date Information based on flexibility */}
-            {request.date_flexibility === 'specific' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date</div>
-                    <div className="request-info">
-                        {new Date(request.start_date).toLocaleDateString()}
-                    </div>
-                </div>
-            ) : request.date_flexibility === 'range' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Range</div>
-                    <div className="request-info">
-                        {`${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`}
-                    </div>
-                </div>
-            ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Preference</div>
-                    <div className="request-info">
-                        {request.date_timeframe === '3months' ? 'Within 3 months' :
-                         request.date_timeframe === '6months' ? 'Within 6 months' :
-                         request.date_timeframe === '1year' ? 'Within 1 year' :
-                         request.date_timeframe === 'more' ? 'More than 1 year' :
-                         'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Location</div>
-                <div className="request-info">{request.location}</div>
-            </div>
-
-            {/* Time Information */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Time</div>
-                <div className="request-info">
-                    {request.start_time_unknown ? 'Start time TBD' : request.start_time}
-                    {' - '}
-                    {request.end_time_unknown ? 'End time TBD' : request.end_time}
-                </div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Number of People</div>
-                <div className="request-info">
-                    {request.num_people_unknown ? 'TBD' : request.num_people || 'Not specified'}
-                </div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Duration (in hours)</div>
-                <div className="request-info">
-                    {request.duration_unknown ? 'TBD' : request.duration || 'Not specified'}
-                </div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Indoor/Outdoor</div>
-                <div className="request-info">{request.indoor_outdoor}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Budget</div>
-                <div className="request-info">{request.price_range}</div>
-            </div>
-
-            {request.pinterest_board && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Pinterest Board Link</div>
-                    <div className="request-info">
-                        <a href={request.pinterest_board} target="_blank" rel="noopener noreferrer">
-                            View Board
-                        </a>
-                    </div>
-                </div>
-            )}
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Second Photographer</div>
-                <div className="request-info">
-                    {request.second_photographer_unknown ? 'TBD' : 
-                     request.second_photographer || 'Not specified'}
-                </div>
-            </div>
-
-            {/* Wedding Details if applicable */}
-            {request.wedding_details && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Wedding Coverage</div>
-                    <div className="request-info">
-                        {typeof request.wedding_details === 'string' 
-                            ? Object.entries(JSON.parse(request.wedding_details))
-                                .filter(([_, value]) => value)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ')
-                            : Object.entries(request.wedding_details)
-                                .filter(([_, value]) => value)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ')}
-                    </div>
-                </div>
-            )}
-
-            {/* Style Preferences */}
-            {request.style_preferences && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Style Preferences</div>
-                    <div className="request-info">
-                        {typeof request.style_preferences === 'string'
-                            ? Object.entries(JSON.parse(request.style_preferences))
-                                .filter(([_, value]) => value)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ')
-                            : Object.entries(request.style_preferences)
-                                .filter(([_, value]) => value)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ')}
-                    </div>
-                </div>
-            )}
-
-            {/* Deliverables */}
-            {request.deliverables && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Deliverables</div>
-                    <div className="request-info">
-                        {typeof request.deliverables === 'string'
-                            ? Object.entries(JSON.parse(request.deliverables))
-                                .filter(([_, value]) => value)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ')
-                            : Object.entries(request.deliverables)
-                                .filter(([_, value]) => value)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ')}
-                    </div>
-                </div>
-            )}
-
-            {request.additional_info && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Information</div>
-                    <div 
-                        className="request-info"
-                        dangerouslySetInnerHTML={{ __html: request.additional_info }}
-                    />
-                </div>
-            )}
-
-            {/* Inspiration Photos */}
-            {filteredPhotos && filteredPhotos.length > 0 && (
-                <>
-                    <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
-                        Inspiration Photos
-                    </div>
-                    <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
-                        {filteredPhotos.map((photo, index) => {
-                            const publicUrl = getPublicUrl(photo.file_path);
-                            return (
-                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
-                                    <img
-                                        src={publicUrl || photo.photo_url}
-                                        className="photo"
-                                        alt={`Photo ${index + 1}`}
-                                        onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
-                                        }}
-                                        loading="lazy"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </>
-            )}
-
-            {request.additional_comments && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Comments</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
-                </div>
-            )}
-        </div>
-    );
-
-    const renderDJRequest = () => (
-        <div className="request-summary-grid">
-            {/* Basic Event Information */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Type</div>
-                <div className="request-info">{request.event_type || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Location</div>
-                <div className="request-info">{request.location}</div>
-            </div>
-
-            {/* Date Information */}
-            {request.date_flexibility === 'specific' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Event Date</div>
-                    <div className="request-info">
-                        {new Date(request.start_date).toLocaleDateString()}
-                    </div>
-                </div>
-            ) : request.date_flexibility === 'range' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Range</div>
-                    <div className="request-info">
-                        {`${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`}
-                    </div>
-                </div>
-            ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Preference</div>
-                    <div className="request-info">
-                        {request.date_timeframe === '3months' ? 'Within 3 months' :
-                         request.date_timeframe === '6months' ? 'Within 6 months' :
-                         request.date_timeframe === '1year' ? 'Within 1 year' :
-                         request.date_timeframe === 'more' ? 'More than 1 year' :
-                         'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Indoor/Outdoor */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Venue Type</div>
-                <div className="request-info">{request.indoor_outdoor || 'Not specified'}</div>
-            </div>
-
-            {/* Event Coverage */}
-            {request.event_type === 'Wedding' && request.wedding_details && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Event Coverage</div>
-                    <div className="request-info">
-                        {Object.entries(request.wedding_details)
-                            .filter(([_, value]) => value)
-                            .map(([key]) => key.replace(/([A-Z])/g, ' $1').charAt(0).toUpperCase() + key.slice(1))
-                            .join(', ') || 'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Event Details */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Duration</div>
-                <div className="request-info">
-                    {request.event_duration ? `${request.event_duration} hours` : 'Not specified'}
-                </div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Expected Guests</div>
-                <div className="request-info">
-                    {request.estimated_guests || 'Not specified'}
-                </div>
-            </div>
-
-            {/* Equipment Section */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Equipment Setup</div>
-                <div className="request-info">{request.equipment_needed || 'Not specified'}</div>
-            </div>
-
-            {request.equipment_notes && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Equipment Notes</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.equipment_notes }} />
-                </div>
-            )}
-
-            {/* Music Preferences */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Music Preferences</div>
-                <div className="request-info">
-                    {request.music_preferences ? 
-                        Object.entries(request.music_preferences)
-                            .filter(([_, value]) => value)
-                            .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
-                            .join(', ') 
-                        : 'Not specified'}
-                </div>
-            </div>
-
-            {/* Add-ons */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Additional Services</div>
-                <div className="request-info">
-                    {request.additional_services && request.additional_services.length > 0
-                        ? request.additional_services.map(service => {
-                            const serviceNames = {
-                                mcServices: '🎤 MC Services',
-                                liveMixing: '🎶 Live Mixing',
-                                uplighting: '🏮 Uplighting',
-                                fogMachine: '🌫️ Fog Machine',
-                                specialFx: '🎇 Special FX',
-                                photoBooth: '📸 Photo Booth',
-                                eventRecording: '🎥 Event Recording',
-                                karaoke: '🎵 Karaoke'
-                            };
-                            return serviceNames[service] || service;
-                        }).join(', ')
-                        : 'None selected'}
-                </div>
-            </div>
-
-            {/* Playlist Link */}
-            {request.special_songs?.playlist && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Music Playlist</div>
-                    <div className="request-info">
-                        <a href={request.special_songs.playlist} target="_blank" rel="noopener noreferrer">
-                            View Playlist
-                        </a>
-                    </div>
-                </div>
-            )}
-
-            {/* Special Songs */}
-            {request.special_songs?.requests && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Special Song Requests</div>
-                    <div className="request-info">
-                        <ReactQuill value={request.special_songs.requests} readOnly={true} theme="bubble" />
-                    </div>
-                </div>
-            )}
-
-            {/* Budget */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Budget Range</div>
-                <div className="request-info">${request.budget_range}</div>
-            </div>
-
-            {/* Additional Information */}
-            {request.additional_info && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Information</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_info }} />
-                </div>
-            )}
-
-            {request.additional_comments && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Comments</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
-                </div>
-            )}
-        </div>
-    );
-
-    const renderCateringRequest = () => (
-        <div className="request-summary-grid">
-            {/* Basic Event Information */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Type</div>
-                <div className="request-info">{request.event_type || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Location</div>
-                <div className="request-info">{request.location}</div>
-            </div>
-
-            {/* Date Information */}
-            {request.date_flexibility === 'specific' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Event Date</div>
-                    <div className="request-info">
-                        {new Date(request.start_date).toLocaleDateString()}
-                    </div>
-                </div>
-            ) : request.date_flexibility === 'range' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Range</div>
-                    <div className="request-info">
-                        {`${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`}
-                    </div>
-                </div>
-            ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Preference</div>
-                    <div className="request-info">
-                        {request.date_timeframe === '3months' ? 'Within 3 months' :
-                         request.date_timeframe === '6months' ? 'Within 6 months' :
-                         request.date_timeframe === '1year' ? 'Within 1 year' :
-                         request.date_timeframe === 'more' ? 'More than 1 year' :
-                         'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Time Information */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Time</div>
-                <div className="request-info">
-                    {request.start_time ? `Start: ${request.start_time}` : 'Start time TBD'}
-                    <br />
-                    {request.end_time ? `End: ${request.end_time}` : 'End time TBD'}
-                </div>
-            </div>
-
-            {/* Guest Count */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Expected Guests</div>
-                <div className="request-info">{request.estimated_guests || 'Not specified'}</div>
-            </div>
-
-            {/* Food Style Preferences */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                <div className="request-subtype">Food Style Preferences</div>
-                <div className="request-info">
-                    {typeof request.food_preferences === 'object' 
-                        ? Object.entries(request.food_preferences)
-                            .filter(([_, value]) => value)
-                            .map(([key]) => key
-                                .replace(/([A-Z])/g, ' $1')
-                                .toLowerCase()
-                                .replace(/^./, str => str.toUpperCase()))
-                                .join(', ') 
-                        : request.food_preferences || 'Not specified'}
-                </div>
-            </div>
-
-            {/* Service Type */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Food Service Type</div>
-                <div className="request-info">
-                    {(() => {
-                        switch (request.food_service_type) {
-                            case 'onSite': return 'Cooking On-Site';
-                            case 'delivered': return 'Delivered Ready-to-Serve';
-                            case 'both': return 'Combination';
-                            case 'flexible': return 'Flexible';
-                            default: return request.food_service_type || 'Not specified';
-                        }
-                    })()}
-                </div>
-            </div>
-
-            {/* Equipment Setup */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Kitchen Equipment</div>
-                <div className="request-info">{request.equipment_needed || 'Not specified'}</div>
-            </div>
-
-            {/* Serving Staff */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Serving Staff</div>
-                <div className="request-info">
-                    {(() => {
-                        switch (request.serving_staff) {
-                            case 'fullService': return 'Full Service Staff';
-                            case 'partialService': return 'Partial Service';
-                            case 'noService': return 'No Staff Needed';
-                            case 'unsure': return 'Not Sure';
-                            default: return request.serving_staff || 'Not specified';
-                        }
-                    })()}
-                </div>
-            </div>
-
-            {/* Setup & Cleanup */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Setup & Cleanup</div>
-                <div className="request-info">
-                    {(() => {
-                        switch (request.setup_cleanup) {
-                            case 'setupOnly': return 'Setup Only';
-                            case 'cleanupOnly': return 'Cleanup Only';
-                            case 'both': return 'Both Setup & Cleanup';
-                            case 'neither': return 'Neither';
-                            default: return request.setup_cleanup || 'Not specified';
-                        }
-                    })()}
-                </div>
-            </div>
-
-            {/* Dining Items */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Dining Items</div>
-                <div className="request-info">
-                    {(() => {
-                        switch (request.dining_items) {
-                            case 'provided': return 'Provided by Caterer';
-                            case 'notProvided': return 'Not Needed';
-                            case 'partial': return 'Partial (See Details Below)';
-                            default: return request.dining_items || 'Not specified';
-                        }
-                    })()}
-                </div>
-            </div>
-
-            {/* Dining Items Notes */}
-            {request.dining_items_notes && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Dining Items Details</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.dining_items_notes }} />
-                </div>
-            )}
-
-            {/* Budget */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Budget Range</div>
-                <div className="request-info">
-                    {(() => {
-                        switch (request.budget_range) {
-                            case 'under1000': return 'Under $1,000';
-                            case '1000-2000': return '$1,000 - $2,000';
-                            case '2000-3000': return '$2,000 - $3,000';
-                            case '3000-4000': return '$3,000 - $4,000';
-                            case '4000-5000': return '$4,000 - $5,000';
-                            case '5000+': return '$5,000+';
-                            default: return `$${request.budget_range}` || 'Not specified';
-                        }
-                    })()}
-                </div>
-            </div>
-
-            {/* Special Requests */}
-            {request.special_requests && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Special Requests</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.special_requests }} />
-                </div>
-            )}
-
-            {/* Additional Information */}
-            {request.additional_info && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Information</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_info }} />
-                </div>
-            )}
-
-            {/* Inspiration Photos */}
-            {filteredPhotos && filteredPhotos.length > 0 && (
-                <>
-                    <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
-                        Inspiration Photos
-                    </div>
-                    <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
-                        {filteredPhotos.map((photo, index) => {
-                            const publicUrl = getPublicUrl(photo.file_path);
-                            return (
-                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
-                                    <img
-                                        src={publicUrl || photo.photo_url}
-                                        className="photo"
-                                        alt={`Photo ${index + 1}`}
-                                        onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
-                                        }}
-                                        loading="lazy"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </>
-            )}
-
-            {request.additional_comments && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Comments</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
-                </div>
-            )}
-        </div>
-    );
-
-    const renderFloristRequest = () => (
-        <div className="request-summary-grid">
-            {/* Basic Event Information */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Type</div>
-                <div className="request-info">{request.event_type || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Location</div>
-                <div className="request-info">{request.location}</div>
-            </div>
-
-            {/* Date Information */}
-            {request.date_flexibility === 'specific' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Event Date</div>
-                    <div className="request-info">
-                        {new Date(request.start_date).toLocaleDateString()}
-                    </div>
-                </div>
-            ) : request.date_flexibility === 'range' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Range</div>
-                    <div className="request-info">
-                        {`${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`}
-                    </div>
-                </div>
-            ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Preference</div>
-                    <div className="request-info">
-                        {request.date_timeframe === '3months' ? 'Within 3 months' :
-                         request.date_timeframe === '6months' ? 'Within 6 months' :
-                         request.date_timeframe === '1year' ? 'Within 1 year' :
-                         request.date_timeframe === 'more' ? 'More than 1 year' :
-                         'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Budget */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Budget Range</div>
-                <div className="request-info">${request.price_range}</div>
-            </div>
-
-            {/* Pinterest Link */}
-            {request.pinterest_link && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Pinterest Board</div>
-                    <div className="request-info">
-                        <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
-                            View Board
-                        </a>
-                    </div>
-                </div>
-            )}
-
-            {/* Additional Services */}
-            {request.additional_services && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Additional Services</div>
-                    <div className="request-info">
-                        {typeof request.additional_services === 'string'
-                            ? Object.entries(JSON.parse(request.additional_services))
-                                .filter(([_, value]) => value === true)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ')
-                            : Object.entries(request.additional_services)
-                                .filter(([_, value]) => value === true)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ') || 'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Colors Display */}
-            {request.colors && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Color Preferences</div>
-                    <div className="request-info">
-                        {typeof request.colors === 'string' 
-                            ? JSON.parse(request.colors).join(', ')
-                            : Array.isArray(request.colors) 
-                                ? request.colors.join(', ')
-                                : 'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Floral Arrangements */}
-            {request.floral_arrangements && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Floral Arrangements</div>
-                    <div className="request-info">
-                        {typeof request.floral_arrangements === 'string'
-                            ? Object.entries(JSON.parse(request.floral_arrangements))
-                                .filter(([key, value]) => value === true && !key.endsWith('Quantity'))
-                                .map(([key]) => {
-                                    const arrangements = JSON.parse(request.floral_arrangements);
-                                    const quantity = arrangements[`${key}Quantity`];
-                                    const label = key
-                                        .replace(/([A-Z])/g, ' $1')
-                                        .toLowerCase()
-                                        .replace(/^./, str => str.toUpperCase());
-                                    return quantity ? `${label} (${quantity})` : label;
-                                })
-                                .join(', ')
-                            : Object.entries(request.floral_arrangements)
-                                .filter(([key, value]) => value === true && !key.endsWith('Quantity'))
-                                .map(([key]) => {
-                                    const quantity = request.floral_arrangements[`${key}Quantity`];
-                                    const label = key
-                                        .replace(/([A-Z])/g, ' $1')
-                                        .toLowerCase()
-                                        .replace(/^./, str => str.toUpperCase());
-                                    return quantity ? `${label} (${quantity})` : label;
-                                })
-                                .join(', ') || 'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Flower Preferences */}
-            {request.flower_preferences && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Flower Preferences</div>
-                    <div className="request-info">
-                        {typeof request.flower_preferences === 'string'
-                            ? Object.entries(JSON.parse(request.flower_preferences))
-                                .filter(([_, value]) => value === true)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ')
-                            : Object.entries(request.flower_preferences)
-                                .filter(([_, value]) => value === true)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ') || 'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Additional Comments */}
-            {request.additional_comments && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Comments</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
-                </div>
-            )}
-
-            {/* Inspiration Photos */}
-            {filteredPhotos && filteredPhotos.length > 0 && (
-                <>
-                    <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
-                        Inspiration Photos
-                    </div>
-                    <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
-                        {filteredPhotos.map((photo, index) => {
-                            const publicUrl = getPublicUrl(photo.file_path);
-                            return (
-                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
-                                    <img
-                                        src={publicUrl || photo.photo_url}
-                                        className="photo"
-                                        alt={`Photo ${index + 1}`}
-                                        onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
-                                        }}
-                                        loading="lazy"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </>
-            )}
-        </div>
-    );
-
-    const renderVideographyRequest = () => (
-        <div className="request-summary-grid">
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Type</div>
-                <div className="request-info">{request.event_type || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Location</div>
-                <div className="request-info">{request.location}</div>
-            </div>
-
-            {/* Date Information */}
-            {request.date_flexibility === 'specific' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Event Date</div>
-                    <div className="request-info">
-                        {new Date(request.start_date).toLocaleDateString()}
-                    </div>
-                </div>
-            ) : request.date_flexibility === 'range' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Range</div>
-                    <div className="request-info">
-                        {`${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`}
-                    </div>
-                </div>
-            ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Preference</div>
-                    <div className="request-info">
-                        {request.date_timeframe === '3months' ? 'Within 3 months' :
-                         request.date_timeframe === '6months' ? 'Within 6 months' :
-                         request.date_timeframe === '1year' ? 'Within 1 year' :
-                         request.date_timeframe === 'more' ? 'More than 1 year' :
-                         'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Time</div>
-                <div className="request-info">
-                    {request.start_time ? `Start: ${request.start_time}` : 'Start time TBD'}
-                    <br />
-                    {request.end_time ? `End: ${request.end_time}` : 'End time TBD'}
-                </div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Number of People</div>
-                <div className="request-info">{request.num_people || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Duration (hours)</div>
-                <div className="request-info">{request.duration || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Indoor/Outdoor</div>
-                <div className="request-info">{request.indoor_outdoor || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Second Videographer</div>
-                <div className="request-info">{request.second_photographer ? 'Yes' : 'No'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Budget Range</div>
-                <div className="request-info">${request.price_range}</div>
-            </div>
-
-            {request.pinterest_link && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Pinterest Board</div>
-                    <div className="request-info">
-                        <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
-                            View Board
-                        </a>
-                    </div>
-                </div>
-            )}
-
-            {/* Style Preferences */}
-            {request.style_preferences && Object.keys(request.style_preferences).length > 0 && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Style Preferences</div>
-                    <div className="request-info">
-                        {Object.entries(request.style_preferences)
-                            .filter(([_, value]) => value)
-                            .map(([key]) => key.replace(/([A-Z])/g, ' $1')
-                                .toLowerCase()
-                                .replace(/^./, str => str.toUpperCase()))
-                            .join(', ') || 'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Deliverables */}
-            {request.deliverables && Object.keys(request.deliverables).length > 0 && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Deliverables</div>
-                    <div className="request-info">
-                        {Object.entries(request.deliverables)
-                            .filter(([_, value]) => value)
-                            .map(([key]) => key.replace(/([A-Z])/g, ' $1')
-                                .toLowerCase()
-                                .replace(/^./, str => str.toUpperCase()))
-                            .join(', ') || 'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {request.additional_info && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Information</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_info }} />
-                </div>
-            )}
-
-            {/* Inspiration Photos */}
-            {filteredPhotos && filteredPhotos.length > 0 && (
-                <>
-                    <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
-                        Inspiration Photos
-                    </div>
-                    <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
-                        {filteredPhotos.map((photo, index) => {
-                            const publicUrl = getPublicUrl(photo.file_path);
-                            return (
-                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
-                                    <img
-                                        src={publicUrl || photo.photo_url}
-                                        className="photo"
-                                        alt={`Photo ${index + 1}`}
-                                        onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
-                                        }}
-                                        loading="lazy"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </>
-            )}
-
-            {request.additional_comments && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Comments</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
-                </div>
-            )}
-        </div>
-    );
-
-    const renderWeddingPlanningRequest = () => (
-        <div className="request-summary-grid">
-            {/* Event Title */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                <div className="request-subtype">Event Title</div>
-                <div className="request-info">{request.event_title || 'Not specified'}</div>
-            </div>
-
-            {/* Basic Event Information */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Type</div>
-                <div className="request-info">{request.event_type || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Location</div>
-                <div className="request-info">{request.location || 'Not specified'}</div>
-            </div>
-
-            {/* Date Information */}
-            {request.date_flexibility === 'specific' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Event Date</div>
-                    <div className="request-info">
-                        {request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Not specified'}
-                    </div>
-                </div>
-            ) : request.date_flexibility === 'range' ? (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Range</div>
-                    <div className="request-info">
-                        {request.start_date && request.end_date 
-                            ? `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
-                            : 'Not specified'}
-                    </div>
-                </div>
-            ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Date Preference</div>
-                    <div className="request-info">
-                        {request.date_timeframe === '3months' ? 'Within 3 months' :
-                         request.date_timeframe === '6months' ? 'Within 6 months' :
-                         request.date_timeframe === '1year' ? 'Within 1 year' :
-                         request.date_timeframe === 'more' ? 'More than 1 year' :
-                         'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Time Information */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Time</div>
-                <div className="request-info">
-                    {request.start_time ? `Start: ${request.start_time}` : 'Start time TBD'}
-                    <br />
-                    {request.end_time ? `End: ${request.end_time}` : 'End time TBD'}
-                </div>
-            </div>
-
-            {/* Venue Information */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Venue Type</div>
-                <div className="request-info">{request.indoor_outdoor || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Venue Status</div>
-                <div className="request-info">{request.venue_status || 'Not specified'}</div>
-            </div>
-
-            {/* Guest Count */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Expected Guests</div>
-                <div className="request-info">{request.guest_count || 'Not specified'}</div>
-            </div>
-
-            {/* Budget */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Budget Range</div>
-                <div className="request-info">${request.budget_range || 'Not specified'}</div>
-            </div>
-
-            {/* Wedding Style */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Wedding Style</div>
-                <div className="request-info">{request.wedding_style || 'Not specified'}</div>
-            </div>
-
-            {/* Color Scheme */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Color Scheme</div>
-                <div className="request-info">{request.color_scheme || 'Not specified'}</div>
-            </div>
-
-            {/* Theme Preferences */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Theme Preferences</div>
-                <div className="request-info">{request.theme_preferences || 'Not specified'}</div>
-            </div>
-
-            {/* Vendor Preferences */}
-            {request.vendor_preferences && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Vendor Preferences</div>
-                    <div className="request-info">
-                        {typeof request.vendor_preferences === 'string'
-                            ? Object.entries(JSON.parse(request.vendor_preferences))
-                                .filter(([_, value]) => value)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ')
-                            : Object.entries(request.vendor_preferences)
-                                .filter(([_, value]) => value)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ') || 'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Additional Events */}
-            {request.additional_events && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Events</div>
-                    <div className="request-info">
-                        {typeof request.additional_events === 'string'
-                            ? Object.entries(JSON.parse(request.additional_events))
-                                .filter(([_, value]) => value)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ')
-                            : Object.entries(request.additional_events)
-                                .filter(([_, value]) => value)
-                                .map(([key]) => key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .toLowerCase()
-                                    .replace(/^./, str => str.toUpperCase()))
-                                .join(', ') || 'Not specified'}
-                    </div>
-                </div>
-            )}
-
-            {/* Pinterest Link */}
-            {request.pinterest_link && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Pinterest Board</div>
-                    <div className="request-info">
-                        <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
-                            View Board
-                        </a>
-                    </div>
-                </div>
-            )}
-
-            {/* Additional Comments */}
-            {request.additional_comments && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Comments</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
-                </div>
-            )}
-
-            {/* Coupon Code */}
-            {request.coupon_code && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Coupon Code</div>
-                    <div className="request-info">{request.coupon_code}</div>
-                </div>
-            )}
-
-            {/* Inspiration Photos */}
-            {filteredPhotos && filteredPhotos.length > 0 && (
-                <>
-                    <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
-                        Inspiration Photos
-                    </div>
-                    <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
-                        {filteredPhotos.map((photo, index) => {
-                            const publicUrl = getPublicUrl(photo.file_path);
-                            return (
-                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
-                                    <img
-                                        src={publicUrl || photo.photo_url}
-                                        className="photo"
-                                        alt={`Photo ${index + 1}`}
-                                        onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
-                                        }}
-                                        loading="lazy"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </>
-            )}
-        </div>
-    );
-
-    const renderDefaultRequest = () => (
-        <div className="request-summary-grid">
-            {/* Basic Info */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Event Type</div>
-                <div className="request-info">{request.event_type || request.service_type || 'Not specified'}</div>
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Location</div>
-                <div className="request-info">{request.location || 'Not specified'}</div>
-            </div>
-
-            {/* Service Details */}
-            {request.service_title && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Service Title</div>
-                    <div className="request-info">{request.service_title}</div>
-                </div>
-            )}
-
-            {request.service_description && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Service Description</div>
-                    <div className="request-info">{request.service_description}</div>
-                </div>
-            )}
-
-            {request.service_category && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Service Category</div>
-                    <div className="request-info">{request.service_category}</div>
-                </div>
-            )}
-
-            {/* Date and Time */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Date of Service</div>
-                <div className="request-info">{getDate()}</div>
-            </div>
-
-            {request.time_of_day && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Time of Day</div>
-                    <div className="request-info">{request.time_of_day}</div>
-                </div>
-            )}
-
-            {request.end_date && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">End Date</div>
-                    <div className="request-info">{new Date(request.end_date).toLocaleDateString()}</div>
-                </div>
-            )}
-
-            {/* Additional Details */}
-            {request.additional_details && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Details</div>
-                    <div className="request-info">{request.additional_details}</div>
-                </div>
-            )}
-
-            {/* Budget */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                <div className="request-subtype">Budget Range</div>
-                <div className="request-info">${request.price_range || request.budget_range || 'Not specified'}</div>
-            </div>
-
-            {/* Customer Info */}
-            {request.customer_location && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Customer Location</div>
-                    <div className="request-info">{request.customer_location}</div>
-                </div>
-            )}
-
-            {/* Media */}
-            {request.media_url && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Media</div>
-                    <div className="request-info">
-                        <a href={request.media_url} target="_blank" rel="noopener noreferrer">
-                            View Media
-                        </a>
-                    </div>
-                </div>
-            )}
-
-            {/* Coupon Code */}
-            {request.coupon_code && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                    <div className="request-subtype">Coupon Code</div>
-                    <div className="request-info">{request.coupon_code}</div>
-                </div>
-            )}
-
-            {/* Additional Comments */}
-            {request.additional_comments && (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1'}}>
-                    <div className="request-subtype">Additional Comments</div>
-                    <div className="request-info" dangerouslySetInnerHTML={{ __html: request.additional_comments }} />
-                </div>
-            )}
-
-            {/* Photos */}
-            {filteredPhotos && filteredPhotos.length > 0 && (
-                <>
-                    <div className="request-subtype" style={{gridColumn: '1 / -1'}}>
-                        Photos
-                    </div>
-                    <div className="photo-grid scroll-container" style={{gridColumn: '1 / -1'}}>
-                        {filteredPhotos.map((photo, index) => {
-                            const publicUrl = getPublicUrl(photo.file_path);
-                            return (
-                                <div className="photo-grid-item" key={index} onClick={() => handlePhotoClick(photo)}>
-                                    <img
-                                        src={publicUrl || photo.photo_url}
-                                        className="photo"
-                                        alt={`Photo ${index + 1}`}
-                                        onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/150?text=Image+Failed';
-                                        }}
-                                        loading="lazy"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </>
-            )}
-        </div>
-    );
-
-    const renderRequestDetails = () => {
-        const type = getRequestType();
-        console.log('renderRequestDetails - type:', type);
-        console.log('renderRequestDetails - request:', request);
-        
-        switch (type) {
-            case 'beauty_requests':
-                return renderBeautyRequest();
-            case 'photography_requests':
-                return renderPhotographyRequest();
-            case 'dj_requests':
-                return renderDJRequest();
-            case 'catering_requests':
-                return renderCateringRequest();
-            case 'florist_requests':
-                console.log('Rendering florist request...');
-                return renderFloristRequest();
-            case 'videography_requests':
-                return renderVideographyRequest();
-            case 'wedding_planning_requests':
-                return renderWeddingPlanningRequest();
-            default:
-                console.log('Falling back to default render...');
-                return renderDefaultRequest();
-        }
-    };
-
     const handlePhotoClick = (photo) => {
         setSelectedPhoto(photo);
     };
@@ -1626,42 +334,12 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         }
     };
 
-    const getTimeDifference = (createdAt) => {
-        const now = new Date();
-        const created = new Date(createdAt);
-        const diffInHours = Math.floor((now - created) / (1000 * 60 * 60));
-        const diffInDays = Math.floor(diffInHours / 24);
-        
-        if (diffInDays < 7) return 'New';
-        return `${diffInDays}d ago`;
-    };
-
-    const getDateDistance = (date) => {
-        const now = new Date();
-        const eventDate = new Date(date);
-        const diffInDays = Math.floor((eventDate - now) / (1000 * 60 * 60 * 24));
-        
-        if (diffInDays < 0) return 'Past event';
-        if (diffInDays === 0) return 'Today';
-        if (diffInDays === 1) return 'Tomorrow';
-        return '';
-    };
-
-    const isNew = (createdAt) => {
-        if (!createdAt) return false;
-        const now = new Date();
-        const created = new Date(createdAt);
-        const diffInDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
-        return diffInDays < 7;
-    };
-
     const checkPromotion = (createdAt) => {
         if (!createdAt) return null;
 
-        // Parse PostgreSQL timestamp string to get UTC milliseconds
         const createdParts = createdAt.split(/[^0-9]/);
         const year = parseInt(createdParts[0]);
-        const month = parseInt(createdParts[1]) - 1; // months are 0-based
+        const month = parseInt(createdParts[1]) - 1;
         const day = parseInt(createdParts[2]);
         const hour = parseInt(createdParts[3]);
         const minute = parseInt(createdParts[4]);
@@ -1671,29 +349,17 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         const created = Date.UTC(year, month, day, hour, minute, second, millisecond);
         const now = Date.now();
 
-        // Date comparison in local time (this part works fine)
         const localCreated = new Date(createdAt);
         const createdDate = localCreated.toLocaleDateString('en-CA');
         const specialDates = ['2025-01-11', '2025-01-25'];
-
-        // Debug logging
-        console.log('Raw createdAt:', createdAt);
-        console.log('Parsed created UTC:', new Date(created).toISOString());
-        console.log('Now:', new Date(now).toISOString());
-        console.log('Created parts:', { year, month, day, hour, minute, second, millisecond });
 
         if (!specialDates.includes(createdDate)) {
             return null;
         }
 
-        // Get milliseconds since creation
         const msSinceCreation = now - created;
         const minutesSinceCreation = msSinceCreation / (1000 * 60);
 
-        console.log('Milliseconds since creation:', msSinceCreation);
-        console.log('Minutes since creation:', minutesSinceCreation);
-
-        // Check time windows
         if (minutesSinceCreation < 30) {
             return {
                 message: "⚡ Save 2% (Now 6% vs. 8%)",
@@ -1735,7 +401,6 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                         return;
                 }
 
-                console.log('Fetching photos from table:', photoTable);
                 const { data: photos, error } = await supabase
                     .from(photoTable)
                     .select('*')
@@ -1747,7 +412,6 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                     return;
                 }
 
-                console.log('Fetched photos:', photos);
                 setFilteredPhotos(photos);
             } catch (err) {
                 console.error('Error in fetchPhotos:', err);
@@ -1780,10 +444,1044 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         return () => clearInterval(timer);
     }, [request.created_at]);
 
+    const renderRequestDetails = () => {
+        const type = getRequestType();
+        
+        switch (type) {
+            case 'wedding_planning_requests':
+                return (
+                    <WeddingPlanningRequest 
+                        request={request}
+                        filteredPhotos={filteredPhotos}
+                        onPhotoClick={handlePhotoClick}
+                        getPublicUrl={getPublicUrl}
+                    />
+                );
+            case 'beauty_requests':
+                return (
+                    <div className="request-summary-grid">
+                        <InfoField label="Event Type" value={request.event_type} />
+                        <InfoField label="Location" value={request.location} />
+                        <InfoField 
+                            label="Event Date" 
+                            value={request.start_date ? new Date(request.start_date).toLocaleDateString() : null} 
+                        />
+                        <InfoField label="Service Type" value={request.service_type} />
+                        <InfoField label="Number of People" value={request.num_people} />
+
+                        {(request.service_type === 'both' || request.service_type === 'hair') && (
+                            <>
+                                <InfoField label="Hairstyle Preferences" value={request.hairstyle_preferences} />
+                                <InfoField label="Hair Length & Type" value={request.hair_length_type} />
+                                <InfoField label="Extensions Needed" value={request.extensions_needed} />
+                                <InfoField label="Trial Session for Hair" value={request.trial_session_hair} />
+                            </>
+                        )}
+
+                        {(request.service_type === 'both' || request.service_type === 'makeup') && (
+                            <>
+                                <InfoField label="Makeup Style Preferences" value={request.makeup_style_preferences} />
+                                <InfoField label="Skin Type & Concerns" value={request.skin_type_concerns} />
+                                <InfoField label="Preferred Products or Allergies" value={request.preferred_products_allergies} />
+                                <InfoField label="Lashes Included" value={request.lashes_included} />
+                                <InfoField label="Trial Session for Makeup" value={request.trial_session_makeup} />
+                            </>
+                        )}
+
+                        <InfoField label="Group Discount Inquiry" value={request.group_discount_inquiry} />
+                        <InfoField label="On-Site Service Needed" value={request.on_site_service_needed} />
+                        <InfoField label="Budget Range" value={request.price_range ? `$${request.price_range}` : null} />
+
+                        {request.pinterest_link && (
+                            <InfoField 
+                                label="Pinterest Board" 
+                                value={
+                                    <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
+                                        View Board
+                                    </a>
+                                } 
+                            />
+                        )}
+
+                        {request.additional_info && (
+                            <InfoField 
+                                label="Additional Information" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_info }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        {filteredPhotos && filteredPhotos.length > 0 && (
+                            <PhotoGrid 
+                                photos={filteredPhotos} 
+                                onPhotoClick={handlePhotoClick} 
+                                getPublicUrl={getPublicUrl} 
+                            />
+                        )}
+                    </div>
+                );
+            case 'photography_requests':
+                return (
+                    <div className="request-summary-grid">
+                        <InfoField label="Event Type" value={request.event_type} />
+                        <InfoField label="Location" value={request.location} />
+                        
+                        {request.date_flexibility === 'specific' ? (
+                            <InfoField 
+                                label="Date" 
+                                value={request.start_date ? new Date(request.start_date).toLocaleDateString() : null} 
+                            />
+                        ) : request.date_flexibility === 'range' ? (
+                            <InfoField 
+                                label="Date Range" 
+                                value={request.start_date && request.end_date 
+                                    ? `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                                    : null} 
+                            />
+                        ) : (
+                            <InfoField 
+                                label="Date Preference" 
+                                value={request.date_timeframe === '3months' ? 'Within 3 months' :
+                                       request.date_timeframe === '6months' ? 'Within 6 months' :
+                                       request.date_timeframe === '1year' ? 'Within 1 year' :
+                                       request.date_timeframe === 'more' ? 'More than 1 year' : null} 
+                            />
+                        )}
+
+                        <InfoField 
+                            label="Time" 
+                            value={`${request.start_time_unknown ? 'Start time TBD' : request.start_time} - ${request.end_time_unknown ? 'End time TBD' : request.end_time}`} 
+                        />
+
+                        <InfoField 
+                            label="Number of People" 
+                            value={request.num_people_unknown ? 'TBD' : request.num_people} 
+                        />
+
+                        <InfoField 
+                            label="Duration (in hours)" 
+                            value={request.duration_unknown ? 'TBD' : request.duration} 
+                        />
+
+                        <InfoField label="Indoor/Outdoor" value={request.indoor_outdoor} />
+                        <InfoField label="Budget" value={request.price_range} />
+
+                        {request.pinterest_board && (
+                            <InfoField 
+                                label="Pinterest Board Link" 
+                                value={
+                                    <a href={request.pinterest_board} target="_blank" rel="noopener noreferrer">
+                                        View Board
+                                    </a>
+                                } 
+                            />
+                        )}
+
+                        <InfoField 
+                            label="Second Photographer" 
+                            value={request.second_photographer_unknown ? 'TBD' : request.second_photographer} 
+                        />
+
+                        {request.wedding_details && (
+                            <InfoField 
+                                label="Wedding Coverage" 
+                                value={Object.entries(request.wedding_details)
+                                    .filter(([_, value]) => value)
+                                    .map(([key]) => key
+                                        .replace(/([A-Z])/g, ' $1')
+                                        .toLowerCase()
+                                        .replace(/^./, str => str.toUpperCase()))
+                                    .join(', ')} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.style_preferences && (
+                            <InfoField 
+                                label="Style Preferences" 
+                                value={(() => {
+                                    try {
+                                        const preferences = typeof request.style_preferences === 'string' 
+                                            ? JSON.parse(request.style_preferences)
+                                            : request.style_preferences;
+                                            
+                                        const styleLabels = {
+                                            cinematic: 'Cinematic Film Style',
+                                            documentary: 'Documentary Style',
+                                            journalistic: 'Journalistic',
+                                            artistic: 'Artistic & Experimental',
+                                            romantic: 'Romantic',
+                                            traditional: 'Traditional',
+                                            luxury: 'Luxury Production'
+                                        };
+
+                                        const selectedStyles = Object.entries(preferences)
+                                            .filter(([_, value]) => value === true)
+                                            .map(([key]) => styleLabels[key] || key);
+
+                                        return selectedStyles.length > 0 
+                                            ? selectedStyles.join(', ') 
+                                            : 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing style preferences:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.deliverables && (
+                            <InfoField 
+                                label="Deliverables" 
+                                value={(() => {
+                                    try {
+                                        const delivs = typeof request.deliverables === 'string'
+                                            ? JSON.parse(request.deliverables)
+                                            : request.deliverables;
+
+                                        const deliverableLabels = {
+                                            digitalFiles: 'Digital Files',
+                                            printRelease: 'Print Release',
+                                            weddingAlbum: 'Wedding Album',
+                                            prints: 'Professional Prints',
+                                            rawFiles: 'RAW Footage',
+                                            engagement: 'Engagement Session'
+                                        };
+
+                                        const selectedDeliverables = Object.entries(delivs)
+                                            .filter(([_, value]) => value === true)
+                                            .map(([key]) => deliverableLabels[key] || key);
+
+                                        return selectedDeliverables.length > 0 
+                                            ? selectedDeliverables.join(', ') 
+                                            : 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing deliverables:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.coverage && (
+                            <InfoField 
+                                label="Coverage Details" 
+                                value={(() => {
+                                    try {
+                                        const coverage = typeof request.coverage === 'string'
+                                            ? JSON.parse(request.coverage)
+                                            : request.coverage;
+
+                                        const coverageLabels = {
+                                            preparation: 'Preparation',
+                                            ceremony: 'Ceremony',
+                                            reception: 'Reception',
+                                            firstLook: 'First Look',
+                                            bridalParty: 'Bridal Party',
+                                            familyPhotos: 'Family Photos',
+                                            speeches: 'Speeches',
+                                            dancing: 'Dancing',
+                                            sendOff: 'Send Off'
+                                        };
+
+                                        return Object.entries(coverage)
+                                            .filter(([_, value]) => value === true || value === 1 || value === 'true')
+                                            .map(([key]) => coverageLabels[key] || key)
+                                            .join(', ') || 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing coverage:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.wedding_details && (
+                            <InfoField 
+                                label="Wedding Details" 
+                                value={(() => {
+                                    try {
+                                        const details = typeof request.wedding_details === 'string'
+                                            ? JSON.parse(request.wedding_details)
+                                            : request.wedding_details;
+
+                                        return Object.entries(details)
+                                            .filter(([_, value]) => value === true || value === 1 || value === 'true')
+                                            .map(([key]) => key
+                                                .replace(/([A-Z])/g, ' $1')
+                                                .toLowerCase()
+                                                .replace(/^./, str => str.toUpperCase()))
+                                            .join(', ') || 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing wedding details:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.additional_info && (
+                            <InfoField 
+                                label="Additional Information" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_info }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        {request.additional_comments && (
+                            <InfoField 
+                                label="Additional Comments" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_comments }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        {filteredPhotos && filteredPhotos.length > 0 && (
+                            <PhotoGrid 
+                                photos={filteredPhotos} 
+                                onPhotoClick={handlePhotoClick} 
+                                getPublicUrl={getPublicUrl} 
+                            />
+                        )}
+                    </div>
+                );
+            case 'dj_requests':
+                return (
+                    <div className="request-summary-grid">
+                        <InfoField label="Event Type" value={request.event_type} />
+                        <InfoField label="Location" value={request.location} />
+                        
+                        {request.date_flexibility === 'specific' ? (
+                            <InfoField 
+                                label="Event Date" 
+                                value={request.start_date ? new Date(request.start_date).toLocaleDateString() : null} 
+                            />
+                        ) : request.date_flexibility === 'range' ? (
+                            <InfoField 
+                                label="Date Range" 
+                                value={request.start_date && request.end_date 
+                                    ? `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                                    : null} 
+                            />
+                        ) : (
+                            <InfoField 
+                                label="Date Preference" 
+                                value={request.date_timeframe === '3months' ? 'Within 3 months' :
+                                       request.date_timeframe === '6months' ? 'Within 6 months' :
+                                       request.date_timeframe === '1year' ? 'Within 1 year' :
+                                       request.date_timeframe === 'more' ? 'More than 1 year' : null} 
+                            />
+                        )}
+
+                        <InfoField label="Venue Type" value={request.indoor_outdoor} />
+
+                        {request.event_type === 'Wedding' && request.wedding_details && (
+                            <InfoField 
+                                label="Event Coverage" 
+                                value={Object.entries(request.wedding_details)
+                                    .filter(([_, value]) => value)
+                                    .map(([key]) => key.replace(/([A-Z])/g, ' $1').charAt(0).toUpperCase() + key.slice(1))
+                                    .join(', ')} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        <InfoField 
+                            label="Duration" 
+                            value={request.event_duration ? `${request.event_duration} hours` : null} 
+                        />
+
+                        <InfoField label="Expected Guests" value={request.estimated_guests} />
+                        <InfoField label="Equipment Setup" value={request.equipment_needed} />
+
+                        {request.equipment_notes && (
+                            <InfoField 
+                                label="Equipment Notes" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.equipment_notes }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        <InfoField 
+                            label="Music Preferences" 
+                            value={request.music_preferences 
+                                ? Object.entries(request.music_preferences)
+                                    .filter(([_, value]) => value)
+                                    .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
+                                    .join(', ')
+                                : null} 
+                            gridColumn="1 / -1"
+                        />
+
+                        <InfoField 
+                            label="Additional Services" 
+                            value={request.additional_services && request.additional_services.length > 0
+                                ? request.additional_services.map(service => {
+                                    const serviceNames = {
+                                        mcServices: '🎤 MC Services',
+                                        liveMixing: '🎶 Live Mixing',
+                                        uplighting: '🏮 Uplighting',
+                                        fogMachine: '🌫️ Fog Machine',
+                                        specialFx: '🎇 Special FX',
+                                        photoBooth: '📸 Photo Booth',
+                                        eventRecording: '🎥 Event Recording',
+                                        karaoke: '🎵 Karaoke'
+                                    };
+                                    return serviceNames[service] || service;
+                                }).join(', ')
+                                : 'None selected'} 
+                            gridColumn="1 / -1"
+                        />
+
+                        {request.special_songs?.playlist && (
+                            <InfoField 
+                                label="Music Playlist" 
+                                value={
+                                    <a href={request.special_songs.playlist} target="_blank" rel="noopener noreferrer">
+                                        View Playlist
+                                    </a>
+                                } 
+                            />
+                        )}
+
+                        {request.special_songs?.requests && (
+                            <InfoField 
+                                label="Special Song Requests" 
+                                value={<ReactQuill value={request.special_songs.requests} readOnly={true} theme="bubble" />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        <InfoField label="Budget Range" value={request.budget_range ? `$${request.budget_range}` : null} />
+
+                        {request.additional_info && (
+                            <InfoField 
+                                label="Additional Information" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_info }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        {request.additional_comments && (
+                            <InfoField 
+                                label="Additional Comments" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_comments }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+                    </div>
+                );
+            case 'florist_requests':
+                return (
+                    <div className="request-summary-grid">
+                        <InfoField label="Event Type" value={request.event_type} />
+                        <InfoField label="Event Title" value={request.event_title} />
+                        <InfoField label="Location" value={request.location} />
+                        
+                        {request.date_flexibility === 'specific' ? (
+                            <InfoField 
+                                label="Event Date" 
+                                value={request.start_date ? new Date(request.start_date).toLocaleDateString() : null} 
+                            />
+                        ) : request.date_flexibility === 'range' ? (
+                            <InfoField 
+                                label="Date Range" 
+                                value={request.start_date && request.end_date 
+                                    ? `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                                    : null} 
+                            />
+                        ) : (
+                            <InfoField 
+                                label="Date Preference" 
+                                value={request.date_timeframe === '3months' ? 'Within 3 months' :
+                                       request.date_timeframe === '6months' ? 'Within 6 months' :
+                                       request.date_timeframe === '1year' ? 'Within 1 year' :
+                                       request.date_timeframe === 'more' ? 'More than 1 year' : null} 
+                            />
+                        )}
+
+                        <InfoField 
+                            label="Event Time" 
+                            value={request.start_time_unknown ? 'Start time TBD' : request.start_time} 
+                        />
+                        <InfoField 
+                            label="End Time" 
+                            value={request.end_time_unknown ? 'End time TBD' : request.end_time} 
+                        />
+
+                        <InfoField 
+                            label="Number of People" 
+                            value={request.num_people_unknown ? 'TBD' : request.num_people} 
+                        />
+                        
+                        <InfoField 
+                            label="Duration (hours)" 
+                            value={request.duration_unknown ? 'TBD' : request.duration} 
+                        />
+                        
+                        <InfoField label="Indoor/Outdoor" value={request.indoor_outdoor} />
+                        <InfoField label="Budget Range" value={request.price_range ? `$${request.price_range}` : null} />
+
+                        {request.pinterest_link && (
+                            <InfoField 
+                                label="Pinterest Board" 
+                                value={
+                                    <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
+                                        View Board
+                                    </a>
+                                } 
+                            />
+                        )}
+
+                        {request.additional_services && (
+                            <InfoField 
+                                label="Additional Services" 
+                                value={(() => {
+                                    try {
+                                        const services = typeof request.additional_services === 'string'
+                                            ? JSON.parse(request.additional_services)
+                                            : request.additional_services;
+
+                                        const serviceLabels = {
+                                            setupAndTakedown: 'Setup & Takedown',
+                                            delivery: 'Delivery',
+                                            installation: 'Installation',
+                                            consultation: 'Consultation',
+                                            customDesign: 'Custom Design',
+                                            preservation: 'Preservation'
+                                        };
+
+                                        const selectedServices = Object.entries(services)
+                                            .filter(([_, value]) => value === true)
+                                            .map(([key]) => serviceLabels[key] || key);
+
+                                        return selectedServices.length > 0 
+                                            ? selectedServices.join(', ') 
+                                            : 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing additional services:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.colors && (
+                            <InfoField 
+                                label="Color Preferences" 
+                                value={(() => {
+                                    try {
+                                        const colors = typeof request.colors === 'string'
+                                            ? JSON.parse(request.colors)
+                                            : request.colors;
+
+                                        return Array.isArray(colors) 
+                                            ? colors.join(', ') 
+                                            : 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing colors:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.floral_arrangements && (
+                            <InfoField 
+                                label="Floral Arrangements" 
+                                value={(() => {
+                                    try {
+                                        const arrangements = typeof request.floral_arrangements === 'string'
+                                            ? JSON.parse(request.floral_arrangements)
+                                            : request.floral_arrangements;
+
+                                        const arrangementLabels = {
+                                            bridalBouquet: 'Bridal Bouquet',
+                                            bridesmaidBouquets: 'Bridesmaid Bouquets',
+                                            boutonnieres: 'Boutonnieres',
+                                            corsages: 'Corsages',
+                                            centerpieces: 'Centerpieces',
+                                            ceremonyArch: 'Ceremony Arch',
+                                            aisleMarkers: 'Aisle Markers',
+                                            altarArrangements: 'Altar Arrangements',
+                                            welcomeSign: 'Welcome Sign',
+                                            cakeFlowers: 'Cake Flowers',
+                                            tossBouquet: 'Toss Bouquet',
+                                            flowerCrown: 'Flower Crown',
+                                            flowerGirlBasket: 'Flower Girl Basket',
+                                            petalConfetti: 'Petal Confetti'
+                                        };
+
+                                        const selectedArrangements = Object.entries(arrangements)
+                                            .filter(([key, value]) => value === true && !key.endsWith('Quantity'))
+                                            .map(([key]) => {
+                                                const quantity = arrangements[`${key}Quantity`];
+                                                const label = arrangementLabels[key] || key;
+                                                return quantity ? `${label} (${quantity})` : label;
+                                            });
+
+                                        return selectedArrangements.length > 0 
+                                            ? selectedArrangements.join(', ') 
+                                            : 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing floral arrangements:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.flower_preferences && (
+                            <InfoField 
+                                label="Flower Preferences" 
+                                value={(() => {
+                                    try {
+                                        const preferences = typeof request.flower_preferences === 'string'
+                                            ? JSON.parse(request.flower_preferences)
+                                            : request.flower_preferences;
+
+                                        const preferenceLabels = {
+                                            roses: 'Roses',
+                                            peonies: 'Peonies',
+                                            hydrangeas: 'Hydrangeas',
+                                            lilies: 'Lilies',
+                                            orchids: 'Orchids',
+                                            tulips: 'Tulips',
+                                            sunflowers: 'Sunflowers',
+                                            daisies: 'Daisies',
+                                            wildflowers: 'Wildflowers',
+                                            succulents: 'Succulents',
+                                            greenery: 'Greenery',
+                                            seasonal: 'Seasonal Flowers'
+                                        };
+
+                                        const selectedPreferences = Object.entries(preferences)
+                                            .filter(([_, value]) => value === true)
+                                            .map(([key]) => preferenceLabels[key] || key);
+
+                                        return selectedPreferences.length > 0 
+                                            ? selectedPreferences.join(', ') 
+                                            : 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing flower preferences:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.additional_comments && (
+                            <InfoField 
+                                label="Additional Comments" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_comments }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        {filteredPhotos && filteredPhotos.length > 0 && (
+                            <PhotoGrid 
+                                photos={filteredPhotos} 
+                                onPhotoClick={handlePhotoClick} 
+                                getPublicUrl={getPublicUrl} 
+                            />
+                        )}
+                    </div>
+                );
+            case 'catering_requests':
+                return (
+                    <div className="request-summary-grid">
+                        <InfoField label="Event Type" value={request.event_type} />
+                        <InfoField label="Location" value={request.location} />
+                        
+                        {request.date_flexibility === 'specific' ? (
+                            <InfoField 
+                                label="Event Date" 
+                                value={request.start_date ? new Date(request.start_date).toLocaleDateString() : null} 
+                            />
+                        ) : request.date_flexibility === 'range' ? (
+                            <InfoField 
+                                label="Date Range" 
+                                value={request.start_date && request.end_date 
+                                    ? `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                                    : null} 
+                            />
+                        ) : (
+                            <InfoField 
+                                label="Date Preference" 
+                                value={request.date_timeframe === '3months' ? 'Within 3 months' :
+                                       request.date_timeframe === '6months' ? 'Within 6 months' :
+                                       request.date_timeframe === '1year' ? 'Within 1 year' :
+                                       request.date_timeframe === 'more' ? 'More than 1 year' : null} 
+                            />
+                        )}
+
+                        <InfoField 
+                            label="Event Time" 
+                            value={`${request.start_time ? `Start: ${request.start_time}` : 'Start time TBD'}
+                                   ${request.end_time ? `\nEnd: ${request.end_time}` : '\nEnd time TBD'}`} 
+                        />
+
+                        <InfoField label="Expected Guests" value={request.estimated_guests} />
+
+                        <InfoField 
+                            label="Food Style Preferences" 
+                            value={typeof request.food_preferences === 'object' 
+                                ? Object.entries(request.food_preferences)
+                                    .filter(([_, value]) => value)
+                                    .map(([key]) => key
+                                        .replace(/([A-Z])/g, ' $1')
+                                        .toLowerCase()
+                                        .replace(/^./, str => str.toUpperCase()))
+                                    .join(', ') 
+                                : request.food_preferences} 
+                            gridColumn="1 / -1"
+                        />
+
+                        <InfoField 
+                            label="Food Service Type" 
+                            value={(() => {
+                                switch (request.food_service_type) {
+                                    case 'onSite': return 'Cooking On-Site';
+                                    case 'delivered': return 'Delivered Ready-to-Serve';
+                                    case 'both': return 'Combination';
+                                    case 'flexible': return 'Flexible';
+                                    default: return request.food_service_type;
+                                }
+                            })()} 
+                        />
+
+                        <InfoField label="Kitchen Equipment" value={request.equipment_needed} />
+
+                        <InfoField 
+                            label="Serving Staff" 
+                            value={(() => {
+                                switch (request.serving_staff) {
+                                    case 'fullService': return 'Full Service Staff';
+                                    case 'partialService': return 'Partial Service';
+                                    case 'noService': return 'No Staff Needed';
+                                    case 'unsure': return 'Not Sure';
+                                    default: return request.serving_staff;
+                                }
+                            })()} 
+                        />
+
+                        <InfoField 
+                            label="Setup & Cleanup" 
+                            value={(() => {
+                                switch (request.setup_cleanup) {
+                                    case 'setupOnly': return 'Setup Only';
+                                    case 'cleanupOnly': return 'Cleanup Only';
+                                    case 'both': return 'Both Setup & Cleanup';
+                                    case 'neither': return 'Neither';
+                                    default: return request.setup_cleanup;
+                                }
+                            })()} 
+                        />
+
+                        <InfoField 
+                            label="Dining Items" 
+                            value={(() => {
+                                switch (request.dining_items) {
+                                    case 'provided': return 'Provided by Caterer';
+                                    case 'notProvided': return 'Not Needed';
+                                    case 'partial': return 'Partial (See Details Below)';
+                                    default: return request.dining_items;
+                                }
+                            })()} 
+                        />
+
+                        {request.dining_items_notes && (
+                            <InfoField 
+                                label="Dining Items Details" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.dining_items_notes }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        <InfoField 
+                            label="Budget Range" 
+                            value={(() => {
+                                switch (request.budget_range) {
+                                    case 'under1000': return 'Under $1,000';
+                                    case '1000-2000': return '$1,000 - $2,000';
+                                    case '2000-3000': return '$2,000 - $3,000';
+                                    case '3000-4000': return '$3,000 - $4,000';
+                                    case '4000-5000': return '$4,000 - $5,000';
+                                    case '5000+': return '$5,000+';
+                                    default: return request.budget_range ? `$${request.budget_range}` : null;
+                                }
+                            })()} 
+                        />
+
+                        {request.special_requests && (
+                            <InfoField 
+                                label="Special Requests" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.special_requests }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        {request.additional_info && (
+                            <InfoField 
+                                label="Additional Information" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_info }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        {filteredPhotos && filteredPhotos.length > 0 && (
+                            <PhotoGrid 
+                                photos={filteredPhotos} 
+                                onPhotoClick={handlePhotoClick} 
+                                getPublicUrl={getPublicUrl} 
+                            />
+                        )}
+
+                        {request.additional_comments && (
+                            <InfoField 
+                                label="Additional Comments" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_comments }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+                    </div>
+                );
+            case 'videography_requests':
+                console.log('Videography Request Data:', request);
+                console.log('Style Preferences:', request.style_preferences);
+                console.log('Deliverables:', request.deliverables);
+                return (
+                    <div className="request-summary-grid">
+                        <InfoField label="Event Type" value={request.event_type} />
+                        <InfoField label="Event Title" value={request.event_title} />
+                        <InfoField label="Location" value={request.location} />
+                        
+                        {request.date_flexibility === 'specific' ? (
+                            <InfoField 
+                                label="Event Date" 
+                                value={request.start_date ? new Date(request.start_date).toLocaleDateString() : null} 
+                            />
+                        ) : request.date_flexibility === 'range' ? (
+                            <InfoField 
+                                label="Date Range" 
+                                value={request.start_date && request.end_date 
+                                    ? `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                                    : null} 
+                            />
+                        ) : (
+                            <InfoField 
+                                label="Date Preference" 
+                                value={request.date_timeframe === '3months' ? 'Within 3 months' :
+                                       request.date_timeframe === '6months' ? 'Within 6 months' :
+                                       request.date_timeframe === '1year' ? 'Within 1 year' :
+                                       request.date_timeframe === 'more' ? 'More than 1 year' : null} 
+                            />
+                        )}
+
+                        <InfoField label="Time of Day" value={request.time_of_day} />
+
+                        <InfoField 
+                            label="Event Time" 
+                            value={request.start_time_unknown ? 'Start time TBD' : request.start_time} 
+                        />
+                        <InfoField 
+                            label="End Time" 
+                            value={request.end_time_unknown ? 'End time TBD' : request.end_time} 
+                        />
+
+                        <InfoField 
+                            label="Number of People" 
+                            value={request.num_people_unknown ? 'TBD' : request.num_people} 
+                        />
+                        
+                        <InfoField 
+                            label="Duration (hours)" 
+                            value={request.duration_unknown ? 'TBD' : request.duration} 
+                        />
+                        
+                        <InfoField label="Indoor/Outdoor" value={request.indoor_outdoor} />
+                        <InfoField label="Second Videographer" value={request.second_photographer} />
+                        <InfoField label="Budget Range" value={request.price_range} />
+
+                        {request.pinterest_link && (
+                            <InfoField 
+                                label="Pinterest Board" 
+                                value={
+                                    <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
+                                        View Board
+                                    </a>
+                                } 
+                            />
+                        )}
+
+                        {request.style_preferences && (
+                            <InfoField 
+                                label="Style Preferences" 
+                                value={(() => {
+                                    try {
+                                        const preferences = typeof request.style_preferences === 'string' 
+                                            ? JSON.parse(request.style_preferences)
+                                            : request.style_preferences;
+                                            
+                                        const styleLabels = {
+                                            cinematic: 'Cinematic Film Style',
+                                            documentary: 'Documentary Style',
+                                            journalistic: 'Journalistic',
+                                            artistic: 'Artistic & Experimental',
+                                            romantic: 'Romantic',
+                                            traditional: 'Traditional',
+                                            luxury: 'Luxury Production'
+                                        };
+
+                                        const selectedStyles = Object.entries(preferences)
+                                            .filter(([_, value]) => value === true)
+                                            .map(([key]) => styleLabels[key] || key);
+
+                                        return selectedStyles.length > 0 
+                                            ? selectedStyles.join(', ') 
+                                            : 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing style preferences:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.deliverables && (
+                            <InfoField 
+                                label="Deliverables" 
+                                value={(() => {
+                                    try {
+                                        const delivs = typeof request.deliverables === 'string'
+                                            ? JSON.parse(request.deliverables)
+                                            : request.deliverables;
+
+                                        const deliverableLabels = {
+                                            digitalFiles: 'Digital Files',
+                                            printRelease: 'Print Release',
+                                            weddingAlbum: 'Wedding Album',
+                                            prints: 'Professional Prints',
+                                            rawFiles: 'RAW Footage',
+                                            engagement: 'Engagement Session'
+                                        };
+
+                                        const selectedDeliverables = Object.entries(delivs)
+                                            .filter(([_, value]) => value === true)
+                                            .map(([key]) => deliverableLabels[key] || key);
+
+                                        return selectedDeliverables.length > 0 
+                                            ? selectedDeliverables.join(', ') 
+                                            : 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing deliverables:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.coverage && (
+                            <InfoField 
+                                label="Coverage Details" 
+                                value={(() => {
+                                    try {
+                                        const coverage = typeof request.coverage === 'string'
+                                            ? JSON.parse(request.coverage)
+                                            : request.coverage;
+
+                                        const coverageLabels = {
+                                            preparation: 'Preparation',
+                                            ceremony: 'Ceremony',
+                                            reception: 'Reception',
+                                            firstLook: 'First Look',
+                                            bridalParty: 'Bridal Party',
+                                            familyPhotos: 'Family Photos',
+                                            speeches: 'Speeches',
+                                            dancing: 'Dancing',
+                                            sendOff: 'Send Off'
+                                        };
+
+                                        return Object.entries(coverage)
+                                            .filter(([_, value]) => value === true || value === 1 || value === 'true')
+                                            .map(([key]) => coverageLabels[key] || key)
+                                            .join(', ') || 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing coverage:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.wedding_details && (
+                            <InfoField 
+                                label="Wedding Details" 
+                                value={(() => {
+                                    try {
+                                        const details = typeof request.wedding_details === 'string'
+                                            ? JSON.parse(request.wedding_details)
+                                            : request.wedding_details;
+
+                                        return Object.entries(details)
+                                            .filter(([_, value]) => value === true || value === 1 || value === 'true')
+                                            .map(([key]) => key
+                                                .replace(/([A-Z])/g, ' $1')
+                                                .toLowerCase()
+                                                .replace(/^./, str => str.toUpperCase()))
+                                            .join(', ') || 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing wedding details:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
+                                gridColumn="1 / -1"
+                            />
+                        )}
+
+                        {request.additional_info && (
+                            <InfoField 
+                                label="Additional Information" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_info }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        {request.additional_comments && (
+                            <InfoField 
+                                label="Additional Comments" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_comments }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        {filteredPhotos && filteredPhotos.length > 0 && (
+                            <PhotoGrid 
+                                photos={filteredPhotos} 
+                                onPhotoClick={handlePhotoClick} 
+                                getPublicUrl={getPublicUrl} 
+                            />
+                        )}
+                    </div>
+                );
+            default:
+                return <div>Unsupported request type</div>;
+        }
+    };
+
     return (
         <div className="request-display text-center mb-4">
-            {console.log('Final render - RequestType:', getRequestType())}
-            {console.log('Final render - Request:', request)}
             <div className="request-content p-3">
                 <h2 className="request-title">{getTitle()}</h2>
                 
@@ -1803,25 +1501,14 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                     {renderRequestDetails()}
                 </div>
             </div>
-{/* Add this modal */}
-{selectedPhoto && (
-    <div className="modal-overlay" onClick={handleCloseModal}>
-        <div className="modal-content-photo" onClick={e => e.stopPropagation()}>
-            <button 
-                className="remove-photo-button"
-                style={{ position: 'absolute', right: '10px', top: '10px' }}
-                onClick={handleCloseModal}
-            >
-                X
-            </button>
-            <img 
-                src={getPublicUrl(selectedPhoto.file_path) || selectedPhoto.photo_url} 
-                alt="Full size" 
-                style={{ maxWidth: '100%', maxHeight: '90vh' }}
-            />
-        </div>
-    </div>
-)}
+
+            {selectedPhoto && (
+                <PhotoModal 
+                    photo={selectedPhoto}
+                    onClose={handleCloseModal}
+                    getPublicUrl={getPublicUrl}
+                />
+            )}
         </div>
     );
 }
