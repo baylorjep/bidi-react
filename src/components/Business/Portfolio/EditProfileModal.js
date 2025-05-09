@@ -21,6 +21,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const [draggedElement, setDraggedElement] = useState(null);
   const [dragFeedback, setDragFeedback] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isCropping, setIsCropping] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
@@ -495,40 +496,41 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      // Set canvas size to desired dimensions
+      // Set canvas size to desired dimensions (400x400 for profile picture)
       canvas.width = 400;
       canvas.height = 400;
 
-      // Calculate scaling factors based on the original image and crop area
+      // Calculate the scale factor to maintain aspect ratio
       const scaleX = image.width / pixelCrop.width;
       const scaleY = image.height / pixelCrop.height;
-      const scale = Math.min(scaleX, scaleY);
+      const scale = Math.max(scaleX, scaleY); // Use max to ensure we cover the entire crop area
 
-      // Calculate the actual crop dimensions in the original image
-      const cropWidth = pixelCrop.width * scale;
-      const cropHeight = pixelCrop.height * scale;
+      // Calculate the scaled dimensions
+      const scaledWidth = image.width / scale;
+      const scaledHeight = image.height / scale;
 
-      // Calculate the actual crop position in the original image
-      const cropX = pixelCrop.x * scale;
-      const cropY = pixelCrop.y * scale;
+      // Calculate the position to center the image
+      const x = (canvas.width - scaledWidth) / 2;
+      const y = (canvas.height - scaledHeight) / 2;
 
       // Clear the canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#FFFFFF'; // Set white background
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw the cropped portion of the image
+      // Draw the image centered on the canvas
       ctx.drawImage(
         image,
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
-        0,
-        0,
-        canvas.width,
-        canvas.height
+        pixelCrop.x,
+        pixelCrop.y,
+        pixelCrop.width,
+        pixelCrop.height,
+        x,
+        y,
+        scaledWidth,
+        scaledHeight
       );
 
-      // Convert to JPEG first
+      // Convert to JPEG with high quality
       return new Promise((resolve, reject) => {
         canvas.toBlob(
           (blob) => {
@@ -563,6 +565,8 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     const imageUrl = URL.createObjectURL(file);
     setTempImageUrl(imageUrl);
     setIsCropping(true);
+    setZoom(1); // Reset zoom
+    setCrop({ x: 0, y: 0 }); // Reset crop position
   };
 
   // Add function to handle crop complete
@@ -600,65 +604,16 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
         throw new Error('No crop area selected');
       }
 
-      // Ensure crop area is valid
-      if (croppedAreaPixels.width <= 0 || croppedAreaPixels.height <= 0) {
-        throw new Error('Invalid crop area');
-      }
-
       // Get the cropped image as JPEG
       const croppedImage = await getCroppedImg(tempImageUrl, croppedAreaPixels);
       
-      // Create a new canvas for final processing
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      // Create an image from the cropped blob
-      const img = new Image();
-      const imgUrl = URL.createObjectURL(croppedImage);
-      
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = imgUrl;
-      });
-      
-      // Set canvas dimensions
-      canvas.width = 400;
-      canvas.height = 400;
-      
-      // Clear and draw the image
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      
-      // Try to convert to WebP, but fall back to JPEG if needed
-      let finalBlob;
-      try {
-        finalBlob = await new Promise((resolve, reject) => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error('Failed to convert to WebP'));
-                return;
-              }
-              resolve(blob);
-            },
-            'image/webp',
-            0.90
-          );
-        });
-      } catch (error) {
-        console.log('WebP conversion failed, using JPEG instead');
-        finalBlob = croppedImage;
-      }
-
-      const fileExt = finalBlob.type === 'image/webp' ? 'webp' : 'jpg';
-      const fileName = `${uuidv4()}.${fileExt}`;
+      const fileName = `${uuidv4()}.jpg`;
       const filePath = `${businessId}/${fileName}`;
 
-      // Upload the final image
+      // Upload the cropped image
       const { error: uploadError } = await supabase.storage
         .from('profile-photos')
-        .upload(filePath, finalBlob, { upsert: true });
+        .upload(filePath, croppedImage, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -706,7 +661,6 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       setIsCropping(false);
       setIsResizing(false);
       URL.revokeObjectURL(tempImageUrl);
-      URL.revokeObjectURL(imgUrl);
       setTempImageUrl(null);
     } catch (error) {
       console.error("Error processing profile picture:", error);
@@ -1097,62 +1051,219 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
 
             {/* Cropping Modal */}
             {isCropping && (
-              <div className="cropper-container">
-                <Cropper
-                  image={tempImageUrl}
-                  crop={crop}
-                  zoom={1}
-                  aspect={1}
-                  onCropChange={setCrop}
-                  onCropComplete={onCropComplete}
-                  showGrid={true}
-                  restrictPosition={false}
-                  cropShape="rect"
-                  style={{
-                    containerStyle: {
-                      width: '100%',
-                      height: '100%',
-                      position: 'relative',
-                      touchAction: 'none'
-                    },
-                    mediaStyle: {
-                      width: '100%',
-                      height: '100%',
-                      touchAction: 'none',
-                      objectFit: 'contain'
-                    },
-                    cropAreaStyle: {
-                      width: '100%',
-                      height: '100%',
-                      touchAction: 'none'
-                    }
-                  }}
-                  classes={{
-                    containerClassName: 'cropper-container',
-                    mediaClassName: 'cropper-media',
-                    cropAreaClassName: 'cropper-area'
-                  }}
-                />
-                <div className="cropper-controls">
-                  <button onClick={handleCropConfirm} disabled={uploadingProfile}>
-                    {uploadingProfile ? "Saving..." : "Save"}
-                  </button>
-                  <button onClick={handleCropCancel}>Cancel</button>
+              <div className="cropper-container" style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                zIndex: 1000,
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '20px',
+                boxSizing: 'border-box'
+              }}>
+                <div style={{
+                  flex: 1,
+                  position: 'relative',
+                  width: '100%',
+                  maxHeight: 'calc(100vh - 180px)',
+                  marginBottom: '20px'
+                }}>
+                  <Cropper
+                    image={tempImageUrl}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={1}
+                    onCropChange={setCrop}
+                    onCropComplete={(croppedArea, croppedAreaPixels) => {
+                      setCroppedAreaPixels(croppedAreaPixels);
+                    }}
+                    onZoomChange={setZoom}
+                    showGrid={true}
+                    restrictPosition={true}
+                    cropShape="rect"
+                    minZoom={0.5}
+                    maxZoom={3}
+                    style={{
+                      containerStyle: {
+                        width: '100%',
+                        height: '100%',
+                        position: 'relative',
+                        touchAction: 'none'
+                      },
+                      mediaStyle: {
+                        width: '100%',
+                        height: '100%',
+                        touchAction: 'none',
+                        objectFit: 'contain'
+                      },
+                      cropAreaStyle: {
+                        width: '100%',
+                        height: '100%',
+                        touchAction: 'none'
+                      }
+                    }}
+                  />
+                </div>
+                <div className="cropper-controls" style={{
+                  backgroundColor: 'white',
+                  padding: '15px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '15px'
+                }}>
+                  <div className="zoom-controls" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '15px',
+                    padding: '10px'
+                  }}>
+                    <button 
+                      onClick={() => setZoom(Math.max(0.5, zoom - 0.1))}
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#9633eb',
+                        border: '1px solid #ddd',
+                        borderRadius: '50%',
+                        fontSize: '24px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        userSelect: 'none',
+                        touchAction: 'manipulation'
+                      }}
+                      onTouchStart={(e) => e.preventDefault()}
+                    >
+                      −
+                    </button>
+                    <div style={{
+                      minWidth: '80px',
+                      textAlign: 'center',
+                      fontSize: '16px',
+                      fontWeight: '500',
+                      color: '#333'
+                    }}>
+                      {Math.round(zoom * 100)}%
+                    </div>
+                    <button 
+                      onClick={() => setZoom(Math.min(3, zoom + 0.1))}
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#9633eb',
+                        border: '1px solid #ddd',
+                        borderRadius: '50%',
+                        fontSize: '24px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        userSelect: 'none',
+                        touchAction: 'manipulation'
+                      }}
+                      onTouchStart={(e) => e.preventDefault()}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="action-buttons" style={{
+                    display: 'flex',
+                    gap: '10px'
+                  }}>
+                    <button 
+                      onClick={handleCropConfirm} 
+                      disabled={uploadingProfile}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        backgroundColor: '#d84888',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        cursor: 'pointer',
+                        opacity: uploadingProfile ? '0.7' : '1'
+                      }}
+                    >
+                      {uploadingProfile ? "Saving..." : "Save"}
+                    </button>
+                    <button 
+                      onClick={handleCropCancel}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        backgroundColor: '#f8f9fa',
+                        color: '#333',
+                        border: '1px solid #ddd',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Profile Picture Section */}
             {initialData.currentSection === 'profile' && initialData.profile_picture && !isCropping && (
-              <div className="profile-picture-container">
-                <label>Profile Picture</label>
-                <div className="profile-pic-wrapper">
-                  <img 
-                    src={profilePic || "/images/default.jpg"}
-                    alt="Profile"
-                    className="profile-pic-modal"
-                  />
-                  <div className="profile-pic-buttons">
+              <div className="profile-picture-container" style={{
+                width: '100%',
+                padding: '20px',
+                boxSizing: 'border-box'
+              }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '15px',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  color: '#333'
+                }}>Profile Picture</label>
+                <div className="profile-pic-wrapper" style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '20px',
+                  width: '100%'
+                }}>
+                  <div style={{
+                    position: 'relative',
+                    width: '200px',
+                    height: '200px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}>
+                    <img 
+                      src={profilePic || "/images/default.jpg"}
+                      alt="Profile"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center'
+                      }}
+                    />
+                  </div>
+                  <div className="profile-pic-buttons" style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    width: '100%',
+                    maxWidth: '300px'
+                  }}>
                     <input 
                       type="file" 
                       accept="image/*" 
@@ -1164,6 +1275,18 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                       className="edit-profile-button" 
                       onClick={() => profileFileInputRef.current.click()}
                       disabled={uploadingProfile}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        backgroundColor: '#d84888',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.3s ease',
+                        opacity: uploadingProfile ? '0.7' : '1'
+                      }}
                     >
                       {uploadingProfile ? "Uploading..." : "Edit Profile Picture"}
                     </button>
@@ -1173,6 +1296,18 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                           className="resize-profile-button"
                           onClick={handleResizeProfilePic}
                           disabled={uploadingProfile}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            backgroundColor: '#f8f9fa',
+                            color: '#333',
+                            border: '1px solid #ddd',
+                            borderRadius: '8px',
+                            fontSize: '16px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            opacity: uploadingProfile ? '0.7' : '1'
+                          }}
                         >
                           Resize Picture
                         </button>
@@ -1180,6 +1315,18 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                           className="remove-profile-button"
                           onClick={handleRemoveProfilePic}
                           disabled={uploadingProfile}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            backgroundColor: '#fff',
+                            color: '#dc3545',
+                            border: '1px solid #dc3545',
+                            borderRadius: '8px',
+                            fontSize: '16px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            opacity: uploadingProfile ? '0.7' : '1'
+                          }}
                         >
                           Remove Picture
                         </button>
