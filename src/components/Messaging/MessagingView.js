@@ -6,6 +6,7 @@ import { supabase } from "../../supabaseClient";
 import "../../styles/chat.css";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
+import { formatMessageText } from "../../utils/formatMessageText";
 
 export default function MessagingView({
   currentUserId,
@@ -299,7 +300,7 @@ export default function MessagingView({
             key={index}
             className={`message-bubble ${msg.senderId === currentUserId ? "sent" : "received"} ${!msg.seen && msg.senderId === currentUserId ? "unseen" : ""}`}
           >
-            {msg.message}
+            {formatMessageText(msg.message)}
             <div className="message-time">
               {new Date(msg.createdAt).toLocaleTimeString('en-US', {
                 hour: 'numeric',
