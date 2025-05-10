@@ -710,3 +710,21 @@
 .message-bubble a:hover {
   text-decoration: none;
 }
+
+.chat-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bidi-primary);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.chat-upload-btn:hover {
+  background: #8200c2;
+}
