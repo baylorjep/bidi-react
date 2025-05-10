@@ -70,18 +70,32 @@ export default function MessagingView({
           userData = individualData;
           setIsBusinessProfile(false);
         } else {
-          // If not found in individual_profiles, try business_profiles
-          const { data: businessData, error: businessError } = await supabase
-            .from("business_profiles")
+          // If not found in individual_profiles, try wedding_planner_profiles
+          const { data: weddingPlannerData, error: weddingPlannerError } = await supabase
+            .from("wedding_planner_profiles")
             .select("business_name")
             .eq("id", businessId)
             .single();
 
-          if (businessError) throw businessError;
-          setBusinessName(businessData.business_name || "Business");
-          setInitialLetter(businessData.business_name?.charAt(0)?.toUpperCase() || "");
-          userData = businessData;
-          setIsBusinessProfile(true);
+          if (!weddingPlannerError && weddingPlannerData) {
+            setBusinessName(weddingPlannerData.business_name || "Wedding Planner");
+            setInitialLetter(weddingPlannerData.business_name?.charAt(0)?.toUpperCase() || "");
+            userData = weddingPlannerData;
+            setIsBusinessProfile(true);
+          } else {
+            // If not found in wedding_planner_profiles, try business_profiles
+            const { data: businessData, error: businessError } = await supabase
+              .from("business_profiles")
+              .select("business_name")
+              .eq("id", businessId)
+              .single();
+
+            if (businessError) throw businessError;
+            setBusinessName(businessData.business_name || "Business");
+            setInitialLetter(businessData.business_name?.charAt(0)?.toUpperCase() || "");
+            userData = businessData;
+            setIsBusinessProfile(true);
+          }
         }
 
         // Get the profile photo
