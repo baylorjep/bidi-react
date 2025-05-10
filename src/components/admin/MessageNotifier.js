@@ -90,6 +90,19 @@ function MessageNotifier() {
 
             console.log('Fetched business profiles:', businessProfiles);
 
+            // Fetch wedding planning requests for context
+            const { data: weddingPlanningRequests, error: weddingPlanningError } = await supabase
+                .from('wedding_planning_requests')
+                .select('id, user_id, event_title, status')
+                .in('user_id', userIds);
+
+            if (weddingPlanningError) {
+                console.error('Error fetching wedding planning requests:', weddingPlanningError);
+                throw weddingPlanningError;
+            }
+
+            console.log('Fetched wedding planning requests:', weddingPlanningRequests);
+
             // Combine all the information
             const contacts = userIds.reduce((acc, userId) => {
                 const role = userRoles[userId];
@@ -104,14 +117,40 @@ function MessageNotifier() {
                     const businessProfile = businessProfiles.find(p => p.id === userId);
                     displayName = businessProfile ? businessProfile.business_name : 'N/A';
                     phone = businessProfile?.phone || 'Not provided';
+                } else if (role === 'both') {
+                    // For 'both' role, check both profiles and use business info if available
+                    const businessProfile = businessProfiles.find(p => p.id === userId);
+                    const individualProfile = individualProfiles.find(p => p.id === userId);
+                    
+                    // Prefer business name if available, otherwise use individual name
+                    displayName = businessProfile?.business_name || 
+                                 (individualProfile ? `${individualProfile.first_name} ${individualProfile.last_name}` : 'N/A');
+                    
+                    // Prefer business phone if available, otherwise use individual phone
+                    phone = businessProfile?.phone || individualProfile?.phone || 'Not provided';
+                    
+                    console.log('Both role user profiles:', {
+                        userId,
+                        businessProfile,
+                        individualProfile,
+                        finalDisplayName: displayName,
+                        finalPhone: phone
+                    });
                 }
+
+                // Add wedding planning request context if available
+                const userWeddingRequests = weddingPlanningRequests?.filter(req => req.user_id === userId) || [];
+                const weddingRequestContext = userWeddingRequests.length > 0 
+                    ? ` (${userWeddingRequests.length} wedding planning request${userWeddingRequests.length > 1 ? 's' : ''})`
+                    : '';
 
                 acc[userId] = {
                     email: profiles.find(p => p.id === userId)?.email || 'N/A',
-                    displayName: displayName,
+                    displayName: displayName + weddingRequestContext,
                     role: role,
                     phone: phone
                 };
+                console.log('Contact info for user', userId, ':', acc[userId]);
                 return acc;
             }, {});
 
@@ -141,7 +180,7 @@ function MessageNotifier() {
             return;
         }
         
-        const message = `You have a new message on Bidi! Click here to view: https://www.savewithbidi.com/messages`;
+        const message = `You have new messages on Bidi! Click here to view: https://www.savewithbidi.com/messages`;
         const smsLink = `sms:${formattedPhone}?body=${encodeURIComponent(message)}`;
         window.open(smsLink, '_blank');
     };
@@ -167,6 +206,17 @@ function MessageNotifier() {
             setTimeout(() => setError(''), 3000);
         }
     };
+
+    // Group messages by sender-receiver pairs
+    const groupedMessages = messages.reduce((groups, message) => {
+        // Use the original sender and receiver IDs in the key
+        const key = `${message.sender_id}-${message.receiver_id}`;
+        if (!groups[key]) {
+            groups[key] = [];
+        }
+        groups[key].push(message);
+        return groups;
+    }, {});
 
     if (loading) return <div>Loading messages...</div>;
 
@@ -196,12 +246,14 @@ function MessageNotifier() {
                 </div>
             ) : (
                 <div className="messages-list">
-                    {messages.map(message => {
-                        const sender = userContacts[message.sender_id];
-                        const receiver = userContacts[message.receiver_id];
+                    {Object.entries(groupedMessages).map(([key, messageGroup]) => {
+                        // Get the first message to determine sender and receiver
+                        const firstMessage = messageGroup[0];
+                        const sender = userContacts[firstMessage.sender_id];
+                        const receiver = userContacts[firstMessage.receiver_id];
                         
                         return (
-                            <div key={message.id} className="message-card">
+                            <div key={key} className="message-group">
                                 <div className="message-header">
                                     <div className="message-participants">
                                         <div className="sender-info">
@@ -219,23 +271,33 @@ function MessageNotifier() {
                                     </div>
                                     <div className="message-status">
                                         <span className="message-time">
-                                            {new Date(message.created_at).toLocaleString()}
+                                            {new Date(messageGroup[0].created_at).toLocaleString()}
                                         </span>
-                                        {!message.seen && (
+                                        {messageGroup.some(msg => !msg.seen) && (
                                             <Badge bg="warning" className="status-badge">
                                                 Unseen
                                             </Badge>
                                         )}
-                                        {!message.notified && (
+                                        {messageGroup.some(msg => !msg.notified) && (
                                             <Badge bg="danger" className="status-badge">
                                                 Unnotified
                                             </Badge>
                                         )}
+                                        <Badge bg="info" className="count-badge">
+                                            {messageGroup.length} message{messageGroup.length > 1 ? 's' : ''}
+                                        </Badge>
                                     </div>
                                 </div>
                                 <div className="message-body">
                                     <div className="message-content">
-                                        <p className="message-text">{message.message}</p>
+                                        {messageGroup.map(message => (
+                                            <div key={message.id} className="message-text-container">
+                                                <p className="message-text">{message.message}</p>
+                                                <small className="message-time">
+                                                    {new Date(message.created_at).toLocaleString()}
+                                                </small>
+                                            </div>
+                                        ))}
                                     </div>
                                     <div className="contact-info">
                                         <div className="sender-details">
@@ -250,16 +312,16 @@ function MessageNotifier() {
                                     <div className="action-buttons">
                                         <button
                                             className="sms-button"
-                                            onClick={() => handleSendSMS(message.receiver_id)}
+                                            onClick={() => handleSendSMS(firstMessage.receiver_id)}
                                             disabled={!receiver?.phone || receiver.phone === 'Not provided'}
                                         >
                                             <i className="fas fa-sms"></i> Send Text
                                         </button>
                                         <button
                                             className="mark-button"
-                                            onClick={() => markMessageAsNotified(message.id)}
+                                            onClick={() => messageGroup.forEach(msg => markMessageAsNotified(msg.id))}
                                         >
-                                            Mark as Notified
+                                            Mark All as Notified
                                         </button>
                                     </div>
                                 </div>
