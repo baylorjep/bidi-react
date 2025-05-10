@@ -26,6 +26,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const [isCropping, setIsCropping] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState(null);
+  const [minZoom, setMinZoom] = useState(1);
 
   useEffect(() => {
     if (isOpen) {
@@ -500,34 +501,17 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       canvas.width = 400;
       canvas.height = 400;
 
-      // Calculate the scale factor to maintain aspect ratio
-      const scaleX = image.width / pixelCrop.width;
-      const scaleY = image.height / pixelCrop.height;
-      const scale = Math.max(scaleX, scaleY); // Use max to ensure we cover the entire crop area
-
-      // Calculate the scaled dimensions
-      const scaledWidth = image.width / scale;
-      const scaledHeight = image.height / scale;
-
-      // Calculate the position to center the image
-      const x = (canvas.width - scaledWidth) / 2;
-      const y = (canvas.height - scaledHeight) / 2;
-
-      // Clear the canvas
-      ctx.fillStyle = '#FFFFFF'; // Set white background
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw the image centered on the canvas
+      // Draw the cropped area to fill the canvas
       ctx.drawImage(
         image,
         pixelCrop.x,
         pixelCrop.y,
         pixelCrop.width,
         pixelCrop.height,
-        x,
-        y,
-        scaledWidth,
-        scaledHeight
+        0,
+        0,
+        400,
+        400
       );
 
       // Convert to JPEG with high quality
@@ -1081,11 +1065,20 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                       setCroppedAreaPixels(croppedAreaPixels);
                     }}
                     onZoomChange={setZoom}
+                    onMediaLoaded={(mediaSize) => {
+                      // Calculate the minimum zoom so the whole image fits in the crop area (400x400)
+                      const minZoomValue = Math.max(
+                        400 / mediaSize.naturalWidth,
+                        400 / mediaSize.naturalHeight
+                      );
+                      setMinZoom(minZoomValue);
+                      setZoom(minZoomValue);
+                    }}
+                    minZoom={minZoom}
+                    maxZoom={3}
                     showGrid={true}
                     restrictPosition={true}
                     cropShape="rect"
-                    minZoom={0.5}
-                    maxZoom={3}
                     style={{
                       containerStyle: {
                         width: '100%',
