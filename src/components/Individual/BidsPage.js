@@ -33,6 +33,8 @@ export default function BidsPage({ onOpenChat }) {
     const [showShareSection, setShowShareSection] = useState(true);
     const [activeSection, setActiveSection] = useState("messages");
     const [selectedChat, setSelectedChat] = useState(null);
+    const [showMobileBids, setShowMobileBids] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState(null);
     const navigate = useNavigate();
 
     const isNew = (createdAt) => {
@@ -929,131 +931,6 @@ export default function BidsPage({ onOpenChat }) {
         return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
     };
 
-    const renderRequestCard = (request) => {
-        const requestTitle = request.event_title || request.title || 'Untitled Request';
-        const isOpen = request.status === "open" || request.status === "pending" || request.open;
-        
-        if (request.event_type) {
-            // Photo request card
-            return (
-                <div className="request-card">
-                    <div className="request-header">
-                        <h2 className="request-title">{requestTitle}</h2>
-                        <div className="request-status-container" style={{ display: 'flex', gap: '10px' }}>
-                            {isNew(request.created_at) && (
-                                <div className="request-status" style={{ 
-                                    backgroundColor: '#9633eb',
-                                    color: 'white'
-                                }}>New</div>
-                            )}
-                            <div className="request-status" style={{ 
-                                backgroundColor: isOpen ? '#9633eb' : 'white',
-                                color: isOpen ? 'white' : '#9633eb',
-                                border: isOpen ? 'none' : '1px solid #9633eb',
-                                marginLeft: isNew(request.created_at) ? '0' : 'auto'
-                            }}>
-                                {isOpen ? 'Open' : 'Closed'}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="request-details">
-                        <div className="detail-row">
-                            <span className="detail-label">Event Type:</span>
-                            <span className="detail-value">{request.event_type}</span>
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Date:</span>
-                            <span className="detail-value">{getDate(request)}</span>
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Location:</span>
-                            <span className="detail-value">{request.location}</span>
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Budget:</span>
-                            <span className="detail-value">${request.price_range}</span>
-                        </div>
-                    </div>
-                    <div className="request-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
-                        <button
-                            className="btn-danger"
-                            onClick={() => handleEdit(request)}
-                            style={{ padding: '8px 16px', fontSize: '14px' }}
-                        >
-                            Edit
-                        </button>
-                        <button
-                            className="btn-success"
-                            onClick={() => toggleRequestStatus(request)}
-                            style={{ padding: '8px 16px', fontSize: '14px' }}
-                        >
-                            {isOpen ? "Close" : "Reopen"}
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
-        // Regular service request card
-        return (
-            <div className="request-card">
-                <div className="request-header">
-                    <h2 className="request-title">{requestTitle}</h2>
-                    <div className="request-status-container" style={{ display: 'flex', gap: '10px' }}>
-                        {isNew(request.created_at) && (
-                            <div className="request-status" style={{ 
-                                backgroundColor: '#9633eb',
-                                color: 'white'
-                            }}>New</div>
-                        )}
-                        <div className="request-status" style={{ 
-                            backgroundColor: isOpen ? '#9633eb' : 'white',
-                            color: isOpen ? 'white' : '#9633eb',
-                            border: isOpen ? 'none' : '1px solid #9633eb',
-                            marginLeft: isNew(request.created_at) ? '0' : 'auto'
-                        }}>
-                            {isOpen ? 'Open' : 'Closed'}
-                        </div>
-                    </div>
-                </div>
-                <div className="request-details">
-                    <div className="detail-row">
-                        <span className="detail-label">Category:</span>
-                        <span className="detail-value">{request.service_category}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">Date:</span>
-                        <span className="detail-value">{getDate(request)}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">Location:</span>
-                        <span className="detail-value">{request.location}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">Budget:</span>
-                        <span className="detail-value">${request.price_range}</span>
-                    </div>
-                </div>
-                <div className="request-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
-                    <button
-                        className="btn-danger"
-                        onClick={() => handleEdit(request)}
-                        style={{ padding: '8px 16px', fontSize: '14px' }}
-                    >
-                        Edit
-                    </button>
-                    <button
-                        className="btn-success"
-                        onClick={() => toggleRequestStatus(request)}
-                        style={{ padding: '8px 16px', fontSize: '14px' }}
-                    >
-                        {isOpen ? "Close" : "Reopen"}
-                    </button>
-                </div>
-            </div>
-        );
-    };
-
     const renderNoBidsMessage = () => {
         const currentRequestBids = bids.filter(bid => bid.request_id === requests[currentRequestIndex]?.id);
         
@@ -1099,6 +976,137 @@ export default function BidsPage({ onOpenChat }) {
         setSelectedChat(chat);
     };
 
+    const getCategoryIcon = (type) => {
+        const typeMap = {
+            'photography': 'fa-camera',
+            'videography': 'fa-video',
+            'dj': 'fa-music',
+            'catering': 'fa-utensils',
+            'beauty': 'fa-spa',
+            'florist': 'fa-leaf',
+            'wedding_planning': 'fa-ring',
+            'regular': 'fa-star'
+        };
+        return typeMap[type] || typeMap.regular;
+    };
+
+    const formatCategoryType = (type) => {
+        const typeMap = {
+            'photography': 'Photography',
+            'videography': 'Videography',
+            'dj': 'DJ',
+            'catering': 'Catering',
+            'beauty': 'Hair & Makeup',
+            'florist': 'Florist',
+            'wedding_planning': 'Wedding Planning',
+            'regular': 'General Request'
+        };
+        return typeMap[type] || type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    };
+
+    const renderMobileNav = () => {
+        return (
+            <div className="mobile-nav">
+                <button 
+                    className={activeTab === 'pending' ? 'active' : ''}
+                    onClick={() => setActiveTab('pending')}
+                >
+                    <i className="fas fa-clock"></i>
+                    <span>Pending</span>
+                </button>
+                <button 
+                    className={activeTab === 'approved' ? 'active' : ''}
+                    onClick={() => setActiveTab('approved')}
+                >
+                    <i className="fas fa-check-circle"></i>
+                    <span>Approved</span>
+                </button>
+                <button 
+                    className={activeTab === 'denied' ? 'active' : ''}
+                    onClick={() => setActiveTab('denied')}
+                >
+                    <i className="fas fa-times-circle"></i>
+                    <span>Denied</span>
+                </button>
+            </div>
+        );
+    };
+
+    const handleRequestClick = (request, index) => {
+        if (window.innerWidth <= 1024) {
+            setSelectedRequest(request);
+            setCurrentRequestIndex(index);
+            setShowMobileBids(true);
+            setActiveTab('pending');
+        } else {
+            setCurrentRequestIndex(index);
+            setActiveTab('pending');
+        }
+    };
+
+    const handleCloseMobileBids = () => {
+        setShowMobileBids(false);
+        // Add a small delay before clearing the selected request
+        setTimeout(() => {
+            setSelectedRequest(null);
+        }, 300);
+    };
+
+    const renderMobileBidsView = () => {
+        if (!selectedRequest) return null;
+
+        return (
+            <>
+                <div 
+                    className={`mobile-backdrop ${showMobileBids ? 'active' : ''}`}
+                    onClick={handleCloseMobileBids}
+                />
+                <div className={`mobile-bids-view ${showMobileBids ? 'active' : ''}`}>
+                    <div className="mobile-bids-header">
+                        <button className="mobile-back-button" onClick={handleCloseMobileBids}>
+                            <i className="fas fa-arrow-left"></i>
+                            <span>Back</span>
+                        </button>
+                        <h2 className="mobile-bids-title">
+                            {selectedRequest.event_title || selectedRequest.title || 'Selected Request'}
+                        </h2>
+                    </div>
+                    <div className="mobile-bids-content">
+                        <div className="tabs">
+                            <button 
+                                className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('pending')}
+                            >
+                                <i className="fas fa-clock"></i>
+                                Pending Bids
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('approved')}
+                            >
+                                <i className="fas fa-check-circle"></i>
+                                Approved Bids
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('denied')}
+                            >
+                                <i className="fas fa-times-circle"></i>
+                                Denied Bids
+                            </button>
+                        </div>
+
+                        <div className="bids-container">
+                            {bids.filter(bid => bid.request_id === selectedRequest.id)
+                                .map(bid => renderBidCard(bid))}
+                            {renderNoBidsMessage()}
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    };
+
     return (
         <>
             <Helmet>
@@ -1109,33 +1117,76 @@ export default function BidsPage({ onOpenChat }) {
             <div className="bids-page">
                 <h1 className="section-title">Your Service Requests</h1>
                 <p className="section-description">
-                    Browse through your service requests using the arrows. Below, you'll find all bids received for the currently displayed request.
+                    View all your service requests and manage the bids you've received.
                 </p>
-
+                
                 {requests.length > 0 ? (
-                    <>
-                        <div className="request-swiper-container">
-                            <div className="swipe-indicator">
-                                Swipe to view more requests
-                            </div>
-                            <Swiper
-                                modules={[Navigation]}
-                                navigation={true}
-                                onSlideChange={(swiper) => setCurrentRequestIndex(swiper.activeIndex)}
-                                spaceBetween={30}
-                                slidesPerView={1}
-                            >
-                                {requests.map((request, index) => (
-                                    <SwiperSlide key={request.id}>
-                                        <div className="request-slide">
-                                            {renderRequestCard(request)}
+                    <div className="requests-list-container">
+                        <div className="requests-list">
+                            {requests.map((request, index) => (
+                                <div 
+                                    key={request.id} 
+                                    className={`request-card ${currentRequestIndex === index ? 'active' : ''}`}
+                                    onClick={() => handleRequestClick(request, index)}
+                                >
+                                    <div className="request-header">
+                                        <div className="request-category">
+                                            <div className="category-icon">
+                                                <i className={`fas ${getCategoryIcon(request.type)}`}></i>
+                                            </div>
+                                            <div className="category-info">
+                                                <span className="category-name">
+                                                    {formatCategoryType(request.type)}
+                                                </span>
+                                                <div className="request-status-container">
+                                                    {isNew(request.created_at) && (
+                                                        <div className="request-status new">New</div>
+                                                    )}
+                                                    <div className={`request-status ${(request.status === "open" || request.status === "pending" || request.open) ? 'open' : 'closed'}`}>
+                                                        {(request.status === "open" || request.status === "pending" || request.open) ? 'Open' : 'Closed'}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </SwiperSlide>
-                                ))}
-                            </Swiper>
+                                    </div>
+                                    <div className="request-actions">
+                                        <button
+                                            className="btn-edit"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEdit(request);
+                                            }}
+                                        >
+                                            <i className="fas fa-edit"></i>
+                                            Edit
+                                        </button>
+                                        <button
+                                            className="btn-toggle"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleRequestStatus(request);
+                                            }}
+                                        >
+                                            <i className={`fas ${(request.status === "open" || request.status === "pending" || request.open) ? 'fa-lock' : 'fa-unlock'}`}></i>
+                                            {(request.status === "open" || request.status === "pending" || request.open) ? "Close" : "Reopen"}
+                                        </button>
+                                    </div>
+                                    <div className="request-details">
+                                        <div className="detail-item">
+                                            <i className="fas fa-calendar"></i>
+                                            <span className="detail-label">Date:</span>
+                                            <span className="detail-value">{getDate(request)}</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <i className="fas fa-dollar-sign"></i>
+                                            <span className="detail-label">Budget:</span>
+                                            <span className="detail-value">${request.price_range}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-
-                    </>
+                    </div>
                 ) : (
                     <div className="no-requests" style={{
                         textAlign: 'center',
@@ -1172,43 +1223,50 @@ export default function BidsPage({ onOpenChat }) {
                     </div>
                 )}
 
-                <h2 className="section-title" style={{ marginTop: '40px', textAlign:'center' }}>Bids for Selected Request</h2>
-                <p className="section-description">
-                    Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
-                </p>
+                {/* Desktop bids section */}
+                {window.innerWidth > 1024 && currentRequestIndex >= 0 && (
+                    <div className={`bids-section ${currentRequestIndex >= 0 ? 'active' : ''}`}>
+                        <h2 className="section-title">
+                            Bids for {requests[currentRequestIndex]?.event_title || requests[currentRequestIndex]?.title || 'Selected Request'}
+                        </h2>
+                        <p className="section-description">
+                            Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
+                        </p>
 
-                <div className="tabs">
-                    <button 
-                        className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('pending')}
-                    >
-                        Pending Bids
-                    </button>
-                    <button 
-                        className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('approved')}
-                    >
-                        Approved Bids
-                    </button>
-                    <button 
-                        className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('denied')}
-                    >
-                        Denied Bids
-                    </button>
-                </div>
+                        <div className="tabs">
+                            <button 
+                                className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('pending')}
+                            >
+                                <i className="fas fa-clock"></i>
+                                Pending Bids
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('approved')}
+                            >
+                                <i className="fas fa-check-circle"></i>
+                                Approved Bids
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('denied')}
+                            >
+                                <i className="fas fa-times-circle"></i>
+                                Denied Bids
+                            </button>
+                        </div>
 
-                <div className="bids-container">
-                    {requests.length > 0 && currentRequestIndex >= 0 ? (
-                        <>
+                        <div className="bids-container">
                             {bids.filter(bid => bid.request_id === requests[currentRequestIndex].id)
                                 .map(bid => renderBidCard(bid))}
                             {renderNoBidsMessage()}
-                        </>
-                    ) : (
-                        <p className="no-bids">No bids to display</p>
-                    )}
-                </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Mobile bids view */}
+                {window.innerWidth <= 1024 && renderMobileBidsView()}
 
                 {showShareSection && (
                     <div className="share-earn-section" style={{ 
@@ -1242,25 +1300,31 @@ export default function BidsPage({ onOpenChat }) {
                         </p>
                         <div style={{display: 'flex', justifyContent: 'center'}}>
                             <button
-                            className="btn-primary"
-                            onClick={handleShareAndEarn}
-                            style={{
-                                padding: '12px 24px',
-                                fontSize: '16px',
-                                fontWeight: 'bold',
-                                background: '#9633eb',
-                                color:'white',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
-                            Get Your Referral Code
-                        </button>
+                                className="btn-primary"
+                                onClick={handleShareAndEarn}
+                                style={{
+                                    padding: '12px 24px',
+                                    fontSize: '16px',
+                                    fontWeight: 'bold',
+                                    background: '#9633eb',
+                                    color:'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '40px',
+                                    border: 'none',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
+                                Get Your Referral Code
+                            </button>
                         </div>
                     </div>
                 )}
+
+                {/* Add mobile navigation at the bottom */}
+                {window.innerWidth <= 1024 && renderMobileNav()}
             </div>
 
             {showAcceptModal && (

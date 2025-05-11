@@ -251,13 +251,13 @@ function BidDisplay({
               </div>
             </div>
             <div className="business-info">
-              <Link
-                to={`/portfolio/${bid.business_profiles.id}`}
-                className="business-name-bid-display"
-              >
-                {bid.business_profiles.business_name}
-              </Link>
-              <div className="business-badges">
+              <div className="business-name-container">
+                <Link
+                  to={`/portfolio/${bid.business_profiles.id}`}
+                  className="business-name-bid-display"
+                >
+                  {bid.business_profiles.business_name}
+                </Link>
                 {isBidiVerified && (
                   <img
                     src={bidiCheck}
@@ -265,6 +265,8 @@ function BidDisplay({
                     alt="Bidi Verified Icon"
                   />
                 )}
+              </div>
+              <div className="business-badges">
                 {averageRating && (
                   <span className="vendor-rating">
                     <img src={StarIcon} alt="Star" className="star-icon" />
