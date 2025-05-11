@@ -197,8 +197,8 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                                 </Link>
                                 )
                             ) : (
-                                <Link to="/signup" onClick={() => posthog.capture('signup_button_click')}>
-                                <button className='landing-page-button'>Start Now</button>
+                                <Link to="/request-categories" onClick={() => posthog.capture('signup_button_click')}>
+                                <button className='landing-page-button'>Start Getting Bids</button>
                                 </Link>
                             )}
                         </div>

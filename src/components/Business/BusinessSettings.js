@@ -690,7 +690,7 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
             <button
               style={{ fontWeight: "bold", color: "#9633eb" }}
               className="btn-primary flex-fill"
-              onClick={() => navigate("/admin-dashboard")}
+              onClick={() => setActiveSection("admin")}
             >
               <img src={bidiLogo} className="admin-logo" alt="Admin" />
               Admin Dashboard

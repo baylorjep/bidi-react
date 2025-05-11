@@ -1,0 +1,121 @@
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  background: white;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  width: 250px; /* Add explicit width */
+  padding: 10px;
+}
+
+.sidebar.hidden {
+  transform: translateX(-100%);
+}
+
+.sidebar.visible {
+  transform: translateX(0);
+}
+
+/* Add overlay styles */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 999;
+  display: none;
+}
+
+.sidebar-overlay.visible {
+  display: block;
+}
+
+/* Add show sidebar button styles */
+.show-sidebar-button {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  padding: 10px;
+  cursor: pointer;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.show-sidebar-button:hover {
+  background: #f5f5f5;
+}
+
+.show-sidebar-button i {
+  font-size: 16px;
+  color: #666;
+}
+
+.pin-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  z-index: 1001;
+}
+
+.pin-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.pin-button i {
+  font-size: 16px;
+  color: #666;
+  transition: transform 0.2s ease;
+}
+
+.pin-button i.pinned {
+  transform: rotate(45deg);
+  color: #9633eb;
+}
+
+/* Adjust main content when sidebar is visible */
+.dashboard-main {
+  transition: margin-left 0.3s ease;
+  margin-left: 250px;
+}
+
+.sidebar.hidden + .dashboard-main {
+  margin-left: 0;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.visible {
+    transform: translateX(0);
+  }
+
+  .dashboard-main {
+    margin-left: 0;
+  }
+
+  .show-sidebar-button {
+    display: none; /* Hide show button on mobile */
+  }
+} 

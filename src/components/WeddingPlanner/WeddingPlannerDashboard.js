@@ -5,6 +5,7 @@ import "../../App.css";
 import "../../styles/BusinessDashboard.css";
 import "../../styles/IndividualDashboard.css";
 import "../../styles/WeddingPlannerDashboard.css";
+import "../../styles/Sidebar.css";
 import verifiedCheckIcon from "../../assets/images/Icons/verified-check.svg";
 import dashboardIcon from "../../assets/images/Icons/dashboard.svg";
 import bidsIcon from "../../assets/images/Icons/bids.svg";
@@ -35,7 +36,8 @@ const WeddingPlannerDashboard = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const navigate = useNavigate();
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [isHoveringSidebar, setIsHoveringSidebar] = useState(false);
+  const [isPinned, setIsPinned] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(false);
   const sidebarRef = React.useRef(null);
   const location = useLocation();
   const [businessName, setBusinessName] = useState("");
@@ -214,27 +216,10 @@ const WeddingPlannerDashboard = () => {
     );
   };
 
-  // Add mouse move event listener to detect when mouse is near sidebar
   useEffect(() => {
-    if (isMobile) return; // Only apply on desktop
-
-    const handleMouseMove = (e) => {
-      if (!sidebarRef.current) return;
-      
-      const sidebarRect = sidebarRef.current.getBoundingClientRect();
-      const mouseX = e.clientX;
-      
-      // Show sidebar when mouse is within 50px of the left edge
-      if (mouseX <= 50) {
-        setIsSidebarVisible(true);
-      } else if (!isHoveringSidebar && mouseX > sidebarRect.right) {
-        setIsSidebarVisible(false);
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [isMobile, isHoveringSidebar]);
+    if (isMobile) return;
+    setIsSidebarVisible(isPinned);
+  }, [isPinned, isMobile]);
 
   const handleMessagesClick = () => {
     if (isMobile) {
@@ -269,6 +254,18 @@ const WeddingPlannerDashboard = () => {
     setShowVendorMenu(false);
   };
 
+  const handleShowSidebar = () => {
+    setIsSidebarVisible(true);
+    setShowOverlay(true);
+  };
+
+  const handleOverlayClick = () => {
+    if (!isPinned) {
+      setIsSidebarVisible(false);
+      setShowOverlay(false);
+    }
+  };
+
   if (error) {
     return <div>Error: {error}</div>;
   }
@@ -283,9 +280,24 @@ const WeddingPlannerDashboard = () => {
         <aside 
           className={`sidebar ${isSidebarVisible ? 'visible' : 'hidden'}`}
           ref={sidebarRef}
-          onMouseEnter={() => setIsHoveringSidebar(true)}
-          onMouseLeave={() => setIsHoveringSidebar(false)}
         >
+          {/* Add pin button at the top of sidebar */}
+          <button 
+            className="pin-button"
+            onClick={() => {
+              setIsPinned(!isPinned);
+              if (!isPinned) {
+                setIsSidebarVisible(true);
+                setShowOverlay(true);
+              } else {
+                setShowOverlay(false);
+              }
+            }}
+            title={isPinned ? "Unpin Sidebar" : "Pin Sidebar"}
+          >
+            <i className={`fas fa-thumbtack ${isPinned ? 'pinned' : ''}`}></i>
+          </button>
+
           {/* Profile Section */}
           <div className="profile-section">
             <img src={profileImage} alt="Profile" className="profile-pic" />
@@ -367,6 +379,25 @@ const WeddingPlannerDashboard = () => {
             </li>
           </ul>
         </aside>
+
+        {/* Overlay for click-away behavior */}
+        {showOverlay && !isPinned && (
+          <div 
+            className={`sidebar-overlay ${showOverlay ? 'visible' : ''}`}
+            onClick={handleOverlayClick}
+          />
+        )}
+
+        {/* Show Sidebar Button */}
+        {!isSidebarVisible && !isMobile && (
+          <button 
+            className="show-sidebar-button"
+            onClick={handleShowSidebar}
+            title="Show Sidebar"
+          >
+            <i className="fas fa-chevron-right"></i>
+          </button>
+        )}
 
         {/* Main Dashboard */}
         <main className="dashboard-main">

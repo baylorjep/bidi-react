@@ -42,10 +42,10 @@ function OpenRequests() {
   const [businessType, setBusinessType] = useState("");
   const [userBids, setUserBids] = useState(new Set()); // Add this new state
   const [minimumPrice, setMinimumPrice] = useState(null);
-  const [hiddenRequests, setHiddenRequests] = useState(new Set());
-  const [showHidden, setShowHidden] = useState(false);
+  const [businessId, setBusinessId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
 
   // Add this new function to fetch user's bids
   const fetchUserBids = async (userId) => {
@@ -103,6 +103,7 @@ function OpenRequests() {
 
         setBusinessType(profileData.business_category);
         setMinimumPrice(profileData.minimum_price);
+        setBusinessId(userData.user.id); // Set businessId for later use
       } catch (err) {
         console.error("Error fetching business type:", err);
         setError("Error fetching business type.");
@@ -113,32 +114,6 @@ function OpenRequests() {
 
     fetchUserBusinessType();
   }, []);
-
-  useEffect(() => {
-    // Load hidden requests from localStorage
-    const hidden = JSON.parse(localStorage.getItem("hiddenRequests") || "[]");
-    setHiddenRequests(new Set(hidden));
-  }, []);
-
-  const hideRequest = (requestId) => {
-    const newHiddenRequests = new Set(hiddenRequests);
-    newHiddenRequests.add(requestId);
-    setHiddenRequests(newHiddenRequests);
-    localStorage.setItem(
-      "hiddenRequests",
-      JSON.stringify([...newHiddenRequests])
-    );
-  };
-
-  const showRequest = (requestId) => {
-    const newHiddenRequests = new Set(hiddenRequests);
-    newHiddenRequests.delete(requestId);
-    setHiddenRequests(newHiddenRequests);
-    localStorage.setItem(
-      "hiddenRequests",
-      JSON.stringify([...newHiddenRequests])
-    );
-  };
 
   const isNew = (createdAt) => {
     const now = new Date();
@@ -390,62 +365,38 @@ function OpenRequests() {
           setOpenRequests(combinedRequests);
           setOpenPhotoRequests([]);
         } else {
-          // Original logic for other categories
-          const categoryInfo =
-            SERVICE_CATEGORY_MAPPING[businessType.toLowerCase()];
-
-          const [specificTableData, legacyRequestsData] = await Promise.all([
+          // Handle other business types (catering, dj, etc.)
+          const [categoryData, legacyRequestsData] = await Promise.all([
             supabase
-              .from(categoryInfo.table)
+              .from(`${businessType.toLowerCase()}_requests`)
               .select("*")
               .in("status", ["pending", "open"])
               .order("created_at", { ascending: false }),
             supabase
               .from("requests")
               .select("*")
-              .eq("service_category", categoryInfo.legacy)
+              .eq("service_category", businessType.toLowerCase())
               .eq("open", true)
               .order("created_at", { ascending: false }),
           ]);
 
-          console.log("Fetching requests for:", businessType);
-          console.log("From specific table:", categoryInfo.table);
-          console.log("Legacy category:", categoryInfo.legacy);
-          console.log(
-            "Specific table results:",
-            specificTableData.data?.length
-          );
-          console.log(
-            "Legacy table results:",
-            legacyRequestsData.data?.length
-          );
-
           const combinedRequests = [
-            ...(specificTableData.data?.map((req) => ({
+            ...(categoryData.data?.map((req) => ({
               ...req,
-              table_name: categoryInfo.table,
-              service_title:
-                req.title ||
-                req.event_title ||
-                `${req.event_type} ${businessType} Request`,
-              service_category: categoryInfo.legacy,
+              table_name: `${businessType.toLowerCase()}_requests`,
+              service_title: req.title || req.event_title || `${businessType} Request`,
+              service_category: businessType.toLowerCase(),
             })) || []),
             ...(legacyRequestsData.data?.map((req) => ({
               ...req,
               table_name: "requests",
-              service_title:
-                req.service_title || req.title || `${businessType} Request`,
-              service_category: categoryInfo.legacy,
+              service_title: req.service_title || req.title || `${businessType} Request`,
+              service_category: businessType.toLowerCase(),
             })) || []),
           ];
 
-          if (businessType.toLowerCase() === "photography") {
-            setOpenPhotoRequests(combinedRequests);
-            setOpenRequests([]);
-          } else {
-            setOpenRequests(combinedRequests);
-            setOpenPhotoRequests([]);
-          }
+          setOpenRequests(combinedRequests);
+          setOpenPhotoRequests([]);
         }
       } catch (error) {
         console.error("Error in fetchRequests:", error);
@@ -504,12 +455,241 @@ function OpenRequests() {
     return true; // Default to showing the request if format is unknown
   };
 
+  // Add new function to check if a request's date has passed
+  const isDatePassed = (request) => {
+    // If date is flexible or a range, don't hide
+    if (request.date_flexibility === 'flexible' || request.date_flexibility === 'range') {
+      return false;
+    }
+
+    // For specific dates, check if the date has passed
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+
+    // Check start_date for specific date requests
+    if (request.start_date) {
+      const startDate = new Date(request.start_date);
+      startDate.setHours(0, 0, 0, 0);
+      return startDate < today;
+    }
+
+    // If no date is specified, don't hide
+    return false;
+  };
+
   const sortByNewAndDate = (a, b) => {
     const aIsNew = isNew(a.created_at);
     const bIsNew = isNew(b.created_at);
     if (aIsNew && !bIsNew) return -1;
     if (!aIsNew && bIsNew) return 1;
     return new Date(b.created_at) - new Date(a.created_at);
+  };
+
+  // Helper to update hidden_by_vendor in the DB
+  async function updateHiddenByVendor(requestId, tableName, businessId, hide) {
+    console.log('updateHiddenByVendor called with:', {
+      requestId,
+      tableName,
+      businessId,
+      hide
+    });
+
+    try {
+      // First, verify the table exists and we can access it
+      const { data: tableCheck, error: tableError } = await supabase
+        .from(tableName)
+        .select('id')
+        .limit(1);
+      
+      if (tableError) {
+        console.error(`Error accessing table ${tableName}:`, tableError);
+        return false;
+      }
+
+      // Fetch the latest array from Supabase
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('hidden_by_vendor, id')
+        .eq('id', requestId)
+        .single();
+      
+      console.log('Fetched data from Supabase:', { data, error });
+      
+      if (error) {
+        console.error('Error fetching hidden_by_vendor:', error);
+        return false;
+      }
+
+      if (!data) {
+        console.error('No data returned from Supabase for request:', requestId);
+        return false;
+      }
+
+      let hidden = Array.isArray(data.hidden_by_vendor) ? data.hidden_by_vendor : [];
+      console.log('Current hidden array:', hidden);
+      
+      if (hide) {
+        if (!hidden.includes(businessId)) {
+          hidden.push(businessId);
+          console.log('Added businessId to hidden array');
+        }
+      } else {
+        hidden = hidden.filter(id => id !== businessId);
+        console.log('Removed businessId from hidden array');
+      }
+      console.log('Updated hidden array:', hidden);
+      
+      // Perform the update - only update hidden_by_vendor
+      const { data: updateData, error: updateError } = await supabase
+        .from(tableName)
+        .update({ hidden_by_vendor: hidden })
+        .eq('id', requestId)
+        .select();
+      
+      console.log('Update result:', { updateData, updateError });
+      
+      if (updateError) {
+        console.error('Error updating hidden_by_vendor:', updateError);
+        return false;
+      }
+
+      if (!updateData || updateData.length === 0) {
+        console.error('No data returned after update');
+        return false;
+      }
+
+      console.log('Successfully updated hidden_by_vendor');
+      return true;
+    } catch (error) {
+      console.error('Unexpected error in updateHiddenByVendor:', error);
+      return false;
+    }
+  }
+
+  const hideRequest = async (requestId, tableName) => {
+    console.log('hideRequest called with:', { requestId, tableName, businessId });
+    
+    if (!businessId) {
+      console.error('No businessId available');
+      return;
+    }
+
+    try {
+      // Update DB first
+      const success = await updateHiddenByVendor(requestId, tableName, businessId, true);
+      console.log('Database update result:', { success });
+      
+      if (success) {
+        // Only update UI after successful DB update
+        if (["photography", "videography"].includes(businessType?.toLowerCase())) {
+          console.log('Updating openPhotoRequests');
+          setOpenPhotoRequests(prev => {
+            const filtered = prev.filter(req => req.id !== requestId);
+            console.log('Previous photo requests count:', prev.length);
+            console.log('New photo requests count:', filtered.length);
+            return filtered;
+          });
+        } else {
+          console.log('Updating openRequests');
+          setOpenRequests(prev => {
+            const filtered = prev.filter(req => req.id !== requestId);
+            console.log('Previous requests count:', prev.length);
+            console.log('New requests count:', filtered.length);
+            return filtered;
+          });
+        }
+
+        // Force a re-render
+        setShowHidden(prev => !prev);
+        setTimeout(() => setShowHidden(prev => !prev), 0);
+      } else {
+        console.error('Failed to update hidden_by_vendor in database');
+      }
+    } catch (error) {
+      console.error('Error in hideRequest:', error);
+    }
+  };
+
+  const showRequest = async (requestId, tableName) => {
+    if (!businessId) return;
+    const success = await updateHiddenByVendor(requestId, tableName, businessId, false);
+    if (success) {
+      // Fetch the updated request from Supabase and update local state
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq('id', requestId)
+        .single();
+      if (!error && data) {
+        if (["photography", "videography"].includes(businessType?.toLowerCase())) {
+          setOpenPhotoRequests(prev => {
+            // If not already present, add it
+            if (!prev.some(r => r.id === requestId)) {
+              return [...prev, data];
+            }
+            // Otherwise, update it
+            return prev.map(r => r.id === requestId ? data : r);
+          });
+        } else {
+          setOpenRequests(prev => {
+            if (!prev.some(r => r.id === requestId)) {
+              return [...prev, data];
+            }
+            return prev.map(r => r.id === requestId ? data : r);
+          });
+        }
+      }
+    }
+  };
+
+  // Helper to filter requests by hidden status
+  const filterRequestsByHidden = (requests) => {
+    console.log('Filtering requests by hidden status:', {
+      showHidden,
+      businessId,
+      requestCount: requests.length,
+      requests: requests.map(r => ({ id: r.id, hidden: r.hidden_by_vendor }))
+    });
+    
+    const filtered = showHidden
+      ? requests.filter(req => req.hidden_by_vendor?.includes(businessId))
+      : requests.filter(req => !req.hidden_by_vendor?.includes(businessId));
+    
+    console.log('Filtered requests:', {
+      count: filtered.length,
+      ids: filtered.map(r => r.id)
+    });
+    return filtered;
+  };
+
+  // Helper to get the correct table name for a request
+  const getTableName = (request) => {
+    console.log('Getting table name for request:', {
+      table_name: request.table_name,
+      service_category: request.service_category,
+      request_id: request.id
+    });
+    
+    if (request.table_name) {
+      console.log('Using table_name from request:', request.table_name, request);
+      return request.table_name;
+    }
+    const cat = (request.service_category || '').toLowerCase();
+    console.log('Service category (lowercase):', cat);
+    
+    let table;
+    switch (cat) {
+      case "catering": table = "catering_requests"; break;
+      case "videography": table = "videography_requests"; break;
+      case "photography": table = "photography_requests"; break;
+      case "dj": table = "dj_requests"; break;
+      case "beauty": table = "beauty_requests"; break;
+      case "florist": table = "florist_requests"; break;
+      case "wedding planning": table = "wedding_planning_requests"; break;
+      default: table = "requests";
+    }
+    console.log('Determined table for request:', table, request);
+    return table;
   };
 
   if (isLoading) {
@@ -521,72 +701,35 @@ function OpenRequests() {
       <h1 style={{ fontFamily: "Outfit", fontWeight: "bold" }}>
         Open Requests
       </h1>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          width: "100%",
-          marginBottom: "20px",
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "center", width: "100%", marginBottom: "20px" }}>
         <button
           className="toggle-hidden-button"
-          onClick={() => setShowHidden(!showHidden)}
+          onClick={() => setShowHidden((prev) => !prev)}
         >
           {showHidden ? "Show Active Requests" : "Show Hidden Requests"}
         </button>
       </div>
-
       <div className="request-grid-container">
         <div className="request-grid">
           {error && <p>Error: {error}</p>}
-
-          {["photography", "videography"].includes(businessType?.toLowerCase())
-            ? openPhotoRequests
-                .filter((request) => !userBids.has(request.id))
-                .filter((request) =>
-                  showHidden
-                    ? hiddenRequests.has(request.id)
-                    : !hiddenRequests.has(request.id)
-                )
-                .filter(meetsMinimumPrice) // Add minimum price filter
-                .sort(sortByNewAndDate)
-                .map((request) => (
-                  <RequestDisplayMini
-                    key={`photo-video-${request.id}`}
-                    request={request}
-                    isPhotoRequest={request.service_category === "photography"}
-                    onHide={() => hideRequest(request.id)}
-                    onShow={() => showRequest(request.id)}
-                    isHidden={hiddenRequests.has(request.id)}
-                  />
-                ))
-            : openRequests
-                .filter((request) => !userBids.has(request.id))
-                .filter((request) =>
-                  showHidden
-                    ? hiddenRequests.has(request.id)
-                    : !hiddenRequests.has(request.id)
-                )
-                .filter(meetsMinimumPrice) // Add minimum price filter
-                .sort(sortByNewAndDate)
-                .map((request) => (
-                  <RequestDisplayMini
-                    key={`regular-${request.id}`}
-                    request={request}
-                    isPhotoRequest={false}
-                    onHide={() => hideRequest(request.id)}
-                    onShow={() => showRequest(request.id)}
-                    isHidden={hiddenRequests.has(request.id)}
-                  />
-                ))}
-
-          {/* {openRequests.length === 0 && openPhotoRequests.length === 0 && (
-            <div>
-              <h2>No open requests found.</h2>
-              <p>Please check again later.</p>
-            </div>
-          )} */}
+          {(["photography", "videography"].includes(businessType?.toLowerCase())
+            ? filterRequestsByHidden(openPhotoRequests)
+            : filterRequestsByHidden(openRequests)
+          )
+            .filter((request) => !userBids.has(request.id))
+            .filter(meetsMinimumPrice)
+            .filter(request => !isDatePassed(request)) // Add the date filter
+            .sort(sortByNewAndDate)
+            .map((request) => (
+              <RequestDisplayMini
+                key={request.id}
+                request={request}
+                isPhotoRequest={request.service_category === "photography"}
+                onHide={() => hideRequest(request.id, getTableName(request))}
+                onShow={() => showRequest(request.id, getTableName(request))}
+                isHidden={request.hidden_by_vendor?.includes(businessId)}
+              />
+            ))}
         </div>
       </div>
     </div>

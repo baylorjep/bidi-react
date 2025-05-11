@@ -4,6 +4,7 @@ import { supabase } from "../../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import "../../App.css";
 import "../../styles/BusinessDashboard.css";
+import "../../styles/Sidebar.css";
 // import DashboardBanner from "./DashboardBanner.js";
 import verifiedCheckIcon from "../../assets/images/Icons/verified-check.svg";
 import dashboardIcon from "../../assets/images/Icons/dashboard.svg";
@@ -12,7 +13,7 @@ import messageIcon from "../../assets/images/Icons/message.svg";
 // import paymentIcon from "../../assets/images/Icons/payment.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
 import profileIcon from "../../assets/images/Icons/profile.svg";
-// import bidiLogo from "../../assets/images/bidi check.png";
+import bidiLogo from "../../assets/images/bidi check.png";
 // import MessagingView from "../Messaging/MessagingView";
 // import PlacedBidDisplay from "./PlacedBids.js";
 import BusinessBids from "./BusinessBids.js";
@@ -25,6 +26,7 @@ import LoadingSpinner from "../LoadingSpinner.js";
 import ChatInterface from "../Messaging/ChatInterface.js";
 import MobileChatList from "../Messaging/MobileChatList.js";
 import MessagingView from "../Messaging/MessagingView.js";
+import AdminDashboard from "../admin/AdminDashboard.js";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -56,6 +58,8 @@ const BusinessDashSidebar = () => {
   const [profileDetails, setProfileDetails] = useState(null);
   const [error, setError] = useState(null);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isPinned, setIsPinned] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(false);
   const [isHoveringSidebar, setIsHoveringSidebar] = useState(false);
   const sidebarRef = React.useRef(null);
   const [selectedChat, setSelectedChat] = useState(null);
@@ -237,27 +241,10 @@ const BusinessDashSidebar = () => {
     );
   };
 
-  // Add mouse move event listener to detect when mouse is near sidebar
   useEffect(() => {
-    if (isMobile) return; // Only apply on desktop
-
-    const handleMouseMove = (e) => {
-      if (!sidebarRef.current) return;
-      
-      const sidebarRect = sidebarRef.current.getBoundingClientRect();
-      const mouseX = e.clientX;
-      
-      // Show sidebar when mouse is within 50px of the left edge
-      if (mouseX <= 50) {
-        setIsSidebarVisible(true);
-      } else if (!isHoveringSidebar && mouseX > sidebarRect.right) {
-        setIsSidebarVisible(false);
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [isMobile, isHoveringSidebar]);
+    if (isMobile) return;
+    setIsSidebarVisible(isPinned);
+  }, [isPinned, isMobile]);
 
   const handleChatSelect = (chat) => {
     setSelectedChat(chat);
@@ -267,15 +254,42 @@ const BusinessDashSidebar = () => {
     setSelectedChat(null);
   };
 
+  const handleShowSidebar = () => {
+    setIsSidebarVisible(true);
+    setShowOverlay(true);
+  };
+
+  const handleOverlayClick = () => {
+    if (!isPinned) {
+      setIsSidebarVisible(false);
+      setShowOverlay(false);
+    }
+  };
+
   return (
     <div className="business-dashboard text-left">
       <div className="dashboard-container">
         <aside 
           className={`sidebar ${isSidebarVisible ? 'visible' : 'hidden'}`}
           ref={sidebarRef}
-          onMouseEnter={() => setIsHoveringSidebar(true)}
-          onMouseLeave={() => setIsHoveringSidebar(false)}
         >
+          {/* Add pin button at the top of sidebar */}
+          <button 
+            className="pin-button"
+            onClick={() => {
+              setIsPinned(!isPinned);
+              if (!isPinned) {
+                setIsSidebarVisible(true);
+                setShowOverlay(true);
+              } else {
+                setShowOverlay(false);
+              }
+            }}
+            title={isPinned ? "Unpin Sidebar" : "Pin Sidebar"}
+          >
+            <i className={`fas fa-thumbtack ${isPinned ? 'pinned' : ''}`}></i>
+          </button>
+
           {/* Profile Section */}
           <div className="profile-section">
             <img src={profileImage} alt="Vendor" className="profile-pic" />
@@ -337,6 +351,26 @@ const BusinessDashSidebar = () => {
             </div>
           )} */}
         </aside>
+
+        {/* Overlay for click-away behavior */}
+        {showOverlay && !isPinned && (
+          <div 
+            className={`sidebar-overlay ${showOverlay ? 'visible' : ''}`}
+            onClick={handleOverlayClick}
+          />
+        )}
+
+        {/* Show Sidebar Button */}
+        {!isSidebarVisible && !isMobile && (
+          <button 
+            className="show-sidebar-button"
+            onClick={handleShowSidebar}
+            title="Show Sidebar"
+          >
+            <i className="fas fa-chevron-right"></i>
+          </button>
+        )}
+
         {/* Main Dashboard */}
         <main className="dashboard-main">
           {activeSection === "dashboard" && <OpenRequests />}
@@ -375,6 +409,8 @@ const BusinessDashSidebar = () => {
               setActiveSection={setActiveSection}
               connectedAccountId={connectedAccountId}
             />
+          ) : activeSection === "admin" ? (
+            <AdminDashboard />
           ) : null}
         </main>
 
