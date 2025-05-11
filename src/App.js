@@ -142,20 +142,21 @@ function App() {
         setUserId(user.id);
         console.log('App - User ID:', user.id); // Debug log
 
-        const { data: individual } = await supabase
-          .from("individual_profiles")
-          .select("id")
+        // First check the profiles table for the user's role
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("role")
           .eq("id", user.id)
           .single();
 
-        console.log('App - Individual profile:', individual); // Debug log
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          return;
+        }
 
-        if (individual) {
-          console.log('App - Setting userType to individual'); // Debug log
-          setUserType("individual");
-        } else {
-          console.log('App - Setting userType to business'); // Debug log
-          setUserType("business");
+        if (profile) {
+          console.log('App - Setting userType to:', profile.role); // Debug log
+          setUserType(profile.role);
         }
       }
     };
