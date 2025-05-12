@@ -111,7 +111,7 @@ const BusinessDashSidebar = () => {
           setConnectedAccountId(profile.stripe_account_id || null);
           setBidiPlus(!!profile.Bidi_Plus);
           setIsAdmin(!!profile.is_admin);
-          setProfile(profile);
+          setProfile({ ...profile, business_category: getCategories(profile.business_category) });
         }
 
         // Set profile picture
@@ -265,6 +265,9 @@ const BusinessDashSidebar = () => {
       setShowOverlay(false);
     }
   };
+
+  // Helper function to normalize business_category
+  const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
 
   return (
     <div className="business-dashboard text-left">

@@ -339,14 +339,57 @@ const ProfilePage = () => {
               />
             </div>
             <div className="form-group mt-3">
-              <label>Business Category</label>
-              <input
-                type="text"
-                className="form-control"
-                name="business_category"
-                value={profileData.business_category || ""}
-                onChange={handleInputChange}
-              />
+              <label>Business Categories</label>
+              <div className="business-categories-container">
+                {profileData.business_category?.map((category, index) => (
+                  <div key={index} className="business-category-tag">
+                    <span>{category}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newCategories = [...profileData.business_category];
+                        newCategories.splice(index, 1);
+                        setProfileData({
+                          ...profileData,
+                          business_category: newCategories
+                        });
+                      }}
+                      className="remove-category-btn"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <select
+                  className="form-control"
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const newCategories = [...(profileData.business_category || [])];
+                      if (!newCategories.includes(e.target.value)) {
+                        newCategories.push(e.target.value);
+                        setProfileData({
+                          ...profileData,
+                          business_category: newCategories
+                        });
+                      }
+                      e.target.value = '';
+                    }
+                  }}
+                >
+                  <option value="">Add a category...</option>
+                  <option value="photography">Photography</option>
+                  <option value="videography">Videography</option>
+                  <option value="dj">DJ</option>
+                  <option value="catering">Catering</option>
+                  <option value="beauty">Hair and Makeup</option>
+                  <option value="florist">Florist</option>
+                  <option value="wedding planning">Wedding Planning</option>
+                  <option value="venue">Venue</option>
+                  <option value="rental">Rentals</option>
+                  <option value="cake">Cake Making</option>
+                </select>
+              </div>
             </div>
             <div className="form-group mt-3">
               <label>Service Area</label>
@@ -389,16 +432,6 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            <div className="form-group mt-3">
-              <label>Phone</label>
-              <input
-                type="text"
-                className="form-control"
-                name="phone"
-                value={profileData.phone || ""}
-                onChange={handleInputChange}
-              />
-            </div>
             <div className="form-group mt-3">
               <label>Phone</label>
               <input

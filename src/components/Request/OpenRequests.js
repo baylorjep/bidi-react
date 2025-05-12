@@ -39,8 +39,8 @@ function OpenRequests() {
   const [openPhotoRequests, setOpenPhotoRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState("");
-  const [businessType, setBusinessType] = useState("");
-  const [userBids, setUserBids] = useState(new Set()); // Add this new state
+  const [businessCategories, setBusinessCategories] = useState([]);
+  const [userBids, setUserBids] = useState(new Set());
   const [minimumPrice, setMinimumPrice] = useState(null);
   const [businessId, setBusinessId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +65,7 @@ function OpenRequests() {
 
   useEffect(() => {
     const fetchUserBusinessType = async () => {
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
       try {
         const { data: userData, error: userError } =
           await supabase.auth.getUser();
@@ -101,14 +101,19 @@ function OpenRequests() {
           return;
         }
 
-        setBusinessType(profileData.business_category);
+        // Handle both array and string formats for backward compatibility
+        const categories = Array.isArray(profileData.business_category) 
+          ? profileData.business_category 
+          : [profileData.business_category];
+        
+        setBusinessCategories(categories);
         setMinimumPrice(profileData.minimum_price);
-        setBusinessId(userData.user.id); // Set businessId for later use
+        setBusinessId(userData.user.id);
       } catch (err) {
         console.error("Error fetching business type:", err);
         setError("Error fetching business type.");
       } finally {
-        setIsLoading(false); // Stop loading
+        setIsLoading(false);
       }
     };
 
@@ -146,7 +151,7 @@ function OpenRequests() {
   };
 
   useEffect(() => {
-    if (!businessType && !isAdmin) return;
+    if (businessCategories.length === 0 && !isAdmin) return;
 
     const fetchRequests = async () => {
       setIsLoading(true);
@@ -267,22 +272,23 @@ function OpenRequests() {
           return;
         }
 
-        // Check if current business type is in valid categories
-        const isValidCategory = validCategories.includes(
-          businessType.toLowerCase()
-        );
-        const isPhotoVideo = ["photography", "videography"].includes(
-          businessType.toLowerCase()
+        // Check if any of the business categories are valid
+        const hasValidCategory = businessCategories.some(category => 
+          validCategories.includes(category.toLowerCase())
         );
 
-        if (!isValidCategory) {
-          // If not a valid category and not admin, show no requests
+        if (!hasValidCategory) {
           setOpenRequests([]);
           setOpenPhotoRequests([]);
           return;
         }
 
-        if (isPhotoVideo) {
+        // Check if any categories are photo/video related
+        const hasPhotoVideoCategory = businessCategories.some(category => 
+          ["photography", "videography"].includes(category.toLowerCase())
+        );
+
+        if (hasPhotoVideoCategory) {
           // Fetch both photography and videography requests
           const [photoTableData, videoTableData, legacyRequestsData] =
             await Promise.all([
@@ -331,70 +337,41 @@ function OpenRequests() {
 
             setOpenPhotoRequests(combinedRequests);
             setOpenRequests([]);
-        } else if (businessType.toLowerCase() === "wedding planner/coordinator") {
-          // Fetch only wedding planning requests
-          const [weddingPlanningData, legacyRequestsData] = await Promise.all([
-            supabase
-              .from("wedding_planning_requests")
-              .select("*")
-              .in("status", ["pending", "open"])
-              .order("created_at", { ascending: false }),
-            supabase
-              .from("requests")
-              .select("*")
-              .eq("service_category", "wedding planning")
-              .eq("open", true)
-              .order("created_at", { ascending: false }),
-          ]);
-
-          const combinedRequests = [
-            ...(weddingPlanningData.data?.map((req) => ({
-              ...req,
-              table_name: "wedding_planning_requests",
-              service_title: req.event_title || "Wedding Planning Request",
-              service_category: "wedding planning",
-            })) || []),
-            ...(legacyRequestsData.data?.map((req) => ({
-              ...req,
-              table_name: "requests",
-              service_title: req.service_title || req.title || "Wedding Planning Request",
-              service_category: "wedding planning",
-            })) || []),
-          ];
-
-          setOpenRequests(combinedRequests);
-          setOpenPhotoRequests([]);
         } else {
           // Handle other business types (catering, dj, etc.)
-          const [categoryData, legacyRequestsData] = await Promise.all([
-            supabase
-              .from(`${businessType.toLowerCase()}_requests`)
-              .select("*")
-              .in("status", ["pending", "open"])
-              .order("created_at", { ascending: false }),
-            supabase
-              .from("requests")
-              .select("*")
-              .eq("service_category", businessType.toLowerCase())
-              .eq("open", true)
-              .order("created_at", { ascending: false }),
-          ]);
+          const categoryPromises = businessCategories.map(async (category) => {
+            const [categoryData, legacyRequestsData] = await Promise.all([
+              supabase
+                .from(`${category.toLowerCase()}_requests`)
+                .select("*")
+                .in("status", ["pending", "open"])
+                .order("created_at", { ascending: false }),
+              supabase
+                .from("requests")
+                .select("*")
+                .eq("service_category", category.toLowerCase())
+                .eq("open", true)
+                .order("created_at", { ascending: false }),
+            ]);
 
-          const combinedRequests = [
-            ...(categoryData.data?.map((req) => ({
-              ...req,
-              table_name: `${businessType.toLowerCase()}_requests`,
-              service_title: req.title || req.event_title || `${businessType} Request`,
-              service_category: businessType.toLowerCase(),
-            })) || []),
-            ...(legacyRequestsData.data?.map((req) => ({
-              ...req,
-              table_name: "requests",
-              service_title: req.service_title || req.title || `${businessType} Request`,
-              service_category: businessType.toLowerCase(),
-            })) || []),
-          ];
+            return [
+              ...(categoryData.data?.map((req) => ({
+                ...req,
+                table_name: `${category.toLowerCase()}_requests`,
+                service_title: req.title || req.event_title || `${category} Request`,
+                service_category: category.toLowerCase(),
+              })) || []),
+              ...(legacyRequestsData.data?.map((req) => ({
+                ...req,
+                table_name: "requests",
+                service_title: req.service_title || req.title || `${category} Request`,
+                service_category: category.toLowerCase(),
+              })) || []),
+            ];
+          });
 
+          const allCategoryRequests = await Promise.all(categoryPromises);
+          const combinedRequests = allCategoryRequests.flat();
           setOpenRequests(combinedRequests);
           setOpenPhotoRequests([]);
         }
@@ -407,7 +384,7 @@ function OpenRequests() {
     };
 
     fetchRequests();
-  }, [businessType, isAdmin]);
+  }, [businessCategories, isAdmin]);
 
   const meetsMinimumPrice = (request) => {
     if (!minimumPrice) return true; // If no minimum price set, show all requests
@@ -581,7 +558,7 @@ function OpenRequests() {
       
       if (success) {
         // Only update UI after successful DB update
-        if (["photography", "videography"].includes(businessType?.toLowerCase())) {
+        if (["photography", "videography"].includes(businessCategories?.some(c => c.toLowerCase()) || '')) {
           console.log('Updating openPhotoRequests');
           setOpenPhotoRequests(prev => {
             const filtered = prev.filter(req => req.id !== requestId);
@@ -621,7 +598,7 @@ function OpenRequests() {
         .eq('id', requestId)
         .single();
       if (!error && data) {
-        if (["photography", "videography"].includes(businessType?.toLowerCase())) {
+        if (["photography", "videography"].includes(businessCategories?.some(c => c.toLowerCase()) || '')) {
           setOpenPhotoRequests(prev => {
             // If not already present, add it
             if (!prev.some(r => r.id === requestId)) {
@@ -712,7 +689,7 @@ function OpenRequests() {
       <div className="request-grid-container">
         <div className="request-grid">
           {error && <p>Error: {error}</p>}
-          {(["photography", "videography"].includes(businessType?.toLowerCase())
+          {(["photography", "videography"].includes(businessCategories?.some(c => c.toLowerCase()) || '')
             ? filterRequestsByHidden(openPhotoRequests)
             : filterRequestsByHidden(openRequests)
           )

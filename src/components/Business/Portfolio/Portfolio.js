@@ -628,6 +628,12 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     }
   };
 
+  // Helper function to normalize business_category
+  const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
+
+  // After fetching business, normalize categories
+  setBusiness({ ...business, business_category: getCategories(business.business_category) });
+
   if (loading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }

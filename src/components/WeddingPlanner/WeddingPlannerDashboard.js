@@ -98,11 +98,14 @@ const WeddingPlannerDashboard = () => {
 
         setError(null);
 
+        // Helper function to normalize business_category
+        const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
+
         // Set profile data
         if (businessProfile.data) {
           setBusinessName(businessProfile.data.business_name || "Business Name Not Found");
           setBidiPlus(!!businessProfile.data.Bidi_Plus);
-          setProfile(businessProfile.data);
+          setProfile({ ...businessProfile.data, business_category: getCategories(businessProfile.data.business_category) });
         }
 
         // Set profile picture
