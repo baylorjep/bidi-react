@@ -945,7 +945,9 @@ export default function BidsPage({ onOpenChat }) {
             showActions: true,
             onViewCoupon: handleViewCoupon,
             onMessage: onOpenChat,
-            currentUserId: currentUserId
+            currentUserId: currentUserId,
+            handleDeny: () => handleMoveToNotInterested(bid),
+            handleInterested: () => handleMoveToInterested(bid)
         };
 
         // State-specific props
@@ -953,8 +955,6 @@ export default function BidsPage({ onOpenChat }) {
             return (
                 <BidDisplay
                     {...commonProps}
-                    handleDeny={() => handleMoveToNotInterested(bid)}
-                    handleInterested={() => handleMoveToInterested(bid)}
                     showPending={true}
                 />
             );
@@ -978,7 +978,6 @@ export default function BidsPage({ onOpenChat }) {
                 <BidDisplay
                     {...commonProps}
                     handleApprove={() => handleAcceptBidClick(bid)}
-                    handleDeny={() => handleMoveToNotInterested(bid)}
                     handleInterested={() => handleMoveToPending(bid)}
                     showInterested={true}
                 />
@@ -990,8 +989,6 @@ export default function BidsPage({ onOpenChat }) {
                 <BidDisplay
                     {...commonProps}
                     handleApprove={() => handleAcceptBidClick(bid)}
-                    handleDeny={() => handleMoveToPending(bid)}
-                    handleInterested={() => handleMoveToInterested(bid)}
                     showNotInterested={true}
                 />
             );

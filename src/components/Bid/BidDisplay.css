@@ -92,15 +92,16 @@
   display: flex;
   flex-direction: row;
   gap: 12px;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin: 0;
   padding: 0;
-  width: auto !important;
+  width: 100% !important;
+  margin-top: 4px;
 }
 
 .bid-display .business-actions-bid-display .btn-icon {
-  width: 24px;
-  height: 24px;
+  width: 48px;
+  height: 48px;
   padding: 0;
   font-size: inherit;
   color: #9633eb;
@@ -122,8 +123,8 @@
 }
 
 .bid-display .business-actions-bid-display .btn-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
 }
 
 /* Remove all special button classes to ensure consistent styling */
@@ -447,9 +448,9 @@
   }
 
   .bid-display .profile-image-container {
-    width: 100px;
-    height: 100px;
-    margin: 0 auto 12px;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 16px;
   }
 
   .business-name-bid-display {
@@ -462,22 +463,18 @@
   }
 
   .bid-display .business-actions-bid-display {
-    justify-content: flex-end;
-    width: auto;
+    justify-content: space-between;
+    width: 100%;
   }
 
   .bid-display .business-actions-bid-display .btn-icon {
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    font-size: inherit;
-    min-width: unset;
-    flex: none;
+    width: 56px;
+    height: 56px;
   }
 
   .bid-display .business-actions-bid-display .btn-icon svg {
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
   }
 
   .bid-display-head {
@@ -526,8 +523,8 @@
   }
 
   .business-actions-bid-display {
-    justify-content: flex-end;
-    width: auto;
+    justify-content: space-between;
+    width: 100%;
   }
 
   .business-actions-bid-display button {
@@ -612,30 +609,17 @@
   }
 
   .bid-display .profile-image-container {
-    width: 90px;
-    height: 90px;
-    margin: 0 auto 12px;
+    width: 160px;
+    height: 160px;
+    margin: 0 auto 20px;
   }
 }
 
-@media screen and (max-width: 480px) {
-  .request-display {
-    padding: 12px;
-  }
-
-  .business-actions-bid-display button {
-    padding: 8px;
-    font-size: 12px;
-  }
-
-  .bid-display-button {
-    padding: 8px 16px;
-    font-size: 1rem;
-  }
-
-  .expiration-badge {
-    padding: 4px 8px;
-    font-size: 0.75rem;
+@media screen and (max-width: 360px) {
+  .bid-display .profile-image-container {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 16px;
   }
 }
 

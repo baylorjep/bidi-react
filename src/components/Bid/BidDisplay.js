@@ -201,9 +201,9 @@ function BidDisplay({
     if (!showActions) return null;
 
     const buttonStyle = {
-      padding: window.innerWidth <= 768 ? '12px' : '8px',
-      minWidth: window.innerWidth <= 768 ? '48px' : '40px',
-      minHeight: window.innerWidth <= 768 ? '48px' : '40px',
+      padding: window.innerWidth <= 768 ? '16px' : '12px',
+      minWidth: window.innerWidth <= 768 ? '56px' : '48px',
+      minHeight: window.innerWidth <= 768 ? '56px' : '48px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -213,124 +213,27 @@ function BidDisplay({
     };
 
     const iconStyle = {
-      fontSize: window.innerWidth <= 768 ? 40 : 28
+      fontSize: window.innerWidth <= 768 ? 48 : 36
     };
 
-    if (showPaymentOptions) {
-      return (
-        <div className="business-actions" style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleDeny, bid.id)}
-          >
-            <CancelIcon style={iconStyle} />
-          </button>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleApprove, bid.id)}
-          >
-            <AccessTimeIcon style={iconStyle} />
-          </button>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={handleChatClick}
-          >
-            <ChatIcon style={iconStyle} />
-          </button>
-        </div>
-      );
-    }
+    const actionButtonsContainer = {
+      display: 'flex',
+      gap: '12px',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+      padding: '0 8px'
+    };
 
-    if (showInterested) {
-      return (
-        <div className="business-actions-bid-display" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleDeny, bid.id)}
-          >
-            <CancelIcon style={iconStyle} />
-          </button>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleInterested, bid.id)}
-          >
-            <FavoriteIcon style={iconStyle} />
-          </button>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={handleChatClick}
-          >
-            <ChatIcon style={iconStyle} />
-          </button>
-        </div>
-      );
-    }
+    const rightButtonsContainer = {
+      display: 'flex',
+      gap: '12px',
+      alignItems: 'center'
+    };
 
-    if (showNotInterested) {
-      return (
-        <div className="business-actions-bid-display" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleDeny, bid.id)}
-          >
-            <AccessTimeIcon style={iconStyle} />
-          </button>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleInterested, bid.id)}
-          >
-            <FavoriteBorderIcon style={iconStyle} />
-          </button>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={handleChatClick}
-          >
-            <ChatIcon style={iconStyle} />
-          </button>
-        </div>
-      );
-    }
-
-    if (showPending) {
-      return (
-        <div className="business-actions-bid-display" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleDeny, bid.id)}
-          >
-            <CancelIcon style={iconStyle} />
-          </button>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleInterested, bid.id)}
-          >
-            <FavoriteBorderIcon style={iconStyle} />
-          </button>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={handleChatClick}
-          >
-            <ChatIcon style={iconStyle} />
-          </button>
-        </div>
-      );
-    }
-
-    // Default case - only show X, heart, and chat
-    return (
-      <div className="business-actions-bid-display" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    // Common button layout for all states
+    const renderButtons = () => (
+      <div className="business-actions-bid-display" style={actionButtonsContainer}>
         <button
           className="btn-icon"
           style={buttonStyle}
@@ -338,22 +241,64 @@ function BidDisplay({
         >
           <CancelIcon style={iconStyle} />
         </button>
-        <button
-          className="btn-icon"
-          style={buttonStyle}
-          onClick={() => handleAction(handleInterested, bid.id)}
-        >
-          <FavoriteBorderIcon style={iconStyle} />
-        </button>
-        <button
-          className="btn-icon"
-          style={buttonStyle}
-          onClick={handleChatClick}
-        >
-          <ChatIcon style={iconStyle} />
-        </button>
+        <div style={rightButtonsContainer}>
+          <button
+            className="btn-icon"
+            style={buttonStyle}
+            onClick={handleChatClick}
+          >
+            <ChatIcon style={iconStyle} />
+          </button>
+          <button
+            className="btn-icon"
+            style={buttonStyle}
+            onClick={() => {
+              console.log('Heart clicked. showInterested:', showInterested);
+              handleAction(handleInterested, bid.id);
+            }}
+            aria-label={showInterested ? 'Move to Pending' : 'Mark as Interested'}
+          >
+            {showInterested ? (
+              <FavoriteIcon style={iconStyle} />
+            ) : (
+              <FavoriteBorderIcon style={iconStyle} />
+            )}
+          </button>
+        </div>
       </div>
     );
+
+    if (showPaymentOptions) {
+      return (
+        <div className="business-actions" style={actionButtonsContainer}>
+          <button
+            className="btn-icon"
+            style={buttonStyle}
+            onClick={() => handleAction(handleDeny, bid.id)}
+          >
+            <CancelIcon style={iconStyle} />
+          </button>
+          <div style={rightButtonsContainer}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => handleAction(handleApprove, bid.id)}
+            >
+              <AccessTimeIcon style={iconStyle} />
+            </button>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={handleChatClick}
+            >
+              <ChatIcon style={iconStyle} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return renderButtons();
   };
 
   useEffect(() => {
