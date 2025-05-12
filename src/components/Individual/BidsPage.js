@@ -39,7 +39,18 @@ export default function BidsPage({ onOpenChat }) {
     const [selectedChat, setSelectedChat] = useState(null);
     const [showMobileBids, setShowMobileBids] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
+    const [currentUserId, setCurrentUserId] = useState(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setCurrentUserId(user.id);
+            }
+        };
+        fetchCurrentUser();
+    }, []);
 
     const isNew = (createdAt) => {
         if (!createdAt) return false;
@@ -933,7 +944,8 @@ export default function BidsPage({ onOpenChat }) {
             },
             showActions: true,
             onViewCoupon: handleViewCoupon,
-            onMessage: onOpenChat
+            onMessage: onOpenChat,
+            currentUserId: currentUserId
         };
 
         // State-specific props
@@ -1102,62 +1114,130 @@ export default function BidsPage({ onOpenChat }) {
                 <button 
                     className={activeTab === 'not_interested' ? 'active' : ''}
                     onClick={() => setActiveTab('not_interested')}
-                    title="Not Interested"
                     style={{
                         background: 'none',
                         border: 'none',
-                        fontSize: '24px',
                         color: activeTab === 'not_interested' ? '#9633eb' : '#666',
                         cursor: 'pointer',
-                        padding: '8px'
+                        padding: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px'
                     }}
                 >
-                    <i className="fas fa-times-circle"></i>
+                    <CancelIcon style={{ fontSize: 28 }} />
+                    <span style={{ fontSize: '12px', color: activeTab === 'not_interested' ? '#9633eb' : '#666' }}>
+                        Not Interested
+                        {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length > 0 && (
+                            <span style={{ 
+                                marginLeft: '4px',
+                                background: activeTab === 'not_interested' ? '#9633eb' : '#666',
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                fontSize: '10px'
+                            }}>
+                                {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length}
+                            </span>
+                        )}
+                    </span>
                 </button>
                 <button 
                     className={activeTab === 'pending' ? 'active' : ''}
                     onClick={() => setActiveTab('pending')}
-                    title="Pending"
                     style={{
                         background: 'none',
                         border: 'none',
-                        fontSize: '24px',
                         color: activeTab === 'pending' ? '#9633eb' : '#666',
                         cursor: 'pointer',
-                        padding: '8px'
+                        padding: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px'
                     }}
                 >
-                    <i className="fas fa-clock"></i>
+                    <AccessTimeIcon style={{ fontSize: 28 }} />
+                    <span style={{ fontSize: '12px', color: activeTab === 'pending' ? '#9633eb' : '#666' }}>
+                        Pending
+                        {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length > 0 && (
+                            <span style={{ 
+                                marginLeft: '4px',
+                                background: activeTab === 'pending' ? '#9633eb' : '#666',
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                fontSize: '10px'
+                            }}>
+                                {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length}
+                            </span>
+                        )}
+                    </span>
                 </button>
                 <button 
                     className={activeTab === 'interested' ? 'active' : ''}
                     onClick={() => setActiveTab('interested')}
-                    title="Interested"
                     style={{
                         background: 'none',
                         border: 'none',
-                        fontSize: '24px',
                         color: activeTab === 'interested' ? '#9633eb' : '#666',
                         cursor: 'pointer',
-                        padding: '8px'
+                        padding: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px'
                     }}
                 >
-                    <i className="fas fa-heart"></i>
+                    <FavoriteIcon style={{ fontSize: 28 }} />
+                    <span style={{ fontSize: '12px', color: activeTab === 'interested' ? '#9633eb' : '#666' }}>
+                        Interested
+                        {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length > 0 && (
+                            <span style={{ 
+                                marginLeft: '4px',
+                                background: activeTab === 'interested' ? '#9633eb' : '#666',
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                fontSize: '10px'
+                            }}>
+                                {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length}
+                            </span>
+                        )}
+                    </span>
                 </button>
                 <button 
                     className={activeTab === 'approved' ? 'active' : ''}
                     onClick={() => setActiveTab('approved')}
-                    title="Approved"
                     style={{
                         background: 'none',
                         border: 'none',
-                        fontSize: '24px',
                         color: activeTab === 'approved' ? '#9633eb' : '#666',
                         cursor: 'pointer',
-                        padding: '8px'
+                        padding: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px'
                     }}
                 >
-                    <i className="fas fa-check-circle"></i>
+                    <CheckCircleIcon style={{ fontSize: 28 }} />
+                    <span style={{ fontSize: '12px', color: activeTab === 'approved' ? '#9633eb' : '#666' }}>
+                        Approved
+                        {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length > 0 && (
+                            <span style={{ 
+                                marginLeft: '4px',
+                                background: activeTab === 'approved' ? '#9633eb' : '#666',
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                fontSize: '10px'
+                            }}>
+                                {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length}
+                            </span>
+                        )}
+                    </span>
                 </button>
             </div>
         );
@@ -1212,70 +1292,126 @@ export default function BidsPage({ onOpenChat }) {
                             <button 
                                 className={`tab ${activeTab === 'not_interested' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('not_interested')}
-                                title="Not Interested"
                                 style={{
                                     background: 'none',
                                     border: 'none',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    width: '40px',
-                                    height: '40px',
+                                    gap: '4px',
                                     color: activeTab === 'not_interested' ? '#9633eb' : '#666'
                                 }}
                             >
                                 <CancelIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'not_interested' ? '#9633eb' : '#666' }}>
+                                    Not Interested
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'not_interested' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length}
+                                        </span>
+                                    )}
+                                </span>
                             </button>
                             <button 
                                 className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('pending')}
-                                title="Pending"
                                 style={{
                                     background: 'none',
                                     border: 'none',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    width: '40px',
-                                    height: '40px',
+                                    gap: '4px',
                                     color: activeTab === 'pending' ? '#9633eb' : '#666'
                                 }}
                             >
                                 <AccessTimeIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'pending' ? '#9633eb' : '#666' }}>
+                                    Pending
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'pending' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length}
+                                        </span>
+                                    )}
+                                </span>
                             </button>
                             <button 
                                 className={`tab ${activeTab === 'interested' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('interested')}
-                                title="Interested"
                                 style={{
                                     background: 'none',
                                     border: 'none',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    width: '40px',
-                                    height: '40px',
+                                    gap: '4px',
                                     color: activeTab === 'interested' ? '#9633eb' : '#666'
                                 }}
                             >
                                 <FavoriteIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'interested' ? '#9633eb' : '#666' }}>
+                                    Interested
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'interested' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length}
+                                        </span>
+                                    )}
+                                </span>
                             </button>
                             <button 
                                 className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('approved')}
-                                title="Approved"
                                 style={{
                                     background: 'none',
                                     border: 'none',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    width: '40px',
-                                    height: '40px',
+                                    gap: '4px',
                                     color: activeTab === 'approved' ? '#9633eb' : '#666'
                                 }}
                             >
                                 <CheckCircleIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'approved' ? '#9633eb' : '#666' }}>
+                                    Approved
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'approved' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length}
+                                        </span>
+                                    )}
+                                </span>
                             </button>
                         </div>
 
@@ -1438,70 +1574,126 @@ export default function BidsPage({ onOpenChat }) {
                             <button 
                                 className={`tab ${activeTab === 'not_interested' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('not_interested')}
-                                title="Not Interested"
                                 style={{
                                     background: 'none',
                                     border: 'none',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    width: '40px',
-                                    height: '40px',
+                                    gap: '4px',
                                     color: activeTab === 'not_interested' ? '#9633eb' : '#666'
                                 }}
                             >
                                 <CancelIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'not_interested' ? '#9633eb' : '#666' }}>
+                                    Not Interested
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'not_interested' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length}
+                                        </span>
+                                    )}
+                                </span>
                             </button>
                             <button 
                                 className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('pending')}
-                                title="Pending"
                                 style={{
                                     background: 'none',
                                     border: 'none',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    width: '40px',
-                                    height: '40px',
+                                    gap: '4px',
                                     color: activeTab === 'pending' ? '#9633eb' : '#666'
                                 }}
                             >
                                 <AccessTimeIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'pending' ? '#9633eb' : '#666' }}>
+                                    Pending
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'pending' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length}
+                                        </span>
+                                    )}
+                                </span>
                             </button>
                             <button 
                                 className={`tab ${activeTab === 'interested' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('interested')}
-                                title="Interested"
                                 style={{
                                     background: 'none',
                                     border: 'none',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    width: '40px',
-                                    height: '40px',
+                                    gap: '4px',
                                     color: activeTab === 'interested' ? '#9633eb' : '#666'
                                 }}
                             >
                                 <FavoriteIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'interested' ? '#9633eb' : '#666' }}>
+                                    Interested
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'interested' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length}
+                                        </span>
+                                    )}
+                                </span>
                             </button>
                             <button 
                                 className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('approved')}
-                                title="Approved"
                                 style={{
                                     background: 'none',
                                     border: 'none',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    width: '40px',
-                                    height: '40px',
+                                    gap: '4px',
                                     color: activeTab === 'approved' ? '#9633eb' : '#666'
                                 }}
                             >
                                 <CheckCircleIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'approved' ? '#9633eb' : '#666' }}>
+                                    Approved
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'approved' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length}
+                                        </span>
+                                    )}
+                                </span>
                             </button>
                         </div>
 

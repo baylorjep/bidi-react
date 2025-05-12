@@ -53,6 +53,8 @@ export default function MessagingView({
   // Fetch business/individual information
   useEffect(() => {
     const fetchUserInfo = async () => {
+      if (!businessId) return;
+      
       console.log("Fetching user info for ID:", businessId);
       try {
         // First get the user info from individual_profiles
@@ -119,16 +121,17 @@ export default function MessagingView({
       }
     };
 
-    if (businessId) {
-      fetchUserInfo();
-    }
+    fetchUserInfo();
   }, [businessId]);
 
-  // 1) Fetch & normalize persisted messages
+  // Fetch messages when component mounts or when currentUserId/businessId changes
   useEffect(() => {
-    if (!currentUserId || !businessId) return;
-
     const fetchMessages = async () => {
+      if (!currentUserId || !businessId) {
+        console.error('Missing currentUserId or businessId for messaging');
+        return;
+      }
+
       try {
         const { data: out, error: outError } = await supabase
           .from("messages")
@@ -188,13 +191,12 @@ export default function MessagingView({
     fetchMessages();
   }, [currentUserId, businessId]);
 
+  // Socket connection
   useEffect(() => {
     if (!currentUserId) return;
-    socket.emit("join", currentUserId);
-  }, [currentUserId]);
 
-  // 2) Listen for live messages & typing indicators
-  useEffect(() => {
+    socket.emit("join", currentUserId);
+
     const handleReceive = (msg) => {
       if (
         (msg.senderId === businessId && msg.receiverId === currentUserId) ||
@@ -240,20 +242,44 @@ export default function MessagingView({
     chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages, isTyping]);
 
-  // 3) Send a new message
+  if (!currentUserId || !businessId) {
+    return <div style={{ padding: 32, textAlign: 'center' }}>Loading chat…</div>;
+  }
+
   const sendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !currentUserId || !businessId) return;
 
-    const payload = {
-      senderId: currentUserId,
-      receiverId: businessId,
-      message: newMessage.trim(),
-      seen: false
-    };
+    try {
+      const payload = {
+        senderId: currentUserId,
+        receiverId: businessId,
+        message: newMessage.trim(),
+        seen: false
+      };
 
-    socket.emit("send_message", payload);
-    setNewMessage("");
-    socket.emit("stop_typing", { senderId: currentUserId, receiverId: businessId });
+      // Emit socket event
+      socket.emit("send_message", payload);
+
+      // Save to database
+      const { error } = await supabase
+        .from("messages")
+        .insert([{
+          sender_id: currentUserId,
+          receiver_id: businessId,
+          message: newMessage.trim(),
+          seen: false
+        }]);
+
+      if (error) {
+        console.error("Error saving message:", error);
+        return;
+      }
+
+      setNewMessage("");
+      socket.emit("stop_typing", { senderId: currentUserId, receiverId: businessId });
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   // 4) Handle typing

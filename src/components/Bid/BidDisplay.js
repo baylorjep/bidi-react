@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "../../supabaseClient"; // Import your Supabase client
 import bidiCheck from "../../assets/Frame 1162.svg";
 import StarIcon from "../../assets/star-duotone.svg";
@@ -12,6 +12,8 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
+import MessagingView from "../Messaging/MessagingView";
+import { FaArrowLeft } from 'react-icons/fa';
 
 function BidDisplay({ 
   bid, 
@@ -28,7 +30,8 @@ function BidDisplay({
   downPayment = null,
   onDownPayment = null,
   onMessage = null,
-  onViewCoupon = null
+  onViewCoupon = null,
+  currentUserId = null
 }) {
   const [isBidiVerified, setIsBidiVerified] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -38,7 +41,25 @@ function BidDisplay({
   const [isAnimating, setIsAnimating] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [showVerifiedTooltip, setShowVerifiedTooltip] = useState(false);
+  const [showMessagingView, setShowMessagingView] = useState(false);
+  const [showCouponDetails, setShowCouponDetails] = useState(false);
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [showShareCouponModal, setShowShareCouponModal] = useState(false);
+  const [newCouponCode, setNewCouponCode] = useState('');
+  const [activeCoupon, setActiveCoupon] = useState(null);
+  const [showShareSection, setShowShareSection] = useState(true);
+  const [activeSection, setActiveSection] = useState("messages");
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [showMessaging, setShowMessaging] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const cardRef = useRef(null);
   const navigate = useNavigate();
+  const frontRef = useRef(null);
+  const backRef = useRef(null);
+  const [cardHeight, setCardHeight] = useState('auto');
 
   const getExpirationStatus = (expirationDate) => {
     if (!expirationDate) return null;
@@ -150,418 +171,462 @@ function BidDisplay({
     }
   };
 
-  const renderChatButton = () => (
-    <button
-      className="btn-icon"
-      onClick={() => {
-        console.log("Opening chat with business:", bid.business_profiles.id);
-        
-        if (onMessage) {
-          onMessage({
-            id: bid.business_profiles.id,
-            name: bid.business_profiles.business_name,
-            profileImage: bid.business_profiles.profile_image
-          });
-        }
+  const handleChatClick = () => {
+    if (!currentUserId) {
+      console.error('No currentUserId provided for messaging');
+      return;
+    }
+    setIsFlipped(true);
+    setShowMessagingView(true);
+  };
 
-        setTimeout(() => {
-          window.scrollTo({
-            top: 0,
-            left: 0,
-            behavior: 'instant'
-          });
-          document.body.scrollTop = 0;
-          document.documentElement.scrollTop = 0;
-          
-          if (window.innerWidth <= 768) {
-            window.scrollTo(0, 0);
-            document.body.scrollIntoView({ behavior: 'instant' });
-          }
-        }, 100);
-      }}
-    >
-      <ChatIcon />
-    </button>
-  );
+  const handleBackFromMessaging = () => {
+    setShowMessagingView(false);
+    setIsFlipped(false);
+  };
+
+  const handleMessage = () => {
+    setShowMessaging(true);
+    setIsFlipped(true);
+  };
+
+  const handleClose = () => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onMessage();
+    }, 300);
+  };
 
   const renderActionButtons = () => {
     if (!showActions) return null;
 
+    const buttonStyle = {
+      padding: window.innerWidth <= 768 ? '12px' : '8px',
+      minWidth: window.innerWidth <= 768 ? '48px' : '40px',
+      minHeight: window.innerWidth <= 768 ? '48px' : '40px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer'
+    };
+
+    const iconStyle = {
+      fontSize: window.innerWidth <= 768 ? 40 : 28
+    };
+
     if (showPaymentOptions) {
       return (
-        <div className="business-actions">
+        <div className="business-actions" style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
           <button
             className="btn-icon"
+            style={buttonStyle}
             onClick={() => handleAction(handleDeny, bid.id)}
           >
-            <CancelIcon />
+            <CancelIcon style={iconStyle} />
           </button>
-          {downPayment && (
-            <button
-              className="btn-icon"
-              onClick={() => handleAction(onDownPayment, bid)}
-            >
-              Pay Deposit
-            </button>
-          )}
           <button
             className="btn-icon"
-            onClick={() => handleAction(handleDeny, bid.id)}
+            style={buttonStyle}
+            onClick={() => handleAction(handleApprove, bid.id)}
           >
-            Pay Full
+            <AccessTimeIcon style={iconStyle} />
           </button>
-          {renderChatButton()}
+          <button
+            className="btn-icon"
+            style={buttonStyle}
+            onClick={handleChatClick}
+          >
+            <ChatIcon style={iconStyle} />
+          </button>
         </div>
       );
     }
 
     if (showInterested) {
       return (
-        <div className="business-actions-bid-display">
+        <div className="business-actions-bid-display" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             className="btn-icon"
+            style={buttonStyle}
             onClick={() => handleAction(handleDeny, bid.id)}
           >
-            <CancelIcon />
+            <CancelIcon style={iconStyle} />
           </button>
           <button
             className="btn-icon"
+            style={buttonStyle}
             onClick={() => handleAction(handleInterested, bid.id)}
           >
-            <FavoriteIcon />
+            <FavoriteIcon style={iconStyle} />
           </button>
-          <button 
+          <button
             className="btn-icon"
-            onClick={() => {
-              if (handleApprove) {
-                handleApprove(bid.id);
-              }
-            }}
+            style={buttonStyle}
+            onClick={handleChatClick}
           >
-            <CheckCircleIcon />
+            <ChatIcon style={iconStyle} />
           </button>
-          {renderChatButton()}
         </div>
       );
     }
 
     if (showNotInterested) {
       return (
-        <div className="business-actions-bid-display">
+        <div className="business-actions-bid-display" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             className="btn-icon"
+            style={buttonStyle}
             onClick={() => handleAction(handleDeny, bid.id)}
           >
-            <AccessTimeIcon />
+            <AccessTimeIcon style={iconStyle} />
           </button>
           <button
             className="btn-icon"
+            style={buttonStyle}
             onClick={() => handleAction(handleInterested, bid.id)}
           >
-            <FavoriteBorderIcon />
+            <FavoriteBorderIcon style={iconStyle} />
           </button>
-          {renderChatButton()}
+          <button
+            className="btn-icon"
+            style={buttonStyle}
+            onClick={handleChatClick}
+          >
+            <ChatIcon style={iconStyle} />
+          </button>
         </div>
       );
     }
 
     if (showPending) {
       return (
-        <div className="business-actions-bid-display">
+        <div className="business-actions-bid-display" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             className="btn-icon"
+            style={buttonStyle}
             onClick={() => handleAction(handleDeny, bid.id)}
           >
-            <CancelIcon />
+            <CancelIcon style={iconStyle} />
           </button>
           <button
             className="btn-icon"
+            style={buttonStyle}
             onClick={() => handleAction(handleInterested, bid.id)}
           >
-            <FavoriteBorderIcon />
+            <FavoriteBorderIcon style={iconStyle} />
           </button>
-          {renderChatButton()}
+          <button
+            className="btn-icon"
+            style={buttonStyle}
+            onClick={handleChatClick}
+          >
+            <ChatIcon style={iconStyle} />
+          </button>
         </div>
       );
     }
 
     // Default case - only show X, heart, and chat
     return (
-      <div className="business-actions-bid-display">
+      <div className="business-actions-bid-display" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
         <button
           className="btn-icon"
+          style={buttonStyle}
           onClick={() => handleAction(handleDeny, bid.id)}
         >
-          <CancelIcon />
+          <CancelIcon style={iconStyle} />
         </button>
         <button
           className="btn-icon"
+          style={buttonStyle}
           onClick={() => handleAction(handleInterested, bid.id)}
         >
-          <FavoriteBorderIcon />
+          <FavoriteBorderIcon style={iconStyle} />
         </button>
-        {renderChatButton()}
+        <button
+          className="btn-icon"
+          style={buttonStyle}
+          onClick={handleChatClick}
+        >
+          <ChatIcon style={iconStyle} />
+        </button>
       </div>
     );
   };
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    function updateHeight() {
+      if (frontRef.current) {
+        const frontHeight = frontRef.current.offsetHeight;
+        setCardHeight(Math.max(frontHeight, 400)); // Ensure minimum height of 400px
+      }
+    }
+    
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, [showMessagingView, isFlipped, bid, isDescriptionExpanded]);
+
+  useEffect(() => {
+    setIsVisible(true);
+    return () => setIsVisible(false);
+  }, []);
+
+  const handleDescriptionToggle = () => {
+    setIsDescriptionExpanded(!isDescriptionExpanded);
+    // Add a small delay to allow the content to expand before updating height
+    setTimeout(() => {
+      if (frontRef.current) {
+        const frontHeight = frontRef.current.offsetHeight;
+        setCardHeight(Math.max(frontHeight, 400));
+      }
+    }, 50);
+  };
+
   return (
-    <div className={`request-display bid-display ${isAnimating ? 'fade-out' : ''}`}>
-      {showActions && (
-        <div className="business-actions-bid-display">
-          {showPaymentOptions ? (
-            <>
-              <button
-                className="btn-icon btn-danger"
-                onClick={() => handleAction(handleDeny, bid.id)}
-              >
-                <CancelIcon />
-              </button>
-              <button
-                className="btn-icon"
-                onClick={() => handleAction(handleInterested, bid.id)}
-              >
-                <FavoriteBorderIcon />
-              </button>
-              <button 
-                className="btn-icon"
-                onClick={() => handleAction(handleApprove, bid.id)}
-              >
-                <AccessTimeIcon />
-              </button>
-              {renderChatButton()}
-            </>
-          ) : showReopen ? (
-            <>
-              <button 
-                className="btn-icon btn-success"
-                onClick={() => handleAction(handleApprove, bid.id)}
-              >
-                <CheckCircleIcon />
-              </button>
-              <button
-                className="btn-icon btn-success"
-                onClick={() => handleAction(handleDeny, bid.id)}
-              >
-                <CheckCircleIcon />
-              </button>
-              {renderChatButton()}
-            </>
-          ) : showInterested ? (
-            <>
-              <button
-                className="btn-icon btn-danger"
-                onClick={() => handleAction(handleDeny, bid.id)}
-              >
-                <CancelIcon />
-              </button>
-              <button
-                className="btn-icon"
-                onClick={() => handleAction(handleInterested, bid.id)}
-              >
-                <FavoriteIcon />
-              </button>
-              <button 
-                className="btn-icon"
-                onClick={() => {
-                  if (handleApprove) {
-                    handleApprove(bid.id);
-                  }
-                }}
-              >
-                <CheckCircleIcon />
-              </button>
-              {renderChatButton()}
-            </>
-          ) : showNotInterested ? (
-            <>
-              <button
-                className="btn-icon"
-                onClick={() => handleAction(handleDeny, bid.id)}
-              >
-                <AccessTimeIcon />
-              </button>
-              <button
-                className="btn-icon"
-                onClick={() => handleAction(handleInterested, bid.id)}
-              >
-                <FavoriteBorderIcon />
-              </button>
-              {renderChatButton()}
-            </>
-          ) : showPending ? (
-            <>
-              <button
-                className="btn-icon btn-danger"
-                onClick={() => handleAction(handleDeny, bid.id)}
-              >
-                <CancelIcon />
-              </button>
-              <button
-                className="btn-icon"
-                onClick={() => handleAction(handleInterested, bid.id)}
-              >
-                <FavoriteBorderIcon />
-              </button>
-              {renderChatButton()}
-            </>
-          ) : (
-            <>
-              <button
-                className="btn-icon btn-danger"
-                onClick={() => handleAction(handleDeny, bid.id)}
-              >
-                <CancelIcon />
-              </button>
-              <button
-                className="btn-icon"
-                onClick={() => handleAction(handleInterested, bid.id)}
-              >
-                <FavoriteBorderIcon />
-              </button>
-              {renderChatButton()}
-            </>
-          )}
-        </div>
-      )}
-      <div className="bid-display-head-container">
-        <div className="bid-display-head">
-          <div className="profile-image-container">
-            <img
-              src={profileImage}
-              alt={`${bid.business_profiles.business_name} profile`}
-              className="vendor-profile-image"
-              onClick={handleProfileClick}
-            />
-            <div
-              className="profile-tooltip"
-              style={{
-                display: showBubble ? "block" : "none",
-              }}
-            >
-              Click to view profile
-            </div>
-          </div>
-          <div className="business-info">
-            <div className="business-name-container">
-              <Link
-                to={`/portfolio/${bid.business_profiles.id}`}
-                className="business-name-bid-display"
-              >
-                {bid.business_profiles.business_name}
-              </Link>
-              {isBidiVerified && (
-                <div 
-                  className="bidi-verified-compact"
-                  onMouseEnter={() => setShowVerifiedTooltip(true)}
-                  onMouseLeave={() => setShowVerifiedTooltip(false)}
-                  onClick={() => setShowVerifiedTooltip(!showVerifiedTooltip)}
-                >
+    <div className={`request-display bid-display${isAnimating ? ' fade-out' : ''}`}> 
+      <div className="card-flip-container" style={{ height: cardHeight }}>
+        <div className={`card-flip${isFlipped ? ' flipped' : ''}`}>
+          {/* Front of card - Bid Display */}
+          <div className="card-front" ref={frontRef}>
+            {showActions && (
+              <div className="business-actions-bid-display" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {renderActionButtons()}
+              </div>
+            )}
+            <div className="bid-display-head-container">
+              <div className="bid-display-head">
+                <div className="profile-image-container">
                   <img
-                    src={bidiCheck}
-                    className="bidi-check-icon"
-                    alt="Bidi Verified Icon"
+                    src={profileImage}
+                    alt={`${bid.business_profiles.business_name} profile`}
+                    className="vendor-profile-image"
+                    onClick={handleProfileClick}
                   />
-                  <span>Verified</span>
-                  <div className={`verified-tooltip ${showVerifiedTooltip ? 'show' : ''}`}>
-                    <p className="verified-tooltip-title">Bidi Verified</p>
-                    <p className="verified-tooltip-subtitle">100% Money-Back Guarantee When You Pay Through Bidi</p>
+                  <div
+                    className="profile-tooltip"
+                    style={{
+                      display: showBubble ? "block" : "none",
+                    }}
+                  >
+                    Click to view profile
                   </div>
                 </div>
-              )}
-            </div>
-            <div className="bid-amount-section">
-              <div className="bid-amount-container">
-                <button className="bid-display-button" disabled>
-                  ${bid.bid_amount}
-                  <div className="tag-hole"></div>
-                </button>
+                <div className="business-info">
+                  <div className="business-name-container">
+                    <Link
+                      to={`/portfolio/${bid.business_profiles.id}`}
+                      className="business-name-bid-display"
+                    >
+                      {bid.business_profiles.business_name}
+                    </Link>
+                    {isBidiVerified && (
+                      <div 
+                        className="bidi-verified-compact"
+                        onMouseEnter={() => setShowVerifiedTooltip(true)}
+                        onMouseLeave={() => setShowVerifiedTooltip(false)}
+                        onClick={() => setShowVerifiedTooltip(!showVerifiedTooltip)}
+                      >
+                        <img
+                          src={bidiCheck}
+                          className="bidi-check-icon"
+                          alt="Bidi Verified Icon"
+                        />
+                        <span>Verified</span>
+                        <div className={`verified-tooltip ${showVerifiedTooltip ? 'show' : ''}`}>
+                          <p className="verified-tooltip-title">Bidi Verified</p>
+                          <p className="verified-tooltip-subtitle">100% Money-Back Guarantee When You Pay Through Bidi</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="bid-amount-section">
+                    <div className="bid-amount-container">
+                      <button className="bid-display-button" disabled>
+                        ${bid.bid_amount}
+                        <div className="tag-hole"></div>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="business-badges">
+                    {averageRating && (
+                      <span className="vendor-rating">
+                        <img src={StarIcon} alt="Star" className="star-icon" />
+                        {averageRating}
+                      </span>
+                    )}
+                    {bid.isNew && (
+                      <span className="new-badge">New</span>
+                    )}
+                    {expirationStatus && (
+                      <div className={`expiration-badge ${expirationStatus.status}`}>
+                        <AccessTimeIcon />
+                        {expirationStatus.text}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="business-badges">
-              {averageRating && (
-                <span className="vendor-rating">
-                  <img src={StarIcon} alt="Star" className="star-icon" />
-                  {averageRating}
-                </span>
+
+            {showPaymentOptions && (
+              <div className="payment-options" style={{ marginBottom: '8px' }}>
+                {downPayment && (
+                  <button
+                    className="payment-button deposit"
+                    onClick={() => handleAction(onDownPayment, bid)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      marginBottom: '8px',
+                      background: '#9633eb',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    Pay Deposit (${downPayment.amount})
+                  </button>
+                )}
+                <button
+                  className="payment-button full"
+                  onClick={() => handleAction(handleDeny, bid.id)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: '#9633eb',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  Pay Full Amount (${bid.bid_amount})
+                </button>
+              </div>
+            )}
+
+            <div className="request-content" style={{ fontSize: '14px' }}>
+              {showInterested && (
+                <button
+                  className="approve-pay-button"
+                  onClick={() => {
+                    if (handleApprove) {
+                      handleApprove(bid.id);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    marginBottom: '12px',
+                    background: '#9633eb',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <CheckCircleIcon style={{ fontSize: 20 }} />
+                  Approve and Pay
+                </button>
               )}
-              {bid.isNew && (
-                <span className="new-badge">New</span>
+              <p className="request-description" style={{ marginBottom: '8px' }}>
+                <strong>Description:</strong>{" "}
+                <div 
+                  className={`bid-description-content ${!isDescriptionExpanded ? 'description-collapsed' : ''}`}
+                  dangerouslySetInnerHTML={{ __html: bid.bid_description?.replace(/\n/g, '<br>') }}
+                />
+                {bid.bid_description && bid.bid_description.replace(/<[^>]*>/g, '').replace(/\n/g, ' ').trim().length > 100 && (
+                  <button 
+                    className="read-more-btn"
+                    onClick={handleDescriptionToggle}
+                  >
+                    {isDescriptionExpanded ? 'Show Less' : 'Read More'}
+                  </button>
+                )}
+              </p>
+              {downPayment && !showPaymentOptions && (
+                <p className="request-comments">
+                  <strong>Down Payment:</strong>{" "}
+                  {downPayment.display}
+                </p>
               )}
-              {expirationStatus && (
-                <div className={`expiration-badge ${expirationStatus.status}`}>
-                  <AccessTimeIcon />
-                  {expirationStatus.text}
+              {bid.coupon_code && (
+                <div className="coupon-section">
+                  <button
+                    className="btn-secondary"
+                    onClick={() => onViewCoupon(bid)}
+                  >
+                    <i className="fas fa-ticket-alt"></i>
+                    View Applied Coupon
+                  </button>
+                </div>
+              )}
+              {bid.coupon_applied && (
+                <div className="coupon-applied-info">
+                  <strong>Coupon Applied:</strong> {bid.coupon_code}
+                  <br />
+                  <strong>Original Price:</strong> ${(bid.original_amount || 0).toFixed(2)}
+                  <br />
+                  <strong>Discount:</strong> ${(bid.discount_amount || 0).toFixed(2)}
+                  <br />
+                  <strong>Final Price:</strong> ${(bid.bid_amount || 0).toFixed(2)}
                 </div>
               )}
             </div>
           </div>
-        </div>
-      </div>
 
-      {showPaymentOptions && (
-        <div className="payment-options">
-          {downPayment && (
-            <button
-              className="payment-button deposit"
-              onClick={() => handleAction(onDownPayment, bid)}
-            >
-              Pay Deposit (${downPayment.amount})
-            </button>
-          )}
-          <button
-            className="payment-button full"
-            onClick={() => handleAction(handleDeny, bid.id)}
-          >
-            Pay Full Amount (${bid.bid_amount})
-          </button>
+          {/* Back of card - Messaging View */}
+          <div className="card-back" ref={backRef}>
+            {showMessagingView && currentUserId && (
+              <>
+                <button 
+                  onClick={handleBackFromMessaging}
+                  className="back-button-messaging"
+                  type="button"
+                >
+                  <FaArrowLeft />
+                  <span>Back to Bid</span>
+                </button>
+                <MessagingView
+                  currentUserId={currentUserId}
+                  businessId={bid.business_profiles.id}
+                  onBack={handleBackFromMessaging}
+                />
+              </>
+            )}
+          </div>
         </div>
-      )}
-
-      <div className="request-content">
-        <p className="request-description">
-          <strong>Description:</strong>{" "}
-          <div 
-            className={`bid-description-content ${!isDescriptionExpanded ? 'description-collapsed' : ''}`}
-            dangerouslySetInnerHTML={{ __html: bid.bid_description?.replace(/\n/g, '<br>') }}
-          />
-          {bid.bid_description && bid.bid_description.replace(/<[^>]*>/g, '').replace(/\n/g, ' ').trim().length > 100 && (
-            <button 
-              className="read-more-btn"
-              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-            >
-              {isDescriptionExpanded ? 'Show Less' : 'Read More'}
-            </button>
-          )}
-        </p>
-        {downPayment && !showPaymentOptions && (
-          <p className="request-comments">
-            <strong>Down Payment:</strong>{" "}
-            {downPayment.display}
-          </p>
-        )}
-        {bid.coupon_code && (
-          <div className="coupon-section">
-            <button
-              className="btn-secondary"
-              onClick={() => onViewCoupon(bid)}
-            >
-              <i className="fas fa-ticket-alt"></i>
-              View Applied Coupon
-            </button>
-          </div>
-        )}
-        {bid.coupon_applied && (
-          <div className="coupon-applied-info">
-            <strong>Coupon Applied:</strong> {bid.coupon_code}
-            <br />
-            <strong>Original Price:</strong> ${(bid.original_amount || 0).toFixed(2)}
-            <br />
-            <strong>Discount:</strong> ${(bid.discount_amount || 0).toFixed(2)}
-            <br />
-            <strong>Final Price:</strong> ${(bid.bid_amount || 0).toFixed(2)}
-          </div>
-        )}
       </div>
     </div>
   );
