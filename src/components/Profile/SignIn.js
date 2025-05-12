@@ -70,7 +70,7 @@ const SignIn = ({ onSuccess }) => {
                 if (onSuccess) {
                     onSuccess();
                 } else {
-                    navigate('/my-dashboard', {
+                    navigate('/individual-dashboard', {
                         state: { 
                             source: requestSource || requestFormData.source || 'general',
                             from: 'signin',
@@ -79,7 +79,7 @@ const SignIn = ({ onSuccess }) => {
                     });
                 }
             } else if (profile.role === 'business') {
-                navigate('/dashboard');
+                navigate('/business-dashboard');
             } else if (profile.role === 'both') {
                 navigate('/wedding-planner-dashboard');
             } else {
@@ -244,7 +244,7 @@ const SignIn = ({ onSuccess }) => {
                         if (onSuccess) {
                             onSuccess();
                         } else {
-                            navigate('/my-dashboard', {
+                            navigate('/individual-dashboard', {
                                 state: { 
                                     source: localStorage.getItem('requestSource') || 
                                            JSON.parse(localStorage.getItem('requestFormData') || '{}').source || 
@@ -255,7 +255,7 @@ const SignIn = ({ onSuccess }) => {
                             });
                         }
                     } else if (currentProfile?.role === 'business') {
-                        navigate('/dashboard');
+                        navigate('/business-dashboard');
                     } else if (currentProfile?.role === 'both') {
                         navigate('/wedding-planner-dashboard');
                     }

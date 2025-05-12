@@ -253,15 +253,14 @@ function App() {
               <Route path="/createaccount" element={<CreateAccount />} />
               <Route path="/profile" element={<ProfilePage />} />
               {/* Individual Routes */}
-              <Route path="/my-dashboard" element={
+              <Route path="/individual-dashboard" element={
                 <PrivateRoute>
-                  {userType === "individual" ? (
-                    <IndividualDashboard />
-                  ) : userType === "both" ? (
-                    <WeddingPlannerDashboard />
-                  ) : (
-                    <BusinessDashboard />
-                  )}
+                  <IndividualDashboard />
+                </PrivateRoute>
+              } />
+              <Route path="/business-dashboard" element={
+                <PrivateRoute>
+                  <BusinessDashboard />
                 </PrivateRoute>
               } />
               <Route path="/wedding-planner-dashboard" element={
@@ -275,7 +274,6 @@ function App() {
               <Route path="/test-email" element={<TestEmail />} />
               {/* Business Routes */}
               <Route path="/open-requests" element={<OpenRequests />} />
-              <Route path="/dashboard" element={<BusinessDashboard />} />
               <Route
                 path="/edit-bid/:requestId/:bidId"
                 element={<EditBid />}
