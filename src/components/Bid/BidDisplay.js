@@ -523,9 +523,9 @@ function BidDisplay({
           <strong>Description:</strong>{" "}
           <div 
             className={`bid-description-content ${!isDescriptionExpanded ? 'description-collapsed' : ''}`}
-            dangerouslySetInnerHTML={{ __html: bid.bid_description }}
+            dangerouslySetInnerHTML={{ __html: bid.bid_description?.replace(/\n/g, '<br>') }}
           />
-          {bid.bid_description.length > 200 && (
+          {bid.bid_description && bid.bid_description.replace(/<[^>]*>/g, '').replace(/\n/g, ' ').trim().length > 100 && (
             <button 
               className="read-more-btn"
               onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
