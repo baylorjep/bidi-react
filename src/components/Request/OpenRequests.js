@@ -14,7 +14,7 @@ const BUSINESS_TYPE_MAPPING = {
   "hair and makeup artist": ["hair and makeup artist", "beauty"],
   photography: ["photo"],
   videography: ["photo"],
-  dj: ["dj", "DJ"], // Add both lowercase and uppercase variations
+  dj: ["dj", "DJ"],
   venue: ["venue"],
   "spray tan": ["spray tan"],
   beauty: ["beauty", "hair and makeup artist"],
@@ -34,6 +34,29 @@ const SERVICE_CATEGORY_MAPPING = {
   "wedding planner": { table: "wedding_planning_requests", legacy: "wedding planning" },
 };
 
+// Helper function to normalize category names
+const normalizeCategory = (category) => {
+  return category.toLowerCase().trim();
+};
+
+// Helper function to check if a category matches any of the business categories
+const hasMatchingCategory = (requestCategory, businessCategories) => {
+  if (!requestCategory || !businessCategories) return false;
+  
+  const normalizedRequestCategory = normalizeCategory(requestCategory);
+  return businessCategories.some(category => {
+    const normalizedCategory = normalizeCategory(category);
+    // Check direct match
+    if (normalizedCategory === normalizedRequestCategory) return true;
+    
+    // Check mappings
+    const mappings = BUSINESS_TYPE_MAPPING[normalizedCategory] || [];
+    return mappings.some(mapping => 
+      normalizeCategory(mapping) === normalizedRequestCategory
+    );
+  });
+};
+
 function OpenRequests() {
   const [openRequests, setOpenRequests] = useState([]);
   const [openPhotoRequests, setOpenPhotoRequests] = useState([]);
@@ -46,6 +69,7 @@ function OpenRequests() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
 
   // Add this new function to fetch user's bids
   const fetchUserBids = async (userId) => {
@@ -274,7 +298,7 @@ function OpenRequests() {
 
         // Check if any of the business categories are valid
         const hasValidCategory = businessCategories.some(category => 
-          validCategories.includes(category.toLowerCase())
+          validCategories.includes(normalizeCategory(category))
         );
 
         if (!hasValidCategory) {
@@ -283,13 +307,17 @@ function OpenRequests() {
           return;
         }
 
-        // Check if any categories are photo/video related
-        const hasPhotoVideoCategory = businessCategories.some(category => 
-          ["photography", "videography"].includes(category.toLowerCase())
+        // Separate photo/video categories from other categories
+        const photoVideoCategories = businessCategories.filter(category => 
+          ["photography", "videography"].includes(normalizeCategory(category))
+        );
+        const otherCategories = businessCategories.filter(category => 
+          !["photography", "videography"].includes(normalizeCategory(category))
         );
 
-        if (hasPhotoVideoCategory) {
-          // Fetch both photography and videography requests
+        // Fetch photo/video requests if applicable
+        let photoVideoRequests = [];
+        if (photoVideoCategories.length > 0) {
           const [photoTableData, videoTableData, legacyRequestsData] =
             await Promise.all([
               supabase
@@ -310,46 +338,51 @@ function OpenRequests() {
                 .order("created_at", { ascending: false }),
             ]);
 
-            const combinedRequests = [
-              ...(photoTableData.data?.map((req) => ({
-                ...req,
-                table_name: "photography_requests",
-                service_title:
-                  req.title || req.event_title || "Photography Request",
-                service_category: "photography",
-              })) || []),
-              ...(videoTableData.data?.map((req) => ({
-                ...req,
-                table_name: "videography_requests",
-                service_title:
-                  req.title || req.event_title || "Videography Request",
-                service_category: "videography",
-              })) || []),
-              ...(legacyRequestsData.data?.map((req) => ({
-                ...req,
-                table_name: "requests",
-                service_title:
-                  req.service_title ||
-                  req.title ||
-                  `${req.service_category} Request`,
-              })) || []),
-            ];
+          photoVideoRequests = [
+            ...(photoTableData.data?.map((req) => ({
+              ...req,
+              table_name: "photography_requests",
+              service_title:
+                req.title || req.event_title || "Photography Request",
+              service_category: "photography",
+            })) || []),
+            ...(videoTableData.data?.map((req) => ({
+              ...req,
+              table_name: "videography_requests",
+              service_title:
+                req.title || req.event_title || "Videography Request",
+              service_category: "videography",
+            })) || []),
+            ...(legacyRequestsData.data?.map((req) => ({
+              ...req,
+              table_name: "requests",
+              service_title:
+                req.service_title ||
+                req.title ||
+                `${req.service_category} Request`,
+            })) || []),
+          ];
+        }
 
-            setOpenPhotoRequests(combinedRequests);
-            setOpenRequests([]);
-        } else {
-          // Handle other business types (catering, dj, etc.)
-          const categoryPromises = businessCategories.map(async (category) => {
+        // Fetch other category requests
+        let otherRequests = [];
+        if (otherCategories.length > 0) {
+          const categoryPromises = otherCategories.map(async (category) => {
+            const normalizedCategory = normalizeCategory(category);
+            const serviceMapping = SERVICE_CATEGORY_MAPPING[normalizedCategory];
+            
+            if (!serviceMapping) return [];
+
             const [categoryData, legacyRequestsData] = await Promise.all([
               supabase
-                .from(`${category.toLowerCase()}_requests`)
+                .from(serviceMapping.table)
                 .select("*")
                 .in("status", ["pending", "open"])
                 .order("created_at", { ascending: false }),
               supabase
                 .from("requests")
                 .select("*")
-                .eq("service_category", category.toLowerCase())
+                .eq("service_category", serviceMapping.legacy)
                 .eq("open", true)
                 .order("created_at", { ascending: false }),
             ]);
@@ -357,24 +390,35 @@ function OpenRequests() {
             return [
               ...(categoryData.data?.map((req) => ({
                 ...req,
-                table_name: `${category.toLowerCase()}_requests`,
+                table_name: serviceMapping.table,
                 service_title: req.title || req.event_title || `${category} Request`,
-                service_category: category.toLowerCase(),
+                service_category: normalizedCategory,
               })) || []),
               ...(legacyRequestsData.data?.map((req) => ({
                 ...req,
                 table_name: "requests",
                 service_title: req.service_title || req.title || `${category} Request`,
-                service_category: category.toLowerCase(),
+                service_category: normalizedCategory,
               })) || []),
             ];
           });
 
           const allCategoryRequests = await Promise.all(categoryPromises);
-          const combinedRequests = allCategoryRequests.flat();
-          setOpenRequests(combinedRequests);
+          otherRequests = allCategoryRequests.flat();
+        }
+
+        // Combine all requests
+        const allRequests = [...photoVideoRequests, ...otherRequests];
+        
+        // Set the appropriate state based on whether we have photo/video categories
+        if (photoVideoCategories.length > 0) {
+          setOpenPhotoRequests(allRequests);
+          setOpenRequests([]);
+        } else {
+          setOpenRequests(allRequests);
           setOpenPhotoRequests([]);
         }
+
       } catch (error) {
         console.error("Error in fetchRequests:", error);
         setError(`Error fetching requests: ${error.message}`);
@@ -669,6 +713,30 @@ function OpenRequests() {
     return table;
   };
 
+  // Add this new function to filter requests by category
+  const filterRequestsByCategory = (requests, category) => {
+    if (category === "all") return requests;
+    return requests.filter(request => 
+      normalizeCategory(request.service_category) === normalizeCategory(category)
+    );
+  };
+
+  // Add this new function to get the display name for a category
+  const getCategoryDisplayName = (category) => {
+    const normalized = normalizeCategory(category);
+    switch (normalized) {
+      case "photography": return "Photography";
+      case "videography": return "Videography";
+      case "dj": return "DJ";
+      case "catering": return "Catering";
+      case "florist": return "Florist";
+      case "hair and makeup artist": return "Hair & Makeup";
+      case "beauty": return "Beauty";
+      case "wedding planner": return "Wedding Planning";
+      default: return category;
+    }
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -686,27 +754,78 @@ function OpenRequests() {
           {showHidden ? "Show Active Requests" : "Show Hidden Requests"}
         </button>
       </div>
+
+      {/* Add the tabs */}
+      <div className="category-tabs" style={{ 
+        display: 'flex', 
+        gap: '10px', 
+        marginBottom: '20px',
+        overflowX: 'auto',
+        padding: '0 10px'
+      }}>
+        <button
+          className={`category-tab ${activeTab === 'all' ? 'active' : ''}`}
+          onClick={() => setActiveTab('all')}
+          style={{
+            padding: '8px 16px',
+            border: 'none',
+            borderRadius: '20px',
+            backgroundColor: activeTab === 'all' ? '#9633eb' : '#f0f0f0',
+            color: activeTab === 'all' ? 'white' : '#333',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          All Requests
+        </button>
+        {businessCategories.map(category => (
+          <button
+            key={category}
+            className={`category-tab ${activeTab === category ? 'active' : ''}`}
+            onClick={() => setActiveTab(category)}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '20px',
+              backgroundColor: activeTab === category ? '#9633eb' : '#f0f0f0',
+              color: activeTab === category ? 'white' : '#333',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {getCategoryDisplayName(category)}
+          </button>
+        ))}
+      </div>
+
       <div className="request-grid-container">
         <div className="request-grid">
           {error && <p>Error: {error}</p>}
-          {(["photography", "videography"].includes(businessCategories?.some(c => c.toLowerCase()) || '')
-            ? filterRequestsByHidden(openPhotoRequests)
-            : filterRequestsByHidden(openRequests)
-          )
-            .filter((request) => !userBids.has(request.id))
-            .filter(meetsMinimumPrice)
-            .filter(request => !isDatePassed(request)) // Add the date filter
-            .sort(sortByNewAndDate)
-            .map((request) => (
-              <RequestDisplayMini
-                key={request.id}
-                request={request}
-                isPhotoRequest={request.service_category === "photography"}
-                onHide={() => hideRequest(request.id, getTableName(request))}
-                onShow={() => showRequest(request.id, getTableName(request))}
-                isHidden={request.hidden_by_vendor?.includes(businessId)}
-              />
-            ))}
+          {filterRequestsByCategory(
+            (businessCategories.some(cat => 
+              ["photography", "videography"].includes(normalizeCategory(cat))
+            )
+              ? filterRequestsByHidden(openPhotoRequests)
+              : filterRequestsByHidden(openRequests)
+            )
+              .filter((request) => !userBids.has(request.id))
+              .filter(meetsMinimumPrice)
+              .filter(request => !isDatePassed(request))
+              .filter(request => hasMatchingCategory(request.service_category, businessCategories))
+              .sort(sortByNewAndDate),
+            activeTab
+          ).map((request) => (
+            <RequestDisplayMini
+              key={request.id}
+              request={request}
+              isPhotoRequest={request.service_category === "photography"}
+              onHide={() => hideRequest(request.id, getTableName(request))}
+              onShow={() => showRequest(request.id, getTableName(request))}
+              isHidden={request.hidden_by_vendor?.includes(businessId)}
+            />
+          ))}
         </div>
       </div>
     </div>

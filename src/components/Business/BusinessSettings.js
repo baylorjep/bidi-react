@@ -49,6 +49,10 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
     const saved = localStorage.getItem('hideSupportBanner');
     return saved !== 'true';
   });
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [currentCategories, setCurrentCategories] = useState([]);
+  const [customCategory, setCustomCategory] = useState("");
 
   // Add these modules for the editor
   const modules = {
@@ -71,6 +75,22 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
     "bullet",
     "link",
     "image",
+  ];
+
+  // Add these business categories
+  const businessCategories = [
+    { id: 'photography', label: 'Photography' },
+    { id: 'videography', label: 'Videography' },
+    { id: 'dj', label: 'DJ' },
+    { id: 'florist', label: 'Florist' },
+    { id: 'venue', label: 'Venue' },
+    { id: 'catering', label: 'Catering' },
+    { id: 'cake', label: 'Cake' },
+    { id: 'beauty', label: 'Hair & Makeup' },
+    { id: 'wedding planner/coordinator', label: 'Wedding Planner/Coordinator' },
+    { id: 'rental', label: 'Rental' },
+    { id: 'photo_booth', label: 'Photo Booth' },
+    { id: 'other', label: 'Other' }
   ];
 
   useEffect(() => {
@@ -105,6 +125,15 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
 
         setIsAdmin(!!profile.is_admin);
         setDefaultExpirationDays(profile.default_expiration_days || "");
+        
+        // Set selected categories from profile
+        if (profile.business_category) {
+          const categories = Array.isArray(profile.business_category) 
+            ? profile.business_category 
+            : [profile.business_category];
+          setSelectedCategories(categories);
+          setCurrentCategories(categories);
+        }
 
         // Step 2: Use the business_id from the profile to fetch related data
         const { data: existingCoupon, error: couponError } = await supabase
@@ -537,6 +566,39 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
     localStorage.setItem('hideSupportBanner', 'true');
   };
 
+  // Add this new function to handle category updates
+  const handleCategorySubmit = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("User not found. Please log in again.");
+      return;
+    }
+
+    // If "other" is selected and there's a custom category, add it to the array
+    let categoriesToSave = [...selectedCategories];
+    if (selectedCategories.includes('other') && customCategory.trim()) {
+      categoriesToSave = categoriesToSave.filter(cat => cat !== 'other');
+      categoriesToSave.push(customCategory.trim());
+    }
+
+    const { error } = await supabase
+      .from("business_profiles")
+      .update({ business_category: categoriesToSave })
+      .eq("id", user.id);
+
+    if (error) {
+      console.error("Error updating business categories:", error);
+      alert("An error occurred while updating your business categories.");
+    } else {
+      setShowCategoryModal(false);
+      setCurrentCategories(categoriesToSave);
+      setCustomCategory(""); // Reset custom category
+    }
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -875,6 +937,21 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
             Set Default Bid Expiration
           </button>
         </div>
+
+        {/* Add Business Categories Button */}
+        <div
+          className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
+          style={{ marginTop: "20px" }}
+        >
+          <button
+            style={{ fontWeight: "bold", color: "#9633eb" }}
+            className="btn-primary flex-fill"
+            onClick={() => setShowCategoryModal(true)}
+          >
+            <i className="fas fa-tags" style={{ marginRight: "8px" }}></i>
+            Manage Business Categories
+          </button>
+        </div>
       </div>
 
       {/* Modal for Down Payment Setup */}
@@ -1179,6 +1256,120 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
           </button>
           <button className="btn-success" onClick={handleDefaultExpirationSubmit}>
             Save
+          </button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Business Categories Modal */}
+      <Modal
+        show={showCategoryModal}
+        onHide={() => {
+          setShowCategoryModal(false);
+          setSelectedCategories(currentCategories);
+          setCustomCategory(""); // Reset custom category when closing
+        }}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Manage Business Categories</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <label className="form-label">Select your business categories:</label>
+            {currentCategories.length > 0 && (
+              <div className="current-categories mb-3">
+                <h6>Current Categories:</h6>
+                <div className="d-flex flex-wrap gap-2">
+                  {currentCategories.map(categoryId => {
+                    const category = businessCategories.find(c => c.id === categoryId);
+                    return category ? (
+                      <span key={categoryId} className="badge ">
+                        {category.label}
+                      </span>
+                    ) : (
+                      <span key={categoryId} className="badge ">
+                        {categoryId}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <div className="category-grid">
+              {businessCategories.map((category) => (
+                <div 
+                  key={category.id} 
+                  className="category-item"
+                  onClick={() => {
+                    if (selectedCategories.includes(category.id)) {
+                      setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                      if (category.id === 'other') {
+                        setCustomCategory(""); // Clear custom category when unchecking "Other"
+                      }
+                    } else {
+                      setSelectedCategories([...selectedCategories, category.id]);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id={category.id}
+                      checked={selectedCategories.includes(category.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCategories([...selectedCategories, category.id]);
+                        } else {
+                          setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                          if (category.id === 'other') {
+                            setCustomCategory(""); // Clear custom category when unchecking "Other"
+                          }
+                        }
+                      }}
+                    />
+                    <label className="form-check-label" htmlFor={category.id}>
+                      {category.label}
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {selectedCategories.includes('other') && (
+              <div className="mt-3">
+                <label htmlFor="customCategory" className="form-label">
+                  Please specify your business category:
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="customCategory"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  placeholder="Enter your business category"
+                />
+              </div>
+            )}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <button
+            className="btn-danger"
+            onClick={() => {
+              setShowCategoryModal(false);
+              setSelectedCategories(currentCategories);
+              setCustomCategory(""); // Reset custom category when canceling
+            }}
+          >
+            Cancel
+          </button>
+          <button 
+            className="btn-success" 
+            onClick={handleCategorySubmit}
+            disabled={selectedCategories.length === 0 || (selectedCategories.includes('other') && !customCategory.trim())}
+          >
+            Save Changes
           </button>
         </Modal.Footer>
       </Modal>
