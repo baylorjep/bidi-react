@@ -123,6 +123,19 @@
     color: #a328f4;
     font-size: 1.4rem;
     flex-shrink: 0;
+    margin-right: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.bids-page .category-icon i {
+    font-size: 1.4rem;
+    color: #a328f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
 }
 
 .bids-page .category-info {
@@ -361,10 +374,13 @@
 }
 
 .bids-page .bids-container {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
-    transition: all 0.3s ease;
+    margin-top: 20px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* No Bids Message Styles */
@@ -597,7 +613,12 @@
     }
 
     .bids-page .bids-container {
-        gap: 16px;
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .bids-page .bid-display {
+        width: 100%;
     }
 }
 
@@ -663,8 +684,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 32px; /* Increased bottom margin for more breathing room */
-    gap: 32px; /* Add gap between left and right sections */
+    gap: 20px; /* Add gap between left and right sections */
 }
 
 .bids-page .bid-display-head {
@@ -857,7 +877,7 @@
 .bids-page .request-content {
     padding: 20px 0;
     border-top: 1px solid #f0f0f0;
-    margin-top: 20px;
+
 }
 
 .bids-page .request-category,
@@ -1288,10 +1308,7 @@
     visibility: visible;
 }
 
-/* Ensure bid content is properly spaced */
-.bids-page .bid-display-head-container {
-    margin-bottom: 20px;
-}
+
 
 .bids-page .business-info {
     margin-bottom: 16px;
@@ -1397,6 +1414,13 @@
         margin: 0 auto;
         display: inline-flex;
     }
+}
+
+.bids-page .request-category {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
 }
 
 

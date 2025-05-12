@@ -5,7 +5,7 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
   width: 100%;
   margin: 0 auto;
-  padding: 20px;
+  padding: 15px;
   opacity: 1;
 }
 
@@ -16,55 +16,133 @@
 
 .bid-display-head-container {
   display: flex;
-  flex-direction: row;
-  gap: 20px;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
   width: 100%;
 }
 
 .bid-display-head {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 15px;
-  flex-wrap: nowrap;
+  gap: 12px;
+  width: 100%;
 }
 
-.business-actions {
+.request-content {
+  margin-bottom: 15px;
+}
+
+.bid-description-content {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  font-family: 'Inter';
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bid-amount-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.bid-amount-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  text-align: center;
+}
+
+.bid-display-button {
+  background: #A328F4;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 8px 24px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: default;
+  position: relative;
+  width: auto;
+  text-align: center;
+  min-width: 140px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bid-display .business-actions-bid-display {
   display: flex;
   flex-direction: row;
-  gap: 15px;
-  width: auto;
-  margin-top: 20px;
+  gap: 12px;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 0;
+  width: auto !important;
 }
 
-.business-actions button {
-  width: auto;
-  padding: 12px 24px;
-  border-radius: 30px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.bid-display .business-actions-bid-display .btn-icon {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: inherit;
+  color: #9633eb;
+  background: none;
   border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  box-shadow: none;
+  min-width: unset;
+  flex: none;
 }
 
-.btn-danger {
-  background-color: white;
-  color: #A328F4;
-  border: 1px solid #A328F4;
+.bid-display .business-actions-bid-display .btn-icon:hover {
+  transform: scale(1.1);
+  color: #7a29bc;
 }
 
-.btn-danger:hover {
-  background-color: #A328F4;
-  color: white;
+.bid-display .business-actions-bid-display .btn-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
-.btn-success {
-  background-color: #28a745;
-  color: white;
+/* Remove all special button classes to ensure consistent styling */
+.bid-display .business-actions-bid-display .btn-icon.btn-success,
+.bid-display .business-actions-bid-display .btn-icon.btn-danger {
+  color: #9633eb;
+  background: none;
+  border: none;
+  box-shadow: none;
+  min-width: unset;
+  flex: none;
 }
 
-.btn-success:hover {
-  background-color: #218838;
+.bid-display .business-actions-bid-display .btn-icon.btn-success:hover,
+.bid-display .business-actions-bid-display .btn-icon.btn-danger:hover {
+  color: #7a29bc;
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 
 .btn-secondary {
@@ -93,28 +171,6 @@
 
 .btn-chat svg {
   font-size: 1.2rem;
-}
-
-.bid-display-button {
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 30px;
-  padding: 12px 24px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #333;
-  cursor: default;
-  position: relative;
-  width: auto;
-  text-align: center;
-  min-width: 200px;
-  background-color: #A328F4;
-  color: white;
-  border: none;
-}
-
-.bid-display-button:hover {
-  background-color: #8a1fd4;
 }
 
 .tag-hole {
@@ -149,96 +205,344 @@
   z-index: 1;
 }
 
-.vendor-profile-image {
-  cursor: pointer;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.request-title {
-  margin-bottom: 0;
-  text-align: left;
+.bid-display .profile-image-container {
+  width: 120px;
+  height: 120px;
   position: relative;
-  width: 100%;
-}
-
-.bid-description-content {
-  max-height: 400px;
-  overflow-y: auto;
-  margin-top: 12px;
-  padding: 12px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  font-family: 'Inter';
-  font-size: 14px;
-  line-height: 1.6;
-  color: #333;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Expiration Badge Styles */
-.expiration-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  width: auto;
+  cursor: pointer;
+  margin: 0 auto 12px;
+  display: flex;
   justify-content: center;
+  align-items: center;
+}
+
+.bid-display .vendor-profile-image {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #f0f0f0;
+  transition: transform 0.2s ease;
+  display: block;
+  margin: 0 auto;
+}
+
+.profile-image-container:hover .vendor-profile-image {
+  transform: scale(1.05);
+}
+
+.business-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: center;
+}
+
+.business-name-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.business-name-bid-display {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.business-name-bid-display:hover {
+  color: #A328F4;
+}
+
+.business-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.bidi-check-icon {
+  height: 20px;
+  width: auto;
+}
+
+.bidi-verified-info {
+  text-align: left;
+  padding: 0;
+  margin-top: 8px;
+}
+
+.bidi-verified-title {
+  font-size: 0.9rem;
+  margin: 0;
+  font-weight: bold;
+  text-align: left;
+  font-family: Outfit;
+  color: #a328f4;
+}
+
+.bidi-verified-subtitle {
+  font-size: 0.8rem;
+  margin: 5px 0 0;
+  font-style: italic;
+  text-align: left;
+  font-family: Outfit;
+  color: #a328f4;
+}
+
+.request-category {
+  display: none;
+}
+
+.request-description {
+  text-align: left;
+  margin-bottom: 10px;
+}
+
+.coupon-section {
+  text-align: left;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.coupon-section .btn-secondary {
+  padding: 8px 16px;
+  font-size: 14px;
+  width: auto;
   min-width: 200px;
 }
 
-.expiration-badge svg {
-  margin-right: 4px;
+.coupon-section .fas {
+  margin-right: 8px;
 }
 
-.expiration-badge.normal {
-  background-color: #f3e5f5;
-  color: #6a1b9a;
+.coupon-applied-info {
+  margin-top: 8px;
+  text-align: left;
+  color: #a328f4;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }
 
-.expiration-badge.warning {
-  background-color: #e1bee7;
-  color: #4a148c;
+.action-buttons-spacer {
+  margin-bottom: 20px;
 }
 
-.expiration-badge.urgent {
-  background-color: #ce93d8;
-  color: #38006b;
-}
-
-.expiration-badge.expired {
-  background-color: #f5f5f5;
-  color: #757575;
-}
-
-.new-badge {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: bold;
-  background-color: #A328F4;
-  color: white;
+.bidi-verified-compact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #A328F4;
   margin-left: 8px;
+  position: relative;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 16px;
+  background-color: rgba(163, 40, 244, 0.1);
+  transition: background-color 0.2s ease;
 }
 
-/* Mobile Styles */
+.bidi-verified-compact:hover {
+  background-color: rgba(163, 40, 244, 0.15);
+}
+
+.bidi-verified-compact .bidi-check-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Make tooltip styles more specific */
+.bid-display .bidi-verified-compact .verified-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 240px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 1000;
+  pointer-events: none;
+  border: 1px solid rgba(163, 40, 244, 0.1);
+  height: 100px;
+}
+
+.bid-display .bidi-verified-compact .verified-tooltip.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.bid-display .bidi-verified-compact .verified-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid white;
+  filter: drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.05));
+}
+
+.bid-display .bidi-verified-compact .verified-tooltip::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid white;
+}
+
+.bid-display .bidi-verified-compact .verified-tooltip-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #A328F4;
+  margin: 0 0 4px 0;
+  font-family: 'Outfit', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bid-display .bidi-verified-compact .verified-tooltip-title::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-image: url('../../assets/Frame 1162.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.bid-display .bidi-verified-compact .verified-tooltip-subtitle {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  line-height: 1.4;
+}
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+  .bid-display-head-container {
+    gap: 12px;
+  }
+
+  .bid-display .profile-image-container {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 12px;
+  }
+
+  .business-name-bid-display {
+    font-size: 1.1rem;
+  }
+
+  .bid-display-button {
+    font-size: 1.1rem;
+    padding: 6px 20px;
+  }
+
+  .bid-display .business-actions-bid-display {
+    justify-content: flex-end;
+    width: auto;
+  }
+
+  .bid-display .business-actions-bid-display .btn-icon {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: inherit;
+    min-width: unset;
+    flex: none;
+  }
+
+  .bid-display .business-actions-bid-display .btn-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .bid-display-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bid-amount-section {
+    margin-top: 2px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .bid-amount-container {
+    width: 100%;
+    text-align: center;
+  }
+
+  .bid-display-button {
+    margin: 0 auto;
+  }
+
+  .business-badges {
+    margin-top: 2px;
+  }
+
+  .expiration-badge {
+    margin-top: 2px;
+  }
+
+  .business-actions-bid-display button {
+    width: auto;
+    padding: 0;
+    font-size: inherit;
+  }
+}
+
 @media screen and (max-width: 500px) {
   .request-display {
-    padding: 15px;
+    padding: 12px;
   }
 
   .bid-display-head-container {
     flex-direction: column;
-    gap: 15px;
-    align-items: center;
-    justify-content: center;
+    gap: 12px;
+  }
+
+  .business-actions-bid-display {
+    justify-content: flex-end;
+    width: auto;
+  }
+
+  .business-actions-bid-display button {
+    width: auto;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  .btn-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .btn-icon svg {
+    font-size: 18px;
   }
 
   .bid-display-head {
@@ -247,13 +551,7 @@
     gap: 10px;
   }
 
-  .business-actions {
-    flex-direction: column;
-    width: 100%;
-    margin-top: 15px;
-  }
-
-  .business-actions button {
+  .business-actions-bid-display button {
     width: 100%;
     padding: 10px;
     font-size: 13px;
@@ -299,6 +597,25 @@
     width: 100%;
     min-width: unset;
   }
+
+  .verified-tooltip {
+    width: 220px;
+    padding: 10px 14px;
+  }
+
+  .verified-tooltip-title {
+    font-size: 12px;
+  }
+
+  .verified-tooltip-subtitle {
+    font-size: 11px;
+  }
+
+  .bid-display .profile-image-container {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 12px;
+  }
 }
 
 @media screen and (max-width: 480px) {
@@ -306,7 +623,7 @@
     padding: 12px;
   }
 
-  .business-actions button {
+  .business-actions-bid-display button {
     padding: 8px;
     font-size: 12px;
   }
@@ -322,108 +639,136 @@
   }
 }
 
-.profile-image-container {
+.new-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  background-color: #A328F4;
+  color: white;
+  margin-left: 8px;
+}
+
+/* Expiration Badge Styles */
+.expiration-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  width: auto;
+  justify-content: center;
+  min-width: 120px;
+  margin-top: 4px;
+}
+
+.expiration-badge svg {
+  margin-right: 4px;
+  font-size: 16px;
+}
+
+.expiration-badge.normal {
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+}
+
+.expiration-badge.warning {
+  background-color: #e1bee7;
+  color: #4a148c;
+}
+
+.expiration-badge.urgent {
+  background-color: #ce93d8;
+  color: #38006b;
+}
+
+.expiration-badge.expired {
+  background-color: #f5f5f5;
+  color: #757575;
+}
+
+.description-collapsed {
+  max-height: 100px;
+  overflow: hidden;
   position: relative;
 }
 
-.business-info {
-  display: flex;
-  flex-direction: row;
-  align-items: left;
-  justify-content: left;
-  gap: 4px;
-  flex-wrap: wrap;
-  flex: 1;
+.description-collapsed::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: linear-gradient(transparent, #f9f9f9);
 }
 
-.business-name {
-  text-decoration: none;
-  color: inherit;
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-.business-badges {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.bidi-check-icon {
-  height: 20px;
-  width: auto;
-}
-
-.bidi-verified-info {
-  text-align: left;
-  padding: 0;
+.read-more-btn {
+  background: none;
+  border: none;
+  color: #A328F4;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
   margin-top: 8px;
+  font-weight: 500;
 }
 
-.bidi-verified-title {
-  font-size: 0.9rem;
-  margin: 0;
-  font-weight: bold;
-  text-align: left;
-  font-family: Outfit;
-  color: #a328f4;
+.read-more-btn:hover {
+  text-decoration: underline;
 }
 
-.bidi-verified-subtitle {
-  font-size: 0.8rem;
-  margin: 5px 0 0;
-  font-style: italic;
-  text-align: left;
-  font-family: Outfit;
-  color: #a328f4;
-}
-
-.bid-amount-container {
+.payment-options {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: auto;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 0 16px;
 }
 
-.request-category {
-  text-align: left;
-  margin-bottom: 10px;
-}
-
-.request-description {
-  text-align: left;
-  margin-bottom: 10px;
-}
-
-.coupon-section {
-  text-align: left;
-  margin-top: 8px;
-  margin-bottom: 10px;
-}
-
-.coupon-section .btn-secondary {
-  padding: 8px 16px;
-  font-size: 14px;
-  width: auto;
-  min-width: 200px;
-}
-
-.coupon-section .fas {
-  margin-right: 8px;
-}
-
-.coupon-applied-info {
-  margin-top: 8px;
-  text-align: left;
-  color: #a328f4;
-  padding: 12px;
-  background-color: #f9f9f9;
+.payment-button {
+  width: 100%;
+  padding: 12px 24px;
   border-radius: 8px;
-  margin-bottom: 10px;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.action-buttons-spacer {
-  margin-bottom: 20px;
+.payment-button.deposit {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.payment-button.full {
+  background-color: #9633eb;
+  color: white;
+}
+
+.payment-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.payment-button.deposit:hover {
+  background-color: #e0e0e0;
+}
+
+.payment-button.full:hover {
+  background-color: #7a29bc;
+}
+
+@media (max-width: 768px) {
+  .payment-options {
+    padding: 0 12px;
+  }
+  
+  .payment-button {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
 } 

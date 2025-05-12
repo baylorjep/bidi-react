@@ -12,6 +12,10 @@ import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import { Helmet } from 'react-helmet';
+import CancelIcon from '@mui/icons-material/Cancel';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 export default function BidsPage({ onOpenChat }) {
     const [requests, setRequests] = useState([]);
@@ -79,7 +83,7 @@ export default function BidsPage({ onOpenChat }) {
                 { data: weddingPlanningRequests, error: weddingPlanningError }
             ] = await Promise.all([
                 supabase.from('requests').select('*').eq('user_id', userId),
-                supabase.from('photography_requests').select('*').eq('user_id', userId),
+                supabase.from('photography_requests').select('*').eq('profile_id', userId),
                 supabase.from('dj_requests').select('*').eq('user_id', userId),
                 supabase.from('catering_requests').select('*').eq('user_id', userId),
                 supabase.from('beauty_requests').select('*').eq('user_id', userId),
@@ -169,7 +173,7 @@ export default function BidsPage({ onOpenChat }) {
                     return { 
                         requestId: request.id, 
                         count: activeBusinessIds.size,
-                        total: totalBusinesses // Use total businesses without subtracting hidden vendors
+                        total: totalBusinesses
                     };
                 })
             );
@@ -178,10 +182,26 @@ export default function BidsPage({ onOpenChat }) {
             const requestsWithViews = allRequests.map(request => ({
                 ...request,
                 viewCount: viewCounts.find(v => v.requestId === request.id)?.count || 0,
-                totalBusinessCount: viewCounts.find(v => v.requestId === request.id)?.total || 0
+                totalBusinessCount: viewCounts.find(v => v.requestId === request.id)?.total || 0,
+                isNew: isNew(request.created_at),
+                isOpen: request.status === "open" || request.status === "pending" || request.open
             }));
 
-            setRequests(requestsWithViews);
+            // Sort requests: new and open first, then by creation date
+            const sortedRequests = requestsWithViews.sort((a, b) => {
+                // First sort by new status
+                if (a.isNew && !b.isNew) return -1;
+                if (!a.isNew && b.isNew) return 1;
+                
+                // Then sort by open status
+                if (a.isOpen && !b.isOpen) return -1;
+                if (!a.isOpen && b.isOpen) return 1;
+                
+                // Finally sort by creation date (newest first)
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+
+            setRequests(sortedRequests);
         } catch (error) {
             console.error('Error loading requests:', error);
         }
@@ -357,7 +377,9 @@ export default function BidsPage({ onOpenChat }) {
                             return bid.status?.toLowerCase() === 'pending';
                         } else if (activeTab === 'approved') {
                             return bid.status?.toLowerCase() === 'accepted';
-                        } else if (activeTab === 'denied') {
+                        } else if (activeTab === 'interested') {
+                            return bid.status?.toLowerCase() === 'interested';
+                        } else if (activeTab === 'not_interested') {
                             return bid.status?.toLowerCase() === 'denied';
                         }
                         return false;
@@ -515,11 +537,26 @@ export default function BidsPage({ onOpenChat }) {
         }
     };
 
-    const handleMoveToDenied = async (bid) => {
+    const handleMoveToNotInterested = async (bid) => {
         try {
             const { error } = await supabase
                 .from('bids')
                 .update({ status: 'denied' })
+                .eq('id', bid.id);
+            
+            if (error) throw error;
+            
+            await loadBids();
+        } catch (error) {
+            console.error('Error updating bid status:', error);
+        }
+    };
+
+    const handleMoveToInterested = async (bid) => {
+        try {
+            const { error } = await supabase
+                .from('bids')
+                .update({ status: 'interested' })
                 .eq('id', bid.id);
             
             if (error) throw error;
@@ -904,8 +941,9 @@ export default function BidsPage({ onOpenChat }) {
             return (
                 <BidDisplay
                     {...commonProps}
-                    handleApprove={() => handleAcceptBidClick(bid)}
-                    handleDeny={() => handleMoveToDenied(bid)}
+                    handleDeny={() => handleMoveToNotInterested(bid)}
+                    handleInterested={() => handleMoveToInterested(bid)}
+                    showPending={true}
                 />
             );
         }
@@ -923,13 +961,26 @@ export default function BidsPage({ onOpenChat }) {
             );
         }
 
-        if (activeTab === 'denied') {
+        if (activeTab === 'interested') {
+            return (
+                <BidDisplay
+                    {...commonProps}
+                    handleApprove={() => handleAcceptBidClick(bid)}
+                    handleDeny={() => handleMoveToNotInterested(bid)}
+                    handleInterested={() => handleMoveToPending(bid)}
+                    showInterested={true}
+                />
+            );
+        }
+
+        if (activeTab === 'not_interested') {
             return (
                 <BidDisplay
                     {...commonProps}
                     handleApprove={() => handleAcceptBidClick(bid)}
                     handleDeny={() => handleMoveToPending(bid)}
-                    showReopen={true}
+                    handleInterested={() => handleMoveToInterested(bid)}
+                    showNotInterested={true}
                 />
             );
         }
@@ -972,10 +1023,22 @@ export default function BidsPage({ onOpenChat }) {
                         </button>
                     </div>
                 ) : null;
-            case 'denied':
+            case 'interested':
                 return currentRequestBids.length === 0 ? (
                     <div className="no-bids-message">
-                        <p>No denied bids for this request.</p>
+                        <p>No interested bids for this request.</p>
+                        <button 
+                            className="btn btn-secondary"
+                            onClick={() => setActiveTab('pending')}
+                        >
+                            View Pending Bids
+                        </button>
+                    </div>
+                ) : null;
+            case 'not_interested':
+                return currentRequestBids.length === 0 ? (
+                    <div className="no-bids-message">
+                        <p>No bids marked as not interested.</p>
                         <button 
                             className="btn btn-secondary"
                             onClick={() => setActiveTab('pending')}
@@ -996,14 +1059,14 @@ export default function BidsPage({ onOpenChat }) {
 
     const getCategoryIcon = (type) => {
         const typeMap = {
-            'photography': 'fa-camera',
-            'videography': 'fa-video',
-            'dj': 'fa-music',
-            'catering': 'fa-utensils',
-            'beauty': 'fa-spa',
-            'florist': 'fa-leaf',
-            'wedding_planning': 'fa-ring',
-            'regular': 'fa-star'
+            'photography': 'fa-solid fa-camera',
+            'videography': 'fa-solid fa-video',
+            'dj': 'fa-solid fa-music',
+            'catering': 'fa-solid fa-utensils',
+            'beauty': 'fa-solid fa-spa',
+            'florist': 'fa-solid fa-leaf',
+            'wedding_planning': 'fa-solid fa-ring',
+            'regular': 'fa-solid fa-star'
         };
         return typeMap[type] || typeMap.regular;
     };
@@ -1024,27 +1087,77 @@ export default function BidsPage({ onOpenChat }) {
 
     const renderMobileNav = () => {
         return (
-            <div className="mobile-nav">
+            <div className="mobile-nav" style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                display: 'flex',
+                justifyContent: 'space-around',
+                padding: '10px',
+                backgroundColor: 'white',
+                borderTop: '1px solid #eee',
+                zIndex: 1000
+            }}>
+                <button 
+                    className={activeTab === 'not_interested' ? 'active' : ''}
+                    onClick={() => setActiveTab('not_interested')}
+                    title="Not Interested"
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '24px',
+                        color: activeTab === 'not_interested' ? '#9633eb' : '#666',
+                        cursor: 'pointer',
+                        padding: '8px'
+                    }}
+                >
+                    <i className="fas fa-times-circle"></i>
+                </button>
                 <button 
                     className={activeTab === 'pending' ? 'active' : ''}
                     onClick={() => setActiveTab('pending')}
+                    title="Pending"
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '24px',
+                        color: activeTab === 'pending' ? '#9633eb' : '#666',
+                        cursor: 'pointer',
+                        padding: '8px'
+                    }}
                 >
                     <i className="fas fa-clock"></i>
-                    <span>Pending</span>
+                </button>
+                <button 
+                    className={activeTab === 'interested' ? 'active' : ''}
+                    onClick={() => setActiveTab('interested')}
+                    title="Interested"
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '24px',
+                        color: activeTab === 'interested' ? '#9633eb' : '#666',
+                        cursor: 'pointer',
+                        padding: '8px'
+                    }}
+                >
+                    <i className="fas fa-heart"></i>
                 </button>
                 <button 
                     className={activeTab === 'approved' ? 'active' : ''}
                     onClick={() => setActiveTab('approved')}
+                    title="Approved"
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '24px',
+                        color: activeTab === 'approved' ? '#9633eb' : '#666',
+                        cursor: 'pointer',
+                        padding: '8px'
+                    }}
                 >
                     <i className="fas fa-check-circle"></i>
-                    <span>Approved</span>
-                </button>
-                <button 
-                    className={activeTab === 'denied' ? 'active' : ''}
-                    onClick={() => setActiveTab('denied')}
-                >
-                    <i className="fas fa-times-circle"></i>
-                    <span>Denied</span>
                 </button>
             </div>
         );
@@ -1090,27 +1203,79 @@ export default function BidsPage({ onOpenChat }) {
                         </h2>
                     </div>
                     <div className="mobile-bids-content">
-                        <div className="tabs">
+                        <div className="tabs" style={{
+                            display: 'flex',
+                            justifyContent: 'space-around',
+                            padding: '10px',
+                            borderBottom: '1px solid #eee'
+                        }}>
+                            <button 
+                                className={`tab ${activeTab === 'not_interested' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('not_interested')}
+                                title="Not Interested"
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '40px',
+                                    height: '40px',
+                                    color: activeTab === 'not_interested' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <CancelIcon style={{ fontSize: 28 }} />
+                            </button>
                             <button 
                                 className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('pending')}
+                                title="Pending"
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '40px',
+                                    height: '40px',
+                                    color: activeTab === 'pending' ? '#9633eb' : '#666'
+                                }}
                             >
-                                <i className="fas fa-clock"></i>
-                                Pending Bids
+                                <AccessTimeIcon style={{ fontSize: 28 }} />
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'interested' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('interested')}
+                                title="Interested"
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '40px',
+                                    height: '40px',
+                                    color: activeTab === 'interested' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <FavoriteIcon style={{ fontSize: 28 }} />
                             </button>
                             <button 
                                 className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('approved')}
+                                title="Approved"
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '40px',
+                                    height: '40px',
+                                    color: activeTab === 'approved' ? '#9633eb' : '#666'
+                                }}
                             >
-                                <i className="fas fa-check-circle"></i>
-                                Approved Bids
-                            </button>
-                            <button 
-                                className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('denied')}
-                            >
-                                <i className="fas fa-times-circle"></i>
-                                Denied Bids
+                                <CheckCircleIcon style={{ fontSize: 28 }} />
                             </button>
                         </div>
 
@@ -1150,7 +1315,7 @@ export default function BidsPage({ onOpenChat }) {
                                     <div className="request-header">
                                         <div className="request-category">
                                             <div className="category-icon">
-                                                <i className={`fas ${getCategoryIcon(request.type)}`}></i>
+                                                <i className={`${getCategoryIcon(request.type)}`}></i>
                                             </div>
                                             <div className="category-info">
                                                 <span className="category-name">
@@ -1264,27 +1429,79 @@ export default function BidsPage({ onOpenChat }) {
                             Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
                         </p>
 
-                        <div className="tabs">
+                        <div className="tabs" style={{
+                            display: 'flex',
+                            justifyContent: 'space-around',
+                            padding: '10px',
+                            borderBottom: '1px solid #eee'
+                        }}>
+                            <button 
+                                className={`tab ${activeTab === 'not_interested' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('not_interested')}
+                                title="Not Interested"
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '40px',
+                                    height: '40px',
+                                    color: activeTab === 'not_interested' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <CancelIcon style={{ fontSize: 28 }} />
+                            </button>
                             <button 
                                 className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('pending')}
+                                title="Pending"
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '40px',
+                                    height: '40px',
+                                    color: activeTab === 'pending' ? '#9633eb' : '#666'
+                                }}
                             >
-                                <i className="fas fa-clock"></i>
-                                Pending Bids
+                                <AccessTimeIcon style={{ fontSize: 28 }} />
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'interested' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('interested')}
+                                title="Interested"
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '40px',
+                                    height: '40px',
+                                    color: activeTab === 'interested' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <FavoriteIcon style={{ fontSize: 28 }} />
                             </button>
                             <button 
                                 className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('approved')}
+                                title="Approved"
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '40px',
+                                    height: '40px',
+                                    color: activeTab === 'approved' ? '#9633eb' : '#666'
+                                }}
                             >
-                                <i className="fas fa-check-circle"></i>
-                                Approved Bids
-                            </button>
-                            <button 
-                                className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('denied')}
-                            >
-                                <i className="fas fa-times-circle"></i>
-                                Denied Bids
+                                <CheckCircleIcon style={{ fontSize: 28 }} />
                             </button>
                         </div>
 
@@ -1359,21 +1576,46 @@ export default function BidsPage({ onOpenChat }) {
             </div>
 
             {showAcceptModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content-bids-page">
-                        <h3>Accept Bid Confirmation</h3>
-                        <p>Are you sure you want to accept this bid from {selectedBid?.business_profiles?.business_name}?</p>
+                <div className="modal-overlay" style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div className="modal-content-bids-page" style={{
+                        background: 'white',
+                        padding: '24px',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        maxWidth: '500px',
+                        width: '90%',
+                        margin: '0 auto'
+                    }}>
+                        <h3 style={{ marginBottom: '16px', color: '#333' }}>Accept Bid Confirmation</h3>
+                        <p style={{ marginBottom: '16px', color: '#666' }}>Are you sure you want to accept this bid from {selectedBid?.business_profiles?.business_name}?</p>
                         
-
-                        <p>By accepting this bid:</p>
-                        <ul>
-                            <li>Your contact information will be shared with the business</li>
-                            <li>The business will be notified and can reach out to you directly</li>
+                        <p style={{ marginBottom: '12px', color: '#666' }}>By accepting this bid:</p>
+                        <ul style={{ marginBottom: '24px', color: '#666', paddingLeft: '20px' }}>
+                            <li style={{ marginBottom: '8px' }}>Your contact information will be shared with the business</li>
+                            <li style={{ marginBottom: '8px' }}>The business will be notified and can reach out to you directly</li>
                         </ul>
-                        <div className="modal-buttons">
+                        <div className="modal-buttons" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                             <button 
                                 className="btn-danger"
-                                style={{borderRadius:'40px'}}
+                                style={{
+                                    borderRadius: '40px',
+                                    padding: '8px 24px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    backgroundColor: '#dc3545',
+                                    color: 'white'
+                                }}
                                 onClick={() => {
                                     setShowAcceptModal(false);
                                     setSelectedBid(null);
@@ -1386,7 +1628,14 @@ export default function BidsPage({ onOpenChat }) {
                             </button>
                             <button 
                                 className="btn-success"
-                                style={{borderRadius:'40px'}}
+                                style={{
+                                    borderRadius: '40px',
+                                    padding: '8px 24px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    backgroundColor: '#28a745',
+                                    color: 'white'
+                                }}
                                 onClick={handleConfirmAccept}
                             >
                                 Accept Bid

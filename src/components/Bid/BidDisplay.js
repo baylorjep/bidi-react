@@ -6,14 +6,25 @@ import { Link, useNavigate } from "react-router-dom";
 import "./BidDisplay.css";
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ChatIcon from '@mui/icons-material/Chat';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 
 function BidDisplay({ 
   bid, 
   handleApprove, 
   handleDeny, 
+  handleInterested,
+  handlePending,
   showActions = true,
   showPaymentOptions = false,
   showReopen = false,
+  showInterested = false,
+  showNotInterested = false,
+  showPending = false,
   downPayment = null,
   onDownPayment = null,
   onMessage = null,
@@ -25,6 +36,8 @@ function BidDisplay({
   const [averageRating, setAverageRating] = useState(null);
   const [showBubble, setShowBubble] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [showVerifiedTooltip, setShowVerifiedTooltip] = useState(false);
   const navigate = useNavigate();
 
   const getExpirationStatus = (expirationDate) => {
@@ -129,73 +142,70 @@ function BidDisplay({
   }, [bid.business_profiles.id]);
 
   const handleAction = (action, id) => {
-    setIsAnimating(true);
-    setTimeout(() => {
-      action(id);
-    }, 300); // Match this with the CSS animation duration
+    if (typeof action === 'function') {
+      setIsAnimating(true);
+      setTimeout(() => {
+        action(id);
+      }, 300); // Match this with the CSS animation duration
+    }
   };
+
+  const renderChatButton = () => (
+    <button
+      className="btn-icon"
+      onClick={() => {
+        console.log("Opening chat with business:", bid.business_profiles.id);
+        
+        if (onMessage) {
+          onMessage({
+            id: bid.business_profiles.id,
+            name: bid.business_profiles.business_name,
+            profileImage: bid.business_profiles.profile_image
+          });
+        }
+
+        setTimeout(() => {
+          window.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: 'instant'
+          });
+          document.body.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+          
+          if (window.innerWidth <= 768) {
+            window.scrollTo(0, 0);
+            document.body.scrollIntoView({ behavior: 'instant' });
+          }
+        }, 100);
+      }}
+    >
+      <ChatIcon />
+    </button>
+  );
 
   const renderActionButtons = () => {
     if (!showActions) return null;
 
-    const renderChatButton = (onClick) => (
-      <button
-        className="btn-chat"
-        onClick={() => {
-          console.log("Opening chat with business:", bid.business_profiles.id);
-          
-          // Handle the message first
-          if (onMessage) {
-            onMessage({
-              id: bid.business_profiles.id,
-              name: bid.business_profiles.business_name,
-              profileImage: bid.business_profiles.profile_image
-            });
-          }
-
-          // Force scroll to top after a small delay
-          setTimeout(() => {
-            // Multiple scroll methods for maximum compatibility
-            window.scrollTo({
-              top: 0,
-              left: 0,
-              behavior: 'instant' // Use instant instead of smooth for more reliable scrolling
-            });
-            document.body.scrollTop = 0;
-            document.documentElement.scrollTop = 0;
-            
-            // Additional mobile-specific scroll
-            if (window.innerWidth <= 768) {
-              window.scrollTo(0, 0);
-              document.body.scrollIntoView({ behavior: 'instant' });
-            }
-          }, 100);
-        }}
-      >
-        <ChatIcon />
-        Chat
-      </button>
-    );
-
     if (showPaymentOptions) {
       return (
         <div className="business-actions">
-          <button 
-            className="btn-danger"
-            onClick={() => handleAction(handleApprove, bid.id)}
+          <button
+            className="btn-icon"
+            onClick={() => handleAction(handleDeny, bid.id)}
           >
-            Move to Pending
+            <CancelIcon />
           </button>
           {downPayment && (
             <button
-              className="btn-success"
+              className="btn-icon"
               onClick={() => handleAction(onDownPayment, bid)}
             >
               Pay Deposit
             </button>
           )}
           <button
-            className="btn-success"
+            className="btn-icon"
             onClick={() => handleAction(handleDeny, bid.id)}
           >
             Pay Full
@@ -205,39 +215,90 @@ function BidDisplay({
       );
     }
 
-    if (showReopen) {
+    if (showInterested) {
       return (
-        <div className="business-actions">
-          <button 
-            className="btn-danger"
+        <div className="business-actions-bid-display">
+          <button
+            className="btn-icon"
             onClick={() => handleAction(handleDeny, bid.id)}
           >
-            Move to Pending
+            <CancelIcon />
           </button>
           <button
-            className="btn-success"
-            onClick={() => handleAction(handleApprove, bid.id)}
+            className="btn-icon"
+            onClick={() => handleAction(handleInterested, bid.id)}
           >
-            Accept
+            <FavoriteIcon />
+          </button>
+          <button 
+            className="btn-icon"
+            onClick={() => {
+              if (handleApprove) {
+                handleApprove(bid.id);
+              }
+            }}
+          >
+            <CheckCircleIcon />
           </button>
           {renderChatButton()}
         </div>
       );
     }
 
+    if (showNotInterested) {
+      return (
+        <div className="business-actions-bid-display">
+          <button
+            className="btn-icon"
+            onClick={() => handleAction(handleDeny, bid.id)}
+          >
+            <AccessTimeIcon />
+          </button>
+          <button
+            className="btn-icon"
+            onClick={() => handleAction(handleInterested, bid.id)}
+          >
+            <FavoriteBorderIcon />
+          </button>
+          {renderChatButton()}
+        </div>
+      );
+    }
+
+    if (showPending) {
+      return (
+        <div className="business-actions-bid-display">
+          <button
+            className="btn-icon"
+            onClick={() => handleAction(handleDeny, bid.id)}
+          >
+            <CancelIcon />
+          </button>
+          <button
+            className="btn-icon"
+            onClick={() => handleAction(handleInterested, bid.id)}
+          >
+            <FavoriteBorderIcon />
+          </button>
+          {renderChatButton()}
+        </div>
+      );
+    }
+
+    // Default case - only show X, heart, and chat
     return (
-      <div className="business-actions">
-        <button 
-          className="btn-danger"
+      <div className="business-actions-bid-display">
+        <button
+          className="btn-icon"
           onClick={() => handleAction(handleDeny, bid.id)}
         >
-          Deny
+          <CancelIcon />
         </button>
         <button
-          className="btn-success"
-          onClick={() => handleAction(handleApprove, bid.id)}
+          className="btn-icon"
+          onClick={() => handleAction(handleInterested, bid.id)}
         >
-          Accept
+          <FavoriteBorderIcon />
         </button>
         {renderChatButton()}
       </div>
@@ -245,100 +306,235 @@ function BidDisplay({
   };
 
   return (
-    <div className={`request-display ${isAnimating ? 'fade-out' : ''}`}>
-      <div className="bid-display-head-container">
-        <div className="request-title">
-          <div className="bid-display-head">
-            <div className="profile-image-container">
-              <img
-                src={profileImage}
-                alt={`${bid.business_profiles.business_name} profile`}
-                className="vendor-profile-image"
-                onClick={handleProfileClick}
-              />
-              <div
-                className="profile-tooltip"
-                style={{
-                  display: showBubble ? "block" : "none",
+    <div className={`request-display bid-display ${isAnimating ? 'fade-out' : ''}`}>
+      {showActions && (
+        <div className="business-actions-bid-display">
+          {showPaymentOptions ? (
+            <>
+              <button
+                className="btn-icon btn-danger"
+                onClick={() => handleAction(handleDeny, bid.id)}
+              >
+                <CancelIcon />
+              </button>
+              <button
+                className="btn-icon"
+                onClick={() => handleAction(handleInterested, bid.id)}
+              >
+                <FavoriteBorderIcon />
+              </button>
+              <button 
+                className="btn-icon"
+                onClick={() => handleAction(handleApprove, bid.id)}
+              >
+                <AccessTimeIcon />
+              </button>
+              {renderChatButton()}
+            </>
+          ) : showReopen ? (
+            <>
+              <button 
+                className="btn-icon btn-success"
+                onClick={() => handleAction(handleApprove, bid.id)}
+              >
+                <CheckCircleIcon />
+              </button>
+              <button
+                className="btn-icon btn-success"
+                onClick={() => handleAction(handleDeny, bid.id)}
+              >
+                <CheckCircleIcon />
+              </button>
+              {renderChatButton()}
+            </>
+          ) : showInterested ? (
+            <>
+              <button
+                className="btn-icon btn-danger"
+                onClick={() => handleAction(handleDeny, bid.id)}
+              >
+                <CancelIcon />
+              </button>
+              <button
+                className="btn-icon"
+                onClick={() => handleAction(handleInterested, bid.id)}
+              >
+                <FavoriteIcon />
+              </button>
+              <button 
+                className="btn-icon"
+                onClick={() => {
+                  if (handleApprove) {
+                    handleApprove(bid.id);
+                  }
                 }}
               >
-                Click to view profile
-              </div>
+                <CheckCircleIcon />
+              </button>
+              {renderChatButton()}
+            </>
+          ) : showNotInterested ? (
+            <>
+              <button
+                className="btn-icon"
+                onClick={() => handleAction(handleDeny, bid.id)}
+              >
+                <AccessTimeIcon />
+              </button>
+              <button
+                className="btn-icon"
+                onClick={() => handleAction(handleInterested, bid.id)}
+              >
+                <FavoriteBorderIcon />
+              </button>
+              {renderChatButton()}
+            </>
+          ) : showPending ? (
+            <>
+              <button
+                className="btn-icon btn-danger"
+                onClick={() => handleAction(handleDeny, bid.id)}
+              >
+                <CancelIcon />
+              </button>
+              <button
+                className="btn-icon"
+                onClick={() => handleAction(handleInterested, bid.id)}
+              >
+                <FavoriteBorderIcon />
+              </button>
+              {renderChatButton()}
+            </>
+          ) : (
+            <>
+              <button
+                className="btn-icon btn-danger"
+                onClick={() => handleAction(handleDeny, bid.id)}
+              >
+                <CancelIcon />
+              </button>
+              <button
+                className="btn-icon"
+                onClick={() => handleAction(handleInterested, bid.id)}
+              >
+                <FavoriteBorderIcon />
+              </button>
+              {renderChatButton()}
+            </>
+          )}
+        </div>
+      )}
+      <div className="bid-display-head-container">
+        <div className="bid-display-head">
+          <div className="profile-image-container">
+            <img
+              src={profileImage}
+              alt={`${bid.business_profiles.business_name} profile`}
+              className="vendor-profile-image"
+              onClick={handleProfileClick}
+            />
+            <div
+              className="profile-tooltip"
+              style={{
+                display: showBubble ? "block" : "none",
+              }}
+            >
+              Click to view profile
             </div>
-            <div className="business-info">
-              <div className="business-name-container">
-                <Link
-                  to={`/portfolio/${bid.business_profiles.id}`}
-                  className="business-name-bid-display"
+          </div>
+          <div className="business-info">
+            <div className="business-name-container">
+              <Link
+                to={`/portfolio/${bid.business_profiles.id}`}
+                className="business-name-bid-display"
+              >
+                {bid.business_profiles.business_name}
+              </Link>
+              {isBidiVerified && (
+                <div 
+                  className="bidi-verified-compact"
+                  onMouseEnter={() => setShowVerifiedTooltip(true)}
+                  onMouseLeave={() => setShowVerifiedTooltip(false)}
+                  onClick={() => setShowVerifiedTooltip(!showVerifiedTooltip)}
                 >
-                  {bid.business_profiles.business_name}
-                </Link>
-                {isBidiVerified && (
                   <img
                     src={bidiCheck}
                     className="bidi-check-icon"
                     alt="Bidi Verified Icon"
                   />
-                )}
-              </div>
-              <div className="business-badges">
-                {averageRating && (
-                  <span className="vendor-rating">
-                    <img src={StarIcon} alt="Star" className="star-icon" />
-                    {averageRating}
-                  </span>
-                )}
-                {bid.isNew && (
-                  <span className="new-badge">New</span>
-                )}
+                  <span>Verified</span>
+                  <div className={`verified-tooltip ${showVerifiedTooltip ? 'show' : ''}`}>
+                    <p className="verified-tooltip-title">Bidi Verified</p>
+                    <p className="verified-tooltip-subtitle">100% Money-Back Guarantee When You Pay Through Bidi</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="bid-amount-section">
+              <div className="bid-amount-container">
+                <button className="bid-display-button" disabled>
+                  ${bid.bid_amount}
+                  <div className="tag-hole"></div>
+                </button>
               </div>
             </div>
-          </div>
-          {loading ? (
-            <p>Loading...</p>
-          ) : error ? (
-            <p>{error}</p>
-          ) : (
-            isBidiVerified && (
-              <div className="bidi-verified-info">
-                <p className="bidi-verified-title">
-                  Bidi Verified
-                </p>
-                <p className="bidi-verified-subtitle">
-                  100% Money-Back Guarantee When You Pay Through Bidi
-                </p>
-              </div>
-            )
-          )}
-        </div>
-        <div className="bid-display-btn-container">
-          <div className="bid-amount-container">
-            <button className="bid-display-button" disabled>
-              ${bid.bid_amount}
-              <div className="tag-hole"></div>
-            </button>
-            {expirationStatus && (
-              <div className={`expiration-badge ${expirationStatus.status}`}>
-                <AccessTimeIcon />
-                {expirationStatus.text}
-              </div>
-            )}
+            <div className="business-badges">
+              {averageRating && (
+                <span className="vendor-rating">
+                  <img src={StarIcon} alt="Star" className="star-icon" />
+                  {averageRating}
+                </span>
+              )}
+              {bid.isNew && (
+                <span className="new-badge">New</span>
+              )}
+              {expirationStatus && (
+                <div className={`expiration-badge ${expirationStatus.status}`}>
+                  <AccessTimeIcon />
+                  {expirationStatus.text}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-      <hr />
+
+      {showPaymentOptions && (
+        <div className="payment-options">
+          {downPayment && (
+            <button
+              className="payment-button deposit"
+              onClick={() => handleAction(onDownPayment, bid)}
+            >
+              Pay Deposit (${downPayment.amount})
+            </button>
+          )}
+          <button
+            className="payment-button full"
+            onClick={() => handleAction(handleDeny, bid.id)}
+          >
+            Pay Full Amount (${bid.bid_amount})
+          </button>
+        </div>
+      )}
+
       <div className="request-content">
-        <p className="request-category">
-          <strong>Category:</strong> {bid.business_profiles.business_category}
-        </p>
         <p className="request-description">
           <strong>Description:</strong>{" "}
           <div 
-            className="bid-description-content"
+            className={`bid-description-content ${!isDescriptionExpanded ? 'description-collapsed' : ''}`}
             dangerouslySetInnerHTML={{ __html: bid.bid_description }}
           />
+          {bid.bid_description.length > 200 && (
+            <button 
+              className="read-more-btn"
+              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+            >
+              {isDescriptionExpanded ? 'Show Less' : 'Read More'}
+            </button>
+          )}
         </p>
-        {downPayment && (
+        {downPayment && !showPaymentOptions && (
           <p className="request-comments">
             <strong>Down Payment:</strong>{" "}
             {downPayment.display}
@@ -367,9 +563,6 @@ function BidDisplay({
           </div>
         )}
       </div>
-
-      <div className="action-buttons-spacer"></div>
-      {renderActionButtons()}
     </div>
   );
 }

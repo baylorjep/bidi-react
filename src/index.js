@@ -6,6 +6,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import './i18n';
 import { registerServiceWorker } from './serviceWorkerRegistration';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
