@@ -83,7 +83,9 @@ const BusinessBids = () => {
         const requestMap = {};
         businessBids.forEach((bid) => {
           // Handle both category-specific tables and the general requests table
-          const categoryTable = bid.category === 'General' ? 'requests' : `${bid.category.toLowerCase()}_requests`;
+          const categoryTable = bid.category === 'General' 
+            ? 'requests' 
+            : `${bid.category.toLowerCase().replace(/\s+/g, '_')}_requests`;
           if (!requestMap[categoryTable]) requestMap[categoryTable] = [];
           requestMap[categoryTable].push(bid.request_id);
         });

@@ -418,7 +418,7 @@ const LocationBasedVendors = () => {
                 // For wedding planner/coordinator category, ensure we're using the correct category name
                 const categoryToQuery = selectedCategory === 'wedding planner/coordinator' ? 
                     'wedding planner/coordinator' : selectedCategory;
-                query = query.eq('business_category', categoryToQuery);
+                query = query.ov('business_category', [categoryToQuery]);
             }
 
             if (selectedCity) {

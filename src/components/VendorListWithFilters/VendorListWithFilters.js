@@ -35,7 +35,7 @@ const VendorListWithFilters = () => {
                 .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
-                query = query.eq('business_category', selectedCategory);    
+                query = query.filter('business_category', 'ov', `{${selectedCategory}}`);    
             }
 
             const { count, error } = await query;

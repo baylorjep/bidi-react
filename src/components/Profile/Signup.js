@@ -4,6 +4,7 @@ import '../../App.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import './ChoosePricingPlan.css';
+import './Signup.css';
 
 const Signup = ({ onSuccess, initialUserType }) => {
     const [formData, setFormData] = useState({
@@ -14,7 +15,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
         lastName: '',
         phone: '',
         businessName: '',
-        businessCategory: '',
+        businessCategory: [],
         otherBusinessCategory: '',
         businessAddress: '',
         website: '',
@@ -23,6 +24,21 @@ const Signup = ({ onSuccess, initialUserType }) => {
     const [userType, setUserType] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
+
+    const businessCategories = [
+        { id: 'photographer', label: 'Photographer' },
+        { id: 'videographer', label: 'Videographer' },
+        { id: 'dj', label: 'DJ' },
+        { id: 'florist', label: 'Florist' },
+        { id: 'venue', label: 'Venue' },
+        { id: 'catering', label: 'Catering' },
+        { id: 'cake', label: 'Cake' },
+        { id: 'beauty', label: 'Hair & Makeup' },
+        { id: 'wedding planner/coordinator', label: 'Wedding Planner/Coordinator' },
+        { id: 'rental', label: 'Rental' },
+        { id: 'photo_booth', label: 'Photo Booth' },
+        { id: 'other', label: 'Other' }
+    ];
 
     const handleGoogleSignUp = async () => {
         try {
@@ -67,11 +83,25 @@ const Signup = ({ onSuccess, initialUserType }) => {
     const [redirectUrl, setRedirectUrl] = useState('');
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-            ...(e.target.name === 'businessCategory' && e.target.value !== 'other' ? { otherBusinessCategory: '' } : {}),
-        });
+        if (e.target.type === 'checkbox') {
+            const categoryId = e.target.value;
+            if (e.target.checked) {
+                setFormData({
+                    ...formData,
+                    businessCategory: [...formData.businessCategory, categoryId]
+                });
+            } else {
+                setFormData({
+                    ...formData,
+                    businessCategory: formData.businessCategory.filter(id => id !== categoryId)
+                });
+            }
+        } else {
+            setFormData({
+                ...formData,
+                [e.target.name]: e.target.value,
+            });
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -83,7 +113,14 @@ const Signup = ({ onSuccess, initialUserType }) => {
         }
 
         const { email, password, firstName, lastName, phone, businessName, businessCategory, otherBusinessCategory, businessAddress, website } = formData;
-        const finalUserType = businessCategory === 'wedding planner/coordinator' ? 'both' : userType;
+        
+        let finalCategories = [...businessCategory];
+        if (businessCategory.includes('other') && otherBusinessCategory) {
+            finalCategories = finalCategories.filter(cat => cat !== 'other');
+            finalCategories.push(otherBusinessCategory);
+        }
+
+        const finalUserType = businessCategory.includes('wedding planner/coordinator') ? 'both' : userType;
 
         const { data, error } = await supabase.auth.signUp({
             email,
@@ -152,7 +189,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
                 .insert([{
                     id: user.id,
                     business_name: businessName,
-                    business_category: businessCategory === 'other' ? otherBusinessCategory : businessCategory,
+                    business_category: finalCategories,
                     business_address: businessAddress,
                     phone: phone,
                     website: website,
@@ -163,21 +200,6 @@ const Signup = ({ onSuccess, initialUserType }) => {
                 setErrorMessage(`Business profile insertion error: ${businessError.message}`);
                 console.error('Business profile insertion error:', businessError);
                 return;
-            }
-
-            if (businessCategory === 'other' && otherBusinessCategory) {
-                const { error: otherCategoryError } = await supabase
-                    .from('other_service_categories')
-                    .insert([{
-                        user_id: user.id,
-                        category_name: otherBusinessCategory,
-                    }]);
-
-                if (otherCategoryError) {
-                    setErrorMessage(`Error submitting custom category: ${otherCategoryError.message}`);
-                    console.error('Detailed error:', otherCategoryError);
-                    return;
-                }
             }
         }
 
@@ -255,37 +277,40 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                             display: 'block',
                                             marginBottom: '8px',
                                             fontWeight: '500'
-                                        }}>Business Category</label>
-                                        <select
-                                            name="businessCategory"
-                                            value={formData.businessCategory}
-                                            onChange={handleChange}
-                                            required
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px',
-                                                borderRadius: '8px',
-                                                border: '1px solid #ddd',
-                                                fontSize: '1rem',
-                                                backgroundColor: '#fff'
-                                            }}
-                                        >
-                                            <option value="">Select a category...</option>
-                                            <option value="photography">Photography</option>
-                                            <option value="videography">Videography</option>
-                                            <option value="dj">DJ</option>
-                                            <option value="cake">Cake Making</option>
-                                            <option value="catering">Catering</option>
-                                            <option value="hair and makeup artist">Hair and Makeup Artist</option>
-                                            <option value="wedding planner/coordinator">Wedding/Event Planner</option>
-                                            <option value="florist">Florist</option>
-                                            <option value="rental">Rentals</option>
-                                            <option value="venue">Venue</option>
-                                            <option value="other">Other</option>
-                                        </select>
+                                        }}>Business Categories</label>
+                                        <div className="category-grid">
+                                            {businessCategories.map((category) => (
+                                                <div 
+                                                    key={category.id} 
+                                                    className="category-item"
+                                                    onClick={() => {
+                                                        const checkbox = document.getElementById(category.id);
+                                                        checkbox.checked = !checkbox.checked;
+                                                        handleChange({ target: checkbox });
+                                                    }}
+                                                >
+                                                    <div className="form-check">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            id={category.id}
+                                                            value={category.id}
+                                                            checked={formData.businessCategory.includes(category.id)}
+                                                            onChange={handleChange}
+                                                        />
+                                                        <label 
+                                                            className="form-check-label"
+                                                            htmlFor={category.id}
+                                                        >
+                                                            {category.label}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
 
-                                    {formData.businessCategory === 'other' && (
+                                    {formData.businessCategory.includes('other') && (
                                         <div style={{ marginBottom: '20px' }}>
                                             <label style={{
                                                 display: 'block',
@@ -310,7 +335,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                         </div>
                                     )}
 
-                                    {formData.businessCategory === 'wedding planner/coordinator' && (
+                                    {formData.businessCategory.includes('wedding planner/coordinator') && (
                                         <>
                                             <div style={{ marginBottom: '20px' }}>
                                                 <label style={{

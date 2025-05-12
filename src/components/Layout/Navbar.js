@@ -195,7 +195,7 @@ function Navbar() {
             
             {userRole === "individual" && (
               <li className="nav-item">
-                <Link className="nav-link me-lg-3" to="/my-dashboard" onClick={closeMenu}>
+                <Link className="nav-link me-lg-3" to="/individual-dashboard" onClick={closeMenu}>
                   Dashboard
                 </Link>
               </li>
@@ -203,7 +203,7 @@ function Navbar() {
 
             {userRole === "business" && (
               <li className="nav-item">
-                <Link className="nav-link me-lg-3" to="/dashboard" onClick={closeMenu}>
+                <Link className="nav-link me-lg-3" to="/business-dashboard" onClick={closeMenu}>
                   Business Dashboard
                 </Link>
               </li>

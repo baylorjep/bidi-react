@@ -55,6 +55,8 @@ export default function MessagingView({
   // Fetch business/individual information
   useEffect(() => {
     const fetchUserInfo = async () => {
+      if (!businessId) return;
+      
       console.log("Fetching user info for ID:", businessId);
       try {
         // First get the user info from individual_profiles
@@ -72,18 +74,32 @@ export default function MessagingView({
           userData = individualData;
           setIsBusinessProfile(false);
         } else {
-          // If not found in individual_profiles, try business_profiles
-          const { data: businessData, error: businessError } = await supabase
-            .from("business_profiles")
+          // If not found in individual_profiles, try wedding_planner_profiles
+          const { data: weddingPlannerData, error: weddingPlannerError } = await supabase
+            .from("wedding_planner_profiles")
             .select("business_name")
             .eq("id", businessId)
             .single();
 
-          if (businessError) throw businessError;
-          setBusinessName(businessData.business_name || "Business");
-          setInitialLetter(businessData.business_name?.charAt(0)?.toUpperCase() || "");
-          userData = businessData;
-          setIsBusinessProfile(true);
+          if (!weddingPlannerError && weddingPlannerData) {
+            setBusinessName(weddingPlannerData.business_name || "Wedding Planner");
+            setInitialLetter(weddingPlannerData.business_name?.charAt(0)?.toUpperCase() || "");
+            userData = weddingPlannerData;
+            setIsBusinessProfile(true);
+          } else {
+            // If not found in wedding_planner_profiles, try business_profiles
+            const { data: businessData, error: businessError } = await supabase
+              .from("business_profiles")
+              .select("business_name")
+              .eq("id", businessId)
+              .single();
+
+            if (businessError) throw businessError;
+            setBusinessName(businessData.business_name || "Business");
+            setInitialLetter(businessData.business_name?.charAt(0)?.toUpperCase() || "");
+            userData = businessData;
+            setIsBusinessProfile(true);
+          }
         }
 
         // Get the profile photo
@@ -107,16 +123,17 @@ export default function MessagingView({
       }
     };
 
-    if (businessId) {
-      fetchUserInfo();
-    }
+    fetchUserInfo();
   }, [businessId]);
 
-  // 1) Fetch & normalize persisted messages
+  // Fetch messages when component mounts or when currentUserId/businessId changes
   useEffect(() => {
-    if (!currentUserId || !businessId) return;
-
     const fetchMessages = async () => {
+      if (!currentUserId || !businessId) {
+        console.error('Missing currentUserId or businessId for messaging');
+        return;
+      }
+
       try {
         const { data: out, error: outError } = await supabase
           .from("messages")
@@ -177,13 +194,12 @@ export default function MessagingView({
     fetchMessages();
   }, [currentUserId, businessId]);
 
+  // Socket connection
   useEffect(() => {
     if (!currentUserId) return;
-    socket.emit("join", currentUserId);
-  }, [currentUserId]);
 
-  // 2) Listen for live messages & typing indicators
-  useEffect(() => {
+    socket.emit("join", currentUserId);
+
     const handleReceive = (msg) => {
       if (
         (msg.senderId === businessId && msg.receiverId === currentUserId) ||
@@ -229,7 +245,10 @@ export default function MessagingView({
     chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages, isTyping]);
 
-  // 3) Send a new message
+  if (!currentUserId || !businessId) {
+    return <div style={{ padding: 32, textAlign: 'center' }}>Loading chat…</div>;
+  }
+
   const sendMessage = async () => {
     if (!pendingFile && !newMessage.trim()) return;
   

@@ -63,6 +63,10 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
 
     useEffect(() => {
         const fetchRequestDetails = async () => {
+            // Get current business user
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
             // Array of all possible request tables
             const requestTables = [
                 { name: 'beauty_requests', type: 'beauty' },
@@ -75,6 +79,9 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                 { name: 'wedding_planning_requests', type: 'wedding planning' }
             ];
 
+            let foundTable = null;
+            let foundData = null;
+
             // Try each table until we find the request
             for (const table of requestTables) {
                 const { data, error } = await supabase
@@ -86,26 +93,54 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                 if (data && !error) {
                     console.log('Found request in table:', table.name);
                     console.log('Request data:', data);
-                    
-                    // Add table_name to the request data
-                    setRequestDetails({ ...data, table_name: table.name });
-                    setRequestType(table.name);
+                    foundTable = table.name;
+                    foundData = data;
                     break;
                 }
             }
 
-            // Add photo fetching for videography and wedding planning requests
-            if (requestType === 'videography_requests' || requestType === 'wedding_planning_requests') {
-                const photoTable = requestType === 'videography_requests' ? 'videography_photos' : 'wedding_planning_photos';
-                const { data: photos, error } = await supabase
-                    .from(photoTable)
-                    .select('*')
-                    .eq('request_id', requestId);
+            if (foundTable && foundData) {
+                // Add table_name to the request data
+                setRequestDetails({ ...foundData, table_name: foundTable });
+                setRequestType(foundTable);
 
-                if (photos && !error) {
-                    setServicePhotos(photos);
-                } else {
-                    console.error(`Error fetching ${requestType} photos:`, error);
+                // Check if view already exists
+                const { data: existingView } = await supabase
+                    .from('request_views')
+                    .select('id')
+                    .eq('request_id', requestId)
+                    .eq('request_type', foundTable)
+                    .eq('business_id', user.id)
+                    .single();
+
+                // Only record view if it doesn't exist
+                if (!existingView) {
+                    const { error: viewError } = await supabase
+                        .from('request_views')
+                        .insert([{
+                            request_id: requestId,
+                            request_type: foundTable,
+                            business_id: user.id
+                        }]);
+
+                    if (viewError) {
+                        console.error('Error recording view:', viewError);
+                    }
+                }
+
+                // Add photo fetching for videography and wedding planning requests
+                if (foundTable === 'videography_requests' || foundTable === 'wedding_planning_requests') {
+                    const photoTable = foundTable === 'videography_requests' ? 'videography_photos' : 'wedding_planning_photos';
+                    const { data: photos, error } = await supabase
+                        .from(photoTable)
+                        .select('*')
+                        .eq('request_id', requestId);
+
+                    if (photos && !error) {
+                        setServicePhotos(photos);
+                    } else {
+                        console.error(`Error fetching ${foundTable} photos:`, error);
+                    }
                 }
             }
         };
@@ -158,7 +193,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
         fetchRequestDetails();
         fetchStripeStatus();
         fetchBidTemplate();
-    }, [requestId, requestType]);
+    }, [requestId]);
 
     const validateBidDescription = (content) => {
         // Simple regex patterns for basic contact info
@@ -423,7 +458,7 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                     </Modal.Header>
                     <Modal.Body className="d-flex flex-column align-items-center justify-content-center">
                     <p className="text-center">
-                    To place bids and get paid for jobs you win, you’ll need to set up a payment account. Bidi won’t charge you to talk to users or bid — a small fee is only deducted after you’ve been paid.
+                    To place bids and get paid for jobs you win, you'll need to set up a payment account. Bidi won't charge you to talk to users or bid — a small fee is only deducted after you've been paid.
                     </p>
                         <Button className="btn-secondary" onClick={() => navigate("/onboarding")}>
                             Set Up Account

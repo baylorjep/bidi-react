@@ -69,7 +69,19 @@ export default function ChatInterface({ initialChat }) {
 
       setCurrentUserId(user.id);
 
-      // Determine if user is an individual or business
+      // First check if user is a wedding planner
+      const { data: weddingPlanner } = await supabase
+        .from("wedding_planner_profiles")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+      if (weddingPlanner) {
+        setUserType("business");
+        return;
+      }
+
+      // Then check if user is an individual
       const { data: individual } = await supabase
         .from("individual_profiles")
         .select("id")
@@ -79,7 +91,16 @@ export default function ChatInterface({ initialChat }) {
       if (individual) {
         setUserType("individual");
       } else {
-        setUserType("business");
+        // If not individual or wedding planner, check business profiles
+        const { data: business } = await supabase
+          .from("business_profiles")
+          .select("id")
+          .eq("id", user.id)
+          .single();
+
+        if (business) {
+          setUserType("business");
+        }
       }
     })();
   }, []);
@@ -122,21 +143,21 @@ export default function ChatInterface({ initialChat }) {
       const otherIds = Object.keys(latestMap);
       if (otherIds.length === 0) return setChats([]);
 
-      const otherTable = userType === "individual"
-        ? "business_profiles"
-        : "individual_profiles";
+      // Fetch profiles from all relevant tables
+      const [businessProfiles, weddingPlannerProfiles, individualProfiles] = await Promise.all([
+        supabase.from("business_profiles").select("id, business_name").in("id", otherIds),
+        supabase.from("wedding_planner_profiles").select("id, business_name").in("id", otherIds),
+        supabase.from("individual_profiles").select("id, first_name, last_name").in("id", otherIds)
+      ]);
 
-      const { data: profiles = [], error: profilesError } = await supabase
-        .from(otherTable)
-        .select(userType === "individual" ? "id, business_name" : "id, first_name, last_name")
-        .in("id", otherIds);
+      // Combine all profiles
+      const allProfiles = [
+        ...(businessProfiles.data || []),
+        ...(weddingPlannerProfiles.data || []),
+        ...(individualProfiles.data || [])
+      ];
 
-      if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
-        return;
-      }
-
-      const formatted = profiles.map((p) => ({
+      const formatted = allProfiles.map((p) => ({
         business_id: p.id,
         business_name:
           userType === "individual"

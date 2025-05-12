@@ -1,82 +1,102 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "../../styles/RequestCategories.css";
 
 function RequestCategories() {
   const navigate = useNavigate();
   const [selectedCategories, setSelectedCategories] = useState([]);
 
   const categories = [
-    "Photography",
-    "Videography",
-    "DJ",
-    "HairAndMakeup",
-    "Florist",
-    "Catering",
-    "WeddingPlanning"
+    {
+      id: "Photography",
+      name: "Photography",
+      icon: "fa-camera",
+      description: "Professional photography services for your special day"
+    },
+    {
+      id: "Videography",
+      name: "Videography",
+      icon: "fa-video",
+      description: "Capture your memories in motion"
+    },
+    {
+      id: "DJ",
+      name: "DJ Services",
+      icon: "fa-music",
+      description: "Keep your celebration moving with great music"
+    },
+    {
+      id: "HairAndMakeup",
+      name: "Hair and Makeup",
+      icon: "fa-spa",
+      description: "Look your best on your special day"
+    },
+    {
+      id: "Florist",
+      name: "Florist",
+      icon: "fa-leaf",
+      description: "Beautiful floral arrangements for your event"
+    },
+    {
+      id: "Catering",
+      name: "Catering",
+      icon: "fa-utensils",
+      description: "Delicious food and beverage services"
+    },
+    {
+      id: "WeddingPlanning",
+      name: "Wedding Planning",
+      icon: "fa-calendar-check",
+      description: "Professional planning and coordination"
+    }
   ];
 
   const toggleCategory = (category) => {
     setSelectedCategories(
       (prev) =>
         prev.includes(category)
-          ? prev.filter((c) => c !== category) // Remove category if already selected
-          : [...prev, category] // Add category if not selected
+          ? prev.filter((c) => c !== category)
+          : [...prev, category]
     );
   };
 
   const handleNext = () => {
     if (selectedCategories.length > 0) {
-      // Pass selected categories to the next step
       navigate("/master-request-flow", { state: { selectedCategories } });
     }
   };
 
-  const getDisplayName = (category) => {
-    switch (category) {
-      case "DJ":
-        return "DJ Services";
-      case "HairAndMakeup":
-        return "Hair and Makeup Artist";
-      case "WeddingPlanning":
-        return "Wedding Planning";
-      default:
-        return category;
-    }
-  };
-
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        gap: "64px",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "85vh",
-      }}
-    >
-      <div className="request-form-container-details">
-        <div className="request-form-header" style={{ marginTop: "20px" }}>
+    <div className="request-categories-container">
+      <div className="request-categories-form-container-details">
+        <div className="request-form-header">
           What would you like to get done today?
         </div>
-        <div
-          className="Sign-Up-Page-Subheader"
-          style={{ marginTop: "20px", marginBottom: "20px" }}
-        >
-          Please select one or more
+        <div className="request-form-subheader">
+          Please select one or more services
         </div>
 
-        {/* Grid Container for Category Buttons */}
-        <div className="event-grid-container">
-          {categories.map((cat, index) => (
+        <div className="request-categories-grid">
+          {categories.map((category) => (
             <button
-              key={index}
-              className={`selector-buttons ${
-                selectedCategories.includes(cat) ? "selected-event" : ""
+              key={category.id}
+              className={`request-category-card ${
+                selectedCategories.includes(category.id) ? "selected" : ""
               }`}
-              onClick={() => toggleCategory(cat)}
+              onClick={() => toggleCategory(category.id)}
             >
-              {getDisplayName(cat)}
+              <div className="category-icon">
+                <i className={`fas ${category.icon}`}></i>
+              </div>
+              <div className="category-content">
+                <h3>{category.name}</h3>
+                <p>{category.description}</p>
+              </div>
+              {selectedCategories.includes(category.id) && (
+                <div className="selected-indicator">
+                  <i className="fas fa-check"></i>
+                </div>
+              )}
             </button>
           ))}
         </div>
@@ -84,7 +104,7 @@ function RequestCategories() {
         <div className="form-button-container">
           <button
             className="request-form-back-and-foward-btn"
-            onClick={() => navigate("/")} // Changed to go to home page
+            onClick={() => navigate("/")}
           >
             Back
           </button>
@@ -97,8 +117,7 @@ function RequestCategories() {
             style={{
               backgroundColor:
                 selectedCategories.length === 0 ? "#9F8AB3" : "#a328f4",
-              cursor:
-                selectedCategories.length === 0 ? "not-allowed" : "pointer",
+              cursor: selectedCategories.length === 0 ? "not-allowed" : "pointer",
             }}
           >
             Next

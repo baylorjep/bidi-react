@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../../App.css';
 
-function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false, onHide }) {
+function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false, onHide, isHidden = false, onShow }) {
     const [timeLeft, setTimeLeft] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
 
@@ -65,10 +65,23 @@ function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false, on
     };
 
     const getTitle = () => {
+        // First check if it's a photo request (legacy check)
         if (isPhotoRequest) {
             return request.event_title || 'Untitled Event';
         }
-        return request.service_title || request.title || request.event_title || 'Untitled Service';
+
+        // Check all possible title fields in order of preference
+        const title = request.event_title || 
+                     request.title || 
+                     request.service_title || 
+                     `${request.event_type || 'Untitled'} Event`;
+
+        // If we have a title but it's too short, add the event type
+        if (title.length < 3 && request.event_type) {
+            return `${request.event_type} Event`;
+        }
+
+        return title;
     };
 
     const getDate = () => {
@@ -102,11 +115,15 @@ function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false, on
         <div className="request-display-mini text-center mb-4">
             <div style={{display: 'flex', justifyContent:"flex-end"}}>
             <button 
-                onClick={onHide} 
+                onClick={isHidden ? onShow : onHide} 
                 className="hide-button"
-                title="Hide this request"
+                title={isHidden ? "Show this request" : "Hide this request"}
             >
-                <i className="fas fa-times"></i>
+                {isHidden ? (
+                  <i className="fas fa-eye"></i>
+                ) : (
+                  <i className="fas fa-times"></i>
+                )}
             </button>
             </div>
 

@@ -1,0 +1,342 @@
+.dashboard-container {
+  display: flex;
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 250px;
+  background: white;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: transform 0.3s ease;
+  border-right: 1px solid #e0e0e0;
+}
+
+.sidebar.hidden {
+  transform: translateX(-250px);
+}
+
+.sidebar.visible {
+  transform: translateX(0);
+}
+
+/* Main Dashboard */
+.dashboard-main {
+  transition: margin-left 0.3s ease, width 0.3s ease;
+  padding: 20px;
+  min-height: 100vh;
+  position: relative;
+  background: #f8f9fa;
+  width: 100%;
+}
+
+/* Default state when sidebar is visible */
+.sidebar:not(.hidden) + .dashboard-main {
+  margin-left: 250px;
+  width: calc(100% - 250px);
+}
+
+/* When sidebar is hidden */
+.sidebar.hidden + .dashboard-main {
+  margin-left: 0;
+  width: 100%;
+}
+
+/* Profile Section */
+.profile-section {
+  position: relative;
+  text-align: center;
+}
+
+.profile-pic {
+  width: 6vw;
+  height: 6vw;
+  border-radius: 50%;
+  background: lightgray 50% / cover no-repeat;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto;
+  border: none;
+}
+
+.verified-badge {
+  position: absolute;
+  margin-top: -5px;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%);
+  background-color: #a328f4;
+  color: white;
+  font-size: 0.8vw;
+  font-weight: 400;
+  padding: 0.1vw 0.8vw;
+}
+
+.profile-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 12vw;
+  line-height: 1.2;
+  font-size: 0.9vw;
+  margin-top: 1.3vw;
+}
+
+.name-under-picture,
+.business-name-under-picture {
+  display: inline-block;
+  max-width: 100%;
+  text-align: center;
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* Sidebar Links */
+.sidebar-links {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+  text-align: center;
+}
+
+.sidebar-links li {
+  display: flex;
+  align-items: center;
+  padding: 0.3vh 0;
+  font-size: 1.2vw;
+  margin-left: 2.5vw;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #333;
+}
+
+.sidebar-links li img {
+  width: 1.5vw;
+  margin-right: 1vw;
+  color: #a328f4;
+}
+
+.sidebar-links li.active {
+  background: #f6eafe;
+  border-radius: 0.5vw;
+  color: #a328f4;
+}
+
+.sidebar-links li.active img {
+  color: #a328f4;
+  fill: #a328f4;
+}
+
+/* Show sidebar button */
+.show-sidebar-button {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  padding: 10px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  cursor: pointer;
+}
+
+/* Pin button styles */
+.pin-button {
+  position: absolute;
+  right: -12px;
+  top: 20px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.pin-button i {
+  font-size: 12px;
+  color: #666;
+  transition: transform 0.3s ease;
+}
+
+.pin-button i.pinned {
+  transform: rotate(45deg);
+  color: #9633eb;
+}
+
+/* Bottom Navigation Bar */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-top: 2px solid rgb(222, 226, 230);
+  justify-content: space-around;
+  align-items: center;
+  padding: 16px 0;
+  z-index: 1000;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
+  height: calc(90px + env(safe-area-inset-bottom));
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 4px;
+  min-width: 60px;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.bottom-nav button:focus {
+  outline: none;
+}
+
+.bottom-nav button img {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 8px;
+}
+
+.nav-label {
+  font-size: 13px;
+  margin-top: 2px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.bottom-nav button.active {
+  background-color: #f6eafe;
+}
+
+.bottom-nav button.active .nav-label {
+  color: #a328f4;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .dashboard-main {
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding: 0;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  }
+
+  .bottom-nav {
+    display: flex;
+    padding: 8px 0;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    height: calc(90px + env(safe-area-inset-bottom));
+  }
+
+  /* Override any sidebar-related margins on mobile */
+  .sidebar:not(.hidden) + .dashboard-main,
+  .sidebar.hidden + .dashboard-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .show-sidebar-button {
+    display: none;
+  }
+
+  .profile-pic {
+    width: 60px;
+    height: 60px;
+  }
+
+  .verified-badge {
+    font-size: 12px;
+    padding: 2px 8px;
+  }
+
+  .profile-name {
+    font-size: 14px;
+    max-width: 150px;
+  }
+
+  .sidebar-links li {
+    font-size: 14px;
+    margin-left: 20px;
+  }
+
+  .sidebar-links li img {
+    width: 20px;
+    margin-right: 10px;
+  }
+}
+
+/* Ensure proper spacing on very small screens */
+@media (max-width: 360px) {
+  .bottom-nav {
+    padding: 12px 0;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    height: calc(70px + env(safe-area-inset-bottom));
+  }
+
+  .bottom-nav button img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .nav-label {
+    font-size: 11px;
+  }
+}
+
+/* Overlay for mobile */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}

@@ -12,6 +12,10 @@ import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import { Helmet } from 'react-helmet';
+import CancelIcon from '@mui/icons-material/Cancel';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 export default function BidsPage({ onOpenChat }) {
     const [requests, setRequests] = useState([]);
@@ -33,7 +37,20 @@ export default function BidsPage({ onOpenChat }) {
     const [showShareSection, setShowShareSection] = useState(true);
     const [activeSection, setActiveSection] = useState("messages");
     const [selectedChat, setSelectedChat] = useState(null);
+    const [showMobileBids, setShowMobileBids] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState(null);
+    const [currentUserId, setCurrentUserId] = useState(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setCurrentUserId(user.id);
+            }
+        };
+        fetchCurrentUser();
+    }, []);
 
     const isNew = (createdAt) => {
         if (!createdAt) return false;
@@ -65,9 +82,7 @@ export default function BidsPage({ onOpenChat }) {
 
     const loadRequests = async (userId) => {
         try {
-            console.log('Loading requests for user:', userId);
-
-            // Fetch requests from all tables
+            // Get all requests from different tables
             const [
                 { data: regularRequests, error: regularError },
                 { data: photoRequests, error: photoError },
@@ -78,112 +93,148 @@ export default function BidsPage({ onOpenChat }) {
                 { data: floristRequests, error: floristError },
                 { data: weddingPlanningRequests, error: weddingPlanningError }
             ] = await Promise.all([
-                supabase
-                    .from('requests')
-                    .select('*, service_photos(*)')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('photography_requests')
-                    .select('*, event_photos(*)')
-                    .eq('profile_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('dj_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('catering_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('beauty_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('videography_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('florist_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('wedding_planning_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false })
+                supabase.from('requests').select('*').eq('user_id', userId),
+                supabase.from('photography_requests').select('*').eq('profile_id', userId),
+                supabase.from('dj_requests').select('*').eq('user_id', userId),
+                supabase.from('catering_requests').select('*').eq('user_id', userId),
+                supabase.from('beauty_requests').select('*').eq('user_id', userId),
+                supabase.from('videography_requests').select('*').eq('user_id', userId),
+                supabase.from('florist_requests').select('*').eq('user_id', userId),
+                supabase.from('wedding_planning_requests').select('*').eq('user_id', userId)
             ]);
 
-            if (regularError) throw regularError;
-            if (photoError) throw photoError;
-            if (djError) throw djError;
-            if (cateringError) throw cateringError;
-            if (beautyError) throw beautyError;
-            if (videoError) throw videoError;
-            if (floristError) throw floristError;
-            if (weddingPlanningError) throw weddingPlanningError;
+            // Map of request types to their corresponding business categories
+            const categoryMap = {
+                'photography': 'photography',
+                'videography': 'videography',
+                'dj': 'dj',
+                'catering': 'catering',
+                'beauty': 'beauty',
+                'florist': 'florist',
+                'wedding_planning': 'wedding_planning'
+            };
 
-            // Transform requests to match the same structure
-            const transformedPhotoRequests = (photoRequests || []).map(request => ({
+            // Get total business counts for each category
+            const totalBusinessCounts = {};
+            for (const [type, category] of Object.entries(categoryMap)) {
+                const { count, error } = await supabase
+                    .from('business_profiles')
+                    .select('*', { count: 'exact' })
+                    .eq('business_category', category);
+
+                if (error) {
+                    console.error(`Error fetching total ${category} businesses:`, error);
+                    totalBusinessCounts[type] = 0;
+                } else {
+                    totalBusinessCounts[type] = count || 0;
+                }
+            }
+
+            // Combine all requests with their types
+            const allRequests = [
+                ...(regularRequests || []).map(r => ({ ...r, type: 'other' })),
+                ...(photoRequests || []).map(r => ({ ...r, type: 'photography' })),
+                ...(djRequests || []).map(r => ({ ...r, type: 'dj' })),
+                ...(cateringRequests || []).map(r => ({ ...r, type: 'catering' })),
+                ...(beautyRequests || []).map(r => ({ ...r, type: 'beauty' })),
+                ...(videoRequests || []).map(r => ({ ...r, type: 'videography' })),
+                ...(floristRequests || []).map(r => ({ ...r, type: 'florist' })),
+                ...(weddingPlanningRequests || []).map(r => ({ ...r, type: 'wedding_planning' }))
+            ];
+
+            // Get view counts for all requests
+            const viewCounts = await Promise.all(
+                allRequests.map(async (request) => {
+                    // Get views
+                    const { data: views, error: viewError } = await supabase
+                        .from('request_views')
+                        .select('business_id')
+                        .eq('request_id', request.id)
+                        .eq('request_type', `${request.type}_requests`);
+
+                    if (viewError) {
+                        console.error('Error fetching views:', viewError);
+                        return { requestId: request.id, count: 0 };
+                    }
+
+                    // Get bids
+                    const { data: bids, error: bidError } = await supabase
+                        .from('bids')
+                        .select('user_id')
+                        .eq('request_id', request.id);
+
+                    if (bidError) {
+                        console.error('Error fetching bids:', bidError);
+                        return { requestId: request.id, count: 0 };
+                    }
+
+                    // Get hidden status
+                    const hiddenByVendor = request.hidden_by_vendor || [];
+                    const hiddenBusinessIds = Array.isArray(hiddenByVendor) ? hiddenByVendor : [];
+
+                    // Get total businesses in this category
+                    const totalBusinesses = totalBusinessCounts[request.type] || 0;
+
+                    // Get unique business IDs that have viewed or bid
+                    const activeBusinessIds = new Set([
+                        ...(views?.map(v => v.business_id) || []),
+                        ...(bids?.map(b => b.user_id) || [])
+                    ]);
+
+                    return { 
+                        requestId: request.id, 
+                        count: activeBusinessIds.size,
+                        total: totalBusinesses
+                    };
+                })
+            );
+
+            // Add view counts and total business counts to requests
+            const requestsWithViews = allRequests.map(request => ({
                 ...request,
-                service_photos: request.event_photos // Map event_photos to service_photos for consistency
+                viewCount: viewCounts.find(v => v.requestId === request.id)?.count || 0,
+                totalBusinessCount: viewCounts.find(v => v.requestId === request.id)?.total || 0,
+                isNew: isNew(request.created_at),
+                isOpen: request.status === "open" || request.status === "pending" || request.open
             }));
 
-            const allRequests = [
-                ...(regularRequests || []).map(req => ({
-                    ...req,
-                    type: 'regular'
-                })),
-                ...transformedPhotoRequests.map(req => ({
-                    ...req,
-                    type: 'photography'
-                })),
-                ...(djRequests || []).map(req => ({
-                    ...req,
-                    type: 'dj',
-                    service_title: req.title || req.event_title || `${req.event_type} DJ Request`,
-                    price_range: req.budget_range,
-                    service_date: req.start_date
-                })),
-                ...(cateringRequests || []).map(req => ({
-                    ...req,
-                    type: 'catering',
-                    service_title: req.title || req.event_title || `${req.event_type} Catering Request`,
-                    price_range: req.budget_range || req.price_range,
-                    service_date: req.start_date || req.date
-                })),
-                ...(beautyRequests || []).map(req => ({
-                    ...req,
-                    type: 'beauty'
-                })),
-                ...(videoRequests || []).map(req => ({
-                    ...req,
-                    type: 'videography'
-                })),
-                ...(floristRequests || []).map(req => ({
-                    ...req,
-                    type: 'florist'
-                })),
-                ...(weddingPlanningRequests || []).map(req => ({
-                    ...req,
-                    type: 'wedding_planning',
-                    service_title: req.event_title || 'Wedding Planning Request',
-                    price_range: req.budget_range,
-                    service_date: req.start_date
-                }))
-            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            // Sort requests: new and open first, then by creation date
+            const sortedRequests = requestsWithViews.sort((a, b) => {
+                // First sort by new status
+                if (a.isNew && !b.isNew) return -1;
+                if (!a.isNew && b.isNew) return 1;
+                
+                // Then sort by open status
+                if (a.isOpen && !b.isOpen) return -1;
+                if (!a.isOpen && b.isOpen) return 1;
+                
+                // Finally sort by creation date (newest first)
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
 
-            console.log('All requests loaded:', allRequests);
-            setRequests(allRequests);
+            setRequests(sortedRequests);
         } catch (error) {
             console.error('Error loading requests:', error);
         }
+    };
+
+    const getViewCountText = (request) => {
+        const categoryMap = {
+            'photography': 'photographers',
+            'videography': 'videographers',
+            'dj': 'DJs',
+            'catering': 'caterers',
+            'beauty': 'HMUAs',
+            'florist': 'florists',
+            'wedding_planning': 'wedding planners',
+            'regular': 'vendors'
+        };
+
+        const category = categoryMap[request.type] || 'vendors';
+        return {
+            count: `${request.viewCount}/${request.totalBusinessCount}`,
+            category: `${category} viewed`
+        };
     };
 
     const loadBids = async () => {
@@ -337,7 +388,9 @@ export default function BidsPage({ onOpenChat }) {
                             return bid.status?.toLowerCase() === 'pending';
                         } else if (activeTab === 'approved') {
                             return bid.status?.toLowerCase() === 'accepted';
-                        } else if (activeTab === 'denied') {
+                        } else if (activeTab === 'interested') {
+                            return bid.status?.toLowerCase() === 'interested';
+                        } else if (activeTab === 'not_interested') {
                             return bid.status?.toLowerCase() === 'denied';
                         }
                         return false;
@@ -495,11 +548,26 @@ export default function BidsPage({ onOpenChat }) {
         }
     };
 
-    const handleMoveToDenied = async (bid) => {
+    const handleMoveToNotInterested = async (bid) => {
         try {
             const { error } = await supabase
                 .from('bids')
                 .update({ status: 'denied' })
+                .eq('id', bid.id);
+            
+            if (error) throw error;
+            
+            await loadBids();
+        } catch (error) {
+            console.error('Error updating bid status:', error);
+        }
+    };
+
+    const handleMoveToInterested = async (bid) => {
+        try {
+            const { error } = await supabase
+                .from('bids')
+                .update({ status: 'interested' })
                 .eq('id', bid.id);
             
             if (error) throw error;
@@ -876,7 +944,10 @@ export default function BidsPage({ onOpenChat }) {
             },
             showActions: true,
             onViewCoupon: handleViewCoupon,
-            onMessage: onOpenChat
+            onMessage: onOpenChat,
+            currentUserId: currentUserId,
+            handleDeny: () => handleMoveToNotInterested(bid),
+            handleInterested: () => handleMoveToInterested(bid)
         };
 
         // State-specific props
@@ -884,8 +955,7 @@ export default function BidsPage({ onOpenChat }) {
             return (
                 <BidDisplay
                     {...commonProps}
-                    handleApprove={() => handleAcceptBidClick(bid)}
-                    handleDeny={() => handleMoveToDenied(bid)}
+                    showPending={true}
                 />
             );
         }
@@ -903,13 +973,23 @@ export default function BidsPage({ onOpenChat }) {
             );
         }
 
-        if (activeTab === 'denied') {
+        if (activeTab === 'interested') {
             return (
                 <BidDisplay
                     {...commonProps}
                     handleApprove={() => handleAcceptBidClick(bid)}
-                    handleDeny={() => handleMoveToPending(bid)}
-                    showReopen={true}
+                    handleInterested={() => handleMoveToPending(bid)}
+                    showInterested={true}
+                />
+            );
+        }
+
+        if (activeTab === 'not_interested') {
+            return (
+                <BidDisplay
+                    {...commonProps}
+                    handleApprove={() => handleAcceptBidClick(bid)}
+                    showNotInterested={true}
                 />
             );
         }
@@ -927,131 +1007,6 @@ export default function BidsPage({ onOpenChat }) {
             return `Flexible within ${request.date_timeframe}`;
         }
         return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
-    };
-
-    const renderRequestCard = (request) => {
-        const requestTitle = request.event_title || request.title || 'Untitled Request';
-        const isOpen = request.status === "open" || request.status === "pending" || request.open;
-        
-        if (request.event_type) {
-            // Photo request card
-            return (
-                <div className="request-card">
-                    <div className="request-header">
-                        <h2 className="request-title">{requestTitle}</h2>
-                        <div className="request-status-container" style={{ display: 'flex', gap: '10px' }}>
-                            {isNew(request.created_at) && (
-                                <div className="request-status" style={{ 
-                                    backgroundColor: '#9633eb',
-                                    color: 'white'
-                                }}>New</div>
-                            )}
-                            <div className="request-status" style={{ 
-                                backgroundColor: isOpen ? '#9633eb' : 'white',
-                                color: isOpen ? 'white' : '#9633eb',
-                                border: isOpen ? 'none' : '1px solid #9633eb',
-                                marginLeft: isNew(request.created_at) ? '0' : 'auto'
-                            }}>
-                                {isOpen ? 'Open' : 'Closed'}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="request-details">
-                        <div className="detail-row">
-                            <span className="detail-label">Event Type:</span>
-                            <span className="detail-value">{request.event_type}</span>
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Date:</span>
-                            <span className="detail-value">{getDate(request)}</span>
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Location:</span>
-                            <span className="detail-value">{request.location}</span>
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Budget:</span>
-                            <span className="detail-value">${request.price_range}</span>
-                        </div>
-                    </div>
-                    <div className="request-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
-                        <button
-                            className="btn-danger"
-                            onClick={() => handleEdit(request)}
-                            style={{ padding: '8px 16px', fontSize: '14px' }}
-                        >
-                            Edit
-                        </button>
-                        <button
-                            className="btn-success"
-                            onClick={() => toggleRequestStatus(request)}
-                            style={{ padding: '8px 16px', fontSize: '14px' }}
-                        >
-                            {isOpen ? "Close" : "Reopen"}
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
-        // Regular service request card
-        return (
-            <div className="request-card">
-                <div className="request-header">
-                    <h2 className="request-title">{requestTitle}</h2>
-                    <div className="request-status-container" style={{ display: 'flex', gap: '10px' }}>
-                        {isNew(request.created_at) && (
-                            <div className="request-status" style={{ 
-                                backgroundColor: '#9633eb',
-                                color: 'white'
-                            }}>New</div>
-                        )}
-                        <div className="request-status" style={{ 
-                            backgroundColor: isOpen ? '#9633eb' : 'white',
-                            color: isOpen ? 'white' : '#9633eb',
-                            border: isOpen ? 'none' : '1px solid #9633eb',
-                            marginLeft: isNew(request.created_at) ? '0' : 'auto'
-                        }}>
-                            {isOpen ? 'Open' : 'Closed'}
-                        </div>
-                    </div>
-                </div>
-                <div className="request-details">
-                    <div className="detail-row">
-                        <span className="detail-label">Category:</span>
-                        <span className="detail-value">{request.service_category}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">Date:</span>
-                        <span className="detail-value">{getDate(request)}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">Location:</span>
-                        <span className="detail-value">{request.location}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">Budget:</span>
-                        <span className="detail-value">${request.price_range}</span>
-                    </div>
-                </div>
-                <div className="request-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
-                    <button
-                        className="btn-danger"
-                        onClick={() => handleEdit(request)}
-                        style={{ padding: '8px 16px', fontSize: '14px' }}
-                    >
-                        Edit
-                    </button>
-                    <button
-                        className="btn-success"
-                        onClick={() => toggleRequestStatus(request)}
-                        style={{ padding: '8px 16px', fontSize: '14px' }}
-                    >
-                        {isOpen ? "Close" : "Reopen"}
-                    </button>
-                </div>
-            </div>
-        );
     };
 
     const renderNoBidsMessage = () => {
@@ -1077,10 +1032,22 @@ export default function BidsPage({ onOpenChat }) {
                         </button>
                     </div>
                 ) : null;
-            case 'denied':
+            case 'interested':
                 return currentRequestBids.length === 0 ? (
                     <div className="no-bids-message">
-                        <p>No denied bids for this request.</p>
+                        <p>No interested bids for this request.</p>
+                        <button 
+                            className="btn btn-secondary"
+                            onClick={() => setActiveTab('pending')}
+                        >
+                            View Pending Bids
+                        </button>
+                    </div>
+                ) : null;
+            case 'not_interested':
+                return currentRequestBids.length === 0 ? (
+                    <div className="no-bids-message">
+                        <p>No bids marked as not interested.</p>
                         <button 
                             className="btn btn-secondary"
                             onClick={() => setActiveTab('pending')}
@@ -1099,6 +1066,363 @@ export default function BidsPage({ onOpenChat }) {
         setSelectedChat(chat);
     };
 
+    const getCategoryIcon = (type) => {
+        const typeMap = {
+            'photography': 'fa-solid fa-camera',
+            'videography': 'fa-solid fa-video',
+            'dj': 'fa-solid fa-music',
+            'catering': 'fa-solid fa-utensils',
+            'beauty': 'fa-solid fa-spa',
+            'florist': 'fa-solid fa-leaf',
+            'wedding_planning': 'fa-solid fa-ring',
+            'regular': 'fa-solid fa-star'
+        };
+        return typeMap[type] || typeMap.regular;
+    };
+
+    const formatCategoryType = (type) => {
+        const typeMap = {
+            'photography': 'Photography',
+            'videography': 'Videography',
+            'dj': 'DJ',
+            'catering': 'Catering',
+            'beauty': 'Hair & Makeup',
+            'florist': 'Florist',
+            'wedding_planning': 'Wedding Planning',
+            'regular': 'General Request'
+        };
+        return typeMap[type] || type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    };
+
+    const renderMobileNav = () => {
+        return (
+            <div className="mobile-nav" style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                display: 'flex',
+                justifyContent: 'space-around',
+                padding: '10px',
+                backgroundColor: 'white',
+                borderTop: '1px solid #eee',
+                zIndex: 1000
+            }}>
+                <button 
+                    className={activeTab === 'not_interested' ? 'active' : ''}
+                    onClick={() => setActiveTab('not_interested')}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: activeTab === 'not_interested' ? '#9633eb' : '#666',
+                        cursor: 'pointer',
+                        padding: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px'
+                    }}
+                >
+                    <CancelIcon style={{ fontSize: 28 }} />
+                    <span style={{ fontSize: '12px', color: activeTab === 'not_interested' ? '#9633eb' : '#666' }}>
+                        Not Interested
+                        {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length > 0 && (
+                            <span style={{ 
+                                marginLeft: '4px',
+                                background: activeTab === 'not_interested' ? '#9633eb' : '#666',
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                fontSize: '10px'
+                            }}>
+                                {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length}
+                            </span>
+                        )}
+                    </span>
+                </button>
+                <button 
+                    className={activeTab === 'pending' ? 'active' : ''}
+                    onClick={() => setActiveTab('pending')}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: activeTab === 'pending' ? '#9633eb' : '#666',
+                        cursor: 'pointer',
+                        padding: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px'
+                    }}
+                >
+                    <AccessTimeIcon style={{ fontSize: 28 }} />
+                    <span style={{ fontSize: '12px', color: activeTab === 'pending' ? '#9633eb' : '#666' }}>
+                        Pending
+                        {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length > 0 && (
+                            <span style={{ 
+                                marginLeft: '4px',
+                                background: activeTab === 'pending' ? '#9633eb' : '#666',
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                fontSize: '10px'
+                            }}>
+                                {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length}
+                            </span>
+                        )}
+                    </span>
+                </button>
+                <button 
+                    className={activeTab === 'interested' ? 'active' : ''}
+                    onClick={() => setActiveTab('interested')}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: activeTab === 'interested' ? '#9633eb' : '#666',
+                        cursor: 'pointer',
+                        padding: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px'
+                    }}
+                >
+                    <FavoriteIcon style={{ fontSize: 28 }} />
+                    <span style={{ fontSize: '12px', color: activeTab === 'interested' ? '#9633eb' : '#666' }}>
+                        Interested
+                        {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length > 0 && (
+                            <span style={{ 
+                                marginLeft: '4px',
+                                background: activeTab === 'interested' ? '#9633eb' : '#666',
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                fontSize: '10px'
+                            }}>
+                                {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length}
+                            </span>
+                        )}
+                    </span>
+                </button>
+                <button 
+                    className={activeTab === 'approved' ? 'active' : ''}
+                    onClick={() => setActiveTab('approved')}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: activeTab === 'approved' ? '#9633eb' : '#666',
+                        cursor: 'pointer',
+                        padding: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px'
+                    }}
+                >
+                    <CheckCircleIcon style={{ fontSize: 28 }} />
+                    <span style={{ fontSize: '12px', color: activeTab === 'approved' ? '#9633eb' : '#666' }}>
+                        Approved
+                        {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length > 0 && (
+                            <span style={{ 
+                                marginLeft: '4px',
+                                background: activeTab === 'approved' ? '#9633eb' : '#666',
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                fontSize: '10px'
+                            }}>
+                                {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length}
+                            </span>
+                        )}
+                    </span>
+                </button>
+            </div>
+        );
+    };
+
+    const handleRequestClick = (request, index) => {
+        if (window.innerWidth <= 1024) {
+            setSelectedRequest(request);
+            setCurrentRequestIndex(index);
+            setShowMobileBids(true);
+            setActiveTab('pending');
+        } else {
+            setCurrentRequestIndex(index);
+            setActiveTab('pending');
+        }
+    };
+
+    const handleCloseMobileBids = () => {
+        setShowMobileBids(false);
+        // Add a small delay before clearing the selected request
+        setTimeout(() => {
+            setSelectedRequest(null);
+        }, 300);
+    };
+
+    const renderMobileBidsView = () => {
+        if (!selectedRequest) return null;
+
+        return (
+            <>
+                <div 
+                    className={`mobile-backdrop ${showMobileBids ? 'active' : ''}`}
+                    onClick={handleCloseMobileBids}
+                />
+                <div className={`mobile-bids-view ${showMobileBids ? 'active' : ''}`}>
+                    <div className="mobile-bids-header">
+                        <button className="mobile-back-button" onClick={handleCloseMobileBids}>
+                            <i className="fas fa-arrow-left"></i>
+                            <span>Back</span>
+                        </button>
+                        <h2 className="mobile-bids-title">
+                            {selectedRequest.event_title || selectedRequest.title || 'Selected Request'}
+                        </h2>
+                    </div>
+                    <div className="mobile-bids-content">
+                        <div className="tabs" style={{
+                            display: 'flex',
+                            justifyContent: 'space-around',
+                            padding: '10px',
+                            borderBottom: '1px solid #eee'
+                        }}>
+                            <button 
+                                className={`tab ${activeTab === 'not_interested' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('not_interested')}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px',
+                                    color: activeTab === 'not_interested' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <CancelIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'not_interested' ? '#9633eb' : '#666' }}>
+                                    Not Interested
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'not_interested' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length}
+                                        </span>
+                                    )}
+                                </span>
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('pending')}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px',
+                                    color: activeTab === 'pending' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <AccessTimeIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'pending' ? '#9633eb' : '#666' }}>
+                                    Pending
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'pending' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length}
+                                        </span>
+                                    )}
+                                </span>
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'interested' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('interested')}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px',
+                                    color: activeTab === 'interested' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <FavoriteIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'interested' ? '#9633eb' : '#666' }}>
+                                    Interested
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'interested' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length}
+                                        </span>
+                                    )}
+                                </span>
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('approved')}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px',
+                                    color: activeTab === 'approved' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <CheckCircleIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'approved' ? '#9633eb' : '#666' }}>
+                                    Approved
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'approved' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length}
+                                        </span>
+                                    )}
+                                </span>
+                            </button>
+                        </div>
+
+                        <div className="bids-container">
+                            {bids.filter(bid => bid.request_id === selectedRequest.id)
+                                .map(bid => renderBidCard(bid))}
+                            {renderNoBidsMessage()}
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    };
+
     return (
         <>
             <Helmet>
@@ -1109,33 +1433,89 @@ export default function BidsPage({ onOpenChat }) {
             <div className="bids-page">
                 <h1 className="section-title">Your Service Requests</h1>
                 <p className="section-description">
-                    Browse through your service requests using the arrows. Below, you'll find all bids received for the currently displayed request.
+                    View all your service requests and manage the bids you've received.
                 </p>
-
+                
                 {requests.length > 0 ? (
-                    <>
-                        <div className="request-swiper-container">
-                            <div className="swipe-indicator">
-                                Swipe to view more requests
-                            </div>
-                            <Swiper
-                                modules={[Navigation]}
-                                navigation={true}
-                                onSlideChange={(swiper) => setCurrentRequestIndex(swiper.activeIndex)}
-                                spaceBetween={30}
-                                slidesPerView={1}
-                            >
-                                {requests.map((request, index) => (
-                                    <SwiperSlide key={request.id}>
-                                        <div className="request-slide">
-                                            {renderRequestCard(request)}
+                    <div className="requests-list-container">
+                        <div className="requests-list">
+                            {requests.map((request, index) => (
+                                <div 
+                                    key={request.id} 
+                                    className={`request-card ${currentRequestIndex === index ? 'active' : ''}`}
+                                    onClick={() => handleRequestClick(request, index)}
+                                >
+                                    <div className="request-header">
+                                        <div className="request-category">
+                                            <div className="category-icon">
+                                                <i className={`${getCategoryIcon(request.type)}`}></i>
+                                            </div>
+                                            <div className="category-info">
+                                                <span className="category-name">
+                                                    {formatCategoryType(request.type)}
+                                                </span>
+                                                <div className="request-status-container">
+                                                    {isNew(request.created_at) && (
+                                                        <div className="request-status new">New</div>
+                                                    )}
+                                                    <div className={`request-status ${(request.status === "open" || request.status === "pending" || request.open) ? 'open' : 'closed'}`}>
+                                                        {(request.status === "open" || request.status === "pending" || request.open) ? 'Open' : 'Closed'}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </SwiperSlide>
-                                ))}
-                            </Swiper>
+                                    </div>
+                                    <div className="request-actions">
+                                        <button
+                                            className="btn-edit"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEdit(request);
+                                            }}
+                                        >
+                                            <i className="fas fa-edit"></i>
+                                            Edit
+                                        </button>
+                                        <button
+                                            className="btn-toggle"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleRequestStatus(request);
+                                            }}
+                                        >
+                                            <i className={`fas ${(request.status === "open" || request.status === "pending" || request.open) ? 'fa-lock' : 'fa-unlock'}`}></i>
+                                            {(request.status === "open" || request.status === "pending" || request.open) ? "Close" : "Reopen"}
+                                        </button>
+                                    </div>
+                                    <div className="request-details">
+                                        <div className="detail-item">
+                                            <i className="fas fa-calendar"></i>
+                                            <span className="detail-label">Date:</span>
+                                            <span className="detail-value">{getDate(request)}</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <i className="fas fa-dollar-sign"></i>
+                                            <span className="detail-label">Budget:</span>
+                                            <span className="detail-value">${request.price_range}</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <i className="fas fa-eye"></i>
+                                            <span className="detail-label">Views:</span>
+                                            <div className="detail-value" style={{ 
+                                                display: 'flex', 
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                textAlign: 'center'
+                                            }}>
+                                                <span>{getViewCountText(request).count}</span>
+                                                <span style={{ fontSize: '0.9em', color: '#666' }}>{getViewCountText(request).category}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-
-                    </>
+                    </div>
                 ) : (
                     <div className="no-requests" style={{
                         textAlign: 'center',
@@ -1172,43 +1552,158 @@ export default function BidsPage({ onOpenChat }) {
                     </div>
                 )}
 
-                <h2 className="section-title" style={{ marginTop: '40px', textAlign:'center' }}>Bids for Selected Request</h2>
-                <p className="section-description">
-                    Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
-                </p>
+                {/* Desktop bids section */}
+                {window.innerWidth > 1024 && currentRequestIndex >= 0 && (
+                    <div className={`bids-section ${currentRequestIndex >= 0 ? 'active' : ''}`}>
+                        <h2 className="section-title">
+                            Bids for {requests[currentRequestIndex]?.event_title || requests[currentRequestIndex]?.title || 'Selected Request'}
+                        </h2>
+                        <p className="section-description">
+                            Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
+                        </p>
 
-                <div className="tabs">
-                    <button 
-                        className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('pending')}
-                    >
-                        Pending Bids
-                    </button>
-                    <button 
-                        className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('approved')}
-                    >
-                        Approved Bids
-                    </button>
-                    <button 
-                        className={`tab ${activeTab === 'denied' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('denied')}
-                    >
-                        Denied Bids
-                    </button>
-                </div>
+                        <div className="tabs" style={{
+                            display: 'flex',
+                            justifyContent: 'space-around',
+                            padding: '10px',
+                            borderBottom: '1px solid #eee'
+                        }}>
+                            <button 
+                                className={`tab ${activeTab === 'not_interested' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('not_interested')}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px',
+                                    color: activeTab === 'not_interested' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <CancelIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'not_interested' ? '#9633eb' : '#666' }}>
+                                    Not Interested
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'not_interested' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length}
+                                        </span>
+                                    )}
+                                </span>
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('pending')}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px',
+                                    color: activeTab === 'pending' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <AccessTimeIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'pending' ? '#9633eb' : '#666' }}>
+                                    Pending
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'pending' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length}
+                                        </span>
+                                    )}
+                                </span>
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'interested' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('interested')}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px',
+                                    color: activeTab === 'interested' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <FavoriteIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'interested' ? '#9633eb' : '#666' }}>
+                                    Interested
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'interested' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length}
+                                        </span>
+                                    )}
+                                </span>
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('approved')}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px',
+                                    color: activeTab === 'approved' ? '#9633eb' : '#666'
+                                }}
+                            >
+                                <CheckCircleIcon style={{ fontSize: 28 }} />
+                                <span style={{ fontSize: '12px', color: activeTab === 'approved' ? '#9633eb' : '#666' }}>
+                                    Approved
+                                    {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length > 0 && (
+                                        <span style={{ 
+                                            marginLeft: '4px',
+                                            background: activeTab === 'approved' ? '#9633eb' : '#666',
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px'
+                                        }}>
+                                            {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length}
+                                        </span>
+                                    )}
+                                </span>
+                            </button>
+                        </div>
 
-                <div className="bids-container">
-                    {requests.length > 0 && currentRequestIndex >= 0 ? (
-                        <>
+                        <div className="bids-container">
                             {bids.filter(bid => bid.request_id === requests[currentRequestIndex].id)
                                 .map(bid => renderBidCard(bid))}
                             {renderNoBidsMessage()}
-                        </>
-                    ) : (
-                        <p className="no-bids">No bids to display</p>
-                    )}
-                </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Mobile bids view */}
+                {window.innerWidth <= 1024 && renderMobileBidsView()}
 
                 {showShareSection && (
                     <div className="share-earn-section" style={{ 
@@ -1242,43 +1737,74 @@ export default function BidsPage({ onOpenChat }) {
                         </p>
                         <div style={{display: 'flex', justifyContent: 'center'}}>
                             <button
-                            className="btn-primary"
-                            onClick={handleShareAndEarn}
-                            style={{
-                                padding: '12px 24px',
-                                fontSize: '16px',
-                                fontWeight: 'bold',
-                                background: '#9633eb',
-                                color:'white',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
-                            Get Your Referral Code
-                        </button>
+                                className="btn-primary"
+                                onClick={handleShareAndEarn}
+                                style={{
+                                    padding: '12px 24px',
+                                    fontSize: '16px',
+                                    fontWeight: 'bold',
+                                    background: '#9633eb',
+                                    color:'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '40px',
+                                    border: 'none',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
+                                Get Your Referral Code
+                            </button>
                         </div>
                     </div>
                 )}
+
+                {/* Add mobile navigation at the bottom */}
+                {window.innerWidth <= 1024 && renderMobileNav()}
             </div>
 
             {showAcceptModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content-bids-page">
-                        <h3>Accept Bid Confirmation</h3>
-                        <p>Are you sure you want to accept this bid from {selectedBid?.business_profiles?.business_name}?</p>
+                <div className="modal-overlay" style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div className="modal-content-bids-page" style={{
+                        background: 'white',
+                        padding: '24px',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        maxWidth: '500px',
+                        width: '90%',
+                        margin: '0 auto'
+                    }}>
+                        <h3 style={{ marginBottom: '16px', color: '#333' }}>Accept Bid Confirmation</h3>
+                        <p style={{ marginBottom: '16px', color: '#666' }}>Are you sure you want to accept this bid from {selectedBid?.business_profiles?.business_name}?</p>
                         
-
-                        <p>By accepting this bid:</p>
-                        <ul>
-                            <li>Your contact information will be shared with the business</li>
-                            <li>The business will be notified and can reach out to you directly</li>
+                        <p style={{ marginBottom: '12px', color: '#666' }}>By accepting this bid:</p>
+                        <ul style={{ marginBottom: '24px', color: '#666', paddingLeft: '20px' }}>
+                            <li style={{ marginBottom: '8px' }}>Your contact information will be shared with the business</li>
+                            <li style={{ marginBottom: '8px' }}>The business will be notified and can reach out to you directly</li>
                         </ul>
-                        <div className="modal-buttons">
+                        <div className="modal-buttons" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                             <button 
                                 className="btn-danger"
-                                style={{borderRadius:'40px'}}
+                                style={{
+                                    borderRadius: '40px',
+                                    padding: '8px 24px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    backgroundColor: '#dc3545',
+                                    color: 'white'
+                                }}
                                 onClick={() => {
                                     setShowAcceptModal(false);
                                     setSelectedBid(null);
@@ -1291,7 +1817,14 @@ export default function BidsPage({ onOpenChat }) {
                             </button>
                             <button 
                                 className="btn-success"
-                                style={{borderRadius:'40px'}}
+                                style={{
+                                    borderRadius: '40px',
+                                    padding: '8px 24px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    backgroundColor: '#28a745',
+                                    color: 'white'
+                                }}
                                 onClick={handleConfirmAccept}
                             >
                                 Accept Bid

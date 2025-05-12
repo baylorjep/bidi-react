@@ -194,6 +194,9 @@ const VendorList = ({
         registerServiceWorker();
     }, []);
 
+    // Helper function to normalize business_category
+    const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
+
     const fetchVendors = async () => {
         setLoading(true);
         setVendorPhotosLoaded({});
@@ -210,7 +213,7 @@ const VendorList = ({
                 .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
-                query = query.eq('business_category', selectedCategory);
+                query = query.filter('business_category', 'ov', `{${selectedCategory}}`);
             }
 
             const { data: allVendorData, error: vendorError } = await query;
@@ -234,6 +237,7 @@ const VendorList = ({
                     : null;
                 return {
                     ...vendor,
+                    business_category: getCategories(vendor.business_category),
                     average_rating: averageRating
                 };
             });
@@ -602,12 +606,8 @@ const VendorList = ({
         };
 
         // Format the category to match the expected format in RequestCategories.js
-        const formattedCategory = vendor.business_category === 'wedding planner/coordinator' 
-            ? 'WeddingPlanning'
-            : vendor.business_category === 'beauty'
-                ? 'HairAndMakeup'
-                : vendor.business_category.charAt(0).toUpperCase() + 
-                  vendor.business_category.slice(1).toLowerCase();
+        const formattedCategory = vendor.business_category.join(', ').charAt(0).toUpperCase() + 
+            vendor.business_category.join(', ').slice(1).toLowerCase();
 
         // Navigate to the master request flow with the vendor data and selected category
         navigate("/master-request-flow", { 

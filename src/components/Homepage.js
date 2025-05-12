@@ -183,22 +183,27 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                             {user ? (
                                 // Conditionally render different routes based on the role
                                 role === 'individual' ? (
-                                <Link to="/my-dashboard" onClick={() => posthog.capture('client_dashboard')}>
+                                <Link to="/individual-dashboard" onClick={() => posthog.capture('client_dashboard')}>
                                     <button className='landing-page-button'>See Your Bids</button>
                                 </Link>
                                 ) : role === 'business' ? (
-                                <Link to="/dashboard" onClick={() => posthog.capture('vendor_dashboard')}>
+                                <Link to="/business-dashboard" onClick={() => posthog.capture('vendor_dashboard')}>
                                     <button className='landing-page-button'>See Requests</button>
                                 </Link>
                                 ) : (
+                                role === 'both' ? (
+                                <Link to="/wedding-planner-dashboard">
+                                    <button className='landing-page-button'>See Dashboard</button>
+                                </Link>
+                                ) :
                                 // Default route if no role is found or unhandled role
                                 <Link to="/dashboard">
                                     <button className='landing-page-button'>Get Started</button>
                                 </Link>
                                 )
                             ) : (
-                                <Link to="/signup" onClick={() => posthog.capture('signup_button_click')}>
-                                <button className='landing-page-button'>Start Now</button>
+                                <Link to="/request-categories" onClick={() => posthog.capture('signup_button_click')}>
+                                <button className='landing-page-button'>Start Getting Bids</button>
                                 </Link>
                             )}
                         </div>

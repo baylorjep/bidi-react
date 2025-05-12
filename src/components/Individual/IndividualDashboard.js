@@ -3,6 +3,7 @@ import { supabase } from "../../supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../../App.css";
 import "../../styles/IndividualDashboard.css";
+import "../../styles/Sidebar.css";
 import verifiedCheckIcon from "../../assets/images/Icons/verified-check.svg";
 import bidsIcon from "../../assets/images/Icons/bids.svg";
 import messageIcon from "../../assets/images/Icons/message.svg";
@@ -36,7 +37,8 @@ const IndividualDashboard = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const navigate = useNavigate();
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [isHoveringSidebar, setIsHoveringSidebar] = useState(false);
+  const [isPinned, setIsPinned] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(false);
   const sidebarRef = React.useRef(null);
   const location = useLocation();
 
@@ -277,27 +279,22 @@ const IndividualDashboard = () => {
     setSelectedChat(chat);
   };
 
-  // Add mouse move event listener to detect when mouse is near sidebar
   useEffect(() => {
-    if (isMobile) return; // Only apply on desktop
+    if (isMobile) return;
+    setIsSidebarVisible(isPinned);
+  }, [isPinned, isMobile]);
 
-    const handleMouseMove = (e) => {
-      if (!sidebarRef.current) return;
-      
-      const sidebarRect = sidebarRef.current.getBoundingClientRect();
-      const mouseX = e.clientX;
-      
-      // Show sidebar when mouse is within 50px of the left edge
-      if (mouseX <= 50) {
-        setIsSidebarVisible(true);
-      } else if (!isHoveringSidebar && mouseX > sidebarRect.right) {
-        setIsSidebarVisible(false);
-      }
-    };
+  const handleShowSidebar = () => {
+    setIsSidebarVisible(true);
+    setShowOverlay(true);
+  };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [isMobile, isHoveringSidebar]);
+  const handleOverlayClick = () => {
+    if (!isPinned) {
+      setIsSidebarVisible(false);
+      setShowOverlay(false);
+    }
+  };
 
   if (error) {
     return <div>Error: {error}</div>;
@@ -313,9 +310,24 @@ const IndividualDashboard = () => {
         <aside 
           className={`sidebar ${isSidebarVisible ? 'visible' : 'hidden'}`}
           ref={sidebarRef}
-          onMouseEnter={() => setIsHoveringSidebar(true)}
-          onMouseLeave={() => setIsHoveringSidebar(false)}
         >
+          {/* Add pin button at the top of sidebar */}
+          <button 
+            className="pin-button"
+            onClick={() => {
+              setIsPinned(!isPinned);
+              if (!isPinned) {
+                setIsSidebarVisible(true);
+                setShowOverlay(true);
+              } else {
+                setShowOverlay(false);
+              }
+            }}
+            title={isPinned ? "Unpin Sidebar" : "Pin Sidebar"}
+          >
+            <i className={`fas fa-thumbtack ${isPinned ? 'pinned' : ''}`}></i>
+          </button>
+
           {/* Profile Section */}
           <div className="profile-section">
             <img src={profileImage} alt="Profile" className="profile-pic" />
@@ -366,6 +378,25 @@ const IndividualDashboard = () => {
             </li>
           </ul>
         </aside>
+
+        {/* Overlay for click-away behavior */}
+        {showOverlay && !isPinned && (
+          <div 
+            className={`sidebar-overlay ${showOverlay ? 'visible' : ''}`}
+            onClick={handleOverlayClick}
+          />
+        )}
+
+        {/* Show Sidebar Button */}
+        {!isSidebarVisible && !isMobile && (
+          <button 
+            className="show-sidebar-button"
+            onClick={handleShowSidebar}
+            title="Show Sidebar"
+          >
+            <i className="fas fa-chevron-right"></i>
+          </button>
+        )}
 
         {/* Main Dashboard */}
         <main className="dashboard-main">

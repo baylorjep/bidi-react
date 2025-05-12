@@ -2,150 +2,24 @@
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  width: 100%;
-}
-
-/* Sidebar */
-.sidebar {
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 250px;
-  background: white;
-  border-right: 1px solid #e0e0e0;
-  transition: transform 0.3s ease-in-out;
-  z-index: 1000;
-}
-
-.sidebar.hidden {
-  transform: translateX(-400px);
-}
-
-.sidebar.visible {
-  transform: translateX(0);
-}
-
-/* Main Dashboard */
-.dashboard-main {
-  margin-left: 250px;
-  transition: margin-left 0.3s ease-in-out;
-  padding: 20px;
-  min-height: 100vh;
-  width: calc(100% - 250px);
+  width: 100vw;
   position: relative;
+  overflow-x: hidden;
 }
 
-.sidebar.hidden + .dashboard-main {
-  margin-left: 0;
-  width: 100%;
-}
-
-.profile-section {
-  position: relative;
-  text-align: center;
-}
-.profile-pic {
-  width: 6vw;
-  height: 6vw;
-  border-radius: 50%;
-  background: lightgray 50% / cover no-repeat;
-  object-fit: cover; /* Prevents stretching, ensures the image is cropped properly */
-  display: block;
-  margin: 0 auto; /* Centers the image horizontally */
-  border-radius: 50%;
-  object-fit: cover;
-  border: none;
-}
-.verified-badge {
-  position: absolute;
-  margin-top: -5px;
-  left: 50%;
-  top: 50%;
-  transform: translateX(-50%);
-  background-color: #a328f4;
-  color: white;
-  font-size: 0.8vw;
-  font-weight: 400;
-  padding: 0.1vw 0.8vw;
-}
-.profile-name {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  max-width: 12vw;
-  line-height: 1.2;
-  font-size: 0.9vw;
-  margin-top: 1.3vw;
-}
-
-.business-name-under-picture {
-  display: inline-block;
-  max-width: 100%;
-  text-align: center;
-  word-break: break-word;
-  white-space: normal;
-}
-
-.verified-wrapper {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 5px; /* Keeps icon to the right */
-}
-
-.verified-icon {
-  width: 1vw;
-  height: auto;
-  position: relative;
-  transform: translateY(2%); /* Slightly adjusts alignment */
-}
-.sidebar-links {
-  list-style: none;
-  padding: 0;
-  width: 100%;
-  text-align: center;
-}
-.sidebar-links li {
-  display: flex;
-  align-items: center;
-  padding: 0.3vh 0;
-  font-size: 1.2vw;
-  margin-left: 2.5vw;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #333; /* Default text color */
-}
-.sidebar-links li img,
-.bottom-nav button img {
-  width: 1.5vw;
-  margin-right: 1vw;
-  color: #a328f4; /* Purple outline by default */
-}
-.sidebar-links li a {
-  text-decoration: none;
-  color: inherit;
-}
-.select {
-  background: #f6eafe; /* Updated color */
-  border-radius: 0.5vw;
-}
 /* Upgrade to PRO Box */
 .upgrade-box {
-  background: #f6eafe; /* Updated color */
+  background: #f6eafe;
   border-radius: 0.5vw;
-  padding: 1.25vw 0.5vw; /* Increase padding to make the box larger */
+  padding: 1.25vw 0.5vw;
   text-align: center;
-  width: 85%; /* Slightly increase width */
-  margin: 3vh auto; /* Add more vertical margin */
+  width: 85%;
+  margin: 3vh auto;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-
-  /* Center content vertically */
   display: flex;
   justify-content: center;
   align-items: center;
-  height: auto; /* Allow it to grow dynamically */
+  height: auto;
 }
 
 /* Force Small Text */
@@ -454,32 +328,7 @@
   font-size: 1vw !important;
 }
 
-/* Bottom Navigation Bar */
-.bottom-nav {
-  display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: white;
-  border-top: 2px solid rgb(222, 226, 230);
-  /* display: flex; */
-  justify-content: space-around;
-  align-items: center;
-  padding: 0.8rem 0;
-  z-index: 1000;
-}
 
-.bottom-nav button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.bottom-nav button:focus {
-  outline: none;
-}
 
 .coming-soon {
   font-size: 4vw;
@@ -487,61 +336,10 @@
   margin-top: 4px;
 }
 
-.sidebar-links li.active,
-.bottom-nav button.active {
-  background: #f6eafe;
-  border-radius: 0.5vw;
-  color: #a328f4; /* Purple text when active */
-}
-
-.sidebar-links li.active img,
-.bottom-nav button.active img {
-  color: #a328f4; /* Keep purple outline when active */
-  fill: #a328f4; /* Fill the white space with purple when active */
-}
-
-.bottom-nav button.active .nav-label {
-  color: #a328f4;
-}
 
 @media (max-width: 768px) {
   .sidebar {
     display: none;
-  }
-
-  .dashboard-main {
-    width: 100%;
-    margin-left: 0;
-    padding: 10px;
-  }
-
-  .bottom-nav {
-    display: flex;
-    padding-bottom: calc(25px + env(safe-area-inset-bottom));
-  }
-
-  .bottom-nav button {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: none;
-    border: none;
-    padding: 8px 4px;
-    min-width: 60px;
-  }
-
-  .bottom-nav button img {
-    width: 24px;
-    height: 24px;
-    margin-bottom: 4px;
-  }
-
-  .nav-label {
-    font-size: 12px;
-    margin-top: 2px;
-    color: #333;
   }
 
   .job-listings {
@@ -576,16 +374,5 @@
     text-align: center;
     font-family: inherit;
   }
-
-  .sidebar-links li.active,
-  .bottom-nav button.active {
-    background: #f6eafe;
-    border-radius: 0.5rem;
-  }
   
-  .sidebar-links li.active img,
-  .bottom-nav button.active img {
-    color: #a328f4;
-    fill: #a328f4;
-  }
 }

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
 import "../../../styles/Portfolio.css";
 import EditProfileModal from "./EditProfileModal"; // Import modal component
@@ -18,6 +18,7 @@ import AuthModal from "../../Request/Authentication/AuthModal";
 
 const Portfolio = ({ businessId: propBusinessId }) => {
   const { businessId: paramBusinessId } = useParams();
+  const location = useLocation();
   const [businessId, setBusinessId] = useState(
     propBusinessId || paramBusinessId || null
   );
@@ -43,6 +44,12 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const [sliderDimensions, setSliderDimensions] = useState({ width: 0, height: 0 });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [fromBid, setFromBid] = useState(false);
+  const [bidData, setBidData] = useState(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [showReadMore, setShowReadMore] = useState(false);
+  const descriptionRef = useRef(null);
 
   // Add slider settings
   const sliderSettings = {
@@ -318,6 +325,13 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     }
 
     setLoading(false);
+
+    // Helper function to normalize business_category
+    const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
+
+    if (businessData) {
+      setBusiness({ ...businessData, business_category: getCategories(businessData.business_category) });
+    }
   };
 
   useEffect(() => {
@@ -352,6 +366,26 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       });
     };
   }, [profileImage, portfolioPics]);
+
+  useEffect(() => {
+    if (location.state?.fromBid) {
+      setFromBid(true);
+      setBidData({
+        ...location.state.bidData,
+        id: location.state.bidId // Add the bid ID to the bid data
+      });
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    if (descriptionRef.current && bidData?.description) {
+      setTimeout(() => {
+        const height = descriptionRef.current.scrollHeight;
+        console.log('Description height:', height); // Debug log
+        setShowReadMore(height > 100);
+      }, 0);
+    }
+  }, [bidData?.description]);
 
   const handleProfilePicEdit = () => {
     openEditModal({
@@ -531,11 +565,85 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     checkAuth();
   }, []);
 
+  const handleAction = (action, id) => {
+    setIsAnimating(true);
+    setTimeout(() => {
+      action(id);
+    }, 300); // Match this with the CSS animation duration
+  };
+
+  const handleDeny = async (bidId) => {
+    try {
+      if (!bidId) {
+        console.error('No bid ID provided');
+        alert('Failed to deny bid: Missing bid ID');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('bids')
+        .update({ status: 'denied' })
+        .eq('id', bidId);
+
+      if (error) {
+        console.error('Error denying bid:', error);
+        throw error;
+      }
+
+      // Update local state
+      setBidData(prev => ({
+        ...prev,
+        status: 'denied'
+      }));
+
+      // Navigate based on user type
+      if (isIndividual) {
+        navigate('/individual-dashboard', { state: { activeSection: 'bids' } });
+      } else {
+        navigate('/business-dashboard', { state: { activeSection: 'bids' } });
+      }
+    } catch (error) {
+      console.error('Error denying bid:', error);
+      alert('Failed to deny bid. Please try again.');
+    }
+  };
+
+  const handleApprove = async (bidId) => {
+    try {
+      const { error } = await supabase
+        .from('bids')
+        .update({ status: 'accepted' })
+        .eq('id', bidId);
+
+      if (error) throw error;
+
+      // Update local state
+      setBidData(prev => ({
+        ...prev,
+        status: 'accepted'
+      }));
+
+      // Navigate based on user type
+      if (isIndividual) {
+        navigate('/individual-dashboard', { state: { activeSection: 'bids' } });
+      } else {
+        navigate('/business-dashboard', { state: { activeSection: 'bids' } });
+      }
+    } catch (error) {
+      console.error('Error approving bid:', error);
+      alert('Failed to approve bid. Please try again.');
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
 
   if (!business) return <p>Error: Business not found.</p>;
+
+  const categories = Array.isArray(business?.business_category)
+    ? business.business_category
+    : [business?.business_category].filter(Boolean);
 
   return (
     <>
@@ -852,18 +960,105 @@ const Portfolio = ({ businessId: propBusinessId }) => {
             {!isOwner && (
               <div className="sticky-footer-wrapper">
                 <div className="section-right sticky-footer">
-                  <div className="get-a-bid-container">
-                    <h2 className="get-quote-header">Need a Bid?</h2>
-                    <div className="vendor-button-container">
-                      <button className="vendor-button" onClick={handleGetQuote}>
-                        Get a Tailored Bid
-                      </button>
-                      <button className="chat-button" onClick={handleChatClick}>
-                        <ChatIcon style={{ fontSize: '20px' }} />
-                        Chat with Vendor
-                      </button>
+                  {fromBid ? (
+                    <div className="bid-info-container">
+                      <h2 className="get-quote-header">Bid Information</h2>
+                      <div className="bid-details">
+                        <div className="bid-amount">
+                          <span className="amount-label">Bid Amount:</span>
+                          <span className="amount-value">${bidData?.amount}</span>
+                        </div>
+                        {bidData?.expirationDate && (
+                          <div className="bid-expiration">
+                            <span className="expiration-label">Expires:</span>
+                            <span className="expiration-value">
+                              {new Date(bidData.expirationDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="bid-status">
+                          <span className="status-label">Status:</span>
+                          <span className={`status-value ${bidData?.status?.toLowerCase()}`}>
+                            {bidData?.status}
+                          </span>
+                        </div>
+                        {bidData?.couponApplied && (
+                          <div className="bid-coupon">
+                            <span className="coupon-label">Coupon Applied:</span>
+                            <div className="coupon-details">
+                              <span className="coupon-code">{bidData.couponCode}</span>
+                              <div className="price-breakdown">
+                                <div className="price-row">
+                                  <span>Original Price:</span>
+                                  <span>${bidData.originalAmount?.toFixed(2)}</span>
+                                </div>
+                                <div className="price-row discount">
+                                  <span>Discount:</span>
+                                  <span>-${bidData.discountAmount?.toFixed(2)}</span>
+                                </div>
+                                <div className="price-row total">
+                                  <span>Final Price:</span>
+                                  <span>${bidData.amount?.toFixed(2)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <div className="bid-description">
+                          <span className="description-label">Description:</span>
+                          <div 
+                            ref={descriptionRef}
+                            className={`description-content ${!isDescriptionExpanded ? 'description-collapsed' : ''}`}
+                            style={{ maxHeight: isDescriptionExpanded ? 'none' : '100px' }}
+                          >
+                            <div dangerouslySetInnerHTML={{ __html: bidData?.description }} />
+                          </div>
+                          {showReadMore && (
+                            <button 
+                              className="read-more-button"
+                              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                            >
+                              {isDescriptionExpanded ? 'Show Less' : 'Read More'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="business-actions">
+                        <button 
+                          className="btn-danger"
+                          onClick={() => handleAction(handleDeny, bidData.id)}
+                        >
+                          Deny
+                        </button>
+                        <button
+                          className="btn-success"
+                          onClick={() => handleAction(handleApprove, bidData.id)}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          className="btn-chat"
+                          onClick={handleChatClick}
+                        >
+                          <ChatIcon style={{ fontSize: '20px' }} />
+                          Chat
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="get-a-bid-container">
+                      <h2 className="get-quote-header">Need a Bid?</h2>
+                      <div className="vendor-button-container">
+                        <button className="vendor-button" onClick={handleGetQuote}>
+                          Get a Tailored Bid
+                        </button>
+                        <button className="chat-button" onClick={handleChatClick}>
+                          <ChatIcon style={{ fontSize: '20px' }} />
+                          Chat with Vendor
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

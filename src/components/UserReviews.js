@@ -40,21 +40,7 @@ const UserReviews = () => {
       name: "Jessica W.",
       date: "December 9th, 2024",
       review: "I used it and was able to find a great photographer! It was nice to see options all in one place, and to know that they were available."
-    },
-    {/*
-    {
-      avatar: jennaferIcon, // Replace with actual avatar URL
-      name: "Jennifer J.",
-      date: "November 16th, 2024",
-      review: `I was looking for a roofer to fix a leak on the roof of my cabin. I put my job request on bidi when they first launched. Because bidi was brand new there were not any roofers yet. Within a day the bidi founders personally made tons of calls to find me a handful of roofers who could bid on my job. I was blown away! My 2nd experience was even better. I needed a fast turnaround for family pictures (one week). I submitted my request for a photographer to take a family photos. Within an hour of my request, I had 12 photographers post bids. Since my first experience with bidi, it has only gotten better and better. This company is going to be a game changer in the way I shop for services!`,
-    },
-    {
-      avatar: jaronIcon,
-      name: "Jaron A.",
-      date: "October 8th, 2024",
-      review: `We recently used Bidi to find a cleaning service, and it was a total game-changer. With a new baby on the way, we needed all the help we could get, and Bidi made it super easy. After I submitted a quick request, I got lots of bids from different cleaning services right away. Bidi took care of all the details, saving us tons of time, and it ended up being way more affordable. If you’re looking for a quick, budget-friendly way to find a reliable service, I’d definitely recommend Bidi!`,
-    },
-    */}
+    }
   ];
 
   return (
