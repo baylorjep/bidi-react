@@ -715,6 +715,9 @@ function OpenRequests() {
 
   // Add this new function to filter requests by category
   const filterRequestsByCategory = (requests, category) => {
+    // If user is admin, show all requests without category filtering
+    if (isAdmin) return requests;
+    
     if (category === "all") return requests;
     return requests.filter(request => 
       normalizeCategory(request.service_category) === normalizeCategory(category)
@@ -755,50 +758,52 @@ function OpenRequests() {
         </button>
       </div>
 
-      {/* Add the tabs */}
-      <div className="category-tabs" style={{ 
-        display: 'flex', 
-        gap: '10px', 
-        marginBottom: '20px',
-        overflowX: 'auto',
-        padding: '0 10px'
-      }}>
-        <button
-          className={`category-tab ${activeTab === 'all' ? 'active' : ''}`}
-          onClick={() => setActiveTab('all')}
-          style={{
-            padding: '8px 16px',
-            border: 'none',
-            borderRadius: '20px',
-            backgroundColor: activeTab === 'all' ? '#9633eb' : '#f0f0f0',
-            color: activeTab === 'all' ? 'white' : '#333',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          All Requests
-        </button>
-        {businessCategories.map(category => (
+      {/* Only show category tabs if user is not admin */}
+      {!isAdmin && (
+        <div className="category-tabs" style={{ 
+          display: 'flex', 
+          gap: '10px', 
+          marginBottom: '20px',
+          overflowX: 'auto',
+          padding: '0 10px'
+        }}>
           <button
-            key={category}
-            className={`category-tab ${activeTab === category ? 'active' : ''}`}
-            onClick={() => setActiveTab(category)}
+            className={`category-tab ${activeTab === 'all' ? 'active' : ''}`}
+            onClick={() => setActiveTab('all')}
             style={{
               padding: '8px 16px',
               border: 'none',
               borderRadius: '20px',
-              backgroundColor: activeTab === category ? '#9633eb' : '#f0f0f0',
-              color: activeTab === category ? 'white' : '#333',
+              backgroundColor: activeTab === 'all' ? '#9633eb' : '#f0f0f0',
+              color: activeTab === 'all' ? 'white' : '#333',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
               transition: 'all 0.2s ease'
             }}
           >
-            {getCategoryDisplayName(category)}
+            All Requests
           </button>
-        ))}
-      </div>
+          {businessCategories.map(category => (
+            <button
+              key={category}
+              className={`category-tab ${activeTab === category ? 'active' : ''}`}
+              onClick={() => setActiveTab(category)}
+              style={{
+                padding: '8px 16px',
+                border: 'none',
+                borderRadius: '20px',
+                backgroundColor: activeTab === category ? '#9633eb' : '#f0f0f0',
+                color: activeTab === category ? 'white' : '#333',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {getCategoryDisplayName(category)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="request-grid-container">
         <div className="request-grid">
@@ -813,7 +818,7 @@ function OpenRequests() {
               .filter((request) => !userBids.has(request.id))
               .filter(meetsMinimumPrice)
               .filter(request => !isDatePassed(request))
-              .filter(request => hasMatchingCategory(request.service_category, businessCategories))
+              .filter(request => isAdmin || hasMatchingCategory(request.service_category, businessCategories))
               .sort(sortByNewAndDate),
             activeTab
           ).map((request) => (
