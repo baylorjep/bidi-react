@@ -67,9 +67,7 @@ export default function BidsPage({ onOpenChat }) {
 
     const loadRequests = async (userId) => {
         try {
-            console.log('Loading requests for user:', userId);
-
-            // Fetch requests from all tables
+            // Get all requests from different tables
             const [
                 { data: regularRequests, error: regularError },
                 { data: photoRequests, error: photoError },
@@ -80,112 +78,132 @@ export default function BidsPage({ onOpenChat }) {
                 { data: floristRequests, error: floristError },
                 { data: weddingPlanningRequests, error: weddingPlanningError }
             ] = await Promise.all([
-                supabase
-                    .from('requests')
-                    .select('*, service_photos(*)')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('photography_requests')
-                    .select('*, event_photos(*)')
-                    .eq('profile_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('dj_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('catering_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('beauty_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('videography_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('florist_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('wedding_planning_requests')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false })
+                supabase.from('requests').select('*').eq('user_id', userId),
+                supabase.from('photography_requests').select('*').eq('user_id', userId),
+                supabase.from('dj_requests').select('*').eq('user_id', userId),
+                supabase.from('catering_requests').select('*').eq('user_id', userId),
+                supabase.from('beauty_requests').select('*').eq('user_id', userId),
+                supabase.from('videography_requests').select('*').eq('user_id', userId),
+                supabase.from('florist_requests').select('*').eq('user_id', userId),
+                supabase.from('wedding_planning_requests').select('*').eq('user_id', userId)
             ]);
 
-            if (regularError) throw regularError;
-            if (photoError) throw photoError;
-            if (djError) throw djError;
-            if (cateringError) throw cateringError;
-            if (beautyError) throw beautyError;
-            if (videoError) throw videoError;
-            if (floristError) throw floristError;
-            if (weddingPlanningError) throw weddingPlanningError;
+            // Map of request types to their corresponding business categories
+            const categoryMap = {
+                'photography': 'photography',
+                'videography': 'videography',
+                'dj': 'dj',
+                'catering': 'catering',
+                'beauty': 'beauty',
+                'florist': 'florist',
+                'wedding_planning': 'wedding_planning'
+            };
 
-            // Transform requests to match the same structure
-            const transformedPhotoRequests = (photoRequests || []).map(request => ({
+            // Get total business counts for each category
+            const totalBusinessCounts = {};
+            for (const [type, category] of Object.entries(categoryMap)) {
+                const { count, error } = await supabase
+                    .from('business_profiles')
+                    .select('*', { count: 'exact' })
+                    .eq('business_category', category);
+
+                if (error) {
+                    console.error(`Error fetching total ${category} businesses:`, error);
+                    totalBusinessCounts[type] = 0;
+                } else {
+                    totalBusinessCounts[type] = count || 0;
+                }
+            }
+
+            // Combine all requests with their types
+            const allRequests = [
+                ...(regularRequests || []).map(r => ({ ...r, type: 'other' })),
+                ...(photoRequests || []).map(r => ({ ...r, type: 'photography' })),
+                ...(djRequests || []).map(r => ({ ...r, type: 'dj' })),
+                ...(cateringRequests || []).map(r => ({ ...r, type: 'catering' })),
+                ...(beautyRequests || []).map(r => ({ ...r, type: 'beauty' })),
+                ...(videoRequests || []).map(r => ({ ...r, type: 'videography' })),
+                ...(floristRequests || []).map(r => ({ ...r, type: 'florist' })),
+                ...(weddingPlanningRequests || []).map(r => ({ ...r, type: 'wedding_planning' }))
+            ];
+
+            // Get view counts for all requests
+            const viewCounts = await Promise.all(
+                allRequests.map(async (request) => {
+                    // Get views
+                    const { data: views, error: viewError } = await supabase
+                        .from('request_views')
+                        .select('business_id')
+                        .eq('request_id', request.id)
+                        .eq('request_type', `${request.type}_requests`);
+
+                    if (viewError) {
+                        console.error('Error fetching views:', viewError);
+                        return { requestId: request.id, count: 0 };
+                    }
+
+                    // Get bids
+                    const { data: bids, error: bidError } = await supabase
+                        .from('bids')
+                        .select('user_id')
+                        .eq('request_id', request.id);
+
+                    if (bidError) {
+                        console.error('Error fetching bids:', bidError);
+                        return { requestId: request.id, count: 0 };
+                    }
+
+                    // Get hidden status
+                    const hiddenByVendor = request.hidden_by_vendor || [];
+                    const hiddenBusinessIds = Array.isArray(hiddenByVendor) ? hiddenByVendor : [];
+
+                    // Get total businesses in this category
+                    const totalBusinesses = totalBusinessCounts[request.type] || 0;
+
+                    // Get unique business IDs that have viewed or bid
+                    const activeBusinessIds = new Set([
+                        ...(views?.map(v => v.business_id) || []),
+                        ...(bids?.map(b => b.user_id) || [])
+                    ]);
+
+                    return { 
+                        requestId: request.id, 
+                        count: activeBusinessIds.size,
+                        total: totalBusinesses // Use total businesses without subtracting hidden vendors
+                    };
+                })
+            );
+
+            // Add view counts and total business counts to requests
+            const requestsWithViews = allRequests.map(request => ({
                 ...request,
-                service_photos: request.event_photos // Map event_photos to service_photos for consistency
+                viewCount: viewCounts.find(v => v.requestId === request.id)?.count || 0,
+                totalBusinessCount: viewCounts.find(v => v.requestId === request.id)?.total || 0
             }));
 
-            const allRequests = [
-                ...(regularRequests || []).map(req => ({
-                    ...req,
-                    type: 'regular'
-                })),
-                ...transformedPhotoRequests.map(req => ({
-                    ...req,
-                    type: 'photography'
-                })),
-                ...(djRequests || []).map(req => ({
-                    ...req,
-                    type: 'dj',
-                    service_title: req.title || req.event_title || `${req.event_type} DJ Request`,
-                    price_range: req.budget_range,
-                    service_date: req.start_date
-                })),
-                ...(cateringRequests || []).map(req => ({
-                    ...req,
-                    type: 'catering',
-                    service_title: req.title || req.event_title || `${req.event_type} Catering Request`,
-                    price_range: req.budget_range || req.price_range,
-                    service_date: req.start_date || req.date
-                })),
-                ...(beautyRequests || []).map(req => ({
-                    ...req,
-                    type: 'beauty'
-                })),
-                ...(videoRequests || []).map(req => ({
-                    ...req,
-                    type: 'videography'
-                })),
-                ...(floristRequests || []).map(req => ({
-                    ...req,
-                    type: 'florist'
-                })),
-                ...(weddingPlanningRequests || []).map(req => ({
-                    ...req,
-                    type: 'wedding_planning',
-                    service_title: req.event_title || 'Wedding Planning Request',
-                    price_range: req.budget_range,
-                    service_date: req.start_date
-                }))
-            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-            console.log('All requests loaded:', allRequests);
-            setRequests(allRequests);
+            setRequests(requestsWithViews);
         } catch (error) {
             console.error('Error loading requests:', error);
         }
+    };
+
+    const getViewCountText = (request) => {
+        const categoryMap = {
+            'photography': 'photographers',
+            'videography': 'videographers',
+            'dj': 'DJs',
+            'catering': 'caterers',
+            'beauty': 'HMUAs',
+            'florist': 'florists',
+            'wedding_planning': 'wedding planners',
+            'regular': 'vendors'
+        };
+
+        const category = categoryMap[request.type] || 'vendors';
+        return {
+            count: `${request.viewCount}/${request.totalBusinessCount}`,
+            category: `${category} viewed`
+        };
     };
 
     const loadBids = async () => {
@@ -1181,6 +1199,19 @@ export default function BidsPage({ onOpenChat }) {
                                             <i className="fas fa-dollar-sign"></i>
                                             <span className="detail-label">Budget:</span>
                                             <span className="detail-value">${request.price_range}</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <i className="fas fa-eye"></i>
+                                            <span className="detail-label">Views:</span>
+                                            <div className="detail-value" style={{ 
+                                                display: 'flex', 
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                textAlign: 'center'
+                                            }}>
+                                                <span>{getViewCountText(request).count}</span>
+                                                <span style={{ fontSize: '0.9em', color: '#666' }}>{getViewCountText(request).category}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
