@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../../App.css";
-import "../../styles/BusinessDashboard.css";
-import "../../styles/IndividualDashboard.css";
 import "../../styles/WeddingPlannerDashboard.css";
 import "../../styles/Sidebar.css";
 import verifiedCheckIcon from "../../assets/images/Icons/verified-check.svg";
