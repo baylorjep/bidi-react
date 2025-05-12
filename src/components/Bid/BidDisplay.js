@@ -44,8 +44,23 @@ function BidDisplay({
   const expirationStatus = getExpirationStatus(bid.expiration_date);
 
   const handleProfileClick = () => {
-    setShowBubble(false); // Hide the bubble when the profile image is clicked
-    navigate(`/portfolio/${bid.business_profiles.id}`);
+    setShowBubble(false);
+    navigate(`/portfolio/${bid.business_profiles.id}`, {
+      state: {
+        fromBid: true,
+        bidId: bid.id,
+        bidData: {
+          amount: bid.bid_amount,
+          description: bid.bid_description,
+          expirationDate: bid.expiration_date,
+          status: bid.status,
+          couponCode: bid.coupon_code,
+          couponApplied: bid.coupon_applied,
+          originalAmount: bid.original_amount,
+          discountAmount: bid.discount_amount
+        }
+      }
+    });
   };
 
   const profileImage =
