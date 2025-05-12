@@ -325,6 +325,13 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     }
 
     setLoading(false);
+
+    // Helper function to normalize business_category
+    const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
+
+    if (businessData) {
+      setBusiness({ ...businessData, business_category: getCategories(businessData.business_category) });
+    }
   };
 
   useEffect(() => {
@@ -628,17 +635,15 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     }
   };
 
-  // Helper function to normalize business_category
-  const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
-
-  // After fetching business, normalize categories
-  setBusiness({ ...business, business_category: getCategories(business.business_category) });
-
   if (loading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
 
   if (!business) return <p>Error: Business not found.</p>;
+
+  const categories = Array.isArray(business?.business_category)
+    ? business.business_category
+    : [business?.business_category].filter(Boolean);
 
   return (
     <>
