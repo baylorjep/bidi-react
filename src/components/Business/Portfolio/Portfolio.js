@@ -16,6 +16,46 @@ import 'slick-carousel/slick/slick-theme.css';
 import ChatIcon from '@mui/icons-material/Chat';
 import AuthModal from "../../Request/Authentication/AuthModal";
 
+// ReviewModal component for writing a review
+const ReviewModal = ({ isOpen, onClose, onSubmit, rating, setRating, comment, setComment, loading }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="review-modal-overlay">
+      <div className="review-modal">
+        <button className="review-modal-close" onClick={onClose} aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M13.5 4.5L4.5 13.5M4.5 4.5L13.5 13.5" stroke="#888" strokeWidth="2" strokeLinecap="round"/></svg>
+        </button>
+        <div className="review-modal-title">Write a Review</div>
+        <div className="review-modal-rating-row">
+          {[1,2,3,4,5].map((star) => (
+            <img
+              key={star}
+              src={star <= rating ? StarIcon : EmptyStarIcon}
+              alt={star <= rating ? 'Filled Star' : 'Empty Star'}
+              className="star-icon-portfolio"
+              style={{ cursor: 'pointer', width: 28, height: 28 }}
+              onClick={() => setRating(star)}
+            />
+          ))}
+        </div>
+        <textarea
+          className="review-modal-textarea"
+          placeholder="Share your experience..."
+          value={comment}
+          onChange={e => setComment(e.target.value)}
+          maxLength={1000}
+        />
+        <div className="review-modal-buttons">
+          <button className="review-modal-cancel" onClick={onClose} disabled={loading}>Cancel</button>
+          <button className="review-modal-submit" onClick={onSubmit} disabled={loading || !comment.trim()}>
+            {loading ? 'Submitting...' : 'Submit Review'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Portfolio = ({ businessId: propBusinessId }) => {
   const { businessId: paramBusinessId } = useParams();
   const location = useLocation();
@@ -668,6 +708,18 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         />
       )}
 
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={closeReviewModal}
+        onSubmit={handleReviewSubmit}
+        rating={newReview.rating}
+        setRating={r => setNewReview(nr => ({ ...nr, rating: r }))}
+        comment={newReview.comment}
+        setComment={c => setNewReview(nr => ({ ...nr, comment: c }))}
+        loading={false}
+      />
+
       <div className="portfolio-container">
         <div className={`portfolio-layout ${portfolioVideos.length + portfolioPics.length <= 1 ? "single-media" : ""}`}>
           {/* Mobile Swiper */}
@@ -1068,30 +1120,88 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
           {/* Reviews section moved outside section-container */}
           <div className="section-container-reviews">
-            <div className="reviews-header">
-              <h2 className="section-header">Reviews</h2>
-              {averageRating && (
-                <div className="reviews-average">
-                  <div className="rating-stars">
-                    <span className="average-rating">
-                      {averageRating} out of 5
-                    </span>
-                    <div className="stars-container">
-                      {[...Array(5)].map((_, index) => (
-                        <img
-                          key={index}
-                          src={StarIcon}
-                          alt="Star"
-                          className={`star-icon-portfolio ${
-                            index < Math.floor(averageRating)
-                              ? "star-filled"
-                              : "star-empty"
-                          }`}
-                        />
-                      ))}
-                    </div>
+            {/* Reviews Summary */}
+            <div className="reviews-summary">
+              <div className="reviews-summary-left">
+                <div className="reviews-summary-title">Reviews</div>
+                <div className="reviews-summary-rating-col">
+                  <span className="reviews-summary-average">{averageRating || '—'} out of 5</span>
+                  <div className="reviews-summary-stars">
+                    {[...Array(5)].map((_, i) => (
+                      <img
+                        key={i}
+                        src={i < Math.round(averageRating) ? StarIcon : EmptyStarIcon}
+                        alt="Star"
+                        className="star-icon-portfolio"
+                      />
+                    ))}
                   </div>
+                  <span className="reviews-summary-count">
+                    {reviews.length} Review{reviews.length !== 1 ? 's' : ''}
+                  </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Write Review Box */}
+            {!isOwner && (
+              <div className="write-review-container">
+                <div className="write-review-title">Rate the vendor and tell others what you think</div>
+                <div className="star-and-write-review">
+                  <div className="write-review-stars">
+                    {[1,2,3,4,5].map((star) => (
+                      <img
+                        key={star}
+                        src={star <= newReview.rating ? StarIcon : EmptyStarIcon}
+                        alt={star <= newReview.rating ? 'Filled Star' : 'Empty Star'}
+                        className="star-icon-portfolio"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setNewReview({ ...newReview, rating: star })}
+                      />
+                    ))}
+                  </div>
+                  <button className="write-review-button" onClick={openReviewModal}>
+                    Write A Review
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Reviews Grid */}
+            <div className="reviews-grid">
+              {reviews.length > 0 ? (
+                reviews.map((review, index) => {
+                  const truncated = review.comment && review.comment.length > 180;
+                  const isExpanded = expandedReviews[index];
+                  return (
+                    <div key={index} className="review-card-portfolio">
+                      <div className="review-card-header">
+                        <div className="reviewer-initial">{review.first_name?.[0] || '?'}</div>
+                        <div className="reviewer-details">
+                          <span className="reviewer-name">{review.first_name}</span>
+                          <span className="review-date">{new Date(review.created_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}</span>
+                        </div>
+                        <div className="review-card-stars">
+                          {[...Array(5)].map((_, i) => (
+                            <img
+                              key={i}
+                              src={i < review.rating ? StarIcon : EmptyStarIcon}
+                              alt="Star"
+                              className="review-star"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="review-card-content">
+                        {truncated && !isExpanded
+                          ? <>{review.comment.slice(0, 180)}... <span className="read-more-link" onClick={() => toggleReview(index)}>Read More</span></>
+                          : <>{review.comment}{truncated && <span className="read-more-link" onClick={() => toggleReview(index)}> Show Less</span>}</>}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="no-reviews">No reviews yet.</p>
               )}
             </div>
           </div>
