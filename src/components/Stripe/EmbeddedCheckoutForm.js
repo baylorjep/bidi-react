@@ -39,7 +39,7 @@ const EmbeddedCheckoutForm = () => {
             amount: Math.round(paymentData.amount * 100),
             applicationFeeAmount: Math.round(paymentData.amount * 5),
             serviceName: paymentData.business_name,
-            successUrl: `${window.location.origin}/payment-success`,
+            successUrl: `${window.location.origin}/payment-success?amount=${paymentData.amount}&payment_type=${paymentData.payment_type}&business_name=${encodeURIComponent(paymentData.business_name)}&bid_id=${paymentData.bid_id}`,
             cancelUrl: `${window.location.origin}/bids`,
           }),
         });
