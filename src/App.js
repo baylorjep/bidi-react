@@ -95,6 +95,7 @@ import EmbeddedCheckoutForm from "./components/Stripe/EmbeddedCheckoutForm";
 import PaymentCancelled from "./components/Stripe/PaymentCancelled";
 import SuccessPayment from "./components/Stripe/SuccessfulPayment";
 import PaymentStatus from "./components/Stripe/PaymentStatus";
+import PaymentSuccess from "./components/Payment/PaymentSuccess";
 
 // ScrollToTop import
 import ScrollToTop from "./components/ScrollToTop";
@@ -309,10 +310,10 @@ function App() {
               <Route path="/contactenos" element={<ContactFormES />} />
               {/* Stripe Routes */}
               <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/stripe-setup" element={<StripeOnboarding />} />
+              <Route path="/stripe-onboarding" element={<StripeOnboarding />} />
               <Route path="/checkout" element={<EmbeddedCheckoutForm />} />
               <Route path="/payment-cancelled" element={<PaymentCancelled />} />
-              <Route path="/payment-successful" element={<SuccessPayment />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
               <Route path="/payment-status" element={<PaymentStatus />} />
               {/* Admin Routes */}
               <Route

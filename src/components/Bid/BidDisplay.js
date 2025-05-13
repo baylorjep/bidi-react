@@ -427,6 +427,42 @@ function BidDisplay({
 
             {showPaymentOptions && (
               <div className="payment-options" style={{ marginBottom: '8px' }}>
+                <div style={{ 
+                  marginBottom: '16px',
+                  padding: '12px',
+                  background: '#f8f9fa',
+                  borderRadius: '8px',
+                  border: '1px solid #e9ecef'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px',
+                    marginBottom: '8px',
+                    color: '#9633eb'
+                  }}>
+                    <i className="fas fa-shield-alt"></i>
+                    <h4 style={{ margin: 0 }}>Bidi Protection Guarantee</h4>
+                  </div>
+                  <p style={{ 
+                    fontSize: '14px', 
+                    color: '#666',
+                    marginBottom: '8px'
+                  }}>
+                    Your payment is protected by our No-Show Guarantee.
+                  </p>
+                  <div style={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '13px',
+                    color: '#666'
+                  }}>
+                    <i className="fas fa-lock" style={{ color: '#9633eb' }}></i>
+                    <span>We'll help you get a full refund if anything goes wrong with your booking.</span>
+                  </div>
+                </div>
+
                 {downPayment && (
                   <button
                     className="payment-button deposit"
@@ -448,6 +484,7 @@ function BidDisplay({
                       gap: '8px'
                     }}
                   >
+                    <i className="fas fa-shield-alt"></i>
                     Pay Deposit (${downPayment.amount})
                   </button>
                 )}
@@ -470,6 +507,7 @@ function BidDisplay({
                     gap: '8px'
                   }}
                 >
+                  <i className="fas fa-shield-alt"></i>
                   Pay Full Amount (${bid.bid_amount})
                 </button>
               </div>

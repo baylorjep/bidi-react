@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom'; // Import useLocation for passing data
+import { useLocation, useNavigate } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 
@@ -7,13 +7,13 @@ import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 const EmbeddedCheckoutForm = () => {
-  const location = useLocation(); // Access location state
-  const { paymentData } = location.state || {}; // Changed from bid to paymentData
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { paymentData } = location.state || {};
   const [clientSecret, setClientSecret] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null); // State to store error messages
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
-    // Only run if paymentData is provided
     if (!paymentData) {
       setErrorMessage('No payment data provided for checkout.');
       console.error('No payment data provided for checkout.');
@@ -26,10 +26,8 @@ const EmbeddedCheckoutForm = () => {
       return;
     }
 
-    // Log the paymentData object to check what data it contains
     console.log('Payment data:', paymentData);
 
-    // Fetch the client_secret from the backend
     const createCheckoutSession = async () => {
       try {
         const response = await fetch("https://bidi-express.vercel.app/create-checkout-session", {
@@ -39,9 +37,11 @@ const EmbeddedCheckoutForm = () => {
           },
           body: JSON.stringify({
             connectedAccountId: paymentData.stripe_account_id,
-            amount: Math.round(paymentData.amount * 100), // Convert to cents and ensure it's a whole number
-            applicationFeeAmount: Math.round(paymentData.amount * 5), // 5% fee
+            amount: Math.round(paymentData.amount * 100),
+            applicationFeeAmount: Math.round(paymentData.amount * 5),
             serviceName: paymentData.business_name,
+            successUrl: `${window.location.origin}/payment-success`,
+            cancelUrl: `${window.location.origin}/bids`,
           }),
         });
 
@@ -65,6 +65,27 @@ const EmbeddedCheckoutForm = () => {
         }
 
         setClientSecret(data.client_secret);
+
+        // Listen for successful payment
+        const stripe = await stripePromise;
+        const { error } = await stripe.retrievePaymentIntent(data.client_secret);
+        
+        if (error) {
+          setErrorMessage(error.message);
+        } else {
+          // Payment was successful, redirect to success page
+          navigate('/payment-success', { 
+            state: { 
+              paymentData: {
+                ...paymentData,
+                amount: paymentData.amount,
+                payment_type: paymentData.payment_type,
+                business_name: paymentData.business_name,
+                date: new Date().toISOString()
+              }
+            }
+          });
+        }
       } catch (error) {
         setErrorMessage('Error creating checkout session: ' + error.message);
         console.error('Error creating checkout session:', error);
@@ -72,7 +93,7 @@ const EmbeddedCheckoutForm = () => {
     };
 
     createCheckoutSession();
-  }, [paymentData]); // Re-run if paymentData changes
+  }, [paymentData, navigate]);
 
   return (
     <div>
