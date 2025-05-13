@@ -18,6 +18,7 @@ import VideoCallIcon from '@mui/icons-material/VideoCall';
 import ConsultationModal from '../Consultation/ConsultationModal';
 import { useConsultation } from '../../hooks/useConsultation';
 
+
 function BidDisplay({ 
   bid, 
   handleApprove, 
@@ -62,6 +63,7 @@ function BidDisplay({
   const cardRef = useRef(null);
   const navigate = useNavigate();
   const frontRef = useRef(null);
+  const [isCalendarConnected, setIsCalendarConnected] = useState(false);
   const backRef = useRef(null);
   const [cardHeight, setCardHeight] = useState('auto');
   const [showConsultationModal, setShowConsultationModal] = useState(false);
@@ -116,42 +118,29 @@ function BidDisplay({
   const profileImage =
     bid.business_profiles.profile_image || "/images/default.jpg"; // Default image if none
 
-  useEffect(() => {
-    const fetchMembershipTier = async () => {
-      try {
-        // Log to ensure bid ID is valid
-        console.log(
-          "Fetching membership tier for business profile ID:",
-          bid.business_profiles.id
-        );
-
-        // Fetch membership-tier for this bid's associated business profile
-        const { data, error } = await supabase
-          .from("business_profiles") // Replace with your actual table name
-          .select("membership_tier, down_payment_type, amount")
-          .eq("id", bid.business_profiles.id) // Match the business profile ID
-          .single();
-
-        // Log the response to check the data
-        console.log("Supabase response:", data, error);
-
-        if (error) {
-          throw error;
+    useEffect(() => {
+      const fetchMembershipTierAndCalendar = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("business_profiles")
+            .select("membership_tier, down_payment_type, amount, google_calendar_connected")
+            .eq("id", bid.business_profiles.id)
+            .single();
+    
+          if (error) throw error;
+    
+          const tier = data?.["membership_tier"];
+          setIsBidiVerified(tier === "Plus" || tier === "Verified");
+          setIsCalendarConnected(!!data?.google_calendar_connected);
+        } catch (error) {
+          setError("Failed to fetch membership tier or calendar connection");
+        } finally {
+          setLoading(false);
         }
-
-        // Check if membership-tier is "Plus" or "Verified"
-        const tier = data?.["membership_tier"];
-        setIsBidiVerified(tier === "Plus" || tier === "Verified");
-      } catch (error) {
-        console.error("Error fetching membership tier:", error.message);
-        setError("Failed to fetch membership tier"); // Set a friendly error message
-      } finally {
-        setLoading(false); // Set loading to false once the fetch is complete
-      }
-    };
-
-    fetchMembershipTier();
-  }, [bid.business_profiles.id]);
+      };
+    
+      fetchMembershipTierAndCalendar();
+    }, [bid.business_profiles.id]);
 
   // Simplified review fetching
   useEffect(() => {
@@ -280,7 +269,7 @@ function BidDisplay({
               <FavoriteBorderIcon style={iconStyle} />
             )}
           </button>
-          {showInterested && (
+          {showInterested && isCalendarConnected && (
             <button
               className="btn-icon"
               style={buttonStyle}
