@@ -1,0 +1,125 @@
+import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import './ConsultationModal.css';
+
+function ConsultationModal({ 
+  isOpen, 
+  onClose, 
+  onSchedule, 
+  businessName,
+  businessId,
+  bidId,
+  isLoading,
+  error,
+  selectedDate,
+  selectedTimeSlot,
+  availableTimeSlots,
+  onDateSelect,
+  onTimeSlotSelect,
+  onFetchTimeSlots
+}) {
+  useEffect(() => {
+    if (isOpen && selectedDate) {
+      onFetchTimeSlots(businessId, selectedDate);
+    }
+  }, [selectedDate, businessId, onFetchTimeSlots, isOpen]);
+
+  if (!isOpen) return null;
+
+  const formatTimeSlot = (timeSlot) => {
+    const date = new Date(timeSlot);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Modal JSX
+  const modalContent = (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h3>Schedule Consultation</h3>
+        <p>
+          Schedule a video consultation with {businessName} to discuss your event details.
+        </p>
+        
+        <div className="expectations-container">
+          <h4>What to Expect</h4>
+          <ul>
+            <li>
+              <i className="fas fa-video"></i>
+              30-minute video consultation via Google Meet
+            </li>
+            <li>
+              <i className="fas fa-clock"></i>
+              Choose from available time slots
+            </li>
+            <li>
+              <i className="fas fa-comments"></i>
+              Discuss your event details and requirements
+            </li>
+          </ul>
+        </div>
+
+        <div className="scheduling-container">
+          <div className="date-picker-container">
+            <label>Select Date</label>
+            <DatePicker
+              selected={selectedDate}
+              onChange={onDateSelect}
+              minDate={new Date()}
+              dateFormat="MMMM d, yyyy"
+              placeholderText="Select a date"
+              className="date-picker"
+            />
+          </div>
+
+          {selectedDate && (
+            <div className="time-slots-container">
+              <label>Select Time</label>
+              {isLoading ? (
+                <div className="loading">Loading available time slots...</div>
+              ) : error ? (
+                <div className="error">{error}</div>
+              ) : availableTimeSlots.length > 0 ? (
+                <div className="time-slots-grid">
+                  {availableTimeSlots.map((slot) => (
+                    <button
+                      key={slot}
+                      className={`time-slot ${selectedTimeSlot === slot ? 'selected' : ''}`}
+                      onClick={() => onTimeSlotSelect(slot)}
+                    >
+                      {formatTimeSlot(slot)}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-slots">No available time slots for this date</div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="modal-buttons">
+          <button 
+            className="btn-secondary-consultation"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button 
+            className="btn-primary-consultation"
+            onClick={() => onSchedule({ businessId, bidId })}
+            disabled={!selectedDate || !selectedTimeSlot || isLoading}
+          >
+            {isLoading ? 'Scheduling...' : 'Schedule Now'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Use React Portal to render modal at the root
+  return ReactDOM.createPortal(modalContent, document.body);
+}
+
+export default ConsultationModal;

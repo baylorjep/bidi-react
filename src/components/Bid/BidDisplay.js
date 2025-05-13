@@ -14,6 +14,9 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import MessagingView from "../Messaging/MessagingView";
 import { FaArrowLeft } from 'react-icons/fa';
+import VideoCallIcon from '@mui/icons-material/VideoCall';
+import ConsultationModal from '../Consultation/ConsultationModal';
+import { useConsultation } from '../../hooks/useConsultation';
 
 function BidDisplay({ 
   bid, 
@@ -31,7 +34,8 @@ function BidDisplay({
   onDownPayment = null,
   onMessage = null,
   onViewCoupon = null,
-  currentUserId = null
+  currentUserId = null,
+  onScheduleConsultation = null
 }) {
   const [isBidiVerified, setIsBidiVerified] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -60,6 +64,18 @@ function BidDisplay({
   const frontRef = useRef(null);
   const backRef = useRef(null);
   const [cardHeight, setCardHeight] = useState('auto');
+  const [showConsultationModal, setShowConsultationModal] = useState(false);
+  const {
+    isLoading: isConsultationLoading,
+    error: consultationError,
+    selectedDate,
+    selectedTimeSlot,
+    availableTimeSlots,
+    setSelectedDate,
+    setSelectedTimeSlot,
+    fetchAvailableTimeSlots,
+    scheduleConsultation
+  } = useConsultation();
 
   const getExpirationStatus = (expirationDate) => {
     if (!expirationDate) return null;
@@ -264,6 +280,16 @@ function BidDisplay({
               <FavoriteBorderIcon style={iconStyle} />
             )}
           </button>
+          {showInterested && (
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => setShowConsultationModal(true)}
+              aria-label="Schedule Consultation"
+            >
+              <VideoCallIcon style={iconStyle} />
+            </button>
+          )}
         </div>
       </div>
     );
@@ -611,6 +637,36 @@ function BidDisplay({
           </div>
         </div>
       </div>
+
+      {/* Consultation Modal */}
+      <ConsultationModal
+        isOpen={showConsultationModal}
+        onClose={() => setShowConsultationModal(false)}
+        onSchedule={async (data) => {
+          try {
+            const result = await scheduleConsultation({
+              businessId: bid.business_profiles.id,
+              bidId: bid.id
+            });
+            if (onScheduleConsultation) {
+              onScheduleConsultation(result);
+            }
+          } catch (error) {
+            console.error('Error scheduling consultation:', error);
+          }
+        }}
+        businessName={bid.business_profiles.business_name}
+        businessId={bid.business_profiles.id}
+        bidId={bid.id}
+        isLoading={isConsultationLoading}
+        error={consultationError}
+        selectedDate={selectedDate}
+        selectedTimeSlot={selectedTimeSlot}
+        availableTimeSlots={availableTimeSlots}
+        onDateSelect={setSelectedDate}
+        onTimeSlotSelect={setSelectedTimeSlot}
+        onFetchTimeSlots={fetchAvailableTimeSlots}
+      />
     </div>
   );
 }
