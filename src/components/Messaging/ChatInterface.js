@@ -112,7 +112,7 @@ export default function ChatInterface({ initialChat }) {
     (async () => {
       const { data: messages = [], error: messagesError } = await supabase
         .from("messages")
-        .select("receiver_id, sender_id, message, created_at, seen")
+        .select("receiver_id, sender_id, message, created_at, seen, type")
         .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
         .order("created_at", { ascending: false });
 
@@ -163,7 +163,9 @@ export default function ChatInterface({ initialChat }) {
           userType === "individual"
             ? p.business_name || "Business"
             : `${p.first_name || ""} ${p.last_name || ""}`.trim() || "User",
-        last_message: latestMap[p.id]?.message || "",
+        last_message: latestMap[p.id]?.type === 'image'
+          ? (latestMap[p.id]?.sender_id === currentUserId ? "You sent an image" : "Image")
+          : latestMap[p.id]?.message || "",
         unseen_count: unseenCountMap[p.id] || 0,
         last_message_time: latestMap[p.id]?.created_at
       }));
