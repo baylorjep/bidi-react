@@ -490,7 +490,7 @@ function BidDisplay({
                 )}
                 <button
                   className="payment-button full"
-                  onClick={() => handleAction(handleDeny, bid.id)}
+                  onClick={() => handleAction(handleApprove, bid.id)}
                   style={{
                     width: '100%',
                     padding: '12px',
