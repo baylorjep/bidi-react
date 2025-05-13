@@ -827,7 +827,7 @@
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.9); /* darker for better focus on image */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -835,6 +835,10 @@
 }
 
 .modal-content {
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: 100%;
+  max-height: 100%;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
