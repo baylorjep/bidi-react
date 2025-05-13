@@ -58,18 +58,25 @@ const EmbeddedCheckoutForm = () => {
         }
     
         const data = await response.json();
+        console.log('Checkout session response:', data);
         
         if (data.error) {
           throw new Error(data.error.message || 'Failed to create checkout session');
         }
+
+        if (!data.id) {
+          throw new Error('No session ID received from server');
+        }
     
         // Redirect to Stripe Checkout
         const stripe = await stripePromise;
+        console.log('Redirecting to checkout with session ID:', data.id);
         const { error } = await stripe.redirectToCheckout({
           sessionId: data.id
         });
         
         if (error) {
+          console.error('Stripe redirect error:', error);
           setErrorMessage(error.message);
         }
       } catch (error) {
