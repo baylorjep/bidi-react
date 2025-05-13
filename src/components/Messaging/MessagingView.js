@@ -514,7 +514,17 @@ export default function MessagingView({
       {showImageModal && (
         <div className="modal-backdrop" onClick={() => setShowImageModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <img src={modalImageSrc} alt="Full Size" style={{ maxWidth: "90vw", maxHeight: "90vh" }} />
+          <img
+            src={modalImageSrc}
+            alt="Full Size"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+              border: "none",
+              boxShadow: "none"
+            }}
+          />
           </div>
         </div>
       )}

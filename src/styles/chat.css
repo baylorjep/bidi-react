@@ -753,15 +753,16 @@
   height: auto;
   border-radius: 12px;
   display: block;
-  @media (max-width: 600px) {
-    .preview-container {
-      max-width: 80%;
-    }
-  
-    .preview-image {
-      max-width: 150px;
-      max-height: 150px;
-    }
+}
+
+@media (max-width: 600px) {
+  .preview-container {
+    max-width: 80%;
+  }
+
+  .preview-image {
+    max-width: 150px;
+    max-height: 150px;
   }
 }
 
