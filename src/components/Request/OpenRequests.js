@@ -7,17 +7,17 @@ import SearchBar from "../SearchBar/SearchBar";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
 const BUSINESS_TYPE_MAPPING = {
-  cake: ["cake"],
-  "wedding planner/coordinator": ["wedding planning"],
-  catering: ["catering"],
-  florist: ["florist"],
+  "cake": ["cake"],
+  "wedding planner/coordinator": ["Wedding Planning"],
+  "catering": ["catering"],
+  "florist": ["florist"],
   "hair and makeup artist": ["hair and makeup artist", "beauty"],
-  photography: ["photo"],
-  videography: ["photo"],
-  dj: ["dj", "DJ"],
-  venue: ["venue"],
+  "photography": ["photo"],
+  "videography": ["photo"],
+  "dj": ["dj", "DJ"],
+  "venue": ["venue"],
   "spray tan": ["spray tan"],
-  beauty: ["beauty", "hair and makeup artist"],
+  "beauty": ["beauty", "hair and makeup artist"]
 };
 
 const SERVICE_CATEGORY_MAPPING = {
@@ -31,7 +31,10 @@ const SERVICE_CATEGORY_MAPPING = {
   beauty: { table: "beauty_requests", legacy: "hair and makeup artist" },
   videography: { table: "videography_requests", legacy: "videography" },
   florist: { table: "florist_requests", legacy: "florist" },
-  "wedding planner": { table: "wedding_planning_requests", legacy: "wedding planning" },
+  "wedding planner/coordinator": { 
+    table: "wedding_planning_requests", 
+    legacy: "wedding planning" 
+  }
 };
 
 // Helper function to normalize category names
@@ -180,6 +183,9 @@ function OpenRequests() {
     const fetchRequests = async () => {
       setIsLoading(true);
       try {
+        console.log('Business Categories:', businessCategories);
+        console.log('Is Admin:', isAdmin);
+
         const validCategories = [
           "photography",
           "videography",
@@ -188,11 +194,12 @@ function OpenRequests() {
           "florist",
           "hair and makeup artist",
           "beauty",
-          "wedding planner"
+          "wedding planner/coordinator"
         ];
 
         // If user is admin, fetch all requests
         if (isAdmin) {
+          console.log('Fetching as admin');
           const [
             photoData,
             djData,
@@ -245,6 +252,8 @@ function OpenRequests() {
               .order("created_at", { ascending: false }),
           ]);
 
+          console.log('Wedding Planning Data:', weddingPlanningData);
+
           const allRequests = [
             ...(photoData.data?.map((req) => ({
               ...req,
@@ -286,20 +295,25 @@ function OpenRequests() {
               ...req,
               table_name: "wedding_planning_requests",
               service_title: req.event_title || "Wedding Planning Request",
-              service_category: "wedding planning",
+              service_category: "Wedding Planning",
             })) || []),
             ...(legacyData.data || []),
           ];
 
+          console.log('All Requests:', allRequests);
           setOpenRequests(allRequests);
           setOpenPhotoRequests([]);
           return;
         }
 
         // Check if any of the business categories are valid
-        const hasValidCategory = businessCategories.some(category => 
-          validCategories.includes(normalizeCategory(category))
-        );
+        const hasValidCategory = businessCategories.some(category => {
+          const normalized = normalizeCategory(category);
+          console.log('Checking category:', category, 'normalized:', normalized);
+          return validCategories.includes(normalized);
+        });
+
+        console.log('Has Valid Category:', hasValidCategory);
 
         if (!hasValidCategory) {
           setOpenRequests([]);
@@ -706,7 +720,7 @@ function OpenRequests() {
       case "dj": table = "dj_requests"; break;
       case "beauty": table = "beauty_requests"; break;
       case "florist": table = "florist_requests"; break;
-      case "wedding planning": table = "wedding_planning_requests"; break;
+      case "Wedding Planning": table = "wedding_planning_requests"; break;
       default: table = "requests";
     }
     console.log('Determined table for request:', table, request);
@@ -735,6 +749,7 @@ function OpenRequests() {
       case "florist": return "Florist";
       case "hair and makeup artist": return "Hair & Makeup";
       case "beauty": return "Beauty";
+      case "wedding planning": return "Wedding Planning";
       case "wedding planner": return "Wedding Planning";
       default: return category;
     }

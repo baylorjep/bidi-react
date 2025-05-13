@@ -964,8 +964,8 @@ export default function BidsPage({ onOpenChat }) {
             return (
                 <BidDisplay
                     {...commonProps}
-                    handleApprove={() => handleMoveToPending(bid)}
-                    handleDeny={() => handlePayNow(bid)}
+                    handleApprove={() => handlePayNow(bid)}
+                    handleDeny={() => handleMoveToPending(bid)}
                     showPaymentOptions={true}
                     downPayment={calculateDownPayment(bid)}
                     onDownPayment={() => handleDownPayNow(bid)}
@@ -988,8 +988,10 @@ export default function BidsPage({ onOpenChat }) {
             return (
                 <BidDisplay
                     {...commonProps}
-                    handleApprove={() => handleAcceptBidClick(bid)}
-                    showNotInterested={true}
+                    handleApprove={() => handleMoveToPending(bid)}
+                    handleDeny={() => handleAcceptBidClick(bid)}
+                    showPending={true}
+                    showNotInterested={false}
                 />
             );
         }
@@ -1789,11 +1791,43 @@ export default function BidsPage({ onOpenChat }) {
                         <h3 style={{ marginBottom: '16px', color: '#333' }}>Accept Bid Confirmation</h3>
                         <p style={{ marginBottom: '16px', color: '#666' }}>Are you sure you want to accept this bid from {selectedBid?.business_profiles?.business_name}?</p>
                         
-                        <p style={{ marginBottom: '12px', color: '#666' }}>By accepting this bid:</p>
-                        <ul style={{ marginBottom: '24px', color: '#666', paddingLeft: '20px' }}>
-                            <li style={{ marginBottom: '8px' }}>Your contact information will be shared with the business</li>
-                            <li style={{ marginBottom: '8px' }}>The business will be notified and can reach out to you directly</li>
-                        </ul>
+                        <div style={{ 
+                            marginBottom: '24px', 
+                            padding: '16px',
+                            background: '#f8f9fa',
+                            borderRadius: '8px',
+                            border: '1px solid #e9ecef'
+                        }}>
+                            <h4 style={{ color: '#9633eb', marginBottom: '12px' }}>Bidi Protection Guarantee</h4>
+                            <p style={{ marginBottom: '12px', color: '#666' }}>When you pay through Bidi, you're protected by our 100% Money-Back Guarantee:</p>
+                            <ul style={{ 
+                                marginBottom: '12px', 
+                                color: '#666', 
+                                paddingLeft: '20px',
+                                listStyleType: 'none'
+                            }}>
+                                <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-shield-alt" style={{ color: '#9633eb' }}></i>
+                                    Full refund if the business doesn't deliver the service
+                                </li>
+                                <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-user-shield" style={{ color: '#9633eb' }}></i>
+                                    Protection against no-shows or cancellations
+                                </li>
+                                <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-hand-holding-usd" style={{ color: '#9633eb' }}></i>
+                                    Secure payment processing through Stripe
+                                </li>
+                            </ul>
+                            <p style={{ fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
+                                We'll help you get a full refund if anything goes wrong with your booking.
+                            </p>
+                            <p style={{ marginTop: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <i className="fas fa-comments" style={{ color: '#9633eb' }}></i>
+                                The business will be able to contact you through Bidi's messenger to discuss service details.
+                            </p>
+                        </div>
+
                         <div className="modal-buttons" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                             <button 
                                 className="btn-danger"

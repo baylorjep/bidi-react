@@ -901,7 +901,6 @@
 
 .bids-page .business-actions {
     display: flex;
-    flex-direction: column;
     gap: 12px;
     margin-top: 24px;
     padding-top: 20px;

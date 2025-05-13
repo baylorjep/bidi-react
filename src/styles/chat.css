@@ -753,15 +753,16 @@
   height: auto;
   border-radius: 12px;
   display: block;
-  @media (max-width: 600px) {
-    .preview-container {
-      max-width: 80%;
-    }
-  
-    .preview-image {
-      max-width: 150px;
-      max-height: 150px;
-    }
+}
+
+@media (max-width: 600px) {
+  .preview-container {
+    max-width: 80%;
+  }
+
+  .preview-image {
+    max-width: 150px;
+    max-height: 150px;
   }
 }
 
@@ -821,4 +822,24 @@
   object-fit: contain;
   border-radius: 8px;
   display: block;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.9); /* darker for better focus on image */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  max-width: 100%;
+  max-height: 100%;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }

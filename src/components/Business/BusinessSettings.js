@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 // import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import Verification from "../../assets/Frame 1162.svg";
 import { Modal } from "react-bootstrap";
@@ -10,6 +10,7 @@ import bidiLogo from "../../assets/images/bidi check.png";
 import "../../styles/BusinessSettings.css";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { useGoogleCalendar } from '../../hooks/useGoogleCalendar';
 
 const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [isVerified, setIsVerified] = useState(false);
@@ -24,6 +25,8 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [minimumPrice, setMinimumPrice] = useState("");
   const [downPaymentNumber, setDownPaymentNumber] = useState("");
   const [paymentType, setPaymentType] = useState("");
+  const location = useLocation();
+  const [showCalendarSuccess, setShowCalendarSuccess] = useState(false);
   const [percentage, setPercentage] = useState("");
   const navigate = useNavigate();
   const [stripeError, setStripeError] = useState(false);
@@ -53,6 +56,23 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [currentCategories, setCurrentCategories] = useState([]);
   const [customCategory, setCustomCategory] = useState("");
+  const [showGoogleCalendarModal, setShowGoogleCalendarModal] = useState(false);
+const { 
+  isCalendarConnected, 
+  calendarError, 
+  isLoading: isCalendarLoading, 
+  connectCalendar, 
+  disconnectCalendar 
+} = useGoogleCalendar();
+
+// Add this useEffect to debug the state
+useEffect(() => {
+  console.log('Calendar state:', {
+    isCalendarConnected,
+    calendarError,
+    isCalendarLoading
+  });
+}, [isCalendarConnected, calendarError, isCalendarLoading]);
 
   // Add these modules for the editor
   const modules = {
@@ -92,6 +112,15 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
     { id: 'photo_booth', label: 'Photo Booth' },
     { id: 'other', label: 'Other' }
   ];
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('calendar') === 'connected' && !sessionStorage.getItem('calendarSuccessShown')) {
+      setShowCalendarSuccess(true);
+      sessionStorage.setItem('calendarSuccessShown', 'true');
+      window.history.replaceState({}, document.title, location.pathname);
+    }
+  }, [location]);
 
   useEffect(() => {
     console.log("Active Coupon:", activeCoupon);
@@ -237,7 +266,7 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   };
 
   const handleStripeOnboarding = async () => {
-    setActiveSection("onboarding");
+    navigate('/onboarding');
   };
 
   const handleGenerateCoupon = async () => {
@@ -952,6 +981,20 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
             Manage Business Categories
           </button>
         </div>
+        <div
+  className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
+  style={{ marginTop: "20px" }}
+>
+  <button
+    style={{ fontWeight: "bold", color: "#9633eb" }}
+    className="btn-primary flex-fill"
+    onClick={() => setShowGoogleCalendarModal(true)}
+    disabled={isCalendarLoading}
+  >
+    <i className="fas fa-calendar" style={{ marginRight: "8px" }}></i>
+    {isCalendarConnected ? "Manage Google Calendar" : "Connect Google Calendar"}
+  </button>
+</div>
       </div>
 
       {/* Modal for Down Payment Setup */}
@@ -1373,6 +1416,99 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
           </button>
         </Modal.Footer>
       </Modal>
+      {/* Google Calendar Button */}
+
+
+{/* Google Calendar Modal */}
+<Modal
+  show={showGoogleCalendarModal}
+  onHide={() => setShowGoogleCalendarModal(false)}
+  centered
+>
+  <Modal.Header closeButton>
+    <Modal.Title>
+      {isCalendarConnected ? "Manage Google Calendar" : "Connect Google Calendar"}
+    </Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    {calendarError && (
+      <div className="alert alert-danger" role="alert">
+        {calendarError}
+      </div>
+    )}
+    {isCalendarLoading ? (
+      <div className="text-center">
+        <LoadingSpinner color="#9633eb" size={30} />
+      </div>
+    ) : isCalendarConnected ? (
+      <div>
+        <p>Your Google Calendar is connected. You can now manage your availability for consultations.</p>
+        <button
+          className="btn btn-danger"
+          onClick={async () => {
+            try {
+              await disconnectCalendar();
+              setShowGoogleCalendarModal(false);
+            } catch (error) {
+              // Error is already handled in the hook
+            }
+          }}
+        >
+          Disconnect Calendar
+        </button>
+      </div>
+    ) : (
+      <div>
+        <p>Connect your Google Calendar to manage your availability for consultations.</p>
+        <p>This will allow you to:</p>
+        <ul>
+          <li>Automatically sync your availability</li>
+          <li>Prevent double bookings</li>
+          <li>Manage your consultation schedule</li>
+        </ul>
+        <button
+          className="btn btn-primary"
+          onClick={async () => {
+            try {
+              await connectCalendar();
+              // The page will redirect to Google OAuth
+            } catch (error) {
+              // Error is already handled in the hook
+            }
+          }}
+        >
+          Connect Google Calendar
+        </button>
+      </div>
+    )}
+  </Modal.Body>
+</Modal>
+<Modal
+  show={showCalendarSuccess}
+  onHide={() => {
+    setShowCalendarSuccess(false);
+    sessionStorage.removeItem('calendarSuccessShown');
+  }}
+  centered
+>
+  <Modal.Header closeButton>
+    <Modal.Title>Success!</Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    Google Calendar connected successfully!
+  </Modal.Body>
+  <Modal.Footer>
+    <button
+      className="btn-success"
+      onClick={() => {
+        setShowCalendarSuccess(false);
+        sessionStorage.removeItem('calendarSuccessShown');
+      }}
+    >
+      Close
+    </button>
+  </Modal.Footer>
+</Modal>
     </div>
   );
 };

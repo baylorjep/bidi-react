@@ -26,6 +26,8 @@ export default function MessagingView({
   const location = useLocation();
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const [pendingFile, setPendingFile] = useState(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [modalImageSrc, setModalImageSrc] = useState("");
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -438,10 +440,14 @@ export default function MessagingView({
           >
             {msg.type === 'image' ? (
               <img
-                src={msg.message}
-                alt="Sent"
-                style={{ maxWidth: "200px", borderRadius: "8px" }}
-              />
+              src={msg.message}
+              alt="Sent"
+              style={{ maxWidth: "200px", borderRadius: "8px", cursor: "pointer" }}
+              onClick={() => {
+                setModalImageSrc(msg.message);
+                setShowImageModal(true);
+              }}
+            />
             ) : (
               formatMessageText(msg.message)
           )}
@@ -505,6 +511,23 @@ export default function MessagingView({
           Send
         </button>
       </footer>
+      {showImageModal && (
+        <div className="modal-backdrop" onClick={() => setShowImageModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <img
+            src={modalImageSrc}
+            alt="Full Size"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+              border: "none",
+              boxShadow: "none"
+            }}
+          />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

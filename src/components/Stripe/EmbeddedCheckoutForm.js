@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom'; // Import useLocation for passing data
+import { useLocation, useNavigate } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 
@@ -7,13 +7,13 @@ import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 const EmbeddedCheckoutForm = () => {
-  const location = useLocation(); // Access location state
-  const { paymentData } = location.state || {}; // Changed from bid to paymentData
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { paymentData } = location.state || {};
   const [clientSecret, setClientSecret] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null); // State to store error messages
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
-    // Only run if paymentData is provided
     if (!paymentData) {
       setErrorMessage('No payment data provided for checkout.');
       console.error('No payment data provided for checkout.');
@@ -26,10 +26,7 @@ const EmbeddedCheckoutForm = () => {
       return;
     }
 
-    // Log the paymentData object to check what data it contains
     console.log('Payment data:', paymentData);
-
-    // Fetch the client_secret from the backend
     const createCheckoutSession = async () => {
       try {
         const response = await fetch("https://bidi-express.vercel.app/create-checkout-session", {
@@ -39,12 +36,14 @@ const EmbeddedCheckoutForm = () => {
           },
           body: JSON.stringify({
             connectedAccountId: paymentData.stripe_account_id,
-            amount: Math.round(paymentData.amount * 100), // Convert to cents and ensure it's a whole number
-            applicationFeeAmount: Math.round(paymentData.amount * 5), // 5% fee
+            amount: Math.round(paymentData.amount * 100),
+            applicationFeeAmount: Math.round(paymentData.amount * 5),
             serviceName: paymentData.business_name,
+            successUrl: `${window.location.origin}/payment-success?amount=${paymentData.amount}&payment_type=${paymentData.payment_type}&business_name=${encodeURIComponent(paymentData.business_name)}&bid_id=${paymentData.bid_id}`,
+            cancelUrl: `${window.location.origin}/bids`,
           }),
         });
-
+    
         if (!response.ok) {
           const errorText = await response.text();
           try {
@@ -57,11 +56,16 @@ const EmbeddedCheckoutForm = () => {
             throw new Error(e.message || errorText);
           }
         }
-
+    
         const data = await response.json();
+        console.log('Checkout session response:', data);
         
         if (data.error) {
           throw new Error(data.error.message || 'Failed to create checkout session');
+        }
+
+        if (!data.client_secret) {
+          throw new Error('No client secret received from server');
         }
 
         setClientSecret(data.client_secret);
@@ -72,7 +76,7 @@ const EmbeddedCheckoutForm = () => {
     };
 
     createCheckoutSession();
-  }, [paymentData]); // Re-run if paymentData changes
+  }, [paymentData, navigate]);
 
   return (
     <div>
@@ -82,11 +86,18 @@ const EmbeddedCheckoutForm = () => {
           {errorMessage}
         </div>
       ) : clientSecret ? (
-        <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
-          <EmbeddedCheckout />
-        </EmbeddedCheckoutProvider>
+        <div style={{ padding: '20px' }}>
+          <EmbeddedCheckoutProvider
+            stripe={stripePromise}
+            options={{ clientSecret }}
+          >
+            <EmbeddedCheckout />
+          </EmbeddedCheckoutProvider>
+        </div>
       ) : (
-        <div className='center'style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center',height:'50vh' }}>Loading payment form...</div>
+        <div className='center' style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center',height:'50vh' }}>
+          Loading payment form...
+        </div>
       )}
     </div>
   );
