@@ -27,7 +27,6 @@ const EmbeddedCheckoutForm = () => {
     }
 
     console.log('Payment data:', paymentData);
-
     const createCheckoutSession = async () => {
       try {
         const response = await fetch("https://bidi-express.vercel.app/create-checkout-session", {
@@ -44,7 +43,7 @@ const EmbeddedCheckoutForm = () => {
             cancelUrl: `${window.location.origin}/bids`,
           }),
         });
-
+    
         if (!response.ok) {
           const errorText = await response.text();
           try {
@@ -57,34 +56,21 @@ const EmbeddedCheckoutForm = () => {
             throw new Error(e.message || errorText);
           }
         }
-
+    
         const data = await response.json();
         
         if (data.error) {
           throw new Error(data.error.message || 'Failed to create checkout session');
         }
-
-        setClientSecret(data.client_secret);
-
-        // Listen for successful payment
+    
+        // Redirect to Stripe Checkout
         const stripe = await stripePromise;
-        const { error } = await stripe.retrievePaymentIntent(data.client_secret);
+        const { error } = await stripe.redirectToCheckout({
+          sessionId: data.sessionId
+        });
         
         if (error) {
           setErrorMessage(error.message);
-        } else {
-          // Payment was successful, redirect to success page
-          navigate('/payment-success', { 
-            state: { 
-              paymentData: {
-                ...paymentData,
-                amount: paymentData.amount,
-                payment_type: paymentData.payment_type,
-                business_name: paymentData.business_name,
-                date: new Date().toISOString()
-              }
-            }
-          });
         }
       } catch (error) {
         setErrorMessage('Error creating checkout session: ' + error.message);
@@ -102,12 +88,10 @@ const EmbeddedCheckoutForm = () => {
         <div style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center',height:'50vh' }}>
           {errorMessage}
         </div>
-      ) : clientSecret ? (
-        <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
-          <EmbeddedCheckout />
-        </EmbeddedCheckoutProvider>
       ) : (
-        <div className='center'style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center',height:'50vh' }}>Loading payment form...</div>
+        <div className='center' style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center',height:'50vh' }}>
+          Loading payment form...
+        </div>
       )}
     </div>
   );
