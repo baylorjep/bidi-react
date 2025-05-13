@@ -64,21 +64,11 @@ const EmbeddedCheckoutForm = () => {
           throw new Error(data.error.message || 'Failed to create checkout session');
         }
 
-        if (!data.id) {
-          throw new Error('No session ID received from server');
+        if (!data.client_secret) {
+          throw new Error('No client secret received from server');
         }
-    
-        // Redirect to Stripe Checkout
-        const stripe = await stripePromise;
-        console.log('Redirecting to checkout with session ID:', data.id);
-        const { error } = await stripe.redirectToCheckout({
-          sessionId: data.id
-        });
-        
-        if (error) {
-          console.error('Stripe redirect error:', error);
-          setErrorMessage(error.message);
-        }
+
+        setClientSecret(data.client_secret);
       } catch (error) {
         setErrorMessage('Error creating checkout session: ' + error.message);
         console.error('Error creating checkout session:', error);
@@ -94,6 +84,15 @@ const EmbeddedCheckoutForm = () => {
       {errorMessage ? (
         <div style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center',height:'50vh' }}>
           {errorMessage}
+        </div>
+      ) : clientSecret ? (
+        <div style={{ padding: '20px' }}>
+          <EmbeddedCheckoutProvider
+            stripe={stripePromise}
+            options={{ clientSecret }}
+          >
+            <EmbeddedCheckout />
+          </EmbeddedCheckoutProvider>
         </div>
       ) : (
         <div className='center' style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center',height:'50vh' }}>
