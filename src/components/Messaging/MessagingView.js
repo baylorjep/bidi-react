@@ -256,7 +256,8 @@ export default function MessagingView({
   
     if (pendingFile && previewImageUrl) {
       try {
-        const fileName = `${Date.now()}_${pendingFile.name}`;
+        const cleanFileName = pendingFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+        const fileName = `${Date.now()}_${cleanFileName}`;
         const { error: uploadError } = await supabase.storage
           .from('chat-images')
           .upload(fileName, pendingFile);
