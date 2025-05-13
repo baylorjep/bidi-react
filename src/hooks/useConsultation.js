@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { consultationService } from '../services/consultationService';
+import { googleCalendarService } from '../services/googleCalendarService';
 
 export const useConsultation = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,7 +12,7 @@ export const useConsultation = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const slots = await consultationService.getAvailableTimeSlots(businessId, date);
+      const slots = await googleCalendarService.getAvailableTimeSlots(businessId, date);
       setAvailableTimeSlots(slots);
       setSelectedDate(date);
     } catch (err) {
@@ -31,7 +31,7 @@ export const useConsultation = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const result = await consultationService.scheduleConsultation({
+      const result = await googleCalendarService.scheduleConsultation({
         businessId,
         bidId,
         startTime: selectedTimeSlot
