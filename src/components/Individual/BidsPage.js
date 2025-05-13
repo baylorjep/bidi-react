@@ -120,7 +120,7 @@ export default function BidsPage({ onOpenChat }) {
                 const { count, error } = await supabase
                     .from('business_profiles')
                     .select('*', { count: 'exact' })
-                    .eq('business_category', category);
+                    .filter('business_category', 'ov', `{${category}}`);
 
                 if (error) {
                     console.error(`Error fetching total ${category} businesses:`, error);
