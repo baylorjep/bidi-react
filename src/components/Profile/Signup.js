@@ -26,8 +26,8 @@ const Signup = ({ onSuccess, initialUserType }) => {
     const location = useLocation();
 
     const businessCategories = [
-        { id: 'photographer', label: 'Photographer' },
-        { id: 'videographer', label: 'Videographer' },
+        { id: 'photography', label: 'Photography' },
+        { id: 'videography', label: 'Videography' },
         { id: 'dj', label: 'DJ' },
         { id: 'florist', label: 'Florist' },
         { id: 'venue', label: 'Venue' },
