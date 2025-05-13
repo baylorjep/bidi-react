@@ -10,14 +10,7 @@ export default function PaymentSuccess() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const testPaymentData = {
-        amount: 1000,
-        payment_type: 'full',
-        business_name: 'Test Business',
-        date: new Date().toISOString()
-    };
-
-    const paymentData = location.state?.paymentData || testPaymentData;
+    const paymentData = location.state?.paymentData;
 
     useEffect(() => {
         const updateBidStatus = async () => {
