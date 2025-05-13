@@ -24,6 +24,8 @@ export default function MessagingView({
   const [isBusinessProfile, setIsBusinessProfile] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [pendingFile, setPendingFile] = useState(null);
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -164,7 +166,8 @@ export default function MessagingView({
           receiverId: r.receiver_id,
           message: r.message,
           createdAt: r.created_at,
-          seen: r.seen || false
+          seen: r.seen || false,
+          type: r.type || 'text'
         }));
 
         all.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
@@ -247,41 +250,93 @@ export default function MessagingView({
   }
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !currentUserId || !businessId) return;
-
-    try {
-      const payload = {
+    if (!pendingFile && !newMessage.trim()) return;
+  
+    let imageUrl = null;
+  
+    if (pendingFile && previewImageUrl) {
+      try {
+        const fileName = `${Date.now()}_${pendingFile.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('chat-images')
+          .upload(fileName, pendingFile);
+  
+        if (uploadError) {
+          console.error("Image upload failed:", uploadError);
+          return;
+        }
+  
+        const { publicUrl } = supabase
+          .storage
+          .from('chat-images')
+          .getPublicUrl(fileName).data;
+  
+        imageUrl = publicUrl;
+      } catch (err) {
+        console.error("Image send failed:", err);
+        return;
+      }
+    }
+  
+    if (imageUrl) {
+      socket.emit("send_message", {
+        senderId: currentUserId,
+        receiverId: businessId,
+        message: imageUrl,
+        type: "image",
+        seen: false,
+      });
+    }
+  
+    if (newMessage.trim()) {
+      socket.emit("send_message", {
         senderId: currentUserId,
         receiverId: businessId,
         message: newMessage.trim(),
-        seen: false
-      };
-
-      // Emit socket event
-      socket.emit("send_message", payload);
-
-      // Save to database
-      const { error } = await supabase
-        .from("messages")
-        .insert([{
-          sender_id: currentUserId,
-          receiver_id: businessId,
-          message: newMessage.trim(),
-          seen: false
-        }]);
-
-      if (error) {
-        console.error("Error saving message:", error);
-        return;
-      }
-
-      setNewMessage("");
-      socket.emit("stop_typing", { senderId: currentUserId, receiverId: businessId });
-    } catch (error) {
-      console.error("Error sending message:", error);
+        type: "text",
+        seen: false,
+      });
     }
+  
+    // Cleanup
+    setNewMessage("");
+    setPreviewImageUrl(null);
+    setPendingFile(null);
+    socket.emit("stop_typing", { senderId: currentUserId, receiverId: businessId });
   };
 
+  /*
+   commented out til we have a better solution
+  const sendMessage = async () => {
+    let payload;
+  
+    if (previewImageUrl) {
+      payload = {
+        senderId: currentUserId,
+        receiverId: businessId,
+        message: previewImageUrl,
+        type: 'image',
+        seen: false
+      };
+      setPreviewImageUrl(null);
+    } else if (newMessage.trim()) {
+      payload = {
+        senderId: currentUserId,
+        receiverId: businessId,
+        message: newMessage.trim(),
+        type: 'text',
+        seen: false
+      };
+      setNewMessage("");
+    } else {
+      return;  // Nothing to send
+    }
+  
+    // Just emit to server; let it handle DB and return
+    socket.emit('send_message', payload);
+    socket.emit("stop_typing", { senderId: currentUserId, receiverId: businessId });
+  };
+*/
   // 4) Handle typing
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
@@ -303,6 +358,46 @@ export default function MessagingView({
     } else {
       navigate('/messages');
     }
+  };
+
+  /* // commented out to preserve old functionality until we can upload and sendmessages locally
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+  
+    try {
+      const fileName = `${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('chat-images')
+        .upload(fileName, file);
+  
+      if (uploadError) {
+        console.error("Error uploading image:", uploadError);
+        return;
+      }
+  
+      const { publicUrl } = supabase
+        .storage
+        .from('chat-images')
+        .getPublicUrl(fileName).data;
+  
+      setPreviewImageUrl(publicUrl);  // Set uploaded image URL in input so user can hit Send
+      console.log("Image uploaded, preview ready!");
+    } catch (err) {
+      console.error("Upload failed:", err);
+    }
+  };
+  */
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+  
+    setPendingFile(file);
+    const localPreview = URL.createObjectURL(file);
+    setPreviewImageUrl(localPreview);
+
+    e.target.value = null;
   };
 
   return (
@@ -340,7 +435,15 @@ export default function MessagingView({
             key={index}
             className={`message-bubble ${msg.senderId === currentUserId ? "sent" : "received"} ${!msg.seen && msg.senderId === currentUserId ? "unseen" : ""}`}
           >
-            {formatMessageText(msg.message)}
+            {msg.type === 'image' ? (
+              <img
+                src={msg.message}
+                alt="Sent"
+                style={{ maxWidth: "200px", borderRadius: "8px" }}
+              />
+            ) : (
+              formatMessageText(msg.message)
+          )}
             <div className="message-time">
               {new Date(msg.createdAt).toLocaleTimeString('en-US', {
                 hour: 'numeric',
@@ -366,14 +469,37 @@ export default function MessagingView({
       </div>
 
       <footer className="chat-footer">
-        <input
-          className="chat-input"
-          type="text"
-          placeholder="Type your message…"
-          value={newMessage}
-          onChange={handleTyping}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        />
+        <label htmlFor="file-upload" className="chat-upload-btn">
+          <span>＋</span>
+          <input
+            id="file-upload"
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={handleFileUpload}
+          />
+        </label>
+
+        <div className="chat-input-wrapper">
+          {previewImageUrl && (
+            <div className="inline-image-preview">
+              <img src={previewImageUrl} alt="Preview" />
+              <button className="inline-remove-button" onClick={() => {
+                setPreviewImageUrl(null);
+                setPendingFile(null);
+              }}>×</button>
+            </div>
+          )}
+          <input
+            className="chat-input"
+            type="text"
+            placeholder="Add a message…"
+            value={newMessage}
+            onChange={handleTyping}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          />
+        </div>
+
         <button className="chat-send-btn" onClick={sendMessage}>
           Send
         </button>
