@@ -3,12 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { FaTrash } from 'react-icons/fa';
 
 function EditRequest() {
     const { type, id } = useParams();
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-
         // Regular request fields
         service_type: '',
         service_title: '',
@@ -52,13 +52,14 @@ function EditRequest() {
         start_time: '',
         end_time: '',
         event_duration: '',
-        num_people: '',
+        estimated_guests: '',
         indoor_outdoor: '',
         music_preferences: {},
         special_songs: { playlists: '', requests: '' },
         equipment_needed: '',
+        equipment_notes: '',
         additional_services: [],
-        special_requests: '',  // Changed from additional_info to special_requests
+        special_requests: '',
         budget_range: '',
 
         // Beauty request fields
@@ -75,9 +76,47 @@ function EditRequest() {
         group_discount_inquiry: '',
         on_site_service_needed: '',
         specific_time_needed: '',
-        specific_time: ''
+        specific_time: '',
+
+        // Florist request fields
+        budget: '',
+        budget_unknown: false,
+        floral_arrangements: {},
+        flower_preferences: {},
+        flower_preferences_text: '',
+        color_scheme: '',
+        indoor_outdoor: '',
+
+        // Catering request fields
+        title: '',
+        guest_count: '',
+        guest_count_unknown: false,
+        food_preferences: {},
+        service_type: '',
+        event_duration: '',
+        dietary_restrictions: '',
+        other_dietary_details: '',
+        dining_items_notes: '',
+
+        // Wedding Planning request fields
+        planning_type: '',
+        services_needed: {},
+        venue_status: '',
+        wedding_style: '',
+        theme_preferences: '',
+        planning_level: '',
+        experience_level: '',
+        communication_style: '',
+        planner_budget: '',
+
+        // Videography request fields
+        duration: '',
+        coverage: {},
+        style: ''
     });
     const [error, setError] = useState('');
+    const [photos, setPhotos] = useState([]);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         const fetchRequest = async () => {
@@ -88,6 +127,7 @@ function EditRequest() {
                 'beauty': 'beauty_requests',
                 'videography': 'videography_requests',
                 'florist': 'florist_requests',
+                'wedding_planning': 'wedding_planning_requests',
                 'regular': 'requests'
             };
             const table = tableMap[type] || 'requests';
@@ -144,7 +184,7 @@ function EditRequest() {
                     formattedData.food_preferences = typeof data[0].food_preferences === 'string' 
                         ? JSON.parse(data[0].food_preferences)
                         : data[0].food_preferences || {};
-                        
+                    formattedData.title = data[0].title || '';
                     // Don't parse these as JSON, just use the values directly
                     formattedData.dining_items = data[0].dining_items || null;
                     formattedData.setup_cleanup = data[0].setup_cleanup || null;
@@ -166,6 +206,18 @@ function EditRequest() {
         };
 
         fetchRequest();
+
+        // Fetch photos for this request (photography only for now)
+        const fetchPhotos = async () => {
+            if (type === 'photography') {
+                const { data, error } = await supabase
+                    .from('event_photos')
+                    .select('*')
+                    .eq('request_id', id);
+                if (!error) setPhotos(data || []);
+            }
+        };
+        fetchPhotos();
     }, [id, type, navigate]);
 
     const handleInputChange = (e) => {
@@ -214,13 +266,14 @@ function EditRequest() {
             'beauty': 'beauty_requests',
             'videography': 'videography_requests',
             'florist': 'florist_requests',
+            'wedding_planning': 'wedding_planning_requests',
             'regular': 'requests'
         };
         const table = tableMap[type] || 'requests';
 
         let updateData = { ...formData };
 
-        // Convert JSON objects to strings for photography requests
+        // Convert JSON objects to strings for specific request types
         if (type === 'photography') {
             updateData = {
                 ...updateData,
@@ -228,82 +281,47 @@ function EditRequest() {
                 deliverables: JSON.stringify(formData.deliverables),
                 wedding_details: JSON.stringify(formData.wedding_details)
             };
-        }
-
-        if (type === 'beauty') {
-            updateData = {
-                ...formData,
-                event_type: formData.event_type,
-                service_type: formData.service_type,
-                date_flexibility: formData.date_flexibility,
-                start_date: formData.start_date,
-                end_date: formData.end_date,
-                date_timeframe: formData.date_timeframe,
-                specific_time_needed: formData.specific_time_needed === 'yes',
-                specific_time: formData.specific_time,
-                num_people: formData.num_people ? parseInt(formData.num_people) : null,
-                hairstyle_preferences: formData.hairstyle_preferences,
-                hair_length_type: formData.hair_length_type,
-                extensions_needed: formData.extensions_needed,
-                trial_session_hair: formData.trial_session_hair,
-                makeup_style_preferences: formData.makeup_style_preferences,
-                skin_type_concerns: formData.skin_type_concerns,
-                preferred_products_allergies: formData.preferred_products_allergies,
-                lashes_included: formData.lashes_included,
-                trial_session_makeup: formData.trial_session_makeup,
-                group_discount_inquiry: formData.group_discount_inquiry,
-                on_site_service_needed: formData.on_site_service_needed,
-                pinterest_link: formData.pinterest_link,
-                price_range: formData.price_range,
-                location: formData.location,
-                additional_comments: formData.additional_comments
-            };
-        }
-
-        if (type === 'florist') {
+        } else if (type === 'florist') {
             updateData = {
                 ...updateData,
                 floral_arrangements: JSON.stringify(formData.floral_arrangements),
                 flower_preferences: JSON.stringify(formData.flower_preferences),
                 additional_services: JSON.stringify(formData.additional_services),
-                colors: JSON.stringify(formData.colors),
-                location: formData.location,
-                price_range: formData.price_range,
-                event_type: formData.event_type,
-                event_title: formData.event_title,
-                date_flexibility: formData.date_flexibility,
-                start_date: formData.start_date,
-                end_date: formData.end_date,
-                date_timeframe: formData.date_timeframe,
-                specific_time_needed: formData.specific_time_needed === 'yes',
-                specific_time: formData.specific_time,
-                pinterest_link: formData.pinterest_link,
-                additional_info: formData.additional_info
+                colors: JSON.stringify(formData.colors)
             };
-        }
-
-        if (type === 'catering') {
+        } else if (type === 'catering') {
             updateData = {
                 ...updateData,
                 food_preferences: JSON.stringify(formData.food_preferences),
-                dining_items: JSON.stringify(formData.dining_items),
-                setup_cleanup: formData.setup_cleanup,
-                food_service_type: formData.food_service_type,
-                serving_staff: formData.serving_staff,
-                dining_items_notes: formData.dining_items_notes,
-                special_requests: formData.special_requests,
-                additional_info: formData.additional_info,
-                budget_range: formData.price_range,
-                equipment_needed: formData.equipment_needed,
-                equipment_notes: formData.equipment_notes,
-                location: formData.location,
-                event_type: formData.event_type,
-                event_title: formData.event_title,
-                date_flexibility: formData.date_flexibility,
-                start_date: formData.start_date,
-                end_date: formData.end_date,
-                date_timeframe: formData.date_timeframe
+                special_requests: JSON.stringify(formData.special_requests),
+                additional_services: JSON.stringify(formData.additional_services)
             };
+        } else if (type === 'dj') {
+            updateData = {
+                ...updateData,
+                music_preferences: JSON.stringify(formData.music_preferences),
+                special_songs: JSON.stringify(formData.special_songs),
+                additional_services: formData.additional_services
+            };
+        } else if (type === 'wedding_planning') {
+            updateData = {
+                ...updateData,
+                vendor_preferences: JSON.stringify(formData.vendor_preferences),
+                additional_events: JSON.stringify(formData.additional_events)
+            };
+        }
+
+        // Handle boolean fields
+        if (type === 'beauty' || type === 'florist') {
+            updateData.specific_time_needed = formData.specific_time_needed === 'yes';
+        }
+
+        // Handle date fields
+        if (updateData.start_date) {
+            updateData.start_date = new Date(updateData.start_date).toISOString().split('T')[0];
+        }
+        if (updateData.end_date) {
+            updateData.end_date = new Date(updateData.end_date).toISOString().split('T')[0];
         }
 
         const { error } = await supabase
@@ -319,55 +337,108 @@ function EditRequest() {
         }
     };
 
+    // Photo upload handler
+    const handlePhotoUpload = async (e) => {
+        const files = e.target.files;
+        if (!files.length) return;
+        setUploading(true);
+        try {
+            for (let file of files) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${id}-${Date.now()}-${Math.random()}.${fileExt}`;
+                const filePath = `request-media/${fileName}`;
+                // Upload to storage
+                let { error: uploadError } = await supabase.storage
+                    .from('request-media')
+                    .upload(fileName, file);
+                if (uploadError) throw uploadError;
+                // Get public URL
+                const { data: { publicUrl } } = supabase.storage
+                    .from('request-media')
+                    .getPublicUrl(fileName);
+                // Insert into event_photos
+                const user = await supabase.auth.getUser();
+                await supabase.from('event_photos').insert({
+                    request_id: id,
+                    user_id: user.data.user.id,
+                    photo_url: publicUrl,
+                    file_path: fileName
+                });
+            }
+            // Refresh photos
+            const { data } = await supabase
+                .from('event_photos')
+                .select('*')
+                .eq('request_id', id);
+            setPhotos(data || []);
+        } catch (err) {
+            setError('Failed to upload photo(s)');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    // Remove photo handler
+    const handleRemovePhoto = async (photoId, filePath) => {
+        try {
+            await supabase.from('event_photos').delete().eq('id', photoId);
+            await supabase.storage.from('request-media').remove([filePath]);
+            setPhotos(photos.filter(p => p.id !== photoId));
+        } catch (err) {
+            setError('Failed to remove photo');
+        }
+    };
+
     if (!formData) return <div className="container mt-5">Loading...</div>;
 
     return (
-        <div className="container px-3 px-md-5" style={{ minHeight: "80vh" }}>
-            <div className="Sign-Up-Page-Header">Edit Request</div>
+        <div className="bids-page" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+            <div className="section-title" style={{marginBottom: 8}}>Edit Request</div>
             {error && <div className="alert alert-danger">{error}</div>}
-            
             <form onSubmit={handleSubmit} className="mb-5">
-                {type === 'photography' && (
-                    <>
-                        <div className="mb-3">
-                            <label className="form-label">Event Title</label>
+                {/* Basic Information Section */}
+                <div className="form-grid">
+                    <div className="wedding-details-container">
+                        <div className="photo-options-header">Basic Information</div>
+                        <div className="custom-input-container">
                             <input
                                 type="text"
-                                className="form-control"
                                 name="event_title"
                                 value={formData.event_title}
                                 onChange={handleInputChange}
+                                className="custom-input"
+                                placeholder="Enter event title"
                             />
+                            <label className="custom-label">Event Title</label>
                         </div>
-                        <div className="mb-3">
-                            <label className="form-label">Event Type</label>
+                        <div className="custom-input-container">
                             <input
                                 type="text"
-                                className="form-control"
                                 name="event_type"
                                 value={formData.event_type}
                                 onChange={handleInputChange}
+                                className="custom-input"
+                                placeholder="Enter event type"
                             />
+                            <label className="custom-label">Event Type</label>
                         </div>
-                        <div className="mb-3">
-                            <label className="form-label">Location</label>
+                        <div className="custom-input-container">
                             <input
                                 type="text"
-                                className="form-control"
                                 name="location"
                                 value={formData.location}
                                 onChange={handleInputChange}
+                                className="custom-input"
+                                placeholder="Enter location"
                             />
+                            <label className="custom-label">Location</label>
                         </div>
                         <div className="custom-input-container">
-                            <label htmlFor="priceRange" className="form-label">
-                                Budget Range
-                            </label>
                             <select
-                                name="priceRange"
+                                name="price_range"
                                 value={formData.price_range}
                                 onChange={handleInputChange}
-                                className="form-control custom-select"
+                                className="custom-input"
                             >
                                 <option value="">Select Budget Range</option>
                                 <option value="0-1000">Under $1,000</option>
@@ -377,99 +448,74 @@ function EditRequest() {
                                 <option value="4000-5000">$4,000 - $5,000</option>
                                 <option value="5000+">$5,000+</option>
                             </select>
+                            <label className="custom-label">Budget Range</label>
+                        </div>
+                    </div>
+                </div>
 
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Number of People</label>
-                            <input
-                                type="number"
-                                className="form-control"
-                                name="num_people"
-                                value={formData.num_people}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Duration (hours)</label>
-                            <input
-                                type="number"
-                                className="form-control"
-                                name="duration"
-                                value={formData.duration}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Indoor/Outdoor</label>
+                {/* Date & Time Section */}
+                <div className="form-grid">
+                    <div className="wedding-details-container">
+                        <div className="photo-options-header">Date & Time</div>
+                        <div className="custom-input-container">
                             <select
-                                className="form-control"
-                                name="indoor_outdoor"
-                                value={formData.indoor_outdoor}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select...</option>
-                                <option value="indoor">Indoor</option>
-                                <option value="outdoor">Outdoor</option>
-                                <option value="both">Both</option>
-                            </select>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Date Flexibility</label>
-                            <select
-                                className="form-control"
                                 name="date_flexibility"
                                 value={formData.date_flexibility}
                                 onChange={handleInputChange}
+                                className="custom-input"
                             >
                                 <option value="specific">Specific Date</option>
                                 <option value="range">Date Range</option>
                                 <option value="flexible">I'm Flexible</option>
                             </select>
+                            <label className="custom-label">Date Flexibility</label>
                         </div>
+
                         {formData.date_flexibility === 'specific' && (
-                            <div className="mb-3">
-                                <label className="form-label">Event Date</label>
+                            <div className="custom-input-container">
                                 <input
                                     type="date"
-                                    className="form-control"
                                     name="start_date"
                                     value={formData.start_date}
                                     onChange={handleInputChange}
+                                    className="custom-input"
                                 />
+                                <label className="custom-label">Event Date</label>
                             </div>
                         )}
+
                         {formData.date_flexibility === 'range' && (
                             <>
-                                <div className="mb-3">
-                                    <label className="form-label">Earliest Date</label>
+                                <div className="custom-input-container">
                                     <input
                                         type="date"
-                                        className="form-control"
                                         name="start_date"
                                         value={formData.start_date}
                                         onChange={handleInputChange}
+                                        className="custom-input"
                                     />
+                                    <label className="custom-label">Start Date</label>
                                 </div>
-                                <div className="mb-3">
-                                    <label className="form-label">Latest Date</label>
+                                <div className="custom-input-container">
                                     <input
                                         type="date"
-                                        className="form-control"
                                         name="end_date"
                                         value={formData.end_date}
                                         onChange={handleInputChange}
+                                        className="custom-input"
                                     />
+                                    <label className="custom-label">End Date</label>
                                 </div>
                             </>
                         )}
+
                         {formData.date_flexibility === 'flexible' && (
-                            <div className="mb-3">
-                                <label className="form-label">Preferred Timeframe</label>
+                            <div className="custom-input-container">
                                 <select
-                                    className="form-control"
                                     name="date_timeframe"
                                     value={formData.date_timeframe}
                                     onChange={handleInputChange}
+                                    className="custom-input"
                                 >
                                     <option value="">Select timeframe</option>
                                     <option value="3months">Within 3 months</option>
@@ -477,2158 +523,808 @@ function EditRequest() {
                                     <option value="1year">Within 1 year</option>
                                     <option value="more">More than 1 year</option>
                                 </select>
+                                <label className="custom-label">Preferred Timeframe</label>
                             </div>
                         )}
-                        <div className="mb-3">
-                            <label className="form-label">Start Time</label>
+
+                        <div className="custom-input-container">
                             <input
                                 type="time"
-                                className="form-control"
                                 name="start_time"
                                 value={formData.start_time}
                                 onChange={handleInputChange}
-                                disabled={formData.start_time_unknown}
+                                className="custom-input"
                             />
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="start_time_unknown"
-                                    checked={formData.start_time_unknown}
-                                    onChange={handleCheckboxChange}
-                                />
-                                <label className="form-check-label">Not sure</label>
-                            </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">End Time</label>
-                            <input
-                                type="time"
-                                className="form-control"
-                                name="end_time"
-                                value={formData.end_time}
-                                onChange={handleInputChange}
-                                disabled={formData.end_time_unknown}
-                            />
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="end_time_unknown"
-                                    checked={formData.end_time_unknown}
-                                    onChange={handleCheckboxChange}
-                                />
-                                <label className="form-check-label">Not sure</label>
-                            </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Second Photographer</label>
-                            <select
-                                className="form-control"
-                                name="second_photographer"
-                                value={formData.second_photographer}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                                <option value="undecided">Let photographer recommend</option>
-                            </select>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="second_photographer_unknown"
-                                    checked={formData.second_photographer_unknown}
-                                    onChange={handleCheckboxChange}
-                                />
-                                <label className="form-check-label">Not sure</label>
-                            </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Style Preferences</label>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="style_preferences"
-                                    value="brightAiry"
-                                    checked={formData.style_preferences.brightAiry || false}
-                                    onChange={(e) => handleJsonChange('style_preferences', 'brightAiry', e.target.checked)}
-                                />
-                                <label className="form-check-label">Bright & Airy</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="style_preferences"
-                                    value="darkMoody"
-                                    checked={formData.style_preferences.darkMoody || false}
-                                    onChange={(e) => handleJsonChange('style_preferences', 'darkMoody', e.target.checked)}
-                                />
-                                <label className="form-check-label">Dark & Moody</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="style_preferences"
-                                    value="filmEmulation"
-                                    checked={formData.style_preferences.filmEmulation || false}
-                                    onChange={(e) => handleJsonChange('style_preferences', 'filmEmulation', e.target.checked)}
-                                />
-                                <label className="form-check-label">Film-Like</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="style_preferences"
-                                    value="traditional"
-                                    checked={formData.style_preferences.traditional || false}
-                                    onChange={(e) => handleJsonChange('style_preferences', 'traditional', e.target.checked)}
-                                />
-                                <label className="form-check-label">Traditional/Classic</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="style_preferences"
-                                    value="documentary"
-                                    checked={formData.style_preferences.documentary || false}
-                                    onChange={(e) => handleJsonChange('style_preferences', 'documentary', e.target.checked)}
-                                />
-                                <label className="form-check-label">Documentary/Candid</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="style_preferences"
-                                    value="artistic"
-                                    checked={formData.style_preferences.artistic || false}
-                                    onChange={(e) => handleJsonChange('style_preferences', 'artistic', e.target.checked)}
-                                />
-                                <label className="form-check-label">Artistic/Creative</label>
-                            </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Deliverables</label>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="deliverables"
-                                    value="digitalFiles"
-                                    checked={formData.deliverables.digitalFiles || false}
-                                    onChange={(e) => handleJsonChange('deliverables', 'digitalFiles', e.target.checked)}
-                                />
-                                <label className="form-check-label">Digital Files</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="deliverables"
-                                    value="printRelease"
-                                    checked={formData.deliverables.printRelease || false}
-                                    onChange={(e) => handleJsonChange('deliverables', 'printRelease', e.target.checked)}
-                                />
-                                <label className="form-check-label">Print Release</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="deliverables"
-                                    value="weddingAlbum"
-                                    checked={formData.deliverables.weddingAlbum || false}
-                                    onChange={(e) => handleJsonChange('deliverables', 'weddingAlbum', e.target.checked)}
-                                />
-                                <label className="form-check-label">Wedding Album</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="deliverables"
-                                    value="prints"
-                                    checked={formData.deliverables.prints || false}
-                                    onChange={(e) => handleJsonChange('deliverables', 'prints', e.target.checked)}
-                                />
-                                <label className="form-check-label">Professional Prints</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="deliverables"
-                                    value="rawFiles"
-                                    checked={formData.deliverables.rawFiles || false}
-                                    onChange={(e) => handleJsonChange('deliverables', 'rawFiles', e.target.checked)}
-                                />
-                                <label className="form-check-label">RAW Files</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="deliverables"
-                                    value="engagement"
-                                    checked={formData.deliverables.engagement || false}
-                                    onChange={(e) => handleJsonChange('deliverables', 'engagement', e.target.checked)}
-                                />
-                                <label className="form-check-label">Engagement Session</label>
-                            </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Wedding Details</label>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="wedding_details"
-                                    value="preCeremony"
-                                    checked={formData.wedding_details.preCeremony || false}
-                                    onChange={(e) => handleJsonChange('wedding_details', 'preCeremony', e.target.checked)}
-                                />
-                                <label className="form-check-label">Pre-Ceremony</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="wedding_details"
-                                    value="ceremony"
-                                    checked={formData.wedding_details.ceremony || false}
-                                    onChange={(e) => handleJsonChange('wedding_details', 'ceremony', e.target.checked)}
-                                />
-                                <label className="form-check-label">Ceremony</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="wedding_details"
-                                    value="reception"
-                                    checked={formData.wedding_details.reception || false}
-                                    onChange={(e) => handleJsonChange('wedding_details', 'reception', e.target.checked)}
-                                />
-                                <label className="form-check-label">Reception</label>
-                            </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Pinterest Link</label>
-                            <input
-                                type="url"
-                                className="form-control"
-                                name="pinterest_link"
-                                value={formData.pinterest_link}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Additional Info</label>
-                            <ReactQuill
-                                theme="snow"
-                                value={formData.additional_info || ''}
-                                onChange={(content) => setFormData(prev => ({
-                                    ...prev,
-                                    additional_info: content
-                                }))}
-                            />
-                        </div>
-                    </>
-                )}
-
-                {type === 'dj' && (
-                    <>
-                        <div className="mb-3">
-                            <label className="form-label">Event Title</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="event_title"
-                                value={formData.event_title}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Event Type</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="event_type"
-                                value={formData.event_type}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Location</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="location"
-                                value={formData.location}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Special Requests</label>
-                            <ReactQuill
-                                value={formData.special_requests}
-                                onChange={(value) => setFormData(prev => ({ ...prev, special_requests: value }))}
-                                modules={{
-                                    toolbar: [
-                                        ['bold', 'italic', 'underline', 'strike'],
-                                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                        ['link', 'image'],
-                                        ['clean']
-                                    ]
-                                }}
-                            />
+                            <label className="custom-label">Start Time</label>
                         </div>
                         <div className="custom-input-container">
-                            <label htmlFor="priceRange" className="form-label">
-                                Budget Range
-                            </label>
-                            <select
-                                name="priceRange"
-                                value={formData.budget_range}
-                                onChange={handleInputChange}
-                                className="form-control custom-select"
-                            >
-                                <option value="">Select Budget Range</option>
-                                <option value="0-1000">$0 - $1,000</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
-                            </select>
-
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Date Flexibility</label>
-                            <select
-                                className="form-control"
-                                name="date_flexibility"
-                                value={formData.date_flexibility}
-                                onChange={handleInputChange}
-                            >
-                                <option value="specific">Specific Date</option>
-                                <option value="range">Date Range</option>
-                                <option value="flexible">I'm Flexible</option>
-                            </select>
-                        </div>
-                        {formData.date_flexibility === 'specific' && (
-                            <div className="mb-3">
-                                <label className="form-label">Event Date</label>
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                    name="start_date"
-                                    value={formData.start_date}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                        )}
-                        {formData.date_flexibility === 'range' && (
-                            <>
-                                <div className="mb-3">
-                                    <label className="form-label">Earliest Date</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        name="start_date"
-                                        value={formData.start_date}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                                <div className="mb-3">
-                                    <label className="form-label">Latest Date</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        name="end_date"
-                                        value={formData.end_date}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                            </>
-                        )}
-                        {formData.date_flexibility === 'flexible' && (
-                            <div className="mb-3">
-                                <label className="form-label">Preferred Timeframe</label>
-                                <select
-                                    className="form-control"
-                                    name="date_timeframe"
-                                    value={formData.date_timeframe}
-                                    onChange={handleInputChange}
-                                >
-                                    <option value="">Select timeframe</option>
-                                    <option value="3months">Within 3 months</option>
-                                    <option value="6months">Within 6 months</option>
-                                    <option value="1year">Within 1 year</option>
-                                    <option value="more">More than 1 year</option>
-                                </select>
-                            </div>
-                        )}
-                        <div className="mb-3">
-                            <label className="form-label">Start Time</label>
                             <input
                                 type="time"
-                                className="form-control"
-                                name="start_time"
-                                value={formData.start_time}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">End Time</label>
-                            <input
-                                type="time"
-                                className="form-control"
                                 name="end_time"
                                 value={formData.end_time}
                                 onChange={handleInputChange}
+                                className="custom-input"
                             />
+                            <label className="custom-label">End Time</label>
                         </div>
-                        <div className="mb-3">
-                            <label className="form-label">Duration (hours)</label>
-                            <input
-                                type="number"
-                                className="form-control"
-                                name="event_duration"
-                                value={formData.event_duration}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Estimated Guests</label>
-                            <input
-                                type="number"
-                                className="form-control"
-                                name="num_people"
-                                value={formData.estimated_guests}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Indoor/Outdoor</label>
-                            <select
-                                className="form-control"
-                                name="indoor_outdoor"
-                                value={formData.indoor_outdoor}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select...</option>
-                                <option value="indoor">Indoor</option>
-                                <option value="outdoor">Outdoor</option>
-                                <option value="both">Both</option>
-                            </select>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Music Preferences</label>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="top40"
-                                    checked={formData.music_preferences.top40 || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                top40: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">Top 40</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="hiphop"
-                                    checked={formData.music_preferences.hiphop || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                hiphop: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">Hip Hop</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="house"
-                                    checked={formData.music_preferences.house || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                house: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">House</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="latin"
-                                    checked={formData.music_preferences.latin || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                latin: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">Latin</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="rock"
-                                    checked={formData.music_preferences.rock || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                rock: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">Rock</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="classics"
-                                    checked={formData.music_preferences.classics || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                classics: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">Classics</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="country"
-                                    checked={formData.music_preferences.country || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                country: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">Country</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="jazz"
-                                    checked={formData.music_preferences.jazz || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                jazz: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">Jazz</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="rb"
-                                    checked={formData.music_preferences.rb || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                rb: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">R&B</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="edm"
-                                    checked={formData.music_preferences.edm || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                edm: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">EDM</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="pop"
-                                    checked={formData.music_preferences.pop || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                pop: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">Pop</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="music_preferences"
-                                    value="international"
-                                    checked={formData.music_preferences.international || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'music_preferences',
-                                            value: {
-                                                ...formData.music_preferences,
-                                                international: e.target.checked
-                                            }
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">International</label>
-                            </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Special Songs</label>
-                            <div className="mb-3">
-                                <label className="form-label">Playlists</label>
-                                <ReactQuill
-                                    theme="snow"
-                                    value={formData.special_songs.playlist || ''}
-                                    onChange={(content) => handleSpecialSongsChange('playlist', content)}
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label">Requests</label>
-                                <ReactQuill
-                                    theme="snow"
-                                    value={formData.special_songs.requests || ''}
-                                    onChange={(content) => handleSpecialSongsChange('requests', content)}
-                                />
-                            </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Equipment Needed</label>
-                            <select
-                                className="form-control"
-                                name="equipment_needed"
-                                value={formData.equipment_needed}
-                                onChange={handleInputChange}
-                            >
-                                <option value="venueProvided">The venue provides sound and lighting equipment</option>
-                                <option value="djBringsAll">The DJ needs to bring all equipment</option>
-                                <option value="djBringsSome">The DJ needs to bring some equipment</option>
-                                <option value="unknown">I'm not sure about the equipment requirements</option>
-                            </select>
-                        </div>
-                        {formData.equipment_needed === 'djBringsSome' && (
-                            <div className="mb-3">
-                                <label className="form-label">Equipment Details</label>
-                                <ReactQuill
-                                    theme="snow"
-                                    value={formData.equipment_notes || ''}
-                                    onChange={(content) => setFormData(prev => ({
-                                        ...prev,
-                                        equipment_notes: content
-                                    }))}
-                                />
-                            </div>
-                        )}
-                        <div className="mb-3">
-                            <label className="form-label">Additional Services</label>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="additional_services"
-                                    value="mcServices"
-                                    checked={formData.additional_services.includes('mcServices')}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'additional_services',
-                                            value: e.target.checked
-                                                ? [...formData.additional_services, 'mcServices']
-                                                : formData.additional_services.filter(service => service !== 'mcServices')
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">🎤 MC Services</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="additional_services"
-                                    value="liveMixing"
-                                    checked={formData.additional_services.includes('liveMixing')}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'additional_services',
-                                            value: e.target.checked
-                                                ? [...formData.additional_services, 'liveMixing']
-                                                : formData.additional_services.filter(service => service !== 'liveMixing')
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">🎶 Live Mixing</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="additional_services"
-                                    value="lighting"
-                                    checked={formData.additional_services.includes('lighting')}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'additional_services',
-                                            value: e.target.checked
-                                                ? [...formData.additional_services, 'lighting']
-                                                : formData.additional_services.filter(service => service !== 'lighting')
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">🏮 Uplighting</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="additional_services"
-                                    value="fogMachine"
-                                    checked={formData.additional_services.includes('fogMachine')}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'additional_services',
-                                            value: e.target.checked
-                                                ? [...formData.additional_services, 'fogMachine']
-                                                : formData.additional_services.filter(service => service !== 'fogMachine')
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">🌫️ Fog Machine</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="additional_services"
-                                    value="specialFx"
-                                    checked={formData.additional_services.includes('specialFx')}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'additional_services',
-                                            value: e.target.checked
-                                                ? [...formData.additional_services, 'specialFx']
-                                                : formData.additional_services.filter(service => service !== 'specialFx')
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">🎇 Special FX</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="additional_services"
-                                    value="photoBooth"
-                                    checked={formData.additional_services.includes('photoBooth')}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'additional_services',
-                                            value: e.target.checked
-                                                ? [...formData.additional_services, 'photoBooth']
-                                                : formData.additional_services.filter(service => service !== 'photoBooth')
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">📸 Photo Booth</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="additional_services"
-                                    value="videoRecording"
-                                    checked={formData.additional_services.includes('videoRecording')}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'additional_services',
-                                            value: e.target.checked
-                                                ? [...formData.additional_services, 'videoRecording']
-                                                : formData.additional_services.filter(service => service !== 'videoRecording')
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">🎥 Event Recording</label>
-                            </div>
-                            <div className="form-check">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name="additional_services"
-                                    value="other"
-                                    checked={formData.additional_services.includes('other')}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'additional_services',
-                                            value: e.target.checked
-                                                ? [...formData.additional_services, 'other']
-                                                : formData.additional_services.filter(service => service !== 'other')
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">Other</label>
-                            </div>
-                        </div>
+                    </div>
+                </div>
 
-                    </>
-                )}
-
-                {type === 'catering' && (
-                    <>
-                        <div className="mb-3">
-                            <label className="form-label">Event Type</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="event_type"
-                                value={formData.event_type}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        
-                        <div className="mb-3">
-                            <label className="form-label">Event Title</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Location</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="location"
-                                value={formData.location}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Budget Range</label>
-                            <select
-                                className="form-control"
-                                name="budget_range"
-                                value={formData.budget_range}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select Budget Range</option>
-                                <option value="0-1000">$0 - $1,000</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Date Flexibility</label>
-                            <select
-                                className="form-control"
-                                name="date_flexibility"
-                                value={formData.date_flexibility}
-                                onChange={handleInputChange}
-                            >
-                                <option value="specific">Specific Date</option>
-                                <option value="range">Date Range</option>
-                                <option value="flexible">I'm Flexible</option>
-                            </select>
-                        </div>
-
-                        {formData.date_flexibility === 'specific' && (
-                            <div className="mb-3">
-                                <label className="form-label">Event Date</label>
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                    name="start_date"
-                                    value={formData.start_date}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                        )}
-
-                        {formData.date_flexibility === 'range' && (
-                            <>
-                                <div className="mb-3">
-                                    <label className="form-label">Start Date</label>
+                {/* Photography Specific Section */}
+                {type === 'photography' && (
+                    <div className="form-grid">
+                        <div className="wedding-details-container">
+                            <div className="photo-options-header">Photography Details</div>
+                            
+                            <div className="custom-input-container">
+                                <div className="input-with-unknown">
                                     <input
-                                        type="date"
-                                        className="form-control"
-                                        name="start_date"
-                                        value={formData.start_date}
+                                        type="number"
+                                        name="num_people"
+                                        value={formData.num_people}
                                         onChange={handleInputChange}
+                                        className="custom-input"
+                                        min="1"
                                     />
+                                    <label className="unknown-checkbox-container">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.num_people_unknown}
+                                            onChange={handleCheckboxChange}
+                                            name="num_people_unknown"
+                                        />
+                                        <span className="unknown-checkbox-label">Not sure</span>
+                                    </label>
                                 </div>
-                                <div className="mb-3">
-                                    <label className="form-label">End Date</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        name="end_date"
-                                        value={formData.end_date}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                            </>
-                        )}
+                                <label className="custom-label">Number of People</label>
+                            </div>
 
-                        {formData.date_flexibility === 'flexible' && (
-                            <div className="mb-3">
-                                <label className="form-label">Preferred Timeframe</label>
+                            <div className="custom-input-container">
+                                <div className="input-with-unknown">
+                                    <input
+                                        type="number"
+                                        name="duration"
+                                        value={formData.duration}
+                                        onChange={handleInputChange}
+                                        className="custom-input"
+                                        min="1"
+                                    />
+                                    <label className="unknown-checkbox-container">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.duration_unknown}
+                                            onChange={handleCheckboxChange}
+                                            name="duration_unknown"
+                                        />
+                                        <span className="unknown-checkbox-label">Not sure</span>
+                                    </label>
+                                </div>
+                                <label className="custom-label">Duration (hours)</label>
+                            </div>
+
+                            <div className="custom-input-container">
                                 <select
-                                    className="form-control"
-                                    name="date_timeframe"
-                                    value={formData.date_timeframe}
+                                    name="indoor_outdoor"
+                                    value={formData.indoor_outdoor}
                                     onChange={handleInputChange}
+                                    className="custom-input"
                                 >
-                                    <option value="">Select timeframe</option>
-                                    <option value="3months">Within 3 months</option>
-                                    <option value="6months">Within 6 months</option>
-                                    <option value="1year">Within 1 year</option>
-                                    <option value="more">More than 1 year</option>
+                                    <option value="">Select...</option>
+                                    <option value="indoor">Indoor</option>
+                                    <option value="outdoor">Outdoor</option>
+                                    <option value="both">Both</option>
                                 </select>
+                                <label className="custom-label">Indoor/Outdoor</label>
                             </div>
-                        )}
 
-                        <div className="mb-3">
-                            <label className="form-label">Start Time</label>
-                            <input
-                                type="time"
-                                className="form-control"
-                                name="start_time"
-                                value={formData.start_time}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">End Time</label>
-                            <input
-                                type="time"
-                                className="form-control"
-                                name="end_time"
-                                value={formData.end_time}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Estimated Guests</label>
-                            <input
-                                type="number"
-                                className="form-control"
-                                name="num_people"
-                                value={formData.estimated_guests}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Indoor/Outdoor</label>
-                            <select
-                                className="form-control"
-                                name="indoor_outdoor"
-                                value={formData.indoor_outdoor}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select...</option>
-                                <option value="indoor">Indoor</option>
-                                <option value="outdoor">Outdoor</option>
-                                <option value="both">Both</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Setup & Cleanup</label>
-                            <select
-                                className="form-control"
-                                name="setup_cleanup"
-                                value={formData.setup_cleanup}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select...</option>
-                                <option value="setupOnly">Setup Only</option>
-                                <option value="cleanupOnly">Cleanup Only</option>
-                                <option value="both">Both Setup & Cleanup</option>
-                                <option value="neither">Neither</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Serving Staff</label>
-                            <select
-                                className="form-control"
-                                name="serving_staff"
-                                value={formData.serving_staff}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select...</option>
-                                <option value="fullService">Full Service Staff</option>
-                                <option value="partialService">Partial Service</option>
-                                <option value="noService">No Staff Needed</option>
-                                <option value="unsure">Not Sure</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Dinnerware, Utensils & Linens</label>
-                            <select
-                                className="form-control"
-                                name="dining_items"
-                                value={formData.dining_items}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select...</option>
-                                <option value="provided">Provided by Caterer</option>
-                                <option value="notProvided">Not Needed</option>
-                                <option value="partial">Partial (Specify Below)</option>
-                            </select>
-                        </div>
-
-                        {formData.dining_items === 'partial' && (
-                            <div className="mb-3">
-                                <label className="form-label">Dining Items Details</label>
-                                <ReactQuill
-                                    theme="snow"
-                                    value={formData.dining_items_notes || ''}
-                                    onChange={(content) => handleInputChange({
-                                        target: {
-                                            name: 'dining_items_notes',
-                                            value: content
-                                        }
-                                    })}
-                                />
-                            </div>
-                        )}
-
-                        <div className="mb-3">
-                            <label className="form-label">Food Service Type</label>
-                            <select
-                                className="form-control"
-                                name="food_service_type"
-                                value={formData.food_service_type}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select...</option>
-                                <option value="onSite">Cooking On-Site</option>
-                                <option value="delivered">Delivered Ready-to-Serve</option>
-                                <option value="both">Combination</option>
-                                <option value="flexible">Flexible</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Kitchen Equipment</label>
-                            <select
-                                className="form-control"
-                                name="equipment_needed"
-                                value={formData.equipment_needed}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select...</option>
-                                <option value="The venue provides kitchen equipment">The venue provides kitchen equipment</option>
-                                <option value="The caterer needs to bring all equipment">The caterer needs to bring all equipment</option>
-                                <option value="The caterer needs to bring some equipment">The caterer needs to bring some equipment</option>
-                                <option value="Equipment requirements to be discussed">Not sure about equipment requirements</option>
-                            </select>
-                        </div>
-
-                        {formData.equipment_needed === 'catererBringsSome' && (
-                            <div className="mb-3">
-                                <label className="form-label">Equipment Details</label>
-                                <ReactQuill
-                                    theme="snow"
-                                    value={formData.equipment_notes || ''}
-                                    onChange={(content) => handleInputChange({
-                                        target: {
-                                            name: 'equipment_notes',
-                                            value: content
-                                        }
-                                    })}
-                                />
-                            </div>
-                        )}
-
-                        <div className="mb-3">
-                            <label className="form-label">Food Style Preferences</label>
-                            <div className="form-check-group">
-                                {['american', 'mexican', 'italian', 'chinese', 'japanese',
-                                    'thai', 'korean', 'vietnamese', 'indian', 'mediterranean',
-                                    'greek', 'french', 'spanish', 'caribbean', 'cajunCreole',
-                                    'hawaiian', 'middleEastern', 'turkish', 'persian', 'african',
-                                    'brazilian', 'argentinian', 'peruvian', 'filipino', 'german',
-                                    'russian', 'easternEuropean', 'veganPlantBased', 'bbqSmoked',
-                                    'fusion'].map(cuisine => (
-                                    <div key={cuisine} className="form-check">
-                                        <input
-                                            type="checkbox"
-                                            className="form-check-input"
-                                            checked={formData.food_preferences?.[cuisine] || false}
-                                            onChange={(e) => handleJsonChange('food_preferences', cuisine, e.target.checked)}
-                                        />
-                                        <label className="form-check-label">
-                                            {cuisine.charAt(0).toUpperCase() + cuisine.slice(1).replace(/([A-Z])/g, ' $1')}
-                                        </label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Special Requests</label>
-                            <ReactQuill
-                                theme="snow"
-                                value={formData.special_requests || ''}
-                                onChange={(content) => handleInputChange({
-                                    target: {
-                                        name: 'special_requests',
-                                        value: content
-                                    }
-                                })}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Additional Information</label>
-                            <ReactQuill
-                                theme="snow"
-                                value={formData.additional_info || ''}
-                                onChange={(content) => handleInputChange({
-                                    target: {
-                                        name: 'additional_info',
-                                        value: content
-                                    }
-                                })}
-                            />
-                        </div>
-                    </>
-                )}
-
-                {type === 'beauty' && (
-                    <>
-                        <div className="mb-3">
-                            <label className="form-label">Title</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="event_title"
-                                value={formData.event_title}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Location</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="location"
-                                value={formData.location}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="custom-input-container">
-                            <label htmlFor="priceRange" className="form-label">
-                                Budget Range
-                            </label>
-                            <select
-                                name="priceRange"
-                                value={formData.price_range}
-                                onChange={handleInputChange}
-                                className="form-control custom-select"
-                            >
-                                <option value="">Select Budget Range</option>
-                                <option value="0-500">$0 - $500</option>
-                                <option value="500-1000">$500 - $1,000</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
-                            </select>
-
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">Service Type</label>
-                            <select
-                                className="form-control"
-                                name="service_type"
-                                value={formData.service_type}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select Service Type</option>
-                                <option value="both">Both Hair and Makeup</option>
-                                <option value="hair">Hair Only</option>
-                                <option value="makeup">Makeup Only</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Event Type</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="event_type"
-                                value={formData.event_type}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Date Flexibility</label>
-                            <select
-                                className="form-control"
-                                name="date_flexibility"
-                                value={formData.date_flexibility}
-                                onChange={handleInputChange}
-                            >
-                                <option value="specific">Specific Date</option>
-                                <option value="range">Date Range</option>
-                                <option value="flexible">I'm Flexible</option>
-                            </select>
-                        </div>
-
-                        {formData.date_flexibility === 'specific' && (
-                            <div className="mb-3">
-                                <label className="form-label">Event Date</label>
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                    name="start_date"
-                                    value={formData.start_date}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                        )}
-
-                        {formData.date_flexibility === 'range' && (
-                            <>
-                                <div className="mb-3">
-                                    <label className="form-label">Start Date</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        name="start_date"
-                                        value={formData.start_date}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                                <div className="mb-3">
-                                    <label className="form-label">End Date</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        name="end_date"
-                                        value={formData.end_date}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                            </>
-                        )}
-                        {formData.date_flexibility === 'flexible' && (
-                            <>
-                                <div className="mb-3">
-                                    <label className="form-label">Preferred Timeframe</label>
-                                    <select
-                                        className="form-control"
-                                        name="date_timeframe"
-                                        value={formData.date_timeframe}
-                                        onChange={handleInputChange}
-                                    >
-                                        <option value="">Select timeframe</option>
-                                        <option value="3months">Within 3 months</option>
-                                        <option value="6months">Within 6 months</option>
-                                        <option value="1year">Within 1 year</option>
-                                        <option value="more">More than 1 year</option>
-                                    </select>
-                                </div>
-                            </>
-                        )}
-
-                        <div className="mb-3">
-                                    <label className="form-label">Specific Time Needed</label>
-                                    <select
-                                        className="form-control"
-                                        name="specific_time_needed"
-                                        value={formData.specific_time_needed}
-                                        onChange={handleInputChange}
-                                    >
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </div>
-
-                                {formData.specific_time_needed === 'yes' && (
-                                    <div className="mb-3">
-                                        <label className="form-label">Specific Time</label>
-                                        <input
-                                            type="time"
-                                            className="form-control"
-                                            name="specific_time"
-                                            value={formData.specific_time}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-        )}
-
-
-                        <div className="mb-3">
-                            <label className="form-label">Number of People</label>
-                            <input
-                                type="number"
-                                className="form-control"
-                                name="num_people"
-                                value={formData.num_people}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        {(formData.service_type === 'both' || formData.service_type === 'hair') && (
-                            <>
-                                <div className="mb-3">
-                                    <label className="form-label">Hairstyle Preferences</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        name="hairstyle_preferences"
-                                        value={formData.hairstyle_preferences}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                <div className="mb-3">
-                                    <label className="form-label">Hair Length & Type</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        name="hair_length_type"
-                                        value={formData.hair_length_type}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                <div className="mb-3">
-                                    <div className="form-check">
-                                        <input
-                                            className="form-check-input"
-                                            type="checkbox"
-                                            name="extensions_needed"
-                                            checked={formData.extensions_needed === 'yes'}
-                                            onChange={(e) => handleInputChange({
-                                                target: {
-                                                    name: 'extensions_needed',
-                                                    value: e.target.checked ? 'yes' : 'no'
-                                                }
-                                            })}
-                                        />
-                                        <label className="form-check-label">Extensions Needed</label>
-                                    </div>
-                                </div>
-
-                                <div className="mb-3">
-                                <div className="form-check">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        name="trial_session_hair"
-                                        checked={formData.trial_session_hair === 'yes'}
-                                        onChange={(e) => handleInputChange({
-                                            target: {
-                                                name: 'trial_session_hair',
-                                                value: e.target.checked ? 'yes' : 'no'
-                                            }
-                                        })}
-                                    />
-                                    <label className="form-check-label">Trial Session for Hair</label>
-                                </div>
-                            </div>
-                            </>
-                        )}
-
-                        {(formData.service_type === 'both' || formData.service_type === 'makeup') && (
-                            <>
-                                <div className="mb-3">
-                                    <label className="form-label">Makeup Style Preferences</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        name="makeup_style_preferences"
-                                        value={formData.makeup_style_preferences}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                <div className="mb-3">
-                                    <label className="form-label">Skin Type & Concerns</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        name="skin_type_concerns"
-                                        value={formData.skin_type_concerns}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                <div className="mb-3">
-                                    <label className="form-label">Preferred Products or Allergies</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        name="preferred_products_allergies"
-                                        value={formData.preferred_products_allergies}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                <div className="mb-3">
-                                    <div className="form-check">
-                                        <input
-                                            className="form-check-input"
-                                            type="checkbox"
-                                            name="lashes_included"
-                                            checked={formData.lashes_included === 'yes'}
-                                            onChange={(e) => handleInputChange({
-                                                target: {
-                                                    name: 'lashes_included',
-                                                    value: e.target.checked ? 'yes' : 'no'
-                                                }
-                                            })}
-                                        />
-                                        <label className="form-check-label">Lashes Included</label>
-                                    </div>
-                                </div>
-
-                                <div className="mb-3">
-                                    <div className="form-check">
-                                        <input
-                                            className="form-check-input"
-                                            type="checkbox"
-                                            name="trial_session_makeup"
-                                            checked={formData.trial_session_makeup === 'yes'}
-                                            onChange={(e) => handleInputChange({
-                                                target: {
-                                                    name: 'trial_session_makeup',
-                                                    value: e.target.checked ? 'yes' : 'no'
-                                                }
-                                            })}
-                                        />
-                                        <label className="form-check-label">Trial Session for Makeup</label>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-
-                        <div className="mb-3">
-                            <label className="form-label">Group Discount Inquiry</label>
-                            <select
-                                className="form-control"
-                                name="group_discount_inquiry"
-                                value={formData.group_discount_inquiry}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">On-Site Service Needed</label>
-                            <select
-                                className="form-control"
-                                name="on_site_service_needed"
-                                value={formData.on_site_service_needed}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Pinterest Link</label>
-                            <input
-                                type="url"
-                                className="form-control"
-                                name="pinterest_link"
-                                value={formData.pinterest_link}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    </>
-                )}
-
-                {type === 'florist' && (
-                    <>
-                        <div className="mb-3">
-                            <label className="form-label">Event Type</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="event_type"
-                                value={formData.event_type}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Event Title</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="event_title"
-                                value={formData.event_title}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Location</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="location"
-                                value={formData.location}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Budget Range</label>
-                            <select
-                                className="form-control"
-                                name="price_range"
-                                value={formData.price_range}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select Budget Range</option>
-                                <option value="0-500">$0 - $500</option>
-                                <option value="500-1000">$500 - $1,000</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Date Flexibility</label>
-                            <select
-                                className="form-control"
-                                name="date_flexibility"
-                                value={formData.date_flexibility}
-                                onChange={handleInputChange}
-                            >
-                                <option value="specific">Specific Date</option>
-                                <option value="range">Date Range</option>
-                                <option value="flexible">I'm Flexible</option>
-                            </select>
-                        </div>
-
-                        {formData.date_flexibility === 'specific' && (
-                            <div className="mb-3">
-                                <label className="form-label">Event Date</label>
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                    name="start_date"
-                                    value={formData.start_date}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                        )}
-
-                        {formData.date_flexibility === 'range' && (
-                            <>
-                                <div className="mb-3">
-                                    <label className="form-label">Earliest Date</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        name="start_date"
-                                        value={formData.start_date}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                                <div className="mb-3">
-                                    <label className="form-label">Latest Date</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        name="end_date"
-                                        value={formData.end_date}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                            </>
-                        )}
-
-                        {formData.date_flexibility === 'flexible' && (
-                            <div className="mb-3">
-                                <label className="form-label">Preferred Timeframe</label>
+                            <div className="custom-input-container">
                                 <select
-                                    className="form-control"
-                                    name="date_timeframe"
-                                    value={formData.date_timeframe}
+                                    name="second_photographer"
+                                    value={formData.second_photographer}
                                     onChange={handleInputChange}
+                                    className="custom-input"
                                 >
-                                    <option value="">Select timeframe</option>
-                                    <option value="3months">Within 3 months</option>
-                                    <option value="6months">Within 6 months</option>
-                                    <option value="1year">Within 1 year</option>
-                                    <option value="more">More than 1 year</option>
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                    <option value="undecided">Let photographer recommend</option>
                                 </select>
+                                <label className="custom-label">Second Photographer</label>
                             </div>
-                        )}
 
-                        <div className="mb-3">
-                            <label className="form-label">Specific Time Needed</label>
-                            <div className="form-check">
-                                <input
-                                    type="checkbox"
-                                    className="form-check-input"
-                                    name="specific_time_needed"
-                                    checked={formData.specific_time_needed || false}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: 'specific_time_needed',
-                                            value: e.target.checked
-                                        }
-                                    })}
-                                />
-                                <label className="form-check-label">I need a specific time</label>
+                            {/* Style Preferences */}
+                            <div className="wedding-photo-options">
+                                <div className="photo-options-header">Style Preferences</div>
+                                <div className="photo-options-grid">
+                                    {[
+                                        { key: 'brightAiry', label: 'Bright & Airy' },
+                                        { key: 'darkMoody', label: 'Dark & Moody' },
+                                        { key: 'filmEmulation', label: 'Film-Like' },
+                                        { key: 'traditional', label: 'Traditional/Classic' },
+                                        { key: 'documentary', label: 'Documentary/Candid' },
+                                        { key: 'artistic', label: 'Artistic/Creative' }
+                                    ].map(style => (
+                                        <div key={style.key} className="photo-option-item">
+                                            <input
+                                                type="checkbox"
+                                                id={style.key}
+                                                checked={formData.style_preferences?.[style.key] || false}
+                                                onChange={(e) => handleJsonChange('style_preferences', style.key, e.target.checked)}
+                                            />
+                                            <label htmlFor={style.key}>{style.label}</label>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
-                        {formData.specific_time_needed === true && (
-                            <div className="mb-3">
-                                <label className="form-label">Specific Time</label>
-                                <input
-                                    type="time"
-                                    className="form-control"
-                                    name="specific_time"
-                                    value={formData.specific_time}
-                                    onChange={handleInputChange}
-                                />
+                            {/* Deliverables */}
+                            <div className="wedding-photo-options">
+                                <div className="photo-options-header">Deliverables</div>
+                                <div className="photo-options-grid">
+                                    {[
+                                        { key: 'digitalFiles', label: 'Digital Files' },
+                                        { key: 'printRelease', label: 'Print Release' },
+                                        { key: 'weddingAlbum', label: 'Wedding Album' },
+                                        { key: 'prints', label: 'Professional Prints' },
+                                        { key: 'rawFiles', label: 'RAW Files' },
+                                        { key: 'engagement', label: 'Engagement Session' }
+                                    ].map(item => (
+                                        <div key={item.key} className="photo-option-item">
+                                            <input
+                                                type="checkbox"
+                                                id={item.key}
+                                                checked={formData.deliverables?.[item.key] || false}
+                                                onChange={(e) => handleJsonChange('deliverables', item.key, e.target.checked)}
+                                            />
+                                            <label htmlFor={item.key}>{item.label}</label>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        )}
 
-                        {/* Floral Arrangements Section */}
-                        <div className="mb-3">
-                            <label className="form-label">Floral Arrangements</label>
-                            {[
-                                { id: 'bridalBouquet', label: 'Bridal bouquet' },
-                                { id: 'bridesmaidBouquets', label: 'Bridesmaid bouquets' },
-                                { id: 'boutonnieres', label: 'Boutonnieres' },
-                                { id: 'corsages', label: 'Corsages' },
-                                { id: 'centerpieces', label: 'Centerpieces' },
-                                { id: 'ceremonyArchFlowers', label: 'Ceremony arch flowers' },
-                                { id: 'aisleDecorations', label: 'Aisle decorations' },
-                                { id: 'floralInstallations', label: 'Floral installations' },
-                                { id: 'cakeFlowers', label: 'Cake flowers' },
-                                { id: 'loosePetals', label: 'Loose petals' }
-                            ].map(item => (
-                                <div key={item.id} className="form-check">
+                            {/* Wedding Details */}
+                            <div className="wedding-photo-options">
+                                <div className="photo-options-header">Wedding Details</div>
+                                <div className="photo-options-grid">
+                                    {[
+                                        { key: 'preCeremony', label: 'Pre-Ceremony' },
+                                        { key: 'ceremony', label: 'Ceremony' },
+                                        { key: 'reception', label: 'Reception' }
+                                    ].map(item => (
+                                        <div key={item.key} className="photo-option-item">
+                                            <input
+                                                type="checkbox"
+                                                id={item.key}
+                                                checked={formData.wedding_details?.[item.key] || false}
+                                                onChange={(e) => handleJsonChange('wedding_details', item.key, e.target.checked)}
+                                            />
+                                            <label htmlFor={item.key}>{item.label}</label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Photo Upload Section */}
+                            <div className="photo-upload-section">
+                                <div className="custom-input-container">
                                     <input
-                                        type="checkbox"
-                                        className="form-check-input"
-                                        checked={formData.floral_arrangements?.[item.id] || false}
-                                        onChange={(e) => handleJsonChange('floral_arrangements', item.id, e.target.checked)}
+                                        type="url"
+                                        name="pinterest_link"
+                                        value={formData.pinterest_link}
+                                        onChange={handleInputChange}
+                                        className="custom-input"
+                                        placeholder="Paste your Pinterest board link here"
                                     />
-                                    <label className="form-check-label">{item.label}</label>
-                                    {formData.floral_arrangements?.[item.id] && item.id !== 'loosePetals' && (
-                                        <input
-                                            type="number"
-                                            className="form-control mt-2"
-                                            value={formData.floral_arrangements[`${item.id}Quantity`] || ''}
-                                            onChange={(e) => handleJsonChange('floral_arrangements', `${item.id}Quantity`, e.target.value)}
-                                            placeholder="Quantity"
-                                        />
+                                    <label className="custom-label">Inspo</label>
+                                </div>
+
+                                <div className="photo-upload-instructions">
+                                    <p style={{ color: "gray", fontSize:'16px' }}>You can also upload photos to help us understand your vision. Click or drag and drop photos below.</p>
+                                </div>
+
+                                <div className="photo-preview-container">
+                                    {(!photos || photos.length === 0) ? (
+                                        <div
+                                            className="photo-upload-box"
+                                            onClick={() => document.getElementById("file-input").click()}
+                                        >
+                                            <input
+                                                type="file"
+                                                id="file-input"
+                                                multiple
+                                                onChange={handlePhotoUpload}
+                                                style={{ display: "none" }}
+                                            />
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="54"
+                                                height="45"
+                                                viewBox="0 0 54 45"
+                                                fill="none"
+                                            >
+                                                <path
+                                                    d="M40.6939 15.6916C40.7126 15.6915 40.7313 15.6915 40.75 15.6915C46.9632 15.6915 52 20.2889 52 25.9601C52 31.2456 47.6249 35.5984 42 36.166M40.6939 15.6916C40.731 15.3158 40.75 14.9352 40.75 14.5505C40.75 7.61906 34.5939 2 27 2C19.8081 2 13.9058 7.03987 13.3011 13.4614M40.6939 15.6916C40.4383 18.2803 39.3216 20.6423 37.6071 22.5372M13.3011 13.4614C6.95995 14.0121 2 18.8869 2 24.8191C2 30.339 6.2944 34.9433 12 36.0004M13.3011 13.4614C13.6956 13.4271 14.0956 13.4096 14.5 13.4096C17.3146 13.4096 19.9119 14.2586 22.0012 15.6915"
+                                                    stroke="#141B34"
+                                                    strokeWidth="3"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                />
+                                                <path
+                                                    d="M27 24.7783L27 43.0002M27 24.7783C25.2494 24.7783 21.9788 29.3208 20.75 30.4727M27 24.7783C28.7506 24.7783 32.0212 29.3208 33.25 30.4727"
+                                                    stroke="#141B34"
+                                                    strokeWidth="3"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                />
+                                            </svg>
+                                            <div className="photo-upload-text">
+                                                Drag & Drop to Upload or Click to Browse
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="photo-grid">
+                                                {photos.map(photo => (
+                                                    <div key={photo.id} className="photo-grid-item">
+                                                        <img
+                                                            src={photo.photo_url}
+                                                            alt="Inspiration"
+                                                            className="photo-grid-image"
+                                                        />
+                                                        <button
+                                                            className="remove-photo-button"
+                                                            onClick={() => handleRemovePhoto(photo.id, photo.file_path)}
+                                                        >
+                                                            <FaTrash size={14} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div style={{ textAlign: "center", marginTop: "20px" }}>
+                                                <button
+                                                    onClick={() => document.getElementById("file-input-more").click()}
+                                                    className="add-more-photos-btn"
+                                                >
+                                                    <input
+                                                        type="file"
+                                                        id="file-input-more"
+                                                        multiple
+                                                        onChange={handlePhotoUpload}
+                                                        style={{ display: "none" }}
+                                                    />
+                                                    <span className="add-more-text">Add More Photos</span>
+                                                </button>
+                                            </div>
+                                        </>
                                     )}
                                 </div>
-                            ))}
-                        </div>
+                            </div>
 
-                        {/* Additional Services Section */}
-                        <div className="mb-3">
-                            <label className="form-label">Additional Services</label>
-                            {[
-                                { id: 'setupAndTakedown', label: 'Setup and takedown' },
-                                { id: 'delivery', label: 'Delivery' },
-                                { id: 'floralPreservation', label: 'Floral preservation' }
-                            ].map(service => (
-                                <div key={service.id} className="form-check">
-                                    <input
-                                        type="checkbox"
-                                        className="form-check-input"
-                                        checked={formData.additional_services?.[service.id] || false}
-                                        onChange={(e) => handleJsonChange('additional_services', service.id, e.target.checked)}
-                                    />
-                                    <label className="form-check-label">{service.label}</label>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Color Preferences Section */}
-                        <div className="mb-3">
-                            <label className="form-label">Color Preferences</label>
-                            {[
-                                'Red', 'Pink', 'Orange', 'Yellow', 'Green',
-                                'Blue', 'Purple', 'White', 'Black', 'Gray', 'Brown'
-                            ].map(color => (
-                                <div key={color} className="form-check">
-                                    <input
-                                        type="checkbox"
-                                        className="form-check-input"
-                                        checked={formData.colors?.includes(color) || false}
-                                        onChange={(e) => {
-                                            const newColors = e.target.checked
-                                                ? [...(formData.colors || []), color]
-                                                : (formData.colors || []).filter(c => c !== color);
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                colors: newColors
-                                            }));
-                                        }}
-                                    />
-                                    <label className="form-check-label">{color}</label>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Flower Types Section */}
-                        <div className="mb-3">
-                            <label className="form-label">Flower Preferences</label>
-                            {[
-                                { id: 'roses', label: 'Roses' },
-                                { id: 'peonies', label: 'Peonies' },
-                                { id: 'hydrangeas', label: 'Hydrangeas' },
-                                { id: 'lilies', label: 'Lilies' },
-                                { id: 'tulips', label: 'Tulips' },
-                                { id: 'orchids', label: 'Orchids' },
-                                { id: 'daisies', label: 'Daisies' },
-                                { id: 'ranunculus', label: 'Ranunculus' },
-                                { id: 'anemones', label: 'Anemones' },
-                                { id: 'scabiosa', label: 'Scabiosa' },
-                                { id: 'eucalyptus', label: 'Eucalyptus' },
-                                { id: 'sunflowers', label: 'Sunflowers' },
-                                { id: 'babysBreath', label: "Baby's Breath" },
-                                { id: 'lavender', label: 'Lavender' },
-                                { id: 'dahlia', label: 'Dahlia' },
-                                { id: 'zinnias', label: 'Zinnias' },
-                                { id: 'protea', label: 'Protea' },
-                                { id: 'amaranthus', label: 'Amaranthus' },
-                                { id: 'chrysanthemums', label: 'Chrysanthemums' },
-                                { id: 'ruscus', label: 'Ruscus' },
-                                { id: 'ivy', label: 'Ivy' },
-                                { id: 'ferns', label: 'Ferns' }
-                            ].map(flower => (
-                                <div key={flower.id} className="form-check">
-                                    <input
-                                        type="checkbox"
-                                        className="form-check-input"
-                                        checked={formData.flower_preferences?.[flower.id] || false}
-                                        onChange={(e) => handleJsonChange('flower_preferences', flower.id, e.target.checked)}
-                                    />
-                                    <label className="form-check-label">{flower.label}</label>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Pinterest Link</label>
-                            <input
-                                type="url"
-                                className="form-control"
-                                name="pinterest_link"
-                                value={formData.pinterest_link}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Additional Information</label>
-                            <ReactQuill
-                                theme="snow"
-                                value={formData.additional_comments || ''}
-                                onChange={(content) => handleInputChange({
-                                    target: {
-                                        name: 'additional_comments',
-                                        value: content
-                                    }
-                                })}
-                            />
-                        </div>
-                    </>
-                )}
-
-                {type === 'videography' && (
-                    <>
-                        <div className="mb-3">
-                            <label className="form-label">Event Title</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="event_title"
-                                value={formData.event_title}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Event Type</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="event_type"
-                                value={formData.event_type}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Location</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="location"
-                                value={formData.location}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Time of Day</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="time_of_day"
-                                value={formData.time_of_day}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Number of People</label>
-                            <input
-                                type="number"
-                                className="form-control"
-                                name="num_people"
-                                value={formData.num_people}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Duration (hours)</label>
-                            <input
-                                type="number"
-                                className="form-control"
-                                name="duration"
-                                value={formData.duration}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Indoor/Outdoor</label>
-                            <select
-                                className="form-control"
-                                name="indoor_outdoor"
-                                value={formData.indoor_outdoor}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select...</option>
-                                <option value="indoor">Indoor</option>
-                                <option value="outdoor">Outdoor</option>
-                                <option value="both">Both</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Second Photographer</label>
-                            <select
-                                className="form-control"
-                                name="second_photographer"
-                                value={formData.second_photographer}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select</option>
-                                <option value="true">Yes</option>
-                                <option value="false">No</option>
-                                <option value="undecided">Let photographer recommend</option>
-                            </select>
-                        </div>
-
-                        {/* Existing videography fields */}
-                        <div className="mb-3">
-                            <label className="form-label">Budget Range</label>
-                            <select
-                                className="form-control"
-                                name="price_range"
-                                value={formData.price_range}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select Budget Range</option>
-                                <option value="0-1000">$0 - $1,000</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Additional Information</label>
-                            <ReactQuill
-                                theme="snow"
-                                value={formData.additional_comments || ''}
-                                onChange={(content) => handleInputChange({
-                                    target: {
-                                        name: 'additional_comments',
-                                        value: content
-                                    }
-                                })}
-                            />
-                        </div>
-
-                        {/* Add this new coverage section */}
-                        <div className="mb-3">
-                            <label className="form-label">Coverage Options</label>
-                            <div className="form-check-group">
-                                {[
-                                    { key: 'preCeremony', label: 'Pre-Ceremony' },
-                                    { key: 'ceremony', label: 'Ceremony' },
-                                    { key: 'luncheon', label: 'Luncheon' },
-                                    { key: 'reception', label: 'Reception' },
-
-                                ].map(({ key, label }) => (
-                                    <div key={key} className="form-check">
-                                        <input
-                                            type="checkbox"
-                                            className="form-check-input"
-                                            checked={formData.coverage?.[key] || false}
-                                            onChange={(e) => {
-                                                const newCoverage = {
-                                                    ...formData.coverage,
-                                                    [key]: e.target.checked
-                                                };
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    coverage: newCoverage
-                                                }));
-                                            }}
-                                        />
-                                        <label className="form-check-label">{label}</label>
-                                    </div>
-                                ))}
+                            <div className="custom-input-container">
+                                <ReactQuill
+                                    value={formData.additional_info || ''}
+                                    onChange={(content) => setFormData(prev => ({
+                                        ...prev,
+                                        additional_info: content
+                                    }))}
+                                    placeholder="Any special requests or additional information photographers should know..."
+                                />
+                                <label className="custom-label">Additional Information</label>
                             </div>
                         </div>
-                    </>
+                    </div>
                 )}
 
-                {type === 'regular' && (
-                    <>
-                        <div className="mb-3">
-                            <label className="form-label">Service Type</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="service_type"
-                                value={formData.service_type}
-                                onChange={handleInputChange}
-                            />
-                        </div>
+                {/* Florist Specific Section */}
+                {type === 'florist' && (
+                    <div className="form-grid">
+                        <div className="wedding-details-container">
+                            <div className="photo-options-header">Florist Details</div>
+                            
+                            <div className="custom-input-container">
+                                <div className="input-with-unknown">
+                                    <input
+                                        type="number"
+                                        name="budget"
+                                        value={formData.budget}
+                                        onChange={handleInputChange}
+                                        className="custom-input"
+                                        min="1"
+                                    />
+                                    <label className="unknown-checkbox-container">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.budget_unknown}
+                                            onChange={handleCheckboxChange}
+                                            name="budget_unknown"
+                                        />
+                                        <span className="unknown-checkbox-label">Not sure</span>
+                                    </label>
+                                </div>
+                                <label className="custom-label">Budget</label>
+                            </div>
 
-                        <div className="mb-3">
-                            <label className="form-label">Service Title</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="service_title"
-                                value={formData.service_title}
-                                onChange={handleInputChange}
-                            />
-                        </div>
+                            <div className="wedding-photo-options">
+                                <div className="photo-options-header">Floral Arrangements Needed</div>
+                                <div className="photo-options-grid">
+                                    {[
+                                        { key: 'bridalBouquet', label: 'Bridal Bouquet' },
+                                        { key: 'bridesmaidBouquets', label: 'Bridesmaid Bouquets' },
+                                        { key: 'boutonnieres', label: 'Boutonnieres' },
+                                        { key: 'centerpieces', label: 'Centerpieces' },
+                                        { key: 'ceremonyArch', label: 'Ceremony Arch' },
+                                        { key: 'aisleDecor', label: 'Aisle Decor' },
+                                        { key: 'altarArrangements', label: 'Altar Arrangements' }
+                                    ].map(item => (
+                                        <div key={item.key} className="photo-option-item">
+                                            <input
+                                                type="checkbox"
+                                                id={item.key}
+                                                checked={formData.floral_arrangements?.[item.key] || false}
+                                                onChange={(e) => handleJsonChange('floral_arrangements', item.key, e.target.checked)}
+                                            />
+                                            <label htmlFor={item.key}>{item.label}</label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
 
-                        <div className="mb-3">
-                            <label className="form-label">Service Description</label>
-                            <ReactQuill
-                                theme="snow"
-                                value={formData.service_description || ''}
-                                onChange={(content) => handleInputChange({
-                                    target: {
-                                        name: 'service_description',
-                                        value: content
-                                    }
-                                })}
-                            />
-                        </div>
+                            <div className="wedding-photo-options">
+                                <div className="photo-options-header">Flower Preferences</div>
+                                <div className="photo-options-grid">
+                                    {[
+                                        { key: 'roses', label: 'Roses' },
+                                        { key: 'peonies', label: 'Peonies' },
+                                        { key: 'lilies', label: 'Lilies' },
+                                        { key: 'tulips', label: 'Tulips' },
+                                        { key: 'hydrangeas', label: 'Hydrangeas' },
+                                        { key: 'orchids', label: 'Orchids' }
+                                    ].map(item => (
+                                        <div key={item.key} className="photo-option-item">
+                                            <input
+                                                type="checkbox"
+                                                id={item.key}
+                                                checked={formData.flower_preferences?.[item.key] || false}
+                                                onChange={(e) => handleJsonChange('flower_preferences', item.key, e.target.checked)}
+                                            />
+                                            <label htmlFor={item.key}>{item.label}</label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
 
-                        <div className="mb-3">
-                            <label className="form-label">Service Date</label>
-                            <input
-                                type="date"
-                                className="form-control"
-                                name="service_date"
-                                value={formData.service_date}
-                                onChange={handleInputChange}
-                            />
-                        </div>
+                            <div className="custom-input-container">
+                                <input
+                                    type="text"
+                                    name="color_scheme"
+                                    value={formData.color_scheme}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                    placeholder="Enter color scheme"
+                                />
+                                <label className="custom-label">Color Scheme</label>
+                            </div>
 
-                        <div className="mb-3">
-                            <label className="form-label">End Date</label>
-                            <input
-                                type="date"
-                                className="form-control"
-                                name="end_date"
-                                value={formData.end_date}
-                                onChange={handleInputChange}
-                            />
+                            <div className="custom-input-container">
+                                <ReactQuill
+                                    value={formData.additional_info || ''}
+                                    onChange={(content) => setFormData(prev => ({
+                                        ...prev,
+                                        additional_info: content
+                                    }))}
+                                    placeholder="Any specific floral arrangements or additional information..."
+                                />
+                                <label className="custom-label">Additional Information</label>
+                            </div>
                         </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Additional Comments</label>
-                            <ReactQuill
-                                theme="snow"
-                                value={formData.additional_comments || ''}
-                                onChange={(content) => handleInputChange({
-                                    target: {
-                                        name: 'additional_comments',
-                                        value: content
-                                    }
-                                })}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Location</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="location"
-                                value={formData.location}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Budget Range</label>
-                            <select
-                                className="form-control"
-                                name="price_range"
-                                value={formData.price_range}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">Select Budget Range</option>
-                                <option value="0-1000">Under $1,000</option>
-                                <option value="1000-2000">$1,000 - $2,000</option>
-                                <option value="2000-3000">$2,000 - $3,000</option>
-                                <option value="3000-4000">$3,000 - $4,000</option>
-                                <option value="4000-5000">$4,000 - $5,000</option>
-                                <option value="5000+">$5,000+</option>
-                            </select>
-                        </div>
-                    </>
+                    </div>
                 )}
 
-                <div className="d-flex gap-2 mt-4">
-                    <button type="submit" className="btn-primary" style={{width: '100%'}}>Save Changes</button>
-                    <button type="button" className="btn-secondary" style={{width: '100%'}} onClick={() => navigate('/bids')}>Cancel</button>
+                {/* Catering Specific Section */}
+                {type === 'catering' && (
+                    <div className="form-grid">
+                        <div className="wedding-details-container">
+                            <div className="photo-options-header">Catering Details</div>
+                            <div className="custom-input-container">
+                                <input
+                                    type="text"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                    placeholder="Enter catering request title"
+                                />
+                                <label className="custom-label">Title</label>
+                            </div>
+                            <div className="custom-input-container">
+                                <div className="input-with-unknown">
+                                    <input
+                                        type="number"
+                                        name="estimated_guests"
+                                        value={formData.estimated_guests}
+                                        onChange={handleInputChange}
+                                        className="custom-input"
+                                        min="1"
+                                    />
+                                    <label className="unknown-checkbox-container">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.guest_count_unknown}
+                                            onChange={handleCheckboxChange}
+                                            name="guest_count_unknown"
+                                        />
+                                        <span className="unknown-checkbox-label">Not sure</span>
+                                    </label>
+                                </div>
+                                <label className="custom-label">Expected Guest Count</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <input
+                                    type="number"
+                                    name="event_duration"
+                                    value={formData.event_duration}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                    min="1"
+                                />
+                                <label className="custom-label">Event Duration (hours)</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <input
+                                    type="text"
+                                    name="dietary_restrictions"
+                                    value={formData.dietary_restrictions}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                    placeholder="List any dietary restrictions"
+                                />
+                                <label className="custom-label">Dietary Restrictions</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <input
+                                    type="text"
+                                    name="other_dietary_details"
+                                    value={formData.other_dietary_details}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                    placeholder="Any other dietary details"
+                                />
+                                <label className="custom-label">Other Dietary Details</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <input
+                                    type="text"
+                                    name="equipment_notes"
+                                    value={formData.equipment_notes}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                    placeholder="Any specific equipment requirements"
+                                />
+                                <label className="custom-label">Equipment Notes</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <input
+                                    type="text"
+                                    name="dining_items_notes"
+                                    value={formData.dining_items_notes}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                    placeholder="Notes about dining items"
+                                />
+                                <label className="custom-label">Dining Items Notes</label>
+                            </div>
+
+                            <div className="wedding-photo-options">
+                                <div className="photo-options-header">Food Preferences</div>
+                                <div className="photo-options-grid">
+                                    {[
+                                        { key: 'vegetarian', label: 'Vegetarian' },
+                                        { key: 'vegan', label: 'Vegan' },
+                                        { key: 'glutenFree', label: 'Gluten-Free' },
+                                        { key: 'kosher', label: 'Kosher' },
+                                        { key: 'halal', label: 'Halal' },
+                                        { key: 'dairyFree', label: 'Dairy-Free' }
+                                    ].map(item => (
+                                        <div key={item.key} className="photo-option-item">
+                                            <input
+                                                type="checkbox"
+                                                id={item.key}
+                                                checked={formData.food_preferences?.[item.key] || false}
+                                                onChange={(e) => handleJsonChange('food_preferences', item.key, e.target.checked)}
+                                            />
+                                            <label htmlFor={item.key}>{item.label}</label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <select
+                                    name="service_type"
+                                    value={formData.service_type}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                >
+                                    <option value="">Select Service Type</option>
+                                    <option value="buffet">Buffet</option>
+                                    <option value="plated">Plated</option>
+                                    <option value="family">Family Style</option>
+                                    <option value="cocktail">Cocktail Style</option>
+                                </select>
+                                <label className="custom-label">Service Type</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <ReactQuill
+                                    value={formData.additional_info || ''}
+                                    onChange={(content) => setFormData(prev => ({
+                                        ...prev,
+                                        additional_info: content
+                                    }))}
+                                    placeholder="Any specific dietary requirements or additional information..."
+                                />
+                                <label className="custom-label">Additional Information</label>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Wedding Planning Specific Section */}
+                {type === 'wedding_planning' && (
+                    <div className="form-grid">
+                        <div className="wedding-details-container">
+                            <div className="photo-options-header">Wedding Planning Details</div>
+                            
+                            <div className="custom-input-container">
+                                <select
+                                    name="planning_level"
+                                    value={formData.planning_level}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                >
+                                    <option value="">Select Planning Level</option>
+                                    <option value="full">Full Planning</option>
+                                    <option value="partial">Partial Planning</option>
+                                    <option value="dayOf">Day-of Coordination</option>
+                                </select>
+                                <label className="custom-label">Planning Level</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <select
+                                    name="venue_status"
+                                    value={formData.venue_status}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                >
+                                    <option value="">Select Venue Status</option>
+                                    <option value="booked">Venue Booked</option>
+                                    <option value="shortlisted">Venue Shortlisted</option>
+                                    <option value="searching">Still Searching</option>
+                                </select>
+                                <label className="custom-label">Venue Status</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <input
+                                    type="text"
+                                    name="wedding_style"
+                                    value={formData.wedding_style}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                    placeholder="Describe your wedding style"
+                                />
+                                <label className="custom-label">Wedding Style</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <input
+                                    type="text"
+                                    name="theme_preferences"
+                                    value={formData.theme_preferences}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                    placeholder="Describe your theme preferences"
+                                />
+                                <label className="custom-label">Theme Preferences</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <select
+                                    name="experience_level"
+                                    value={formData.experience_level}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                >
+                                    <option value="">Select Experience Level</option>
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="experienced">Experienced</option>
+                                </select>
+                                <label className="custom-label">Experience Level</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <select
+                                    name="communication_style"
+                                    value={formData.communication_style}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                >
+                                    <option value="">Select Communication Style</option>
+                                    <option value="email">Email</option>
+                                    <option value="phone">Phone</option>
+                                    <option value="both">Both</option>
+                                </select>
+                                <label className="custom-label">Communication Style</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <select
+                                    name="planner_budget"
+                                    value={formData.planner_budget}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                >
+                                    <option value="">Select Planner Budget</option>
+                                    <option value="0-1000">Under $1,000</option>
+                                    <option value="1000-2000">$1,000 - $2,000</option>
+                                    <option value="2000-3000">$2,000 - $3,000</option>
+                                    <option value="3000+">$3,000+</option>
+                                </select>
+                                <label className="custom-label">Planner Budget</label>
+                            </div>
+
+                            <div className="wedding-photo-options">
+                                <div className="photo-options-header">Services Needed</div>
+                                <div className="photo-options-grid">
+                                    {[
+                                        { key: 'vendorCoordination', label: 'Vendor Coordination' },
+                                        { key: 'timelineCreation', label: 'Timeline Creation' },
+                                        { key: 'budgetManagement', label: 'Budget Management' },
+                                        { key: 'venueSelection', label: 'Venue Selection' },
+                                        { key: 'designConsultation', label: 'Design Consultation' },
+                                        { key: 'rehearsalCoordination', label: 'Rehearsal Coordination' }
+                                    ].map(item => (
+                                        <div key={item.key} className="photo-option-item">
+                                            <input
+                                                type="checkbox"
+                                                id={item.key}
+                                                checked={formData.services_needed?.[item.key] || false}
+                                                onChange={(e) => handleJsonChange('services_needed', item.key, e.target.checked)}
+                                            />
+                                            <label htmlFor={item.key}>{item.label}</label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <ReactQuill
+                                    value={formData.additional_info || ''}
+                                    onChange={(content) => setFormData(prev => ({
+                                        ...prev,
+                                        additional_info: content
+                                    }))}
+                                    placeholder="Any specific requirements or additional information..."
+                                />
+                                <label className="custom-label">Additional Information</label>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Videography Specific Section */}
+                {type === 'videography' && (
+                    <div className="form-grid">
+                        <div className="wedding-details-container">
+                            <div className="photo-options-header">Videography Details</div>
+                            
+                            <div className="custom-input-container">
+                                <div className="input-with-unknown">
+                                    <input
+                                        type="number"
+                                        name="duration"
+                                        value={formData.duration}
+                                        onChange={handleInputChange}
+                                        className="custom-input"
+                                        min="1"
+                                    />
+                                    <label className="unknown-checkbox-container">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.duration_unknown}
+                                            onChange={handleCheckboxChange}
+                                            name="duration_unknown"
+                                        />
+                                        <span className="unknown-checkbox-label">Not sure</span>
+                                    </label>
+                                </div>
+                                <label className="custom-label">Duration (hours)</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <select
+                                    name="date_type"
+                                    value={formData.date_type}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                >
+                                    <option value="">Select Date Type</option>
+                                    <option value="specific">Specific Date</option>
+                                    <option value="range">Date Range</option>
+                                    <option value="flexible">Flexible</option>
+                                </select>
+                                <label className="custom-label">Date Type</label>
+                            </div>
+
+                            <div className="wedding-photo-options">
+                                <div className="photo-options-header">Coverage Needed</div>
+                                <div className="photo-options-grid">
+                                    {[
+                                        { key: 'preCeremony', label: 'Pre-Ceremony' },
+                                        { key: 'ceremony', label: 'Ceremony' },
+                                        { key: 'reception', label: 'Reception' },
+                                        { key: 'highlights', label: 'Highlights' },
+                                        { key: 'fullLength', label: 'Full Length' },
+                                        { key: 'trailer', label: 'Trailer' }
+                                    ].map(item => (
+                                        <div key={item.key} className="photo-option-item">
+                                            <input
+                                                type="checkbox"
+                                                id={item.key}
+                                                checked={formData.coverage?.[item.key] || false}
+                                                onChange={(e) => handleJsonChange('coverage', item.key, e.target.checked)}
+                                            />
+                                            <label htmlFor={item.key}>{item.label}</label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <select
+                                    name="style"
+                                    value={formData.style}
+                                    onChange={handleInputChange}
+                                    className="custom-input"
+                                >
+                                    <option value="">Select Style</option>
+                                    <option value="cinematic">Cinematic</option>
+                                    <option value="documentary">Documentary</option>
+                                    <option value="traditional">Traditional</option>
+                                    <option value="modern">Modern</option>
+                                </select>
+                                <label className="custom-label">Video Style</label>
+                            </div>
+
+                            <div className="custom-input-container">
+                                <ReactQuill
+                                    value={formData.additional_info || ''}
+                                    onChange={(content) => setFormData(prev => ({
+                                        ...prev,
+                                        additional_info: content
+                                    }))}
+                                    placeholder="Any specific shots or additional information..."
+                                />
+                                <label className="custom-label">Additional Information</label>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="request-actions d-flex gap-2 mt-4" style={{ maxWidth: 700, margin: '0 auto' }}>
+                    <button type="submit" className="btn-edit">
+                        Save Changes
+                    </button>
+                    <button type="button" className="btn-toggle" onClick={() => navigate('/bids')}>
+                        Cancel
+                    </button>
                 </div>
             </form>
         </div>
