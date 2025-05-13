@@ -237,7 +237,7 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   };
 
   const handleStripeOnboarding = async () => {
-    setActiveSection("onboarding");
+    navigate('/onboarding');
   };
 
   const handleGenerateCoupon = async () => {

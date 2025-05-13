@@ -89,7 +89,7 @@ export default function Onboarding({ setActiveSection }) {
           <h1 className="dashboard-title color: black">Stripe Onboarding</h1>
           {!connectedAccountId && (
             <p>
-            To receive payments for the jobs you win, you’ll need to set up a payment account. Bidi will never charge you to talk to users or place bids — a small service fee is only deducted after you’ve been paid.
+            To receive payments for the jobs you win, you'll need to set up a payment account. Bidi will never charge you to talk to users or place bids — a small service fee is only deducted after you've been paid.
             <br />
             You can skip this step for now and set it up later from your dashboard.
           </p>
@@ -134,7 +134,7 @@ export default function Onboarding({ setActiveSection }) {
           <button
             className="btn-primary"
             style={{ width: "100%" }}
-            onClick={() => setActiveSection("settings")}
+            onClick={() => navigate("/business-dashboard")}
           >
             Return
           </button>

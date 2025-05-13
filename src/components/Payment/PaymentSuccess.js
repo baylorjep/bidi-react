@@ -18,27 +18,86 @@ const PaymentSuccess = () => {
             try {
                 // Get data from URL parameters
                 const params = new URLSearchParams(location.search);
+                console.log('URL Parameters:', Object.fromEntries(params.entries()));
+                
                 const amount = params.get('amount');
                 const paymentType = params.get('payment_type');
-                const businessName = params.get('business_name');
+                const businessName = decodeURIComponent(params.get('business_name') || '');
                 const bidId = params.get('bid_id');
 
+                console.log('Parsed Parameters:', {
+                    amount,
+                    paymentType,
+                    businessName,
+                    bidId
+                });
+
                 if (amount && paymentType && businessName) {
-                    setPaymentData({
+                    const paymentDataObj = {
                         amount: parseFloat(amount),
                         payment_type: paymentType,
                         business_name: businessName,
                         date: new Date().toISOString(),
                         bid_id: bidId
-                    });
+                    };
+                    console.log('Setting payment data:', paymentDataObj);
+                    setPaymentData(paymentDataObj);
+
+                    // Update bid status if bidId is present
+                    if (bidId) {
+                        try {
+                            const { error } = await supabase
+                                .from('bids')
+                                .update({ 
+                                    status: 'paid',
+                                    paid_at: new Date().toISOString(),
+                                    payment_amount: parseFloat(amount),
+                                    payment_type: paymentType
+                                })
+                                .eq('id', bidId);
+
+                            if (error) {
+                                console.error('Error updating bid status:', error);
+                            } else {
+                                console.log('Successfully updated bid status to paid');
+                            }
+                        } catch (error) {
+                            console.error('Error updating bid:', error);
+                        }
+                    }
                 } else {
+                    console.log('Missing required parameters:', { amount, paymentType, businessName });
                     // If no URL parameters, try to get data from location state
                     const stateData = location.state?.paymentData;
+                    console.log('Location state data:', stateData);
                     if (stateData) {
                         setPaymentData({
                             ...stateData,
                             date: new Date().toISOString()
                         });
+
+                        // Update bid status if bidId is present in state data
+                        if (stateData.bid_id) {
+                            try {
+                                const { error } = await supabase
+                                    .from('bids')
+                                    .update({ 
+                                        status: 'paid',
+                                        paid_at: new Date().toISOString(),
+                                        payment_amount: parseFloat(stateData.amount),
+                                        payment_type: stateData.payment_type
+                                    })
+                                    .eq('id', stateData.bid_id);
+
+                                if (error) {
+                                    console.error('Error updating bid status:', error);
+                                } else {
+                                    console.log('Successfully updated bid status to paid');
+                                }
+                            } catch (error) {
+                                console.error('Error updating bid:', error);
+                            }
+                        }
                     }
                 }
             } catch (error) {
@@ -184,6 +243,7 @@ const PaymentSuccess = () => {
                 <div className="success-message">
                     <h2>Payment Successful!</h2>
                     <p>Your payment has been processed successfully.</p>
+                    <i className="fas fa-check-circle check-icon"></i>
                 </div>
                 
                 <div className="receipt-container">
@@ -218,12 +278,15 @@ const PaymentSuccess = () => {
                     </div>
                     
                     <div className="receipt-actions">
-                        <button onClick={handlePrint} className="btn-primary">
-                            Print Receipt
-                        </button>
-                        <button onClick={() => navigate('/bids')} className="btn-secondary">
+                        <button onClick={() => navigate('/bids')} className="btn-secondary-payment-success">
+                            <i className="fas fa-arrow-left"></i>
                             Return to Bids
                         </button>
+                        <button onClick={handlePrint} className="btn-primary-payment-success">
+                            <i className="fas fa-print"></i>
+                            Print Receipt
+                        </button>
+
                     </div>
                 </div>
             </div>
