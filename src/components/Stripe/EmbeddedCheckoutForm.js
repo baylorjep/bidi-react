@@ -66,7 +66,7 @@ const EmbeddedCheckoutForm = () => {
         // Redirect to Stripe Checkout
         const stripe = await stripePromise;
         const { error } = await stripe.redirectToCheckout({
-          sessionId: data.sessionId
+          sessionId: data.id
         });
         
         if (error) {
