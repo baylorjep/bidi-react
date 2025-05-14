@@ -1,27 +1,21 @@
 import { supabase } from '../supabaseClient';
 
+const API_URL = process.env.REACT_APP_API_URL || 'https://bidi-express.vercel.app';
+
 export const googleCalendarService = {
   async connectCalendar(userId) {
     try {
-      console.log('API URL:', process.env.REACT_APP_API_URL);
-      
-      // Fetch the OAuth URL from your backend
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/calendar/auth?businessId=${userId}`);
-      
-      // Check if the response is OK
+      console.log('API URL:', API_URL); // Log the API URL to verify it
+      const response = await fetch(`${API_URL}/calendar/auth?businessId=${userId}`);
       if (!response.ok) {
         console.error('Failed to fetch Google OAuth URL:', response.status, response.statusText);
         throw new Error('Failed to get Google OAuth URL');
       }
-
-      // Parse the response as JSON
       const data = await response.json();
       if (!data.authUrl) {
         console.error('Invalid response format:', data);
         throw new Error('Invalid response format from server');
       }
-
-      // Redirect to the OAuth URL
       window.location.href = data.authUrl;
     } catch (error) {
       console.error('Error in connectCalendar:', error);
@@ -51,14 +45,14 @@ export const googleCalendarService = {
 
   async getAvailableTimeSlots(businessId, date) {
     const response = await fetch(
-      `${process.env.REACT_APP_API_URL}/calendar/availability?businessId=${businessId}&date=${date}`
+      `${API_URL}/calendar/availability?businessId=${businessId}&date=${date}`
     );
     if (!response.ok) throw new Error('Failed to fetch available time slots');
     return response.json();
   },
 
   async scheduleConsultation({ businessId, bidId, startTime }) {
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/calendar/schedule`, {
+    const response = await fetch(`${API_URL}/calendar/schedule`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ businessId, bidId, startTime }),
