@@ -47,7 +47,7 @@ export const googleCalendarService = {
 
   async getAvailableTimeSlots(businessId, date) {
     const response = await fetch(
-      `${API_URL}/calendar/availability?businessId=${businessId}&date=${date}`
+      `${API_URL}api/calendar/availability?businessId=${businessId}&date=${date}`
     );
     if (!response.ok) throw new Error('Failed to fetch available time slots');
     return response.json();

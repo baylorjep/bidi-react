@@ -361,7 +361,7 @@ function BidDisplay({
         onScheduleConsultation(result);
       }
       setShowConsultationModal(false);
-      toast.success('Consultation scheduled successfully!');
+      toast.success('Consultation scheduled successfully! Please check your email for details.');
     } catch (error) {
       toast.error('Failed to schedule consultation');
       console.error('Error scheduling consultation:', error);
