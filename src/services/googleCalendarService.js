@@ -2,11 +2,29 @@ import { supabase } from '../supabaseClient';
 
 export const googleCalendarService = {
   async connectCalendar(userId) {
-    // Fetch the OAuth URL from your backend
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/calendar/auth?businessId=${userId}`);
-    if (!response.ok) throw new Error('Failed to get Google OAuth URL');
-    const { authUrl } = await response.json();
-    window.location.href = authUrl;
+    try {
+      // Fetch the OAuth URL from your backend
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/calendar/auth?businessId=${userId}`);
+      
+      // Check if the response is OK
+      if (!response.ok) {
+        console.error('Failed to fetch Google OAuth URL:', response.status, response.statusText);
+        throw new Error('Failed to get Google OAuth URL');
+      }
+
+      // Parse the response as JSON
+      const data = await response.json();
+      if (!data.authUrl) {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from server');
+      }
+
+      // Redirect to the OAuth URL
+      window.location.href = data.authUrl;
+    } catch (error) {
+      console.error('Error in connectCalendar:', error);
+      throw error;
+    }
   },
 
   async disconnectCalendar(userId) {
