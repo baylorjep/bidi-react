@@ -51,7 +51,22 @@ export const useGoogleCalendar = () => {
       if (!user) throw new Error('No user found');
 
       console.log('Connecting calendar for user:', user.id);
-      await googleCalendarService.connectCalendar(user.id);
+
+      // Fetch the authUrl from the backend
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/calendar/auth?businessId=${user.id}`);
+      if (!response.ok) {
+        console.error('Failed to fetch Google OAuth URL:', response.status, response.statusText);
+        throw new Error('Failed to get Google OAuth URL');
+      }
+
+      const data = await response.json();
+      if (!data.authUrl) {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from server');
+      }
+
+      console.log('Redirecting to:', data.authUrl);
+      window.location.href = data.authUrl; // Redirect to the authUrl
     } catch (error) {
       console.error('Error connecting calendar:', error);
       setCalendarError(error.message);
