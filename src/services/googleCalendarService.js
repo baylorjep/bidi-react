@@ -12,10 +12,12 @@ export const googleCalendarService = {
         throw new Error('Failed to get Google OAuth URL');
       }
       const data = await response.json();
+      console.log('Response from backend:', data); // Log the response to verify the authUrl
       if (!data.authUrl) {
         console.error('Invalid response format:', data);
         throw new Error('Invalid response format from server');
       }
+      console.log('Redirecting to:', data.authUrl); // Log the redirection URL
       window.location.href = data.authUrl;
     } catch (error) {
       console.error('Error in connectCalendar:', error);
