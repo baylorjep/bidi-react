@@ -55,7 +55,8 @@ export const useGoogleCalendar = () => {
       // Fetch the authUrl from the backend
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/calendar/auth?businessId=${user.id}`);
       if (!response.ok) {
-        console.error('Failed to fetch Google OAuth URL:', response.status, response.statusText);
+        const errorText = await response.text(); // Log the response body for debugging
+        console.error('Failed to fetch Google OAuth URL:', response.status, response.statusText, errorText);
         throw new Error('Failed to get Google OAuth URL');
       }
 
