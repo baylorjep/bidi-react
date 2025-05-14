@@ -1,44 +1,52 @@
-import { useState } from 'react';
-import { googleCalendarService } from '../services/googleCalendarService';
+import { useState, useCallback } from 'react';
+import { fetchAvailableTimeSlots, createCalendarEvent } from '../utils/calendarUtils';
 
 export const useConsultation = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const handleDateSelect = (date) => {
+    console.log('Date selected:', date);
+    setSelectedDate(date);
+    setSelectedTimeSlot(null);
+    setError(null);
+  };
 
-  const fetchAvailableTimeSlots = async (businessId, date) => {
+  const handleTimeSlotSelect = (timeSlot) => {
+    setSelectedTimeSlot(timeSlot);
+    setError(null);
+  };
+
+  const fetchTimeSlots = useCallback(async (businessId, date) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setIsLoading(true);
-      setError(null);
-      const slots = await googleCalendarService.getAvailableTimeSlots(businessId, date);
+      const slots = await fetchAvailableTimeSlots(businessId, date);
       setAvailableTimeSlots(slots);
-      setSelectedDate(date);
     } catch (err) {
-      setError(err.message);
+      setError('Failed to fetch available time slots');
+      setAvailableTimeSlots([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const scheduleConsultation = async ({ businessId, bidId }) => {
-    if (!selectedDate || !selectedTimeSlot) {
-      setError('Please select a date and time slot');
-      return;
-    }
-
+  const scheduleConsultation = async ({ businessId, bidId, startTime }) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setIsLoading(true);
-      setError(null);
-      const result = await googleCalendarService.scheduleConsultation({
+      const eventData = {
         businessId,
         bidId,
-        startTime: selectedTimeSlot
-      });
+        startTime,
+        duration: 30 // 30-minute consultation
+      };
+      const result = await createCalendarEvent(eventData);
       return result;
     } catch (err) {
-      setError(err.message);
+      setError('Failed to schedule consultation');
       throw err;
     } finally {
       setIsLoading(false);
@@ -46,14 +54,14 @@ export const useConsultation = () => {
   };
 
   return {
-    isLoading,
-    error,
     selectedDate,
     selectedTimeSlot,
     availableTimeSlots,
-    setSelectedDate,
-    setSelectedTimeSlot,
-    fetchAvailableTimeSlots,
+    isLoading,
+    error,
+    handleDateSelect,
+    handleTimeSlotSelect,
+    fetchTimeSlots,
     scheduleConsultation
   };
-}; 
+};

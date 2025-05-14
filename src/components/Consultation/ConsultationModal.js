@@ -62,10 +62,9 @@ function ConsultationModal({
 
         <div className="scheduling-container">
           <div className="date-picker-container">
-            <label>Select Date</label>
-            <DatePicker
+            <label>Select Date</label>            <DatePicker
               selected={selectedDate}
-              onChange={onDateSelect}
+              onChange={(date) => onDateSelect(date)}
               minDate={new Date()}
               dateFormat="MMMM d, yyyy"
               placeholderText="Select a date"
@@ -75,22 +74,24 @@ function ConsultationModal({
 
           {selectedDate && (
             <div className="time-slots-container">
-              <label>Select Time</label>
-              {isLoading ? (
+              <label>Select Time</label>              {isLoading ? (
                 <div className="loading">Loading available time slots...</div>
               ) : error ? (
                 <div className="error">{error}</div>
-              ) : availableTimeSlots.length > 0 ? (
+              ) : availableTimeSlots && availableTimeSlots.length > 0 ? (
                 <div className="time-slots-grid">
-                  {availableTimeSlots.map((slot) => (
-                    <button
-                      key={slot}
-                      className={`time-slot ${selectedTimeSlot === slot ? 'selected' : ''}`}
-                      onClick={() => onTimeSlotSelect(slot)}
-                    >
-                      {formatTimeSlot(slot)}
-                    </button>
-                  ))}
+                  {availableTimeSlots.map((slot) => {
+                    const slotTime = new Date(slot);
+                    return (
+                      <button
+                        key={slot}
+                        className={`time-slot ${selectedTimeSlot === slot ? 'selected' : ''}`}
+                        onClick={() => onTimeSlotSelect(slot)}
+                      >
+                        {formatTimeSlot(slotTime)}
+                      </button>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="no-slots">No available time slots for this date</div>
@@ -108,7 +109,7 @@ function ConsultationModal({
           </button>
           <button 
             className="btn-primary-consultation"
-            onClick={() => onSchedule({ businessId, bidId })}
+            onClick={() => onSchedule({ businessId, bidId, startTime: selectedTimeSlot })}
             disabled={!selectedDate || !selectedTimeSlot || isLoading}
           >
             {isLoading ? 'Scheduling...' : 'Schedule Now'}
@@ -118,7 +119,6 @@ function ConsultationModal({
     </div>
   );
 
-  // Use React Portal to render modal at the root
   return ReactDOM.createPortal(modalContent, document.body);
 }
 

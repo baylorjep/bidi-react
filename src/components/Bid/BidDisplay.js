@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { toast } from 'react-toastify';
 import { supabase } from "../../supabaseClient"; // Import your Supabase client
 import bidiCheck from "../../assets/Frame 1162.svg";
 import StarIcon from "../../assets/star-duotone.svg";
@@ -17,7 +18,6 @@ import { FaArrowLeft } from 'react-icons/fa';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import ConsultationModal from '../Consultation/ConsultationModal';
 import { useConsultation } from '../../hooks/useConsultation';
-
 
 function BidDisplay({ 
   bid, 
@@ -68,14 +68,14 @@ function BidDisplay({
   const [cardHeight, setCardHeight] = useState('auto');
   const [showConsultationModal, setShowConsultationModal] = useState(false);
   const {
-    isLoading: isConsultationLoading,
-    error: consultationError,
     selectedDate,
     selectedTimeSlot,
     availableTimeSlots,
-    setSelectedDate,
-    setSelectedTimeSlot,
-    fetchAvailableTimeSlots,
+    isLoading: isConsultationLoading,
+    error: consultationError,
+    handleDateSelect,
+    handleTimeSlotSelect,
+    fetchTimeSlots,
     scheduleConsultation
   } = useConsultation();
 
@@ -352,6 +352,20 @@ function BidDisplay({
         setCardHeight(Math.max(frontHeight, 400));
       }
     }, 50);
+  };
+
+  const handleScheduleConsultation = async (data) => {
+    try {
+      const result = await scheduleConsultation(data);
+      if (onScheduleConsultation) {
+        onScheduleConsultation(result);
+      }
+      setShowConsultationModal(false);
+      toast.success('Consultation scheduled successfully!');
+    } catch (error) {
+      toast.error('Failed to schedule consultation');
+      console.error('Error scheduling consultation:', error);
+    }
   };
 
   return (
@@ -631,30 +645,18 @@ function BidDisplay({
       <ConsultationModal
         isOpen={showConsultationModal}
         onClose={() => setShowConsultationModal(false)}
-        onSchedule={async (data) => {
-          try {
-            const result = await scheduleConsultation({
-              businessId: bid.business_profiles.id,
-              bidId: bid.id
-            });
-            if (onScheduleConsultation) {
-              onScheduleConsultation(result);
-            }
-          } catch (error) {
-            console.error('Error scheduling consultation:', error);
-          }
-        }}
-        businessName={bid.business_profiles.business_name}
+        onSchedule={handleScheduleConsultation}
+        businessName={bid.business_profiles.name}
         businessId={bid.business_profiles.id}
         bidId={bid.id}
-        isLoading={isConsultationLoading}
-        error={consultationError}
         selectedDate={selectedDate}
         selectedTimeSlot={selectedTimeSlot}
         availableTimeSlots={availableTimeSlots}
-        onDateSelect={setSelectedDate}
-        onTimeSlotSelect={setSelectedTimeSlot}
-        onFetchTimeSlots={fetchAvailableTimeSlots}
+        isLoading={isConsultationLoading}
+        error={consultationError}
+        onDateSelect={handleDateSelect}
+        onTimeSlotSelect={handleTimeSlotSelect}
+        onFetchTimeSlots={fetchTimeSlots}
       />
     </div>
   );
