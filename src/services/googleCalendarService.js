@@ -3,6 +3,8 @@ import { supabase } from '../supabaseClient';
 export const googleCalendarService = {
   async connectCalendar(userId) {
     try {
+      console.log('API URL:', process.env.REACT_APP_API_URL);
+      
       // Fetch the OAuth URL from your backend
       const response = await fetch(`${process.env.REACT_APP_API_URL}/calendar/auth?businessId=${userId}`);
       
