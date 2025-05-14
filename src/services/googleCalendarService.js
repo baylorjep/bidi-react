@@ -6,7 +6,7 @@ export const googleCalendarService = {
   async connectCalendar(userId) {
     try {
       console.log('API URL:', API_URL); // Log the API URL to verify it
-      const response = await fetch(`${API_URL}/calendar/auth?businessId=${userId}`);
+      const response = await fetch(`${API_URL}/api/calendar/auth?businessId=${userId}`);
       if (!response.ok) {
         console.error('Failed to fetch Google OAuth URL:', response.status, response.statusText);
         throw new Error('Failed to get Google OAuth URL');
