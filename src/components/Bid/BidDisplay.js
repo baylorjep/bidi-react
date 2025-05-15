@@ -18,6 +18,12 @@ import { FaArrowLeft } from 'react-icons/fa';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import ConsultationModal from '../Consultation/ConsultationModal';
 import { useConsultation } from '../../hooks/useConsultation';
+import { Document, Page, pdfjs } from 'react-pdf';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { saveAs } from 'file-saver';
+import ContractSignatureModal from "./ContractSignatureModal";
+// Set the workerSrc for pdfjs to use the local public directory for compatibility
+pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.js`;
 
 function BidDisplay({ 
   bid, 
@@ -67,6 +73,7 @@ function BidDisplay({
   const backRef = useRef(null);
   const [cardHeight, setCardHeight] = useState('auto');
   const [showConsultationModal, setShowConsultationModal] = useState(false);
+  const [showContractModal, setShowContractModal] = useState(false);
   const {
     selectedDate,
     selectedTimeSlot,
@@ -78,6 +85,19 @@ function BidDisplay({
     fetchTimeSlots,
     scheduleConsultation
   } = useConsultation();
+
+  // Signature state for client
+  const [clientSignature, setClientSignature] = useState("");
+  const [clientSigning, setClientSigning] = useState(false);
+  const [clientSignError, setClientSignError] = useState("");
+  const [clientSigned, setClientSigned] = useState(!!bid.client_signature);
+
+  // PDF signature placement state
+  const [pdfPage, setPdfPage] = useState(1);
+  const [signaturePos, setSignaturePos] = useState(null); // {x, y}
+  const [placingSignature, setPlacingSignature] = useState(false);
+  const [pdfData, setPdfData] = useState(null);
+  const pdfWrapperRef = useRef(null);
 
   const getExpirationStatus = (expirationDate) => {
     if (!expirationDate) return null;
@@ -368,6 +388,78 @@ function BidDisplay({
     }
   };
 
+  const handleClientSignContract = async () => {
+    setClientSignError("");
+    if (!clientSignature.trim()) {
+      setClientSignError("Signature is required.");
+      return;
+    }
+    setClientSigning(true);
+    const { error } = await supabase
+      .from("bids")
+      .update({ client_signature: clientSignature, client_signed_at: new Date().toISOString() })
+      .eq("id", bid.id);
+    setClientSigning(false);
+    if (error) {
+      setClientSignError("Failed to sign contract. Please try again.");
+    } else {
+      setClientSigned(true);
+    }
+  };
+
+  // Fetch PDF data for react-pdf
+  useEffect(() => {
+    if (bid.contract_url && bid.contract_url.endsWith('.pdf')) {
+      fetch(bid.contract_url)
+        .then(res => res.arrayBuffer())
+        .then(setPdfData);
+    }
+  }, [bid.contract_url]);
+
+  // Handle click to place signature
+  const handlePdfClick = (e) => {
+    if (!placingSignature || !pdfWrapperRef.current) return;
+    const rect = pdfWrapperRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setSignaturePos({ x, y });
+    setPlacingSignature(false);
+  };
+
+  // Download PDF with both signatures
+  const handleDownloadSignedPdf = async () => {
+    if (!pdfData) return;
+    const pdfDoc = await PDFDocument.load(pdfData);
+    const pages = pdfDoc.getPages();
+    const page = pages[pdfPage - 1];
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    // Place business signature (bottom left)
+    if (bid.business_signature) {
+      page.drawText(`Business: ${bid.business_signature}`, {
+        x: 50,
+        y: 50,
+        size: 16,
+        font,
+        color: rgb(0, 0.4, 0),
+      });
+    }
+    // Place client signature (user-placed or default bottom right)
+    if (bid.client_signature || clientSignature) {
+      const sig = bid.client_signature || clientSignature;
+      const x = signaturePos?.x || (page.getWidth() - 200);
+      const y = signaturePos?.y || 50;
+      page.drawText(`Client: ${sig}`, {
+        x,
+        y,
+        size: 16,
+        font,
+        color: rgb(0, 0, 0.6),
+      });
+    }
+    const pdfBytes = await pdfDoc.save();
+    saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), 'signed_contract.pdf');
+  };
+
   return (
     <div className={`request-display bid-display${isAnimating ? ' fade-out' : ''}`}> 
       <div className="card-flip-container" style={{ height: cardHeight }}>
@@ -616,6 +708,17 @@ function BidDisplay({
                 </div>
               )}
             </div>
+
+            {/* Contract signature modal trigger */}
+            {bid.contract_url && bid.contract_url.endsWith('.pdf') && (
+              <button
+                className="btn-secondary"
+                style={{ margin: '16px 0', width: '100%' }}
+                onClick={() => setShowContractModal(true)}
+              >
+                Sign / View Contract
+              </button>
+            )}
           </div>
 
           {/* Back of card - Messaging View */}
@@ -657,6 +760,26 @@ function BidDisplay({
         onDateSelect={handleDateSelect}
         onTimeSlotSelect={handleTimeSlotSelect}
         onFetchTimeSlots={fetchTimeSlots}
+      />
+      {/* Contract Signature Modal */}
+      <ContractSignatureModal
+        isOpen={showContractModal}
+        onClose={() => setShowContractModal(false)}
+        bid={bid}
+        pdfPage={pdfPage}
+        setPdfPage={setPdfPage}
+        pdfData={pdfData}
+        pdfWrapperRef={pdfWrapperRef}
+        handlePdfClick={handlePdfClick}
+        signaturePos={signaturePos}
+        placingSignature={placingSignature}
+        clientSignature={clientSignature}
+        setClientSignature={setClientSignature}
+        clientSigning={clientSigning}
+        clientSignError={clientSignError}
+        clientSigned={clientSigned}
+        handleClientSignContract={handleClientSignContract}
+        handleDownloadSignedPdf={handleDownloadSignedPdf}
       />
     </div>
   );

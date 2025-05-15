@@ -1,14 +1,90 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/BidDisplayMini.css";
 import { FaEnvelope, FaSms } from "react-icons/fa";
+import { supabase } from "../../supabaseClient";
+import ContractSignatureModal from "../Bid/ContractSignatureModal";
 
-const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal }) => {
+const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContractUpload }) => {
   const navigate = useNavigate();
+  const [signature, setSignature] = useState("");
+  const [signing, setSigning] = useState(false);
+  const [signError, setSignError] = useState("");
+  const [signed, setSigned] = useState(!!bid.business_signature);
+  const [showContractModal, setShowContractModal] = useState(false);
+  const [clientSignature, setClientSignature] = useState("");
+  const [clientSigning, setClientSigning] = useState(false);
+  const [clientSignError, setClientSignError] = useState("");
+  const [clientSigned, setClientSigned] = useState(!!bid.client_signature);
+  const [signaturePos, setSignaturePos] = useState(null);
+  const [placingSignature, setPlacingSignature] = useState(false);
+  const [pdfPage, setPdfPage] = useState(1);
+  const pdfWrapperRef = React.useRef(null);
 
   const getTitle = () => {
     if (request?.title) return request.title;
     return request?.service_title || request?.event_title || "Untitled Request";
+  };
+
+  const canUploadContract = ["pending", "approved", "accepted"].includes(bid.status);
+
+  const handleContractChange = async (e) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    if (onContractUpload) {
+      onContractUpload(bid, file);
+    }
+  };
+
+  const handleSignContract = async () => {
+    setSignError("");
+    if (!signature.trim()) {
+      setSignError("Signature is required.");
+      return;
+    }
+    setSigning(true);
+    const { error } = await supabase
+      .from("bids")
+      .update({ business_signature: signature, business_signed_at: new Date().toISOString() })
+      .eq("id", bid.id);
+    setSigning(false);
+    if (error) {
+      setSignError("Failed to sign contract. Please try again.");
+    } else {
+      setSigned(true);
+    }
+  };
+
+  const handlePdfClick = (e) => {
+    if (!placingSignature || !pdfWrapperRef.current) return;
+    const rect = pdfWrapperRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setSignaturePos({ x, y });
+    setPlacingSignature(false);
+  };
+
+  const handleClientSignContract = async () => {
+    setClientSignError("");
+    if (!clientSignature.trim()) {
+      setClientSignError("Signature is required.");
+      return;
+    }
+    setClientSigning(true);
+    const { error } = await supabase
+      .from("bids")
+      .update({ client_signature: clientSignature, client_signed_at: new Date().toISOString() })
+      .eq("id", bid.id);
+    setClientSigning(false);
+    if (error) {
+      setClientSignError("Failed to sign contract. Please try again.");
+    } else {
+      setClientSigned(true);
+    }
+  };
+
+  const handleDownloadSignedPdf = () => {
+    // You can implement PDF download logic here or pass it as a prop
   };
 
   return (
@@ -119,6 +195,72 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal }) => {
               )}
             </div>
           )}
+
+          {/* Contract upload section */}
+          {canUploadContract && (
+            <div className="contract-upload-section" style={{ margin: '10px 0' }}>
+              <label style={{ fontWeight: 600 }}>Contract File:</label>
+              {bid.contract_url ? (
+                <div>
+                  <a href={bid.contract_url} target="_blank" rel="noopener noreferrer">View Uploaded Contract</a>
+                  {/* Business signature UI */}
+                  {signed ? (
+                    <div style={{ marginTop: 8, color: 'green' }}>
+                      Signed by business: <b>{bid.business_signature || signature}</b>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: 8 }}>
+                      <input
+                        type="text"
+                        placeholder="Type your name to sign"
+                        value={signature}
+                        onChange={e => setSignature(e.target.value)}
+                        disabled={signing}
+                        style={{ marginRight: 8 }}
+                      />
+                      <button onClick={handleSignContract} disabled={signing} style={{ padding: '4px 12px' }}>
+                        {signing ? "Signing..." : "Sign Contract"}
+                      </button>
+                      {signError && <div style={{ color: 'red', marginTop: 4 }}>{signError}</div>}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleContractChange} />
+              )}
+            </div>
+          )}
+
+          {bid.contract_url && (
+            <button
+              className="contract-sign-btn"
+              style={{ margin: '16px 0', width: '100%' }}
+              onClick={() => setShowContractModal(true)}
+            >
+              Sign / View Contract
+            </button>
+          )}
+
+          <ContractSignatureModal
+            isOpen={showContractModal}
+            onClose={() => setShowContractModal(false)}
+            bid={bid}
+            pdfPage={pdfPage}
+            setPdfPage={setPdfPage}
+            pdfWrapperRef={pdfWrapperRef}
+            handlePdfClick={handlePdfClick}
+            signaturePos={signaturePos}
+            setSignaturePos={setSignaturePos}
+            placingSignature={placingSignature}
+            setPlacingSignature={setPlacingSignature}
+            clientSignature={clientSignature}
+            setClientSignature={setClientSignature}
+            clientSigning={clientSigning}
+            clientSignError={clientSignError}
+            clientSigned={clientSigned}
+            handleClientSignContract={handleClientSignContract}
+            handleDownloadSignedPdf={handleDownloadSignedPdf}
+          />
 
           <div className="action-buttons">
             <button

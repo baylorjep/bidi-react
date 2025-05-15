@@ -17,7 +17,9 @@ const BusinessBids = () => {
   const filteredBids = bids.filter((bid) => 
     activeTab === "approved" 
       ? bid.status === "approved" || bid.status === "accepted"
-      : bid.status === activeTab
+      : activeTab === "pending"
+        ? bid.status === "pending" || bid.status === "interested"
+        : bid.status === activeTab
   );
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +67,7 @@ const BusinessBids = () => {
           .from("bids")
           .select("*")
           .eq("user_id", user.id)
-          .or("hidden.is.false,hidden.is.null");
+          .or('hidden.is.false,hidden.is.null');
 
         if (bidError) {
           console.error("❌ Error fetching bids:", bidError);
@@ -199,7 +201,10 @@ const BusinessBids = () => {
   };
 
   // Group bids by status
-  const pendingBids = bids.filter((bid) => bid.status === "pending");
+const pendingBids = bids.filter((bid) =>
+  bid.status === "pending" || bid.status === "interested"
+);
+
   const approvedBids = bids.filter((bid) => bid.status === "approved" || bid.status === "accepted");
   const deniedBids = bids.filter((bid) => bid.status === "denied");
 
@@ -311,6 +316,35 @@ const BusinessBids = () => {
     );
   };
 
+  // Contract upload handler
+  const handleContractUpload = async (bid, file) => {
+    if (!file) return;
+    try {
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const filePath = `contracts/bid-${bid.id}-${Date.now()}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage.from('contracts').upload(filePath, file, { upsert: true });
+      if (uploadError) {
+        alert('Failed to upload contract: ' + uploadError.message);
+        return;
+      }
+      // Get public URL
+      const { data: urlData } = supabase.storage.from('contracts').getPublicUrl(filePath);
+      const contractUrl = urlData?.publicUrl;
+      // Update bid with contract_url
+      const { error: updateError } = await supabase.from('bids').update({ contract_url: contractUrl }).eq('id', bid.id);
+      if (updateError) {
+        alert('Failed to update bid with contract URL: ' + updateError.message);
+        return;
+      }
+      // Update local state
+      setBids((prevBids) => prevBids.map((b) => b.id === bid.id ? { ...b, contract_url: contractUrl } : b));
+      alert('Contract uploaded successfully!');
+    } catch (err) {
+      alert('Error uploading contract: ' + err.message);
+    }
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -336,6 +370,7 @@ const BusinessBids = () => {
                       navigate(`/edit-bid/${requestId}/${bidId}`)
                     }
                     openWithdrawModal={openWithdrawModal}
+                    onContractUpload={handleContractUpload}
                   />
                 )
               );
