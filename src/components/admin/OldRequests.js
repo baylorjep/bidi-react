@@ -297,6 +297,93 @@ The reason I'm reaching out is that we'd like to close out your request${request
         }
     };
 
+    const handleCloseRequests = async (userGroup) => {
+        try {
+            // Update all requests for this user
+            const updatePromises = userGroup.requests.map(request => {
+                const tableName = `${request.type}_requests`.replace('regular_requests', 'requests');
+                let updates = {};
+
+                // Handle updates based on request type
+                switch (request.type) {
+                    case 'regular':
+                        updates = {
+                            followed_up: true,
+                            open: false
+                        };
+                        break;
+                    case 'photography':
+                    case 'videography':
+                    case 'dj':
+                    case 'catering':
+                    case 'beauty':
+                    case 'florist':
+                    case 'wedding_planning':
+                        updates = {
+                            followed_up: true,
+                            status: 'completed'
+                        };
+                        break;
+                    default:
+                        updates = {
+                            followed_up: true
+                        };
+                }
+
+                return supabaseAdmin
+                    .from(tableName)
+                    .update(updates)
+                    .eq('id', request.id);
+            });
+
+            // Deny all bids for these requests
+            const bidUpdatePromises = userGroup.requests.map(request => {
+                // First, get all bids for this request
+                return supabaseAdmin
+                    .from('bids')
+                    .select('id')
+                    .eq('request_id', request.id)
+                    .eq('category', request.type)
+                    .then(({ data: bids, error }) => {
+                        if (error) throw error;
+                        if (!bids || bids.length === 0) return null;
+
+                        // Update each bid individually
+                        return Promise.all(bids.map(bid => 
+                            supabaseAdmin
+                                .from('bids')
+                                .update({ status: 'denied' })
+                                .eq('id', bid.id)
+                        ));
+                    });
+            });
+
+            // Execute all updates
+            const [requestResults, bidResults] = await Promise.all([
+                Promise.all(updatePromises),
+                Promise.all(bidUpdatePromises.filter(Boolean))
+            ]);
+
+            // Check for errors
+            const requestErrors = requestResults.filter(result => result.error);
+            const bidErrors = bidResults.flat().filter(result => result?.error);
+
+            if (requestErrors.length > 0 || bidErrors.length > 0) {
+                console.error('Request update errors:', requestErrors);
+                console.error('Bid update errors:', bidErrors);
+                throw new Error('Some updates failed');
+            }
+
+            // Update local state
+            setOldRequests(prevRequests => 
+                prevRequests.filter(group => group.id !== userGroup.id)
+            );
+        } catch (error) {
+            console.error('Error closing requests:', error);
+            alert('Error closing requests. Please try again.');
+        }
+    };
+
     if (loading) {
         return <div className="admin-card">Loading...</div>;
     }
@@ -320,6 +407,7 @@ The reason I'm reaching out is that we'd like to close out your request${request
                             <thead>
                                 <tr>
                                     <th>User Name</th>
+                                    <th>Phone Number</th>
                                     <th>Requests</th>
                                     <th>Latest Request</th>
                                     <th>Followed Up</th>
@@ -330,6 +418,7 @@ The reason I'm reaching out is that we'd like to close out your request${request
                                 {oldRequests.map(userGroup => (
                                     <tr key={userGroup.id}>
                                         <td>{`${userGroup.firstName || ''} ${userGroup.lastName || ''}`.trim() || 'N/A'}</td>
+                                        <td>{userGroup.phone || 'N/A'}</td>
                                         <td>
                                             {userGroup.requests.map(request => (
                                                 <div key={`${request.type}-${request.id}`} className="request-item">
@@ -358,6 +447,12 @@ The reason I'm reaching out is that we'd like to close out your request${request
                                                 >
                                                     {userGroup.requests.every(req => req.followed_up) ? '✓ Followed Up' : 'Mark as Followed Up'}
                                                 </button>
+                                                <button
+                                                    onClick={() => handleCloseRequests(userGroup)}
+                                                    className="close-request-button"
+                                                >
+                                                    🔒 Close Requests
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -376,6 +471,10 @@ The reason I'm reaching out is that we'd like to close out your request${request
                                         </span>
                                     </div>
                                     <div className="request-details">
+                                        <div className="request-detail">
+                                            <span className="request-detail-label">Phone:</span>
+                                            <span className="request-detail-value">{userGroup.phone || 'N/A'}</span>
+                                        </div>
                                         <div className="request-detail">
                                             <span className="request-detail-label">Requests:</span>
                                             <div className="request-detail-value">
@@ -408,6 +507,12 @@ The reason I'm reaching out is that we'd like to close out your request${request
                                             disabled={userGroup.requests.every(req => req.followed_up)}
                                         >
                                             {userGroup.requests.every(req => req.followed_up) ? '✓ All Followed Up' : 'Mark All as Followed Up'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleCloseRequests(userGroup)}
+                                            className="close-request-button"
+                                        >
+                                            🔒 Close Requests & Deny Bids
                                         </button>
                                     </div>
                                 </div>

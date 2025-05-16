@@ -282,7 +282,8 @@
     }
 
     .text-user-button,
-    .follow-up-button {
+    .follow-up-button,
+    .close-request-button {
         width: 100%;
         justify-content: center;
         padding: 10px;
@@ -382,6 +383,28 @@
 }
 
 .follow-up-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.close-request-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.close-request-button:hover:not(:disabled) {
+    background-color: #c82333;
+}
+
+.close-request-button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
 }
