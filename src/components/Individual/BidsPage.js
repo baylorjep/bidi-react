@@ -1466,6 +1466,7 @@ export default function BidsPage({ onOpenChat }) {
                                                 </div>
                                             </div>
                                         </div>
+                                        
                                     </div>
                                     <div className="request-actions">
                                         <button
@@ -1512,6 +1513,7 @@ export default function BidsPage({ onOpenChat }) {
                                                 <span>{getViewCountText(request).count}</span>
                                                 <span style={{ fontSize: '0.9em', color: '#666' }}>{getViewCountText(request).category}</span>
                                             </div>
+
                                         </div>
                                     </div>
                                 </div>

@@ -136,6 +136,12 @@
   margin-top: 20px;
 }
 
+.bid-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 /* Contact Information Section */
 .contact-info-section {
   margin-top: 25px;

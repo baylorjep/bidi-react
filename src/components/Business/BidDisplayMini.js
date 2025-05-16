@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/BidDisplayMini.css";
 import { FaEnvelope, FaSms } from "react-icons/fa";
 import { supabase } from "../../supabaseClient";
 import ContractSignatureModal from "../Bid/ContractSignatureModal";
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { saveAs } from 'file-saver';
+import { toast } from 'react-hot-toast';
 
 const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContractUpload }) => {
   const navigate = useNavigate();
@@ -83,8 +86,126 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
     }
   };
 
-  const handleDownloadSignedPdf = () => {
-    // You can implement PDF download logic here or pass it as a prop
+  const handleDownloadSignedPdf = async () => {
+    if (!bid.contract_url || !bid.business_signed_at || !bid.client_signed_at) return;
+    
+    try {
+      // Fetch the PDF data
+      const response = await fetch(bid.contract_url);
+      const pdfData = await response.arrayBuffer();
+      
+      // Load the PDF document
+      const pdfDoc = await PDFDocument.load(pdfData);
+      const pages = pdfDoc.getPages();
+      const page = pages[0]; // Use first page by default
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      
+          // Format timestamps
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      });
+    };
+
+    // Place business signature (bottom left)
+    if (bid.business_signature_image_url) {
+      // If we have a signature image URL, fetch and embed it
+      const response = await fetch(bid.business_signature_image_url);
+      const imageBytes = await response.arrayBuffer();
+      const image = await pdfDoc.embedPng(imageBytes);
+      const { width, height } = image.scale(0.5); // Scale down the image if needed
+      
+      page.drawImage(image, {
+        x: 50,
+        y: 70, // Moved up to make room for timestamp
+        width,
+        height
+      });
+
+      // Add timestamp below signature
+      page.drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
+        x: 50,
+        y: 50,
+        size: 10,
+        font,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+    } else if (bid.business_signature) {
+      // Fallback to text signature
+      page.drawText(`Business: ${bid.business_signature}`, {
+        x: 50,
+        y: 70, // Moved up to make room for timestamp
+        size: 16,
+        font,
+        color: rgb(0, 0.4, 0),
+      });
+
+      // Add timestamp below signature
+      page.drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
+        x: 50,
+        y: 50,
+        size: 10,
+        font,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+    }
+    
+    // Place client signature (bottom right)
+    const pageWidth = page.getWidth();
+    if (bid.client_signature_image) {
+      // If we have a signature image data URL
+      const imageBytes = await fetch(bid.client_signature_image).then(res => res.arrayBuffer());
+      const image = await pdfDoc.embedPng(imageBytes);
+      const { width, height } = image.scale(0.5); // Scale down the image if needed
+      
+      page.drawImage(image, {
+        x: pageWidth - width - 50,
+        y: 70, // Moved up to make room for timestamp
+        width,
+        height
+      });
+
+      // Add timestamp below signature
+      page.drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
+        x: pageWidth - 250,
+        y: 50,
+        size: 10,
+        font,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+    } else if (bid.client_signature) {
+      // Fallback to text signature
+      page.drawText(`Client: ${bid.client_signature}`, {
+        x: pageWidth - 250,
+        y: 70, // Moved up to make room for timestamp
+        size: 16,
+        font,
+        color: rgb(0, 0, 0.6),
+      });
+
+      // Add timestamp below signature
+      page.drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
+        x: pageWidth - 250,
+        y: 50,
+        size: 10,
+        font,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+    }
+      
+      // Save and download the PDF
+      const pdfBytes = await pdfDoc.save();
+      saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), 'signed_contract.pdf');
+    } catch (error) {
+      console.error('Error downloading signed PDF:', error);
+      toast.error('Failed to download signed contract');
+    }
   };
 
   return (
@@ -134,6 +255,7 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
 
         <div className="bid-info-box">
           <h3 className="bid-info-title">Your Bid</h3>
+          <div className="bid-info-grid">
           {bid?.bid_amount && (
             <div className="detail-item">
               <span className="detail-label">Amount</span>
@@ -158,6 +280,8 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
               <span className="detail-value">Not viewed yet</span>
             </div>
           )}
+          </div>
+        </div>
 
           {/* Show contact information for accepted bids */}
           {(bid.status === "accepted" || bid.status === "approved") && (
@@ -210,17 +334,6 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
                     </div>
                   ) : (
                     <div style={{ marginTop: 8 }}>
-                      <input
-                        type="text"
-                        placeholder="Type your name to sign"
-                        value={signature}
-                        onChange={e => setSignature(e.target.value)}
-                        disabled={signing}
-                        style={{ marginRight: 8 }}
-                      />
-                      <button onClick={handleSignContract} disabled={signing} style={{ padding: '4px 12px' }}>
-                        {signing ? "Signing..." : "Sign Contract"}
-                      </button>
                       {signError && <div style={{ color: 'red', marginTop: 4 }}>{signError}</div>}
                     </div>
                   )}
@@ -232,19 +345,92 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
           )}
 
           {bid.contract_url && (
-            <button
-              className="contract-sign-btn"
-              style={{ margin: '16px 0', width: '100%' }}
-              onClick={() => setShowContractModal(true)}
-            >
-              Sign / View Contract
-            </button>
+            <>
+              {/* Show sign button if business hasn't signed yet */}
+              {!bid.business_signed_at && (
+                <button
+                  className="contract-sign-btn"
+                  style={{ 
+                    margin: '16px 0', 
+                    width: '100%',
+                    background: '#9633eb',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontWeight: '600',
+                    fontSize: '15px',
+                    boxShadow: '0 2px 4px rgba(150,51,235,0.1)'
+                  }}
+                  onClick={() => setShowContractModal(true)}
+                >
+                  <i className="fas fa-signature"></i>
+                  Sign Contract as Business
+                </button>
+              )}
+
+              {/* Show waiting message if business has signed and waiting for client */}
+              {bid.business_signed_at && !bid.client_signed_at && (
+                <div
+                  style={{ 
+                    margin: '16px 0', 
+                    padding: '12px',
+                    background: '#f0f0f0',
+                    color: '#666',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Waiting for client signature...
+                </div>
+              )}
+
+              {/* Show single view button when both have signed */}
+              {bid.business_signed_at && bid.client_signed_at && (
+                <button
+                  className="contract-sign-btn"
+                  style={{ 
+                    margin: '16px 0', 
+                    width: '100%',
+                    background: '#9633eb',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontWeight: '600',
+                    fontSize: '15px',
+                    boxShadow: '0 2px 4px rgba(150,51,235,0.1)'
+                  }}
+                  onClick={() => setShowContractModal(true)}
+                >
+                  <i className="fas fa-file-contract"></i>
+                  View Contract
+                </button>
+              )}
+            </>
           )}
 
           <ContractSignatureModal
             isOpen={showContractModal}
-            onClose={() => setShowContractModal(false)}
+            onClose={() => {
+              console.log('BidDisplayMini modal closing');
+              setShowContractModal(false);
+            }}
             bid={bid}
+            userRole={'business'}
+            testSource="BidDisplayMini"
             pdfPage={pdfPage}
             setPdfPage={setPdfPage}
             pdfWrapperRef={pdfWrapperRef}
@@ -273,10 +459,10 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
               className="withdraw-btn"
               onClick={() => onEditBid(bid.request_id, bid.id)}
             >
-              Edit
+              View/Edit
             </button>
           </div>
-        </div>
+
       </div>
     </div>
   );
