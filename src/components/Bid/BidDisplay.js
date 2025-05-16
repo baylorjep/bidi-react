@@ -37,12 +37,15 @@ function BidDisplay({
   showInterested = false,
   showNotInterested = false,
   showPending = false,
+  showApproved = false,
   downPayment = null,
   onDownPayment = null,
   onMessage = null,
   onViewCoupon = null,
   currentUserId = null,
-  onScheduleConsultation = null
+  onScheduleConsultation = null,
+  onPayNow = null,
+  onMoveToPending = null
 }) {
   const [isBidiVerified, setIsBidiVerified] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -226,6 +229,18 @@ function BidDisplay({
   };
 
   const renderActionButtons = () => {
+    console.log(
+      '>>>> BidDisplay.js: renderActionButtons CALLED FOR BID:', bid.id,
+      {
+        bidStatus: bid.status,
+        showActions,
+        showApproved,
+        showPaymentOptions,
+        showNotInterested,
+        showPending,
+        showInterested,
+      }
+    );
     if (!showActions) return null;
 
     const buttonStyle = {
@@ -259,16 +274,101 @@ function BidDisplay({
       alignItems: 'center'
     };
 
-    // Common button layout for all states
-    const renderButtons = () => (
+    // For approved tab, only show X and chat icons
+    if (showApproved) {
+      return (
+        <div className="business-actions-bid-display" style={actionButtonsContainer}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => handleAction(handleDeny, bid.id)}
+            >
+              <CancelIcon style={iconStyle} />
+            </button>
+          </div>
+          <div style={rightButtonsContainer}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={handleChatClick}
+            >
+              <ChatIcon style={iconStyle} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // For payment options, show X and chat icons
+    if (showPaymentOptions) {
+      return (
+        <div className="business-actions" style={actionButtonsContainer}>
+          <button
+            className="btn-icon"
+            style={buttonStyle}
+            onClick={() => handleAction(handleDeny, bid.id)}
+          >
+            <CancelIcon style={iconStyle} />
+          </button>
+          <div style={rightButtonsContainer}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={handleChatClick}
+            >
+              <ChatIcon style={iconStyle} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // For not interested tab, show clock icon
+    if (showNotInterested) {
+      return (
+        <div className="business-actions-bid-display" style={actionButtonsContainer}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => handlePending(bid)}
+            >
+              <AccessTimeIcon style={iconStyle} />
+            </button>
+          </div>
+          <div style={rightButtonsContainer}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={handleChatClick}
+            >
+              <ChatIcon style={iconStyle} />
+            </button>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => handleAction(handleInterested, bid.id)}
+            >
+              <FavoriteBorderIcon style={iconStyle} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // For all other states, show X icon
+    return (
       <div className="business-actions-bid-display" style={actionButtonsContainer}>
-        <button
-          className="btn-icon"
-          style={buttonStyle}
-          onClick={() => handleAction(handleDeny, bid.id)}
-        >
-          <CancelIcon style={iconStyle} />
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            className="btn-icon"
+            style={buttonStyle}
+            onClick={() => handleAction(handleDeny, bid.id)}
+          >
+            <CancelIcon style={iconStyle} />
+          </button>
+        </div>
         <div style={rightButtonsContainer}>
           <button
             className="btn-icon"
@@ -280,11 +380,7 @@ function BidDisplay({
           <button
             className="btn-icon"
             style={buttonStyle}
-            onClick={() => {
-              console.log('Heart clicked. showInterested:', showInterested);
-              handleAction(handleInterested, bid.id);
-            }}
-            aria-label={showInterested ? 'Move to Pending' : 'Mark as Interested'}
+            onClick={() => handleAction(handleInterested, bid.id)}
           >
             {showInterested ? (
               <FavoriteIcon style={iconStyle} />
@@ -305,38 +401,6 @@ function BidDisplay({
         </div>
       </div>
     );
-
-    if (showPaymentOptions) {
-      return (
-        <div className="business-actions" style={actionButtonsContainer}>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleDeny, bid.id)}
-          >
-            <CancelIcon style={iconStyle} />
-          </button>
-          <div style={rightButtonsContainer}>
-            <button
-              className="btn-icon"
-              style={buttonStyle}
-              onClick={() => handleAction(handleApprove, bid.id)}
-            >
-              <AccessTimeIcon style={iconStyle} />
-            </button>
-            <button
-              className="btn-icon"
-              style={buttonStyle}
-              onClick={handleChatClick}
-            >
-              <ChatIcon style={iconStyle} />
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return renderButtons();
   };
 
   useEffect(() => {
@@ -762,7 +826,7 @@ function BidDisplay({
                 )}
                 <button
                   className="payment-button full"
-                  onClick={() => handleAction(handleApprove, bid.id)}
+                  onClick={() => onPayNow(bid)}
                   style={{
                     width: '100%',
                     padding: '12px',

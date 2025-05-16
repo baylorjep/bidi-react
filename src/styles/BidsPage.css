@@ -302,6 +302,7 @@
     transition: all 0.3s ease;
     opacity: 0.8;
     transform: translateX(10px);
+    container-type: inline-size;
 }
 
 .bids-page .bids-section.active {
@@ -381,6 +382,18 @@
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
+}
+
+@container (min-width: 901px) {
+    .bids-page .bids-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@container (max-width: 600px) {
+    .bids-page .bids-container {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* No Bids Message Styles */
