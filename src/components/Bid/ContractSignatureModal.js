@@ -466,7 +466,7 @@ function ContractSignatureModal({
         <h2 style={{ marginBottom: 18, color: '#9633eb', fontWeight: 800, fontSize: 28, letterSpacing: 0.5 }}>Contract Signature</h2>
         
         {/* Business signature UI */}
-        {userRole === "business" && !businessSignaturePos && (
+        {userRole === "business" && !businessSignaturePos && !bid.business_signed_at && !bid.client_signed_at && (
           <div style={{ marginTop: 16, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
               <button onClick={() => setBusinessDrawMode(false)} style={{ background: !businessDrawMode ? '#9633eb' : '#fff', color: !businessDrawMode ? '#fff' : '#9633eb', border: '1.5px solid #9633eb', borderRadius: 6, padding: '6px 18px', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>Type</button>
@@ -621,7 +621,7 @@ function ContractSignatureModal({
           </div>
         )}
 
-        {clientSignatureBoxPos && placingClientBox === false && userRole === "business" && (
+        {clientSignatureBoxPos && placingClientBox === false && userRole === "business" && !bid.business_signed_at && !bid.client_signed_at && (
           <button
             onClick={handleSaveClientBox}
             style={{
@@ -1080,7 +1080,7 @@ function ContractSignatureModal({
           </div>
         )}
 
-        {userRole === "business" && clientSignatureBoxPos && (
+        {userRole === "business" && clientSignatureBoxPos && !bid.business_signed_at && !bid.client_signed_at && (
           <button
             onClick={handleSaveClientBox}
             style={{
