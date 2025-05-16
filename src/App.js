@@ -129,6 +129,7 @@ import RelatedArticles from "./components/Article/RelatedArticles";
 import WeddingVibeQuiz from "./pages/WeddingVibeQuiz";
 import { subscribeToPush } from './hooks/usePushNotification';
 import WeddingPlannerDashboard from "./components/WeddingPlanner/WeddingPlannerDashboard";
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 function App() {
   subscribeToPush();
@@ -432,6 +433,7 @@ function App() {
             draggable
             pauseOnHover
           />
+          <PWAInstallPrompt />
         </div>
       </Router>
     </HelmetProvider>
