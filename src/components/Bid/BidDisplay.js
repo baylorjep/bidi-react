@@ -37,12 +37,15 @@ function BidDisplay({
   showInterested = false,
   showNotInterested = false,
   showPending = false,
+  showApproved = false,
   downPayment = null,
   onDownPayment = null,
   onMessage = null,
   onViewCoupon = null,
   currentUserId = null,
-  onScheduleConsultation = null
+  onScheduleConsultation = null,
+  onPayNow = null,
+  onMoveToPending = null
 }) {
   const [isBidiVerified, setIsBidiVerified] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -73,6 +76,7 @@ function BidDisplay({
   const backRef = useRef(null);
   const [cardHeight, setCardHeight] = useState('auto');
   const [showConsultationModal, setShowConsultationModal] = useState(false);
+  const [currentUserProfile, setCurrentUserProfile] = useState(null);
   const [showContractModal, setShowContractModal] = useState(false);
   const {
     selectedDate,
@@ -114,6 +118,8 @@ function BidDisplay({
   };
 
   const expirationStatus = getExpirationStatus(bid.expiration_date);
+
+  
 
   const handleProfileClick = () => {
     setShowBubble(false);
@@ -223,6 +229,18 @@ function BidDisplay({
   };
 
   const renderActionButtons = () => {
+    console.log(
+      '>>>> BidDisplay.js: renderActionButtons CALLED FOR BID:', bid.id,
+      {
+        bidStatus: bid.status,
+        showActions,
+        showApproved,
+        showPaymentOptions,
+        showNotInterested,
+        showPending,
+        showInterested,
+      }
+    );
     if (!showActions) return null;
 
     const buttonStyle = {
@@ -256,16 +274,101 @@ function BidDisplay({
       alignItems: 'center'
     };
 
-    // Common button layout for all states
-    const renderButtons = () => (
+    // For approved tab, only show X and chat icons
+    if (showApproved) {
+      return (
+        <div className="business-actions-bid-display" style={actionButtonsContainer}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => handleAction(handleDeny, bid.id)}
+            >
+              <CancelIcon style={iconStyle} />
+            </button>
+          </div>
+          <div style={rightButtonsContainer}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={handleChatClick}
+            >
+              <ChatIcon style={iconStyle} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // For payment options, show X and chat icons
+    if (showPaymentOptions) {
+      return (
+        <div className="business-actions" style={actionButtonsContainer}>
+          <button
+            className="btn-icon"
+            style={buttonStyle}
+            onClick={() => handleAction(handleDeny, bid.id)}
+          >
+            <CancelIcon style={iconStyle} />
+          </button>
+          <div style={rightButtonsContainer}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={handleChatClick}
+            >
+              <ChatIcon style={iconStyle} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // For not interested tab, show clock icon
+    if (showNotInterested) {
+      return (
+        <div className="business-actions-bid-display" style={actionButtonsContainer}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => handlePending(bid)}
+            >
+              <AccessTimeIcon style={iconStyle} />
+            </button>
+          </div>
+          <div style={rightButtonsContainer}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={handleChatClick}
+            >
+              <ChatIcon style={iconStyle} />
+            </button>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => handleAction(handleInterested, bid.id)}
+            >
+              <FavoriteBorderIcon style={iconStyle} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // For all other states, show X icon
+    return (
       <div className="business-actions-bid-display" style={actionButtonsContainer}>
-        <button
-          className="btn-icon"
-          style={buttonStyle}
-          onClick={() => handleAction(handleDeny, bid.id)}
-        >
-          <CancelIcon style={iconStyle} />
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            className="btn-icon"
+            style={buttonStyle}
+            onClick={() => handleAction(handleDeny, bid.id)}
+          >
+            <CancelIcon style={iconStyle} />
+          </button>
+        </div>
         <div style={rightButtonsContainer}>
           <button
             className="btn-icon"
@@ -277,11 +380,7 @@ function BidDisplay({
           <button
             className="btn-icon"
             style={buttonStyle}
-            onClick={() => {
-              console.log('Heart clicked. showInterested:', showInterested);
-              handleAction(handleInterested, bid.id);
-            }}
-            aria-label={showInterested ? 'Move to Pending' : 'Mark as Interested'}
+            onClick={() => handleAction(handleInterested, bid.id)}
           >
             {showInterested ? (
               <FavoriteIcon style={iconStyle} />
@@ -302,38 +401,6 @@ function BidDisplay({
         </div>
       </div>
     );
-
-    if (showPaymentOptions) {
-      return (
-        <div className="business-actions" style={actionButtonsContainer}>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleDeny, bid.id)}
-          >
-            <CancelIcon style={iconStyle} />
-          </button>
-          <div style={rightButtonsContainer}>
-            <button
-              className="btn-icon"
-              style={buttonStyle}
-              onClick={() => handleAction(handleApprove, bid.id)}
-            >
-              <AccessTimeIcon style={iconStyle} />
-            </button>
-            <button
-              className="btn-icon"
-              style={buttonStyle}
-              onClick={handleChatClick}
-            >
-              <ChatIcon style={iconStyle} />
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return renderButtons();
   };
 
   useEffect(() => {
@@ -433,27 +500,102 @@ function BidDisplay({
     const pages = pdfDoc.getPages();
     const page = pages[pdfPage - 1];
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    // Format timestamps
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      });
+    };
+
     // Place business signature (bottom left)
-    if (bid.business_signature) {
-      page.drawText(`Business: ${bid.business_signature}`, {
+    if (bid.business_signature_image_url) {
+      // If we have a signature image URL, fetch and embed it
+      const response = await fetch(bid.business_signature_image_url);
+      const imageBytes = await response.arrayBuffer();
+      const image = await pdfDoc.embedPng(imageBytes);
+      const { width, height } = image.scale(0.5); // Scale down the image if needed
+      
+      page.drawImage(image, {
+        x: 50,
+        y: 70, // Moved up to make room for timestamp
+        width,
+        height
+      });
+
+      // Add timestamp below signature
+      page.drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
         x: 50,
         y: 50,
+        size: 10,
+        font,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+    } else if (bid.business_signature) {
+      // Fallback to text signature
+      page.drawText(`Business: ${bid.business_signature}`, {
+        x: 50,
+        y: 70, // Moved up to make room for timestamp
         size: 16,
         font,
         color: rgb(0, 0.4, 0),
       });
+
+      // Add timestamp below signature
+      page.drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
+        x: 50,
+        y: 50,
+        size: 10,
+        font,
+        color: rgb(0.4, 0.4, 0.4),
+      });
     }
-    // Place client signature (user-placed or default bottom right)
-    if (bid.client_signature || clientSignature) {
-      const sig = bid.client_signature || clientSignature;
-      const x = signaturePos?.x || (page.getWidth() - 200);
-      const y = signaturePos?.y || 50;
-      page.drawText(`Client: ${sig}`, {
-        x,
-        y,
+    
+    // Place client signature (bottom right)
+    const pageWidth = page.getWidth();
+    if (bid.client_signature_image) {
+      // If we have a signature image data URL
+      const imageBytes = await fetch(bid.client_signature_image).then(res => res.arrayBuffer());
+      const image = await pdfDoc.embedPng(imageBytes);
+      const { width, height } = image.scale(0.5); // Scale down the image if needed
+      
+      page.drawImage(image, {
+        x: pageWidth - width - 50,
+        y: 70, // Moved up to make room for timestamp
+        width,
+        height
+      });
+
+      // Add timestamp below signature
+      page.drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
+        x: pageWidth - 250,
+        y: 50,
+        size: 10,
+        font,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+    } else if (bid.client_signature) {
+      // Fallback to text signature
+      page.drawText(`Client: ${bid.client_signature}`, {
+        x: pageWidth - 250,
+        y: 70, // Moved up to make room for timestamp
         size: 16,
         font,
         color: rgb(0, 0, 0.6),
+      });
+
+      // Add timestamp below signature
+      page.drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
+        x: pageWidth - 250,
+        y: 50,
+        size: 10,
+        font,
+        color: rgb(0.4, 0.4, 0.4),
       });
     }
     const pdfBytes = await pdfDoc.save();
@@ -584,6 +726,79 @@ function BidDisplay({
                   </div>
                 </div>
 
+                            {/* Contract signature modal trigger */}
+            {bid.contract_url && bid.contract_url.endsWith('.pdf') && (
+              <>
+                {/* Only show sign button if business has signed but client hasn't */}
+                {bid.business_signed_at && !bid.client_signed_at && (
+                  <button
+                    className="btn-secondary"
+                    style={{ 
+                      margin: '16px 0', 
+                      width: '100%',
+                      background: '#9633eb',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                    onClick={() => setShowContractModal(true)}
+                  >
+                    <i className="fas fa-signature"></i>
+                    Sign Contract
+                  </button>
+                )}
+                {/* Show waiting message if business hasn't signed yet */}
+                {!bid.business_signed_at && (
+                  <div
+                    style={{ 
+                      margin: '16px 0', 
+                      padding: '12px',
+                      background: '#f0f0f0',
+                      color: '#666',
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Waiting for business signature...
+                  </div>
+                )}
+                {/* Show single view button when both have signed */}
+                {bid.business_signed_at && bid.client_signed_at && (
+                  <button
+                    className="btn-secondary"
+                    style={{ 
+                      margin: '16px 0', 
+                      width: '100%',
+                      background: '#9633eb',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      fontWeight: '600',
+                      fontSize: '15px',
+                      boxShadow: '0 2px 4px rgba(150,51,235,0.1)'
+                    }}
+                    onClick={() => setShowContractModal(true)}
+                  >
+                    <i className="fas fa-file-contract"></i>
+                    View Contract
+                  </button>
+                )}
+              </>
+            )}
+
                 {downPayment && (
                   <button
                     className="payment-button deposit"
@@ -611,7 +826,7 @@ function BidDisplay({
                 )}
                 <button
                   className="payment-button full"
-                  onClick={() => handleAction(handleApprove, bid.id)}
+                  onClick={() => onPayNow(bid)}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -708,17 +923,6 @@ function BidDisplay({
                 </div>
               )}
             </div>
-
-            {/* Contract signature modal trigger */}
-            {bid.contract_url && bid.contract_url.endsWith('.pdf') && (
-              <button
-                className="btn-secondary"
-                style={{ margin: '16px 0', width: '100%' }}
-                onClick={() => setShowContractModal(true)}
-              >
-                Sign / View Contract
-              </button>
-            )}
           </div>
 
           {/* Back of card - Messaging View */}
@@ -764,24 +968,17 @@ function BidDisplay({
       {/* Contract Signature Modal */}
       <ContractSignatureModal
         isOpen={showContractModal}
-        onClose={() => setShowContractModal(false)}
+        onClose={() => {
+          console.log('BidDisplay modal closing');
+          setShowContractModal(false);
+        }}
         bid={bid}
-        pdfPage={pdfPage}
-        setPdfPage={setPdfPage}
-        pdfData={pdfData}
-        pdfWrapperRef={pdfWrapperRef}
-        handlePdfClick={handlePdfClick}
-        signaturePos={signaturePos}
-        placingSignature={placingSignature}
-        clientSignature={clientSignature}
-        setClientSignature={setClientSignature}
-        clientSigning={clientSigning}
-        clientSignError={clientSignError}
-        clientSigned={clientSigned}
-        handleClientSignContract={handleClientSignContract}
-        handleDownloadSignedPdf={handleDownloadSignedPdf}
+        userRole={'individual'}
+        testSource="BidDisplay"
       />
+      
     </div>
+    
   );
 }
 

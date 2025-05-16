@@ -7,6 +7,8 @@ import reportWebVitals from './reportWebVitals';
 import './i18n';
 import { registerServiceWorker } from './serviceWorkerRegistration';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -23,3 +25,16 @@ reportWebVitals();
 
 // Call service worker registration here
 registerServiceWorker();
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('ServiceWorker registration successful');
+      })
+      .catch(err => {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+  });
+}

@@ -5,11 +5,15 @@ const BudgetForm = ({ formData, setFormData, category }) => {
   const [priceQualityPreference, setPriceQualityPreference] = useState(50);
   const [budgetInsights, setBudgetInsights] = useState([]);
   const [recommendedBudget, setRecommendedBudget] = useState({ min: 0, max: 0 });
+  const [budgetRange, setBudgetRange] = useState({ min: 0, max: 10000 });
+  const [isDragging, setIsDragging] = useState(null);
+  const [isAutoMode, setIsAutoMode] = useState(true);
+  const sliderRef = React.useRef(null);
 
   useEffect(() => {
     updateBudgetInsights();
     calculateRecommendedBudget();
-  }, [formData, category, priceQualityPreference]);
+  }, [formData, category, priceQualityPreference, budgetRange]);
 
   const getBudgetRanges = () => {
     switch (category.toLowerCase()) {
@@ -24,12 +28,20 @@ const BudgetForm = ({ formData, setFormData, category }) => {
         ];
       case 'videography':
         return [
+          { min: 0, max: 1000, value: '0-1000', label: '$0 - $1,000' },
+          { min: 1000, max: 2000, value: '1000-2000', label: '$1,000 - $2,000' },
+          { min: 2000, max: 3000, value: '2000-3000', label: '$2,000 - $3,000' },
+          { min: 3000, max: 4000, value: '3000-4000', label: '$3,000 - $4,000' },
+          { min: 4000, max: 5000, value: '4000-5000', label: '$4,000 - $5,000' },
+          { min: 5000, max: Infinity, value: '5000+', label: '$5,000+' }
+        ];
+      case 'dj':
+        return [
           { min: 0, max: 500, value: '0-500', label: '$0 - $500' },
           { min: 500, max: 1000, value: '500-1000', label: '$500 - $1,000' },
           { min: 1000, max: 1500, value: '1000-1500', label: '$1,000 - $1,500' },
           { min: 1500, max: 2000, value: '1500-2000', label: '$1,500 - $2,000' },
-          { min: 2000, max: 2500, value: '2000-2500', label: '$2,000 - $2,500' },
-          { min: 2500, max: 3000, value: '2500-3000', label: '$2,500 - $3,000' },
+          { min: 2000, max: 3000, value: '2000-3000', label: '$2,000 - $3,000' },
           { min: 3000, max: Infinity, value: '3000+', label: '$3,000+' }
         ];
       case 'catering':
@@ -39,20 +51,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
           { min: 2000, max: 3000, value: '2000-3000', label: '$2,000 - $3,000' },
           { min: 3000, max: 4000, value: '3000-4000', label: '$3,000 - $4,000' },
           { min: 4000, max: 5000, value: '4000-5000', label: '$4,000 - $5,000' },
-          { min: 5000, max: 6000, value: '5000-6000', label: '$5,000 - $6,000' },
-          { min: 6000, max: 8000, value: '6000-8000', label: '$6,000 - $8,000' },
-          { min: 8000, max: 10000, value: '8000-10000', label: '$8,000 - $10,000' },
-          { min: 10000, max: Infinity, value: '10000+', label: '$10,000+' }
-        ];
-      case 'dj':
-        return [
-          { min: 0, max: 500, value: '0-500', label: '$0 - $500' },
-          { min: 500, max: 1000, value: '500-1000', label: '$500 - $1,000' },
-          { min: 1000, max: 1500, value: '1000-1500', label: '$1,000 - $1,500' },
-          { min: 1500, max: 2000, value: '1500-2000', label: '$1,500 - $2,000' },
-          { min: 2000, max: 2500, value: '2000-2500', label: '$2,000 - $2,500' },
-          { min: 2500, max: 3000, value: '2500-3000', label: '$2,500 - $3,000' },
-          { min: 3000, max: Infinity, value: '3000+', label: '$3,000+' }
+          { min: 5000, max: Infinity, value: '5000+', label: '$5,000+' }
         ];
       case 'florist':
         return [
@@ -60,21 +59,17 @@ const BudgetForm = ({ formData, setFormData, category }) => {
           { min: 500, max: 1000, value: '500-1000', label: '$500 - $1,000' },
           { min: 1000, max: 1500, value: '1000-1500', label: '$1,000 - $1,500' },
           { min: 1500, max: 2000, value: '1500-2000', label: '$1,500 - $2,000' },
-          { min: 2000, max: 2500, value: '2000-2500', label: '$2,000 - $2,500' },
-          { min: 2500, max: 3000, value: '2500-3000', label: '$2,500 - $3,000' },
-          { min: 3000, max: 3500, value: '3000-3500', label: '$3,000 - $3,500' },
-          { min: 3500, max: 4000, value: '3500-4000', label: '$3,500 - $4,000' },
-          { min: 4000, max: Infinity, value: '4000+', label: '$4,000+' }
+          { min: 2000, max: 3000, value: '2000-3000', label: '$2,000 - $3,000' },
+          { min: 3000, max: Infinity, value: '3000+', label: '$3,000+' }
         ];
-      case 'hairandmakeup':
+      case 'beauty':
         return [
-          { min: 0, max: 300, value: '0-300', label: '$0 - $300' },
-          { min: 300, max: 500, value: '300-500', label: '$300 - $500' },
-          { min: 500, max: 750, value: '500-750', label: '$500 - $750' },
-          { min: 750, max: 1000, value: '750-1000', label: '$750 - $1,000' },
+          { min: 0, max: 500, value: '0-500', label: '$0 - $500' },
+          { min: 500, max: 1000, value: '500-1000', label: '$500 - $1,000' },
           { min: 1000, max: 1500, value: '1000-1500', label: '$1,000 - $1,500' },
           { min: 1500, max: 2000, value: '1500-2000', label: '$1,500 - $2,000' },
-          { min: 2000, max: Infinity, value: '2000+', label: '$2,000+' }
+          { min: 2000, max: 3000, value: '2000-3000', label: '$2,000 - $3,000' },
+          { min: 3000, max: Infinity, value: '3000+', label: '$3,000+' }
         ];
       default:
         return [
@@ -83,9 +78,7 @@ const BudgetForm = ({ formData, setFormData, category }) => {
           { min: 1000, max: 1500, value: '1000-1500', label: '$1,000 - $1,500' },
           { min: 1500, max: 2000, value: '1500-2000', label: '$1,500 - $2,000' },
           { min: 2000, max: 3000, value: '2000-3000', label: '$2,000 - $3,000' },
-          { min: 3000, max: 4000, value: '3000-4000', label: '$3,000 - $4,000' },
-          { min: 4000, max: 5000, value: '4000-5000', label: '$4,000 - $5,000' },
-          { min: 5000, max: Infinity, value: '5000+', label: '$5,000+' }
+          { min: 3000, max: Infinity, value: '3000+', label: '$3,000+' }
         ];
     }
   };
@@ -93,660 +86,225 @@ const BudgetForm = ({ formData, setFormData, category }) => {
   const calculateRecommendedBudget = () => {
     let basePrice = 0;
     const requestData = formData.requests[category] || {};
+    const commonDetails = formData.commonDetails || {};
+    const eventType = commonDetails.eventType?.toLowerCase();
 
-    if (category.toLowerCase() === 'photography') {
-      // Base price based on duration
-      if (requestData.duration) {
-        basePrice = requestData.duration * 200; // $200 per hour base rate
-      }
-
-      // Add for second photographer
-      if (requestData.secondPhotographer === 'yes') {
-        basePrice *= 1.5; // 50% increase for second photographer
-      }
-
-      // Add for wedding specific coverage
-      if (formData.commonDetails.eventType === 'Wedding') {
-        const weddingDetails = requestData.weddingDetails || {};
-        const coveragePoints = Object.values(weddingDetails).filter(Boolean).length;
-        basePrice += coveragePoints * 200; // $200 per coverage point
-      }
-
-      // Add for deliverables
-      const deliverables = requestData.deliverables || {};
-      if (deliverables.weddingAlbum) basePrice += 500;
-      if (deliverables.rawFiles) basePrice += 300;
-      if (deliverables.engagement) basePrice += 500;
-
-      // Calculate range based on price quality preference
-      const qualityMultiplier = 1 + (priceQualityPreference / 100);
-      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
-      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
-
-      setRecommendedBudget({ min: minPrice, max: maxPrice });
-    } else if (category.toLowerCase() === 'videography') {
-      // Base price based on duration
-      if (requestData.duration) {
-        basePrice = requestData.duration * 300; // $300 per hour base rate
-      }
-
-      // Add for second videographer
-      if (requestData.secondVideographer === 'yes') {
-        basePrice *= 1.5; // 50% increase for second videographer
-      }
-
-      // Add for wedding specific coverage
-      if (formData.commonDetails.eventType === 'Wedding') {
-        const weddingDetails = requestData.weddingDetails || {};
-        const coveragePoints = Object.values(weddingDetails).filter(Boolean).length;
-        basePrice += coveragePoints * 300; // $300 per coverage point
-      }
-
-      // Add for deliverables
-      const deliverables = requestData.deliverables || {};
-      if (deliverables.highlightReel) basePrice += 800;
-      if (deliverables.fullCeremony) basePrice += 500;
-      if (deliverables.fullReception) basePrice += 500;
-      if (deliverables.rawFootage) basePrice += 400;
-      if (deliverables.droneFootage) basePrice += 600;
-      if (deliverables.sameDayEdit) basePrice += 1000;
-
-      // Calculate range based on price quality preference
-      const qualityMultiplier = 1 + (priceQualityPreference / 100);
-      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
-      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
-
-      setRecommendedBudget({ min: minPrice, max: maxPrice });
-    } else if (category.toLowerCase() === 'dj') {
-      // Base price for DJ services
-      basePrice = 1000; // Base rate for a standard DJ service
-
-      // Add for additional services
-      const additionalServices = formData.eventDetails?.additionalServices || {};
-      if (additionalServices.mcServices) basePrice += 200;
-      if (additionalServices.liveMixing) basePrice += 300;
-      if (additionalServices.uplighting) basePrice += 400;
-      if (additionalServices.fogMachine) basePrice += 150;
-      if (additionalServices.specialFx) basePrice += 500;
-      if (additionalServices.photoBooth) basePrice += 800;
-      if (additionalServices.eventRecording) basePrice += 300;
-      if (additionalServices.karaoke) basePrice += 200;
-
-      // Add for equipment needs
-      const equipmentNeeded = formData.eventDetails?.equipmentNeeded;
-      if (equipmentNeeded === 'djBringsAll') basePrice += 500;
-      if (equipmentNeeded === 'djBringsSome') basePrice += 300;
-
-      // Add for wedding coverage
-      if (formData.commonDetails?.eventType === 'Wedding') {
-        const weddingDetails = formData.eventDetails?.weddingDetails || {};
-        const coveragePoints = Object.values(weddingDetails).filter(Boolean).length;
-        basePrice += coveragePoints * 200; // $200 per coverage point
-      }
-
-      // Calculate range based on price quality preference
-      const qualityMultiplier = 1 + (priceQualityPreference / 100);
-      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
-      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
-
-      setRecommendedBudget({ min: minPrice, max: maxPrice });
-    } else if (category.toLowerCase() === 'hairandmakeup') {
-      // Base price for number of people
-      const numPeople = parseInt(formData.requests.HairAndMakeup?.numPeople) || 1;
-      
-      // Base rate per person with volume discount
-      let basePricePerPerson = 150;
-      if (numPeople > 10) {
-        basePricePerPerson = 120; // Volume discount for large groups
-      } else if (numPeople > 5) {
-        basePricePerPerson = 130; // Slight discount for medium groups
-      }
-      
-      basePrice = numPeople * basePricePerPerson;
-
-      // Service type adjustments
-      const serviceType = formData.requests.HairAndMakeup?.serviceType || 'both';
-      if (serviceType === 'both') {
-        basePrice *= 1.5; // Both services cost more than individual services
-      }
-
-      // Hair-specific adjustments
-      if (serviceType === 'both' || serviceType === 'hair') {
-        if (formData.requests.HairAndMakeup?.extensionsNeeded === 'yes') {
-          basePrice += 200 * numPeople; // Additional cost for extensions per person
+    // Get base price from the appropriate stepper component
+    switch (category.toLowerCase()) {
+      case 'photography':
+        if (requestData.duration) {
+          basePrice = requestData.duration * 200;
+          if (requestData.secondPhotographer === 'yes') {
+            basePrice *= 1.5;
+          }
         }
-        if (formData.requests.HairAndMakeup?.trialSessionHair === 'yes') {
-          basePrice += 150 * numPeople; // Additional cost for hair trial per person
+        break;
+      case 'videography':
+        if (requestData.duration) {
+          basePrice = requestData.duration * 300;
+          if (requestData.secondVideographer === 'yes') {
+            basePrice *= 1.5;
+          }
         }
-      }
-
-      // Makeup-specific adjustments
-      if (serviceType === 'both' || serviceType === 'makeup') {
-        if (formData.requests.HairAndMakeup?.lashesIncluded === 'yes') {
-          basePrice += 50 * numPeople; // Additional cost for lashes per person
+        break;
+      case 'dj':
+        basePrice = 1000;
+        if (requestData.additionalServices) {
+          if (requestData.additionalServices.mcServices) basePrice += 200;
+          if (requestData.additionalServices.liveMixing) basePrice += 300;
+          if (requestData.additionalServices.uplighting) basePrice += 400;
+          if (requestData.additionalServices.fogMachine) basePrice += 150;
+          if (requestData.additionalServices.specialFx) basePrice += 500;
+          if (requestData.additionalServices.photoBooth) basePrice += 800;
+          if (requestData.additionalServices.eventRecording) basePrice += 300;
+          if (requestData.additionalServices.karaoke) basePrice += 200;
         }
-        if (formData.requests.HairAndMakeup?.trialSessionMakeup === 'yes') {
-          basePrice += 150 * numPeople; // Additional cost for makeup trial per person
+        break;
+      case 'catering':
+        const numGuests = parseInt(commonDetails.numGuests) || 0;
+        basePrice = numGuests * 50;
+        if (requestData.foodStyle === 'plated') basePrice *= 1.2;
+        if (requestData.foodStyle === 'stations') basePrice *= 1.3;
+        if (requestData.dietaryRestrictions?.length > 0) basePrice *= 1.1;
+        if (requestData.setupCleanup === 'both') basePrice += 500;
+        if (requestData.setupCleanup === 'setupOnly' || requestData.setupCleanup === 'cleanupOnly') basePrice += 250;
+        if (requestData.servingStaff === 'fullService') basePrice += numGuests * 10;
+        if (requestData.servingStaff === 'partialService') basePrice += numGuests * 5;
+        break;
+      case 'florist':
+        const floralArrangements = requestData.floralArrangements || {};
+        if (floralArrangements.bridalBouquet) basePrice += 200;
+        if (floralArrangements.bridesmaidBouquets) {
+          const quantity = floralArrangements.bridesmaidBouquetsQuantity || 1;
+          basePrice += quantity * 100;
         }
-      }
+        if (floralArrangements.boutonnieres) {
+          const quantity = floralArrangements.boutonnieresQuantity || 1;
+          basePrice += quantity * 25;
+        }
+        if (floralArrangements.centerpieces) {
+          const quantity = floralArrangements.centerpiecesQuantity || 1;
+          basePrice += quantity * 75;
+        }
+        if (floralArrangements.ceremonyArch) basePrice += 500;
+        if (floralArrangements.aisleMarkers) basePrice += 300;
+        if (floralArrangements.altarArrangements) basePrice += 400;
+        if (floralArrangements.welcomeSign) basePrice += 150;
+        if (floralArrangements.cakeFlowers) basePrice += 150;
+        if (floralArrangements.tossBouquet) basePrice += 100;
+        if (floralArrangements.flowerCrown) basePrice += 150;
+        if (floralArrangements.flowerGirlBasket) basePrice += 100;
+        if (floralArrangements.petalConfetti) basePrice += 100;
+        break;
+      case 'beauty':
+        const serviceType = requestData.serviceType;
+        const numPeople = parseInt(requestData.numPeople) || 0;
+        const baseRates = {
+          'both': 200,
+          'hair': 150,
+          'makeup': 100
+        };
+        basePrice = baseRates[serviceType] * numPeople;
+        if (requestData.extensionsNeeded === 'yes') basePrice += 100 * numPeople;
+        if (requestData.trialSessionHair === 'yes') basePrice += 150 * numPeople;
+        if (requestData.lashesIncluded === 'yes') basePrice += 50 * numPeople;
+        if (requestData.trialSessionMakeup === 'yes') basePrice += 150 * numPeople;
+        break;
+    }
 
-      // Location adjustment
-      if (formData.requests.HairAndMakeup?.serviceLocation?.toLowerCase().includes('hotel')) {
-        basePrice += 100 * numPeople; // Additional cost for hotel service per person
-      }
+    // Calculate range based on price quality preference
+    const qualityMultiplier = 1 + (priceQualityPreference / 100);
+    const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2) / 100) * 100;
+    const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2) / 100) * 100;
 
-      // Minimum base price for large groups
-      if (numPeople > 5) {
-        basePrice = Math.max(basePrice, numPeople * 200); // Ensure minimum $200 per person for groups
-      }
-
-      // Calculate range based on price quality preference
-      const qualityMultiplier = 1 + (priceQualityPreference / 100);
-      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
-      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
-
-      setRecommendedBudget({ min: minPrice, max: maxPrice });
-    } else if (category.toLowerCase() === 'florist') {
-      // Initialize insights array for Florist
-      const insights = [];
-      
-      // Base prices for floral arrangements
-      const floralArrangements = formData.requests.Florist?.floralArrangements || {};
-      
-      // Bridal bouquet
-      if (floralArrangements.bridalBouquet) {
-        basePrice += 200;
-      }
-      
-      // Bridesmaid bouquets
-      if (floralArrangements.bridesmaidBouquets) {
-        const quantity = floralArrangements.bridesmaidBouquetsQuantity || 1;
-        basePrice += quantity * 100;
-      }
-      
-      // Boutonnieres
-      if (floralArrangements.boutonnieres) {
-        const quantity = floralArrangements.boutonnieresQuantity || 1;
-        basePrice += quantity * 25;
-      }
-      
-      // Corsages
-      if (floralArrangements.corsages) {
-        const quantity = floralArrangements.corsagesQuantity || 1;
-        basePrice += quantity * 40;
-      }
-      
-      // Centerpieces
-      if (floralArrangements.centerpieces) {
-        const quantity = floralArrangements.centerpiecesQuantity || 1;
-        basePrice += quantity * 75;
-      }
-      
-      // Ceremony arch flowers
-      if (floralArrangements.ceremonyArchFlowers) {
-        basePrice += 500;
-      }
-      
-      // Aisle decorations
-      if (floralArrangements.aisleDecorations) {
-        basePrice += 300;
-      }
-      
-      // Floral installations
-      if (floralArrangements.floralInstallations) {
-        basePrice += 800;
-      }
-      
-      // Cake flowers
-      if (floralArrangements.cakeFlowers) {
-        basePrice += 150;
-      }
-      
-      // Loose petals
-      if (floralArrangements.loosePetals) {
-        basePrice += 100;
-      }
-
-      // Additional services
-      const additionalServices = formData.requests.Florist?.additionalServices || {};
-      if (additionalServices.setup) basePrice += 200;
-      if (additionalServices.delivery) basePrice += 150;
-      if (additionalServices.cleanup) basePrice += 100;
-      if (additionalServices.consultation) basePrice += 150;
-
-      // Calculate range based on price quality preference
-      const qualityMultiplier = 1 + (priceQualityPreference / 100);
-      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
-      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
-
-      setRecommendedBudget({ min: minPrice, max: maxPrice });
-
-      // Add budget insights for Florist
-      if (floralArrangements.bridalBouquet) {
-        insights.push({
-          icon: '💐',
-          text: 'Bridal bouquet',
-          type: 'info'
-        });
-      }
-      if (floralArrangements.bridesmaidBouquets) {
-        const quantity = floralArrangements.bridesmaidBouquetsQuantity || 1;
-        insights.push({
-          icon: '💐',
-          text: `${quantity} bridesmaid bouquet(s)`,
-          type: 'info'
-        });
-      }
-      if (floralArrangements.boutonnieres) {
-        const quantity = floralArrangements.boutonnieresQuantity || 1;
-        insights.push({
-          icon: '💐',
-          text: `${quantity} boutonniere(s)`,
-          type: 'info'
-        });
-      }
-      if (floralArrangements.corsages) {
-        const quantity = floralArrangements.corsagesQuantity || 1;
-        insights.push({
-          icon: '💐',
-          text: `${quantity} corsage(s)`,
-          type: 'info'
-        });
-      }
-      if (floralArrangements.centerpieces) {
-        const quantity = floralArrangements.centerpiecesQuantity || 1;
-        insights.push({
-          icon: '💐',
-          text: `${quantity} centerpiece(s)`,
-          type: 'info'
-        });
-      }
-      if (floralArrangements.ceremonyArchFlowers) {
-        insights.push({
-          icon: '💐',
-          text: 'Ceremony arch flowers',
-          type: 'info'
-        });
-      }
-      if (floralArrangements.aisleDecorations) {
-        insights.push({
-          icon: '💐',
-          text: 'Aisle decorations',
-          type: 'info'
-        });
-      }
-      if (floralArrangements.floralInstallations) {
-        insights.push({
-          icon: '💐',
-          text: 'Floral installations',
-          type: 'info'
-        });
-      }
-      if (floralArrangements.cakeFlowers) {
-        insights.push({
-          icon: '💐',
-          text: 'Cake flowers',
-          type: 'info'
-        });
-      }
-      if (floralArrangements.loosePetals) {
-        insights.push({
-          icon: '💐',
-          text: 'Loose petals',
-          type: 'info'
-        });
-      }
-      if (additionalServices.setup) {
-        insights.push({
-          icon: '⚙️',
-          text: 'Setup & installation service',
-          type: 'info'
-        });
-      }
-      if (additionalServices.delivery) {
-        insights.push({
-          icon: '🚚',
-          text: 'Delivery service',
-          type: 'info'
-        });
-      }
-      if (additionalServices.cleanup) {
-        insights.push({
-          icon: '🧹',
-          text: 'Cleanup service',
-          type: 'info'
-        });
-      }
-      if (additionalServices.consultation) {
-        insights.push({
-          icon: '💬',
-          text: 'In-person consultation',
-          type: 'info'
-        });
-      }
-
-      // Set the insights for display
-      setBudgetInsights(insights);
-    } else if (category.toLowerCase() === 'catering') {
-      // Base price based on number of guests
-      const numGuests = parseInt(formData.commonDetails?.numGuests) || 0;
-      if (numGuests > 0) {
-        basePrice = numGuests * 35; // Reduced from $50 to $35 per person base rate
-      }
-
-      // Add for food style
-      const foodStyle = formData.eventDetails?.foodStyle;
-      if (foodStyle === 'plated') {
-        basePrice *= 1.15; // Reduced from 1.2 to 1.15 (15% increase for plated service)
-      } else if (foodStyle === 'stations') {
-        basePrice *= 1.2; // Reduced from 1.3 to 1.2 (20% increase for food stations)
-      }
-
-      // Add for dietary restrictions
-      const dietaryRestrictions = formData.eventDetails?.dietaryRestrictions || [];
-      if (dietaryRestrictions.length > 0) {
-        basePrice *= 1.05; // Reduced from 1.1 to 1.05 (5% increase for dietary restrictions)
-      }
-
-      // Add for setup and cleanup
-      const setupCleanup = formData.eventDetails?.setupCleanup;
-      if (setupCleanup === 'both') {
-        basePrice += 300; // Reduced from $500 to $300 for full setup and cleanup
-      } else if (setupCleanup === 'setupOnly' || setupCleanup === 'cleanupOnly') {
-        basePrice += 150; // Reduced from $250 to $150 for partial service
-      }
-
-      // Add for serving staff
-      const servingStaff = formData.eventDetails?.servingStaff;
-      if (servingStaff === 'fullService') {
-        basePrice += numGuests * 8; // Reduced from $10 to $8 per person for full service staff
-      } else if (servingStaff === 'partialService') {
-        basePrice += numGuests * 4; // Reduced from $5 to $4 per person for partial service
-      }
-
-      // Add for dining items
-      const diningItems = formData.eventDetails?.diningItems;
-      if (diningItems === 'provided') {
-        basePrice += numGuests * 12; // Reduced from $15 to $12 per person for full dining items
-      } else if (diningItems === 'partial') {
-        basePrice += numGuests * 6; // Reduced from $8 to $6 per person for partial items
-      }
-
-      // Adjust based on price quality preference
-      const priceQualityPreference = formData.requests.Catering?.priceQualityPreference || "2";
-      if (priceQualityPreference === "1") {
-        basePrice *= 0.85; // Increased from 0.8 to 0.85 (15% reduction for budget-conscious)
-      } else if (priceQualityPreference === "3") {
-        basePrice *= 1.2; // Reduced from 1.3 to 1.2 (20% increase for quality-focused)
-      }
-
-      // Calculate range based on price quality preference
-      const qualityMultiplier = 1 + (priceQualityPreference / 100);
-      const minPrice = Math.round(basePrice * (qualityMultiplier - 0.2));
-      const maxPrice = Math.round(basePrice * (qualityMultiplier + 0.2));
-
-      setRecommendedBudget({ min: minPrice, max: maxPrice });
-
-      // Add budget insights based on the calculated price
-      const insights = [];
-      if (numGuests > 0) {
-        insights.push(`${numGuests} guests`);
-      }
-      if (foodStyle) {
-        insights.push(`${foodStyle.charAt(0).toUpperCase() + foodStyle.slice(1)} service`);
-      }
-      if (dietaryRestrictions.length > 0) {
-        insights.push(`${dietaryRestrictions.length} dietary restrictions`);
-      }
-      if (setupCleanup) {
-        insights.push(`${setupCleanup === 'both' ? 'Full' : 'Partial'} setup/cleanup`);
-      }
-      if (servingStaff) {
-        insights.push(`${servingStaff === 'fullService' ? 'Full' : 'Partial'} service staff`);
-      }
-      if (diningItems) {
-        insights.push(`${diningItems === 'provided' ? 'Full' : 'Partial'} dining items`);
-      }
-
-      setBudgetInsights(insights);
+    setRecommendedBudget({ min: minPrice, max: maxPrice });
+    
+    if (isAutoMode) {
+      setBudgetRange({ min: minPrice, max: maxPrice });
     }
   };
 
   const updateBudgetInsights = () => {
-    const insights = getBudgetInsights(
-      category.toLowerCase() === 'dj'
-        ? formData.eventDetails?.priceRange 
-        : formData.requests[category]?.priceRange,
-      category
-    );
+    const insights = getBudgetInsights(budgetRange, category);
     setBudgetInsights(insights);
   };
 
   const getBudgetInsights = (range, category) => {
     const insights = [];
-    
-    // Return empty insights if range is undefined
-    if (!range) {
-      return insights;
-    }
+    const requestData = formData.requests[category] || {};
+    const commonDetails = formData.commonDetails || {};
 
-    const [min, max] = range.split('-').map(Number);
-
-    if (category.toLowerCase() === 'catering') {
-      if (min < 1000) {
-        insights.push(
-          'Limited menu options',
-          'Basic service with minimal staff',
-          'Self-service or minimal staff assistance',
-          'Standard dinnerware and utensils',
-          'Limited customization options'
-        );
-      } else if (min < 2000) {
-        insights.push(
-          'Moderate menu selection',
-          'Basic staff service',
-          'Standard dinnerware and utensils',
-          'Some customization options available',
-          'Basic setup and cleanup included'
-        );
-      } else if (min < 3000) {
-        insights.push(
-          'Good variety of menu options',
-          'Professional staff service',
-          'Quality dinnerware and utensils',
-          'More customization options',
-          'Full setup and cleanup service'
-        );
-      } else if (min < 4000) {
-        insights.push(
-          'Extensive menu selection',
-          'Professional full-service staff',
-          'Premium dinnerware and utensils',
-          'High level of customization',
-          'Comprehensive setup and cleanup'
-        );
-      } else if (min < 5000) {
-        insights.push(
-          'Premium menu options',
-          'Experienced professional staff',
-          'Luxury dinnerware and utensils',
-          'Extensive customization options',
-          'Premium setup and cleanup service'
-        );
-      } else if (min < 6000) {
-        insights.push(
-          'Gourmet menu selection',
-          'Highly experienced staff',
-          'Luxury dinnerware and utensils',
-          'Full customization capabilities',
-          'Premium setup and cleanup service'
-        );
-      } else if (min < 8000) {
-        insights.push(
-          'Executive chef services',
-          'Premium staff service',
-          'Luxury dinnerware and utensils',
-          'Complete customization options',
-          'Premium setup and cleanup service'
-        );
-      } else if (min < 10000) {
-        insights.push(
-          'Celebrity chef options',
-          'Elite staff service',
-          'Luxury dinnerware and utensils',
-          'Complete customization options',
-          'Premium setup and cleanup service'
-        );
-      } else {
-        insights.push(
-          'Custom menu design by executive chef',
-          'Elite staff service',
-          'Luxury dinnerware and utensils',
-          'Complete customization options',
-          'Premium setup and cleanup service'
-        );
-      }
-    } else if (category.toLowerCase() === 'photography') {
-      switch (range) {
-        case 'under-2000':
+    switch (category.toLowerCase()) {
+      case 'photography':
+        if (requestData.duration) {
           insights.push({
-            icon: '⚠️',
-            text: 'Limited options in this range. Consider increasing budget for better quality.',
-            type: 'warning'
+            icon: '⏱️',
+            text: `${requestData.duration} hours of coverage`,
+            type: 'info'
           });
-          break;
-        case '2000-4000':
+        }
+        if (requestData.secondPhotographer === 'yes') {
           insights.push({
             icon: '📸',
-            text: 'Good range for experienced photographers with basic packages.',
+            text: 'Second photographer included',
             type: 'info'
           });
-          break;
-        case '4000-6000':
+        }
+        break;
+      case 'videography':
+        if (requestData.duration) {
           insights.push({
-            icon: '📸',
-            text: 'Premium range with experienced photographers and full coverage.',
+            icon: '⏱️',
+            text: `${requestData.duration} hours of coverage`,
             type: 'info'
           });
-          break;
-        case '6000-8000':
-          insights.push({
-            icon: '📸',
-            text: 'Luxury range with top-tier photographers and extensive coverage.',
-            type: 'info'
-          });
-          break;
-        case '8000+':
-          insights.push({
-            icon: '📸',
-            text: 'Elite range with renowned photographers and premium services.',
-            type: 'info'
-          });
-          break;
-        default:
-          break;
-      }
-    } else if (category.toLowerCase() === 'videography') {
-      switch (range) {
-        case 'under-3000':
-          insights.push({
-            icon: '⚠️',
-            text: 'Limited options in this range. Consider increasing budget for better quality.',
-            type: 'warning'
-          });
-          break;
-        case '3000-5000':
+        }
+        if (requestData.secondVideographer === 'yes') {
           insights.push({
             icon: '🎥',
-            text: 'Good range for experienced videographers with basic packages.',
+            text: 'Second videographer included',
             type: 'info'
           });
-          break;
-        case '5000-7000':
+        }
+        break;
+      case 'dj':
+        if (requestData.additionalServices) {
+          Object.entries(requestData.additionalServices).forEach(([service, included]) => {
+            if (included) {
+              insights.push({
+                icon: '🎵',
+                text: service.replace(/([A-Z])/g, ' $1').trim(),
+                type: 'info'
+              });
+            }
+          });
+        }
+        break;
+      case 'catering':
+        const numGuests = parseInt(commonDetails.numGuests) || 0;
+        if (numGuests > 0) {
           insights.push({
-            icon: '🎥',
-            text: 'Premium range with experienced videographers and full coverage.',
+            icon: '👥',
+            text: `${numGuests} guests`,
             type: 'info'
           });
-          break;
-        case '7000-9000':
+        }
+        if (requestData.foodStyle) {
           insights.push({
-            icon: '🎥',
-            text: 'Luxury range with top-tier videographers and extensive coverage.',
+            icon: '🍽️',
+            text: `${requestData.foodStyle} service`,
             type: 'info'
           });
-          break;
-        case '9000+':
+        }
+        break;
+      case 'florist':
+        const floralArrangements = requestData.floralArrangements || {};
+        Object.entries(floralArrangements).forEach(([arrangement, included]) => {
+          if (included && !arrangement.endsWith('Quantity')) {
+            const quantity = floralArrangements[`${arrangement}Quantity`] || 1;
+            insights.push({
+              icon: '💐',
+              text: `${quantity} ${arrangement.replace(/([A-Z])/g, ' $1').toLowerCase()}`,
+              type: 'info'
+            });
+          }
+        });
+        break;
+      case 'beauty':
+        const serviceType = requestData.serviceType;
+        const numPeople = parseInt(requestData.numPeople) || 0;
+        if (serviceType && numPeople > 0) {
           insights.push({
-            icon: '🎥',
-            text: 'Elite range with renowned videographers and premium services.',
+            icon: '💇‍♀️',
+            text: `${serviceType} service for ${numPeople} people`,
             type: 'info'
           });
-          break;
-        default:
-          break;
-      }
-    } else if (category.toLowerCase() === 'dj') {
-      switch (range) {
-        case '0-500':
-          insights.push({
-            icon: '⚠️',
-            text: 'Limited options in this range. Consider increasing budget for better quality.',
-            type: 'warning'
-          });
-          break;
-        case '500-1000':
-          insights.push({
-            icon: '🎵',
-            text: 'Good range for entry-level DJs with basic equipment.',
-            type: 'info'
-          });
-          break;
-        case '1000-1500':
-          insights.push({
-            icon: '🎵',
-            text: 'Standard range for experienced DJs with good equipment.',
-            type: 'info'
-          });
-          break;
-        case '1500-2000':
-          insights.push({
-            icon: '🎵',
-            text: 'Premium range with experienced DJs and professional equipment.',
-            type: 'info'
-          });
-          break;
-        case '2000-2500':
-          insights.push({
-            icon: '🎵',
-            text: 'High-end range with top-tier DJs and premium equipment.',
-            type: 'info'
-          });
-          break;
-        case '2500-3000':
-          insights.push({
-            icon: '🎵',
-            text: 'Luxury range with renowned DJs and extensive equipment.',
-            type: 'info'
-          });
-          break;
-        case '3000+':
-          insights.push({
-            icon: '🎵',
-            text: 'Elite range with celebrity DJs and full production setup.',
-            type: 'info'
-          });
-          break;
-        default:
-          break;
-      }
-    } else if (category.toLowerCase() === 'florist') {
-      // ... existing florist insights ...
-    } else if (category.toLowerCase() === 'hairandmakeup') {
-      // ... existing hairandmakeup insights ...
+        }
+        break;
     }
 
     return insights;
+  };
+
+  const handlePriceQualityChange = (e) => {
+    const value = parseInt(e.target.value);
+    setPriceQualityPreference(value);
+    
+    if (isAutoMode) {
+      calculateRecommendedBudget();
+    }
+    
+    // Update the form data with the new price quality preference
+    setFormData(prev => ({
+      ...prev,
+      requests: {
+        ...prev.requests,
+        [category]: {
+          ...prev.requests[category],
+          priceQualityPreference: value.toString()
+        }
+      }
+    }));
   };
 
   const getPriceQualityDescription = (value) => {
@@ -756,36 +314,46 @@ const BudgetForm = ({ formData, setFormData, category }) => {
     return 'Luxury';
   };
 
-  const handlePriceQualityChange = (e) => {
-    const value = parseInt(e.target.value);
-    setPriceQualityPreference(value);
-    
-    // Update the form data with the new price quality preference
-    if (category.toLowerCase() === 'catering') {
-      setFormData(prev => ({
+  const handleBudgetSliderMouseDown = (e, type) => {
+    e.preventDefault();
+    setIsDragging(type);
+  };
+
+  const handleBudgetSliderMouseMove = (e) => {
+    if (!isDragging || !sliderRef.current) return;
+
+    const rect = sliderRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const percentage = x / rect.width;
+    const maxBudget = 10000; // Maximum budget value
+    const value = Math.round(percentage * maxBudget / 100) * 100; // Round to nearest 100
+
+    if (isDragging === 'min') {
+      setBudgetRange(prev => ({
         ...prev,
-        requests: {
-          ...prev.requests,
-          Catering: {
-            ...prev.requests.Catering,
-            priceQualityPreference: value.toString()
-          }
-        },
-        eventDetails: {
-          ...prev.eventDetails,
-          priceQualityPreference: value.toString()
-        }
+        min: Math.min(value, prev.max - 100)
+      }));
+    } else {
+      setBudgetRange(prev => ({
+        ...prev,
+        max: Math.max(value, prev.min + 100)
       }));
     }
   };
 
-  const handleBudgetRangeChange = (e) => {
+  const handleBudgetSliderMouseUp = () => {
+    if (!isDragging) return;
+    
+    setIsDragging(null);
+    
+    // Update form data with new budget range
+    const rangeValue = `${budgetRange.min}-${budgetRange.max}`;
     if (category.toLowerCase() === 'catering' || category.toLowerCase() === 'dj') {
       setFormData(prev => ({
         ...prev,
         eventDetails: {
           ...prev.eventDetails,
-          priceRange: e.target.value
+          priceRange: rangeValue
         }
       }));
     } else {
@@ -795,264 +363,171 @@ const BudgetForm = ({ formData, setFormData, category }) => {
           ...prev.requests,
           [category]: {
             ...prev.requests[category],
-            priceRange: e.target.value
+            priceRange: rangeValue
           }
         }
       }));
     }
   };
 
+  const handleBudgetSliderTouchStart = (e, type) => {
+    e.preventDefault();
+    setIsDragging(type);
+  };
+
+  const handleBudgetSliderTouchMove = (e) => {
+    if (!isDragging || !sliderRef.current) return;
+
+    const touch = e.touches[0];
+    const rect = sliderRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
+    const percentage = x / rect.width;
+    const maxBudget = 10000;
+    const value = Math.round(percentage * maxBudget / 100) * 100;
+
+    if (isDragging === 'min') {
+      setBudgetRange(prev => ({
+        ...prev,
+        min: Math.min(value, prev.max - 100)
+      }));
+    } else {
+      setBudgetRange(prev => ({
+        ...prev,
+        max: Math.max(value, prev.min + 100)
+      }));
+    }
+  };
+
+  const handleBudgetSliderTouchEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(null);
+    
+    const rangeValue = `${budgetRange.min}-${budgetRange.max}`;
+    if (category.toLowerCase() === 'catering' || category.toLowerCase() === 'dj') {
+      setFormData(prev => ({
+        ...prev,
+        eventDetails: {
+          ...prev.eventDetails,
+          priceRange: rangeValue
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        requests: {
+          ...prev.requests,
+          [category]: {
+            ...prev.requests[category],
+            priceRange: rangeValue
+          }
+        }
+      }));
+    }
+  };
+
+  // Update useEffect to include touch events
+  React.useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleBudgetSliderMouseMove);
+      document.addEventListener('mouseup', handleBudgetSliderMouseUp);
+      document.addEventListener('touchmove', handleBudgetSliderTouchMove);
+      document.addEventListener('touchend', handleBudgetSliderTouchEnd);
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleBudgetSliderMouseMove);
+      document.removeEventListener('mouseup', handleBudgetSliderMouseUp);
+      document.removeEventListener('touchmove', handleBudgetSliderTouchMove);
+      document.removeEventListener('touchend', handleBudgetSliderTouchEnd);
+    };
+  }, [isDragging, budgetRange]);
+
   return (
     <div className="budget-form-container">
       <div className="budget-recommendation-container">
-        <h3>Recommended Budget Range</h3>
-        <div className="budget-amount">
-          ${recommendedBudget.min.toLocaleString()} - ${recommendedBudget.max.toLocaleString()}
-        </div>
-        <span className="explanation-label">Based on: </span>
-        <div className="budget-explanation">
-
-          <div className="explanation-items">
-            {category.toLowerCase() === 'catering' && (
-              <>
-                {formData.commonDetails?.numGuests && (
-                  <span className="explanation-item">{formData.commonDetails.numGuests} guests</span>
-                )}
-                {formData.eventDetails?.foodStyle && (
-                  <span className="explanation-item">{formData.eventDetails.foodStyle.charAt(0).toUpperCase() + formData.eventDetails.foodStyle.slice(1)} service</span>
-                )}
-                {formData.eventDetails?.dietaryRestrictions?.length > 0 && (
-                  <span className="explanation-item">{formData.eventDetails.dietaryRestrictions.length} dietary restrictions</span>
-                )}
-                {formData.eventDetails?.setupCleanup && (
-                  <span className="explanation-item">{formData.eventDetails.setupCleanup === 'both' ? 'Full' : 'Partial'} setup/cleanup</span>
-                )}
-                {formData.eventDetails?.servingStaff && (
-                  <span className="explanation-item">{formData.eventDetails.servingStaff === 'fullService' ? 'Full' : 'Partial'} service staff</span>
-                )}
-                {formData.eventDetails?.diningItems && (
-                  <span className="explanation-item">{formData.eventDetails.diningItems === 'provided' ? 'Full' : 'Partial'} dining items</span>
-                )}
-                {formData.requests.Catering?.priceQualityPreference && (
-                  <span className="explanation-item">{formData.requests.Catering.priceQualityPreference === "1" ? "Budget-conscious" : formData.requests.Catering.priceQualityPreference === "3" ? "Quality-focused" : "Balanced"} quality preference</span>
-                )}
-              </>
-            )}
-            {category.toLowerCase() === 'photography' && (
-              <>
-                {formData.requests.Photography?.duration && (
-                  <span className="explanation-item">{formData.requests.Photography.duration} hours of coverage</span>
-                )}
-                {formData.requests.Photography?.secondPhotographer === 'yes' && (
-                  <span className="explanation-item">Second photographer</span>
-                )}
-                {formData.commonDetails.eventType === 'Wedding' && (
-                  <span className="explanation-item">Wedding coverage points</span>
-                )}
-                {formData.requests.Photography?.deliverables?.weddingAlbum && (
-                  <span className="explanation-item">Wedding album</span>
-                )}
-                {formData.requests.Photography?.deliverables?.rawFiles && (
-                  <span className="explanation-item">RAW files</span>
-                )}
-                {formData.requests.Photography?.deliverables?.engagement && (
-                  <span className="explanation-item">Engagement session</span>
-                )}
-              </>
-            )}
-            {category.toLowerCase() === 'videography' && (
-              <>
-                {formData.requests.Videography?.duration && (
-                  <span className="explanation-item">{formData.requests.Videography.duration} hours of coverage</span>
-                )}
-                {formData.requests.Videography?.secondVideographer === 'yes' && (
-                  <span className="explanation-item">Second videographer</span>
-                )}
-                {formData.commonDetails.eventType === 'Wedding' && (
-                  <span className="explanation-item">Wedding coverage points</span>
-                )}
-                {formData.requests.Videography?.deliverables?.highlightReel && (
-                  <span className="explanation-item">Highlight reel</span>
-                )}
-                {formData.requests.Videography?.deliverables?.fullCeremony && (
-                  <span className="explanation-item">Full ceremony</span>
-                )}
-                {formData.requests.Videography?.deliverables?.fullReception && (
-                  <span className="explanation-item">Full reception</span>
-                )}
-                {formData.requests.Videography?.deliverables?.rawFootage && (
-                  <span className="explanation-item">Raw footage</span>
-                )}
-                {formData.requests.Videography?.deliverables?.droneFootage && (
-                  <span className="explanation-item">Drone footage</span>
-                )}
-                {formData.requests.Videography?.deliverables?.sameDayEdit && (
-                  <span className="explanation-item">Same day edit</span>
-                )}
-              </>
-            )}
-            {category.toLowerCase() === 'dj' && (
-              <>
-                <span className="explanation-item">Standard DJ service</span>
-                {formData.eventDetails?.additionalServices?.mcServices && (
-                  <span className="explanation-item">MC Services</span>
-                )}
-                {formData.eventDetails?.additionalServices?.liveMixing && (
-                  <span className="explanation-item">Live Mixing / Scratching</span>
-                )}
-                {formData.eventDetails?.additionalServices?.uplighting && (
-                  <span className="explanation-item">Uplighting Package</span>
-                )}
-                {formData.eventDetails?.additionalServices?.fogMachine && (
-                  <span className="explanation-item">Fog Machine</span>
-                )}
-                {formData.eventDetails?.additionalServices?.specialFx && (
-                  <span className="explanation-item">Special FX</span>
-                )}
-                {formData.eventDetails?.additionalServices?.photoBooth && (
-                  <span className="explanation-item">Photo Booth Service</span>
-                )}
-                {formData.eventDetails?.additionalServices?.eventRecording && (
-                  <span className="explanation-item">Event Recording</span>
-                )}
-                {formData.eventDetails?.additionalServices?.karaoke && (
-                  <span className="explanation-item">Karaoke Setup</span>
-                )}
-                {formData.eventDetails?.equipmentNeeded === 'djBringsAll' && (
-                  <span className="explanation-item">DJ brings all equipment</span>
-                )}
-                {formData.eventDetails?.equipmentNeeded === 'djBringsSome' && (
-                  <span className="explanation-item">DJ brings some equipment</span>
-                )}
-                {formData.commonDetails?.eventType === 'Wedding' && (
-                  <>
-                    {formData.eventDetails?.weddingDetails?.ceremony && (
-                      <span className="explanation-item">Ceremony coverage</span>
-                    )}
-                    {formData.eventDetails?.weddingDetails?.cocktailHour && (
-                      <span className="explanation-item">Cocktail hour coverage</span>
-                    )}
-                    {formData.eventDetails?.weddingDetails?.reception && (
-                      <span className="explanation-item">Reception coverage</span>
-                    )}
-                    {formData.eventDetails?.weddingDetails?.afterParty && (
-                      <span className="explanation-item">After party coverage</span>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-            {category.toLowerCase() === 'florist' && (
-              <>
-                {formData.requests.Florist?.floralArrangements?.bridalBouquet && (
-                  <span className="explanation-item">Bridal bouquet</span>
-                )}
-                {formData.requests.Florist?.floralArrangements?.bridesmaidBouquets && (
-                  <span className="explanation-item">{formData.requests.Florist?.floralArrangements?.bridesmaidBouquetsQuantity || 1} bridesmaid bouquet(s)</span>
-                )}
-                {formData.requests.Florist?.floralArrangements?.boutonnieres && (
-                  <span className="explanation-item">{formData.requests.Florist?.floralArrangements?.boutonnieresQuantity || 1} boutonniere(s)</span>
-                )}
-                {formData.requests.Florist?.floralArrangements?.corsages && (
-                  <span className="explanation-item">{formData.requests.Florist?.floralArrangements?.corsagesQuantity || 1} corsage(s)</span>
-                )}
-                {formData.requests.Florist?.floralArrangements?.centerpieces && (
-                  <span className="explanation-item">{formData.requests.Florist?.floralArrangements?.centerpiecesQuantity || 1} centerpiece(s)</span>
-                )}
-                {formData.requests.Florist?.floralArrangements?.ceremonyArchFlowers && (
-                  <span className="explanation-item">Ceremony arch flowers</span>
-                )}
-                {formData.requests.Florist?.floralArrangements?.aisleDecorations && (
-                  <span className="explanation-item">Aisle decorations</span>
-                )}
-                {formData.requests.Florist?.floralArrangements?.floralInstallations && (
-                  <span className="explanation-item">Floral installations</span>
-                )}
-                {formData.requests.Florist?.floralArrangements?.cakeFlowers && (
-                  <span className="explanation-item">Cake flowers</span>
-                )}
-                {formData.requests.Florist?.floralArrangements?.loosePetals && (
-                  <span className="explanation-item">Loose petals</span>
-                )}
-                {formData.requests.Florist?.additionalServices?.setup && (
-                  <span className="explanation-item">Setup & installation service</span>
-                )}
-                {formData.requests.Florist?.additionalServices?.delivery && (
-                  <span className="explanation-item">Delivery service</span>
-                )}
-                {formData.requests.Florist?.additionalServices?.cleanup && (
-                  <span className="explanation-item">Cleanup service</span>
-                )}
-                {formData.requests.Florist?.additionalServices?.consultation && (
-                  <span className="explanation-item">In-person consultation</span>
-                )}
-              </>
-            )}
-            {category.toLowerCase() === 'hairandmakeup' && (
-              <>
-                {formData.requests.HairAndMakeup?.numPeople && (
-                  <span className="explanation-item">{formData.requests.HairAndMakeup.numPeople} people needing services</span>
-                )}
-                {formData.requests.HairAndMakeup?.serviceType && (
-                  <span className="explanation-item">{formData.requests.HairAndMakeup.serviceType === 'both' ? 'Hair & Makeup' : formData.requests.HairAndMakeup.serviceType === 'hair' ? 'Hair Only' : 'Makeup Only'} services</span>
-                )}
-                {formData.requests.HairAndMakeup?.extensionsNeeded === 'yes' && (
-                  <span className="explanation-item">Hair extensions</span>
-                )}
-                {formData.requests.HairAndMakeup?.trialSessionHair === 'yes' && (
-                  <span className="explanation-item">Hair trial session</span>
-                )}
-                {formData.requests.HairAndMakeup?.lashesIncluded === 'yes' && (
-                  <span className="explanation-item">Lashes included</span>
-                )}
-                {formData.requests.HairAndMakeup?.trialSessionMakeup === 'yes' && (
-                  <span className="explanation-item">Makeup trial session</span>
-                )}
-                {formData.requests.HairAndMakeup?.serviceLocation?.toLowerCase().includes('hotel') && (
-                  <span className="explanation-item">Hotel service location</span>
-                )}
-              </>
-            )}
+        <div className="budget-recommendation-header">
+          <h3>Recommended Budget Range</h3>
+          <div className="budget-amount">
+            ${recommendedBudget.min.toLocaleString()} - ${recommendedBudget.max.toLocaleString()}
           </div>
         </div>
-      </div>
 
-      <div className="price-quality-slider-container">
-        <h3 className="slider-header">Price vs. Quality Preference</h3>
-        <div className="slider-labels">
-          <span>Budget-friendly</span>
-          <span>Luxury</span>
+        <div className="budget-mode-toggle">
+          <label className="toggle-switch">
+            <input
+              type="checkbox"
+              checked={isAutoMode}
+              onChange={(e) => setIsAutoMode(e.target.checked)}
+            />
+            <span className="toggle-slider"></span>
+          </label>
+          <span className="toggle-label">
+            {isAutoMode ? 'Automatic Budget Range' : 'Manual Budget Range'}
+          </span>
         </div>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={priceQualityPreference}
-          onChange={handlePriceQualityChange}
-          className="price-quality-slider"
-        />
-        <div className="preference-detail">
-          <p>Your preference: {getPriceQualityDescription(priceQualityPreference)}</p>
-        </div>
-      </div>
 
-      <div className="budget-range-selector">
-        <div className="custom-input-container">
-          <label className="custom-label">Budget Range</label>
-          <select
-            className="custom-input"
-            value={category.toLowerCase() === 'catering' || category.toLowerCase() === 'dj'
-              ? formData.eventDetails?.priceRange || '' 
-              : formData.requests[category]?.priceRange || ''}
-            onChange={handleBudgetRangeChange}
-          >
-            <option value="">Select a budget range</option>
-            {getBudgetRanges().map(range => (
-              <option key={range.value} value={range.value}>
-                {range.label}
-              </option>
-            ))}
-          </select>
+        {isAutoMode && (
+          <div className="price-quality-slider-container">
+            <h3 className="slider-header">Price vs. Quality Preference</h3>
+            <div className="slider-labels">
+              <span>Budget-friendly</span>
+              <span>Luxury</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={priceQualityPreference}
+              onChange={handlePriceQualityChange}
+              className="price-quality-slider"
+            />
+            <div className="preference-detail">
+              <p>Your preference: {getPriceQualityDescription(priceQualityPreference)}</p>
+              <p className="auto-mode-note">
+                Budget range will automatically adjust based on your quality preference
+              </p>
+            </div>
+            <div className="budget-explanation">
+              <span className="explanation-label">Based on: </span>
+              <div className="explanation-items">
+                {budgetInsights.map((insight, index) => (
+                  <div key={index} className="explanation-item">
+                    {insight.icon && <span className="insight-icon">{insight.icon}</span>}
+                    <span className="insight-text">{insight.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div className="budget-range-slider-container">
+          <div className="budget-slider-container" ref={sliderRef}>
+            <div className="budget-slider-track">
+              <div 
+                className="budget-slider-selection"
+                style={{
+                  left: `${(budgetRange.min / 10000) * 100}%`,
+                  width: `${((budgetRange.max - budgetRange.min) / 10000) * 100}%`
+                }}
+              />
+              <div 
+                className="budget-slider-handle"
+                style={{ left: `${(budgetRange.min / 10000) * 100}%` }}
+                onMouseDown={(e) => !isAutoMode && handleBudgetSliderMouseDown(e, 'min')}
+                onTouchStart={(e) => !isAutoMode && handleBudgetSliderTouchStart(e, 'min')}
+              />
+              <div 
+                className="budget-slider-handle"
+                style={{ left: `${(budgetRange.max / 10000) * 100}%` }}
+                onMouseDown={(e) => !isAutoMode && handleBudgetSliderMouseDown(e, 'max')}
+                onTouchStart={(e) => !isAutoMode && handleBudgetSliderTouchStart(e, 'max')}
+              />
+            </div>
+            <div className="budget-slider-labels">
+              <span>${budgetRange.min.toLocaleString()}</span>
+              <span>${budgetRange.max.toLocaleString()}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -932,9 +932,8 @@ export default function BidsPage({ onOpenChat }) {
 
         const profileImage = bid.business_profiles.profile_image || '/images/default.jpg'; // Default image if none
 
-        // Common props for all states
-        const commonProps = {
-            key: bid.id,
+        // Common props for all states, REMOVING key from here
+        const commonBidProps = {
             bid: {
                 ...bid,
                 business_profiles: {
@@ -954,7 +953,8 @@ export default function BidsPage({ onOpenChat }) {
         if (activeTab === 'pending') {
             return (
                 <BidDisplay
-                    {...commonProps}
+                    key={bid.id} // Key passed directly
+                    {...commonBidProps}
                     showPending={true}
                 />
             );
@@ -963,12 +963,21 @@ export default function BidsPage({ onOpenChat }) {
         if (activeTab === 'approved') {
             return (
                 <BidDisplay
-                    {...commonProps}
+                    key={bid.id} // Key passed directly
+                    {...commonBidProps}
                     handleApprove={() => handlePayNow(bid)}
-                    handleDeny={() => handleMoveToPending(bid)}
+                    handleDeny={() => handleMoveToNotInterested(bid)}
                     showPaymentOptions={true}
                     downPayment={calculateDownPayment(bid)}
                     onDownPayment={() => handleDownPayNow(bid)}
+                    showApproved={true}
+                    onPayNow={() => handlePayNow(bid)}
+                    handlePending={undefined}
+                    onMoveToPending={undefined}
+                    showPending={false}
+                    showNotInterested={false}
+                    handleInterested={undefined}
+                    showInterested={false}
                 />
             );
         }
@@ -976,7 +985,8 @@ export default function BidsPage({ onOpenChat }) {
         if (activeTab === 'interested') {
             return (
                 <BidDisplay
-                    {...commonProps}
+                    key={bid.id} // Key passed directly
+                    {...commonBidProps}
                     handleApprove={() => handleAcceptBidClick(bid)}
                     handleInterested={() => handleMoveToPending(bid)}
                     showInterested={true}
@@ -987,11 +997,13 @@ export default function BidsPage({ onOpenChat }) {
         if (activeTab === 'not_interested') {
             return (
                 <BidDisplay
-                    {...commonProps}
+                    key={bid.id} // Key passed directly
+                    {...commonBidProps}
                     handleApprove={() => handleMoveToPending(bid)}
                     handleDeny={() => handleAcceptBidClick(bid)}
-                    showPending={true}
-                    showNotInterested={false}
+                    handlePending={() => handleMoveToPending(bid)}
+                    showPending={true} // Assuming if it's not interested, we might want to show pending actions to move it back
+                    showNotInterested={true}
                 />
             );
         }
@@ -1466,6 +1478,7 @@ export default function BidsPage({ onOpenChat }) {
                                                 </div>
                                             </div>
                                         </div>
+                                        
                                     </div>
                                     <div className="request-actions">
                                         <button
@@ -1512,6 +1525,7 @@ export default function BidsPage({ onOpenChat }) {
                                                 <span>{getViewCountText(request).count}</span>
                                                 <span style={{ fontSize: '0.9em', color: '#666' }}>{getViewCountText(request).category}</span>
                                             </div>
+
                                         </div>
                                     </div>
                                 </div>
