@@ -6,6 +6,7 @@ import VerificationApplications from './VerificationApplications';
 import AcceptedBids from './AcceptedBids';
 import ImageConverter from '../admin/ImageConverter';
 import MessageNotifier from './MessageNotifier';
+import OldRequests from './OldRequests';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 function AdminDashboard() {
@@ -143,6 +144,12 @@ function AdminDashboard() {
                         >
                             Message Notifier
                         </button>
+                        <button
+                            className={`admin-tab ${activeTab === 'old-requests' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('old-requests')}
+                        >
+                            Old Requests
+                        </button>
                     </div>
                 </div>
 
@@ -162,6 +169,7 @@ function AdminDashboard() {
                             </div>
                         </div>
                     )}
+                    {activeTab === 'old-requests' && <OldRequests />}
                     {activeTab === 'users' && (
                         <div className="admin-card">
                             <div className="admin-card-header">
