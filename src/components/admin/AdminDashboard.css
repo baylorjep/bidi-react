@@ -130,10 +130,13 @@
 .admin-table-container {
     width: 100%;
     margin-top: 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .admin-table {
     width: 100%;
+    min-width: 1000px;
     border-collapse: collapse;
     margin-top: 10px;
 }
@@ -143,6 +146,7 @@
     padding: 12px;
     text-align: left;
     border-bottom: 1px solid #ddd;
+    white-space: nowrap;
 }
 
 .admin-table th {
@@ -152,6 +156,11 @@
 
 .admin-table tr:hover {
     background-color: #f9f9f9;
+}
+
+.admin-table td:nth-child(3) {
+    white-space: normal;
+    min-width: 300px;
 }
 
 .user-email {
@@ -308,6 +317,14 @@
 
     .request-item .request-title {
         font-size: 13px;
+    }
+
+    .admin-table-container {
+        overflow-x: visible;
+    }
+
+    .admin-table {
+        min-width: auto;
     }
 }
 
