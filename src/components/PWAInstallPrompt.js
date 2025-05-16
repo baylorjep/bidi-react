@@ -42,6 +42,11 @@ const PWAInstallPrompt = () => {
     console.log(`User response to the install prompt: ${outcome}`);
   };
 
+  const handleDismiss = () => {
+    setShowInstallButton(false);
+    setDeferredPrompt(null);
+  };
+
   if (!showInstallButton) {
     return null;
   }
@@ -76,6 +81,20 @@ const PWAInstallPrompt = () => {
         }}
       >
         Install
+      </button>
+      <button
+        onClick={handleDismiss}
+        style={{
+          backgroundColor: 'transparent',
+          color: 'white',
+          border: 'none',
+          padding: '4px 8px',
+          cursor: 'pointer',
+          fontSize: '16px'
+        }}
+        aria-label="Dismiss"
+      >
+        ×
       </button>
     </div>
   );
