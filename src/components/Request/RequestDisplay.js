@@ -585,13 +585,28 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
                         {request.wedding_details && (
                             <InfoField 
                                 label="Wedding Coverage" 
-                                value={Object.entries(request.wedding_details)
-                                    .filter(([_, value]) => value)
-                                    .map(([key]) => key
-                                        .replace(/([A-Z])/g, ' $1')
-                                        .toLowerCase()
-                                        .replace(/^./, str => str.toUpperCase()))
-                                    .join(', ')} 
+                                value={(() => {
+                                    try {
+                                        const details = typeof request.wedding_details === 'string'
+                                            ? JSON.parse(request.wedding_details)
+                                            : request.wedding_details;
+
+                                        const coverageLabels = {
+                                            preCeremony: 'Pre-Ceremony',
+                                            ceremony: 'Ceremony',
+                                            luncheon: 'Luncheon',
+                                            reception: 'Reception'
+                                        };
+
+                                        return Object.entries(details)
+                                            .filter(([_, value]) => value === true || value === 1 || value === 'true')
+                                            .map(([key]) => coverageLabels[key] || key)
+                                            .join(', ') || 'Not specified';
+                                    } catch (e) {
+                                        console.error('Error parsing wedding details:', e);
+                                        return 'Not specified';
+                                    }
+                                })()} 
                                 gridColumn="1 / -1"
                             />
                         )}
