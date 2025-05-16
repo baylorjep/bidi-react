@@ -7,6 +7,7 @@ import ContractSignatureModal from "../Bid/ContractSignatureModal";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { saveAs } from 'file-saver';
 import { toast } from 'react-hot-toast';
+import { useState as useReactState } from 'react';
 
 const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContractUpload }) => {
   const navigate = useNavigate();
@@ -23,17 +24,19 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
   const [placingSignature, setPlacingSignature] = useState(false);
   const [pdfPage, setPdfPage] = useState(1);
   const pdfWrapperRef = React.useRef(null);
+  const [selectedFileName, setSelectedFileName] = useReactState("");
 
   const getTitle = () => {
     if (request?.title) return request.title;
     return request?.service_title || request?.event_title || "Untitled Request";
   };
 
-  const canUploadContract = ["pending", "approved", "accepted"].includes(bid.status);
+  const canUploadContract = ["pending", "approved", "accepted", "interested"].includes(bid.status);
 
-  const handleContractChange = async (e) => {
+  const handleContractChange = (e) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
+    setSelectedFileName(file.name);
     if (onContractUpload) {
       onContractUpload(bid, file);
     }
@@ -285,49 +288,57 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
 
           {/* Show contact information for accepted bids */}
           {(bid.status === "accepted" || bid.status === "approved") && (
-            <div className="contact-info-section">
-              <h3 className="contact-info-title">Client Contact Information</h3>
-              {request?.user_first_name && request?.user_last_name && (
-                <div className="detail-item">
-                  <span className="detail-label">Name</span>
-                  <span className="detail-value">{`${request.user_first_name} ${request.user_last_name}`}</span>
-                </div>
-              )}
-              {request?.user_email && (
-                <div className="detail-item">
-                  <span className="detail-label">Email</span>
-                  <span className="detail-value">{request.user_email}</span>
-                  <button 
-                    className="contact-btn email-btn"
-                    onClick={() => window.location.href = `mailto:${request.user_email}`}
-                  >
-                    <FaEnvelope /> Email
-                  </button>
-                </div>
-              )}
-              {request?.user_phone && (
-                <div className="detail-item">
-                  <span className="detail-label">Phone</span>
-                  <span className="detail-value">{request.user_phone}</span>
-                  <button 
-                    className="contact-btn text-btn"
-                    onClick={() => window.location.href = `sms:${request.user_phone}`}
-                  >
-                    <FaSms /> Text
-                  </button>
-                </div>
-              )}
+            <div className="contact-info-section compact-contact-info">
+              <div className="contact-info-row">
+                {request?.user_first_name && request?.user_last_name && (
+                  <span className="contact-info-item">
+                    <b>{`${request.user_first_name} ${request.user_last_name}`}</b>
+                  </span>
+                )}
+                {request?.user_email && (
+                  <span className="contact-info-item">
+                    <a href={`mailto:${request.user_email}`} title="Email" className="contact-icon-link">
+                      <FaEnvelope />
+                    </a>
+                    <span>{request.user_email}</span>
+                  </span>
+                )}
+                {request?.user_phone && (
+                  <span className="contact-info-item">
+                    <a href={`sms:${request.user_phone}`} title="Text" className="contact-icon-link">
+                      <FaSms />
+                    </a>
+                    <span>{request.user_phone}</span>
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
           {/* Contract upload section */}
           {canUploadContract && (
             <div className="contract-upload-section" style={{ margin: '10px 0' }}>
-              <label style={{ fontWeight: 600 }}>Contract File:</label>
-              {bid.contract_url ? (
-                <div>
+              {!bid.contract_url && (
+                <>
+                  <label className="file-upload-label">
+                    <span>
+                      <i className="fas fa-upload"></i> Upload Contract
+                    </span>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      onChange={handleContractChange}
+                      className="file-upload-input"
+                    />
+                  </label>
+                  {selectedFileName && (
+                    <span className="file-upload-filename">{selectedFileName}</span>
+                  )}
+                </>
+              )}
+              {bid.contract_url && (
+                <div style={{ marginTop: 8 }}>
                   <a href={bid.contract_url} target="_blank" rel="noopener noreferrer">View Uploaded Contract</a>
-                  {/* Business signature UI */}
                   {signed ? (
                     <div style={{ marginTop: 8, color: 'green' }}>
                       Signed by business: <b>{bid.business_signature || signature}</b>
@@ -338,8 +349,6 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
                     </div>
                   )}
                 </div>
-              ) : (
-                <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleContractChange} />
               )}
             </div>
           )}

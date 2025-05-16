@@ -269,6 +269,45 @@
   color: #757575;
 }
 
+/* Compact client contact info section */
+.compact-contact-info {
+  padding: 8px 12px;
+  margin: 0;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.contact-info-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+
+.contact-info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.contact-icon-link {
+  color: #9633eb;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.contact-icon-link:hover {
+  color: #7a29b8;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .request-title {
@@ -308,4 +347,44 @@
     width: 100%;
     justify-content: center;
   }
+
+  .contact-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .compact-contact-info {
+    padding: 8px 6px;
+  }
+}
+
+.file-upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #9633eb;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.98rem;
+  transition: background 0.2s;
+  margin-right: 10px;
+}
+.file-upload-label:hover {
+  background: #7a29b8;
+}
+.file-upload-label i {
+  font-size: 1.1em;
+}
+.file-upload-input {
+  display: none;
+}
+.file-upload-filename {
+  margin-left: 10px;
+  color: #555;
+  font-size: 0.95rem;
+  font-style: italic;
 }
