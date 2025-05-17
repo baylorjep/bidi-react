@@ -388,3 +388,17 @@
   font-size: 0.95rem;
   font-style: italic;
 }
+
+.info-icon-purple {
+  margin-left: 6px;
+  cursor: pointer;
+  color: #9633eb;
+  font-size: 17px;
+  font-weight: 700;
+  vertical-align: middle;
+  display: inline-block;
+  transition: color 0.2s;
+}
+.info-icon-purple:hover {
+  color: #8000ff;
+}
