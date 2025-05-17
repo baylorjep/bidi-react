@@ -234,7 +234,7 @@ export default function BidsPage({ onOpenChat }) {
 
         const category = categoryMap[request.type] || 'vendors';
         return {
-            count: `${request.viewCount}/${request.totalBusinessCount}`,
+            count: `${request.viewCount}`,
             category: `${category} viewed`
         };
     };
