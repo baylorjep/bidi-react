@@ -74,6 +74,7 @@ import Portfolio from "./components/Business/Portfolio/Portfolio";
 import Gallery from "./components/Business/Portfolio/Gallery";
 import VerificationApplication from "./components/Business/VerificationApplication";
 import VendorHomepage from "./components/VendorHomepage";
+import ContractTemplateEditor from "./components/Business/ContractTemplateEditor";
 
 // Misc Imports
 import Homepage from "./components/Homepage";
@@ -281,11 +282,18 @@ function App() {
               <Route
                 path="/edit-bid/:requestId/:bidId"
                 element={<EditBid />}
-              />{" "}
-              {/* Dynamic URL for editing bids */}
+              />
               <Route
                 path="/verification-application"
                 element={<VerificationApplication />}
+              />
+              <Route
+                path="/contract-template"
+                element={
+                  <PrivateRoute>
+                    <ContractTemplateEditor />
+                  </PrivateRoute>
+                }
               />
               {/* Dynamic URL for viewing portfolio */}
               <Route path="/portfolio/:businessId" element={<Portfolio />} />

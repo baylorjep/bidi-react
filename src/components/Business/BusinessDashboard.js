@@ -27,6 +27,7 @@ import ChatInterface from "../Messaging/ChatInterface.js";
 import MobileChatList from "../Messaging/MobileChatList.js";
 import MessagingView from "../Messaging/MessagingView.js";
 import AdminDashboard from "../admin/AdminDashboard.js";
+import ContractTemplateEditor from "./ContractTemplateEditor.js";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -412,6 +413,8 @@ const BusinessDashSidebar = () => {
               setActiveSection={setActiveSection}
               connectedAccountId={connectedAccountId}
             />
+          ) : activeSection === "contract-template" ? (
+            <ContractTemplateEditor setActiveSection={setActiveSection} />
           ) : activeSection === "admin" ? (
             <AdminDashboard />
           ) : null}

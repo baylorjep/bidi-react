@@ -18,6 +18,7 @@
   z-index: 1000;
   transition: transform 0.3s ease;
   border-right: 1px solid #e0e0e0;
+  padding: 80px 8px;
 }
 
 .sidebar.hidden {

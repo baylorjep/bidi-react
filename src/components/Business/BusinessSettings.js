@@ -11,6 +11,7 @@ import "../../styles/BusinessSettings.css";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { useGoogleCalendar } from '../../hooks/useGoogleCalendar';
+import ProgressBar from 'react-bootstrap/ProgressBar';
 
 const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [isVerified, setIsVerified] = useState(false);
@@ -57,6 +58,9 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [currentCategories, setCurrentCategories] = useState([]);
   const [customCategory, setCustomCategory] = useState("");
   const [showGoogleCalendarModal, setShowGoogleCalendarModal] = useState(false);
+  const [contractTemplate, setContractTemplate] = useState("");
+  const [showContractTemplateModal, setShowContractTemplateModal] = useState(false);
+  const [contractTemplateError, setContractTemplateError] = useState("");
 const { 
   isCalendarConnected, 
   calendarError, 
@@ -73,6 +77,14 @@ useEffect(() => {
     isCalendarLoading
   });
 }, [isCalendarConnected, calendarError, isCalendarLoading]);
+
+// Add isDesktop state and effect at the top of the component
+const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
+useEffect(() => {
+  const handleResize = () => setIsDesktop(window.innerWidth > 768);
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
 
   // Add these modules for the editor
   const modules = {
@@ -208,6 +220,10 @@ useEffect(() => {
         if (profile.bid_template) {
           setBidTemplate(profile.bid_template); // Set the bid template content
           setSetupProgress((prev) => ({ ...prev, bidTemplate: true }));
+        }
+
+        if (profile.contract_template) {
+          setContractTemplate(profile.contract_template);
         }
       } catch (error) {
         console.error("Error fetching setup progress:", error);
@@ -628,887 +644,720 @@ useEffect(() => {
     }
   };
 
+  // Add at the top of the component, after useState/useEffect:
+  const steps = [
+    { key: 'paymentAccount', label: 'Payment' },
+    { key: 'downPayment', label: 'Down Payment' },
+    { key: 'minimumPrice', label: 'Min Price' },
+    { key: 'affiliateCoupon', label: 'Coupon' },
+    { key: 'bidTemplate', label: 'Bid Template' },
+    { key: 'verification', label: 'Verification' },
+    { key: 'story', label: 'Profile' },
+  ];
+
+  const isBidiVerified = profileDetails && profileDetails.membership_tier === 'Verified';
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
 
   return (
     <div className="business-settings-container">
-      {/* Vendor Support Group Banner */}
-      {showSupportBanner && (
-        <div className="vendor-support-banner container mt-4 mb-4">
-          <div className="card">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <i className="fab fa-instagram fa-2x me-3" style={{ color: '#E1306C' }}></i>
-                <div className="flex-grow-1">
-                  <div className="d-flex justify-content-between align-items-start">
-                    <div>
-                      <h4 className="mb-2">Join Our Vendor Support Group!</h4>
-                      <p className="mb-2">Connect with other vendors, boost each other's posts, and grow your business together. It's completely free!</p>
-                      <a 
-                        href="https://ig.me/j/Abb0JL3q_V3kfBS9/" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="btn btn-primary"
-                        style={{ backgroundColor: '#E1306C', borderColor: '#E1306C' }}
-                      >
-                        Join Now
-                      </a>
-                    </div>
-                    <button 
-                      onClick={handleDismissBanner}
-                      className="btn-close"
-                      aria-label="Close"
-                      style={{ marginLeft: '1rem' }}
-                    />
-                  </div>
+      {/* Setup Progress Stepper */}
+      {Object.values(setupProgress).some(v => !v) && (
+        <div className="setup-stepper mb-4">
+          {steps.map((step, idx) => {
+            const complete = !!setupProgress[step.key];
+            return (
+              <div key={step.key} className={`stepper-step${complete ? ' complete' : ''}`}>
+                <div className="stepper-circle">
+                  {complete ? <i className="fas fa-check"></i> : idx + 1}
                 </div>
+                <div className="stepper-label">{step.label}</div>
+                {idx < steps.length - 1 && <div className="stepper-line"></div>}
               </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       )}
-
-      {/* Setup Progress Box */}
-      {setupProgress && (!setupProgress.paymentAccount ||
-        !setupProgress.downPayment ||
-        !setupProgress.minimumPrice ||
-        !setupProgress.affiliateCoupon ||
-        !setupProgress.verification ||
-        !setupProgress.story ||
-        !setupProgress.bidTemplate) && (
-        <div className="setup-progress-container container mt-4 mb-4">
-          <div className="card">
-            <div className="card-body">
-              <h3 className="card-title mb-4">Account Setup Progress</h3>
-              <div className="setup-items">
-                {!setupProgress.paymentAccount && (
-                  <div className="setup-item">
-                    <i className="fas fa-times-circle text-danger"></i>
-                    <span>Payment Account Setup</span>
-                    <button
-                      className="btn-link"
-                      onClick={() => setActiveSection("onboarding")}
-                    >
-                      Set up now
-                    </button>
-                  </div>
-                )}
-                {!setupProgress.downPayment && (
-                  <div className="setup-item">
-                    <i className="fas fa-times-circle text-danger"></i>
-                    <span>Down Payment Setup</span>
-                    <button
-                      className="btn-link"
-                      onClick={() => setShowDownPaymentModal(true)}
-                    >
-                      Set up now
-                    </button>
-                  </div>
-                )}
-                {!setupProgress.minimumPrice && (
-                  <div className="setup-item">
-                    <i className="fas fa-times-circle text-danger"></i>
-                    <span>Minimum Price Set</span>
-                    <button
-                      className="btn-link"
-                      onClick={() => setShowMinPriceModal(true)}
-                    >
-                      Set now
-                    </button>
-                  </div>
-                )}
-                {!setupProgress.affiliateCoupon && (
-                  <div className="setup-item">
-                    <i className="fas fa-times-circle text-danger"></i>
-                    <span>Affiliate Coupon Generated</span>
-                    <button className="btn-link" onClick={handleGenerateCoupon}>
-                      Generate now
-                    </button>
-                  </div>
-                )}
-                {!setupProgress.bidTemplate && (
-                  <div className="setup-item">
-                    <i className="fas fa-times-circle text-danger"></i>
-                    <span>Bid Template</span>
-                    <button
-                      className="btn-link"
-                      onClick={() => setShowBidTemplateModal(true)}
-                    >
-                      Set up now
-                    </button>
-                  </div>
-                )}
-                {!setupProgress.verification && (
-                  <div className="setup-item">
-                    <i className="fas fa-times-circle text-danger"></i>
-                    <span>Bidi Verification</span>
-                    <button
-                      className="btn-link"
-                      onClick={() => navigate("/verification-application")}
-                    >
-                      Apply now
-                    </button>
-                  </div>
-                )}
-                {!setupProgress.story && profileDetails && (
-                  <div className="setup-item">
-                    <i className="fas fa-times-circle text-danger"></i>
-                    <span>Complete Your Profile</span>
-                    <button
-                      className="btn-link"
-                      onClick={() =>
-                        navigate(`/portfolio/${profileDetails.id}`)
-                      }
-                    >
-                      Complete now
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      <div className="row justify-content-center">
-        {/* Admin Dashboard */}
+      {/* Sectioned Cards */}
+      <div className="row justify-content-center align-items-stretch">
+        {/* Admin Dashboard Section (if admin) */}
         {isAdmin && (
-          <div
-            className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
-            style={{ marginTop: "20px" }}
-          >
-            <button
-              style={{ fontWeight: "bold", color: "#9633eb" }}
-              className="btn-primary flex-fill"
-              onClick={() => setActiveSection("admin")}
-            >
-              <img src={bidiLogo} className="admin-logo" alt="Admin" />
-              Admin Dashboard
-            </button>
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+            <div className="card mb-4 h-100">
+              <div className="card-header d-flex align-items-center">
+                <img src={bidiLogo} className="admin-logo me-2" alt="Admin" />
+                <span>Admin Dashboard</span>
+              </div>
+              <div className="card-body">
+                <button
+                  className="btn-primary flex-fill"
+                  onClick={() => setActiveSection("admin")}
+                >
+                  <img src={bidiLogo} className="admin-logo me-2" alt="Admin" />
+                  Admin Dashboard
+                </button>
+              </div>
+            </div>
           </div>
         )}
-
-        {/* Payment Dashboard Button */}
-        <div
-          className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
-          style={{ marginTop: "20px" }}
-        >
-          {connectedAccountId ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-              }}
-            >
+        {/* Payments Section */}
+        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="card mb-4 h-100">
+            <div className="card-header d-flex align-items-center">
+              <i className="fas fa-dollar-sign me-2"></i>
+              <span>Payments</span>
+              { !setupProgress.paymentAccount && <span className="badge-new ms-2" title="Set up your payment account to get paid!">New</span> }
+            </div>
+            <div className="card-body">
+              <div className="info-row">
+                <span className="info-label">Status:</span>
+                <span className="info-value">
+                  {connectedAccountId ? <><i className="fas fa-check-circle text-success" aria-label="Connected"></i>Connected</> : <><i className="fas fa-exclamation-circle text-muted" aria-label="Not Connected"></i>Not Connected</>}
+                </span>
+              </div>
               <button
                 style={{ fontWeight: "bold", color: "#9633eb" }}
-                className="btn-primary flex-fill"
-                onClick={handleOpenStripeDashboard}
+                className={`btn-primary flex-fill${!setupProgress.paymentAccount ? ' pulse' : ''}`}
+                onClick={connectedAccountId ? handleOpenStripeDashboard : handleStripeOnboarding}
+                disabled={accountCreatePending}
               >
-                <i
-                  className="fas fa-chart-line"
-                  style={{ marginRight: "8px" }}
-                ></i>
-                Payment Dashboard
+                {connectedAccountId ? 'Edit' : 'Connect Your Payment Account'}
               </button>
-              {stripeError && ( // Show the reset button only if there's an error
-                <div>
-                  <p
-                    style={{
-                      color: "#ff6961",
-                      fontWeight: "bold",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    An error occurred. Click the Reset button below to reset
-                    your account.
-                  </p>
-                  <button
-                    style={{
-                      fontWeight: "bold",
-                      color: "#9633eb",
-                      backgroundColor: "#f8d7da",
-                      border: "1px solid #f5c6cb",
-                      padding: "10px",
-                      borderRadius: "5px",
-                      width: "100%",
-                    }}
-                    className="btn-danger flex-fill"
-                    onClick={handleResetStripeAccount}
-                  >
-                    <i
-                      className="fas fa-redo-alt"
-                      style={{ marginRight: "8px" }}
-                    ></i>
-                    Reset Stripe Connection
-                  </button>
+              <small className="text-muted d-block mt-2">
+                {connectedAccountId
+                  ? 'Connect your payment account to receive payouts from Bidi.'
+                  : 'This is how we pay you for your work. You will never pay us.'}
+              </small>
+              {stripeError && (
+                <div className="alert alert-danger mt-3">
+                  An error occurred. <button className="btn-link" onClick={handleResetStripeAccount}>Reset Stripe Connection</button>
                 </div>
               )}
             </div>
-          ) : (
-            <button
-              style={{ fontWeight: "bold", color: "#9633eb" }}
-              className="btn-primary flex-fill"
-              onClick={handleStripeOnboarding}
-              disabled={accountCreatePending}
-            >
-              <i
-                className="fas fa-dollar-sign"
-                style={{ marginRight: "8px" }}
-              ></i>
-              {accountCreatePending
-                ? "Setting Up Payment Account..."
-                : "Set Up Payment Account"}
-            </button>
-          )}
-        </div>
-
-        {/* Apply to Be Bidi Verified Button */}
-        {!isVerified && (
-          <div
-            className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
-            style={{ marginTop: "20px" }}
-          >
-            <button
-              className="btn-primary flex-fill"
-              style={{
-                fontWeight: "bold",
-                color: "#9633eb",
-              }}
-              onClick={() => navigate("/verification-application")}
-            >
-              <img
-                src={Verification}
-                alt="Bidi Verification Logo"
-                style={{ marginRight: "8px", height: "20px" }}
-              />
-              Apply to be Bidi Verified
-            </button>
           </div>
-        )}
-
-        {/* Set Up Down Payment Button */}
-        <div
-          className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
-          style={{ marginTop: "20px" }}
-        >
-          <button
-            style={{ fontWeight: "bold", color: "#9633eb" }}
-            className="btn-primary flex-fill"
-            onClick={() => setShowDownPaymentModal(true)}
-          >
-            <i
-              className="fas fa-dollar-sign"
-              style={{ marginRight: "8px" }}
-            ></i>
-            Set Up Down Payment
-          </button>
         </div>
-
-        {/* Set Minimum Price Button */}
-        <div
-          className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
-          style={{ marginTop: "20px" }}
-        >
-          <button
-            style={{ fontWeight: "bold", color: "#9633eb" }}
-            className="btn-primary flex-fill"
-            onClick={() => setShowMinPriceModal(true)}
-          >
-            <i className="fas fa-tag" style={{ marginRight: "8px" }}></i>
-            {currentMinPrice !== null
-              ? `Set Minimum Price ($${currentMinPrice})`
-              : "Set Minimum Price"}
-          </button>
-        </div>
-
-        {/* View Affiliate Coupon Button */}
-        <div
-          className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
-          style={{ marginTop: "20px" }}
-        >
-          <button
-            style={{ fontWeight: "bold", color: "#9633eb" }}
-            className="btn-primary flex-fill"
-            onClick={() => setShowCouponModal(true)} // Open the coupon modal
-          >
-            <i className="fas fa-ticket-alt" style={{ marginRight: "8px" }}></i>
-            {getButtonText()}
-          </button>
-        </div>
-        <div
-          className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
-          style={{ marginTop: "20px" }}
-        >
-          <button
-            style={{ fontWeight: "bold", color: "#9633eb" }}
-            className="btn-primary flex-fill"
-            onClick={() => setShowBidTemplateModal(true)}
-          >
-            <i className="fas fa-file-alt" style={{ marginRight: "8px" }}></i>
-            {bidTemplate ? "Edit Bid Template" : "Create Bid Template"}
-          </button>
-        </div>
-
-        {/* Set Default Bid Expiration Button */}
-        <div
-          className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
-          style={{ marginTop: "20px" }}
-        >
-          <button
-            style={{ fontWeight: "bold", color: "#9633eb" }}
-            className="btn-primary flex-fill"
-            onClick={() => setShowDefaultExpirationModal(true)}
-          >
-            <i className="fas fa-clock" style={{ marginRight: "8px" }}></i>
-            Set Default Bid Expiration
-          </button>
-        </div>
-
-        {/* Add Business Categories Button */}
-        <div
-          className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
-          style={{ marginTop: "20px" }}
-        >
-          <button
-            style={{ fontWeight: "bold", color: "#9633eb" }}
-            className="btn-primary flex-fill"
-            onClick={() => setShowCategoryModal(true)}
-          >
-            <i className="fas fa-tags" style={{ marginRight: "8px" }}></i>
-            Manage Business Categories
-          </button>
-        </div>
-        <div
-  className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column"
-  style={{ marginTop: "20px" }}
->
-  <button
-    style={{ fontWeight: "bold", color: "#9633eb" }}
-    className="btn-primary flex-fill"
-    onClick={() => setShowGoogleCalendarModal(true)}
-    disabled={isCalendarLoading}
-  >
-    <i className="fas fa-calendar" style={{ marginRight: "8px" }}></i>
-    {isCalendarConnected ? "Manage Google Calendar" : "Connect Google Calendar"}
-  </button>
-</div>
-      </div>
-
-      {/* Modal for Down Payment Setup */}
-      <Modal
-        show={showDownPaymentModal}
-        onHide={() => setShowDownPaymentModal(false)}
-        centered
-        size="lg"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title className="text-center">
-            Enter What You Charge For a Down Payment
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div
-            style={{
-              textAlign: "center",
-              marginBottom: "20px",
-              wordBreak: "break-word",
-            }}
-          >
-            Do you charge a percentage or a flat fee up front?
-          </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "center",
-              gap: "20px",
-              marginBottom: "20px",
-            }}
-          >
-            <button
-              style={{ width: "50%", maxHeight: "48px" }}
-              className={`btn-${
-                paymentType === "percentage" ? "secondary" : "primary"
-              }`}
-              onClick={() => handlePaymentTypeChange("percentage")}
-            >
-              Percentage
-            </button>
-            <button
-              style={{ width: "50%", maxHeight: "48px" }}
-              className={`btn-${
-                paymentType === "flat fee" ? "secondary" : "primary"
-              }`}
-              onClick={() => handlePaymentTypeChange("flat fee")}
-            >
-              Flat Fee
-            </button>
-          </div>
-
-          {paymentType === "percentage" && (
-            <div>
-              <input
-                type="number"
-                value={percentage}
-                onChange={handleChangeDownPaymentPercentage}
-                placeholder="Enter Percentage"
-                className="form-control"
-                min="0"
-                max="100"
-              />
+        {/* Profile Section */}
+        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="card mb-4 h-100">
+            <div className="card-header d-flex align-items-center">
+              <i className="fas fa-user me-2"></i>
+              <span>Profile</span>
+              { !setupProgress.story && <span className="badge-new ms-2" title="Complete your profile story">New</span> }
             </div>
-          )}
-
-          {paymentType === "flat fee" && (
-            <div>
-              <input
-                type="number"
-                value={downPaymentNumber}
-                onChange={handleChangeDownPaymentNumber}
-                placeholder="Enter Flat Fee"
-                className="form-control"
-              />
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              gap: "20px",
-              justifyContent: "center",
-            }}
-          >
-            <button
-              style={{ maxHeight: "32px" }}
-              className="btn-danger"
-              onClick={() => setShowDownPaymentModal(false)}
-            >
-              Close
-            </button>
-            <button
-              style={{ maxHeight: "32px" }}
-              className="btn-success"
-              onClick={handleDownPaymentSubmit}
-            >
-              Submit
-            </button>
-          </div>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Minimum Price Modal */}
-      <Modal
-        show={showMinPriceModal}
-        onHide={() => setShowMinPriceModal(false)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Set Minimum Price</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-3">
-            <label htmlFor="minimumPrice" className="form-label">
-              Enter your minimum price:
-            </label>
-            <input
-              type="number"
-              className="form-control"
-              id="minimumPrice"
-              value={minimumPrice}
-              onChange={(e) => setMinimumPrice(e.target.value)}
-              placeholder="Enter amount"
-              min="0"
-            />
-          </div>
-          <p className="text-muted">
-            You will only see requests with budgets above this amount.
-          </p>
-        </Modal.Body>
-        <Modal.Footer>
-          <button
-            className="btn-danger"
-            onClick={() => setShowMinPriceModal(false)}
-          >
-            Close
-          </button>
-          <button className="btn-success" onClick={handleMinPriceSubmit}>
-            Save
-          </button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Modal for Coupon Generation */}
-      <Modal
-        show={showCouponModal}
-        onHide={() => setShowCouponModal(false)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {activeCoupon
-              ? "Your Affiliate Coupon"
-              : "New Affiliate Coupon Generated"}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="text-center">
-            <h4>Your coupon code is:</h4>
-            <div className="p-3 mb-3 bg-light rounded">
-              {newCouponCode || (activeCoupon && activeCoupon.code)}
-            </div>
-            <p>This coupon gives customers $10 off their purchase</p>
-            <p>
-              Valid until:{" "}
-              {activeCoupon
-                ? new Date(activeCoupon.expiration_date).toLocaleDateString()
-                : ""}
-            </p>
-            <p>
-              Share this code with your network to earn 5% of the bid amount
-              when your lead pays through Bidi
-            </p>
-
-            {/* Add Calculator Section */}
-            <div className="mt-4 p-3 bg-light rounded">
-              <h5>Earnings Calculator</h5>
-              <div className="input-group mb-3">
-                <span className="input-group-text">$</span>
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="Enter bid amount"
-                  value={calculatorAmount}
-                  onChange={(e) => setCalculatorAmount(e.target.value)}
-                />
+            <div className="card-body">
+              <button
+                className={`btn-primary flex-fill${!setupProgress.story ? ' pulse' : ''}`}
+                onClick={() => navigate(`/portfolio/${profileDetails?.id}`)}
+              >
+                <i className="fas fa-user-edit me-2"></i>
+                {setupProgress.story ? "Edit Profile" : "Complete Profile"}
+              </button>
+              <small className="text-muted d-block mt-2">Tell your story and showcase your work to attract more clients.</small>
+              <div className="info-row info-row-spaced">
+                <span className="info-label">Bidi Verified:</span>
+                <span className="info-value">
+                  {isBidiVerified
+                    ? <><i className="fas fa-check-circle text-success" aria-label="Verified"></i>Verified</>
+                    : <><i className="fas fa-exclamation-circle text-muted" aria-label="Not Verified"></i>Not Verified</>}
+                </span>
               </div>
-              <p className="mt-2">
-                You would earn:{" "}
-                <strong>${calculateEarnings(calculatorAmount)}</strong>
-              </p>
+              {!isBidiVerified && (
+                <button
+                  className="btn-primary flex-fill mt-3"
+                  onClick={() => navigate("/verification-application")}
+                >
+                  Apply to be Bidi Verified
+                </button>
+              )}
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <button
-            className="btn-danger"
-            onClick={() => setShowCouponModal(false)}
-          >
-            Close
-          </button>
-          <button
-            className="btn-success"
-            onClick={() => {
-              navigator.clipboard.writeText(newCouponCode);
-            }}
-          >
-            Copy
-          </button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Modal for Bid Template Editing */}
-      <Modal
-        show={showBidTemplateModal}
-        onHide={() => {
-          setShowBidTemplateModal(false);
-          setBidTemplateError("");
-        }}
-        centered
-        size="lg"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Bid Template</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-3">
-            <label htmlFor="bidTemplate" className="form-label">
-              Your bid template:
-            </label>
-            {bidTemplateError && (
-              <div className="alert alert-warning" role="alert">
-                {bidTemplateError.split("\n").map((line, index) => (
-                  <div key={index}>{line}</div>
-                ))}
+        </div>
+        {/* Templates Section */}
+        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="card mb-4 h-100">
+            <div className="card-header d-flex align-items-center">
+              <i className="fas fa-file-alt me-2"></i>
+              <span>Templates</span>
+              { !setupProgress.bidTemplate && <span className="badge-new ms-2" title="Create your bid template">New</span> }
+            </div>
+            <div className="card-body">
+              <div className="info-row">
+                <span className="info-label">Bid Template:</span>
+                <span className="info-value">
+                  {bidTemplate ? <span className="text-success">Template Set</span> : <span className="text-muted">No Template</span>}
+                </span>
               </div>
-            )}
-            <ReactQuill
-              theme="snow"
-              value={bidTemplate}
-              onChange={handleBidTemplateChange}
-              modules={modules}
-              formats={formats}
-              style={{ height: "300px", marginBottom: "50px" }}
-            />
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <button
-            className="btn-danger"
-            onClick={() => {
-              setShowBidTemplateModal(false);
-              setBidTemplateError("");
-            }}
-          >
-            Close
-          </button>
-          <button className="btn-success" onClick={handleBidTemplateSubmit}>
-            Save
-          </button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Default Expiration Modal */}
-      <Modal
-        show={showDefaultExpirationModal}
-        onHide={() => setShowDefaultExpirationModal(false)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Set Default Bid Expiration</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-3">
-            <label htmlFor="defaultExpiration" className="form-label">
-              Enter default number of days until bid expiration:
-            </label>
-            <input
-              type="number"
-              className="form-control"
-              id="defaultExpiration"
-              value={defaultExpirationDays}
-              onChange={(e) => setDefaultExpirationDays(e.target.value)}
-              placeholder="Enter number of days"
-              min="1"
-            />
-          </div>
-          <p className="text-muted">
-            This will be the default number of days until a bid expires when you create new bids.
-          </p>
-        </Modal.Body>
-        <Modal.Footer>
-          <button
-            className="btn-danger"
-            onClick={() => setShowDefaultExpirationModal(false)}
-          >
-            Close
-          </button>
-          <button className="btn-success" onClick={handleDefaultExpirationSubmit}>
-            Save
-          </button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Business Categories Modal */}
-      <Modal
-        show={showCategoryModal}
-        onHide={() => {
-          setShowCategoryModal(false);
-          setSelectedCategories(currentCategories);
-          setCustomCategory(""); // Reset custom category when closing
-        }}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Manage Business Categories</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-3">
-            <label className="form-label">Select your business categories:</label>
-            {currentCategories.length > 0 && (
-              <div className="current-categories mb-3">
-                <h6>Current Categories:</h6>
-                <div className="d-flex flex-wrap gap-2">
-                  {currentCategories.map(categoryId => {
-                    const category = businessCategories.find(c => c.id === categoryId);
-                    return category ? (
-                      <span key={categoryId} className="badge ">
-                        {category.label}
-                      </span>
-                    ) : (
-                      <span key={categoryId} className="badge ">
-                        {categoryId}
-                      </span>
-                    );
-                  })}
+              <button
+                className={`btn-primary flex-fill${!setupProgress.bidTemplate ? ' pulse' : ''}`}
+                onClick={() => setShowBidTemplateModal(v => !v)}
+              >
+                {setupProgress.bidTemplate ? 'Edit' : 'Add'}
+              </button>
+              <small className="text-muted d-block mt-2">Create a reusable bid template to save time when responding to requests.</small>
+              {isDesktop && showBidTemplateModal && (
+                <div className="card-modal-content">
+                  <div className="mb-3">
+                    <label htmlFor="bidTemplate" className="form-label">Your bid template:</label>
+                    {bidTemplateError && (
+                      <div className="alert alert-warning" role="alert">{bidTemplateError.split("\n").map((line, index) => (<div key={index}>{line}</div>))}</div>
+                    )}
+                    <ReactQuill theme="snow" value={bidTemplate} onChange={handleBidTemplateChange} modules={modules} formats={formats} style={{ height: "300px", marginBottom: "50px" }} />
+                  </div>
+                  <div>
+                    <button className="btn-danger me-2" onClick={() => { setShowBidTemplateModal(false); setBidTemplateError(""); }}>Close</button>
+                    <button className="btn-success" onClick={handleBidTemplateSubmit}>Save</button>
+                  </div>
                 </div>
+              )}
+              <div className="info-row">
+                <span className="info-label">Contract Template:</span>
+                <span className="info-value">
+                  {contractTemplate ? <span className="text-success">Template Set</span> : <span className="text-muted">No Template</span>}
+                </span>
+              </div>
+              <button
+                className={`btn-primary flex-fill mt-3${!contractTemplate ? ' pulse' : ''}`}
+                onClick={() => setActiveSection("contract-template")}
+              >
+                {contractTemplate ? 'Edit' : 'Add'}
+              </button>
+              <small className="text-muted d-block mt-2">Set up your contract template for faster bookings.</small>
+            </div>
+          </div>
+        </div>
+        {/* Down Payment Section */}
+        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="card mb-4 h-100">
+            <div className="card-header d-flex align-items-center">
+              <i className="fas fa-dollar-sign me-2"></i>
+              <span>Down Payment</span>
+              { !setupProgress.downPayment && <span className="badge-new ms-2" title="Set your down payment policy">New</span> }
+            </div>
+            <div className="card-body">
+              <div className="info-row">
+                <span className="info-label">Down Payment:</span>
+                <span className="info-value">
+                  {paymentType
+                    ? paymentType === 'percentage'
+                      ? `${percentage || (profileDetails && profileDetails.amount ? profileDetails.amount * 100 : '')}%`
+                      : `$${downPaymentNumber || (profileDetails && profileDetails.amount ? profileDetails.amount : '')}`
+                    : <span className="text-muted">Not Set</span>}
+                </span>
+              </div>
+              <button
+                className={`btn-primary flex-fill${!setupProgress.downPayment ? ' pulse' : ''}`}
+                onClick={() => setShowDownPaymentModal(v => !v)}
+              >
+                {setupProgress.downPayment ? 'Edit' : 'Add'}
+              </button>
+              <small className="text-muted d-block mt-2">Specify if you require a percentage or flat fee up front for bookings.</small>
+              {isDesktop && showDownPaymentModal && (
+                <div className="card-modal-content">
+                  <div style={{ textAlign: "center", marginBottom: "20px", wordBreak: "break-word" }}>
+                    Do you charge a percentage or a flat fee up front?
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "row", justifyContent: "center", gap: "20px", marginBottom: "20px" }}>
+                    <button style={{ width: "50%", maxHeight: "48px" }} className={`btn-${paymentType === "percentage" ? "secondary" : "primary"}`} onClick={() => handlePaymentTypeChange("percentage")}>Percentage</button>
+                    <button style={{ width: "50%", maxHeight: "48px" }} className={`btn-${paymentType === "flat fee" ? "secondary" : "primary"}`} onClick={() => handlePaymentTypeChange("flat fee")}>Flat Fee</button>
+                  </div>
+                  {paymentType === "percentage" && (
+                    <div>
+                      <input type="number" value={percentage} onChange={handleChangeDownPaymentPercentage} placeholder="Enter Percentage" className="form-control" min="0" max="100" />
+                    </div>
+                  )}
+                  {paymentType === "flat fee" && (
+                    <div>
+                      <input type="number" value={downPaymentNumber} onChange={handleChangeDownPaymentNumber} placeholder="Enter Flat Fee" className="form-control" />
+                    </div>
+                  )}
+                  <div style={{ display: "flex", flexDirection: "row", gap: "20px", justifyContent: "center", marginTop: 20 }}>
+                    <button style={{ maxHeight: "32px" }} className="btn-danger" onClick={() => setShowDownPaymentModal(false)}>Close</button>
+                    <button style={{ maxHeight: "32px" }} className="btn-success" onClick={handleDownPaymentSubmit}>Submit</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Minimum Price Section */}
+        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="card mb-4 h-100">
+            <div className="card-header d-flex align-items-center">
+              <i className="fas fa-tag me-2"></i>
+              <span>Minimum Price</span>
+              { !setupProgress.minimumPrice && <span className="badge-new ms-2" title="Set your minimum price to filter requests">New</span> }
+            </div>
+            <div className="card-body">
+              <div className="info-row">
+                <span className="info-label">Minimum Price:</span>
+                <span className="info-value">
+                  {currentMinPrice !== null ? `$${currentMinPrice}` : <span className="text-muted">Not Set</span>}
+                </span>
+              </div>
+              <button
+                className={`btn-primary flex-fill${!setupProgress.minimumPrice ? ' pulse' : ''}`}
+                onClick={() => setShowMinPriceModal(v => !v)}
+              >
+                {setupProgress.minimumPrice ? 'Edit' : 'Add'}
+              </button>
+              <small className="text-muted d-block mt-2">You will only see requests with budgets above this amount.</small>
+              {isDesktop && showMinPriceModal && (
+                <div className="card-modal-content">
+                  <div className="mb-3">
+                    <label htmlFor="minimumPrice" className="form-label">Enter your minimum price:</label>
+                    <input type="number" className="form-control" id="minimumPrice" value={minimumPrice} onChange={(e) => setMinimumPrice(e.target.value)} placeholder="Enter amount" min="0" />
+                  </div>
+                  <p className="text-muted">You will only see requests with budgets above this amount.</p>
+                  <div>
+                    <button className="btn-danger me-2" onClick={() => setShowMinPriceModal(false)}>Close</button>
+                    <button className="btn-success" onClick={handleMinPriceSubmit}>Save</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Affiliate Coupon Section */}
+        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="card mb-4 h-100">
+            <div className="card-header d-flex align-items-center">
+              <i className="fas fa-ticket-alt me-2"></i>
+              <span>Affiliate Coupon</span>
+              { !setupProgress.affiliateCoupon && <span className="badge-new ms-2" title="Generate your affiliate coupon">New</span> }
+            </div>
+            <div className="card-body">
+              <div className="info-row">
+                <span className="info-label">Coupon Code:</span>
+                <span className="info-value">
+                  {activeCoupon && activeCoupon.code ? activeCoupon.code : <span className="text-muted">No Coupon</span>}
+                </span>
+              </div>
+              <button
+                className={`btn-primary flex-fill${!setupProgress.affiliateCoupon ? ' pulse' : ''}`}
+                onClick={() => setShowCouponModal(v => !v)}
+              >
+                {setupProgress.affiliateCoupon ? 'Edit' : 'Add'}
+              </button>
+              <small className="text-muted d-block mt-2">Share your coupon to earn 5% of the bid amount when your lead pays through Bidi.</small>
+              {isDesktop && showCouponModal && (
+                <div className="card-modal-content">
+                  <div className="text-center">
+                    <h4>Your coupon code is:</h4>
+                    <div className="p-3 mb-3 bg-light rounded">{newCouponCode || (activeCoupon && activeCoupon.code)}</div>
+                    <p>This coupon gives customers $10 off their purchase</p>
+                    <p>Valid until: {activeCoupon ? new Date(activeCoupon.expiration_date).toLocaleDateString() : ""}</p>
+                    <p>Share this code with your network to earn 5% of the bid amount when your lead pays through Bidi</p>
+                    <div className="mt-4 p-3 bg-light rounded">
+                      <h5>Earnings Calculator</h5>
+                      <div className="input-group mb-3">
+                        <span className="input-group-text">$</span>
+                        <input type="number" className="form-control" placeholder="Enter bid amount" value={calculatorAmount} onChange={(e) => setCalculatorAmount(e.target.value)} />
+                      </div>
+                      <p className="mt-2">You would earn: <strong>${calculateEarnings(calculatorAmount)}</strong></p>
+                    </div>
+                    <div className="mt-3">
+                      <button className="btn-danger me-2" onClick={() => setShowCouponModal(false)}>Close</button>
+                      <button className="btn-success" onClick={() => { navigator.clipboard.writeText(newCouponCode); }}>Copy</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Categories Section */}
+        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="card mb-4 h-100">
+            <div className="card-header d-flex align-items-center">
+              <i className="fas fa-tags me-2"></i>
+              <span>Business Categories</span>
+              {/* No setupProgress for categories, but you can add a badge if not set */}
+              { (!currentCategories || currentCategories.length === 0) && <span className="badge-new ms-2" title="Add your business categories">New</span> }
+            </div>
+            <div className="card-body">
+              <div className="info-row">
+                <span className="info-label">Categories:</span>
+                <span className="info-value">
+                  {currentCategories && currentCategories.length > 0
+                    ? currentCategories.map(categoryId => {
+                        const category = businessCategories.find(c => c.id === categoryId);
+                        return category ? category.label : categoryId;
+                      }).join(', ')
+                    : <span className="text-muted">Not Set</span>}
+                </span>
+              </div>
+              <button
+                className={`btn-primary flex-fill${(!currentCategories || currentCategories.length === 0) ? ' pulse' : ''}`}
+                onClick={() => setShowCategoryModal(v => !v)}
+              >
+                {currentCategories && currentCategories.length > 0 ? 'Edit' : 'Add'}
+              </button>
+              <small className="text-muted d-block mt-2">Select your business categories to help clients find you.</small>
+              {isDesktop && showCategoryModal && (
+                <div className="card-modal-content">
+                  <div className="mb-3">
+                    <label className="form-label">Select your business categories:</label>
+                    {currentCategories.length > 0 && (
+                      <div className="current-categories mb-3">
+                        <h6>Current Categories:</h6>
+                        <div className="d-flex flex-wrap gap-2">
+                          {currentCategories.map(categoryId => {
+                            const category = businessCategories.find(c => c.id === categoryId);
+                            return category ? (
+                              <span key={categoryId} className="badge ">{category.label}</span>
+                            ) : (
+                              <span key={categoryId} className="badge ">{categoryId}</span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    <div className="category-grid">
+                      {businessCategories.map((category) => (
+                        <div key={category.id} className="category-item" onClick={() => {
+                          if (selectedCategories.includes(category.id)) {
+                            setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                            if (category.id === 'other') { setCustomCategory(""); }
+                          } else {
+                            setSelectedCategories([...selectedCategories, category.id]);
+                          }
+                        }} style={{ cursor: 'pointer' }}>
+                          <div className="form-check">
+                            <input className="form-check-input" type="checkbox" id={category.id} checked={selectedCategories.includes(category.id)} onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedCategories([...selectedCategories, category.id]);
+                              } else {
+                                setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                                if (category.id === 'other') { setCustomCategory(""); }
+                              }
+                            }} />
+                            <label className="form-check-label" htmlFor={category.id}>{category.label}</label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {selectedCategories.includes('other') && (
+                      <div className="mt-3">
+                        <label htmlFor="customCategory" className="form-label">Please specify your business category:</label>
+                        <input type="text" className="form-control" id="customCategory" value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Enter your business category" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <button className="btn-danger me-2" onClick={() => { setShowCategoryModal(false); setSelectedCategories(currentCategories); setCustomCategory(""); }}>Cancel</button>
+                    <button className="btn-success" onClick={handleCategorySubmit} disabled={selectedCategories.length === 0 || (selectedCategories.includes('other') && !customCategory.trim())}>Save Changes</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Calendar Section */}
+        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="card mb-4 h-100">
+            <div className="card-header d-flex align-items-center">
+              <i className="fas fa-calendar me-2"></i>
+              <span>Google Calendar</span>
+              {/* No setupProgress for calendar, but show badge if not connected */}
+              { !isCalendarConnected && <span className="badge-new ms-2" title="Connect your Google Calendar">New</span> }
+            </div>
+            <div className="card-body">
+              <div className="info-row">
+                <span className="info-label">Google Calendar:</span>
+                <span className="info-value">
+                  {isCalendarConnected ? <span className="text-success">Connected</span> : <span className="text-muted">Not Connected</span>}
+                </span>
+              </div>
+              <button
+                className={`btn-primary flex-fill${!isCalendarConnected ? ' pulse' : ''}`}
+                onClick={() => setShowGoogleCalendarModal(v => !v)}
+                disabled={isCalendarLoading}
+              >
+                {isCalendarConnected ? 'Edit' : 'Add'}
+              </button>
+              <small className="text-muted d-block mt-2">Sync your availability and prevent double bookings by connecting your calendar.</small>
+              {isDesktop && showGoogleCalendarModal && (
+                <div className="card-modal-content">
+                  {calendarError && (<div className="alert alert-danger" role="alert">{calendarError}</div>)}
+                  {isCalendarLoading ? (
+                    <div className="text-center"><LoadingSpinner color="#9633eb" size={30} /></div>
+                  ) : isCalendarConnected ? (
+                    <div>
+                      <p>Your Google Calendar is connected. You can now manage your availability for consultations.</p>
+                      <button className="btn btn-danger" onClick={async () => { try { await disconnectCalendar(); setShowGoogleCalendarModal(false); } catch (error) {} }}>Disconnect Calendar</button>
+                    </div>
+                  ) : (
+                    <div>
+                      <p>Connect your Google Calendar to manage your availability for consultations.</p>
+                      <p>This will allow you to:</p>
+                      <ul>
+                        <li>Automatically sync your availability</li>
+                        <li>Prevent double bookings</li>
+                        <li>Manage your consultation schedule</li>
+                      </ul>
+                      <button className="btn btn-primary" onClick={async () => { try { await connectCalendar(); } catch (error) {} }}>Connect Google Calendar</button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Default Expiration Section */}
+        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+          <div className="card mb-4 h-100">
+            <div className="card-header d-flex align-items-center">
+              <i className="fas fa-clock me-2"></i>
+              <span>Default Bid Expiration</span>
+            </div>
+            <div className="card-body">
+              <div className="info-row">
+                <span className="info-label">Default Expiration:</span>
+                <span className="info-value">
+                  {defaultExpirationDays ? `${defaultExpirationDays} days` : <span className="text-muted">Not Set</span>}
+                </span>
+              </div>
+              <button
+                className="btn-primary flex-fill"
+                onClick={() => setShowDefaultExpirationModal(v => !v)}
+              >
+                {defaultExpirationDays ? 'Edit' : 'Add'}
+              </button>
+              <small className="text-muted d-block mt-2">Set the default number of days until a bid expires when you create new bids.</small>
+              {isDesktop && showDefaultExpirationModal && (
+                <div className="card-modal-content">
+                  <div className="mb-3">
+                    <label htmlFor="defaultExpiration" className="form-label">Enter default number of days until bid expiration:</label>
+                    <input type="number" className="form-control" id="defaultExpiration" value={defaultExpirationDays} onChange={(e) => setDefaultExpirationDays(e.target.value)} placeholder="Enter number of days" min="1" />
+                  </div>
+                  <p className="text-muted">This will be the default number of days until a bid expires when you create new bids.</p>
+                  <div>
+                    <button className="btn-danger me-2" onClick={() => setShowDefaultExpirationModal(false)}>Close</button>
+                    <button className="btn-success" onClick={handleDefaultExpirationSubmit}>Save</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      {!isDesktop && (
+      <>
+        {/* Down Payment Modal */}
+        <Modal show={showDownPaymentModal} onHide={() => setShowDownPaymentModal(false)} centered size="lg">
+          <Modal.Header closeButton>
+            <Modal.Title className="text-center">Enter What You Charge For a Down Payment</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div style={{ textAlign: "center", marginBottom: "20px", wordBreak: "break-word" }}>
+              Do you charge a percentage or a flat fee up front?
+            </div>
+            <div style={{ display: "flex", flexDirection: "row", justifyContent: "center", gap: "20px", marginBottom: "20px" }}>
+              <button style={{ width: "50%", maxHeight: "48px" }} className={`btn-${paymentType === "percentage" ? "secondary" : "primary"}`} onClick={() => handlePaymentTypeChange("percentage")}>Percentage</button>
+              <button style={{ width: "50%", maxHeight: "48px" }} className={`btn-${paymentType === "flat fee" ? "secondary" : "primary"}`} onClick={() => handlePaymentTypeChange("flat fee")}>Flat Fee</button>
+            </div>
+            {paymentType === "percentage" && (
+              <div>
+                <input type="number" value={percentage} onChange={handleChangeDownPaymentPercentage} placeholder="Enter Percentage" className="form-control" min="0" max="100" />
               </div>
             )}
-            <div className="category-grid">
-              {businessCategories.map((category) => (
-                <div 
-                  key={category.id} 
-                  className="category-item"
-                  onClick={() => {
+            {paymentType === "flat fee" && (
+              <div>
+                <input type="number" value={downPaymentNumber} onChange={handleChangeDownPaymentNumber} placeholder="Enter Flat Fee" className="form-control" />
+              </div>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <button className="btn-danger" onClick={() => setShowDownPaymentModal(false)}>Close</button>
+            <button className="btn-success" onClick={handleDownPaymentSubmit}>Submit</button>
+          </Modal.Footer>
+        </Modal>
+        {/* Minimum Price Modal */}
+        <Modal show={showMinPriceModal} onHide={() => setShowMinPriceModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Set Minimum Price</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="mb-3">
+              <label htmlFor="minimumPrice" className="form-label">Enter your minimum price:</label>
+              <input type="number" className="form-control" id="minimumPrice" value={minimumPrice} onChange={(e) => setMinimumPrice(e.target.value)} placeholder="Enter amount" min="0" />
+            </div>
+            <p className="text-muted">You will only see requests with budgets above this amount.</p>
+          </Modal.Body>
+          <Modal.Footer>
+            <button className="btn-danger" onClick={() => setShowMinPriceModal(false)}>Close</button>
+            <button className="btn-success" onClick={handleMinPriceSubmit}>Save</button>
+          </Modal.Footer>
+        </Modal>
+        {/* Coupon Modal */}
+        <Modal show={showCouponModal} onHide={() => setShowCouponModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>{activeCoupon ? "Your Affiliate Coupon" : "New Affiliate Coupon Generated"}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="text-center">
+              <h4>Your coupon code is:</h4>
+              <div className="p-3 mb-3 bg-light rounded">{newCouponCode || (activeCoupon && activeCoupon.code)}</div>
+              <p>This coupon gives customers $10 off their purchase</p>
+              <p>Valid until: {activeCoupon ? new Date(activeCoupon.expiration_date).toLocaleDateString() : ""}</p>
+              <p>Share this code with your network to earn 5% of the bid amount when your lead pays through Bidi</p>
+              <div className="mt-4 p-3 bg-light rounded">
+                <h5>Earnings Calculator</h5>
+                <div className="input-group mb-3">
+                  <span className="input-group-text">$</span>
+                  <input type="number" className="form-control" placeholder="Enter bid amount" value={calculatorAmount} onChange={(e) => setCalculatorAmount(e.target.value)} />
+                </div>
+                <p className="mt-2">You would earn: <strong>${calculateEarnings(calculatorAmount)}</strong></p>
+              </div>
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <button className="btn-danger" onClick={() => setShowCouponModal(false)}>Close</button>
+            <button className="btn-success" onClick={() => { navigator.clipboard.writeText(newCouponCode); }}>Copy</button>
+          </Modal.Footer>
+        </Modal>
+        {/* Bid Template Modal */}
+        <Modal show={showBidTemplateModal} onHide={() => { setShowBidTemplateModal(false); setBidTemplateError(""); }} centered size="lg">
+          <Modal.Header closeButton>
+            <Modal.Title>Edit Bid Template</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="mb-3">
+              <label htmlFor="bidTemplate" className="form-label">Your bid template:</label>
+              {bidTemplateError && (
+                <div className="alert alert-warning" role="alert">{bidTemplateError.split("\n").map((line, index) => (<div key={index}>{line}</div>))}</div>
+              )}
+              <ReactQuill theme="snow" value={bidTemplate} onChange={handleBidTemplateChange} modules={modules} formats={formats} style={{ height: "300px", marginBottom: "50px" }} />
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <button className="btn-danger" onClick={() => { setShowBidTemplateModal(false); setBidTemplateError(""); }}>Close</button>
+            <button className="btn-success" onClick={handleBidTemplateSubmit}>Save</button>
+          </Modal.Footer>
+        </Modal>
+        {/* Default Expiration Modal */}
+        <Modal show={showDefaultExpirationModal} onHide={() => setShowDefaultExpirationModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Set Default Bid Expiration</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="mb-3">
+              <label htmlFor="defaultExpiration" className="form-label">Enter default number of days until bid expiration:</label>
+              <input type="number" className="form-control" id="defaultExpiration" value={defaultExpirationDays} onChange={(e) => setDefaultExpirationDays(e.target.value)} placeholder="Enter number of days" min="1" />
+            </div>
+            <p className="text-muted">This will be the default number of days until a bid expires when you create new bids.</p>
+          </Modal.Body>
+          <Modal.Footer>
+            <button className="btn-danger" onClick={() => setShowDefaultExpirationModal(false)}>Close</button>
+            <button className="btn-success" onClick={handleDefaultExpirationSubmit}>Save</button>
+          </Modal.Footer>
+        </Modal>
+        {/* Categories Modal */}
+        <Modal show={showCategoryModal} onHide={() => { setShowCategoryModal(false); setSelectedCategories(currentCategories); setCustomCategory(""); }} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Manage Business Categories</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="mb-3">
+              <label className="form-label">Select your business categories:</label>
+              {currentCategories.length > 0 && (
+                <div className="current-categories mb-3">
+                  <h6>Current Categories:</h6>
+                  <div className="d-flex flex-wrap gap-2">
+                    {currentCategories.map(categoryId => {
+                      const category = businessCategories.find(c => c.id === categoryId);
+                      return category ? (
+                        <span key={categoryId} className="badge ">{category.label}</span>
+                      ) : (
+                        <span key={categoryId} className="badge ">{categoryId}</span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              <div className="category-grid">
+                {businessCategories.map((category) => (
+                  <div key={category.id} className="category-item" onClick={() => {
                     if (selectedCategories.includes(category.id)) {
                       setSelectedCategories(selectedCategories.filter(id => id !== category.id));
-                      if (category.id === 'other') {
-                        setCustomCategory(""); // Clear custom category when unchecking "Other"
-                      }
+                      if (category.id === 'other') { setCustomCategory(""); }
                     } else {
                       setSelectedCategories([...selectedCategories, category.id]);
                     }
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id={category.id}
-                      checked={selectedCategories.includes(category.id)}
-                      onChange={(e) => {
+                  }} style={{ cursor: 'pointer' }}>
+                    <div className="form-check">
+                      <input className="form-check-input" type="checkbox" id={category.id} checked={selectedCategories.includes(category.id)} onChange={(e) => {
                         if (e.target.checked) {
                           setSelectedCategories([...selectedCategories, category.id]);
                         } else {
                           setSelectedCategories(selectedCategories.filter(id => id !== category.id));
-                          if (category.id === 'other') {
-                            setCustomCategory(""); // Clear custom category when unchecking "Other"
-                          }
+                          if (category.id === 'other') { setCustomCategory(""); }
                         }
-                      }}
-                    />
-                    <label className="form-check-label" htmlFor={category.id}>
-                      {category.label}
-                    </label>
+                      }} />
+                      <label className="form-check-label" htmlFor={category.id}>{category.label}</label>
+                    </div>
                   </div>
+                ))}
+              </div>
+              {selectedCategories.includes('other') && (
+                <div className="mt-3">
+                  <label htmlFor="customCategory" className="form-label">Please specify your business category:</label>
+                  <input type="text" className="form-control" id="customCategory" value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Enter your business category" />
                 </div>
-              ))}
+              )}
             </div>
-            {selectedCategories.includes('other') && (
-              <div className="mt-3">
-                <label htmlFor="customCategory" className="form-label">
-                  Please specify your business category:
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="customCategory"
-                  value={customCategory}
-                  onChange={(e) => setCustomCategory(e.target.value)}
-                  placeholder="Enter your business category"
-                />
+          </Modal.Body>
+          <Modal.Footer>
+            <button className="btn-danger" onClick={() => { setShowCategoryModal(false); setSelectedCategories(currentCategories); setCustomCategory(""); }}>Cancel</button>
+            <button className="btn-success" onClick={handleCategorySubmit} disabled={selectedCategories.length === 0 || (selectedCategories.includes('other') && !customCategory.trim())}>Save Changes</button>
+          </Modal.Footer>
+        </Modal>
+        {/* Calendar Modal */}
+        <Modal show={showGoogleCalendarModal} onHide={() => setShowGoogleCalendarModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>{isCalendarConnected ? "Manage Google Calendar" : "Connect Google Calendar"}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {calendarError && (
+              <div className="alert alert-danger" role="alert">{calendarError}</div>
+            )}
+            {isCalendarLoading ? (
+              <div className="text-center"><LoadingSpinner color="#9633eb" size={30} /></div>
+            ) : isCalendarConnected ? (
+              <div>
+                <p>Your Google Calendar is connected. You can now manage your availability for consultations.</p>
+                <button className="btn btn-danger" onClick={async () => { try { await disconnectCalendar(); setShowGoogleCalendarModal(false); } catch (error) {} }}>Disconnect Calendar</button>
+              </div>
+            ) : (
+              <div>
+                <p>Connect your Google Calendar to manage your availability for consultations.</p>
+                <p>This will allow you to:</p>
+                <ul>
+                  <li>Automatically sync your availability</li>
+                  <li>Prevent double bookings</li>
+                  <li>Manage your consultation schedule</li>
+                </ul>
+                <button className="btn btn-primary" onClick={async () => { try { await connectCalendar(); } catch (error) {} }}>Connect Google Calendar</button>
               </div>
             )}
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <button
-            className="btn-danger"
-            onClick={() => {
-              setShowCategoryModal(false);
-              setSelectedCategories(currentCategories);
-              setCustomCategory(""); // Reset custom category when canceling
-            }}
-          >
-            Cancel
-          </button>
-          <button 
-            className="btn-success" 
-            onClick={handleCategorySubmit}
-            disabled={selectedCategories.length === 0 || (selectedCategories.includes('other') && !customCategory.trim())}
-          >
-            Save Changes
-          </button>
-        </Modal.Footer>
-      </Modal>
-      {/* Google Calendar Button */}
-
-
-{/* Google Calendar Modal */}
-<Modal
-  show={showGoogleCalendarModal}
-  onHide={() => setShowGoogleCalendarModal(false)}
-  centered
->
-  <Modal.Header closeButton>
-    <Modal.Title>
-      {isCalendarConnected ? "Manage Google Calendar" : "Connect Google Calendar"}
-    </Modal.Title>
-  </Modal.Header>
-  <Modal.Body>
-    {calendarError && (
-      <div className="alert alert-danger" role="alert">
-        {calendarError}
-      </div>
+          </Modal.Body>
+        </Modal>
+        {/* Calendar Success Modal */}
+        <Modal show={showCalendarSuccess} onHide={() => { setShowCalendarSuccess(false); sessionStorage.removeItem('calendarSuccessShown'); }} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Success!</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            Google Calendar connected successfully!
+          </Modal.Body>
+          <Modal.Footer>
+            <button className="btn-success" onClick={() => { setShowCalendarSuccess(false); sessionStorage.removeItem('calendarSuccessShown'); }}>Close</button>
+          </Modal.Footer>
+        </Modal>
+      </>
     )}
-    {isCalendarLoading ? (
-      <div className="text-center">
-        <LoadingSpinner color="#9633eb" size={30} />
-      </div>
-    ) : isCalendarConnected ? (
-      <div>
-        <p>Your Google Calendar is connected. You can now manage your availability for consultations.</p>
-        <button
-          className="btn btn-danger"
-          onClick={async () => {
-            try {
-              await disconnectCalendar();
-              setShowGoogleCalendarModal(false);
-            } catch (error) {
-              // Error is already handled in the hook
-            }
-          }}
-        >
-          Disconnect Calendar
-        </button>
-      </div>
-    ) : (
-      <div>
-        <p>Connect your Google Calendar to manage your availability for consultations.</p>
-        <p>This will allow you to:</p>
-        <ul>
-          <li>Automatically sync your availability</li>
-          <li>Prevent double bookings</li>
-          <li>Manage your consultation schedule</li>
-        </ul>
-        <button
-          className="btn btn-primary"
-          onClick={async () => {
-            try {
-              await connectCalendar();
-              // The page will redirect to Google OAuth
-            } catch (error) {
-              // Error is already handled in the hook
-            }
-          }}
-        >
-          Connect Google Calendar
-        </button>
-      </div>
-    )}
-  </Modal.Body>
-</Modal>
-<Modal
-  show={showCalendarSuccess}
-  onHide={() => {
-    setShowCalendarSuccess(false);
-    sessionStorage.removeItem('calendarSuccessShown');
-  }}
-  centered
->
-  <Modal.Header closeButton>
-    <Modal.Title>Success!</Modal.Title>
-  </Modal.Header>
-  <Modal.Body>
-    Google Calendar connected successfully!
-  </Modal.Body>
-  <Modal.Footer>
-    <button
-      className="btn-success"
-      onClick={() => {
-        setShowCalendarSuccess(false);
-        sessionStorage.removeItem('calendarSuccessShown');
-      }}
-    >
-      Close
-    </button>
-  </Modal.Footer>
-</Modal>
     </div>
   );
 };
