@@ -255,13 +255,14 @@ const WeddingPlanningRequest = ({ request, filteredPhotos, onPhotoClick, getPubl
 };
 
 // Main Component
-function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) {
+function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, loading = false }) {
     const navigate = useNavigate();
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const [timeLeft, setTimeLeft] = useState('');
     const [filteredPhotos, setFilteredPhotos] = useState([]);
 
     useEffect(() => {
+        if (!request) return;
         const fetchPhotos = async () => {
             try {
                 let photoTable;
@@ -307,6 +308,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
     }, [request]);
 
     useEffect(() => {
+        if (!request) return;
         const timer = setInterval(() => {
             const promotion = checkPromotion(request.created_at);
             if (promotion && promotion.endTime) {
@@ -327,7 +329,31 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [request.created_at]);
+    }, [request?.created_at]);
+
+    if (loading) {
+        return (
+            <div className="request-display text-center mb-4">
+                <div className="request-content p-3" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
+                <div
+                        className="spinner-border"
+                        role="status"
+                        style={{
+                            width: 48,
+                            height: 48,
+                            marginBottom: 16,
+                            color: '#8000ff',
+                            borderColor: '#8000ff',
+                            borderRightColor: 'transparent'
+                        }}
+                        >
+                        <span className="visually-hidden">Loading...</span>
+                        </div>
+                    <div style={{ fontSize: 18, color: '#555' }}>Loading...</div>
+                </div>
+            </div>
+        );
+    }
 
     if (!request) {
         return (
