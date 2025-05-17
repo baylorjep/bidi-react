@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import '../../App.css';
 import { supabase } from '../../supabaseClient';
+
+
 
 // Helper Components
 const InfoField = ({ label, value, gridColumn = 'auto' }) => (
@@ -146,6 +148,8 @@ const WeddingPlanningRequest = ({ request, filteredPhotos, onPhotoClick, getPubl
         return styles[style] || style || 'Not specified';
     };
 
+    
+
     return (
         <div className="request-summary-grid">
             <InfoField label="Event Title" value={request.event_title} gridColumn="1 / -1" />
@@ -252,9 +256,94 @@ const WeddingPlanningRequest = ({ request, filteredPhotos, onPhotoClick, getPubl
 
 // Main Component
 function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) {
+    const navigate = useNavigate();
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const [timeLeft, setTimeLeft] = useState('');
     const [filteredPhotos, setFilteredPhotos] = useState([]);
+
+    useEffect(() => {
+        const fetchPhotos = async () => {
+            try {
+                let photoTable;
+                switch (getRequestType()) {
+                    case 'photography_requests':
+                        photoTable = 'photography_photos';
+                        break;
+                    case 'videography_requests':
+                        photoTable = 'videography_photos';
+                        break;
+                    case 'beauty_requests':
+                        photoTable = 'beauty_photos';
+                        break;
+                    case 'florist_requests':
+                        photoTable = 'florist_photos';
+                        break;
+                    case 'wedding_planning_requests':
+                        photoTable = 'wedding_planning_photos';
+                        break;
+                    default:
+                        console.log('No specific photo table for request type:', getRequestType());
+                        return;
+                }
+
+                const { data: photos, error } = await supabase
+                    .from(photoTable)
+                    .select('*')
+                    .eq('request_id', request.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('Error fetching photos:', error);
+                    return;
+                }
+
+                setFilteredPhotos(photos);
+            } catch (err) {
+                console.error('Error in fetchPhotos:', err);
+            }
+        };
+
+        fetchPhotos();
+    }, [request]);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const promotion = checkPromotion(request.created_at);
+            if (promotion && promotion.endTime) {
+                const now = new Date();
+                const timeRemaining = promotion.endTime.getTime() - now.getTime();
+                
+                if (timeRemaining > 0) {
+                    const totalSeconds = Math.floor(timeRemaining / 1000);
+                    const minutes = Math.floor(totalSeconds / 60);
+                    const seconds = totalSeconds % 60;
+                    setTimeLeft(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
+                } else {
+                    setTimeLeft('');
+                }
+            } else {
+                setTimeLeft('');
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [request.created_at]);
+
+    if (!request) {
+        return (
+            <div className="request-display text-center mb-4">
+                <div className="request-content p-3">
+                    <h2 className="request-title">Oops! We couldn't find that request.</h2>
+                    <p>Please check your open requests in your dashboard.</p>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24, width: '100%' }}>
+                        <button className="submit-bid-button" onClick={() => navigate('/business-dashboard')}>
+                            Go to Requests
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const isNew = (createdAt) => {
         if (!createdAt) return false;
@@ -376,73 +465,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType }) 
         return null;
     };
 
-    useEffect(() => {
-        const fetchPhotos = async () => {
-            try {
-                let photoTable;
-                switch (getRequestType()) {
-                    case 'photography_requests':
-                        photoTable = 'photography_photos';
-                        break;
-                    case 'videography_requests':
-                        photoTable = 'videography_photos';
-                        break;
-                    case 'beauty_requests':
-                        photoTable = 'beauty_photos';
-                        break;
-                    case 'florist_requests':
-                        photoTable = 'florist_photos';
-                        break;
-                    case 'wedding_planning_requests':
-                        photoTable = 'wedding_planning_photos';
-                        break;
-                    default:
-                        console.log('No specific photo table for request type:', getRequestType());
-                        return;
-                }
 
-                const { data: photos, error } = await supabase
-                    .from(photoTable)
-                    .select('*')
-                    .eq('request_id', request.id)
-                    .order('created_at', { ascending: false });
-
-                if (error) {
-                    console.error('Error fetching photos:', error);
-                    return;
-                }
-
-                setFilteredPhotos(photos);
-            } catch (err) {
-                console.error('Error in fetchPhotos:', err);
-            }
-        };
-
-        fetchPhotos();
-    }, [request]);
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            const promotion = checkPromotion(request.created_at);
-            if (promotion && promotion.endTime) {
-                const now = new Date();
-                const timeRemaining = promotion.endTime.getTime() - now.getTime();
-                
-                if (timeRemaining > 0) {
-                    const totalSeconds = Math.floor(timeRemaining / 1000);
-                    const minutes = Math.floor(totalSeconds / 60);
-                    const seconds = totalSeconds % 60;
-                    setTimeLeft(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
-                } else {
-                    setTimeLeft('');
-                }
-            } else {
-                setTimeLeft('');
-            }
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [request.created_at]);
 
     const renderRequestDetails = () => {
         const type = getRequestType();

@@ -319,7 +319,15 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
                 padding:"20px", 
                 maxWidth:'1000px'
             }}>
-                {requestDetails && (
+                {!requestDetails ? (
+                    <div style={{textAlign: 'center', margin: '40px 0'}}>
+                        <h3>Oops! We couldn't find that request.</h3>
+                        <p>Please check your open requests in your dashboard.</p>
+                        <button className="submit-bid-button" onClick={() => navigate('/business-dashboard')}>
+                            Go to Requests
+                        </button>
+                    </div>
+                ) : (
                     <RequestDisplay 
                         request={requestDetails}
                         servicePhotos={servicePhotos}
