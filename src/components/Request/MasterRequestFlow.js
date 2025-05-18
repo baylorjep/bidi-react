@@ -1103,7 +1103,7 @@ function MasterRequestFlow() {
             playlist: request.playlist || null,
             requests: request.specialSongs || null
           }),
-          budget_range: formData.eventDetails?.priceRange || 'Not specified',
+          budget_range: request.priceRange || 'Not specified',
           estimated_guests: formData.commonDetails.numGuests ? parseInt(formData.commonDetails.numGuests, 10) : null,
           date_flexibility: formData.commonDetails.dateFlexibility || null,
           indoor_outdoor: formData.commonDetails.indoorOutdoor || null,
@@ -1578,12 +1578,15 @@ function MasterRequestFlow() {
           </div>
         );
       } else {
+        const normalizedCategory = Object.keys(formData.requests).find(
+          key => key.toLowerCase() === currentRequest.toLowerCase().replace(/\s/g, '')
+        ) || currentRequest;
         return (
           <div className="form-scrollable-content">
             <BudgetForm
               formData={formData}
               setFormData={setFormData}
-              category={currentRequest}
+              category={normalizedCategory}
             />
           </div>
         );
@@ -1699,7 +1702,26 @@ function MasterRequestFlow() {
     return null;
   };
 
+// Helper to format YYYY-MM-DD as MM/DD/YYYY
+function formatDateString(dateString) {
+  if (!dateString) return 'Not specified';
+  const [year, month, day] = dateString.split('-');
+  return `${month}/${day}/${year}`;
+}
+
+
   const renderReviewScreen = () => {
+    // Debug logs to help diagnose budget issue
+    const category = formData.selectedRequests[currentStep - 1];
+    const normalizedCategory = Object.keys(formData.requests).find(
+      key => key.toLowerCase() === category.toLowerCase().replace(/\s/g, '')
+    ) || category;
+    console.log('formData.requests:', formData.requests);
+    console.log('selectedRequests:', formData.selectedRequests);
+    console.log('currentStep:', currentStep);
+    console.log('category used in review:', category);
+    console.log('normalizedCategory used in review:', normalizedCategory);
+    console.log('categoryData:', formData.requests[normalizedCategory]);
     const formatArrayValue = (value, key) => {
       if (value === null || value === undefined) {
         return 'Not specified';
@@ -1720,7 +1742,7 @@ function MasterRequestFlow() {
 
       // Handle dates
       if (key === 'startDate' || key === 'endDate') {
-        return value ? new Date(value).toLocaleDateString() : 'Not specified';
+        return value ? formatDateString(value) : 'Not specified';
       }
 
       // Handle arrays
@@ -1847,7 +1869,10 @@ function MasterRequestFlow() {
     };
 
     const getCategoryDetails = (category) => {
-      const categoryData = formData.requests[category] || {};
+      const normalizedCategory = Object.keys(formData.requests).find(
+        key => key.toLowerCase() === category.toLowerCase().replace(/\s/g, '')
+      ) || category;
+      const categoryData = formData.requests[normalizedCategory] || {};
       const commonDetails = formData.commonDetails || {};
       const eventDetails = formData.eventDetails || {};
 
@@ -1891,14 +1916,14 @@ function MasterRequestFlow() {
           'Setup & Cleanup': formatArrayValue(eventDetails.setupCleanup, 'setupCleanup'),
           'Serving Staff': formatArrayValue(eventDetails.servingStaff, 'servingStaff'),
           'Dining Items': formatArrayValue(eventDetails.diningItems, 'diningItems'),
-          'Budget Range': formatArrayValue(eventDetails.priceRange, 'priceRange')
+          'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
         };
       } else if (isRequestType(currentRequest, "DJ")) {
         categoryDetails = {
           'Performance Duration': formatArrayValue(commonDetails.duration, 'duration'),
           'Equipment Needed': formatArrayValue(categoryData.equipmentNeeded, 'equipmentNeeded'),
           'Music Style': formatArrayValue(categoryData.musicPreferences, 'musicPreferences'),
-          'Budget Range': formatArrayValue(eventDetails.priceRange, 'priceRange')
+          'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
         };
       } else if (isRequestType(currentRequest, "Florist")) {
         categoryDetails = {
@@ -1929,7 +1954,12 @@ function MasterRequestFlow() {
                   .join(', '),
             'makeupStylePreferences'
           ),
-          'Budget Range': formatArrayValue(categoryData.priceRange, 'priceRange')
+          'Budget Range': formatArrayValue(
+            categoryData.priceRange ||
+            formData.requests.HairAndMakeup?.priceRange ||
+            formData.requests.Beauty?.priceRange,
+            'priceRange'
+          )
         };
       } else if (isRequestType(currentRequest, "WeddingPlanning")) {
         categoryDetails = {

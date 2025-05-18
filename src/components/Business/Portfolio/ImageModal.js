@@ -36,13 +36,12 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose }) => {
       show={isOpen} 
       onHide={onClose} 
       centered
-      size="lg"
-      className="image-modal"
+      size="xl"
+      className="image-modal image-modal-xl"
     >
       <Modal.Header closeButton>
-        <Modal.Title>Media Preview</Modal.Title>
       </Modal.Header>
-      <Modal.Body className="image-modal-body">
+      <Modal.Body className="image-modal-body" style={{ padding: 0 }}>
         {isVideo ? (
           <div className="video-container">
             <video 
@@ -50,6 +49,7 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose }) => {
               controls 
               autoPlay 
               className="modal-media video"
+              style={{ width: '100%', height: 'auto', maxHeight: '80vh', display: 'block', margin: '0 auto' }}
             >
               Your browser does not support the video tag.
             </video>
@@ -66,6 +66,7 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose }) => {
                 src={convertedUrl}
                 alt="Portfolio item"
                 className="modal-media img-fluid"
+                style={{ width: '100%', height: 'auto', maxHeight: '80vh', display: 'block', margin: '0 auto' }}
               />
             )}
           </>

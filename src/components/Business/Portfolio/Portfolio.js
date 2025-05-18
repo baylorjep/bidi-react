@@ -494,7 +494,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     // If media is just a URL string (for backward compatibility)
     else if (typeof media === 'string') {
       const isVideo = media.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
-      setSelectedImage({ url: media, isVideo });
+      setSelectedImage({ url: media, isVideo: !!isVideo });
     }
   };
 
@@ -946,7 +946,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                   </p>
                 </div>
                 <div className="vendor-profile-container">
-                  <div className="vendor-profile-left">
+                  <div className="vendor-profile-left" onClick={() => setSelectedImage({ url: convertedUrls.profile || profileImage, isVideo: false })} style={{ cursor: 'pointer' }}>
                     <img
                       src={convertedUrls.profile || profileImage}
                       alt={`${business.business_name} profile`}
@@ -1065,14 +1065,12 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                           >
                             <div dangerouslySetInnerHTML={{ __html: bidData?.description }} />
                           </div>
-                          {showReadMore && (
-                            <button 
-                              className="read-more-button"
-                              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                            >
-                              {isDescriptionExpanded ? 'Show Less' : 'Read More'}
-                            </button>
-                          )}
+                          <button 
+                            className="read-more-button"
+                            onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                          >
+                            {isDescriptionExpanded ? 'Show Less' : 'Read More'}
+                          </button>
                         </div>
                       </div>
                       <div className="business-actions">
