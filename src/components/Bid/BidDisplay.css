@@ -206,7 +206,7 @@
   z-index: 1;
 }
 
-.bid-display .profile-image-container {
+.bid-display .profile-image-container-bid-display {
   width: 120px;
   height: 120px;
   position: relative;
@@ -217,7 +217,7 @@
   align-items: center;
 }
 
-.bid-display .vendor-profile-image {
+.bid-display .vendor-profile-image-bid-display {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
@@ -228,7 +228,7 @@
   margin: 0 auto;
 }
 
-.profile-image-container:hover .vendor-profile-image {
+.bid-display .profile-image-container-bid-display:hover .vendor-profile-image-bid-display {
   transform: scale(1.05);
 }
 
