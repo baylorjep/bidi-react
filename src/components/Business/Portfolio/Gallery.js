@@ -98,7 +98,13 @@ const Gallery = () => {
   
       <div className="gallery-container">
         <button className="back-button" onClick={() => navigate(-1)}>
-          <span style={{fontSize: '1.2em', marginRight: 8, display: 'inline-block', verticalAlign: 'middle', color: 'white'}}>&#8592;</span> Back
+          <span style={{display: 'inline-block', marginRight: 8, verticalAlign: 'middle'}} aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display: 'block'}}>
+              <circle cx="11" cy="11" r="11" fill="rgba(163,40,244,0.13)"/>
+              <path d="M13.5 7L9.5 11L13.5 15" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </span>
+          Back
         </button>
         <div className="gallery-header">Gallery</div>
         <div className="gallery-grid">

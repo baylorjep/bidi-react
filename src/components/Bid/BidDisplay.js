@@ -119,7 +119,26 @@ function BidDisplay({
 
   const expirationStatus = getExpirationStatus(bid.expiration_date);
 
-  
+  const discountedPrice = getDiscountedPrice(bid);
+const discountDeadline = bid.discount_deadline ? new Date(bid.discount_deadline) : null;
+const now = new Date();
+const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 * 60 * 60 * 24)) : null;
+
+  // Helper to calculate discounted price
+  function getDiscountedPrice(bid) {
+    if (!bid.discount_type || !bid.discount_value || !bid.discount_deadline) return null;
+    const now = new Date();
+    const deadline = new Date(bid.discount_deadline);
+    if (now > deadline) return null;
+
+    let discounted = Number(bid.bid_amount);
+    if (bid.discount_type === 'percentage') {
+      discounted = discounted * (1 - Number(bid.discount_value) / 100);
+    } else if (bid.discount_type === 'flat') {
+      discounted = discounted - Number(bid.discount_value);
+    }
+    return discounted > 0 ? discounted.toFixed(2) : '0.00';
+  }
 
   const handleProfileClick = () => {
     setShowBubble(false);
@@ -274,6 +293,8 @@ function BidDisplay({
       alignItems: 'center'
     };
 
+
+
     // For approved tab, only show X and chat icons
     if (showApproved) {
       return (
@@ -356,6 +377,8 @@ function BidDisplay({
         </div>
       );
     }
+
+    
 
     // For all other states, show X icon
     return (
@@ -661,10 +684,39 @@ function BidDisplay({
                   </div>
                   <div className="bid-amount-section">
                     <div className="bid-amount-container">
-                      <button className="bid-display-button" disabled>
-                        ${bid.bid_amount}
-                        <div className="tag-hole"></div>
-                      </button>
+                      {discountedPrice ? (
+                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <span style={{ textDecoration: 'line-through', color: '#aaa', fontSize: '1em', marginBottom: 2 }}>
+                            ${bid.bid_amount}
+                          </span>
+                          <span style={{ color: '#9633eb', fontWeight: 700, fontSize: '1.6em', marginBottom: 2 }}>
+                            ${discountedPrice}
+                          </span>
+                          <div style={{
+                            fontSize: '1em',
+                            color: '#9633eb',
+                            background: 'rgba(150,51,235,0.08)',
+                            borderRadius: 8,
+                            padding: '4px 12px',
+                            marginTop: 4,
+                            fontWeight: 500,
+                            textAlign: 'center',
+                            width: '80%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center'
+                          }}>
+                            {daysLeft > 0
+                              ? `Book within ${daysLeft} day${daysLeft === 1 ? '' : 's'} to get this price!`
+                              : 'Discount ends today!'}
+                          </div>
+                        </div>
+                      ) : (
+                        <button className="bid-display-button" disabled>
+                          ${bid.bid_amount}
+                          <div className="tag-hole"></div>
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="business-badges">

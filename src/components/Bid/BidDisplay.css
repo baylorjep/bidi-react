@@ -351,6 +351,7 @@
   border-radius: 16px;
   background-color: rgba(163, 40, 244, 0.1);
   transition: background-color 0.2s ease;
+  min-width: 80px;
 }
 
 .bidi-verified-compact:hover {
@@ -612,6 +613,12 @@
     width: 160px;
     height: 160px;
     margin: 0 auto 20px;
+  }
+
+  .bid-display .bidi-verified-compact .verified-tooltip {
+    left: 0;
+    transform: none;
+    right: auto;
   }
 }
 
