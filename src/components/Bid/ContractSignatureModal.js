@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { supabase } from "../../supabaseClient";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { saveAs } from 'file-saver';
+import html2pdf from 'html2pdf.js';
 pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL || ''}/pdf.worker.js`;
 
 function ContractSignatureModal({
@@ -15,12 +16,14 @@ function ContractSignatureModal({
   onClose,
   bid,
   userRole, // "business" or "individual"
-  testSource
+  testSource,
+  useTemplate = false // New prop to indicate if we should use the template
 }) {
   console.log('ContractSignatureModal rendered with:', {
     isOpen,
     userRole,
     testSource,
+    useTemplate,
     bidId: bid?.id,
     hasBusinessSignature: !!(bid?.business_signature || bid?.business_signature_image),
     hasClientSignature: !!bid?.client_signature
@@ -28,6 +31,7 @@ function ContractSignatureModal({
 
   const [pdfError, setPdfError] = useState(null);
   const [pdfData, setPdfData] = useState(null);
+  const [contractTemplate, setContractTemplate] = useState(null);
   // Business signature state
   const [businessSignature, setBusinessSignature] = useState("");
   const [businessDrawMode, setBusinessDrawMode] = useState(false);
@@ -54,14 +58,84 @@ function ContractSignatureModal({
   const resizeStartPos = useRef(null);
   const initialSize = useRef(null);
 
+  // Fetch contract template if useTemplate is true
+  useEffect(() => {
+    const fetchTemplate = async () => {
+      if (!useTemplate) return;
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile, error } = await supabase
+          .from("business_profiles")
+          .select("contract_template")
+          .eq("id", user.id)
+          .single();
+
+        if (error) throw error;
+        if (profile?.contract_template) {
+          setContractTemplate(profile.contract_template);
+        }
+      } catch (error) {
+        console.error("Error fetching contract template:", error);
+        setPdfError("Failed to load contract template");
+      }
+    };
+
+    fetchTemplate();
+  }, [useTemplate]);
+
+  // Convert HTML template to PDF when needed
+  useEffect(() => {
+    const convertTemplateToPdf = async () => {
+      if (!contractTemplate || !useTemplate) return;
+
+      try {
+        // Create a temporary div to render the template
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = contractTemplate;
+
+        // Replace variables with actual values from the bid
+        const variables = {
+          clientName: bid.client_name || 'Client',
+          eventDate: bid.event_date || 'TBD',
+          eventTime: bid.event_time || 'TBD',
+          eventLocation: bid.event_location || 'TBD',
+          servicesDescription: bid.services_description || bid.description || 'Services as described',
+          priceBreakdown: bid.price_breakdown || `$${bid.amount}`,
+          totalAmount: `$${bid.amount}`,
+          downPaymentAmount: bid.down_payment ? `$${bid.down_payment}` : 'N/A'
+        };
+
+        // Replace all variables in the template
+        Object.entries(variables).forEach(([key, value]) => {
+          const regex = new RegExp(`{${key}}`, 'g');
+          tempDiv.innerHTML = tempDiv.innerHTML.replace(regex, value);
+        });
+
+        // Use html2pdf or similar library to convert to PDF
+        const pdfBlob = await html2pdf().from(tempDiv).outputPdf('blob');
+        const pdfArrayBuffer = await pdfBlob.arrayBuffer();
+        setPdfData(pdfArrayBuffer);
+
+      } catch (error) {
+        console.error("Error converting template to PDF:", error);
+        setPdfError("Failed to convert template to PDF");
+      }
+    };
+
+    convertTemplateToPdf();
+  }, [contractTemplate, useTemplate, bid]);
+
   // Fetch PDF data for react-pdf
   useEffect(() => {
-    if (bid.contract_url && bid.contract_url.endsWith('.pdf')) {
+    if (!useTemplate && bid.contract_url && bid.contract_url.endsWith('.pdf')) {
       fetch(bid.contract_url)
         .then(res => res.arrayBuffer())
         .then(setPdfData);
     }
-  }, [bid.contract_url]);
+  }, [bid.contract_url, useTemplate]);
 
   // Download PDF with both signatures
   const handleDownloadSignedPdf = async () => {

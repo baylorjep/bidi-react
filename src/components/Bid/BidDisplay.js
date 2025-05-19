@@ -78,6 +78,9 @@ function BidDisplay({
   const [showConsultationModal, setShowConsultationModal] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState(null);
   const [showContractModal, setShowContractModal] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState("");
+  const [useTemplate, setUseTemplate] = useState(false);
+  const [hasTemplate, setHasTemplate] = useState(false);
   const {
     selectedDate,
     selectedTimeSlot,
@@ -238,7 +241,7 @@ function BidDisplay({
         showPaymentOptions,
         showNotInterested,
         showPending,
-        showInterested,
+        showInterested, 
       }
     );
     if (!showActions) return null;
@@ -602,6 +605,39 @@ function BidDisplay({
     saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), 'signed_contract.pdf');
   };
 
+  // Check if business has a template
+  useEffect(() => {
+    const checkTemplate = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile, error } = await supabase
+          .from("business_profiles")
+          .select("contract_template")
+          .eq("id", user.id)
+          .single();
+
+        if (error) throw error;
+        setHasTemplate(!!profile?.contract_template);
+      } catch (error) {
+        console.error("Error checking template:", error);
+      }
+    };
+
+    if (bid.business_id === currentUserId) {
+      checkTemplate();
+    }
+  }, [bid.business_id, currentUserId]);
+
+  const handleContractChange = (e) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    setSelectedFileName(file.name);
+    // Here you would typically handle the file upload
+    // For now, we'll just set the filename
+  };
+
   return (
     <div className={`request-display bid-display${isAnimating ? ' fade-out' : ''}`}> 
       <div className="card-flip-container" style={{ height: cardHeight }}>
@@ -726,78 +762,104 @@ function BidDisplay({
                   </div>
                 </div>
 
-                            {/* Contract signature modal trigger */}
-            {bid.contract_url && bid.contract_url.endsWith('.pdf') && (
-              <>
-                {/* Only show sign button if business has signed but client hasn't */}
-                {bid.business_signed_at && !bid.client_signed_at && (
-                  <button
-                    className="btn-secondary"
-                    style={{ 
-                      margin: '16px 0', 
-                      width: '100%',
-                      background: '#9633eb',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}
-                    onClick={() => setShowContractModal(true)}
-                  >
-                    <i className="fas fa-signature"></i>
-                    Sign Contract
-                  </button>
+                {/* Contract signature modal trigger */}
+                {bid.contract_url && bid.contract_url.endsWith('.pdf') && (
+                  <>
+                    {/* Only show sign button if business has signed but client hasn't */}
+                    {bid.business_signed_at && !bid.client_signed_at && (
+                      <button
+                        className="btn-secondary"
+                        style={{ 
+                          margin: '16px 0', 
+                          width: '100%',
+                          background: '#9633eb',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px'
+                        }}
+                        onClick={() => setShowContractModal(true)}
+                      >
+                        <i className="fas fa-signature"></i>
+                        Sign Contract
+                      </button>
+                    )}
+                    {/* Show waiting message if business hasn't signed yet */}
+                    {!bid.business_signed_at && (
+                      <div
+                        style={{ 
+                          margin: '16px 0', 
+                          padding: '12px',
+                          background: '#f0f0f0',
+                          color: '#666',
+                          borderRadius: '8px',
+                          textAlign: 'center',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Waiting for business signature...
+                      </div>
+                    )}
+                  </>
                 )}
-                {/* Show waiting message if business hasn't signed yet */}
-                {!bid.business_signed_at && (
-                  <div
-                    style={{ 
-                      margin: '16px 0', 
-                      padding: '12px',
-                      background: '#f0f0f0',
-                      color: '#666',
-                      borderRadius: '8px',
-                      textAlign: 'center',
-                      fontSize: '14px'
-                    }}
-                  >
-                    Waiting for business signature...
+
+                {/* Contract Upload Section for Business */}
+                {bid.business_id === currentUserId && !bid.contract_url && (
+                  <div style={{ margin: '16px 0' }}>
+                    <div style={{ marginBottom: '10px', display: 'flex', gap: '10px' }}>
+                      {hasTemplate && (
+                        <button
+                          className={`template-toggle ${useTemplate ? 'active' : ''}`}
+                          onClick={() => setUseTemplate(!useTemplate)}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            border: '1px solid #9633eb',
+                            background: useTemplate ? '#9633eb' : 'white',
+                            color: useTemplate ? 'white' : '#9633eb',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          <i className="fas fa-file-alt me-2"></i>
+                          Use Template
+                        </button>
+                      )}
+                      {!useTemplate && (
+                        <label className="file-upload-label">
+                          <span>
+                            <i className="fas fa-upload"></i> Upload Contract
+                          </span>
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            onChange={handleContractChange}
+                            className="file-upload-input"
+                          />
+                        </label>
+                      )}
+                    </div>
+                    {selectedFileName && !useTemplate && (
+                      <span className="file-upload-filename">{selectedFileName}</span>
+                    )}
+                    {useTemplate && (
+                      <div style={{ 
+                        padding: '10px', 
+                        background: '#f8f4ff', 
+                        borderRadius: '8px',
+                        border: '1px solid #e0d4ff',
+                        color: '#666'
+                      }}>
+                        Using your saved contract template. Click "Sign Contract" to proceed.
+                      </div>
+                    )}
                   </div>
                 )}
-                {/* Show single view button when both have signed */}
-                {bid.business_signed_at && bid.client_signed_at && (
-                  <button
-                    className="btn-secondary"
-                    style={{ 
-                      margin: '16px 0', 
-                      width: '100%',
-                      background: '#9633eb',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      fontWeight: '600',
-                      fontSize: '15px',
-                      boxShadow: '0 2px 4px rgba(150,51,235,0.1)'
-                    }}
-                    onClick={() => setShowContractModal(true)}
-                  >
-                    <i className="fas fa-file-contract"></i>
-                    View Contract
-                  </button>
-                )}
-              </>
-            )}
 
                 {downPayment && (
                   <button
@@ -973,8 +1035,8 @@ function BidDisplay({
           setShowContractModal(false);
         }}
         bid={bid}
-        userRole={'individual'}
-        testSource="BidDisplay"
+        userRole={bid.business_id === currentUserId ? 'business' : 'individual'}
+        useTemplate={useTemplate}
       />
       
     </div>

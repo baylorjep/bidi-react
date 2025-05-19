@@ -829,4 +829,95 @@
 /* Utility for extra margin above info rows (e.g., Bidi Verified row) */
 .info-row-spaced {
   margin-top: 1.25rem;
+}
+
+/* Template Toggle Button */
+.template-toggle {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #9633eb;
+  background: white;
+  color: #9633eb;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.template-toggle:hover {
+  background: #f6eafe;
+  transform: translateY(-1px);
+}
+
+.template-toggle.active {
+  background: #9633eb;
+  color: white;
+}
+
+.template-toggle i {
+  font-size: 14px;
+}
+
+/* Contract Upload Section */
+.contract-upload-section {
+  margin: 16px 0;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(150, 51, 235, 0.05);
+}
+
+.file-upload-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #9633eb;
+  background: white;
+  color: #9633eb;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.file-upload-label:hover {
+  background: #f6eafe;
+  transform: translateY(-1px);
+}
+
+.file-upload-label input {
+  display: none;
+}
+
+.file-upload-filename {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Template Info Box */
+.template-info {
+  padding: 10px;
+  background: #f8f4ff;
+  border-radius: 8px;
+  border: 1px solid #e0d4ff;
+  color: #666;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .contract-upload-section {
+    padding: 12px;
+  }
+
+  .template-toggle,
+  .file-upload-label {
+    width: 100%;
+    justify-content: center;
+  }
 } 
