@@ -379,7 +379,7 @@ function DjStepper({ formData, setFormData, currentStep, setCurrentStep, subStep
             <BudgetForm 
               formData={formData}
               setFormData={setFormData}
-              category="dj"
+              category="DJ"
             />
 
             <div className="custom-input-container">
@@ -387,7 +387,23 @@ function DjStepper({ formData, setFormData, currentStep, setCurrentStep, subStep
               <select
                 className="custom-input"
                 value={eventDetails.priceRange || ''}
-                onChange={(e) => handleBudgetChange(e.target.value)}
+                onChange={(e) => {
+                  handleBudgetChange(e.target.value);
+                  setFormData(prev => ({
+                    ...prev,
+                    requests: {
+                      ...prev.requests,
+                      DJ: {
+                        ...prev.requests.DJ,
+                        priceRange: e.target.value
+                      }
+                    },
+                    eventDetails: {
+                      ...prev.eventDetails,
+                      priceRange: e.target.value
+                    }
+                  }));
+                }}
               >
                 <option value="">Use recommended budget</option>
                 <option value="0-500">$0 - $500</option>
@@ -492,7 +508,7 @@ function DjStepper({ formData, setFormData, currentStep, setCurrentStep, subStep
                 <div className="request-subtype">Budget Range</div>
                 <div className="request-info">
                   {(() => {
-                    const priceRange = formData.eventDetails?.priceRange;
+                    const priceRange = formData.requests?.DJ?.priceRange || formData.eventDetails?.priceRange;
                     const ranges = {
                       '0-500': '$0 - $500',
                       '500-1000': '$500 - $1,000',

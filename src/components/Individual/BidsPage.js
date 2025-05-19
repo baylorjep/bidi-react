@@ -40,6 +40,7 @@ export default function BidsPage({ onOpenChat }) {
     const [showMobileBids, setShowMobileBids] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [currentUserId, setCurrentUserId] = useState(null);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -70,6 +71,7 @@ export default function BidsPage({ onOpenChat }) {
             } else {
                 console.log('No user session found');
             }
+            setLoading(false);
         };
         getUser();
     }, []);
@@ -232,7 +234,7 @@ export default function BidsPage({ onOpenChat }) {
 
         const category = categoryMap[request.type] || 'vendors';
         return {
-            count: `${request.viewCount}/${request.totalBusinessCount}`,
+            count: `${request.viewCount}`,
             category: `${category} viewed`
         };
     };
@@ -1436,6 +1438,19 @@ export default function BidsPage({ onOpenChat }) {
             </>
         );
     };
+
+    if (loading) {
+        return (
+            <div className="bids-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div className="spinner-border" role="status" style={{ width: 48, height: 48, marginBottom: 16, color: '#8000ff', borderColor: '#8000ff', borderRightColor: 'transparent' }}>
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <div style={{ fontSize: 18, color: '#555' }}>Loading...</div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>

@@ -106,6 +106,9 @@ function BidDisplay({
   const [pdfData, setPdfData] = useState(null);
   const pdfWrapperRef = useRef(null);
 
+  const [lastViewedAt, setLastViewedAt] = useState(null);
+  const [showEditNotification, setShowEditNotification] = useState(false);
+
   const getExpirationStatus = (expirationDate) => {
     if (!expirationDate) return null;
     
@@ -120,9 +123,30 @@ function BidDisplay({
     return { status: 'normal', text: `Expires in ${diffDays} days` };
   };
 
+  console.log('BidDisplay.js: bid.last_edited_at:', bid?.last_edited_at, 'lastViewedAt:', lastViewedAt);
+
   const expirationStatus = getExpirationStatus(bid.expiration_date);
 
-  
+  const discountedPrice = getDiscountedPrice(bid);
+const discountDeadline = bid.discount_deadline ? new Date(bid.discount_deadline) : null;
+const now = new Date();
+const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 * 60 * 60 * 24)) : null;
+
+  // Helper to calculate discounted price
+  function getDiscountedPrice(bid) {
+    if (!bid.discount_type || !bid.discount_value || !bid.discount_deadline) return null;
+    const now = new Date();
+    const deadline = new Date(bid.discount_deadline);
+    if (now > deadline) return null;
+
+    let discounted = Number(bid.bid_amount);
+    if (bid.discount_type === 'percentage') {
+      discounted = discounted * (1 - Number(bid.discount_value) / 100);
+    } else if (bid.discount_type === 'flat') {
+      discounted = discounted - Number(bid.discount_value);
+    }
+    return discounted > 0 ? discounted.toFixed(2) : '0.00';
+  }
 
   const handleProfileClick = () => {
     setShowBubble(false);
@@ -146,6 +170,32 @@ function BidDisplay({
 
   const profileImage =
     bid.business_profiles.profile_image || "/images/default.jpg"; // Default image if none
+
+useEffect(() => {
+  let timer;
+  if (
+    bid.last_edited_at &&
+    (!lastViewedAt || new Date(bid.last_edited_at) > new Date(lastViewedAt))
+  ) {
+    setShowEditNotification(true);
+    timer = setTimeout(async () => {
+      setShowEditNotification(false);
+      // Now update last_viewed_at in the DB
+      if (bid && bid.id && currentUserId) {
+        await supabase
+          .from('bid_views')
+          .upsert([
+            {
+              user_id: currentUserId,
+              bid_id: bid.id,
+              last_viewed_at: new Date().toISOString()
+            }
+          ], { onConflict: ['user_id', 'bid_id'] });
+      }
+    }, 10000); // Show for 10 seconds
+  }
+  return () => clearTimeout(timer);
+}, [bid, lastViewedAt, currentUserId]);
 
     useEffect(() => {
       const fetchMembershipTierAndCalendar = async () => {
@@ -277,6 +327,8 @@ function BidDisplay({
       alignItems: 'center'
     };
 
+
+
     // For approved tab, only show X and chat icons
     if (showApproved) {
       return (
@@ -359,6 +411,8 @@ function BidDisplay({
         </div>
       );
     }
+
+    
 
     // For all other states, show X icon
     return (
@@ -638,6 +692,38 @@ function BidDisplay({
     // For now, we'll just set the filename
   };
 
+  useEffect(() => {
+    const fetchLastViewed = async () => {
+      if (!bid || !bid.id || !currentUserId) return;
+      const { data: viewData } = await supabase
+        .from('bid_views')
+        .select('last_viewed_at')
+        .eq('user_id', currentUserId)
+        .eq('bid_id', bid.id)
+        .single();
+      setLastViewedAt(viewData?.last_viewed_at || null);
+
+      console.log('fetchLastViewed: bid.last_edited_at:', bid.last_edited_at, 'viewData.last_viewed_at:', viewData?.last_viewed_at);
+      // Show notification if bid was edited after last viewed
+      if (
+        bid.last_edited_at &&
+        (!viewData?.last_viewed_at || new Date(bid.last_edited_at) > new Date(viewData.last_viewed_at))
+      ) {
+        setShowEditNotification(true);
+      } else {
+        setShowEditNotification(false);
+      }
+    };
+    fetchLastViewed();
+  }, [bid, currentUserId]);
+
+  useEffect(() => {
+    if (showEditNotification) {
+      const timer = setTimeout(() => setShowEditNotification(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showEditNotification]);
+
   return (
     <div className={`request-display bid-display${isAnimating ? ' fade-out' : ''}`}> 
       <div className="card-flip-container" style={{ height: cardHeight }}>
@@ -650,12 +736,26 @@ function BidDisplay({
               </div>
             )}
             <div className="bid-display-head-container">
+            {showEditNotification && (
+        <div style={{
+          background: "#9633eb",
+          color: "#fff",
+          padding: "10px 20px",
+          borderRadius: "8px",
+          marginBottom: "12px",
+          textAlign: "center",
+          fontWeight: 600,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+        }}>
+          This bid was recently updated by the business.
+        </div>
+      )}
               <div className="bid-display-head">
-                <div className="profile-image-container">
+                <div className="profile-image-container-bid-display">
                   <img
                     src={profileImage}
                     alt={`${bid.business_profiles.business_name} profile`}
-                    className="vendor-profile-image"
+                    className="vendor-profile-image-bid-display"
                     onClick={handleProfileClick}
                   />
                   <div
@@ -682,11 +782,10 @@ function BidDisplay({
                         onMouseLeave={() => setShowVerifiedTooltip(false)}
                         onClick={() => setShowVerifiedTooltip(!showVerifiedTooltip)}
                       >
-                        <img
-                          src={bidiCheck}
-                          className="bidi-check-icon"
-                          alt="Bidi Verified Icon"
-                        />
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M5.68638 8.5104C6.06546 8.13132 6.68203 8.13329 7.06354 8.5148L7.79373 9.24498L9.93117 7.10754C10.3102 6.72847 10.9268 6.73044 11.3083 7.11195C11.6898 7.49345 11.6918 8.11003 11.3127 8.48911L8.48891 11.3129C8.10983 11.692 7.49326 11.69 7.11175 11.3085L5.69078 9.88756C5.30927 9.50605 5.3073 8.88947 5.68638 8.5104Z" fill="#A328F4"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M6.3585 1.15414C7.77571 -0.384714 10.2243 -0.384714 11.6415 1.15414C11.904 1.43921 12.2814 1.59377 12.6709 1.57577C14.7734 1.4786 16.5048 3.19075 16.4065 5.26985C16.3883 5.655 16.5446 6.02814 16.8329 6.28775C18.389 7.68919 18.389 10.1105 16.8329 11.512C16.5446 11.7716 16.3883 12.1447 16.4065 12.5299C16.5048 14.609 14.7734 16.3211 12.6709 16.2239C12.2814 16.2059 11.904 16.3605 11.6415 16.6456C10.2243 18.1844 7.77571 18.1844 6.3585 16.6456C6.09596 16.3605 5.71863 16.2059 5.32915 16.2239C3.22665 16.3211 1.49524 14.609 1.5935 12.5299C1.6117 12.1447 1.4554 11.7716 1.16713 11.512C-0.389043 10.1105 -0.389043 7.68919 1.16713 6.28775C1.4554 6.02814 1.6117 5.655 1.5935 5.26985C1.49524 3.19075 3.22665 1.4786 5.32915 1.57577C5.71863 1.59377 6.09596 1.43921 6.3585 1.15414ZM9.96822 2.66105C9.44875 2.097 8.55125 2.097 8.03178 2.66105C7.31553 3.43878 6.28608 3.86045 5.22349 3.81134C4.45284 3.77572 3.81821 4.40329 3.85422 5.16537C3.90388 6.21614 3.47747 7.23413 2.69099 7.94241C2.12059 8.4561 2.12059 9.34362 2.69099 9.8573C3.47747 10.5656 3.90388 11.5836 3.85422 12.6343C3.81821 13.3964 4.45284 14.024 5.22349 13.9884C6.28608 13.9393 7.31553 14.3609 8.03178 15.1387C8.55125 15.7027 9.44875 15.7027 9.96822 15.1387C10.6845 14.3609 11.7139 13.9393 12.7765 13.9884C13.5472 14.024 14.1818 13.3964 14.1458 12.6343C14.0961 11.5836 14.5225 10.5656 15.309 9.8573C15.8794 9.34362 15.8794 8.4561 15.309 7.94241C14.5225 7.23414 14.0961 6.21614 14.1458 5.16537C14.1818 4.40329 13.5472 3.77572 12.7765 3.81134C11.7139 3.86045 10.6845 3.43878 9.96822 2.66105Z" fill="#A328F4"/>
+                        </svg>
                         <span>Verified</span>
                         <div className={`verified-tooltip ${showVerifiedTooltip ? 'show' : ''}`}>
                           <p className="verified-tooltip-title">Bidi Verified</p>
@@ -697,10 +796,39 @@ function BidDisplay({
                   </div>
                   <div className="bid-amount-section">
                     <div className="bid-amount-container">
-                      <button className="bid-display-button" disabled>
-                        ${bid.bid_amount}
-                        <div className="tag-hole"></div>
-                      </button>
+                      {discountedPrice ? (
+                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <span style={{ textDecoration: 'line-through', color: '#aaa', fontSize: '1em', marginBottom: 2 }}>
+                            ${bid.bid_amount}
+                          </span>
+                          <span style={{ color: '#9633eb', fontWeight: 700, fontSize: '1.6em', marginBottom: 2 }}>
+                            ${discountedPrice}
+                          </span>
+                          <div style={{
+                            fontSize: '1em',
+                            color: '#9633eb',
+                            background: 'rgba(150,51,235,0.08)',
+                            borderRadius: 8,
+                            padding: '4px 12px',
+                            marginTop: 4,
+                            fontWeight: 500,
+                            textAlign: 'center',
+                            width: '80%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center'
+                          }}>
+                            {daysLeft > 0
+                              ? `Book within ${daysLeft} day${daysLeft === 1 ? '' : 's'} to get this price!`
+                              : 'Discount ends today!'}
+                          </div>
+                        </div>
+                      ) : (
+                        <button className="bid-display-button" disabled>
+                          ${bid.bid_amount}
+                          <div className="tag-hole"></div>
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="business-badges">
@@ -947,14 +1075,12 @@ function BidDisplay({
                   className={`bid-description-content ${!isDescriptionExpanded ? 'description-collapsed' : ''}`}
                   dangerouslySetInnerHTML={{ __html: bid.bid_description?.replace(/\n/g, '<br>') }}
                 />
-                {bid.bid_description && bid.bid_description.replace(/<[^>]*>/g, '').replace(/\n/g, ' ').trim().length > 100 && (
-                  <button 
-                    className="read-more-btn"
-                    onClick={handleDescriptionToggle}
-                  >
-                    {isDescriptionExpanded ? 'Show Less' : 'Read More'}
-                  </button>
-                )}
+                <button 
+                  className="read-more-btn"
+                  onClick={handleDescriptionToggle}
+                >
+                  {isDescriptionExpanded ? 'Show Less' : 'Read More'}
+                </button>
               </p>
               {downPayment && !showPaymentOptions && (
                 <p className="request-comments">
@@ -1038,7 +1164,7 @@ function BidDisplay({
         userRole={bid.business_id === currentUserId ? 'business' : 'individual'}
         useTemplate={useTemplate}
       />
-      
+    
     </div>
     
   );

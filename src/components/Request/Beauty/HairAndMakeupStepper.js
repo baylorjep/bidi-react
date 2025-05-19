@@ -759,6 +759,8 @@ function HairAndMakeupStepper({ formData, setFormData, currentStep, setCurrentSt
   };
 
   const renderBudgetStep = () => {
+    // Debug log to check HairAndMakeup data before rendering BudgetForm
+    console.log('Stepper DEBUG:', formData.requests.HairAndMakeup);
     return (
       <div className="form-scrollable-content">
         <BudgetForm 
