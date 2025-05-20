@@ -534,8 +534,17 @@ const ContractTemplateEditor = ({ setActiveSection }) => {
         throw new Error("Editor not initialized");
       }
 
-      // Get the content as HTML
-      const content = editor.root.innerHTML;
+      // Get the content and clean it up
+      let content = editor.root.innerHTML;
+      
+      // Remove any extra variables that might have been added at the bottom
+      const variablePattern = /\{totalAmount\}|\{priceBreakdown\}|\{servicesDescription\}|\{eventLocation\}|\{eventTime\}|\{eventDate\}|\{clientName\}/g;
+      content = content.replace(variablePattern, '').trim();
+
+      // Ensure we have valid content
+      if (!content) {
+        throw new Error("No content to save");
+      }
 
       const { error } = await supabase
         .from("business_profiles")
@@ -602,7 +611,7 @@ const ContractTemplateEditor = ({ setActiveSection }) => {
     
     // Create signature placeholder HTML with exact class names matching our CSS
     const signatureHtml = `
-      <div class="signature-placeholder ${type}-signature" style="background-color: #ffd6e7; border: 1px dashed #ff9ec4; border-radius: 5px; padding: 15px; margin: 20px 0; min-width: 200px;">
+      <div class="signature-placeholder ${type}-signature" style="display: inline-block; background-color: #ffd6e7; border: 1px dashed #ff9ec4; border-radius: 5px; padding: 15px; margin: 20px 0; min-width: 200px;">
         <div class="signature-line" style="border-bottom: 1px solid #d63384; margin-bottom: 5px; min-width: 150px;"></div>
         <div class="signature-label" style="font-weight: bold; margin-bottom: 5px; color: #d63384;">
           ${type === 'client' ? '<span class="variable-tag" style="background-color: #ffd6e7; padding: 2px 6px; border-radius: 4px; color: #d63384; font-family: monospace; font-weight: 500; display: inline-block; border: 1px solid #ff9ec4; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">{clientName}</span>' : businessName}

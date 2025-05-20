@@ -1465,6 +1465,50 @@ export default function BidsPage({ onOpenChat }) {
                     View all your service requests and manage the bids you've received.
                 </p>
                 
+                <style>
+                    {`
+                        .request-actions {
+                            display: flex;
+                            gap: 8px;
+                            margin-top: 12px;
+                        }
+                        .btn-view-bids, .btn-edit, .btn-toggle {
+                            padding: 8px 16px;
+                            border-radius: 20px;
+                            border: none;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                            font-size: 14px;
+                            transition: all 0.2s ease;
+                        }
+                        .btn-view-bids {
+                            background-color: #9633eb;
+                            color: white;
+                        }
+                        .btn-view-bids:hover {
+                            background-color: #7a29c0;
+                        }
+                        .btn-edit {
+                            background-color: #f8f9fa;
+                            color: #666;
+                            border: 1px solid #ddd;
+                        }
+                        .btn-edit:hover {
+                            background-color: #e9ecef;
+                        }
+                        .btn-toggle {
+                            background-color: #f8f9fa;
+                            color: #666;
+                            border: 1px solid #ddd;
+                        }
+                        .btn-toggle:hover {
+                            background-color: #e9ecef;
+                        }
+                    `}
+                </style>
+                
                 {requests.length > 0 ? (
                     <div className="requests-list-container">
                         <div className="requests-list">
@@ -1496,6 +1540,16 @@ export default function BidsPage({ onOpenChat }) {
                                         
                                     </div>
                                     <div className="request-actions">
+                                        <button
+                                            className="btn-view-bids"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRequestClick(request, index);
+                                            }}
+                                        >
+                                            <i className="fas fa-eye"></i>
+                                            View Bids
+                                        </button>
                                         <button
                                             className="btn-edit"
                                             onClick={(e) => {

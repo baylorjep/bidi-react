@@ -9,6 +9,7 @@ import { saveAs } from 'file-saver';
 import { toast } from 'react-hot-toast';
 import { useState as useReactState } from 'react';
 import { FaInfoCircle } from "react-icons/fa";
+import html2pdf from 'html2pdf.js';
 
 const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContractUpload }) => {
   const navigate = useNavigate();
@@ -26,8 +27,21 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
   const [pdfPage, setPdfPage] = useState(1);
   const pdfWrapperRef = React.useRef(null);
   const [selectedFileName, setSelectedFileName] = useReactState("");
-
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
+  const [contractTemplate, setContractTemplate] = useState(null);
+  const [useTemplate, setUseTemplate] = useState(false);
+  const [templateLoading, setTemplateLoading] = useState(false);
+  const [templateVariables, setTemplateVariables] = useState({
+    clientName: '',
+    eventDate: '',
+    eventTime: '',
+    eventLocation: '',
+    servicesDescription: '',
+    priceBreakdown: '',
+    totalAmount: '',
+    downPaymentAmount: ''
+  });
+  const [showTemplatePreview, setShowTemplatePreview] = useState(false);
 
   useEffect(() => {
     if (!showInfoTooltip) return;
@@ -35,6 +49,29 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
   }, [showInfoTooltip]);
+
+  useEffect(() => {
+    const fetchContractTemplate = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile, error } = await supabase
+          .from("business_profiles")
+          .select("contract_template")
+          .eq("id", user.id)
+          .single();
+
+        if (error) throw error;
+        setContractTemplate(profile?.contract_template);
+      } catch (error) {
+        console.error("Error fetching contract template:", error);
+        toast.error("Failed to load contract template");
+      }
+    };
+
+    fetchContractTemplate();
+  }, []);
 
   const getTitle = () => {
     if (request?.title) return request.title;
@@ -221,6 +258,106 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
     } catch (error) {
       console.error('Error downloading signed PDF:', error);
       toast.error('Failed to download signed contract');
+    }
+  };
+
+  const handleTemplateSelect = async () => {
+    if (!contractTemplate) {
+      toast.error("No contract template found. Please create one in your settings.");
+      return;
+    }
+
+    // Initialize variables with default values
+    setTemplateVariables({
+      clientName: `${request?.user_first_name} ${request?.user_last_name}`,
+      eventDate: request?.date_preference || 'TBD',
+      eventTime: request?.time_preference || 'TBD',
+      eventLocation: request?.location || 'TBD',
+      servicesDescription: bid?.description || '',
+      priceBreakdown: `Total Amount: $${bid?.bid_amount}`,
+      totalAmount: `$${bid?.bid_amount}`,
+      downPaymentAmount: bid?.down_payment_amount ? `$${bid.down_payment_amount}` : 'N/A'
+    });
+
+    setShowTemplatePreview(true);
+  };
+
+  const handleCreateContract = async () => {
+    try {
+      if (!contractTemplate) {
+        throw new Error('No contract template found');
+      }
+
+      // Replace variables in the template
+      let contractContent = contractTemplate;
+      const variables = {
+        clientName: request?.client_name || 'Client Name',
+        eventDate: request?.event_date || 'Event Date',
+        eventTime: request?.event_time || 'Event Time',
+        eventLocation: request?.event_location || 'Event Location',
+        servicesDescription: bid?.description || 'Services Description',
+        priceBreakdown: bid?.price_breakdown || 'Price Breakdown',
+        totalAmount: bid?.amount || 'Total Amount',
+        downPaymentAmount: bid?.down_payment_amount || 'Down Payment Amount'
+      };
+
+      // Replace all variables in the content
+      Object.entries(variables).forEach(([key, value]) => {
+        const regex = new RegExp(`{${key}}`, 'g');
+        contractContent = contractContent.replace(regex, value);
+      });
+
+      // Create a temporary div to hold the contract content
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = contractContent;
+
+      // Convert the content to PDF using html2pdf
+      const opt = {
+        margin: 1,
+        filename: `contract_${bid.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      // Generate PDF
+      const pdf = await html2pdf().set(opt).from(tempDiv).save();
+
+      // Upload the PDF to Supabase storage
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not found');
+
+      const filePath = `contracts/${user.id}/${bid.id}_contract.pdf`;
+      const { error: uploadError } = await supabase.storage
+        .from('contracts')
+        .upload(filePath, pdf, {
+          contentType: 'application/pdf',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('contracts')
+        .getPublicUrl(filePath);
+
+      // Update the bid with the contract URL
+      const { error: updateError } = await supabase
+        .from('bids')
+        .update({ contract_url: publicUrl })
+        .eq('id', bid.id);
+
+      if (updateError) throw updateError;
+
+      // Close the preview modal
+      setShowTemplatePreview(false);
+      
+      // Refresh the page to show the new contract
+      window.location.reload();
+    } catch (error) {
+      console.error('Error creating contract:', error);
+      alert('Failed to create contract. Please try again.');
     }
   };
 
@@ -439,26 +576,142 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
           <>
             <div className="contract-upload-section" style={{ margin: '10px 0' }}>
               {!bid.contract_url && (
-                <>
-                  <label className="file-upload-label">
-                    <span>
-                      <i className="fas fa-upload"></i> Upload Contract
-                    </span>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      onChange={handleContractChange}
-                      className="file-upload-input"
-                    />
-                  </label>
-                  {selectedFileName && (
-                    <span className="file-upload-filename">{selectedFileName}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    <button
+                      className="template-btn"
+                      onClick={() => setUseTemplate(true)}
+                      style={{
+                        background: '#9633eb',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '12px 24px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontWeight: '600',
+                        fontSize: '15px',
+                        boxShadow: '0 2px 4px rgba(150,51,235,0.1)'
+                      }}
+                    >
+                      <i className="fas fa-file-alt"></i>
+                      Use Template
+                    </button>
+                    <label className="file-upload-label" style={{
+                      background: '#f8f9fa',
+                      color: '#333',
+                      border: '1px solid #ddd',
+                      padding: '12px 24px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontWeight: '600',
+                      fontSize: '15px'
+                    }}>
+                      <i className="fas fa-upload"></i>
+                      Upload File
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        onChange={handleContractChange}
+                        className="file-upload-input"
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                  </div>
+                  
+                  {useTemplate && (
+                    <div style={{
+                      background: '#f8f9fa',
+                      padding: '16px',
+                      borderRadius: '8px',
+                      border: '1px solid #ddd',
+                      marginTop: '8px'
+                    }}>
+                      <h4 style={{ marginBottom: '12px', color: '#333' }}>Create Contract from Template</h4>
+                      <p style={{ marginBottom: '16px', color: '#666' }}>
+                        This will create a new contract using your template, automatically filling in the client's information.
+                      </p>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button
+                          onClick={() => setUseTemplate(false)}
+                          style={{
+                            background: '#f8f9fa',
+                            color: '#666',
+                            border: '1px solid #ddd',
+                            padding: '8px 16px',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleTemplateSelect}
+                          disabled={templateLoading}
+                          style={{
+                            background: '#9633eb',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '8px 16px',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}
+                        >
+                          {templateLoading ? (
+                            <>
+                              <i className="fas fa-spinner fa-spin"></i>
+                              Creating...
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-file-alt"></i>
+                              Create Contract
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   )}
-                </>
+                  
+                  {selectedFileName && (
+                    <span className="file-upload-filename" style={{
+                      display: 'block',
+                      textAlign: 'center',
+                      color: '#666',
+                      marginTop: '8px'
+                    }}>
+                      Selected file: {selectedFileName}
+                    </span>
+                  )}
+                </div>
               )}
+              
               {bid.contract_url && (
                 <div style={{ marginTop: 8 }}>
-                  <a href={bid.contract_url} target="_blank" rel="noopener noreferrer">View Uploaded Contract</a>
+                  <a 
+                    href={bid.contract_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{
+                      color: '#9633eb',
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <i className="fas fa-file-contract"></i>
+                    View Uploaded Contract
+                  </a>
                   {signed ? (
                     <div style={{ marginTop: 8, color: 'green' }}>
                       Signed by business: <b>{bid.business_signature || signature}</b>
@@ -594,6 +847,199 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
         </div>
 
       </div>
+
+      {/* Template Preview Modal */}
+      {showTemplatePreview && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '24px',
+            borderRadius: '12px',
+            width: '90%',
+            maxWidth: '600px',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <h3 style={{ marginBottom: '20px', color: '#333' }}>Review Contract Details</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#666' }}>Client Name</label>
+                <input
+                  type="text"
+                  value={templateVariables.clientName}
+                  onChange={(e) => setTemplateVariables(prev => ({ ...prev, clientName: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#666' }}>Event Date</label>
+                <input
+                  type="text"
+                  value={templateVariables.eventDate}
+                  onChange={(e) => setTemplateVariables(prev => ({ ...prev, eventDate: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#666' }}>Event Time</label>
+                <input
+                  type="text"
+                  value={templateVariables.eventTime}
+                  onChange={(e) => setTemplateVariables(prev => ({ ...prev, eventTime: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#666' }}>Event Location</label>
+                <input
+                  type="text"
+                  value={templateVariables.eventLocation}
+                  onChange={(e) => setTemplateVariables(prev => ({ ...prev, eventLocation: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#666' }}>Services Description</label>
+                <textarea
+                  value={templateVariables.servicesDescription}
+                  onChange={(e) => setTemplateVariables(prev => ({ ...prev, servicesDescription: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    minHeight: '100px'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#666' }}>Price Breakdown</label>
+                <textarea
+                  value={templateVariables.priceBreakdown}
+                  onChange={(e) => setTemplateVariables(prev => ({ ...prev, priceBreakdown: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    minHeight: '100px'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#666' }}>Total Amount</label>
+                <input
+                  type="text"
+                  value={templateVariables.totalAmount}
+                  onChange={(e) => setTemplateVariables(prev => ({ ...prev, totalAmount: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#666' }}>Down Payment Amount</label>
+                <input
+                  type="text"
+                  value={templateVariables.downPaymentAmount}
+                  onChange={(e) => setTemplateVariables(prev => ({ ...prev, downPaymentAmount: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+              <button
+                onClick={() => setShowTemplatePreview(false)}
+                style={{
+                  background: '#f8f9fa',
+                  color: '#666',
+                  border: '1px solid #ddd',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateContract}
+                disabled={templateLoading}
+                style={{
+                  background: '#9633eb',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                {templateLoading ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-file-alt"></i>
+                    Create Contract
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
