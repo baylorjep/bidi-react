@@ -571,7 +571,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       return;
     }
 
-    navigate('/my-dashboard', {
+    navigate('/individual-dashboard', {
       state: {
         activeSection: 'messages',
         selectedChat: {
@@ -585,7 +585,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    navigate('/my-dashboard', {
+    navigate('/individual-dashboard', {
       state: {
         activeSection: 'messages',
         selectedChat: {
