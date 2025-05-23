@@ -39,9 +39,11 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
     servicesDescription: '',
     priceBreakdown: '',
     totalAmount: '',
-    downPaymentAmount: ''
+    downPaymentAmount: '',
+    signatureDate: ''
   });
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (!showInfoTooltip) return;
@@ -80,12 +82,112 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
 
   const canUploadContract = ["pending", "approved", "accepted", "interested"].includes(bid.status);
 
-  const handleContractChange = (e) => {
+  const handleContractChange = async (e) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
     setSelectedFileName(file.name);
-    if (onContractUpload) {
-      onContractUpload(bid, file);
+
+    try {
+      // Get the current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error('User not authenticated');
+
+      // First update the bid status
+      const { error: statusError } = await supabase
+        .from('bids')
+        .update({ 
+          contract_status: 'pending_signatures'
+        })
+        .eq('id', bid.id);
+
+      if (statusError) throw statusError;
+
+      // Create a unique file path
+      const filePath = `${bid.id}_contract.pdf`;
+
+      // Try to upload with a different approach
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('contracts')
+        .upload(filePath, file, {
+          contentType: 'application/pdf',
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        
+        // If the error is about the bucket not existing, try to create it
+        if (uploadError.message.includes('bucket') || uploadError.statusCode === '404') {
+          // Try to create the bucket
+          const { error: createBucketError } = await supabase.storage.createBucket('contracts', {
+            public: true,
+            allowedMimeTypes: ['application/pdf'],
+            fileSizeLimit: 52428800 // 50MB
+          });
+
+          if (createBucketError) {
+            console.error('Error creating bucket:', createBucketError);
+            throw new Error('Failed to create storage bucket');
+          }
+
+          // Try upload again after creating bucket
+          const { data: retryUploadData, error: retryUploadError } = await supabase.storage
+            .from('contracts')
+            .upload(filePath, file, {
+              contentType: 'application/pdf',
+              upsert: true
+            });
+
+          if (retryUploadError) {
+            console.error('Retry upload error:', retryUploadError);
+            throw new Error('Failed to upload after creating bucket');
+          }
+
+          uploadData = retryUploadData;
+        } else {
+          throw new Error(`Upload failed: ${uploadError.message}`);
+        }
+      }
+
+      if (!uploadData) {
+        throw new Error('No upload data returned');
+      }
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('contracts')
+        .getPublicUrl(filePath);
+
+      if (!publicUrl) {
+        throw new Error('Failed to generate public URL');
+      }
+
+      // Update the bid with the contract URL
+      const { error: urlUpdateError } = await supabase
+        .from('bids')
+        .update({ 
+          contract_url: publicUrl
+        })
+        .eq('id', bid.id);
+
+      if (urlUpdateError) {
+        console.error('URL update error:', urlUpdateError);
+        throw new Error('Failed to update contract URL');
+      }
+
+      if (onContractUpload) {
+        onContractUpload(bid, file);
+      }
+
+      // Show success message
+      toast.success('Contract uploaded successfully');
+      
+      // Refresh the page to show the new contract
+      window.location.reload();
+    } catch (error) {
+      console.error('Error uploading contract:', error);
+      toast.error(error.message || 'Failed to upload contract. Please try again.');
     }
   };
 
@@ -267,16 +369,23 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
       return;
     }
 
-    // Initialize variables with default values
+    // Initialize variables with values from the bid and request
     setTemplateVariables({
-      clientName: `${request?.user_first_name} ${request?.user_last_name}`,
+      clientName: request?.user_first_name && request?.user_last_name 
+        ? `${request.user_first_name} ${request.user_last_name}`
+        : 'Client Name',
       eventDate: request?.date_preference || 'TBD',
       eventTime: request?.time_preference || 'TBD',
       eventLocation: request?.location || 'TBD',
-      servicesDescription: bid?.description || '',
-      priceBreakdown: `Total Amount: $${bid?.bid_amount}`,
-      totalAmount: `$${bid?.bid_amount}`,
-      downPaymentAmount: bid?.down_payment_amount ? `$${bid.down_payment_amount}` : 'N/A'
+      servicesDescription: bid?.description || 'Services as described',
+      priceBreakdown: bid?.price_breakdown || `Total Amount: $${bid?.bid_amount || '0'}`,
+      totalAmount: `$${bid?.bid_amount || '0'}`,
+      downPaymentAmount: bid?.down_payment_amount ? `$${bid.down_payment_amount}` : 'N/A',
+      signatureDate: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
     });
 
     setShowTemplatePreview(true);
@@ -288,54 +397,67 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
         throw new Error('No contract template found');
       }
 
-      // Replace variables in the template
+      // Replace variables in the template with values from templateVariables
       let contractContent = contractTemplate;
-      const variables = {
-        clientName: request?.client_name || 'Client Name',
-        eventDate: request?.event_date || 'Event Date',
-        eventTime: request?.event_time || 'Event Time',
-        eventLocation: request?.event_location || 'Event Location',
-        servicesDescription: bid?.description || 'Services Description',
-        priceBreakdown: bid?.price_breakdown || 'Price Breakdown',
-        totalAmount: bid?.amount || 'Total Amount',
-        downPaymentAmount: bid?.down_payment_amount || 'Down Payment Amount'
-      };
-
-      // Replace all variables in the content
-      Object.entries(variables).forEach(([key, value]) => {
+      Object.entries(templateVariables).forEach(([key, value]) => {
         const regex = new RegExp(`{${key}}`, 'g');
         contractContent = contractContent.replace(regex, value);
       });
 
-      // Create a temporary div to hold the contract content
+      // First update the bid with the contract content
+      const { error: updateError } = await supabase
+        .from('bids')
+        .update({ 
+          contract_content: contractContent,
+          contract_status: 'pending_signatures'
+        })
+        .eq('id', bid.id);
+
+      if (updateError) throw updateError;
+
+      // Convert the content to PDF
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = contractContent;
 
-      // Convert the content to PDF using html2pdf
+      // Configure html2pdf options
       const opt = {
         margin: 1,
         filename: `contract_${bid.id}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          logging: true
+        },
+        jsPDF: { 
+          unit: 'in', 
+          format: 'letter', 
+          orientation: 'portrait'
+        }
       };
 
       // Generate PDF
-      const pdf = await html2pdf().set(opt).from(tempDiv).save();
+      const pdfBlob = await html2pdf().set(opt).from(tempDiv).output('blob');
 
-      // Upload the PDF to Supabase storage
+      // Get the current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not found');
 
-      const filePath = `contracts/${user.id}/${bid.id}_contract.pdf`;
+      // Create a unique file path
+      const filePath = `contracts/${bid.id}_contract.pdf`;
+
+      // Upload the PDF to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('contracts')
-        .upload(filePath, pdf, {
+        .upload(filePath, pdfBlob, {
           contentType: 'application/pdf',
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw new Error('Failed to upload contract PDF');
+      }
 
       // Get the public URL
       const { data: { publicUrl } } = supabase.storage
@@ -343,21 +465,70 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
         .getPublicUrl(filePath);
 
       // Update the bid with the contract URL
-      const { error: updateError } = await supabase
+      const { error: urlUpdateError } = await supabase
         .from('bids')
-        .update({ contract_url: publicUrl })
+        .update({ 
+          contract_url: publicUrl
+        })
         .eq('id', bid.id);
 
-      if (updateError) throw updateError;
+      if (urlUpdateError) {
+        console.error('URL update error:', urlUpdateError);
+        throw new Error('Failed to update contract URL');
+      }
 
       // Close the preview modal
       setShowTemplatePreview(false);
+      
+      // Show success message
+      toast.success('Contract created successfully');
       
       // Refresh the page to show the new contract
       window.location.reload();
     } catch (error) {
       console.error('Error creating contract:', error);
-      alert('Failed to create contract. Please try again.');
+      toast.error(error.message || 'Failed to create contract. Please try again.');
+    }
+  };
+
+  const handleRemoveContract = async () => {
+    try {
+      // Update the bid to remove contract-related fields
+      const { error } = await supabase
+        .from('bids')
+        .update({ 
+          contract_content: null,
+          contract_url: null,
+          contract_status: null,
+          business_signature: null,
+          business_signature_image: null,
+          business_signature_pos: null,
+          business_signed_at: null,
+          client_signature: null,
+          client_signature_image: null,
+          client_signature_box_pos: null,
+          client_signed_at: null
+        })
+        .eq('id', bid.id);
+
+      if (error) throw error;
+
+      // If there's a contract URL, delete the file from storage
+      if (bid.contract_url) {
+        const { error: storageError } = await supabase.storage
+          .from('contracts')
+          .remove([`${bid.id}_contract.pdf`]);
+
+        if (storageError) {
+          console.error('Error deleting contract file:', storageError);
+        }
+      }
+
+      toast.success('Contract removed successfully');
+      window.location.reload();
+    } catch (error) {
+      console.error('Error removing contract:', error);
+      toast.error('Failed to remove contract');
     }
   };
 
@@ -575,7 +746,7 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
         {bid.status === 'approved' || bid.status === 'accepted' && (
           <>
             <div className="contract-upload-section" style={{ margin: '10px 0' }}>
-              {!bid.contract_url && (
+              {!bid.contract_url && !bid.contract_content && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                     <button
@@ -694,6 +865,34 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
                 </div>
               )}
               
+              {/* Show Sign button if contract content exists but not signed */}
+              {bid.contract_content && !bid.business_signed_at && (
+                <button
+                  className="contract-sign-btn"
+                  style={{ 
+                    margin: '16px 0', 
+                    width: '100%',
+                    background: '#9633eb',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontWeight: '600',
+                    fontSize: '15px',
+                    boxShadow: '0 2px 4px rgba(150,51,235,0.1)'
+                  }}
+                  onClick={() => setShowContractModal(true)}
+                >
+                  <i className="fas fa-signature"></i>
+                  Sign Contract
+                </button>
+              )}
+              
               {bid.contract_url && (
                 <div style={{ marginTop: 8 }}>
                   <a 
@@ -809,24 +1008,14 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
                 console.log('BidDisplayMini modal closing');
                 setShowContractModal(false);
               }}
-              bid={bid}
+              bid={{
+                ...bid,
+                contract_url: bid.contract_url || null,
+                contract_content: bid.contract_content || null
+              }}
               userRole={'business'}
               testSource="BidDisplayMini"
-              pdfPage={pdfPage}
-              setPdfPage={setPdfPage}
-              pdfWrapperRef={pdfWrapperRef}
-              handlePdfClick={handlePdfClick}
-              signaturePos={signaturePos}
-              setSignaturePos={setSignaturePos}
-              placingSignature={placingSignature}
-              setPlacingSignature={setPlacingSignature}
-              clientSignature={clientSignature}
-              setClientSignature={setClientSignature}
-              clientSigning={clientSigning}
-              clientSignError={clientSignError}
-              clientSigned={clientSigned}
-              handleClientSignContract={handleClientSignContract}
-              handleDownloadSignedPdf={handleDownloadSignedPdf}
+              useTemplate={false}
             />
           </>
         )}
@@ -845,6 +1034,30 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
             View/Edit
           </button>
         </div>
+
+        {(bid.contract_url || bid.contract_content) && (
+          <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              style={{
+                background: '#fff',
+                color: '#dc3545',
+                border: '1px solid #dc3545',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+            >
+              <i className="fas fa-trash-alt"></i>
+              Remove Contract
+            </button>
+          </div>
+        )}
 
       </div>
 
@@ -1035,6 +1248,62 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
                     Create Contract
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '24px',
+            borderRadius: '12px',
+            width: '90%',
+            maxWidth: '400px'
+          }}>
+            <h3 style={{ marginBottom: '16px', color: '#333' }}>Remove Contract</h3>
+            <p style={{ marginBottom: '24px', color: '#666' }}>
+              Are you sure you want to remove this contract? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                style={{
+                  background: '#f8f9fa',
+                  color: '#666',
+                  border: '1px solid #ddd',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRemoveContract}
+                style={{
+                  background: '#dc3545',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Remove Contract
               </button>
             </div>
           </div>

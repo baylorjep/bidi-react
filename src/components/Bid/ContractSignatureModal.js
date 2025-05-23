@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import ReactDOM from "react-dom";
 import { Document, Page } from "react-pdf";
 import { pdfjs } from 'react-pdf';
@@ -9,7 +9,42 @@ import { supabase } from "../../supabaseClient";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { saveAs } from 'file-saver';
 import html2pdf from 'html2pdf.js';
-pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL || ''}/pdf.worker.js`;
+  
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.js`;
+
+// Add worker initialization check
+const initializePdfWorker = async () => {
+  try {
+    // Check if worker is loaded
+    if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+      throw new Error('PDF.js worker source not set');
+    }
+    
+    // Create a simple PDF document to test worker
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage();
+    page.drawText('Test PDF');
+    const pdfBytes = await pdfDoc.save();
+    
+    // Try to load the test PDF
+    const loadingTask = pdfjs.getDocument({ data: pdfBytes });
+    await loadingTask.promise;
+    
+    console.log('PDF.js worker initialized successfully');
+    return true;
+  } catch (error) {
+    console.error('Error initializing PDF.js worker:', error);
+    return false;
+  }
+};
+
+// Memoize PDF options
+const pdfOptions = {
+  cMapUrl: 'https://unpkg.com/pdfjs-dist@5.2.133/cmaps/',
+  cMapPacked: true,
+  standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@5.2.133/standard_fonts/'
+};
 
 function ContractSignatureModal({
   isOpen,
@@ -57,9 +92,70 @@ function ContractSignatureModal({
   const [isDragging, setIsDragging] = useState(false);
   const resizeStartPos = useRef(null);
   const initialSize = useRef(null);
+  const dragStartPos = useRef(null);
+  const initialPos = useRef(null);
+  const [workerInitialized, setWorkerInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  // Add state for client box adjustment
+  const [isAdjustingClientBox, setIsAdjustingClientBox] = useState(false);
+  const [clientBoxSize, setClientBoxSize] = useState({ width: 180, height: 60 });
+  const clientBoxResizeStartPos = useRef(null);
+  const clientBoxInitialSize = useRef(null);
+  const clientBoxDragStartPos = useRef(null);
+  const clientBoxInitialPos = useRef(null);
 
-  // Fetch contract template if useTemplate is true
+  // Add debug logging at component mount
   useEffect(() => {
+    console.log('ContractSignatureModal mounted with props:', {
+      isOpen,
+      bidId: bid?.id,
+      hasContractUrl: !!bid?.contract_url,
+      hasContractContent: !!bid?.contract_content,
+      contractUrl: bid?.contract_url,
+      userRole,
+      useTemplate
+    });
+  }, [isOpen, bid, userRole, useTemplate]);
+
+  // Update the function to check for signature placeholders
+  const hasTemplateSignaturePlaceholders = (content) => {
+    if (!content) return false;
+    // Check for both client and business signature placeholders
+    const hasClientSignature = content.includes('signature-placeholder client-signature');
+    const hasBusinessSignature = content.includes('signature-placeholder business-signature');
+    console.log('Signature placeholder check:', { hasClientSignature, hasBusinessSignature, content });
+    return hasClientSignature || hasBusinessSignature;
+  };
+
+  // Modify the useEffect that handles template content
+  useEffect(() => {
+    const convertToPdf = async (content) => {
+      try {
+        // Create a temporary div to hold the content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+
+        // Configure html2pdf options
+        const opt = {
+          margin: 1,
+          filename: `contract_${bid.id}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        // Generate PDF and create a new ArrayBuffer
+        const pdfBlob = await html2pdf().set(opt).from(tempDiv).output('blob');
+        const arrayBuffer = await pdfBlob.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        setPdfData(uint8Array);
+        setPdfError(null);
+      } catch (error) {
+        console.error('Error converting to PDF:', error);
+        setPdfError('Failed to convert to PDF');
+      }
+    };
+
     const fetchTemplate = async () => {
       if (!useTemplate) return;
       
@@ -76,6 +172,7 @@ function ContractSignatureModal({
         if (error) throw error;
         if (profile?.contract_template) {
           setContractTemplate(profile.contract_template);
+          await convertToPdf(profile.contract_template);
         }
       } catch (error) {
         console.error("Error fetching contract template:", error);
@@ -84,62 +181,122 @@ function ContractSignatureModal({
     };
 
     fetchTemplate();
-  }, [useTemplate]);
+  }, [useTemplate, bid.id]);
 
-  // Convert HTML template to PDF when needed
+  // Add worker initialization effect
   useEffect(() => {
-    const convertTemplateToPdf = async () => {
-      if (!contractTemplate || !useTemplate) return;
+    if (isOpen) {
+      setIsLoading(true);
+      initializePdfWorker()
+        .then(success => {
+          setWorkerInitialized(success);
+          setIsLoading(false);
+        })
+        .catch(error => {
+          console.error('Failed to initialize PDF worker:', error);
+          setPdfError('Failed to initialize PDF viewer. Please try refreshing the page.');
+          setIsLoading(false);
+        });
+    }
+  }, [isOpen]);
+
+  // Memoize the file prop for Document component
+  const fileProp = useMemo(() => {
+    if (!pdfData) return null;
+    return { data: new Uint8Array(pdfData) };
+  }, [pdfData]);
+
+  // Memoize the options prop
+  const memoizedOptions = useMemo(() => pdfOptions, []);
+
+  // Modify the PDF loading effect
+  useEffect(() => {
+    const fetchPdfData = async () => {
+      if (!workerInitialized || !isOpen) return;
+
+      console.log('Starting PDF fetch process:', {
+        hasContractUrl: !!bid?.contract_url,
+        hasContractContent: !!bid?.contract_content,
+        contractUrl: bid?.contract_url,
+        useTemplate
+      });
 
       try {
-        // Create a temporary div to render the template
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = contractTemplate;
+        if (bid.contract_url) {
+          console.log('Attempting to fetch PDF from URL:', bid.contract_url);
+          const response = await fetch(bid.contract_url);
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+          }
+          
+          const blob = await response.blob();
+          const arrayBuffer = await blob.arrayBuffer();
+          // Create a new Uint8Array from the arrayBuffer and store a copy
+          setPdfData(new Uint8Array(arrayBuffer));
+          setPdfError(null);
+        } else if (bid.contract_content || useTemplate) {
+          console.log('Converting contract content to PDF');
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = bid.contract_content || contractTemplate;
 
-        // Replace variables with actual values from the bid
-        const variables = {
-          clientName: bid.client_name || 'Client',
-          eventDate: bid.event_date || 'TBD',
-          eventTime: bid.event_time || 'TBD',
-          eventLocation: bid.event_location || 'TBD',
-          servicesDescription: bid.services_description || bid.description || 'Services as described',
-          priceBreakdown: bid.price_breakdown || `$${bid.amount}`,
-          totalAmount: `$${bid.amount}`,
-          downPaymentAmount: bid.down_payment ? `$${bid.down_payment}` : 'N/A'
-        };
+          const opt = {
+            margin: 1,
+            filename: `contract_${bid.id}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+          };
 
-        // Replace all variables in the template
-        Object.entries(variables).forEach(([key, value]) => {
-          const regex = new RegExp(`{${key}}`, 'g');
-          tempDiv.innerHTML = tempDiv.innerHTML.replace(regex, value);
-        });
-
-        // Use html2pdf or similar library to convert to PDF
-        const pdfBlob = await html2pdf().from(tempDiv).outputPdf('blob');
-        const pdfArrayBuffer = await pdfBlob.arrayBuffer();
-        setPdfData(pdfArrayBuffer);
-
+          const pdfBlob = await html2pdf().set(opt).from(tempDiv).output('blob');
+          const arrayBuffer = await pdfBlob.arrayBuffer();
+          // Create a new Uint8Array from the arrayBuffer and store a copy
+          setPdfData(new Uint8Array(arrayBuffer));
+          setPdfError(null);
+        } else {
+          setPdfError('No contract content available');
+        }
       } catch (error) {
-        console.error("Error converting template to PDF:", error);
-        setPdfError("Failed to convert template to PDF");
+        console.error('Error in PDF loading process:', error);
+        setPdfError(`Failed to load contract: ${error.message}`);
       }
     };
 
-    convertTemplateToPdf();
-  }, [contractTemplate, useTemplate, bid]);
+    fetchPdfData();
+  }, [isOpen, bid.contract_url, bid.contract_content, bid.id, workerInitialized, useTemplate, contractTemplate]);
 
   // Fetch PDF data for react-pdf
   useEffect(() => {
-    if (!useTemplate && bid.contract_url && bid.contract_url.endsWith('.pdf')) {
-      fetch(bid.contract_url)
-        .then(res => res.arrayBuffer())
-        .then(setPdfData);
-    }
-  }, [bid.contract_url, useTemplate]);
+    const fetchPdfData = async () => {
+      if (bid.contract_url && bid.contract_url.endsWith('.pdf')) {
+        try {
+          const response = await fetch(bid.contract_url);
+          const blob = await response.blob();
+          const arrayBuffer = await blob.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
+          setPdfData(uint8Array);
+          setPdfError(null);
+        } catch (error) {
+          console.error('Error fetching PDF:', error);
+          setPdfError('Failed to load PDF file. Please check the contract file URL and try again.');
+        }
+      }
+    };
+
+    fetchPdfData();
+  }, [bid.contract_url]);
+
+  // Add cleanup effect
+  useEffect(() => {
+    return () => {
+      // Cleanup PDF data when component unmounts
+      setPdfData(null);
+    };
+  }, []);
 
   // Download PDF with both signatures
   const handleDownloadSignedPdf = async () => {
-    if (!pdfData || !bid.business_signed_at || !bid.client_signed_at) return;
+    if (!pdfData) return;
     try {
       const pdfDoc = await PDFDocument.load(pdfData);
       const pages = pdfDoc.getPages();
@@ -162,129 +319,92 @@ function ContractSignatureModal({
       const businessPos = bid.business_signature_pos ? JSON.parse(bid.business_signature_pos) : null;
       const clientPos = bid.client_signature_box_pos ? JSON.parse(bid.client_signature_box_pos) : null;
 
-      // Place business signature at its saved position
+      // Place business signature
       if (bid.business_signature_image_url && businessPos) {
-        // If we have a signature image URL, fetch and embed it
-        const response = await fetch(bid.business_signature_image_url);
-        const imageBytes = await response.arrayBuffer();
-        const image = await pdfDoc.embedPng(imageBytes);
-        const { width, height } = image.scale(0.5); // Scale down the image if needed
-        
-        // Calculate which page this Y position falls on
-        const pageHeight = pages[0].getHeight();
-        const pageIndex = Math.floor(businessPos.y / pageHeight);
-        const yPosInPage = businessPos.y % pageHeight;
-        
-        if (pages[pageIndex]) {
-          pages[pageIndex].drawImage(image, {
-            x: businessPos.x - width / 2,
-            y: yPosInPage - height / 2,
-            width,
-            height
-          });
+        try {
+          // Fetch the business signature image
+          const response = await fetch(bid.business_signature_image_url);
+          const imageBytes = await response.arrayBuffer();
+          const image = await pdfDoc.embedPng(imageBytes);
+          const { width, height } = image.scale(0.5); // Scale down the image if needed
+          
+          // Calculate which page this Y position falls on
+          const pageHeight = pages[0].getHeight();
+          const pageIndex = Math.floor(businessPos.y / pageHeight);
+          const yPosInPage = businessPos.y % pageHeight;
+          
+          if (pages[pageIndex]) {
+            pages[pageIndex].drawImage(image, {
+              x: businessPos.x - width / 2,
+              y: yPosInPage - height / 2,
+              width,
+              height
+            });
 
-          // Add timestamp below signature
-          pages[pageIndex].drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
-            x: businessPos.x - width / 2,
-            y: yPosInPage - height / 2 - 20,
-            size: 10,
-            font,
-            color: rgb(0.4, 0.4, 0.4),
-          });
-        }
-      } else if (bid.business_signature && businessPos) {
-        // Calculate which page this Y position falls on
-        const pageHeight = pages[0].getHeight();
-        const pageIndex = Math.floor(businessPos.y / pageHeight);
-        const yPosInPage = businessPos.y % pageHeight;
-
-        if (pages[pageIndex]) {
-          // Fallback to text signature
-          pages[pageIndex].drawText(bid.business_signature, {
-            x: businessPos.x,
-            y: yPosInPage,
-            size: 16,
-            font,
-            color: rgb(0, 0.4, 0),
-          });
-
-          // Add timestamp below signature
-          pages[pageIndex].drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
-            x: businessPos.x,
-            y: yPosInPage - 20,
-            size: 10,
-            font,
-            color: rgb(0.4, 0.4, 0.4),
-          });
+            // Add timestamp below signature
+            pages[pageIndex].drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
+              x: businessPos.x - width / 2,
+              y: yPosInPage - height / 2 - 20,
+              size: 10,
+              font,
+              color: rgb(0.4, 0.4, 0.4),
+            });
+          }
+        } catch (error) {
+          console.error('Error placing business signature:', error);
+          toast.error('Failed to place business signature');
         }
       }
-    
-      // Place client signature at its saved position
+      
+      // Place client signature
       if (bid.client_signature_image && clientPos) {
-        // If we have a signature image data URL
-        const imageBytes = await fetch(bid.client_signature_image).then(res => res.arrayBuffer());
-        const image = await pdfDoc.embedPng(imageBytes);
-        const { width, height } = image.scale(0.5); // Scale down the image if needed
-        
-        // Calculate which page this Y position falls on
-        const pageHeight = pages[0].getHeight();
-        const pageIndex = Math.floor(clientPos.y / pageHeight);
-        const yPosInPage = clientPos.y % pageHeight;
+        try {
+          // Convert the data URL to a Blob
+          const response = await fetch(bid.client_signature_image);
+          const imageBytes = await response.arrayBuffer();
+          const image = await pdfDoc.embedPng(imageBytes);
+          const { width, height } = image.scale(0.5); // Scale down the image if needed
+          
+          // Calculate which page this Y position falls on
+          const pageHeight = pages[0].getHeight();
+          const pageIndex = Math.floor(clientPos.y / pageHeight);
+          const yPosInPage = clientPos.y % pageHeight;
 
-        if (pages[pageIndex]) {
-          pages[pageIndex].drawImage(image, {
-            x: clientPos.x - width / 2,
-            y: yPosInPage - height / 2,
-            width,
-            height
-          });
+          if (pages[pageIndex]) {
+            pages[pageIndex].drawImage(image, {
+              x: clientPos.x - width / 2,
+              y: yPosInPage - height / 2,
+              width,
+              height
+            });
 
-          // Add timestamp below signature
-          pages[pageIndex].drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
-            x: clientPos.x - width / 2,
-            y: yPosInPage - height / 2 - 20,
-            size: 10,
-            font,
-            color: rgb(0.4, 0.4, 0.4),
-          });
-        }
-      } else if (bid.client_signature && clientPos) {
-        // Calculate which page this Y position falls on
-        const pageHeight = pages[0].getHeight();
-        const pageIndex = Math.floor(clientPos.y / pageHeight);
-        const yPosInPage = clientPos.y % pageHeight;
-
-        if (pages[pageIndex]) {
-          // Fallback to text signature
-          pages[pageIndex].drawText(bid.client_signature, {
-            x: clientPos.x,
-            y: yPosInPage,
-            size: 16,
-            font,
-            color: rgb(0, 0, 0.6),
-          });
-
-          // Add timestamp below signature
-          pages[pageIndex].drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
-            x: clientPos.x,
-            y: yPosInPage - 20,
-            size: 10,
-            font,
-            color: rgb(0.4, 0.4, 0.4),
-          });
+            // Add timestamp below signature
+            pages[pageIndex].drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
+              x: clientPos.x - width / 2,
+              y: yPosInPage - height / 2 - 20,
+              size: 10,
+              font,
+              color: rgb(0.4, 0.4, 0.4),
+            });
+          }
+        } catch (error) {
+          console.error('Error placing client signature:', error);
+          toast.error('Failed to place client signature');
         }
       }
       
       // Save and download the PDF
       const pdfBytes = await pdfDoc.save();
       saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), 'signed_contract.pdf');
+      
+      toast.success('Signed contract downloaded successfully');
     } catch (error) {
       console.error('Error downloading signed PDF:', error);
       toast.error('Failed to download signed contract');
     }
   };
 
-  // Resize handlers
+  // Add resize handlers
   const handleResizeStart = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -317,10 +437,141 @@ function ContractSignatureModal({
     document.removeEventListener('mouseup', handleResizeEnd);
   };
 
+  // Update the business signature drag handlers
+  const handleDragStart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = pdfWrapperRef.current.getBoundingClientRect();
+    const scrollTop = pdfWrapperRef.current.scrollTop;
+    const pageHeight = 792; // Standard letter page height at 72 DPI
+    
+    dragStartPos.current = { 
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top + scrollTop,
+      scrollTop,
+      pageHeight
+    };
+    initialPos.current = { ...businessSignaturePos };
+    setIsDragging(true);
+    document.addEventListener('mousemove', handleDrag);
+    document.addEventListener('mouseup', handleDragEnd);
+  };
+
+  const handleDrag = (e) => {
+    if (!dragStartPos.current || !initialPos.current || !pdfWrapperRef.current) return;
+    
+    const rect = pdfWrapperRef.current.getBoundingClientRect();
+    const currentScrollTop = pdfWrapperRef.current.scrollTop;
+    const pageHeight = dragStartPos.current.pageHeight;
+    
+    const currentX = e.clientX - rect.left;
+    const currentY = e.clientY - rect.top + currentScrollTop;
+    
+    const deltaX = currentX - dragStartPos.current.x;
+    const deltaY = currentY - dragStartPos.current.y;
+    
+    // Calculate which page we're on
+    const pageIndex = Math.floor(currentY / pageHeight);
+    const yPosInPage = currentY % pageHeight;
+    
+    const newPos = {
+      ...initialPos.current,
+      x: initialPos.current.x + deltaX,
+      y: currentY,
+      pageIndex,
+      yPosInPage
+    };
+    
+    console.log('Dragging signature:', { 
+      currentY,
+      pageIndex,
+      yPosInPage,
+      deltaY,
+      newPos
+    });
+    
+    setBusinessSignaturePos(newPos);
+  };
+
+  const handleDragEnd = () => {
+    dragStartPos.current = null;
+    initialPos.current = null;
+    setIsDragging(false);
+    document.removeEventListener('mousemove', handleDrag);
+    document.removeEventListener('mouseup', handleDragEnd);
+  };
+
+  // Update the client box drag handlers
+  const handleClientBoxDragStart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = pdfWrapperRef.current.getBoundingClientRect();
+    const scrollTop = pdfWrapperRef.current.scrollTop;
+    const pageHeight = 792; // Standard letter page height at 72 DPI
+    
+    clientBoxDragStartPos.current = { 
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top + scrollTop,
+      scrollTop,
+      pageHeight
+    };
+    clientBoxInitialPos.current = { ...clientSignatureBoxPos };
+    document.addEventListener('mousemove', handleClientBoxDrag);
+    document.addEventListener('mouseup', handleClientBoxDragEnd);
+  };
+
+  const handleClientBoxDrag = (e) => {
+    if (!clientBoxDragStartPos.current || !clientBoxInitialPos.current || !pdfWrapperRef.current) return;
+    
+    const rect = pdfWrapperRef.current.getBoundingClientRect();
+    const currentScrollTop = pdfWrapperRef.current.scrollTop;
+    const pageHeight = clientBoxDragStartPos.current.pageHeight;
+    
+    const currentX = e.clientX - rect.left;
+    const currentY = e.clientY - rect.top + currentScrollTop;
+    
+    const deltaX = currentX - clientBoxDragStartPos.current.x;
+    const deltaY = currentY - clientBoxDragStartPos.current.y;
+    
+    // Calculate which page we're on
+    const pageIndex = Math.floor(currentY / pageHeight);
+    const yPosInPage = currentY % pageHeight;
+    
+    const newPos = {
+      ...clientBoxInitialPos.current,
+      x: clientBoxInitialPos.current.x + deltaX,
+      y: currentY,
+      pageIndex,
+      yPosInPage
+    };
+    
+    console.log('Dragging client box:', { 
+      currentY,
+      pageIndex,
+      yPosInPage,
+      deltaY,
+      newPos
+    });
+    
+    setClientSignatureBoxPos(newPos);
+  };
+
+  const handleClientBoxDragEnd = () => {
+    clientBoxDragStartPos.current = null;
+    clientBoxInitialPos.current = null;
+    document.removeEventListener('mousemove', handleClientBoxDrag);
+    document.removeEventListener('mouseup', handleClientBoxDragEnd);
+  };
+
   useEffect(() => {
     if (isOpen) {
-      console.log('Modal opened, initializing state with userRole:', userRole);
-      console.log('Initial clientSignatureBoxPos:', bid.client_signature_box_pos);
+      console.log('Modal opened, checking signature placeholders:', {
+        contractContent: bid.contract_content,
+        hasPlaceholders: hasTemplateSignaturePlaceholders(bid.contract_content),
+        userRole,
+        businessSigned: bid.business_signed_at,
+        clientSigned: bid.client_signed_at
+      });
       
       setBusinessSignature("");
       setBusinessDrawMode(false);
@@ -334,7 +585,7 @@ function ContractSignatureModal({
       setPdfPage(1);
       setPdfError(null);
     }
-  }, [isOpen, bid.client_signature_box_pos]);
+  }, [isOpen, bid.client_signature_box_pos, bid.contract_content]);
 
   // Add debug log before client UI render condition
   const shouldShowClientUI = userRole === "individual" && !bid.client_signature && !bid.client_signature_image;
@@ -346,11 +597,13 @@ function ContractSignatureModal({
 
   // Business signature save
   const handleBusinessSaveSignature = async () => {
+    console.log('Creating signature with:', { businessDrawMode, businessSignature });
     try {
       let sig;
       if (businessDrawMode) {
         if (businessSigPadRef.current && !businessSigPadRef.current.isEmpty()) {
           sig = businessSigPadRef.current.toDataURL();
+          console.log('Created signature from drawing');
         }
       } else {
         if (businessSignature) {
@@ -362,45 +615,115 @@ function ContractSignatureModal({
           ctx.fillStyle = 'black';
           ctx.fillText(businessSignature, 10, 50);
           sig = canvas.toDataURL();
+          console.log('Created signature from text');
         }
       }
 
       if (sig) {
+        console.log('Setting signature image and enabling placement');
         setBusinessSignatureImage(sig);
         setPlacingBusinessSignature(true);
+        setIsAdjusting(false); // Disable adjustment mode while placing
+        
+        // If using template, ensure PDF is loaded
+        if (useTemplate && !pdfData) {
+          toast.error('Please wait for the contract to load before placing your signature');
+          return;
+        }
+      } else {
+        console.log('No signature created');
+        toast.error('Please provide a signature');
       }
     } catch (error) {
       console.error('Error saving signature:', error);
+      toast.error('Failed to save signature');
     }
   };
 
+  // Add preview signature function
+  const previewBusinessSignature = () => {
+    console.log('Previewing signature:', { businessDrawMode, businessSignature });
+    
+    if (businessDrawMode && businessSigPadRef.current) {
+      if (!businessSigPadRef.current.isEmpty()) {
+        const sig = businessSigPadRef.current.toDataURL();
+        console.log('Setting drawn signature preview');
+        setBusinessSignatureImage(sig);
+      }
+    } else if (businessSignature) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 400;
+      canvas.height = 100;
+      ctx.font = '32px cursive';
+      ctx.fillStyle = 'black';
+      ctx.fillText(businessSignature, 10, 50);
+      const sig = canvas.toDataURL();
+      console.log('Setting typed signature preview');
+      setBusinessSignatureImage(sig);
+    }
+  };
+
+  // Update signature preview when drawing
+  useEffect(() => {
+    if (businessDrawMode && businessSigPadRef.current) {
+      const updatePreview = () => {
+        console.log('Drawing event triggered');
+        previewBusinessSignature();
+      };
+
+      const canvas = businessSigPadRef.current._canvas;
+      if (canvas) {
+        canvas.addEventListener('mouseup', updatePreview);
+        canvas.addEventListener('touchend', updatePreview);
+        return () => {
+          canvas.removeEventListener('mouseup', updatePreview);
+          canvas.removeEventListener('touchend', updatePreview);
+        };
+      }
+    }
+  }, [businessDrawMode]);
+
+  // Clear signature preview when clearing
+  const handleClearSignature = () => {
+    console.log('Clearing signature');
+    if (businessSigPadRef.current) {
+      businessSigPadRef.current.clear();
+    }
+    setBusinessSignature('');
+    setBusinessSignatureImage(null);
+  };
+
   // Save business signature position and start client box placement
-  const handleSaveBusinessSignature = () => {
-    console.log('handleSaveBusinessSignature called');
+  const handleSaveBusinessSignature = async () => {
+    console.log('Saving business signature with:', {
+      signature: businessSignature,
+      image: businessSignatureImage,
+      pos: businessSignaturePos
+    });
+
     try {
       // First set placing client box to true and turn off adjustment mode
       setPlacingClientBox(true);
       setIsAdjusting(false);
       
       // Save to database in the background
-      const saveToDb = async () => {
-        const { error } = await supabase
-          .from('bids')
-          .update({
-            business_signature: businessSignature,
-            business_signature_image: businessSignatureImage,
-            business_signature_pos: JSON.stringify(businessSignaturePos)
-          })
-          .eq('id', bid.id);
+      const { error } = await supabase
+        .from('bids')
+        .update({
+          business_signature: businessSignature,
+          business_signature_image: businessSignatureImage,
+          business_signature_pos: JSON.stringify(businessSignaturePos),
+          business_signed_at: new Date().toISOString()
+        })
+        .eq('id', bid.id);
 
-        if (error) {
-          console.error('Error saving business signature:', error);
-          toast.error('Failed to save business signature');
-          return;
-        }
-      };
+      if (error) {
+        console.error('Error saving business signature:', error);
+        toast.error('Failed to save business signature');
+        return;
+      }
 
-      saveToDb();
       toast.success('Click where you want the client to sign');
     } catch (error) {
       console.error('Error in handleSaveBusinessSignature:', error);
@@ -409,53 +732,110 @@ function ContractSignatureModal({
     }
   };
 
+  // Add client box resize handlers
+  const handleClientBoxResizeStart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    clientBoxResizeStartPos.current = { x: e.clientX, y: e.clientY };
+    clientBoxInitialSize.current = { ...clientBoxSize };
+    document.addEventListener('mousemove', handleClientBoxResize);
+    document.addEventListener('mouseup', handleClientBoxResizeEnd);
+  };
+
+  const handleClientBoxResize = (e) => {
+    if (!clientBoxResizeStartPos.current || !clientBoxInitialSize.current) return;
+    
+    const deltaX = e.clientX - clientBoxResizeStartPos.current.x;
+    const deltaY = e.clientY - clientBoxResizeStartPos.current.y;
+    
+    const aspectRatio = clientBoxInitialSize.current.width / clientBoxInitialSize.current.height;
+    const newWidth = Math.max(50, clientBoxInitialSize.current.width + deltaX);
+    const newHeight = newWidth / aspectRatio;
+    
+    setClientBoxSize({
+      width: newWidth,
+      height: newHeight
+    });
+  };
+
+  const handleClientBoxResizeEnd = () => {
+    clientBoxResizeStartPos.current = null;
+    clientBoxInitialSize.current = null;
+    document.removeEventListener('mousemove', handleClientBoxResize);
+    document.removeEventListener('mouseup', handleClientBoxResizeEnd);
+  };
+
+  // Update the client box save handler
   const handleSaveClientBox = async () => {
-    console.log('handleSaveClientBox called');
+    console.log('handleSaveClientBox called with:', {
+      position: clientSignatureBoxPos,
+      size: clientBoxSize
+    });
     try {
-      // Convert the data URL to a Blob
-      const response = await fetch(businessSignatureImage);
-      const blob = await response.blob();
-  
-      // Upload the business signature image to the 'contracts/signatures' folder
-      const { data, error: uploadError } = await supabase.storage
-        .from('contracts') // Ensure you have a bucket named 'contracts'
-        .upload(`signatures/${bid.id}.png`, blob, {
-          contentType: 'image/png'
-        });
-  
-      if (uploadError) {
-        console.error('Error uploading signature image:', uploadError);
-        toast.error('Failed to upload signature image');
-        return;
-      }
-  
-      console.log('Upload successful:', data);
-  
-      // Manually construct the public URL
-      const baseUrl = 'https://splafvfbznewlbeqaocv.supabase.co/storage/v1/object/public/';
-      const filePath = `contracts/signatures/${bid.id}.png`;
-      const publicURL = `${baseUrl}${filePath}`;
-  
-      console.log('Constructed Public URL:', publicURL);
-  
-      // Update the database with the client signature box position and business signature URL
-      const { error } = await supabase
+      // First update the database with the signature data and position
+      const { error: updateError } = await supabase
         .from('bids')
         .update({
-          client_signature_box_pos: JSON.stringify(clientSignatureBoxPos),
+          client_signature_box_pos: JSON.stringify({
+            ...clientSignatureBoxPos,
+            width: clientBoxSize.width,
+            height: clientBoxSize.height
+          }),
           business_signature: businessSignature,
-          business_signature_image_url: publicURL, // Store the constructed URL
+          business_signature_image: businessSignatureImage,
+          business_signature_pos: JSON.stringify(businessSignaturePos),
           business_signed_at: new Date().toISOString()
         })
         .eq('id', bid.id);
-  
-      if (error) {
-        console.error('Error saving client signature box position:', error);
-        toast.error('Failed to save client signature box position');
+
+      if (updateError) {
+        console.error('Error saving signature data:', updateError);
+        toast.error('Failed to save signature data');
         return;
+      }
+
+      // Try to upload the signature image to storage
+      try {
+        // Convert the data URL to a Blob
+        const response = await fetch(businessSignatureImage);
+        const blob = await response.blob();
+    
+        // Upload the business signature image to the 'contracts/signatures' folder
+        const { data, error: uploadError } = await supabase.storage
+          .from('contracts')
+          .upload(`signatures/${bid.id}.png`, blob, {
+            contentType: 'image/png',
+            upsert: true
+          });
+    
+        if (uploadError) {
+          console.error('Error uploading signature image:', uploadError);
+        } else {
+          console.log('Upload successful:', data);
+          
+          // Get the public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('contracts')
+            .getPublicUrl(`signatures/${bid.id}.png`);
+
+          // Update the bid with the public URL
+          const { error: urlUpdateError } = await supabase
+            .from('bids')
+            .update({
+              business_signature_image_url: publicUrl
+            })
+            .eq('id', bid.id);
+
+          if (urlUpdateError) {
+            console.error('Error updating signature URL:', urlUpdateError);
+          }
+        }
+      } catch (storageError) {
+        console.error('Storage error:', storageError);
       }
       
       toast.success('Client signature box placement saved.');
+      setIsAdjustingClientBox(false);
       onClose();
     } catch (error) {
       console.error('Error saving client signature box position:', error);
@@ -485,6 +865,12 @@ function ContractSignatureModal({
       }
 
       if (sig) {
+        // If using template, ensure PDF is loaded
+        if (useTemplate && !pdfData) {
+          toast.error('Please wait for the contract to load before signing');
+          return;
+        }
+
         // Save client signature to database with image
         const { error } = await supabase
           .from('bids')
@@ -498,6 +884,56 @@ function ContractSignatureModal({
         if (error) throw error;
 
         setClientSignatureImage(sig);
+
+        // If both parties have signed, create the final PDF
+        if (bid.business_signed_at) {
+          // Create a temporary div to hold the contract content
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = bid.contract_content || contractTemplate;
+
+          // Convert the content to PDF using html2pdf
+          const opt = {
+            margin: 1,
+            filename: `contract_${bid.id}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+          };
+
+          // Generate PDF
+          const pdf = await html2pdf().set(opt).from(tempDiv).save();
+
+          // Upload the PDF to Supabase storage
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('User not found');
+
+          const filePath = `contracts/${user.id}/${bid.id}_contract.pdf`;
+          const { error: uploadError } = await supabase.storage
+            .from('contracts')
+            .upload(filePath, pdf, {
+              contentType: 'application/pdf',
+              upsert: true
+            });
+
+          if (uploadError) throw uploadError;
+
+          // Get the public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('contracts')
+            .getPublicUrl(filePath);
+
+          // Update the bid with the contract URL and status
+          const { error: updateError } = await supabase
+            .from('bids')
+            .update({ 
+              contract_url: publicUrl,
+              contract_status: 'completed'
+            })
+            .eq('id', bid.id);
+
+          if (updateError) throw updateError;
+        }
+
         toast.success('Contract signed successfully');
         onClose();
       } else {
@@ -509,25 +945,164 @@ function ContractSignatureModal({
     }
   };
 
-  // Unified PDF click handler
+  // Update the PDF click handler
   const handlePdfAreaClick = (e) => {
     try {
       if (!pdfWrapperRef.current) return;
       
       const rect = pdfWrapperRef.current.getBoundingClientRect();
+      const scrollTop = pdfWrapperRef.current.scrollTop;
+      const pageHeight = 792; // Standard letter page height at 72 DPI
+      
+      // Calculate click position relative to the container and viewport
       const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const y = e.clientY - rect.top + scrollTop;
+
+      console.log('PDF click:', { 
+        x, 
+        y, 
+        scrollTop,
+        containerHeight: rect.height,
+        clientY: e.clientY,
+        rectTop: rect.top,
+        placingBusinessSignature, 
+        placingClientBox 
+      });
 
       if (placingBusinessSignature) {
-        setBusinessSignaturePos({ x, y });
+        // Calculate which page this Y position falls on
+        const pageIndex = Math.floor(y / pageHeight);
+        const yPosInPage = y % pageHeight;
+        
+        console.log('Placing business signature at:', { 
+          x, 
+          y, 
+          pageIndex, 
+          yPosInPage,
+          pageHeight 
+        });
+
+        setBusinessSignaturePos({ 
+          x, 
+          y,
+          pageIndex,
+          yPosInPage
+        });
         setPlacingBusinessSignature(false);
+        setIsAdjusting(true);
       } else if (placingClientBox) {
-        setClientSignatureBoxPos({ x, y });
+        // Calculate which page this Y position falls on
+        const pageIndex = Math.floor(y / pageHeight);
+        const yPosInPage = y % pageHeight;
+        
+        console.log('Placing client signature box at:', { 
+          x, 
+          y, 
+          pageIndex, 
+          yPosInPage,
+          pageHeight 
+        });
+
+        setClientSignatureBoxPos({ 
+          x, 
+          y,
+          pageIndex,
+          yPosInPage
+        });
         setPlacingClientBox(false);
+        setIsAdjustingClientBox(true);
       }
     } catch (error) {
       console.error('Error handling PDF click:', error);
+      toast.error('Failed to place signature');
     }
+  };
+
+  // Add function to replace variables in contract content
+  const replaceContractVariables = (content) => {
+    if (!content || !bid) return content;
+
+    // Define all possible variables and their values
+    const variables = {
+      clientName: bid.client_name || 'Client',
+      eventDate: bid.event_date || 'TBD',
+      eventTime: bid.event_time || 'TBD',
+      eventLocation: bid.event_location || 'TBD',
+      servicesDescription: bid.services_description || bid.description || 'Services as described',
+      priceBreakdown: bid.price_breakdown || `$${bid.amount}`,
+      totalAmount: `$${bid.amount}`,
+      downPaymentAmount: bid.down_payment ? `$${bid.down_payment}` : 'N/A',
+      signatureDate: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    };
+
+    // Replace all variables in the content
+    let processedContent = content;
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`{${key}}`, 'g');
+      processedContent = processedContent.replace(regex, value);
+    });
+
+    return processedContent;
+  };
+
+  // Modify the Document component's onLoadSuccess handler
+  const handlePdfLoadSuccess = ({ numPages }) => {
+    console.log('PDF loaded successfully:', {
+      numPages,
+      pdfDataLength: pdfData?.length
+    });
+    setNumPages(numPages);
+    setPdfPage(1);
+    setPdfError(null);
+  };
+
+  // Add debug effect for signature state
+  useEffect(() => {
+    console.log('Signature state updated:', {
+      businessSignature,
+      businessSignatureImage,
+      businessSignaturePos,
+      placingBusinessSignature,
+      businessDrawMode
+    });
+  }, [businessSignature, businessSignatureImage, businessSignaturePos, placingBusinessSignature, businessDrawMode]);
+
+  // Add debug logging for signature positions
+  useEffect(() => {
+    console.log('Signature positions updated:', {
+      businessSignaturePos,
+      businessSignatureImage,
+      clientSignatureBoxPos,
+      clientSignatureImage
+    });
+  }, [businessSignaturePos, businessSignatureImage, clientSignatureBoxPos, clientSignatureImage]);
+
+  // Update the signature position calculation function
+  const calculateSignaturePosition = (pos, pageHeight) => {
+    if (!pos) return null;
+    
+    // If we already have pageIndex and yPosInPage, use them
+    if (pos.pageIndex !== undefined && pos.yPosInPage !== undefined) {
+      return {
+        pageIndex: pos.pageIndex,
+        x: pos.x,
+        y: pos.yPosInPage
+      };
+    }
+    
+    // Otherwise calculate them
+    const pageIndex = Math.floor(pos.y / pageHeight);
+    const yPosInPage = pos.y % pageHeight;
+    
+    return {
+      pageIndex,
+      x: pos.x,
+      y: yPosInPage
+    };
   };
 
   if (!isOpen) return null;
@@ -540,7 +1115,7 @@ function ContractSignatureModal({
         <h2 style={{ marginBottom: 18, color: '#9633eb', fontWeight: 800, fontSize: 28, letterSpacing: 0.5 }}>Contract Signature</h2>
         
         {/* Business signature UI */}
-        {userRole === "business" && !businessSignaturePos && !bid.business_signed_at && !bid.client_signed_at && (
+        {userRole === "business" && !bid.business_signed_at && !bid.client_signed_at && !hasTemplateSignaturePlaceholders(bid.contract_content || contractTemplate) && (
           <div style={{ marginTop: 16, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
               <button onClick={() => setBusinessDrawMode(false)} style={{ background: !businessDrawMode ? '#9633eb' : '#fff', color: !businessDrawMode ? '#fff' : '#9633eb', border: '1.5px solid #9633eb', borderRadius: 6, padding: '6px 18px', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>Type</button>
@@ -567,12 +1142,48 @@ function ContractSignatureModal({
                     style: { backgroundColor: 'transparent' }
                   }}
                 />
-                <button style={{ marginTop: 4, fontSize: 13, color: '#9633eb', background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => businessSigPadRef.current?.clear()}>Clear</button>
+                <button 
+                  style={{ 
+                    marginTop: 4, 
+                    fontSize: 13, 
+                    color: '#9633eb', 
+                    background: 'none', 
+                    border: 'none', 
+                    cursor: 'pointer' 
+                  }} 
+                  onClick={handleClearSignature}
+                >
+                  Clear
+                </button>
               </div>
             )}
+            
+            {/* Add signature preview */}
+            {businessSignatureImage && (
+              <div style={{ 
+                marginTop: 12, 
+                padding: '8px', 
+                border: '1px solid #e0e0e0', 
+                borderRadius: 6,
+                background: '#fff'
+              }}>
+                <div style={{ fontSize: 13, color: '#666', marginBottom: 4 }}>Signature Preview:</div>
+                <img 
+                  src={businessSignatureImage} 
+                  alt="Signature Preview" 
+                  style={{ 
+                    maxWidth: '100%', 
+                    height: 'auto',
+                    maxHeight: '60px'
+                  }} 
+                />
+              </div>
+            )}
+
             <button
               onClick={handleBusinessSaveSignature}
               style={{ 
+                marginTop: 16,
                 background: '#9633eb', 
                 color: '#fff', 
                 border: 'none', 
@@ -586,14 +1197,14 @@ function ContractSignatureModal({
               Create & Place Signature
             </button>
             {placingBusinessSignature && (
-              <div style={{ color: '#9633eb', fontWeight: 500, marginBottom: 8 }}>
+              <div style={{ color: '#9633eb', fontWeight: 500, marginTop: 8 }}>
                 Click anywhere on the document to place your signature.
               </div>
             )}
           </div>
         )}
 
-        {userRole === "individual" && !bid.client_signature && !bid.client_signature_image && (
+        {userRole === "individual" && !bid.client_signature && !bid.client_signature_image && !hasTemplateSignaturePlaceholders(bid.contract_content || contractTemplate) && (
           <div style={{ marginTop: 16, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
               <button 
@@ -695,7 +1306,7 @@ function ContractSignatureModal({
           </div>
         )}
 
-        {clientSignatureBoxPos && placingClientBox === false && userRole === "business" && !bid.business_signed_at && !bid.client_signed_at && (
+        {clientSignatureBoxPos && placingClientBox === false && userRole === "business" && !bid.business_signed_at && !bid.client_signed_at && !hasTemplateSignaturePlaceholders(bid.contract_content || contractTemplate) && (
           <button
             onClick={handleSaveClientBox}
             style={{
@@ -785,350 +1396,251 @@ function ContractSignatureModal({
             borderRadius: 8,
             background: '#faf8ff',
             boxShadow: '0 2px 8px rgba(150,51,235,0.04)',
-            isolation: 'isolate' // Create new stacking context
+            isolation: 'isolate',
+            overflow: 'auto'
           }}
         >
-          <Document
-            file={bid.contract_url}
-            onLoadSuccess={({ numPages }) => { 
-              setNumPages(numPages);
-              setPdfPage(1); 
-              setPdfError(null); 
-            }}
-            onLoadError={err => setPdfError('Failed to load PDF file. Please check the contract file URL and try again.')}
-            style={{ position: 'relative', zIndex: 1 }}
-          >
-            <div style={{ position: 'relative' }}>
-              {Array.from(new Array(numPages), (el, index) => (
-                <div 
-                  key={`page_${index + 1}`} 
-                  style={{ 
-                    marginBottom: index < numPages - 1 ? '20px' : 0,
-                    position: 'relative',
-                    background: '#fff'
-                  }}
-                >
-                  <Page 
-                    key={`page_${index + 1}`}
-                    pageNumber={index + 1} 
-                    width={600}
-                    renderAnnotationLayer={false}
-                    renderTextLayer={false}
-                    onLoadSuccess={(page) => {
-                      // Store the actual page dimensions
-                      if (index === 0) {
-                        const { height } = page.getViewport({ scale: 1 });
-                        setBusinessSignaturePos(prev => prev && ({
-                          ...prev,
-                          y: prev.y % height
-                        }));
-                      }
-                    }}
-                  />
-                </div>
-              ))}
-
-              {/* Signature overlays - positioned relative to the first page */}
-              {(placingBusinessSignature || isAdjusting || (!placingBusinessSignature && !isAdjusting && !placingClientBox)) && (
-                <>
-                  {/* Business signature */}
-                  {bid.business_signed_at && bid.business_signature_pos && (
-                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%' }}>
-                      {bid.business_signature_image_url ? (
-                        <img
-                          src={bid.business_signature_image_url}
-                          alt="Business Signature"
-                          style={{
-                            position: 'absolute',
-                            left: `${JSON.parse(bid.business_signature_pos).x - businessSignatureSize.width / 2}px`,
-                            top: `${JSON.parse(bid.business_signature_pos).y - businessSignatureSize.height / 2}px`,
-                            width: `${businessSignatureSize.width}px`,
-                            height: `${businessSignatureSize.height}px`,
-                            pointerEvents: 'none',
-                            mixBlendMode: 'multiply',
-                            zIndex: 50
-                          }}
-                        />
-                      ) : bid.business_signature && (
-                        <div style={{
-                          position: 'absolute',
-                          left: `${JSON.parse(bid.business_signature_pos).x}px`,
-                          top: `${JSON.parse(bid.business_signature_pos).y}px`,
-                          color: '#000',
-                          fontFamily: 'cursive',
-                          fontSize: '24px',
-                          zIndex: 50,
-                          transform: 'translate(-50%, -50%)'
-                        }}>
-                          {bid.business_signature}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Client signature */}
-                  {bid.client_signed_at && bid.client_signature_box_pos && (
-                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%' }}>
-                      {bid.client_signature_image ? (
-                        <img
-                          src={bid.client_signature_image}
-                          alt="Client Signature"
-                          style={{
-                            position: 'absolute',
-                            left: `${JSON.parse(bid.client_signature_box_pos).x - clientSignatureBoxSize.width / 2}px`,
-                            top: `${JSON.parse(bid.client_signature_box_pos).y - clientSignatureBoxSize.height / 2}px`,
-                            width: `${clientSignatureBoxSize.width}px`,
-                            height: `${clientSignatureBoxSize.height}px`,
-                            pointerEvents: 'none',
-                            mixBlendMode: 'multiply',
-                            zIndex: 50
-                          }}
-                        />
-                      ) : bid.client_signature && (
-                        <div style={{
-                          position: 'absolute',
-                          left: `${JSON.parse(bid.client_signature_box_pos).x}px`,
-                          top: `${JSON.parse(bid.client_signature_box_pos).y}px`,
-                          color: '#000',
-                          fontFamily: 'cursive',
-                          fontSize: '24px',
-                          zIndex: 50,
-                          transform: 'translate(-50%, -50%)'
-                        }}>
-                          {bid.client_signature}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </Document>
-          {numPages > 1 && (
+          {isLoading ? (
             <div style={{ 
-              position: 'absolute', 
-              bottom: 20, 
-              right: 20, 
-              background: 'rgba(255, 255, 255, 0.9)',
-              padding: '8px 12px',
-              borderRadius: '20px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              fontSize: '14px',
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              height: '100%',
               color: '#666',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
+              fontSize: '16px'
             }}>
-              <i className="fas fa-file-alt"></i>
-              {numPages} pages
+              Initializing PDF viewer...
             </div>
-          )}
-          {pdfError && (
-            <div style={{ color: '#d32f2f', marginTop: 8, fontWeight: 600, textAlign: 'center' }}>
-              {pdfError}
-              <div style={{ fontSize: 12, marginTop: 4, color: '#555' }}>
-                URL: {bid.contract_url || 'No file specified'}
-              </div>
-            </div>
-          )}
-          {/* Adjustment controls - moved outside the PDF wrapper and fixed to viewport */}
-          {businessSignatureImage && businessSignaturePos && !placingClientBox && (
+          ) : !workerInitialized ? (
             <div style={{ 
-              position: 'fixed',
-              bottom: 40,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '12px',
-              zIndex: 2100,
-              padding: '12px 24px',
-              background: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: '12px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              backdropFilter: 'blur(8px)'
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              height: '100%',
+              color: '#dc3545',
+              fontSize: '16px'
             }}>
-              <button
-                onClick={() => setIsAdjusting(!isAdjusting)}
-                style={{
-                  background: isAdjusting ? '#fff' : '#9633eb',
-                  color: isAdjusting ? '#9633eb' : '#fff',
-                  border: isAdjusting ? '2px solid #9633eb' : 'none',
-                  borderRadius: 6,
-                  padding: '8px 20px',
-                  fontWeight: 600,
-                  fontSize: 15,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  pointerEvents: 'all'
-                }}
-              >
-                {isAdjusting ? 'Save Position' : 'Adjust Signature'}
-              </button>
-              {!isAdjusting && (
-                <button
-                  onClick={() => {
-                    console.log('Continue to Client Box clicked');
-                    handleSaveBusinessSignature();
-                  }}
-                  style={{
-                    background: '#9633eb',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 6,
-                    padding: '8px 20px',
-                    fontWeight: 700,
-                    fontSize: 15,
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(150,51,235,0.2)',
-                    pointerEvents: 'all'
-                  }}
-                >
-                  Continue to Client Box
-                </button>
-              )}
+              Failed to initialize PDF viewer. Please refresh the page.
             </div>
-          )}
-
-          {/* Business signature display */}
-          {businessSignatureImage && businessSignaturePos && !placingClientBox && (
-            <>
-              {isAdjusting ? (
+          ) : pdfData ? (
+            <Document
+              file={fileProp}
+              onLoadSuccess={handlePdfLoadSuccess}
+              onLoadError={err => {
+                console.error('PDF load error:', {
+                  error: err,
+                  pdfDataLength: pdfData?.length
+                });
+                setPdfError('Failed to load PDF file. Please try again.');
+              }}
+              loading={
                 <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  height: '100%',
+                  color: '#666',
+                  fontSize: '16px'
+                }}>
+                  Loading contract...
+                </div>
+              }
+              options={memoizedOptions}
+              style={{ position: 'relative', zIndex: 1 }}
+            >
+              {Array.from(new Array(numPages), (el, index) => {
+                const pageNumber = index + 1;
+                const pageHeight = 792; // Standard letter page height at 72 DPI
+                
+                // Calculate signature positions for this page
+                const businessPos = businessSignaturePos || (bid.business_signature_pos ? JSON.parse(bid.business_signature_pos) : null);
+                const clientPos = clientSignatureBoxPos || (bid.client_signature_box_pos ? JSON.parse(bid.client_signature_box_pos) : null);
+                
+                const businessPosOnPage = businessPos ? calculateSignaturePosition(businessPos, pageHeight) : null;
+                const clientPosOnPage = clientPos ? calculateSignaturePosition(clientPos, pageHeight) : null;
+
+                return (
+                  <div key={`page_${pageNumber}`} style={{ position: 'relative' }}>
+                    <Page 
+                      pageNumber={pageNumber} 
+                      width={600}
+                      renderAnnotationLayer={false}
+                      renderTextLayer={false}
+                      onRenderSuccess={() => console.log(`Page ${pageNumber} rendered successfully`)}
+                      onRenderError={(error) => console.error(`Error rendering page ${pageNumber}:`, error)}
+                      loading={
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          height: '100%',
+                          color: '#666',
+                          fontSize: '16px'
+                        }}>
+                          Loading page {pageNumber}...
+                        </div>
+                      }
+                    />
+                    
+                    {/* Signature overlays for this page */}
+                    <div style={{ 
+                      position: 'absolute', 
+                      top: 0, 
+                      left: 0, 
+                      width: '100%',
+                      height: '100%',
+                      pointerEvents: 'none',
+                      zIndex: 100
+                    }}>
+                      {/* Business signature */}
+                      {businessPosOnPage && businessPosOnPage.pageIndex === index && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            left: `${businessPosOnPage.x}px`,
+                            top: `${businessPosOnPage.y}px`,
+                            transform: 'translate(-50%, -50%)',
+                            pointerEvents: isAdjusting ? 'auto' : 'none',
+                            cursor: isAdjusting ? 'move' : 'default'
+                          }}
+                          onMouseDown={isAdjusting ? handleDragStart : undefined}
+                        >
+                          {businessSignatureImage || bid.business_signature_image ? (
+                            <div style={{ position: 'relative' }}>
+                              <img
+                                src={businessSignatureImage || bid.business_signature_image}
+                                alt="Business Signature"
+                                style={{
+                                  width: `${businessSignatureSize.width}px`,
+                                  height: `${businessSignatureSize.height}px`,
+                                  pointerEvents: 'none'
+                                }}
+                              />
+                              {isAdjusting && (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    right: -8,
+                                    bottom: -8,
+                                    width: 16,
+                                    height: 16,
+                                    background: '#9633eb',
+                                    borderRadius: '50%',
+                                    cursor: 'nwse-resize'
+                                  }}
+                                  onMouseDown={handleResizeStart}
+                                />
+                              )}
+                            </div>
+                          ) : (
+                            <div style={{
+                              color: '#000',
+                              fontFamily: 'cursive',
+                              fontSize: '24px',
+                              pointerEvents: 'none'
+                            }}>
+                              {businessSignature || bid.business_signature}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Client signature */}
+                      {clientPosOnPage && clientPosOnPage.pageIndex === index && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            left: `${clientPosOnPage.x}px`,
+                            top: `${clientPosOnPage.y}px`,
+                            transform: 'translate(-50%, -50%)',
+                            pointerEvents: isAdjustingClientBox ? 'auto' : 'none',
+                            cursor: isAdjustingClientBox ? 'move' : 'default',
+                            zIndex: 100
+                          }}
+                          onMouseDown={isAdjustingClientBox ? handleClientBoxDragStart : undefined}
+                        >
+                          <div style={{ 
+                            position: 'relative',
+                            border: '2px dashed #9633eb',
+                            width: `${clientBoxSize.width}px`,
+                            height: `${clientBoxSize.height}px`,
+                            background: 'rgba(150, 51, 235, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#9633eb',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            userSelect: 'none'
+                          }}>
+                            Client Signature
+                            {isAdjustingClientBox && (
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  right: -8,
+                                  bottom: -8,
+                                  width: 16,
+                                  height: 16,
+                                  background: '#9633eb',
+                                  borderRadius: '50%',
+                                  cursor: 'nwse-resize',
+                                  border: '2px solid white',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                  zIndex: 101
+                                }}
+                                onMouseDown={handleClientBoxResizeStart}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Add placement overlay */}
+              {placingBusinessSignature && (
+                <div style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
-                  right: 0,
+                  width: '100%',
                   height: '100%',
-                  zIndex: 100,
-                  pointerEvents: 'none'
+                  background: 'rgba(150, 51, 235, 0.1)',
+                  pointerEvents: 'none',
+                  zIndex: 90
                 }}>
-                  <Draggable
-                    position={{
-                      x: businessSignaturePos.x - businessSignatureSize.width / 2,
-                      y: businessSignaturePos.y - businessSignatureSize.height / 2
-                    }}
-                    bounds={{
-                      left: 0,
-                      top: 0,
-                      right: pdfWrapperRef.current?.clientWidth - businessSignatureSize.width,
-                      bottom: pdfWrapperRef.current?.scrollHeight - businessSignatureSize.height
-                    }}
-                    onStart={(e, data) => {
-                      console.log('Drag started', { x: data.x, y: data.y });
-                      setIsDragging(true);
-                    }}
-                    onDrag={(e, data) => {
-                      // Get the current scroll position of the PDF wrapper
-                      const scrollTop = pdfWrapperRef.current?.scrollTop || 0;
-                      
-                      console.log('Dragging', { x: data.x, y: data.y + scrollTop });
-                      setBusinessSignaturePos({
-                        x: data.x + businessSignatureSize.width / 2,
-                        y: data.y + businessSignatureSize.height / 2 + scrollTop
-                      });
-                    }}
-                    onStop={(e, data) => {
-                      // Get the current scroll position of the PDF wrapper
-                      const scrollTop = pdfWrapperRef.current?.scrollTop || 0;
-                      
-                      console.log('Drag stopped', { x: data.x, y: data.y + scrollTop });
-                      setIsDragging(false);
-                      setBusinessSignaturePos({
-                        x: data.x + businessSignatureSize.width / 2,
-                        y: data.y + businessSignatureSize.height / 2 + scrollTop
-                      });
-                    }}
-                  >
-                    <div style={{ 
-                      position: 'absolute',
-                      cursor: isDragging ? 'grabbing' : 'grab',
-                      width: `${businessSignatureSize.width}px`,
-                      height: `${businessSignatureSize.height}px`,
-                      pointerEvents: 'all',
-                      background: 'rgba(255,255,255,0.01)',
-                      outline: '2px solid rgba(150,51,235,0.5)'
-                    }}>
-                      <img
-                        src={businessSignatureImage}
-                        alt="Business Signature"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          pointerEvents: 'none',
-                          mixBlendMode: 'multiply',
-                          imageRendering: 'pixelated'
-                        }}
-                      />
-                      {/* Resize handle */}
-                      <div
-                        onMouseDown={handleResizeStart}
-                        style={{
-                          position: 'absolute',
-                          right: -6,
-                          bottom: -6,
-                          width: 12,
-                          height: 12,
-                          background: '#9633eb',
-                          borderRadius: '50%',
-                          cursor: 'nwse-resize',
-                          boxShadow: '0 0 0 2px white',
-                          pointerEvents: 'all'
-                        }}
-                      />
-                    </div>
-                  </Draggable>
-                </div>
-              ) : (
-                <img
-                  src={businessSignatureImage}
-                  alt="Business Signature"
-                  style={{
+                  <div style={{
                     position: 'absolute',
-                    left: `${businessSignaturePos.x - businessSignatureSize.width / 2}px`,
-                    top: `${businessSignaturePos.y - businessSignatureSize.height / 2}px`,
-                    width: `${businessSignatureSize.width}px`,
-                    height: `${businessSignatureSize.height}px`,
-                    pointerEvents: 'none',
-                    mixBlendMode: 'multiply',
-                    imageRendering: 'pixelated',
-                    zIndex: 50
-                  }}
-                />
+                    left: '50%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    color: '#9633eb',
+                    fontWeight: 600,
+                    fontSize: '16px',
+                    textAlign: 'center',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(150,51,235,0.2)'
+                  }}>
+                    Scroll to the desired page and click to place your signature
+                  </div>
+                </div>
               )}
-            </>
-          )}
-
-          {/* Client signature box or signature */}
-          {clientSignatureBoxPos && (
-            <div style={{
-              position: 'absolute',
-              left: `${clientSignatureBoxPos.x - clientSignatureBoxSize.width / 2}px`,
-              top: `${clientSignatureBoxPos.y - clientSignatureBoxSize.height / 2}px`,
-              width: `${clientSignatureBoxSize.width}px`,
-              height: `${clientSignatureBoxSize.height}px`,
-              border: '2px dashed #9633eb',
-              borderRadius: 4,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(150, 51, 235, 0.05)',
-              pointerEvents: 'none'
+            </Document>
+          ) : (
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              height: '100%',
+              color: '#666',
+              fontSize: '16px'
             }}>
-              {clientSignatureImage ? (
-                <img
-                  src={clientSignatureImage}
-                  alt="Client Signature"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    mixBlendMode: 'multiply'
-                  }}
-                />
-              ) : (
-                <span style={{ color: '#9633eb', opacity: 0.5 }}>Sign Here</span>
-              )}
+              {pdfError || 'Loading contract...'}
             </div>
           )}
         </div>
@@ -1171,6 +1683,176 @@ function ContractSignatureModal({
           >
             Save Client Signature Box Position
           </button>
+        )}
+
+        {/* Add adjustment controls */}
+        {businessSignaturePos && !placingBusinessSignature && !placingClientBox && (
+          <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setIsAdjusting(!isAdjusting)}
+              style={{
+                background: isAdjusting ? '#9633eb' : '#fff',
+                color: isAdjusting ? '#fff' : '#9633eb',
+                border: '1.5px solid #9633eb',
+                borderRadius: 6,
+                padding: '6px 18px',
+                fontWeight: 600,
+                fontSize: 15,
+                cursor: 'pointer'
+              }}
+            >
+              {isAdjusting ? 'Done Adjusting' : 'Adjust Signature'}
+            </button>
+            {isAdjusting && (
+              <button
+                onClick={handleSaveBusinessSignature}
+                style={{
+                  background: '#4CAF50',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '6px 18px',
+                  fontWeight: 600,
+                  fontSize: 15,
+                  cursor: 'pointer'
+                }}
+              >
+                Save Position
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Add client box adjustment controls */}
+        {clientSignatureBoxPos && !placingBusinessSignature && !placingClientBox && (
+          <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setIsAdjustingClientBox(!isAdjustingClientBox)}
+              style={{
+                background: isAdjustingClientBox ? '#9633eb' : '#fff',
+                color: isAdjustingClientBox ? '#fff' : '#9633eb',
+                border: '1.5px solid #9633eb',
+                borderRadius: 6,
+                padding: '6px 18px',
+                fontWeight: 600,
+                fontSize: 15,
+                cursor: 'pointer'
+              }}
+            >
+              {isAdjustingClientBox ? 'Done Adjusting' : 'Adjust Client Box'}
+            </button>
+            {isAdjustingClientBox && (
+              <button
+                onClick={handleSaveClientBox}
+                style={{
+                  background: '#4CAF50',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '6px 18px',
+                  fontWeight: 600,
+                  fontSize: 15,
+                  cursor: 'pointer'
+                }}
+              >
+                Save Position
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Update placement overlay */}
+        {placingClientBox && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(150, 51, 235, 0.1)',
+            pointerEvents: 'none',
+            zIndex: 90
+          }}>
+            <div style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: '#9633eb',
+              fontWeight: 600,
+              fontSize: '16px',
+              textAlign: 'center',
+              background: 'rgba(255, 255, 255, 0.9)',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(150,51,235,0.2)'
+            }}>
+              Scroll to the desired page and click to place the client signature box
+            </div>
+          </div>
+        )}
+
+        {/* Add next signature box button */}
+        {placingClientBox && (
+          <div style={{ 
+            position: 'fixed', 
+            bottom: '20px', 
+            left: '50%', 
+            transform: 'translateX(-50%)',
+            zIndex: 2000,
+            display: 'flex',
+            gap: '12px'
+          }}>
+            <button
+              onClick={() => {
+                const pdfWrapper = pdfWrapperRef.current;
+                if (pdfWrapper) {
+                  pdfWrapper.scrollBy({
+                    top: 100,
+                    behavior: 'smooth'
+                  });
+                }
+              }}
+              style={{
+                background: '#9633eb',
+                color: '#fff',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontWeight: 600,
+                boxShadow: '0 2px 8px rgba(150,51,235,0.2)'
+              }}
+            >
+              <i className="fas fa-arrow-down"></i>
+              Scroll Down
+            </button>
+            <button
+              onClick={() => {
+                setPlacingClientBox(false);
+                onClose();
+              }}
+              style={{
+                background: '#4CAF50',
+                color: '#fff',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontWeight: 600,
+                boxShadow: '0 2px 8px rgba(76,175,80,0.2)'
+              }}
+            >
+              <i className="fas fa-check"></i>
+              Done Placing
+            </button>
+          </div>
         )}
       </div>
     </div>,

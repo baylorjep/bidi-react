@@ -552,111 +552,221 @@ useEffect(() => {
 
   // Download PDF with both signatures
   const handleDownloadSignedPdf = async () => {
-    if (!pdfData) return;
-    const pdfDoc = await PDFDocument.load(pdfData);
-    const pages = pdfDoc.getPages();
-    const page = pages[pdfPage - 1];
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    // Format timestamps
-    const formatDate = (dateString) => {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true
-      });
-    };
-
-    // Place business signature (bottom left)
-    if (bid.business_signature_image_url) {
-      // If we have a signature image URL, fetch and embed it
-      const response = await fetch(bid.business_signature_image_url);
-      const imageBytes = await response.arrayBuffer();
-      const image = await pdfDoc.embedPng(imageBytes);
-      const { width, height } = image.scale(0.5); // Scale down the image if needed
-      
-      page.drawImage(image, {
-        x: 50,
-        y: 70, // Moved up to make room for timestamp
-        width,
-        height
-      });
-
-      // Add timestamp below signature
-      page.drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
-        x: 50,
-        y: 50,
-        size: 10,
-        font,
-        color: rgb(0.4, 0.4, 0.4),
-      });
-    } else if (bid.business_signature) {
-      // Fallback to text signature
-      page.drawText(`Business: ${bid.business_signature}`, {
-        x: 50,
-        y: 70, // Moved up to make room for timestamp
-        size: 16,
-        font,
-        color: rgb(0, 0.4, 0),
-      });
-
-      // Add timestamp below signature
-      page.drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
-        x: 50,
-        y: 50,
-        size: 10,
-        font,
-        color: rgb(0.4, 0.4, 0.4),
-      });
+    if (!bid.contract_url) {
+      console.error('No contract URL found');
+      return;
     }
-    
-    // Place client signature (bottom right)
-    const pageWidth = page.getWidth();
-    if (bid.client_signature_image) {
-      // If we have a signature image data URL
-      const imageBytes = await fetch(bid.client_signature_image).then(res => res.arrayBuffer());
-      const image = await pdfDoc.embedPng(imageBytes);
-      const { width, height } = image.scale(0.5); // Scale down the image if needed
+
+    console.log('Starting PDF download process with bid:', {
+      contractUrl: bid.contract_url,
+      businessSignatureUrl: bid.business_signature_image_url,
+      clientSignatureImage: bid.client_signature_image,
+      businessPos: bid.business_signature_pos,
+      clientPos: bid.client_signature_box_pos
+    });
+
+    try {
+      const response = await fetch(bid.contract_url);
+      const pdfData = await response.arrayBuffer();
+      console.log('Fetched PDF data, size:', pdfData.byteLength);
       
-      page.drawImage(image, {
-        x: pageWidth - width - 50,
-        y: 70, // Moved up to make room for timestamp
-        width,
-        height
+      const pdfDoc = await PDFDocument.load(pdfData);
+      const pages = pdfDoc.getPages();
+      console.log('Loaded PDF with pages:', pages.length);
+      
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      
+      // Format timestamps
+      const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: true
+        });
+      };
+
+      // Get signature positions
+      const businessPos = bid.business_signature_pos ? JSON.parse(bid.business_signature_pos) : null;
+      const clientPos = bid.client_signature_box_pos ? JSON.parse(bid.client_signature_box_pos) : null;
+
+      console.log('Parsed signature positions:', {
+        businessPos,
+        clientPos
       });
 
-      // Add timestamp below signature
-      page.drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
-        x: pageWidth - 250,
-        y: 50,
-        size: 10,
-        font,
-        color: rgb(0.4, 0.4, 0.4),
-      });
-    } else if (bid.client_signature) {
-      // Fallback to text signature
-      page.drawText(`Client: ${bid.client_signature}`, {
-        x: pageWidth - 250,
-        y: 70, // Moved up to make room for timestamp
-        size: 16,
-        font,
-        color: rgb(0, 0, 0.6),
-      });
+      // Place business signature
+      if (bid.business_signature_image_url && businessPos) {
+        try {
+          console.log('Fetching business signature image from:', bid.business_signature_image_url);
+          const response = await fetch(bid.business_signature_image_url);
+          const imageBytes = await response.arrayBuffer();
+          console.log('Fetched business signature image, size:', imageBytes.byteLength);
+          
+          const image = await pdfDoc.embedPng(imageBytes);
+          console.log('Embedded business signature image');
+          
+          // Calculate page dimensions
+          const pageHeight = pages[0].getHeight();
+          const pageWidth = pages[0].getWidth();
+          console.log('Page dimensions:', { pageHeight, pageWidth });
+          
+          // Calculate which page this Y position falls on
+          const pageIndex = Math.floor(businessPos.y / pageHeight);
+          const yPosInPage = businessPos.y % pageHeight;
+          
+          console.log('Business signature placement:', {
+            pageIndex,
+            yPosInPage,
+            originalX: businessPos.x
+          });
+          
+          // Scale the image to fit within reasonable bounds
+          const maxWidth = pageWidth * 0.3; // 30% of page width
+          const { width: originalWidth, height: originalHeight } = image.scale(1);
+          const scale = Math.min(1, maxWidth / originalWidth);
+          const { width, height } = image.scale(scale);
+          
+          console.log('Business signature dimensions:', {
+            originalWidth,
+            originalHeight,
+            scaledWidth: width,
+            scaledHeight: height,
+            scale
+          });
+          
+          if (pages[pageIndex]) {
+            // Center the signature horizontally
+            const xPos = businessPos.x - (width / 2);
+            
+            console.log('Drawing business signature at:', {
+              x: xPos,
+              y: yPosInPage - (height / 2),
+              width,
+              height
+            });
+            
+            pages[pageIndex].drawImage(image, {
+              x: xPos,
+              y: yPosInPage - (height / 2),
+              width,
+              height
+            });
 
-      // Add timestamp below signature
-      page.drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
-        x: pageWidth - 250,
-        y: 50,
-        size: 10,
-        font,
-        color: rgb(0.4, 0.4, 0.4),
-      });
+            // Add timestamp below signature
+            pages[pageIndex].drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
+              x: xPos,
+              y: yPosInPage - (height / 2) - 20,
+              size: 10,
+              font,
+              color: rgb(0.4, 0.4, 0.4),
+            });
+          } else {
+            console.error('Invalid page index for business signature:', pageIndex);
+          }
+        } catch (error) {
+          console.error('Error placing business signature:', error);
+          toast.error('Failed to place business signature');
+        }
+      } else {
+        console.log('Skipping business signature:', {
+          hasImageUrl: !!bid.business_signature_image_url,
+          hasPosition: !!businessPos
+        });
+      }
+      
+      // Place client signature
+      if (bid.client_signature_image && clientPos) {
+        try {
+          console.log('Processing client signature image');
+          const response = await fetch(bid.client_signature_image);
+          const imageBytes = await response.arrayBuffer();
+          console.log('Fetched client signature image, size:', imageBytes.byteLength);
+          
+          const image = await pdfDoc.embedPng(imageBytes);
+          console.log('Embedded client signature image');
+          
+          // Calculate page dimensions
+          const pageHeight = pages[0].getHeight();
+          const pageWidth = pages[0].getWidth();
+          
+          // Calculate which page this Y position falls on
+          const pageIndex = Math.floor(clientPos.y / pageHeight);
+          const yPosInPage = clientPos.y % pageHeight;
+          
+          console.log('Client signature placement:', {
+            pageIndex,
+            yPosInPage,
+            originalX: clientPos.x
+          });
+          
+          // Scale the image to fit within reasonable bounds
+          const maxWidth = pageWidth * 0.3; // 30% of page width
+          const { width: originalWidth, height: originalHeight } = image.scale(1);
+          const scale = Math.min(1, maxWidth / originalWidth);
+          const { width, height } = image.scale(scale);
+          
+          console.log('Client signature dimensions:', {
+            originalWidth,
+            originalHeight,
+            scaledWidth: width,
+            scaledHeight: height,
+            scale
+          });
+          
+          if (pages[pageIndex]) {
+            // Center the signature horizontally
+            const xPos = clientPos.x - (width / 2);
+            
+            console.log('Drawing client signature at:', {
+              x: xPos,
+              y: yPosInPage - (height / 2),
+              width,
+              height
+            });
+            
+            pages[pageIndex].drawImage(image, {
+              x: xPos,
+              y: yPosInPage - (height / 2),
+              width,
+              height
+            });
+
+            // Add timestamp below signature
+            pages[pageIndex].drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
+              x: xPos,
+              y: yPosInPage - (height / 2) - 20,
+              size: 10,
+              font,
+              color: rgb(0.4, 0.4, 0.4),
+            });
+          } else {
+            console.error('Invalid page index for client signature:', pageIndex);
+          }
+        } catch (error) {
+          console.error('Error placing client signature:', error);
+          toast.error('Failed to place client signature');
+        }
+      } else {
+        console.log('Skipping client signature:', {
+          hasImage: !!bid.client_signature_image,
+          hasPosition: !!clientPos
+        });
+      }
+      
+      console.log('Saving PDF with signatures');
+      const pdfBytes = await pdfDoc.save();
+      console.log('PDF saved, size:', pdfBytes.byteLength);
+      
+      saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), 'signed_contract.pdf');
+      toast.success('Signed contract downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading signed PDF:', error);
+      toast.error('Failed to download signed contract');
     }
-    const pdfBytes = await pdfDoc.save();
-    saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), 'signed_contract.pdf');
   };
 
   // Check if business has a template
@@ -723,6 +833,44 @@ useEffect(() => {
       return () => clearTimeout(timer);
     }
   }, [showEditNotification]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+        try {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error) {
+                console.error('Error checking session:', error);
+                navigate('/login');
+                return;
+            }
+            
+            if (!session) {
+                console.log('No user session found');
+                navigate('/login');
+                return;
+            }
+
+            // Set current user profile
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profileError) {
+                console.error('Error fetching profile:', profileError);
+                return;
+            }
+
+            setCurrentUserProfile(profile);
+        } catch (err) {
+            console.error('Error in authentication:', err);
+            navigate('/login');
+        }
+    };
+
+    checkAuth();
+}, [navigate]);
 
   return (
     <div className={`request-display bid-display${isAnimating ? ' fade-out' : ''}`}> 
@@ -891,10 +1039,20 @@ useEffect(() => {
                 </div>
 
                 {/* Contract signature modal trigger */}
-                {bid.contract_url && bid.contract_url.endsWith('.pdf') && (
-                  <>
-                    {/* Only show sign button if business has signed but client hasn't */}
-                    {bid.business_signed_at && !bid.client_signed_at && (
+                {(() => {
+                  console.log('Contract button conditions:', {
+                    hasContractUrl: !!bid.contract_url,
+                    isPdf: bid.contract_url?.endsWith('.pdf'),
+                    businessSigned: !!bid.business_signed_at,
+                    clientSigned: !!bid.client_signed_at,
+                    isBusiness: bid.business_id === currentUserId,
+                    currentUserId,
+                    businessId: bid.business_id
+                  });
+
+                  // Show sign button if business has signed but client hasn't
+                  if (bid.business_signed_at && !bid.client_signed_at && bid.business_id !== currentUserId) {
+                    return (
                       <button
                         className="btn-secondary"
                         style={{ 
@@ -916,9 +1074,39 @@ useEffect(() => {
                         <i className="fas fa-signature"></i>
                         Sign Contract
                       </button>
-                    )}
-                    {/* Show waiting message if business hasn't signed yet */}
-                    {!bid.business_signed_at && (
+                    );
+                  }
+
+                  // Show sign button for business if they haven't signed yet
+                  if (!bid.business_signed_at && bid.business_id === currentUserId) {
+                    return (
+                      <button
+                        className="btn-secondary"
+                        style={{ 
+                          margin: '16px 0', 
+                          width: '100%',
+                          background: '#9633eb',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px'
+                        }}
+                        onClick={() => setShowContractModal(true)}
+                      >
+                        <i className="fas fa-signature"></i>
+                        Sign Contract as Business
+                      </button>
+                    );
+                  }
+
+                  // Show waiting message if business hasn't signed yet
+                  if (!bid.business_signed_at && bid.business_id !== currentUserId) {
+                    return (
                       <div
                         style={{ 
                           margin: '16px 0', 
@@ -932,9 +1120,11 @@ useEffect(() => {
                       >
                         Waiting for business signature...
                       </div>
-                    )}
-                  </>
-                )}
+                    );
+                  }
+
+                  return null;
+                })()}
 
                 {/* Contract Upload Section for Business */}
                 {bid.business_id === currentUserId && !bid.contract_url && (

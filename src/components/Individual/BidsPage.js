@@ -63,18 +63,31 @@ export default function BidsPage({ onOpenChat }) {
 
     useEffect(() => {
         const getUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                console.log('User session found:', session.user.id);
-                setUser(session.user);
-                await loadRequests(session.user.id);
-            } else {
-                console.log('No user session found');
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) {
+                    console.error('Error checking session:', error);
+                    navigate('/login');
+                    return;
+                }
+                
+                if (session) {
+                    console.log('User session found:', session.user.id);
+                    setUser(session.user);
+                    await loadRequests(session.user.id);
+                } else {
+                    console.log('No user session found');
+                    navigate('/login');
+                }
+            } catch (err) {
+                console.error('Error in authentication:', err);
+                navigate('/login');
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
         getUser();
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         if (user && requests.length > 0) {

@@ -8,6 +8,7 @@ import LoadingSpinner from '../LoadingSpinner';
 import '../../styles/BusinessSettings.css';
 import '../../styles/ContractTemplateEditor.css';
 import { v4 as uuidv4 } from 'uuid';
+import { toast } from 'react-hot-toast';
 
 // Custom Blot for variables
 const Inline = ReactQuill.Quill.import('blots/inline');
@@ -94,9 +95,10 @@ const styles = `
     background-color: #ffd6e7;
   }
   .signature-line {
-    border-bottom: 1px solid #d63384;
-    margin-bottom: 5px;
-    min-width: 150px;
+    border-bottom: 2.5px solid #d63384;
+    width: 400px;
+    margin: 0 auto 8px auto;
+    height: 0;
   }
   .signature-label {
     font-weight: bold;
@@ -341,7 +343,10 @@ const ContractTemplateEditor = ({ setActiveSection }) => {
       ["link", "image"],
       ["clean"],
       ["insertProfilePhoto"]
-    ]
+    ],
+    clipboard: {
+      matchVisual: false
+    }
   };
 
   const formats = [
@@ -534,18 +539,50 @@ const ContractTemplateEditor = ({ setActiveSection }) => {
         throw new Error("Editor not initialized");
       }
 
-      // Get the content and clean it up
+      // Get the content as Delta format first
+      const delta = editor.getContents();
+      
+      // Convert Delta to HTML while preserving variables
       let content = editor.root.innerHTML;
       
-      // Remove any extra variables that might have been added at the bottom
-      const variablePattern = /\{totalAmount\}|\{priceBreakdown\}|\{servicesDescription\}|\{eventLocation\}|\{eventTime\}|\{eventDate\}|\{clientName\}/g;
-      content = content.replace(variablePattern, '').trim();
+      // Define all possible variables with their exact format
+      const variables = {
+        clientName: '{clientName}',
+        eventDate: '{eventDate}',
+        eventTime: '{eventTime}',
+        eventLocation: '{eventLocation}',
+        servicesDescription: '{servicesDescription}',
+        priceBreakdown: '{priceBreakdown}',
+        totalAmount: '{totalAmount}',
+        downPaymentAmount: '{downPaymentAmount}',
+        signatureDate: '{signatureDate}'
+      };
+
+      // Ensure variables are in the correct format
+      Object.entries(variables).forEach(([key, value]) => {
+        const regex = new RegExp(`<span class="variable-tag"[^>]*>${value}</span>`, 'g');
+        content = content.replace(regex, value);
+      });
+
+      // Clean up any malformed HTML
+      content = content.replace(/<p><br><\/p>/g, '');
+      content = content.replace(/<p><\/p>/g, '');
+
+      // Ensure signature placeholders are properly formatted
+      content = content.replace(
+        /<div class="signature-placeholder (client|business)-signature"[^>]*>/g,
+        (match) => {
+          const type = match.includes('client-signature') ? 'client' : 'business';
+          return `<div class="signature-placeholder ${type}-signature">`;
+        }
+      );
 
       // Ensure we have valid content
-      if (!content) {
+      if (!content || content.trim() === '') {
         throw new Error("No content to save");
       }
 
+      // Save the template
       const { error } = await supabase
         .from("business_profiles")
         .update({ contract_template: content })
@@ -553,10 +590,11 @@ const ContractTemplateEditor = ({ setActiveSection }) => {
 
       if (error) throw error;
 
+      toast.success('Contract template saved successfully');
       setActiveSection("settings");
     } catch (error) {
       console.error("Error saving contract template:", error);
-      setError("Failed to save contract template. Please try again.");
+      toast.error("Failed to save contract template. Please try again.");
     }
   };
 
@@ -608,25 +646,33 @@ const ContractTemplateEditor = ({ setActiveSection }) => {
 
     const editor = quillRef.current.getEditor();
     const range = editor.getSelection(true);
-    
-    // Create signature placeholder HTML with exact class names matching our CSS
+
+    // Use a string of underscores for the signature line
+    const signatureLine = '__________________________________________';
     const signatureHtml = `
-      <div class="signature-placeholder ${type}-signature" style="display: inline-block; background-color: #ffd6e7; border: 1px dashed #ff9ec4; border-radius: 5px; padding: 15px; margin: 20px 0; min-width: 200px;">
-        <div class="signature-line" style="border-bottom: 1px solid #d63384; margin-bottom: 5px; min-width: 150px;"></div>
-        <div class="signature-label" style="font-weight: bold; margin-bottom: 5px; color: #d63384;">
-          ${type === 'client' ? '<span class="variable-tag" style="background-color: #ffd6e7; padding: 2px 6px; border-radius: 4px; color: #d63384; font-family: monospace; font-weight: 500; display: inline-block; border: 1px solid #ff9ec4; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">{clientName}</span>' : businessName}
-        </div>
-        <div class="signature-name" style="color: #d63384; margin-bottom: 5px;">${type === 'client' ? 'Client' : 'Business'} Signature</div>
-        <div class="signature-date" style="font-size: 0.9em; color: #d63384;">Date: _______________</div>
+      <div style="text-align:center; margin: 40px 0 20px 0;">
+        <div>${signatureLine}</div>
+        <div><strong>${type === 'client' ? '{clientName}' : businessName}</strong></div>
+        <div>Date: {signatureDate}</div>
       </div>
     `;
 
+    // Insert a new line before the signature if at the start of a line
+    if (range) {
+      const [line] = editor.getLine(range.index);
+      if (line && line.length() === 0) {
+        editor.insertText(range.index, '\n');
+      }
+    }
+
+    // Insert the signature HTML as a single block
     if (!range) {
-      // If no selection, insert at the end of the document
       const length = editor.getLength();
       editor.clipboard.dangerouslyPasteHTML(length - 1, signatureHtml);
+      editor.insertText(length, '\n');
     } else {
       editor.clipboard.dangerouslyPasteHTML(range.index, signatureHtml);
+      editor.insertText(range.index + 1, '\n');
     }
   };
 
@@ -637,25 +683,23 @@ const ContractTemplateEditor = ({ setActiveSection }) => {
       return;
     }
 
-    const range = quill.getSelection(true); // true to focus and get selection
+    const range = quill.getSelection(true);
 
     if (range) {
       // Delete selected text if any
       quill.deleteText(range.index, range.length, 'user');
       
-      // Insert the variable blot using insertEmbed
-      // The third argument is the value passed to VariableBlot.create()
-      quill.insertEmbed(range.index, 'variable', variable, 'user');
+      // Insert the variable with simple formatting
+      const variableHtml = `<span class="variable-tag">${variable}</span>`;
+      quill.clipboard.dangerouslyPasteHTML(range.index, variableHtml, 'user');
       
-      // Move cursor after the inserted blot (embeds are usually length 1)
+      // Move cursor after the inserted variable
       quill.setSelection(range.index + 1, 0, 'user');
     } else {
-      // Fallback: if for some reason range is not obtained (e.g., editor not focused)
-      // This case should be rare if getSelection(true) is used.
+      // If no selection, insert at the end
       const length = quill.getLength();
-      const insertPosition = length > 0 ? length - 1 : 0; // Insert before trailing newline if any
-      quill.insertEmbed(insertPosition, 'variable', variable, 'user');
-      quill.setSelection(insertPosition + 1, 0, 'user');
+      const variableHtml = `<span class="variable-tag">${variable}</span>`;
+      quill.clipboard.dangerouslyPasteHTML(length - 1, variableHtml, 'user');
     }
   };
 
@@ -687,6 +731,38 @@ const ContractTemplateEditor = ({ setActiveSection }) => {
       setIsMobileSidebarOpen(false);
     }
   };
+
+  // Add this new function to handle loading the template
+  useEffect(() => {
+    const loadTemplate = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile, error } = await supabase
+          .from("business_profiles")
+          .select("contract_template")
+          .eq("id", user.id)
+          .single();
+
+        if (error) throw error;
+
+        if (profile?.contract_template) {
+          // Set the template content in the editor
+          const editor = quillRef.current?.getEditor();
+          if (editor) {
+            editor.clipboard.dangerouslyPasteHTML(0, profile.contract_template);
+          }
+          setContractTemplate(profile.contract_template);
+        }
+      } catch (error) {
+        console.error("Error loading template:", error);
+        toast.error("Failed to load contract template");
+      }
+    };
+
+    loadTemplate();
+  }, []);
 
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
@@ -770,7 +846,8 @@ const ContractTemplateEditor = ({ setActiveSection }) => {
                           { code: '{servicesDescription}', description: 'Description of services being provided' },
                           { code: '{priceBreakdown}', description: 'Detailed breakdown of all costs and fees' },
                           { code: '{totalAmount}', description: 'Total contract amount' },
-                          { code: '{downPaymentAmount}', description: 'Down payment amount' }
+                          { code: '{downPaymentAmount}', description: 'Down payment amount' },
+                          { code: '{signatureDate}', description: 'Date of signature' }
                         ].map((variable, index) => (
                           <button 
                             key={index} 
@@ -860,7 +937,8 @@ const ContractTemplateEditor = ({ setActiveSection }) => {
                 { code: '{servicesDescription}', description: 'Description of services being provided' },
                 { code: '{priceBreakdown}', description: 'Detailed breakdown of all costs and fees' },
                 { code: '{totalAmount}', description: 'Total contract amount' },
-                { code: '{downPaymentAmount}', description: 'Down payment amount' }
+                { code: '{downPaymentAmount}', description: 'Down payment amount' },
+                { code: '{signatureDate}', description: 'Date of signature' }
               ].map((variable, index) => (
                 <button 
                   key={index} 

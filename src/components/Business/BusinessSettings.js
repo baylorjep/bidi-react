@@ -1045,7 +1045,7 @@ useEffect(() => {
                       </div>
                     )}
                   </div>
-                  <div>
+                  <div style={{ display: "flex", flexDirection: "row", gap: "20px", justifyContent: "center", marginTop: 20 }}>
                     <button className="btn-danger me-2" onClick={() => { setShowCategoryModal(false); setSelectedCategories(currentCategories); setCustomCategory(""); }}>Cancel</button>
                     <button className="btn-success" onClick={handleCategorySubmit} disabled={selectedCategories.length === 0 || (selectedCategories.includes('other') && !customCategory.trim())}>Save Changes</button>
                   </div>
@@ -1133,7 +1133,7 @@ useEffect(() => {
                     <input type="number" className="form-control" id="defaultExpiration" value={defaultExpirationDays} onChange={(e) => setDefaultExpirationDays(e.target.value)} placeholder="Enter number of days" min="1" />
                   </div>
                   <p className="text-muted">This will be the default number of days until a bid expires when you create new bids.</p>
-                  <div>
+                  <div style={{ display: "flex", flexDirection: "row", gap: "20px", justifyContent: "center", marginTop: 20 }}>
                     <button className="btn-danger me-2" onClick={() => setShowDefaultExpirationModal(false)}>Close</button>
                     <button className="btn-success" onClick={handleDefaultExpirationSubmit}>Save</button>
                   </div>
@@ -1187,8 +1187,10 @@ useEffect(() => {
             <p className="text-muted">You will only see requests with budgets above this amount.</p>
           </Modal.Body>
           <Modal.Footer>
-            <button className="btn-danger" onClick={() => setShowMinPriceModal(false)}>Close</button>
-            <button className="btn-success" onClick={handleMinPriceSubmit}>Save</button>
+            <div style={{ display: "flex", flexDirection: "row", gap: "20px", justifyContent: "center", marginTop: 20 }}>   
+              <button className="btn-danger" onClick={() => setShowMinPriceModal(false)}>Close</button>
+              <button className="btn-success" onClick={handleMinPriceSubmit}>Save</button>
+            </div>
           </Modal.Footer>
         </Modal>
         {/* Coupon Modal */}
@@ -1310,8 +1312,10 @@ useEffect(() => {
             </div>
           </Modal.Body>
           <Modal.Footer>
-            <button className="btn-danger" onClick={() => { setShowCategoryModal(false); setSelectedCategories(currentCategories); setCustomCategory(""); }}>Cancel</button>
-            <button className="btn-success" onClick={handleCategorySubmit} disabled={selectedCategories.length === 0 || (selectedCategories.includes('other') && !customCategory.trim())}>Save Changes</button>
+            <div style={{ display: "flex", flexDirection: "row", gap: "20px", justifyContent: "center", marginTop: 20 }}>
+              <button className="btn-danger" onClick={() => { setShowCategoryModal(false); setSelectedCategories(currentCategories); setCustomCategory(""); }}>Cancel</button>
+              <button className="btn-success" onClick={handleCategorySubmit} disabled={selectedCategories.length === 0 || (selectedCategories.includes('other') && !customCategory.trim())}>Save Changes</button>
+            </div>
           </Modal.Footer>
         </Modal>
         {/* Calendar Modal */}
