@@ -77,8 +77,17 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
             ? (latestMap[p.id]?.sender_id === currentUserId ? "You sent an image" : "Image")
             : latestMap[p.id]?.message || "",
         unseen_count: unseenCountMap[p.id] || 0,
-        last_message_time: latestMap[p.id]?.created_at
+        last_message_time: latestMap[p.id]?.created_at,
+        is_pinned: false,
       }));
+
+      // Sort by pinned status and last message time
+      formatted.sort((a, b) => {
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+        return new Date(b.last_message_time) - new Date(a.last_message_time);
+      });
+      console.log("Before setChats, chats:", formatted);
 
       setChats(formatted);
     };
@@ -115,6 +124,15 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
         state: { businessName: chat.name }
       });
     }
+  };
+
+  // handle pinning/unpinning a chat
+  const togglePin = (chatId) => {
+    setChats(prevChats =>
+      prevChats.map(c =>
+        c.id === chatId ? { ...c, is_pinned: !c.is_pinned } : c
+      )
+    );
   };
 
   return (
