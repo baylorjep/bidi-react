@@ -631,12 +631,17 @@
 
 @media (max-width: 768px) {
   .chat-sidebar {
-    display: none;
+    display: none !important;
   }
-  
   .chat-main {
     width: 100%;
   }
+}
+
+/* Keep this for modal scroll lock only: */
+body.modal-open {
+  overflow: hidden !important;
+  touch-action: none;
 }
 
 .message-bubble.unseen {

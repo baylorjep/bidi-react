@@ -24,8 +24,13 @@ function MasterRequestFlow() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Accept both new and legacy vendor info structure
+  const vendorData = location.state?.vendor?.vendor
+    ? location.state.vendor
+    : location.state?.vendor
+      ? { vendor: location.state.vendor, image: location.state.vendor.profile_photo_url }
+      : null;
   const selectedCategories = location.state?.selectedCategories || [];
-  const vendorData = location.state?.vendor || null; // Add this line to capture vendor data
   const [completedCategories, setCompletedCategories] = useState([]);
   const [showReview, setShowReview] = useState(false);
 
@@ -1334,7 +1339,7 @@ function MasterRequestFlow() {
               videographyId: requestIds.videography,
               cateringId: requestIds.catering,
               djId: requestIds.dj,
-              floristId: newBeautyRequest.id,
+              floristId: requestIds.florist,
               beautyId: newBeautyRequest.id,
               weddingPlanningId: requestIds.weddingPlanning,
               selectedCategories: formData.selectedRequests,
@@ -1945,6 +1950,7 @@ function MasterRequestFlow() {
         return (
           <div className="form-scrollable-content">
             <HairAndMakeupStepper
+             
               formData={formData}
               setFormData={setFormData}
               currentStep={currentStep}
@@ -2620,7 +2626,7 @@ function formatDateString(dateString) {
               marginTop: '20px' 
             }}>
               <img 
-                src={vendorData.image} 
+                src={vendorData.image || vendorData.vendor.profile_photo_url} 
                 alt={vendorData.vendor.business_name} 
                 className="vendor-profile-image" 
                 style={{ marginRight: '8px' }}

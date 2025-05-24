@@ -91,6 +91,8 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const [showReadMore, setShowReadMore] = useState(false);
   const descriptionRef = useRef(null);
   const [isSelected, setIsSelected] = useState(false);
+  // Add this state to detect vendor selection context
+  const [fromVendorSelection, setFromVendorSelection] = useState(false);
 
   // Add slider settings
   const sliderSettings = {
@@ -416,6 +418,10 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         id: location.state.bidId // Add the bid ID to the bid data
       });
     }
+    // Detect if coming from vendor selection
+    if (location.state?.fromVendorSelection) {
+      setFromVendorSelection(true);
+    }
   }, [location.state]);
 
   useEffect(() => {
@@ -465,25 +471,42 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   };
 
   const handleGetQuote = () => {
+    // Format the vendor data as expected by MasterRequestFlow
     const vendorData = {
-      vendor: business,
-      image: profileImage,
+      vendor: {
+        id: business.id,
+        business_name: business.business_name,
+        business_category: business.business_category,
+        business_address: business.business_address,
+        profile_photo_url: profileImage
+      },
+      image: profileImage
     };
 
     // Format the category to match the expected format in RequestCategories.js
-    const formattedCategory = business.business_category === 'wedding planner/coordinator' 
-        ? 'WeddingPlanning'
-        : business.business_category === 'beauty'
-            ? 'HairAndMakeup'
-            : business.business_category.charAt(0).toUpperCase() + 
-              business.business_category.slice(1).toLowerCase();
+    let formattedCategory;
+    if (Array.isArray(business.business_category)) {
+      formattedCategory = business.business_category[0];
+    } else {
+      formattedCategory = business.business_category;
+    }
+    // Map to canonical category names if needed
+    if (formattedCategory) {
+      if (formattedCategory.toLowerCase().includes('wedding planner')) {
+        formattedCategory = 'WeddingPlanning';
+      } else if (formattedCategory.toLowerCase().includes('beauty')) {
+        formattedCategory = 'HairAndMakeup';
+      } else {
+        formattedCategory = formattedCategory.charAt(0).toUpperCase() + formattedCategory.slice(1).replace(/\s/g, '');
+      }
+    }
 
     // Navigate to the master request flow with the vendor data and selected category
     navigate("/master-request-flow", { 
-        state: { 
-            vendor: vendorData,
-            selectedCategories: [formattedCategory]
-        }
+      state: { 
+        vendor: vendorData,
+        selectedCategories: [formattedCategory]
+      }
     });
   };
 
@@ -1110,7 +1133,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                         </button>
                       </div>
                     </div>
-                  ) : (
+                  ) : fromVendorSelection ? (
                     <div className="get-a-bid-container">
                       <h2 className="get-quote-header">Add to Vendor List</h2>
                       <div className="vendor-button-container">
@@ -1119,6 +1142,26 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                           onClick={handleToggleSelection}
                         >
                           {isSelected ? 'Selected ✓' : 'Add to Vendor List'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="get-a-bid-container">
+                      <h2 className="get-quote-header">Chat with {business.business_name}</h2>
+                      <div className="vendor-button-container" style={{ flexDirection: "column", gap: "16px",  }}>
+                        <button 
+                          className="vendor-button"
+                          onClick={handleGetQuote}
+                        >
+                          Get a Tailored Bid
+                        </button>
+                        <button
+                          className="vendor-button"
+                          style={{ background: "#A328F4", color: "#fff" }}
+                          onClick={handleChatClick}
+                        >
+                          <ChatIcon style={{ fontSize: '20px', marginRight: 6 }} />
+                          Message
                         </button>
                       </div>
                     </div>

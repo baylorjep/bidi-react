@@ -619,20 +619,39 @@ const VendorList = ({
     };
 
     const handleGetQuote = (vendor) => {
+        // Format the vendor data as expected by MasterRequestFlow
+        const vendorData = {
+            vendor: {
+                id: vendor.id,
+                business_name: vendor.business_name,
+                business_category: vendor.business_category,
+                business_address: vendor.business_address,
+                profile_photo_url: vendor.profile_photo_url
+            },
+            image: vendor.profile_photo_url
+        };
+
         // Format the category to match the expected format in RequestCategories.js
-        const formattedCategory = vendor.business_category.join(', ').charAt(0).toUpperCase() + 
-            vendor.business_category.join(', ').slice(1).toLowerCase();
+        let formattedCategory;
+        if (Array.isArray(vendor.business_category)) {
+            formattedCategory = vendor.business_category[0];
+        } else {
+            formattedCategory = vendor.business_category;
+        }
+        if (formattedCategory) {
+            if (formattedCategory.toLowerCase().includes('wedding planner')) {
+                formattedCategory = 'WeddingPlanning';
+            } else if (formattedCategory.toLowerCase().includes('beauty')) {
+                formattedCategory = 'HairAndMakeup';
+            } else {
+                formattedCategory = formattedCategory.charAt(0).toUpperCase() + formattedCategory.slice(1).replace(/\s/g, '');
+            }
+        }
 
         // Navigate to the master request flow with the vendor data and selected category
         navigate("/master-request-flow", { 
             state: { 
-                vendor: {
-                    id: vendor.id,
-                    business_name: vendor.business_name,
-                    business_category: vendor.business_category,
-                    business_address: vendor.business_address,
-                    profile_photo_url: vendor.profile_photo_url
-                },
+                vendor: vendorData,
                 selectedCategories: [formattedCategory]
             }
         });
