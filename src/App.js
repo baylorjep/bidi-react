@@ -131,6 +131,7 @@ import WeddingVibeQuiz from "./pages/WeddingVibeQuiz";
 import { subscribeToPush } from './hooks/usePushNotification';
 import WeddingPlannerDashboard from "./components/WeddingPlanner/WeddingPlannerDashboard";
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import VendorSelection from "./components/Request/VendorSelection";
 
 function App() {
   subscribeToPush();
@@ -428,6 +429,7 @@ function App() {
                 path="/wedding-vibe-quiz"
                 element={<WeddingVibeQuizPage />}
               />
+              <Route path="/vendor-selection/:category" element={<VendorSelection />} />
             </Routes>          </div>
           <Footer />
           <ToastContainer

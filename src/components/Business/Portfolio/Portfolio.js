@@ -90,6 +90,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
   const descriptionRef = useRef(null);
+  const [isSelected, setIsSelected] = useState(false);
 
   // Add slider settings
   const sliderSettings = {
@@ -675,6 +676,16 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     }
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleToggleSelection = () => {
+    setIsSelected(!isSelected);
+    // You can add additional logic here to handle the selection state
+    // For example, adding/removing from a global selected vendors list
+  };
+
   if (loading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -687,6 +698,10 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
   return (
     <>
+      <div className="portfolio-back-button" onClick={handleBack}>
+        <i className="fas fa-arrow-left"></i> Back
+      </div>
+
       <EditProfileModal
         isOpen={modalOpen}
         onClose={handleModalClose}
@@ -1097,14 +1112,13 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                     </div>
                   ) : (
                     <div className="get-a-bid-container">
-                      <h2 className="get-quote-header">Need a Bid?</h2>
+                      <h2 className="get-quote-header">Add to Vendor List</h2>
                       <div className="vendor-button-container">
-                        <button className="vendor-button" onClick={handleGetQuote}>
-                          Get a Tailored Bid
-                        </button>
-                        <button className="chat-button" onClick={handleChatClick}>
-                          <ChatIcon style={{ fontSize: '20px' }} />
-                          Chat with Vendor
+                        <button 
+                          className={`vendor-button ${isSelected ? 'selected' : ''}`} 
+                          onClick={handleToggleSelection}
+                        >
+                          {isSelected ? 'Selected ✓' : 'Add to Vendor List'}
                         </button>
                       </div>
                     </div>
@@ -1208,5 +1222,87 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     </>
   );
 };
+
+const styles = `
+.portfolio-back-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 1000;
+  transition: all 0.2s ease;
+}
+
+.portfolio-back-button:hover {
+  background: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.portfolio-back-button i {
+  font-size: 16px;
+}
+
+.get-a-bid-container {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.get-quote-header {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.vendor-button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vendor-button {
+  background: #9633eb;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.vendor-button:hover {
+  background: #7a29c0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(150,51,235,0.2);
+}
+
+.vendor-button.selected {
+  background: #4CAF50;
+}
+
+.vendor-button.selected:hover {
+  background: #388e3c;
+}
+`;
+
+const styleSheet = document.createElement("style");
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
 
 export default Portfolio;

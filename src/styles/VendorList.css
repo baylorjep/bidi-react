@@ -152,6 +152,24 @@
   align-items: center;
   margin: 5px;
   width: 100%;
+  position: relative;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.vendor-card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.vendor-card.selected {
+  border: 2px solid #4CAF50;
+  box-shadow: 0 4px 12px rgba(76,175,80,0.2);
 }
 
 .portfolio-images {
@@ -342,6 +360,16 @@
   align-items: center;
   width: 100%;
   padding: 10px;
+}
+
+.vendor-button.selected {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+}
+
+.vendor-button.selected:hover {
+  background-color: #45a049;
 }
 
 .modal {

@@ -20,7 +20,12 @@ const VendorList = ({
     vendorsPerPage,
     setCurrentPage,
     setTotalCount,
-    preferredType 
+    preferredType,
+    onVendorSelect,
+    onVendorDeselect,
+    selectedVendors = [],
+    customButtonText = "Get a Tailored Bid",
+    showSelectionButton = false
 }) => {
     const [vendors, setVendors] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -600,11 +605,6 @@ const VendorList = ({
     };
 
     const handleGetQuote = (vendor) => {
-        const vendorData = {
-            vendor,
-            image: vendor.profile_photo_url
-        };
-
         // Format the category to match the expected format in RequestCategories.js
         const formattedCategory = vendor.business_category.join(', ').charAt(0).toUpperCase() + 
             vendor.business_category.join(', ').slice(1).toLowerCase();
@@ -612,7 +612,13 @@ const VendorList = ({
         // Navigate to the master request flow with the vendor data and selected category
         navigate("/master-request-flow", { 
             state: { 
-                vendor: vendorData,
+                vendor: {
+                    id: vendor.id,
+                    business_name: vendor.business_name,
+                    business_category: vendor.business_category,
+                    business_address: vendor.business_address,
+                    profile_photo_url: vendor.profile_photo_url
+                },
                 selectedCategories: [formattedCategory]
             }
         });
@@ -791,6 +797,22 @@ const VendorList = ({
         );
     };
 
+    const isVendorSelected = (vendorId) => {
+        return selectedVendors.some(v => v.id === vendorId);
+    };
+
+    const handleVendorSelect = (vendor) => {
+        if (showSelectionButton) {
+            if (isVendorSelected(vendor.id)) {
+                onVendorDeselect?.(vendor);
+            } else {
+                onVendorSelect?.(vendor);
+            }
+        } else {
+            handleGetQuote(vendor);
+        }
+    };
+
     return (
         <div className="vendor-list">
             {vendors.map(vendor => (
@@ -912,7 +934,15 @@ const VendorList = ({
                             </ul>
                         )}
                         <div className="vendor-buttons">
-                            <button className="vendor-button" onClick={() => handleGetQuote(vendor)}>Get a Tailored Quote</button>
+                            <button 
+                                className={`vendor-button ${isVendorSelected(vendor.id) ? 'selected' : ''}`}
+                                onClick={() => handleVendorSelect(vendor)}
+                            >
+                                {showSelectionButton 
+                                    ? (isVendorSelected(vendor.id) ? 'Selected ✓' : customButtonText)
+                                    : 'Get a Tailored Bid'
+                                }
+                            </button>
                             <button className="vendor-button-secondary" onClick={() => handleMoreInfo(vendor)}>See Profile</button>
                         </div>
                     </div>

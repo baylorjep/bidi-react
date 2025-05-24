@@ -1,78 +1,262 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 function SuccessRequest() {
-    const [emailStatus, setEmailStatus] = useState(null);
     const location = useLocation();
-    const { category, message } = location.state || {};
+    const navigate = useNavigate();
+    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [requestData, setRequestData] = useState({});
 
     useEffect(() => {
-        if (!category) {
-            setEmailStatus('No category found. Email not sent.');
-            return;
-        }
+        if (location.state) {
+            console.log('Raw location state:', location.state);
+            const categories = [];
+            const requestData = {};
 
-        const sendEmail = async () => {
-            try {
-                const emailPayload = { category };
-                const response = await fetch('https://bidi-express.vercel.app/send-resend-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(emailPayload),
+            // First check if we have selectedCategories array
+            if (location.state.selectedCategories && Array.isArray(location.state.selectedCategories)) {
+                location.state.selectedCategories.forEach(category => {
+                    switch(category) {
+                        case 'Photography':
+                            categories.push({ id: 'photography', name: 'Photography', table: 'photography_requests' });
+                            requestData.photography = location.state.photographyId;
+                            break;
+                        case 'Videography':
+                            categories.push({ id: 'videography', name: 'Videography', table: 'videography_requests' });
+                            requestData.videography = location.state.videographyId;
+                            break;
+                        case 'Catering':
+                            categories.push({ id: 'catering', name: 'Catering', table: 'catering_requests' });
+                            requestData.catering = location.state.cateringId;
+                            break;
+                        case 'DJ':
+                            categories.push({ id: 'dj', name: 'DJ', table: 'dj_requests' });
+                            requestData.dj = location.state.djId;
+                            break;
+                        case 'Florist':
+                            categories.push({ id: 'florist', name: 'Florist', table: 'florist_requests' });
+                            requestData.florist = location.state.floristId;
+                            break;
+                        case 'Hair and Makeup':
+                            categories.push({ id: 'beauty', name: 'Hair and Makeup', table: 'beauty_requests' });
+                            requestData.beauty = location.state.beautyId;
+                            break;
+                        case 'Wedding Planning':
+                            categories.push({ id: 'weddingPlanning', name: 'Wedding Planning', table: 'wedding_planning_requests' });
+                            requestData.weddingPlanning = location.state.weddingPlanningId;
+                            break;
+                    }
                 });
-
-                if (!response.ok) {
-                    const errorDetails = await response.json();
-                    console.error('Failed to send email:', errorDetails);
-                    setEmailStatus('Failed to send email notifications.');
-                } else {
-                    console.log('Emails sent successfully!');
-                    setEmailStatus('Vendors successfully contacted! You will receive an email or texts as vendors send in bids.');
-                    localStorage.removeItem("requestFormData");
-                    localStorage.removeItem('submittedCategory'); // Clear localStorage after success
+            } else {
+                // Fallback to checking individual IDs
+                if (location.state.photographyId) {
+                    categories.push({ id: 'photography', name: 'Photography', table: 'photography_requests' });
+                    requestData.photography = location.state.photographyId;
                 }
-            } catch (error) {
-                console.error('Error sending email:', error);
-                setEmailStatus('Error sending email notifications.');
+                if (location.state.videographyId) {
+                    categories.push({ id: 'videography', name: 'Videography', table: 'videography_requests' });
+                    requestData.videography = location.state.videographyId;
+                }
+                if (location.state.cateringId) {
+                    categories.push({ id: 'catering', name: 'Catering', table: 'catering_requests' });
+                    requestData.catering = location.state.cateringId;
+                }
+                if (location.state.djId) {
+                    categories.push({ id: 'dj', name: 'DJ', table: 'dj_requests' });
+                    requestData.dj = location.state.djId;
+                }
+                if (location.state.floristId) {
+                    categories.push({ id: 'florist', name: 'Florist', table: 'florist_requests' });
+                    requestData.florist = location.state.floristId;
+                }
+                if (location.state.beautyId) {
+                    categories.push({ id: 'beauty', name: 'Hair and Makeup', table: 'beauty_requests' });
+                    requestData.beauty = location.state.beautyId;
+                }
+                if (location.state.weddingPlanningId) {
+                    categories.push({ id: 'weddingPlanning', name: 'Wedding Planning', table: 'wedding_planning_requests' });
+                    requestData.weddingPlanning = location.state.weddingPlanningId;
+                }
             }
-        };
 
-        sendEmail();
-    }, [category]);
+            // Add debug logging
+            console.log('Location state:', location.state);
+            console.log('Processed categories:', categories);
+            console.log('Processed request data:', requestData);
+            setSelectedCategories(categories);
+            setRequestData(requestData);
+        } else {
+            console.log('No location state found');
+        }
+    }, [location.state]);
+
+    const handleVendorSelection = (category) => {
+        console.log('Navigating to vendor selection for:', category);
+        // Find the index of the current category in the selectedCategories array
+        const currentIndex = selectedCategories.findIndex(cat => cat.id === category.id);
+        // Get the remaining categories in order
+        const remainingCategories = selectedCategories.slice(currentIndex);
+        
+        // Map category ID to request data key
+        const requestDataKey = category.id === 'videography' ? 'videography' :
+                             category.id === 'photography' ? 'photography' :
+                             category.id === 'catering' ? 'catering' :
+                             category.id === 'dj' ? 'dj' :
+                             category.id === 'florist' ? 'florist' :
+                             category.id === 'beauty' ? 'beauty' :
+                             category.id === 'weddingPlanning' ? 'weddingPlanning' : category.id;
+
+        // Add debug logging
+        console.log('Vendor selection navigation data:', {
+            category,
+            requestId: requestData[requestDataKey],
+            table: category.table,
+            requestDataKey,
+            requestData
+        });
+
+        navigate(`/vendor-selection/${category.id}`, {
+            state: {
+                requestId: requestData[requestDataKey],
+                table: category.table,
+                categories: remainingCategories,
+                requestData: requestData
+            }
+        });
+    };
+
+    const handleSkipVendorSelection = () => {
+        navigate('/bids');
+    };
 
     return (
-        <div className='request-form-overall-container'>
-            <div className='request-form-container-details'>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '60px' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
-                        <path d="M24 44C29.5228 44 34.5228 41.7614 38.1421 38.1421C41.7614 34.5228 44 29.5228 44 24C44 18.4772 41.7614 13.4772 38.1421 9.85786C34.5228 6.23858 29.5228 4 24 4C18.4772 4 13.4772 6.23858 9.85786 9.85786C6.23858 13.4772 4 18.4772 4 24C4 29.5228 6.23858 34.5228 9.85786 38.1421C13.4772 41.7614 18.4772 44 24 44Z" fill="white" stroke="#FF008A" strokeWidth="4" strokeLinejoin="round" />
-                        <path d="M16 24L22 30L34 18" stroke="#FF3875" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+        <div className="success-container" style={{
+            maxWidth: 800,
+            margin: '0 auto',
+            padding: '40px 20px',
+            textAlign: 'center'
+        }}>
+            <div className="success-icon" style={{
+                fontSize: 64,
+                color: '#9633eb',
+                marginBottom: 24
+            }}>✓</div>
 
-                    <div className='successfully-submitted'>
-                        Successfully Submitted!
-                    </div>
+            <h1 style={{
+                fontSize: 32,
+                fontWeight: 800,
+                color: '#9633eb',
+                marginBottom: 16
+            }}>
+                Request Submitted Successfully!
+            </h1>
 
-                    <div className='successfully-submitted-subheader'
-                    role="status"
-                    aria-live="polite">
-                    {message || "Your request has been received! Vendors will start sending bids soon."}
-                    </div>
+            <p style={{
+                fontSize: 18,
+                color: '#666',
+                marginBottom: 32,
+                lineHeight: 1.6
+            }}>
+                {location.state?.message || 'Your request has been submitted successfully. You can now browse vendors or wait for bids.'}
+            </p>
 
-                    <div className='successfully-submitted-subheader' role="status" aria-live="polite">
-                        {emailStatus || "You will receive an email or texts as vendors send in bids. Just relax and let the bids roll in!"}
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16,
+                marginBottom: 32
+            }}>
+                {selectedCategories.map((category) => (
+                    <div key={category.id} style={{
+                        background: '#f8f9fa',
+                        padding: '20px',
+                        borderRadius: 12,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12
+                        }}>
+                            <div style={{
+                                width: 40,
+                                height: 40,
+                                background: '#9633eb',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#fff',
+                                fontSize: 20
+                            }}>
+                                {category.name.charAt(0)}
+                            </div>
+                            <div>
+                                <h3 style={{
+                                    fontSize: 18,
+                                    fontWeight: 600,
+                                    color: '#333',
+                                    margin: 0
+                                }}>
+                                    {category.name}
+                                </h3>
+                                <p style={{
+                                    fontSize: 14,
+                                    color: '#666',
+                                    margin: '4px 0 0 0'
+                                }}>
+                                    Request ID: {requestData[category.id]}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => handleVendorSelection(category)}
+                            style={{
+                                background: '#9633eb',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '12px 24px',
+                                borderRadius: 8,
+                                fontSize: 15,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.background = '#7a29bc'}
+                            onMouseOut={(e) => e.currentTarget.style.background = '#9633eb'}
+                        >
+                            Browse Vendors
+                        </button>
                     </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
-                        <Link to='/bids' className='success-page-button-secondary'>
-                            View Bids
-                        </Link>
-                        <Link to='/request-categories' className='success-page-button-primary'>
-                            Make Another Request
-                        </Link>
-                    </div>
-                </div>
+                ))}
             </div>
+
+            <button
+                onClick={handleSkipVendorSelection}
+                style={{
+                    background: '#fff',
+                    color: '#9633eb',
+                    border: '2px solid #9633eb',
+                    padding: '16px 32px',
+                    borderRadius: 12,
+                    fontSize: 16,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => {
+                    e.currentTarget.style.background = '#9633eb';
+                    e.currentTarget.style.color = '#fff';
+                }}
+                onMouseOut={(e) => {
+                    e.currentTarget.style.background = '#fff';
+                    e.currentTarget.style.color = '#9633eb';
+                }}
+            >
+                Wait for Bids
+            </button>
         </div>
     );
 }

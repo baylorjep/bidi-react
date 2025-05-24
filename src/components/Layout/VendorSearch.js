@@ -202,13 +202,18 @@ const VendorSearch = ({ onLocationPage }) => {
         // Construct the URL
         const path = segments.length > 0 ? `/${segments.join('/')}` : '/vendors';
         
-        // If we're already on a location-based page, force a reload to ensure proper rendering
-        if (location !== path) {
-            navigate(path);
-        } else {
-            // If we're navigating to the same path, force a reload
-            window.location.href = path;
-        }
+        // Navigate with state information
+        navigate(path, {
+            state: {
+                requestId: selectedCategory,
+                table: `${selectedCategory}_requests`,
+                categories: [{
+                    id: selectedCategory,
+                    name: categories.find(cat => cat.id === selectedCategory)?.name || selectedCategory,
+                    table: `${selectedCategory}_requests`
+                }]
+            }
+        });
         
         setIsOpen(false);
     };
