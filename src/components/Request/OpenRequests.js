@@ -60,7 +60,7 @@ const hasMatchingCategory = (requestCategory, businessCategories) => {
   });
 };
 
-function OpenRequests() {
+function OpenRequests({ onMessageClick }) {
   const [openRequests, setOpenRequests] = useState([]);
   const [openPhotoRequests, setOpenPhotoRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -73,6 +73,7 @@ function OpenRequests() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
+  const [user, setUser] = useState(null);
 
   // Add this new function to fetch user's bids
   const fetchUserBids = async (userId) => {
@@ -444,53 +445,6 @@ function OpenRequests() {
     fetchRequests();
   }, [businessCategories, isAdmin]);
 
-  const meetsMinimumPrice = (request) => {
-    if (!minimumPrice) return true; // If no minimum price set, show all requests
-
-    // Handle different price range formats
-    let budget = request.price_range || request.budget;
-    if (!budget) return true; // If no budget specified, show the request
-
-    console.log("Processing budget:", budget); // Debug log
-
-    // Convert price range string to minimum value
-    if (typeof budget === "string") {
-      // Remove any spaces, dollar signs, and convert to lowercase
-      budget = budget.toLowerCase().replace(/\s+/g, "").replace(/\$/g, "");
-
-      // Handle format like "0-1000" or "500-1000"
-      if (budget.includes("-")) {
-        const [min, max] = budget.split("-");
-        // Use the maximum value for comparison
-        const maxBudget = parseInt(max);
-        console.log("Range format detected:", budget, "max value:", maxBudget); // Debug log
-        return !isNaN(maxBudget) && maxBudget >= minimumPrice;
-      }
-
-      // Handle single number or other formats
-      const numbers = budget.match(/\d+/);
-      if (numbers) {
-        const budgetValue = parseInt(numbers[0]);
-        console.log(
-          "Single number format detected:",
-          budget,
-          "value:",
-          budgetValue
-        ); // Debug log
-        return !isNaN(budgetValue) && budgetValue >= minimumPrice;
-      }
-    }
-
-    // Handle numeric budget values
-    if (typeof budget === "number") {
-      console.log("Numeric budget:", budget); // Debug log
-      return budget >= minimumPrice;
-    }
-
-    return true; // Default to showing the request if format is unknown
-  };
-
-  // Add new function to check if a request's date has passed
   const isDatePassed = (request) => {
     // If date is flexible or a range, don't hide
     if (request.date_flexibility === 'flexible' || request.date_flexibility === 'range') {
@@ -755,6 +709,27 @@ function OpenRequests() {
     }
   };
 
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
+
+  const meetsMinimumPrice = (request) => {
+    // Extract price/budget from request
+    const budget = parseFloat(request.price_range || request.budget_range || '0');
+    
+    // If there's no budget specified, return true to show the request
+    if (!budget) return true;
+    
+    // Default minimum price if none is set
+    const minimumPrice = 0;
+    
+    return budget >= minimumPrice;
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -844,6 +819,8 @@ function OpenRequests() {
               onHide={() => hideRequest(request.id, getTableName(request))}
               onShow={() => showRequest(request.id, getTableName(request))}
               isHidden={request.hidden_by_vendor?.includes(businessId)}
+              currentVendorId={businessId}  // Add this line
+              onMessageClick={onMessageClick}
             />
           ))}
         </div>

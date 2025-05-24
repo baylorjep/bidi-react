@@ -38,12 +38,27 @@ function SuccessRequest() {
                             requestData.florist = location.state.floristId;
                             break;
                         case 'Hair and Makeup':
+                        case 'hair and makeup':  // Add lowercase variation
+                        case 'beauty':           // Add direct beauty match
+                        case 'HairAndMakeup':  // Add this case
                             categories.push({ id: 'beauty', name: 'Hair and Makeup', table: 'beauty_requests' });
                             requestData.beauty = location.state.beautyId;
+                            console.log('Processing beauty request:', { 
+                                id: requestData.beauty,
+                                category,
+                                beautyId: location.state.beautyId 
+                            });
                             break;
                         case 'Wedding Planning':
-                            categories.push({ id: 'weddingPlanning', name: 'Wedding Planning', table: 'wedding_planning_requests' });
-                            requestData.weddingPlanning = location.state.weddingPlanningId;
+                        case 'weddingplanning':
+                        case 'WeddingPlanning':  // Add this case to match the exact string
+                            categories.push({ id: 'weddingplanning', name: 'Wedding Planning', table: 'wedding_planning_requests' });
+                            requestData.weddingplanning = location.state.weddingPlanningId;
+                            console.log('Processing wedding planning request:', { 
+                                id: requestData.weddingplanning,
+                                category,
+                                weddingPlanningId: location.state.weddingPlanningId 
+                            });
                             break;
                     }
                 });
@@ -72,10 +87,11 @@ function SuccessRequest() {
                 if (location.state.beautyId) {
                     categories.push({ id: 'beauty', name: 'Hair and Makeup', table: 'beauty_requests' });
                     requestData.beauty = location.state.beautyId;
+                    console.log('Found beauty ID in fallback:', location.state.beautyId);
                 }
                 if (location.state.weddingPlanningId) {
-                    categories.push({ id: 'weddingPlanning', name: 'Wedding Planning', table: 'wedding_planning_requests' });
-                    requestData.weddingPlanning = location.state.weddingPlanningId;
+                    categories.push({ id: 'weddingplanning', name: 'Wedding Planning', table: 'wedding_planning_requests' });
+                    requestData.weddingplanning = location.state.weddingPlanningId;
                 }
             }
 
@@ -92,27 +108,16 @@ function SuccessRequest() {
 
     const handleVendorSelection = (category) => {
         console.log('Navigating to vendor selection for:', category);
-        // Find the index of the current category in the selectedCategories array
         const currentIndex = selectedCategories.findIndex(cat => cat.id === category.id);
-        // Get the remaining categories in order
         const remainingCategories = selectedCategories.slice(currentIndex);
         
-        // Map category ID to request data key
-        const requestDataKey = category.id === 'videography' ? 'videography' :
-                             category.id === 'photography' ? 'photography' :
-                             category.id === 'catering' ? 'catering' :
-                             category.id === 'dj' ? 'dj' :
-                             category.id === 'florist' ? 'florist' :
-                             category.id === 'beauty' ? 'beauty' :
-                             category.id === 'weddingPlanning' ? 'weddingPlanning' : category.id;
+        // Simplified key mapping
+        const requestDataKey = category.id;  // Use category.id directly since we normalized it above
 
-        // Add debug logging
-        console.log('Vendor selection navigation data:', {
-            category,
+        console.log('Beauty selection check:', {
+            categoryId: category.id,
             requestId: requestData[requestDataKey],
-            table: category.table,
-            requestDataKey,
-            requestData
+            table: category.table
         });
 
         navigate(`/vendor-selection/${category.id}`, {
@@ -151,14 +156,45 @@ function SuccessRequest() {
                 Request Submitted Successfully!
             </h1>
 
-            <p style={{
-                fontSize: 18,
-                color: '#666',
-                marginBottom: 32,
-                lineHeight: 1.6
+            <div style={{
+                background: '#f8f9fa',
+                padding: '24px',
+                borderRadius: '12px',
+                marginBottom: '32px',
+                maxWidth: '600px',
+                margin: '0 auto 32px'
             }}>
-                {location.state?.message || 'Your request has been submitted successfully. You can now browse vendors or wait for bids.'}
-            </p>
+                <h2 style={{
+                    fontSize: '20px',
+                    color: '#333',
+                    marginBottom: '16px',
+                    fontWeight: '600'
+                }}>
+                    What happens next?
+                </h2>
+                <p style={{
+                    fontSize: '16px',
+                    color: '#666',
+                    lineHeight: '1.6',
+                    marginBottom: '16px',
+                    textAlign: 'left'
+                }}>
+                    You have two options:
+                </p>
+                <ul style={{
+                    textAlign: 'left',
+                    color: '#666',
+                    paddingLeft: '20px',
+                    marginBottom: '16px'
+                }}>
+                    <li style={{ marginBottom: '8px' }}>
+                        <strong>Browse Vendors Now:</strong> Select specific vendors below and request bids from them directly
+                    </li>
+                    <li>
+                        <strong>Wait for Bids:</strong> Skip vendor selection and let vendors come to you with their best offers
+                    </li>
+                </ul>
+            </div>
 
             <div style={{
                 display: 'flex',
@@ -172,13 +208,15 @@ function SuccessRequest() {
                         padding: '20px',
                         borderRadius: 12,
                         display: 'flex',
-                        justifyContent: 'space-between',
+                        justifyContent: 'center',
                         alignItems: 'center'
                     }}>
                         <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 12
+                            gap: 12,
+                            flexDirection: 'column',
+                            justifyContent: 'center'
                         }}>
                             <div style={{
                                 width: 40,
@@ -202,16 +240,8 @@ function SuccessRequest() {
                                 }}>
                                     {category.name}
                                 </h3>
-                                <p style={{
-                                    fontSize: 14,
-                                    color: '#666',
-                                    margin: '4px 0 0 0'
-                                }}>
-                                    Request ID: {requestData[category.id]}
-                                </p>
                             </div>
-                        </div>
-                        <button
+                                                    <button
                             onClick={() => handleVendorSelection(category)}
                             style={{
                                 background: '#9633eb',
@@ -229,6 +259,8 @@ function SuccessRequest() {
                         >
                             Browse Vendors
                         </button>
+                        </div>
+
                     </div>
                 ))}
             </div>

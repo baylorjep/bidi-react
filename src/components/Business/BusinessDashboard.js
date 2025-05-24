@@ -267,6 +267,20 @@ const BusinessDashSidebar = () => {
     }
   };
 
+  const handleMessageFromRequest = (userId) => {
+    console.log("Message clicked for user:", userId);
+    setActiveSection("messages");
+    
+    // Add delay to ensure state updates
+    setTimeout(() => {
+      console.log("Setting selected chat for user:", userId);
+      setSelectedChat({
+        id: userId,
+        type: "client"
+      });
+    }, 100);
+  };
+
   // Helper function to normalize business_category
   const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
 
@@ -377,15 +391,17 @@ const BusinessDashSidebar = () => {
 
         {/* Main Dashboard */}
         <main className="dashboard-main">
-          {activeSection === "dashboard" && <OpenRequests />}
+          {activeSection === "dashboard" && (
+            <OpenRequests 
+              onMessageClick={handleMessageFromRequest}
+            />
+          )}
           {activeSection === "messages" ? (
             isMobile ? (
               selectedChat ? (
                 <MessagingView
                   currentUserId={user?.id}
                   businessId={selectedChat.id}
-                  businessName={selectedChat.name}
-                  profileImage={selectedChat.profileImage}
                   onBack={handleBackFromChat}
                 />
               ) : (

@@ -1,0 +1,198 @@
+.request-display-mini {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+}
+
+.request-display-mini.selected-vendor {
+    border: 2px solid #9633eb;
+    box-shadow: 0 0 10px rgba(150, 51, 235, 0.2);
+}
+
+.request-display-mini.hidden-request {
+    opacity: 0.7;
+}
+
+.request-display-mini:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.selected-badge {
+    margin: 8px;
+    color: #9633eb;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+}
+
+.commission-badge {
+    background-color: transparent;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 4px;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.title-section {
+    text-align: left;
+    width: 100%;
+    padding: 0 20px;
+    margin-bottom: 20px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin: 20px 0;
+    padding: 0 20px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-label {
+    display: flex;
+    align-items: center;
+    color: #666;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.detail-label i {
+    color: #9633eb;
+    margin-right: 8px;
+}
+
+.detail-chip {
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+    color: #333;
+    font-size: 0.95em;
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.detail-value-long {
+    grid-column: span 2;
+}
+
+.request-status {
+    background: #ffedf7;
+    color: #ff69b4;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.request-status::before {
+    content: '●';
+    color: #ff69b4;
+    font-size: 0.8em;
+}
+
+.buttons-container {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    padding: 0 20px;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.submit-bid-button,
+.message-button {
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    flex: none;
+    width: 100%;
+    min-height: 48px;
+}
+
+.submit-bid-button {
+    background: #9633eb;
+    color: #fff;
+}
+
+.submit-bid-button:hover {
+    background: #7a29bc;
+}
+
+.message-button {
+    background: #fff;
+    color: #9633eb;
+    border: 2px solid #9633eb;
+    cursor: pointer;
+}
+
+.message-button:hover {
+    background: #9633eb;
+    color: #fff;
+}
+
+.message-button:hover i {
+    animation: bounce 0.5s;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+@media (max-width: 768px) {
+    .submit-bid-button,
+    .message-button {
+        min-height: 48px;
+        padding: 12px 16px;
+        font-size: 14px;
+        white-space: normal;
+        text-align: center;
+        line-height: 1.2;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .submit-bid-button span,
+    .message-button span {
+        white-space: normal;
+        overflow: visible;
+        display: block;
+    }
+
+    .submit-bid-button i,
+    .message-button i {
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+}

@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../../App.css';
+import '../../styles/RequestDisplayMini.css';
 
-function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false, onHide, isHidden = false, onShow }) {
+function RequestDisplayMini({ 
+    request, 
+    hideBidButton, 
+    isPhotoRequest = false, 
+    onHide, 
+    isHidden = false, 
+    onShow,
+    currentVendorId = null,
+    onMessageClick = null // Add this prop
+}) {
     const [timeLeft, setTimeLeft] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
 
@@ -111,24 +121,43 @@ function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false, on
         return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
     };
 
+    const isVendorSelected = () => {
+        if (!request.vendor_id || !currentVendorId) return false;
+        const vendorIds = Array.isArray(request.vendor_id) 
+            ? request.vendor_id 
+            : JSON.parse(request.vendor_id || '[]');
+        return vendorIds.includes(currentVendorId);
+    };
+
     return (
-        <div className="request-display-mini text-center mb-4">
-            <div style={{display: 'flex', justifyContent:"flex-end"}}>
-            <button 
-                onClick={isHidden ? onShow : onHide} 
-                className="hide-button"
-                title={isHidden ? "Show this request" : "Hide this request"}
-            >
-                {isHidden ? (
-                  <i className="fas fa-eye"></i>
-                ) : (
-                  <i className="fas fa-times"></i>
+        <div className={`request-display-mini text-center mb-4 
+            ${isVendorSelected() ? 'selected-vendor' : ''}
+            ${isHidden ? 'hidden-request' : ''}`}
+        >
+            <div className="header-container">
+                {isVendorSelected() && (
+                    <div className="selected-badge">
+                        <span>⭐ Client Requested You</span>
+                        <span className="commission-badge">
+                            1% Off Commission
+                        </span>
+                    </div>
                 )}
-            </button>
+                <button 
+                    onClick={isHidden ? onShow : onHide} 
+                    className="hide-button"
+                    title={isHidden ? "Show this request" : "Hide this request"}
+                >
+                    {isHidden ? (
+                        <i className="fas fa-eye"></i>
+                    ) : (
+                        <i className="fas fa-times"></i>
+                    )}
+                </button>
             </div>
 
             <div className="request-content p-3">
-                <div style={{textAlign:'left', width: '100%', padding: '0 20px', marginBottom: '20px'}}>
+                <div className="title-section">
                     <h2 className="request-title">{getTitle()}</h2>
                     <div style={{display: 'flex', gap: '10px'}}>
                         {isNew(request.created_at) && (
@@ -145,34 +174,63 @@ function RequestDisplayMini({ request, hideBidButton, isPhotoRequest = false, on
 
                 <div className="details-grid">
                     <div className="detail-item">
-                        <span className="detail-label">Event Type</span>
-                        <span className="detail-value">{request.event_type || 'Not specified'}</span>
+                        <span className="detail-label">
+                            <i className="fas fa-calendar-alt" style={{ color: '#9633eb', marginRight: '8px' }}></i>
+                            Event Type
+                        </span>
+                        <span className="detail-value detail-chip">
+                            {request.event_type || 'Not specified'}
+                        </span>
                     </div>
                     <div className="detail-item">
-                        <span className="detail-label">Location</span>
-                        <span className="detail-value">{request.location || 'Not specified'}</span>
+                        <span className="detail-label">
+                            <i className="fas fa-map-marker-alt" style={{ color: '#9633eb', marginRight: '8px' }}></i>
+                            Location
+                        </span>
+                        <span className="detail-value detail-chip">
+                            {request.location || 'Not specified'}
+                        </span>
                     </div>
                     <div className="detail-item">
-                        <span className="detail-label">Date of Service</span>
-                        <span className="detail-value-long">{getDate()}</span>
+                        <span className="detail-label">
+                            <i className="fas fa-clock" style={{ color: '#9633eb', marginRight: '8px' }}></i>
+                            Date of Service
+                        </span>
+                        <span className="detail-value-long detail-chip">
+                            {getDate()}
+                        </span>
                     </div>
                     <div className="detail-item">
-                        <span className="detail-label">Budget</span>
-                        <span className="detail-value">${request.price_range || request.budget_range}</span>
+                        <span className="detail-label">
+                            <i className="fas fa-dollar-sign" style={{ color: '#9633eb', marginRight: '8px' }}></i>
+                            Budget
+                        </span>
+                        <span className="detail-value detail-chip">
+                            ${request.price_range || request.budget_range}
+                        </span>
                     </div>
                 </div>
 
                 {!hideBidButton && (
-                    <div style={{marginTop: '20px', display: 'flex', justifyContent: 'center'}}>
+                    <div className="buttons-container" style={{
+                        gridTemplateColumns: currentVendorId && isVendorSelected() ? "1fr 1fr" : "minmax(auto, 400px)",
+                    }}>
                         <Link 
                             className="submit-bid-button" 
-                            to={`/submit-bid/${request.id}`} 
-                            style={{textDecoration:'none'}}
+                            to={`/submit-bid/${request.id}`}
                         >
-                            <span className="bid-button-text">
-                                <span>View More</span>
-                            </span>
+                            <i className="fas fa-eye"></i>
+                            <span>View More</span>
                         </Link>
+                        {currentVendorId && isVendorSelected() && (
+                            <button 
+                                className="message-button" 
+                                onClick={() => onMessageClick && onMessageClick(request.user_id)}
+                            >
+                                <i className="fas fa-comment-dots"></i>
+                                <span>Message</span>
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
