@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/BidDisplayMini.css";
-import { FaEnvelope, FaSms, FaEye } from "react-icons/fa";
+import { FaEnvelope, FaSms, FaEye, FaCommentAlt } from "react-icons/fa";
 import { supabase } from "../../supabaseClient";
 import ContractSignatureModal from "../Bid/ContractSignatureModal";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
@@ -11,7 +11,14 @@ import { useState as useReactState } from 'react';
 import { FaInfoCircle } from "react-icons/fa";
 import html2pdf from 'html2pdf.js';
 
-const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContractUpload }) => {
+const BidDisplayMini = ({ 
+  bid, 
+  request, 
+  onEditBid, 
+  openWithdrawModal, 
+  onContractUpload,
+  onMessageClick  // Add this prop
+}) => {
   const navigate = useNavigate();
   const [signature, setSignature] = useState("");
   const [signing, setSigning] = useState(false);
@@ -44,6 +51,7 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
   });
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showFollowUpButton, setShowFollowUpButton] = useState(false);
 
   useEffect(() => {
     if (!showInfoTooltip) return;
@@ -74,6 +82,15 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
 
     fetchContractTemplate();
   }, []);
+
+  useEffect(() => {
+    if (bid.created_at && bid.status === 'pending' && !bid.followed_up) {
+      const bidDate = new Date(bid.created_at);
+      const followUpDate = new Date(bidDate.getTime() + (3 * 24 * 60 * 60 * 1000)); // 3 days after bid
+      const now = new Date();
+      setShowFollowUpButton(now >= followUpDate);
+    }
+  }, [bid.created_at, bid.status, bid.followed_up]);
 
   const getTitle = () => {
     if (request?.title) return request.title;
@@ -139,12 +156,12 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
               upsert: true
             });
 
-          if (retryUploadError) {
-            console.error('Retry upload error:', retryUploadError);
-            throw new Error('Failed to upload after creating bucket');
-          }
+            if (retryUploadError) {
+              console.error('Retry upload error:', retryUploadError);
+              throw new Error('Failed to upload after creating bucket');
+            }
 
-          uploadData = retryUploadData;
+            uploadData = retryUploadData;
         } else {
           throw new Error(`Upload failed: ${uploadError.message}`);
         }
@@ -532,16 +549,47 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
     }
   };
 
+  const handleFollowUp = async () => {
+    try {
+      const { error } = await supabase
+        .from('bids')
+        .update({ followed_up: true })
+        .eq('id', bid.id);
+
+      if (error) throw error;
+
+      // Use the onMessageClick prop instead of navigate
+      onMessageClick(
+        request.profile_id || request.user_id,
+        "Hi! I wanted to follow up about your request. Are you still looking for services?"
+      );
+
+    } catch (error) {
+      console.error('Error sending follow-up:', error);
+      toast.error('Failed to send follow-up');
+    }
+  };
+
   return (
-    <div className="request-display-mini text-center mb-4">
+    <div className="request-display-mini">
       <div className="request-content p-3">
         <div className="request-header">
           <h2 className="request-title">{getTitle()}</h2>
-          {bid.expirationStatus && (
-            <div className={`expiration-badge ${bid.expirationStatus.status}`}>
-              {bid.expirationStatus.text}
-            </div>
-          )}
+          <div className="header-actions">
+            {showFollowUpButton && (
+              <button
+                className="follow-up-btn"
+                onClick={handleFollowUp}
+              >
+                <span>Send Follow-up Message</span>
+              </button>
+            )}
+            {bid.expirationStatus && (
+              <div className={`expiration-badge ${bid.expirationStatus.status}`}>
+                {bid.expirationStatus.text}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="details-grid">
@@ -712,35 +760,6 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
           )}
           </div>
         </div>
-
-        {/* Show contact information for accepted bids */}
-        {(bid.status === "accepted" || bid.status === "approved") && (
-          <div className="contact-info-section compact-contact-info">
-            <div className="contact-info-row">
-              {request?.user_first_name && request?.user_last_name && (
-                <span className="contact-info-item">
-                  <b>{`${request.user_first_name} ${request.user_last_name}`}</b>
-                </span>
-              )}
-              {request?.user_email && (
-                <span className="contact-info-item">
-                  <a href={`mailto:${request.user_email}`} title="Email" className="contact-icon-link">
-                    <FaEnvelope />
-                  </a>
-                  <span>{request.user_email}</span>
-                </span>
-              )}
-              {request?.user_phone && (
-                <span className="contact-info-item">
-                  <a href={`sms:${request.user_phone}`} title="Text" className="contact-icon-link">
-                    <FaSms />
-                  </a>
-                  <span>{request.user_phone}</span>
-                </span>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Contract section only for approved bids */}
         {bid.status === 'approved' || bid.status === 'accepted' && (
@@ -1021,43 +1040,33 @@ const BidDisplayMini = ({ bid, request, onEditBid, openWithdrawModal, onContract
         )}
 
         <div className="action-buttons">
-          <button
-            className="withdraw-btn"
+          <button 
+            className="action-button secondary" 
             onClick={() => openWithdrawModal(bid.id)}
           >
             Withdraw
           </button>
-          <button
-            className="withdraw-btn"
+          {(bid.status === "approved" || bid.status === "accepted") && (
+            <button
+              className="action-button message"
+              onClick={() => onMessageClick(
+                request.profile_id || request.user_id,
+                null
+              )}
+            >
+              <FaCommentAlt />
+              Message
+            </button>
+          )}
+          <button 
+            className="action-button primary"
             onClick={() => onEditBid(bid.request_id, bid.id)}
           >
             View/Edit
           </button>
         </div>
 
-        {(bid.contract_url || bid.contract_content) && (
-          <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              style={{
-                background: '#fff',
-                color: '#dc3545',
-                border: '1px solid #dc3545',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}
-            >
-              <i className="fas fa-trash-alt"></i>
-              Remove Contract
-            </button>
-          </div>
-        )}
+        {/* Remove the follow-up button from here */}
 
       </div>
 

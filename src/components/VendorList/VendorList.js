@@ -14,7 +14,7 @@ import ImageErrorBoundary from '../Common/ImageErrorBoundary';
 const VendorList = ({ 
     vendors: initialVendors = [], // Add default empty array
     selectedCategory, 
-    sortOrder, 
+    sortOrder = 'recommended',
     preferredLocation, 
     categoryType, 
     currentPage, 
@@ -124,20 +124,20 @@ const VendorList = ({
         }
     }, [vendorsPerPage]);
 
-    // Add useEffect to call fetchVendors when needed
+    // Add useEffect to handle both initial vendors and sort order changes
     useEffect(() => {
-        console.log('Initial vendors received:', initialVendors);
+        console.log('Initial vendors received or sort order changed:', initialVendors);
         if (initialVendors && initialVendors.length > 0) {
             const sortedVendors = sortVendors(initialVendors);
             setVendors(sortedVendors);
             setTotalCount(sortedVendors.length);
             setLoading(false);
         }
-    }, [initialVendors]);
+    }, [initialVendors, sortOrder]);
 
-    // Remove or update the original fetchVendors useEffect
+    // Separate effect for fetching vendors
     useEffect(() => {
-        if (!initialVendors) { // Only fetch if no vendors provided
+        if (!initialVendors || initialVendors.length === 0) {
             fetchVendors();
         }
     }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, preferredLocation, preferredType]);

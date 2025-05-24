@@ -267,7 +267,7 @@ const BusinessDashSidebar = () => {
     }
   };
 
-  const handleMessageFromRequest = (userId) => {
+  const handleMessageFromRequest = (userId, preset = null) => {
     console.log("Message clicked for user:", userId);
     setActiveSection("messages");
     
@@ -276,13 +276,22 @@ const BusinessDashSidebar = () => {
       console.log("Setting selected chat for user:", userId);
       setSelectedChat({
         id: userId,
-        type: "client"
+        type: "client",
+        presetMessage: preset
       });
     }, 100);
   };
 
   // Helper function to normalize business_category
   const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
+
+  useEffect(() => {
+    // Add global handler for messaging
+    window.handleMessageFromRequest = handleMessageFromRequest;
+    return () => {
+      delete window.handleMessageFromRequest;
+    };
+  }, []);
 
   return (
     <div className="business-dashboard text-left">
@@ -419,7 +428,10 @@ const BusinessDashSidebar = () => {
               />
             )
           ) : activeSection === "bids" ? (
-            <BusinessBids bids={bids} />
+            <BusinessBids 
+              setActiveSection={setActiveSection} 
+              bids={bids}
+            />
           ) : activeSection === "onboarding" ? (
             <Onboarding setActiveSection={setActiveSection} />
           ) : activeSection === "portfolio" ? (
