@@ -132,6 +132,7 @@ import { subscribeToPush } from './hooks/usePushNotification';
 import WeddingPlannerDashboard from "./components/WeddingPlanner/WeddingPlannerDashboard";
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import VendorSelection from "./components/Request/VendorSelection";
+import WrongWithWeddings from "./components/Article/WrongWithWeddings";
 
 function App() {
   subscribeToPush();
@@ -368,6 +369,10 @@ function App() {
               <Route
                 path="/articles/related-articles"
                 element={<RelatedArticles />}
+              />
+              <Route
+                path="/articles/everything-wrong-with-the-wedding-industry"
+                element={<WrongWithWeddings />}
               />
               {/* Photography Routes */}
               <Route

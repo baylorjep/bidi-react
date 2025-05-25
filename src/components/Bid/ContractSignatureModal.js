@@ -11,7 +11,7 @@ import { saveAs } from 'file-saver';
 import html2pdf from 'html2pdf.js';
   
 // Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.js`;
 
 // Add worker initialization check
 const initializePdfWorker = async () => {
@@ -52,7 +52,8 @@ function ContractSignatureModal({
   bid,
   userRole, // "business" or "individual"
   testSource,
-  useTemplate = false // New prop to indicate if we should use the template
+  useTemplate = false, // New prop to indicate if we should use the template
+  onContractSigned
 }) {
   console.log('ContractSignatureModal rendered with:', {
     isOpen,
@@ -1378,6 +1379,26 @@ function ContractSignatureModal({
             >
               <i className="fas fa-download"></i>
               Download Contract (PDF)
+            </button>
+            <button
+              onClick={() => {
+                if (typeof onContractSigned === 'function') onContractSigned();
+                onClose();
+              }}
+              style={{
+                background: '#9633eb',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px',
+                fontWeight: 600,
+                fontSize: '15px',
+                cursor: 'pointer',
+                marginTop: '8px',
+                width: '100%'
+              }}
+            >
+              Done
             </button>
           </div>
         )}

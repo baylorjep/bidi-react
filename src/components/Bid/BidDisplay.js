@@ -108,6 +108,7 @@ function BidDisplay({
 
   const [lastViewedAt, setLastViewedAt] = useState(null);
   const [showEditNotification, setShowEditNotification] = useState(false);
+  const [showViewContractButton, setShowViewContractButton] = useState(false);
 
   const getExpirationStatus = (expirationDate) => {
     if (!expirationDate) return null;
@@ -1343,7 +1344,6 @@ useEffect(() => {
         onTimeSlotSelect={handleTimeSlotSelect}
         onFetchTimeSlots={fetchTimeSlots}
       />
-      {/* Contract Signature Modal */}
       <ContractSignatureModal
         isOpen={showContractModal}
         onClose={() => {
@@ -1353,10 +1353,32 @@ useEffect(() => {
         bid={bid}
         userRole={bid.business_id === currentUserId ? 'business' : 'individual'}
         useTemplate={useTemplate}
+        onContractSigned={() => setShowViewContractButton(true)}
       />
-    
+
+      {/* Preview Contract Button */}
+      {bid.business_signed_at && bid.client_signed_at && bid.contract_url && (
+        <button
+          className="view-contract-btn"
+          style={{
+            width: '100%',
+            padding: '12px',
+            background: '#9633eb',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
+            marginTop: '16px'
+          }}
+          onClick={() => window.open(bid.contract_url, '_blank')}
+        >
+          <i className="fas fa-file-pdf" style={{ marginRight: 8 }}></i>
+          Preview Contract
+        </button>
+      )}
     </div>
-    
   );
 }
 

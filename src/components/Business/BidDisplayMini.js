@@ -10,6 +10,8 @@ import { toast } from 'react-hot-toast';
 import { useState as useReactState } from 'react';
 import { FaInfoCircle } from "react-icons/fa";
 import html2pdf from 'html2pdf.js';
+import { createPortal } from "react-dom";
+import { Spinner } from "react-bootstrap";
 
 const BidDisplayMini = ({ 
   bid, 
@@ -52,6 +54,8 @@ const BidDisplayMini = ({
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showFollowUpButton, setShowFollowUpButton] = useState(false);
+  const [uploading, setUploading] = useState(false); // <-- add state
+  const [businessJustSigned, setBusinessJustSigned] = useState(false);
 
   useEffect(() => {
     if (!showInfoTooltip) return;
@@ -102,7 +106,20 @@ const BidDisplayMini = ({
   const handleContractChange = async (e) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
+
+    // Only allow PDF or Word docs
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Only PDF or Word documents (.pdf, .doc, .docx) are allowed.");
+      return;
+    }
+
     setSelectedFileName(file.name);
+    setUploading(true);
 
     try {
       // Get the current user
@@ -110,61 +127,22 @@ const BidDisplayMini = ({
       if (userError) throw userError;
       if (!user) throw new Error('User not authenticated');
 
-      // First update the bid status
-      const { error: statusError } = await supabase
-        .from('bids')
-        .update({ 
-          contract_status: 'pending_signatures'
-        })
-        .eq('id', bid.id);
+      // Use a unique file path per user and bid, similar to EditProfileModal
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/${bid.id}_contract.${fileExt}`;
 
-      if (statusError) throw statusError;
-
-      // Create a unique file path
-      const filePath = `${bid.id}_contract.pdf`;
-
-      // Try to upload with a different approach
+      // Upload to the 'contracts' bucket
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('contracts')
         .upload(filePath, file, {
-          contentType: 'application/pdf',
+          contentType: file.type,
           upsert: true
         });
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        
-        // If the error is about the bucket not existing, try to create it
-        if (uploadError.message.includes('bucket') || uploadError.statusCode === '404') {
-          // Try to create the bucket
-          const { error: createBucketError } = await supabase.storage.createBucket('contracts', {
-            public: true,
-            allowedMimeTypes: ['application/pdf'],
-            fileSizeLimit: 52428800 // 50MB
-          });
-
-          if (createBucketError) {
-            console.error('Error creating bucket:', createBucketError);
-            throw new Error('Failed to create storage bucket');
-          }
-
-          // Try upload again after creating bucket
-          const { data: retryUploadData, error: retryUploadError } = await supabase.storage
-            .from('contracts')
-            .upload(filePath, file, {
-              contentType: 'application/pdf',
-              upsert: true
-            });
-
-            if (retryUploadError) {
-              console.error('Retry upload error:', retryUploadError);
-              throw new Error('Failed to upload after creating bucket');
-            }
-
-            uploadData = retryUploadData;
-        } else {
-          throw new Error(`Upload failed: ${uploadError.message}`);
-        }
+        toast.error(uploadError.message || 'Failed to upload contract. Please try again.');
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
       if (!uploadData) {
@@ -197,14 +175,13 @@ const BidDisplayMini = ({
         onContractUpload(bid, file);
       }
 
-      // Show success message
       toast.success('Contract uploaded successfully');
-      
-      // Refresh the page to show the new contract
-      window.location.reload();
+      setShowContractModal(true);
     } catch (error) {
       console.error('Error uploading contract:', error);
       toast.error(error.message || 'Failed to upload contract. Please try again.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -270,106 +247,93 @@ const BidDisplayMini = ({
       const page = pages[0]; // Use first page by default
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       
-          // Format timestamps
-    const formatDate = (dateString) => {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true
-      });
-    };
+      // Format timestamps
+      const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: true
+        });
+      };
 
-
-
-    // Place business signature (bottom left)
-    if (bid.business_signature_image_url) {
-      // If we have a signature image URL, fetch and embed it
-      const response = await fetch(bid.business_signature_image_url);
-      const imageBytes = await response.arrayBuffer();
-      const image = await pdfDoc.embedPng(imageBytes);
-      const { width, height } = image.scale(0.5); // Scale down the image if needed
-      
-      page.drawImage(image, {
-        x: 50,
-        y: 70, // Moved up to make room for timestamp
-        width,
-        height
-      });
-
-      // Add timestamp below signature
-      page.drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
-        x: 50,
-        y: 50,
-        size: 10,
-        font,
-        color: rgb(0.4, 0.4, 0.4),
-      });
-    } else if (bid.business_signature) {
-      // Fallback to text signature
-      page.drawText(`Business: ${bid.business_signature}`, {
-        x: 50,
-        y: 70, // Moved up to make room for timestamp
-        size: 16,
-        font,
-        color: rgb(0, 0.4, 0),
-      });
-
-      // Add timestamp below signature
-      page.drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
-        x: 50,
-        y: 50,
-        size: 10,
-        font,
-        color: rgb(0.4, 0.4, 0.4),
-      });
-    }
-    
-    // Place client signature (bottom right)
-    const pageWidth = page.getWidth();
-    if (bid.client_signature_image) {
-      // If we have a signature image data URL
-      const imageBytes = await fetch(bid.client_signature_image).then(res => res.arrayBuffer());
-      const image = await pdfDoc.embedPng(imageBytes);
-      const { width, height } = image.scale(0.5); // Scale down the image if needed
-      
-      page.drawImage(image, {
-        x: pageWidth - width - 50,
-        y: 70, // Moved up to make room for timestamp
-        width,
-        height
-      });
-
-      // Add timestamp below signature
-      page.drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
-        x: pageWidth - 250,
-        y: 50,
-        size: 10,
-        font,
-        color: rgb(0.4, 0.4, 0.4),
-      });
-    } else if (bid.client_signature) {
-      // Fallback to text signature
-      page.drawText(`Client: ${bid.client_signature}`, {
-        x: pageWidth - 250,
-        y: 70, // Moved up to make room for timestamp
-        size: 16,
-        font,
-        color: rgb(0, 0, 0.6),
-      });
-
-      // Add timestamp below signature
-      page.drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
-        x: pageWidth - 250,
-        y: 50,
-        size: 10,
-        font,
-        color: rgb(0.4, 0.4, 0.4),
-      });
-    }
+      // Place business signature (bottom left)
+      if (bid.business_signature_image_url) {
+        // If we have a signature image URL, fetch and embed it
+        const response = await fetch(bid.business_signature_image_url);
+        const imageBytes = await response.arrayBuffer();
+        const image = await pdfDoc.embedPng(imageBytes);
+        const { width, height } = image.scale(0.5); // Scale down the image if needed
+        page.drawImage(image, {
+          x: 50,
+          y: 70, // Moved up to make room for timestamp
+          width,
+          height
+        });
+        // Add timestamp below signature
+        page.drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
+          x: 50,
+          y: 50,
+          size: 10,
+          font,
+          color: rgb(0.4, 0.4, 0.4),
+        });
+      } else if (bid.business_signature) {
+        // Fallback to text signature
+        page.drawText(`Business: ${bid.business_signature}`, {
+          x: 50,
+          y: 70, // Moved up to make room for timestamp
+          size: 16,
+          font,
+          color: rgb(0, 0.4, 0),
+        });
+        // Add timestamp below signature
+        page.drawText(`Signed on ${formatDate(bid.business_signed_at)}`, {
+          x: 50,
+          y: 50,
+          size: 10,
+          font,
+          color: rgb(0.4, 0.4, 0.4),
+        });
+      }
+      // Place client signature (bottom right)
+      const pageWidth = page.getWidth();
+      if (bid.client_signature_image_url) {
+        const imageBytes = await fetch(bid.client_signature_image_url).then(res => res.arrayBuffer());
+        const image = await pdfDoc.embedPng(imageBytes);
+        const { width, height } = image.scale(0.5);
+        page.drawImage(image, {
+          x: pageWidth - width - 50,
+          y: 70,
+          width,
+          height
+        });
+        page.drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
+          x: pageWidth - 250,
+          y: 50,
+          size: 10,
+          font,
+          color: rgb(0.4, 0.4, 0.4),
+        });
+      } else if (bid.client_signature) {
+        page.drawText(`Client: ${bid.client_signature}`, {
+          x: pageWidth - 250,
+          y: 70,
+          size: 16,
+          font,
+          color: rgb(0, 0, 0.6),
+        });
+        page.drawText(`Signed on ${formatDate(bid.client_signed_at)}`, {
+          x: pageWidth - 250,
+          y: 50,
+          size: 10,
+          font,
+          color: rgb(0.4, 0.4, 0.4),
+        });
+      }
       
       // Save and download the PDF
       const pdfBytes = await pdfDoc.save();
@@ -501,7 +465,7 @@ const BidDisplayMini = ({
       toast.success('Contract created successfully');
       
       // Refresh the page to show the new contract
-      window.location.reload();
+
     } catch (error) {
       console.error('Error creating contract:', error);
       toast.error(error.message || 'Failed to create contract. Please try again.');
@@ -542,7 +506,6 @@ const BidDisplayMini = ({
       }
 
       toast.success('Contract removed successfully');
-      window.location.reload();
     } catch (error) {
       console.error('Error removing contract:', error);
       toast.error('Failed to remove contract');
@@ -568,6 +531,33 @@ const BidDisplayMini = ({
       console.error('Error sending follow-up:', error);
       toast.error('Failed to send follow-up');
     }
+  };
+
+  // Pass a callback to ContractSignatureModal to detect when business signature is saved
+  const handleContractModalClose = (justSigned = false) => {
+    setShowContractModal(false);
+    if (justSigned) {
+      setBusinessJustSigned(true);
+    }
+  };
+
+  // Helper for portal modals
+  const PortalModal = ({ children }) => {
+    if (typeof window === "undefined") return null;
+    return createPortal(
+      <div style={{
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999 // very high to ensure above all
+      }}>
+        {children}
+      </div>,
+      document.body
+    );
   };
 
   return (
@@ -762,7 +752,7 @@ const BidDisplayMini = ({
         </div>
 
         {/* Contract section only for approved bids */}
-        {bid.status === 'approved' || bid.status === 'accepted' && (
+        {bid.status === 'approved' || bid.status === 'accepted' ? (
           <>
             <div className="contract-upload-section" style={{ margin: '10px 0' }}>
               {!bid.contract_url && !bid.contract_content && (
@@ -770,7 +760,7 @@ const BidDisplayMini = ({
                   <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                     <button
                       className="template-btn"
-                      onClick={() => setUseTemplate(true)}
+                      onClick={handleTemplateSelect}
                       style={{
                         background: '#9633eb',
                         color: '#fff',
@@ -806,72 +796,22 @@ const BidDisplayMini = ({
                       Upload File
                       <input
                         type="file"
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         onChange={handleContractChange}
                         className="file-upload-input"
                         style={{ display: 'none' }}
+                        disabled={uploading}
                       />
                     </label>
                   </div>
-                  
-                  {useTemplate && (
-                    <div style={{
-                      background: '#f8f9fa',
-                      padding: '16px',
-                      borderRadius: '8px',
-                      border: '1px solid #ddd',
-                      marginTop: '8px'
-                    }}>
-                      <h4 style={{ marginBottom: '12px', color: '#333' }}>Create Contract from Template</h4>
-                      <p style={{ marginBottom: '16px', color: '#666' }}>
-                        This will create a new contract using your template, automatically filling in the client's information.
-                      </p>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                        <button
-                          onClick={() => setUseTemplate(false)}
-                          style={{
-                            background: '#f8f9fa',
-                            color: '#666',
-                            border: '1px solid #ddd',
-                            padding: '8px 16px',
-                            borderRadius: '6px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleTemplateSelect}
-                          disabled={templateLoading}
-                          style={{
-                            background: '#9633eb',
-                            color: '#fff',
-                            border: 'none',
-                            padding: '8px 16px',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px'
-                          }}
-                        >
-                          {templateLoading ? (
-                            <>
-                              <i className="fas fa-spinner fa-spin"></i>
-                              Creating...
-                            </>
-                          ) : (
-                            <>
-                              <i className="fas fa-file-alt"></i>
-                              Create Contract
-                            </>
-                          )}
-                        </button>
-                      </div>
+                  {/* Spinner and upload status */}
+                  {uploading && (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 8 }}>
+                      <Spinner animation="border" size="sm" style={{ marginRight: 8 }} />
+                      <span style={{ color: '#9633eb', fontWeight: 500 }}>Uploading file...</span>
                     </div>
                   )}
-                  
-                  {selectedFileName && (
+                  {selectedFileName && !uploading && (
                     <span className="file-upload-filename" style={{
                       display: 'block',
                       textAlign: 'center',
@@ -884,12 +824,12 @@ const BidDisplayMini = ({
                 </div>
               )}
               
-              {/* Show Sign button if contract content exists but not signed */}
-              {bid.contract_content && !bid.business_signed_at && (
+              {/* Always show the sign button if a contract was just uploaded (showContractModal is true) */}
+              {(showContractModal || (bid.contract_url && !bid.business_signed_at)) && (
                 <button
                   className="contract-sign-btn"
-                  style={{ 
-                    margin: '16px 0', 
+                  style={{
+                    margin: '16px 0',
                     width: '100%',
                     background: '#9633eb',
                     color: '#fff',
@@ -908,125 +848,36 @@ const BidDisplayMini = ({
                   onClick={() => setShowContractModal(true)}
                 >
                   <i className="fas fa-signature"></i>
-                  Sign Contract
+                  Sign Contract as Business
                 </button>
               )}
-              
-              {bid.contract_url && (
-                <div style={{ marginTop: 8 }}>
-                  <a 
-                    href={bid.contract_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{
-                      color: '#9633eb',
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <i className="fas fa-file-contract"></i>
-                    View Uploaded Contract
-                  </a>
-                  {signed ? (
-                    <div style={{ marginTop: 8, color: 'green' }}>
-                      Signed by business: <b>{bid.business_signature || signature}</b>
-                    </div>
-                  ) : (
-                    <div style={{ marginTop: 8 }}>
-                      {signError && <div style={{ color: 'red', marginTop: 4 }}>{signError}</div>}
-                    </div>
-                  )}
+
+              {/* Show pending client signature button after business signs */}
+              {(businessJustSigned || (bid.business_signed_at && !bid.client_signed_at)) && (
+                <div
+                  style={{
+                    margin: '16px 0',
+                    padding: '12px',
+                    background: '#fffbe6',
+                    color: '#b8860b',
+                    border: '1px solid #ffe58f',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    fontWeight: '600',
+                    fontSize: '15px'
+                  }}
+                >
+                  Waiting for client signature...
                 </div>
               )}
+              
+              {/* ...existing code for waiting message, view contract, remove contract, etc... */}
             </div>
 
-            {bid.contract_url && (
-              <>
-                {/* Show sign button if business hasn't signed yet */}
-                {!bid.business_signed_at && (
-                  <button
-                    className="contract-sign-btn"
-                    style={{ 
-                      margin: '16px 0', 
-                      width: '100%',
-                      background: '#9633eb',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      fontWeight: '600',
-                      fontSize: '15px',
-                      boxShadow: '0 2px 4px rgba(150,51,235,0.1)'
-                    }}
-                    onClick={() => setShowContractModal(true)}
-                  >
-                    <i className="fas fa-signature"></i>
-                    Sign Contract as Business
-                  </button>
-                )}
-
-                {/* Show waiting message if business has signed and waiting for client */}
-                {bid.business_signed_at && !bid.client_signed_at && (
-                  <div
-                    style={{ 
-                      margin: '16px 0', 
-                      padding: '12px',
-                      background: '#f0f0f0',
-                      color: '#666',
-                      borderRadius: '8px',
-                      textAlign: 'center',
-                      fontSize: '14px',
-                      fontWeight: '500'
-                    }}
-                  >
-                    Waiting for client signature...
-                  </div>
-                )}
-
-                {/* Show single view button when both have signed */}
-                {bid.business_signed_at && bid.client_signed_at && (
-                  <button
-                    className="contract-sign-btn"
-                    style={{ 
-                      margin: '16px 0', 
-                      width: '100%',
-                      background: '#9633eb',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      fontWeight: '600',
-                      fontSize: '15px',
-                      boxShadow: '0 2px 4px rgba(150,51,235,0.1)'
-                    }}
-                    onClick={() => setShowContractModal(true)}
-                  >
-                    <i className="fas fa-file-contract"></i>
-                    View Contract
-                  </button>
-                )}
-              </>
-            )}
-
+            {/* ContractSignatureModal always rendered when showContractModal is true */}
             <ContractSignatureModal
               isOpen={showContractModal}
-              onClose={() => {
-                console.log('BidDisplayMini modal closing');
-                setShowContractModal(false);
-              }}
+              onClose={handleContractModalClose}
               bid={{
                 ...bid,
                 contract_url: bid.contract_url || null,
@@ -1035,10 +886,53 @@ const BidDisplayMini = ({
               userRole={'business'}
               testSource="BidDisplayMini"
               useTemplate={false}
+              // Optionally, you can add a prop to trigger callback on business sign
+              onBusinessSigned={() => setBusinessJustSigned(true)}
             />
+            {bid.business_signed_at && bid.client_signed_at && bid.contract_url && (
+  <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+    <button
+      className="view-contract-btn"
+      style={{
+        flex: 1,
+        padding: '12px',
+        background: '#9633eb',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        fontSize: '16px',
+        fontWeight: '600'
+      }}
+      onClick={() => window.open(bid.contract_url, '_blank')}
+    >
+      <i className="fas fa-file-pdf" style={{ marginRight: 8 }}></i>
+      Preview Contract
+    </button>
+    <button
+      className="remove-contract-btn"
+      style={{
+        flex: 1,
+        padding: '12px',
+        background: '#dc3545',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        fontSize: '16px',
+        fontWeight: '600'
+      }}
+      onClick={() => setShowDeleteConfirm(true)}
+    >
+      <i className="fas fa-trash" style={{ marginRight: 8 }}></i>
+      Remove Contract
+    </button>
+  </div>
+)}
           </>
-        )}
+        ) : null}
 
+        {/* Restore action buttons here so they always show */}
         <div className="action-buttons">
           <button 
             className="action-button secondary" 
@@ -1065,25 +959,11 @@ const BidDisplayMini = ({
             View/Edit
           </button>
         </div>
-
-        {/* Remove the follow-up button from here */}
-
       </div>
 
       {/* Template Preview Modal */}
       {showTemplatePreview && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
+        <PortalModal>
           <div style={{
             background: 'white',
             padding: '24px',
@@ -1260,22 +1140,11 @@ const BidDisplayMini = ({
               </button>
             </div>
           </div>
-        </div>
+        </PortalModal>
       )}
 
       {showDeleteConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
+        <PortalModal>
           <div style={{
             background: 'white',
             padding: '24px',
@@ -1316,7 +1185,7 @@ const BidDisplayMini = ({
               </button>
             </div>
           </div>
-        </div>
+        </PortalModal>
       )}
     </div>
   );
