@@ -7,7 +7,7 @@ import WithdrawConfirmationModal from "./WithdrawConfirmationModal";
 import BidDisplayMini from "./BidDisplayMini";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
-const BusinessBids = () => {
+const BusinessBids = ({ setActiveSection }) => {
   const [bids, setBids] = useState([]);
   const [requests, setRequests] = useState([]);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -345,6 +345,17 @@ const pendingBids = bids.filter((bid) =>
     }
   };
 
+  const handleMessageClick = (userId, preset) => {
+    // Switch to messages tab and pass the data
+    setActiveSection("messages");
+    // Add delay to ensure state updates
+    setTimeout(() => {
+      if (window.handleMessageFromRequest) {
+        window.handleMessageFromRequest(userId, preset);
+      }
+    }, 100);
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -371,6 +382,7 @@ const pendingBids = bids.filter((bid) =>
                     }
                     openWithdrawModal={openWithdrawModal}
                     onContractUpload={handleContractUpload}
+                    onMessageClick={handleMessageClick}  // Add this prop
                   />
                 )
               );

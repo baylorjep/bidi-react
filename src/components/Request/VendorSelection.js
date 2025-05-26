@@ -20,47 +20,70 @@ function VendorSelection() {
         const fetchVendors = async () => {
             try {
                 setLoading(true);
-                console.log('VendorSelection location state:', location.state);
                 const { requestId, table, categories } = location.state || {};
                 
+                const categoryMap = {
+                    'weddingplanning': 'wedding planner/coordinator',
+                    'beauty': 'beauty'
+                };
+
+                const searchCategory = categoryMap[category] || category;
+                console.log('Using search category:', searchCategory);
+
                 if (!requestId || !table) {
-                    console.error('Missing required state:', { requestId, table, state: location.state });
                     navigate('/success-request');
                     return;
                 }
 
-                // Debug: Fetch all videography requests
-                const { data: videographyRequests, error: videographyError } = await supabase
-                    .from('videography_requests')
-                    .select('*');
-                
-                if (videographyError) {
-                    console.error('Error fetching videography requests:', videographyError);
-                } else {
-                    console.log('All videography requests:', videographyRequests);
-                }
-
-                // Set up remaining categories for navigation
                 if (categories && Array.isArray(categories)) {
-                    // The first category in the array is the current one, so we take the rest
                     setRemainingCategories(categories.slice(1));
                 }
 
-                console.log('Searching for category:', category);
-
+                // First get the vendors
                 const { data: vendorsData, error: vendorsError } = await supabase
                     .from('business_profiles')
                     .select('*')
-                    .contains('business_category', [category]);
+                    .filter('business_category', 'cs', `{${searchCategory}}`);
 
                 if (vendorsError) throw vendorsError;
 
-                console.log('Vendors found:', vendorsData?.length);
-                setVendors(vendorsData || []);
-                setTotalCount(vendorsData?.length || 0);
+                if (!vendorsData?.length) {
+                    setVendors([]);
+                    setTotalCount(0);
+                    return;
+                }
+
+                // Then get their photos
+                const { data: photosData, error: photosError } = await supabase
+                    .from('profile_photos')
+                    .select('*')
+                    .in('user_id', vendorsData.map(v => v.id));
+
+                if (photosError) throw photosError;
+
+                // Combine vendors with their photos
+                const vendorsWithPhotos = vendorsData.map(vendor => {
+                    const vendorPhotos = photosData?.filter(photo => photo.user_id === vendor.id) || [];
+                    const profilePhoto = vendorPhotos.find(photo => photo.photo_type === 'profile');
+                    const portfolioPhotos = vendorPhotos
+                        .filter(photo => photo.photo_type === 'portfolio' || photo.photo_type === 'video')
+                        .map(photo => photo.photo_url);
+
+                    return {
+                        ...vendor,
+                        profile_photo_url: profilePhoto?.photo_url || '/images/default.jpg',
+                        portfolio_photos: portfolioPhotos,
+                        has_more_photos: portfolioPhotos.length > 10
+                    };
+                });
+
+                console.log('Vendors with photos:', vendorsWithPhotos);
+                setVendors(vendorsWithPhotos);
+                setTotalCount(vendorsWithPhotos.length);
             } catch (err) {
-                console.error('Error fetching vendors:', err);
+                console.error('Error:', err);
                 setError(err.message);
+                setVendors([]);
             } finally {
                 setLoading(false);
             }
@@ -81,39 +104,30 @@ function VendorSelection() {
         try {
             const { requestId, table, categories, requestData } = location.state || {};
             
-            // Add debug logging
-            console.log('Saving vendors for:', {
+            console.log('HandleDone called with:', {
                 requestId,
                 table,
-                selectedVendors: selectedVendors.map(v => v.id),
-                category
+                category,
+                selectedVendors,
+                locationState: location.state
             });
             
-            // Save selected vendor IDs to the database as a UUID array
             if (selectedVendors.length > 0) {
-                // First, let's check if the record exists and our permissions
-                const { data: existingRecord, error: fetchError } = await supabase
+                // First verify the current state
+                const { data: beforeUpdate } = await supabase
                     .from(table)
                     .select('*')
                     .eq('id', requestId)
                     .single();
+                
+                console.log('Before update:', beforeUpdate);
 
-                if (fetchError) {
-                    console.error('Error fetching existing record:', fetchError);
-                    if (fetchError.code === 'PGRST301') {
-                        console.error('RLS policy error - permission denied');
-                        throw new Error('You do not have permission to access this record');
-                    }
-                    throw fetchError;
-                }
-
-                console.log('Existing record:', existingRecord);
-
-                // Ensure vendor_id is an array
+                // Prepare vendor IDs array and try both array and stringified formats
                 const vendorIds = selectedVendors.map(vendor => vendor.id);
-                console.log('Saving vendor IDs:', vendorIds);
+                console.log('Attempting to save vendor IDs:', vendorIds);
 
-                const { data: updateData, error } = await supabase
+                // Try update with direct array first
+                const { data: updateData, error: updateError } = await supabase
                     .from(table)
                     .update({ 
                         vendor_id: vendorIds
@@ -121,20 +135,42 @@ function VendorSelection() {
                     .eq('id', requestId)
                     .select();
 
-                if (error) {
-                    console.error('Error saving selected vendors:', error);
-                    if (error.code === 'PGRST301') {
-                        console.error('RLS policy error - permission denied');
-                        throw new Error('You do not have permission to update this record');
-                    }
-                    throw error;
+                if (updateError) {
+                    console.error('Error with array update, trying stringified:', updateError);
+                    // If array update fails, try stringified
+                    const { data: stringUpdate, error: stringError } = await supabase
+                        .from(table)
+                        .update({ 
+                            vendor_id: JSON.stringify(vendorIds)
+                        })
+                        .eq('id', requestId)
+                        .select();
+
+                    if (stringError) throw stringError;
+                    console.log('Stringified update successful:', stringUpdate);
+                } else {
+                    console.log('Array update successful:', updateData);
                 }
+
+                // Final verification
+                const { data: afterUpdate, error: verifyError } = await supabase
+                    .from(table)
+                    .select('*')
+                    .eq('id', requestId)
+                    .single();
+
+                if (verifyError) {
+                    throw verifyError;
+                }
+
+                console.log('Final verification:', afterUpdate);
                 
-                console.log('Update response:', updateData);
-                console.log('Successfully saved vendors for', table);
+                if (!afterUpdate.vendor_id) {
+                    throw new Error('Vendor IDs missing after update');
+                }
             }
 
-            // If there are more categories, navigate to the next one
+            // Continue with navigation
             if (remainingCategories.length > 0) {
                 const nextCategory = remainingCategories[0];
                 navigate(`/vendor-selection/${nextCategory.id}`, {
@@ -146,12 +182,13 @@ function VendorSelection() {
                     }
                 });
             } else {
-                // If no more categories, navigate to the bids page
                 navigate('/bids');
             }
         } catch (err) {
             console.error('Error in handleDone:', err);
-            setError('Failed to save selected vendors. Please try again.');
+            setError(`Failed to save vendors: ${err.message}`);
+            // Show error to user but don't navigate away
+            alert('There was an error saving your vendor selection. Please try again.');
         }
     };
 
@@ -185,6 +222,12 @@ function VendorSelection() {
     return (
         <div className="vendor-selection-container">
             <div className="vendor-selection-header">
+                    <button
+                    onClick={() => navigate(-1)}
+                    className="back-button"
+                    >
+                        Go Back
+                    </button>
                 <div className="vendor-selection-title-row">
                     <h1 className="vendor-selection-title">
                         {category.charAt(0).toUpperCase() + category.slice(1)} Vendors
@@ -195,6 +238,7 @@ function VendorSelection() {
                         </div>
                     )}
                 </div>
+
                 <div className="done-button-container">
                     <button
                         onClick={handleDone}
@@ -211,7 +255,7 @@ function VendorSelection() {
                 </div>
             </div>
             
-            {vendors.length === 0 ? (
+            {!loading && vendors.length === 0 ? (
                 <div className="no-vendors-container">
                     <p className="no-vendors-message">No vendors found for this category.</p>
                     <button
@@ -223,6 +267,7 @@ function VendorSelection() {
                 </div>
             ) : (
                 <VendorList
+                    vendors={vendors || []}  // Ensure we always pass an array
                     selectedCategory={category}
                     sortOrder="rating"
                     preferredLocation={null}
@@ -243,4 +288,4 @@ function VendorSelection() {
     );
 }
 
-export default VendorSelection; 
+export default VendorSelection;

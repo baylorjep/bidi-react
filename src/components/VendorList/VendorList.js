@@ -12,8 +12,9 @@ import LoadingPlaceholder from '../Common/LoadingPlaceholder';
 import ImageErrorBoundary from '../Common/ImageErrorBoundary';
 
 const VendorList = ({ 
+    vendors: initialVendors = [], // Add default empty array
     selectedCategory, 
-    sortOrder, 
+    sortOrder = 'recommended',
     preferredLocation, 
     categoryType, 
     currentPage, 
@@ -27,7 +28,7 @@ const VendorList = ({
     customButtonText = "Get a Tailored Bid",
     showSelectionButton = false
 }) => {
-    const [vendors, setVendors] = useState([]);
+    const [vendors, setVendors] = useState([]);  // Initialize as empty array
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMedia, setModalMedia] = useState(null);
@@ -123,9 +124,22 @@ const VendorList = ({
         }
     }, [vendorsPerPage]);
 
-    // Add useEffect to call fetchVendors when needed
+    // Add useEffect to handle both initial vendors and sort order changes
     useEffect(() => {
-        fetchVendors();
+        console.log('Initial vendors received or sort order changed:', initialVendors);
+        if (initialVendors && initialVendors.length > 0) {
+            const sortedVendors = sortVendors(initialVendors);
+            setVendors(sortedVendors);
+            setTotalCount(sortedVendors.length);
+            setLoading(false);
+        }
+    }, [initialVendors, sortOrder]);
+
+    // Separate effect for fetching vendors
+    useEffect(() => {
+        if (!initialVendors || initialVendors.length === 0) {
+            fetchVendors();
+        }
     }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, preferredLocation, preferredType]);
 
     // Add effect to check when all vendors are loaded
@@ -815,7 +829,7 @@ const VendorList = ({
 
     return (
         <div className="vendor-list">
-            {vendors.map(vendor => (
+            {Array.isArray(vendors) && vendors.map(vendor => (
                 <div 
                     key={vendor.id} 
                     className="vendor-card" 
@@ -823,9 +837,11 @@ const VendorList = ({
                     ref={el => vendorRefs.current[vendor.id] = el}
                 >
                     <div className="portfolio-images" style={{ minHeight: '300px' }}>
-                        {vendor.portfolio_photos.length > 0 ? (
+                        {(vendor.portfolio_photos && vendor.portfolio_photos.length > 0) ? (
                             <Slider {...settings}>
-                                {vendor.portfolio_photos.map((item, index) => renderImage(item, index, vendor.id))}
+                                {vendor.portfolio_photos.map((item, index) => 
+                                    item ? renderImage(item, index, vendor.id) : null
+                                )}
                                 {vendor.has_more_photos && (
                                     <div className="loading-more-photos" 
                                          style={{ 

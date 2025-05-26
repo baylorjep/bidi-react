@@ -1273,25 +1273,6 @@ const styles = `
   gap: 12px;
 }
 
-.vendor-button {
-  background: #9633eb;
-  color: #fff;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-}
-
-.vendor-button:hover {
-  background: #7a29c0;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(150,51,235,0.2);
-}
-
 .vendor-button.selected {
   background: #4CAF50;
 }

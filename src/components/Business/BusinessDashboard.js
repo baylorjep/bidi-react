@@ -267,8 +267,31 @@ const BusinessDashSidebar = () => {
     }
   };
 
+  const handleMessageFromRequest = (userId, preset = null) => {
+    console.log("Message clicked for user:", userId);
+    setActiveSection("messages");
+    
+    // Add delay to ensure state updates
+    setTimeout(() => {
+      console.log("Setting selected chat for user:", userId);
+      setSelectedChat({
+        id: userId,
+        type: "client",
+        presetMessage: preset
+      });
+    }, 100);
+  };
+
   // Helper function to normalize business_category
   const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
+
+  useEffect(() => {
+    // Add global handler for messaging
+    window.handleMessageFromRequest = handleMessageFromRequest;
+    return () => {
+      delete window.handleMessageFromRequest;
+    };
+  }, []);
 
   return (
     <div className="business-dashboard text-left">
@@ -377,15 +400,17 @@ const BusinessDashSidebar = () => {
 
         {/* Main Dashboard */}
         <main className="dashboard-main">
-          {activeSection === "dashboard" && <OpenRequests />}
+          {activeSection === "dashboard" && (
+            <OpenRequests 
+              onMessageClick={handleMessageFromRequest}
+            />
+          )}
           {activeSection === "messages" ? (
             isMobile ? (
               selectedChat ? (
                 <MessagingView
                   currentUserId={user?.id}
                   businessId={selectedChat.id}
-                  businessName={selectedChat.name}
-                  profileImage={selectedChat.profileImage}
                   onBack={handleBackFromChat}
                 />
               ) : (
@@ -403,7 +428,10 @@ const BusinessDashSidebar = () => {
               />
             )
           ) : activeSection === "bids" ? (
-            <BusinessBids bids={bids} />
+            <BusinessBids 
+              setActiveSection={setActiveSection} 
+              bids={bids}
+            />
           ) : activeSection === "onboarding" ? (
             <Onboarding setActiveSection={setActiveSection} />
           ) : activeSection === "portfolio" ? (
