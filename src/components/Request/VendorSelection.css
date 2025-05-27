@@ -1,0 +1,223 @@
+.vendor-selection-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.vendor-selection-header {
+    margin-bottom: 30px;
+}
+
+.vendor-selection-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.vendor-selection-title {
+    font-size: 2rem;
+    margin: 0;
+    color: #333;
+}
+
+.vendor-selection-count {
+    background: #9633eb;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.done-button-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 20px;
+}
+
+.done-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #9633eb;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+    max-width: 400px;
+    transition: background-color 0.2s;
+}
+
+.done-button:hover {
+    background: #7a29bc;
+}
+
+.done-button i {
+    font-size: 1.125rem;
+}
+
+.done-button span {
+    font-weight: 600;
+}
+
+.no-vendors-container {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.no-vendors-message {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.back-button {
+    background: white;
+    color: #9633eb;
+    border: 1px solid #9633eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.back-button:hover {
+    background: #f3f3f3;
+    color: #7a29bc;
+}
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
+.loading-spinner {
+    text-align: center;
+}
+
+.loading-spinner-animation {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #9633eb;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+.loading-text {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.error-container {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+    .vendor-selection-container {
+        padding: 10px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .vendor-selection-header {
+        margin-bottom: 20px;
+        padding: 0 10px;
+    }
+
+    .vendor-selection-title {
+        font-size: 1.5rem;
+        word-break: break-word;
+        width: 100%;
+    }
+
+    .vendor-selection-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .vendor-selection-count {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+        width: fit-content;
+    }
+
+    .done-button-container {
+        width: 100%;
+        padding: 0 10px;
+    }
+
+    .done-button {
+        width: 100%;
+        min-height: 44px;
+        font-size: 0.9rem;
+        padding: 10px 15px;
+    }
+
+    .done-button i {
+        font-size: 1rem;
+    }
+
+    .done-button span {
+        font-size: 0.9rem;
+        white-space: normal;
+        text-align: center;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .vendor-selection-container {
+        padding: 8px;
+    }
+
+    .vendor-selection-title {
+        font-size: 1.3rem;
+    }
+
+    .vendor-selection-count {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+
+    .done-button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Fix touch events on mobile */
+@media (hover: none) and (pointer: coarse) {
+    .vendor-selection-container {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .done-button {
+        touch-action: manipulation;
+    }
+}

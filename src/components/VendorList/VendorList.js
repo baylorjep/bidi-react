@@ -12,17 +12,23 @@ import LoadingPlaceholder from '../Common/LoadingPlaceholder';
 import ImageErrorBoundary from '../Common/ImageErrorBoundary';
 
 const VendorList = ({ 
+    vendors: initialVendors = [], // Add default empty array
     selectedCategory, 
-    sortOrder, 
+    sortOrder = 'recommended',
     preferredLocation, 
     categoryType, 
     currentPage, 
     vendorsPerPage,
     setCurrentPage,
     setTotalCount,
-    preferredType 
+    preferredType,
+    onVendorSelect,
+    onVendorDeselect,
+    selectedVendors = [],
+    customButtonText = "Get a Tailored Bid",
+    showSelectionButton = false
 }) => {
-    const [vendors, setVendors] = useState([]);
+    const [vendors, setVendors] = useState([]);  // Initialize as empty array
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMedia, setModalMedia] = useState(null);
@@ -118,9 +124,22 @@ const VendorList = ({
         }
     }, [vendorsPerPage]);
 
-    // Add useEffect to call fetchVendors when needed
+    // Add useEffect to handle both initial vendors and sort order changes
     useEffect(() => {
-        fetchVendors();
+        console.log('Initial vendors received or sort order changed:', initialVendors);
+        if (initialVendors && initialVendors.length > 0) {
+            const sortedVendors = sortVendors(initialVendors);
+            setVendors(sortedVendors);
+            setTotalCount(sortedVendors.length);
+            setLoading(false);
+        }
+    }, [initialVendors, sortOrder]);
+
+    // Separate effect for fetching vendors
+    useEffect(() => {
+        if (!initialVendors || initialVendors.length === 0) {
+            fetchVendors();
+        }
     }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, preferredLocation, preferredType]);
 
     // Add effect to check when all vendors are loaded
@@ -600,14 +619,34 @@ const VendorList = ({
     };
 
     const handleGetQuote = (vendor) => {
+        // Format the vendor data as expected by MasterRequestFlow
         const vendorData = {
-            vendor,
+            vendor: {
+                id: vendor.id,
+                business_name: vendor.business_name,
+                business_category: vendor.business_category,
+                business_address: vendor.business_address,
+                profile_photo_url: vendor.profile_photo_url
+            },
             image: vendor.profile_photo_url
         };
 
         // Format the category to match the expected format in RequestCategories.js
-        const formattedCategory = vendor.business_category.join(', ').charAt(0).toUpperCase() + 
-            vendor.business_category.join(', ').slice(1).toLowerCase();
+        let formattedCategory;
+        if (Array.isArray(vendor.business_category)) {
+            formattedCategory = vendor.business_category[0];
+        } else {
+            formattedCategory = vendor.business_category;
+        }
+        if (formattedCategory) {
+            if (formattedCategory.toLowerCase().includes('wedding planner')) {
+                formattedCategory = 'WeddingPlanning';
+            } else if (formattedCategory.toLowerCase().includes('beauty')) {
+                formattedCategory = 'HairAndMakeup';
+            } else {
+                formattedCategory = formattedCategory.charAt(0).toUpperCase() + formattedCategory.slice(1).replace(/\s/g, '');
+            }
+        }
 
         // Navigate to the master request flow with the vendor data and selected category
         navigate("/master-request-flow", { 
@@ -791,9 +830,25 @@ const VendorList = ({
         );
     };
 
+    const isVendorSelected = (vendorId) => {
+        return selectedVendors.some(v => v.id === vendorId);
+    };
+
+    const handleVendorSelect = (vendor) => {
+        if (showSelectionButton) {
+            if (isVendorSelected(vendor.id)) {
+                onVendorDeselect?.(vendor);
+            } else {
+                onVendorSelect?.(vendor);
+            }
+        } else {
+            handleGetQuote(vendor);
+        }
+    };
+
     return (
         <div className="vendor-list">
-            {vendors.map(vendor => (
+            {Array.isArray(vendors) && vendors.map(vendor => (
                 <div 
                     key={vendor.id} 
                     className="vendor-card" 
@@ -801,9 +856,11 @@ const VendorList = ({
                     ref={el => vendorRefs.current[vendor.id] = el}
                 >
                     <div className="portfolio-images" style={{ minHeight: '300px' }}>
-                        {vendor.portfolio_photos.length > 0 ? (
+                        {(vendor.portfolio_photos && vendor.portfolio_photos.length > 0) ? (
                             <Slider {...settings}>
-                                {vendor.portfolio_photos.map((item, index) => renderImage(item, index, vendor.id))}
+                                {vendor.portfolio_photos.map((item, index) => 
+                                    item ? renderImage(item, index, vendor.id) : null
+                                )}
                                 {vendor.has_more_photos && (
                                     <div className="loading-more-photos" 
                                          style={{ 
@@ -912,7 +969,15 @@ const VendorList = ({
                             </ul>
                         )}
                         <div className="vendor-buttons">
-                            <button className="vendor-button" onClick={() => handleGetQuote(vendor)}>Get a Tailored Quote</button>
+                            <button 
+                                className={`vendor-button ${isVendorSelected(vendor.id) ? 'selected' : ''}`}
+                                onClick={() => handleVendorSelect(vendor)}
+                            >
+                                {showSelectionButton 
+                                    ? (isVendorSelected(vendor.id) ? 'Selected ✓' : customButtonText)
+                                    : 'Get a Tailored Bid'
+                                }
+                            </button>
                             <button className="vendor-button-secondary" onClick={() => handleMoreInfo(vendor)}>See Profile</button>
                         </div>
                     </div>

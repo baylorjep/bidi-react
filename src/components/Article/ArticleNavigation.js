@@ -89,6 +89,13 @@ const Articles = () => {
             description: 'Navigate the process of finding and hiring the perfect wedding videographer in Utah. Compare styles, packages, and prices while learning what questions to ask potential videographers. Includes insights on local venues, permits, and latest filming trends across Salt Lake City, Park City, and beyond.',
             image: 'https://wsstgprdphotosonic01.blob.core.windows.net/photosonic/77bcb9b6-4c3e-4211-90c8-0d38283a4b73.png',
             date: '2024-02-01'
+        },
+        {
+            id: 'everything-wrong-with-the-wedding-industry',
+            title: '(Almost) Everything Wrong with the Wedding Industry, and Where We Go to Fix It',
+            description: 'A critical look at the modern wedding industry: costs, time, and alternatives. By Luci Sullivan. Solutions for couples seeking a better way to plan.',
+            image: 'https://images.pexels.com/photos/17315419/pexels-photo-17315419.jpeg',
+            date: '2025-05-24'
         }
     ];
 

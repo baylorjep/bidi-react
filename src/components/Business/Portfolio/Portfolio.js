@@ -90,6 +90,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
   const descriptionRef = useRef(null);
+  const [isSelected, setIsSelected] = useState(false);
+  // Add this state to detect vendor selection context
+  const [fromVendorSelection, setFromVendorSelection] = useState(false);
 
   // Add slider settings
   const sliderSettings = {
@@ -415,6 +418,10 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         id: location.state.bidId // Add the bid ID to the bid data
       });
     }
+    // Detect if coming from vendor selection
+    if (location.state?.fromVendorSelection) {
+      setFromVendorSelection(true);
+    }
   }, [location.state]);
 
   useEffect(() => {
@@ -464,25 +471,42 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   };
 
   const handleGetQuote = () => {
+    // Format the vendor data as expected by MasterRequestFlow
     const vendorData = {
-      vendor: business,
-      image: profileImage,
+      vendor: {
+        id: business.id,
+        business_name: business.business_name,
+        business_category: business.business_category,
+        business_address: business.business_address,
+        profile_photo_url: profileImage
+      },
+      image: profileImage
     };
 
     // Format the category to match the expected format in RequestCategories.js
-    const formattedCategory = business.business_category === 'wedding planner/coordinator' 
-        ? 'WeddingPlanning'
-        : business.business_category === 'beauty'
-            ? 'HairAndMakeup'
-            : business.business_category.charAt(0).toUpperCase() + 
-              business.business_category.slice(1).toLowerCase();
+    let formattedCategory;
+    if (Array.isArray(business.business_category)) {
+      formattedCategory = business.business_category[0];
+    } else {
+      formattedCategory = business.business_category;
+    }
+    // Map to canonical category names if needed
+    if (formattedCategory) {
+      if (formattedCategory.toLowerCase().includes('wedding planner')) {
+        formattedCategory = 'WeddingPlanning';
+      } else if (formattedCategory.toLowerCase().includes('beauty')) {
+        formattedCategory = 'HairAndMakeup';
+      } else {
+        formattedCategory = formattedCategory.charAt(0).toUpperCase() + formattedCategory.slice(1).replace(/\s/g, '');
+      }
+    }
 
     // Navigate to the master request flow with the vendor data and selected category
     navigate("/master-request-flow", { 
-        state: { 
-            vendor: vendorData,
-            selectedCategories: [formattedCategory]
-        }
+      state: { 
+        vendor: vendorData,
+        selectedCategories: [formattedCategory]
+      }
     });
   };
 
@@ -571,7 +595,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       return;
     }
 
-    navigate('/my-dashboard', {
+    navigate('/individual-dashboard', {
       state: {
         activeSection: 'messages',
         selectedChat: {
@@ -585,7 +609,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    navigate('/my-dashboard', {
+    navigate('/individual-dashboard', {
       state: {
         activeSection: 'messages',
         selectedChat: {
@@ -675,6 +699,16 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     }
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleToggleSelection = () => {
+    setIsSelected(!isSelected);
+    // You can add additional logic here to handle the selection state
+    // For example, adding/removing from a global selected vendors list
+  };
+
   if (loading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -687,6 +721,10 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
   return (
     <>
+      <div className="portfolio-back-button" onClick={handleBack}>
+        <i className="fas fa-arrow-left"></i> Back
+      </div>
+
       <EditProfileModal
         isOpen={modalOpen}
         onClose={handleModalClose}
@@ -1095,16 +1133,35 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                         </button>
                       </div>
                     </div>
+                  ) : fromVendorSelection ? (
+                    <div className="get-a-bid-container">
+                      <h2 className="get-quote-header">Add to Vendor List</h2>
+                      <div className="vendor-button-container">
+                        <button 
+                          className={`vendor-button ${isSelected ? 'selected' : ''}`} 
+                          onClick={handleToggleSelection}
+                        >
+                          {isSelected ? 'Selected ✓' : 'Add to Vendor List'}
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <div className="get-a-bid-container">
-                      <h2 className="get-quote-header">Need a Bid?</h2>
-                      <div className="vendor-button-container">
-                        <button className="vendor-button" onClick={handleGetQuote}>
+                      <h2 className="get-quote-header">Chat with {business.business_name}</h2>
+                      <div className="vendor-button-container" style={{ flexDirection: "column", gap: "16px",  }}>
+                        <button 
+                          className="vendor-button"
+                          onClick={handleGetQuote}
+                        >
                           Get a Tailored Bid
                         </button>
-                        <button className="chat-button" onClick={handleChatClick}>
-                          <ChatIcon style={{ fontSize: '20px' }} />
-                          Chat with Vendor
+                        <button
+                          className="vendor-button"
+                          style={{ background: "#A328F4", color: "#fff" }}
+                          onClick={handleChatClick}
+                        >
+                          <ChatIcon style={{ fontSize: '20px', marginRight: 6 }} />
+                          Message
                         </button>
                       </div>
                     </div>
@@ -1208,5 +1265,68 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     </>
   );
 };
+
+const styles = `
+.portfolio-back-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 1000;
+  transition: all 0.2s ease;
+}
+
+.portfolio-back-button:hover {
+  background: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.portfolio-back-button i {
+  font-size: 16px;
+}
+
+.get-a-bid-container {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.get-quote-header {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.vendor-button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vendor-button.selected {
+  background: #4CAF50;
+}
+
+.vendor-button.selected:hover {
+  background: #388e3c;
+}
+`;
+
+const styleSheet = document.createElement("style");
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
 
 export default Portfolio;

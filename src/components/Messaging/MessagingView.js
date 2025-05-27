@@ -52,6 +52,11 @@ export default function MessagingView({
     if (location.state?.profileImage) {
       setProfilePhoto(location.state.profileImage);
     }
+    
+    // Add preset message if coming from follow-up
+    if (location.state?.presetMessage && location.state?.fromFollowUp) {
+      setNewMessage(location.state.presetMessage);
+    }
   }, [location.state]);
 
   // Fetch business/individual information

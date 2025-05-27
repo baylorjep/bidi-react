@@ -62,7 +62,7 @@ import UpdatePassword from "./components/Profile/UpdatePassword";
 import ProfilePage from "./components/Profile/Profile";
 
 // Individual Imports
-import MyDashboard from "./components/Individual/MyDashboard";
+
 import MyRequests from "./components/Individual/MyRequests";
 import EditRequest from "./components/Individual/EditRequest";
 import IndividualDashboard from "./components/Individual/IndividualDashboard";
@@ -131,6 +131,8 @@ import WeddingVibeQuiz from "./pages/WeddingVibeQuiz";
 import { subscribeToPush } from './hooks/usePushNotification';
 import WeddingPlannerDashboard from "./components/WeddingPlanner/WeddingPlannerDashboard";
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import VendorSelection from "./components/Request/VendorSelection";
+import WrongWithWeddings from "./components/Article/WrongWithWeddings";
 
 function App() {
   subscribeToPush();
@@ -368,6 +370,10 @@ function App() {
                 path="/articles/related-articles"
                 element={<RelatedArticles />}
               />
+              <Route
+                path="/articles/everything-wrong-with-the-wedding-industry"
+                element={<WrongWithWeddings />}
+              />
               {/* Photography Routes */}
               <Route
                 path="/request/photography"
@@ -428,6 +434,7 @@ function App() {
                 path="/wedding-vibe-quiz"
                 element={<WeddingVibeQuizPage />}
               />
+              <Route path="/vendor-selection/:category" element={<VendorSelection />} />
             </Routes>          </div>
           <Footer />
           <ToastContainer

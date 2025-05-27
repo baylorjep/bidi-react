@@ -229,7 +229,7 @@ export default function ChatInterface({ initialChat }) {
                 </div>
                 <div className="chat-list-footer">
                   <div className="message-preview">{c.last_message}</div>
-                  <div className="message-time">
+                  <div className="message-time" style={{ color: "black"}}>
                     {new Date(c.last_message_time).toLocaleTimeString('en-US', {
                       hour: 'numeric',
                       minute: '2-digit',

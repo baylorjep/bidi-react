@@ -18,13 +18,19 @@ import AuthModal from "./Authentication/AuthModal";
 import SignInModal from "./Event/SignInModal";
 import { v4 as uuidv4 } from 'uuid';
 import { saveFormData, loadFormData, clearFormData } from '../../utils/localStorage';
+import { toast } from 'react-toastify';
 
 function MasterRequestFlow() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Accept both new and legacy vendor info structure
+  const vendorData = location.state?.vendor?.vendor
+    ? location.state.vendor
+    : location.state?.vendor
+      ? { vendor: location.state.vendor, image: location.state.vendor.profile_photo_url }
+      : null;
   const selectedCategories = location.state?.selectedCategories || [];
-  const vendorData = location.state?.vendor || null; // Add this line to capture vendor data
   const [completedCategories, setCompletedCategories] = useState([]);
   const [showReview, setShowReview] = useState(false);
 
@@ -88,6 +94,7 @@ function MasterRequestFlow() {
       }
     },
     selectedRequests: selectedCategories,
+    vendor: vendorData // Add vendor data to form state
   });
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -108,6 +115,16 @@ function MasterRequestFlow() {
   const [error, setError] = useState(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // Add state for request IDs
+  const [requestIds, setRequestIds] = useState({
+    photography: null,
+    videography: null,
+    catering: null,
+    dj: null,
+    florist: null,
+    beauty: null,
+    weddingPlanning: null
+  });
 
   // Helper function to check request type case-insensitively
   const isRequestType = (request, type) => {
@@ -389,12 +406,16 @@ function MasterRequestFlow() {
 
   const handleContinueToNextCategory = () => {
     setShowReview(false);
-    const remainingCategories = selectedCategories.filter(
-      cat => !completedCategories.includes(cat)
+    // Add current category to completed categories
+    setCompletedCategories(prev => [...prev, selectedCategories[currentStep - 1]]);
+    
+    // Find the next category that hasn't been completed
+    const remainingCategories = formData.selectedRequests.filter(
+      cat => !completedCategories.includes(cat) && cat !== selectedCategories[currentStep - 1]
     );
     
     if (remainingCategories.length > 0) {
-      const nextCategoryIndex = selectedCategories.indexOf(remainingCategories[0]);
+      const nextCategoryIndex = formData.selectedRequests.indexOf(remainingCategories[0]);
       setCurrentStep(nextCategoryIndex + 1);
       // Reset sub-steps for the new category
       setPhotographySubStep(0);
@@ -404,6 +425,11 @@ function MasterRequestFlow() {
       setFloristSubStep(0);
       setHairAndMakeupSubStep(0);
       setWeddingPlanningSubStep(0);
+      // Preserve vendorData in the state
+      setFormData(prev => ({
+        ...prev,
+        vendor: vendorData
+      }));
     }
   };
 
@@ -520,49 +546,62 @@ function MasterRequestFlow() {
     }
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    setError(null);
-
+  // Add email notification function
+  const sendEmailNotification = async (recipientEmail, subject, htmlContent) => {
     try {
+      await fetch('https://bidi-express.vercel.app/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ recipientEmail, subject, htmlContent }),
+      });
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      let submissionSuccess = false;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setIsAuthModalOpen(true);
         return;
       }
 
-      // Get user's first name from individual_profiles
-      const { data: userData, error: userError } = await supabase
-        .from("individual_profiles")
-        .select("first_name")
-        .eq("id", user.id)
+      // Get user's first name from individual_profiles and email from profiles
+      const { data: profileData, error: profileError } = await supabase
+        .from('individual_profiles')
+        .select('first_name')
+        .eq('id', user.id)
         .single();
 
-      if (userError) throw userError;
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user.id)
+        .single();
 
-      // Get the current request type from the selectedRequests array
-      const currentRequestType = formData.selectedRequests[currentStep - 1];
+      if (profileError || userError) {
+        console.error('Error fetching user data:', profileError || userError);
+        toast.error('Failed to fetch user data');
+        return;
+      }
 
-      // Format the request type for display
-      const formatRequestType = (type) => {
-        return type
-          .replace(/([A-Z])/g, ' $1')
-          .replace(/^./, str => str.toUpperCase())
-          .replace(/\s+/g, ' ')
-          .trim();
-      };
+      const firstName = profileData?.first_name || 'User';
+      const userEmail = userData?.email;
 
-      // Generate title for the current request
-      const requestTitle = `${userData.first_name}'s ${formatRequestType(currentRequestType)} Request`;
+      // Format request title
+      const requestTitle = `${firstName}'s ${selectedCategories[currentStep - 1]} Request`;
 
-      let submissionSuccess = false;
-
-      // Handle each category type
-      if (isRequestType(currentRequestType, "Photography")) {
+      // Process each request type
+      if (isRequestType(selectedCategories[currentStep - 1], "Photography")) {
         const request = formData.requests.Photography || {};
         const photographyRequestData = {
           profile_id: user.id,
-          vendor_id: vendorData?.id || null, // Add vendor_id here
+          vendor_id: formData.vendor?.id || vendorData?.id || null, // Try both sources for vendor ID
           event_title: requestTitle,
           status: 'open',
           event_type: formData.commonDetails.eventType,
@@ -717,14 +756,72 @@ function MasterRequestFlow() {
         }
 
         submissionSuccess = true;
-      } else if (isRequestType(currentRequestType, "Videography")) {
+        setRequestIds(prev => ({ ...prev, photography: newPhotographyRequest.id }));
+        
+        // Check if there are more categories to complete
+        const remainingCategories = formData.selectedRequests.filter(
+          cat => !completedCategories.includes(cat) && cat !== selectedCategories[currentStep - 1]
+        );
+
+        if (remainingCategories.length > 0) {
+          // Move to the next category
+          handleContinueToNextCategory();
+        } else {
+          // All categories completed, show success message
+          toast.success('All requests submitted successfully!');
+          
+          // Send email notification to the user
+          if (userEmail) {
+            const emailContent = `
+              <h2>Your Bidi Request Has Been Submitted</h2>
+              <p>Dear ${firstName},</p>
+              <p>Your request has been successfully submitted. Here are the details:</p>
+              <ul>
+                <li>Event Type: ${selectedCategories[currentStep - 1]}</li>
+                <li>Location: ${formData.location || 'Not specified'}</li>
+                <li>Date: ${formData.date || 'Not specified'}</li>
+                <li>Number of Guests: ${formData.guests || 'Not specified'}</li>
+              </ul>
+              <p>You can now:</p>
+              <ul>
+                <li>Browse and select vendors for your request</li>
+                <li>Wait for vendors to find your request and send bids</li>
+              </ul>
+              <p>Best regards,<br>The Bidi Team</p>
+            `;
+
+            await sendEmailNotification(
+              userEmail,
+              'Your Bidi Request Has Been Submitted',
+              emailContent
+            );
+          }
+
+          // Clear form data and navigate to success page
+          setFormData({});
+          navigate('/success-request', {
+            state: {
+              message: 'Your request has been submitted successfully!',
+              photographyId: newPhotographyRequest.id,
+              videographyId: requestIds.videography,
+              cateringId: requestIds.catering,
+              djId: requestIds.dj,
+              floristId: requestIds.florist,
+              beautyId: requestIds.beauty,
+              weddingPlanningId: requestIds.weddingPlanning,
+              selectedCategories: formData.selectedRequests,
+              vendor: vendorData
+            }
+          });
+        }
+      } else if (isRequestType(selectedCategories[currentStep - 1], "Videography")) {
         console.log('Starting videography request submission...');
         const request = formData.requests.Videography || {};
         console.log('Videography request data:', request);
         
         const videographyRequestData = {
           user_id: user.id,
-          vendor_id: vendorData?.id || null, // Add vendor_id here
+          vendor_id: formData.vendor?.id || vendorData?.id || null, // Try both sources for vendor ID
           event_title: requestTitle,
           status: 'open',
           event_type: formData.commonDetails.eventType,
@@ -770,6 +867,9 @@ function MasterRequestFlow() {
         }
 
         console.log('Videography request inserted successfully:', newVideographyRequest);
+
+        // Update request IDs state immediately
+        setRequestIds(prev => ({ ...prev, videography: newVideographyRequest.id }));
 
         // Handle photo uploads if any
         if (request.photos && request.photos.length > 0) {
@@ -866,11 +966,69 @@ function MasterRequestFlow() {
         }
 
         submissionSuccess = true;
-      } else if (isRequestType(currentRequestType, "Florist")) {
+        setRequestIds(prev => ({ ...prev, videography: newVideographyRequest.id }));
+        
+        // Check if there are more categories to complete
+        const remainingCategories = formData.selectedRequests.filter(
+          cat => !completedCategories.includes(cat) && cat !== selectedCategories[currentStep - 1]
+        );
+
+        if (remainingCategories.length > 0) {
+          // Move to the next category
+          handleContinueToNextCategory();
+        } else {
+          // All categories completed, show success message
+          toast.success('All requests submitted successfully!');
+          
+          // Send email notification to the user
+          if (userEmail) {
+            const emailContent = `
+              <h2>Your Bidi Request Has Been Submitted</h2>
+              <p>Dear ${firstName},</p>
+              <p>Your request has been successfully submitted. Here are the details:</p>
+              <ul>
+                <li>Event Type: ${selectedCategories[currentStep - 1]}</li>
+                <li>Location: ${formData.location || 'Not specified'}</li>
+                <li>Date: ${formData.date || 'Not specified'}</li>
+                <li>Number of Guests: ${formData.guests || 'Not specified'}</li>
+              </ul>
+              <p>You can now:</p>
+              <ul>
+                <li>Browse and select vendors for your request</li>
+                <li>Wait for vendors to find your request and send bids</li>
+              </ul>
+              <p>Best regards,<br>The Bidi Team</p>
+            `;
+
+            await sendEmailNotification(
+              userEmail,
+              'Your Bidi Request Has Been Submitted',
+              emailContent
+            );
+          }
+
+          // Clear form data and navigate to success page
+          setFormData({});
+          navigate('/success-request', {
+            state: {
+              message: 'Your request has been submitted successfully!',
+              photographyId: requestIds.photography,
+              videographyId: newVideographyRequest.id,
+              cateringId: requestIds.catering,
+              djId: requestIds.dj,
+              floristId: requestIds.florist,
+              beautyId: requestIds.beauty,
+              weddingPlanningId: requestIds.weddingPlanning,
+              selectedCategories: formData.selectedRequests,
+              vendor: vendorData
+            }
+          });
+        }
+      } else if (isRequestType(selectedCategories[currentStep - 1], "Florist")) {
         const request = formData.requests.Florist || {};
         const floristRequestData = {
           user_id: user.id,
-          vendor_id: vendorData?.id || null, // Add vendor_id here
+          vendor_id: formData.vendor?.id || vendorData?.id || null, // Try both sources for vendor ID
           event_title: requestTitle,
           status: 'pending',
           event_type: formData.commonDetails.eventType,
@@ -995,11 +1153,69 @@ function MasterRequestFlow() {
         }
 
         submissionSuccess = true;
-      } else if (isRequestType(currentRequestType, "HairAndMakeup")) {
+        setRequestIds(prev => ({ ...prev, florist: newFloristRequest.id }));
+        
+        // Check if there are more categories to complete
+        const remainingCategories = formData.selectedRequests.filter(
+          cat => !completedCategories.includes(cat) && cat !== selectedCategories[currentStep - 1]
+        );
+
+        if (remainingCategories.length > 0) {
+          // Move to the next category
+          handleContinueToNextCategory();
+        } else {
+          // All categories completed, show success message
+          toast.success('All requests submitted successfully!');
+          
+          // Send email notification to the user
+          if (userEmail) {
+            const emailContent = `
+              <h2>Your Bidi Request Has Been Submitted</h2>
+              <p>Dear ${firstName},</p>
+              <p>Your request has been successfully submitted. Here are the details:</p>
+              <ul>
+                <li>Event Type: ${selectedCategories[currentStep - 1]}</li>
+                <li>Location: ${formData.location || 'Not specified'}</li>
+                <li>Date: ${formData.date || 'Not specified'}</li>
+                <li>Number of Guests: ${formData.guests || 'Not specified'}</li>
+              </ul>
+              <p>You can now:</p>
+              <ul>
+                <li>Browse and select vendors for your request</li>
+                <li>Wait for vendors to find your request and send bids</li>
+              </ul>
+              <p>Best regards,<br>The Bidi Team</p>
+            `;
+
+            await sendEmailNotification(
+              userEmail,
+              'Your Bidi Request Has Been Submitted',
+              emailContent
+            );
+          }
+
+          // Clear form data and navigate to success page
+          setFormData({});
+          navigate('/success-request', {
+            state: {
+              message: 'Your request has been submitted successfully!',
+              photographyId: requestIds.photography,
+              videographyId: requestIds.videography,
+              cateringId: newFloristRequest.id,
+              djId: requestIds.dj,
+              floristId: newFloristRequest.id,
+              beautyId: requestIds.beauty,
+              weddingPlanningId: requestIds.weddingPlanning,
+              selectedCategories: formData.selectedRequests,
+              vendor: vendorData
+            }
+          });
+        }
+      } else if (isRequestType(selectedCategories[currentStep - 1], "HairAndMakeup")) {
         const request = formData.requests.HairAndMakeup || {};
         const hairAndMakeupRequestData = {
           user_id: user.id,
-          vendor_id: vendorData?.id || null, // Add vendor_id here
+          vendor_id: formData.vendor?.id || vendorData?.id || null, // Try both sources for vendor ID
           event_title: requestTitle,
           status: 'pending',
           event_type: formData.commonDetails.eventType,
@@ -1073,7 +1289,65 @@ function MasterRequestFlow() {
         }
 
         submissionSuccess = true;
-      } else if (isRequestType(currentRequestType, "DJ")) {
+        setRequestIds(prev => ({ ...prev, beauty: newBeautyRequest.id }));
+        
+        // Check if there are more categories to complete
+        const remainingCategories = formData.selectedRequests.filter(
+          cat => !completedCategories.includes(cat) && cat !== selectedCategories[currentStep - 1]
+        );
+
+        if (remainingCategories.length > 0) {
+          // Move to the next category
+          handleContinueToNextCategory();
+        } else {
+          // All categories completed, show success message
+          toast.success('All requests submitted successfully!');
+          
+          // Send email notification to the user
+          if (userEmail) {
+            const emailContent = `
+              <h2>Your Bidi Request Has Been Submitted</h2>
+              <p>Dear ${firstName},</p>
+              <p>Your request has been successfully submitted. Here are the details:</p>
+              <ul>
+                <li>Event Type: ${selectedCategories[currentStep - 1]}</li>
+                <li>Location: ${formData.location || 'Not specified'}</li>
+                <li>Date: ${formData.date || 'Not specified'}</li>
+                <li>Number of Guests: ${formData.guests || 'Not specified'}</li>
+              </ul>
+              <p>You can now:</p>
+              <ul>
+                <li>Browse and select vendors for your request</li>
+                <li>Wait for vendors to find your request and send bids</li>
+              </ul>
+              <p>Best regards,<br>The Bidi Team</p>
+            `;
+
+            await sendEmailNotification(
+              userEmail,
+              'Your Bidi Request Has Been Submitted',
+              emailContent
+            );
+          }
+
+          // Clear form data and navigate to success page
+          setFormData({});
+          navigate('/success-request', {
+            state: {
+              message: 'Your request has been submitted successfully!',
+              photographyId: requestIds.photography,
+              videographyId: requestIds.videography,
+              cateringId: requestIds.catering,
+              djId: requestIds.dj,
+              floristId: requestIds.florist,
+              beautyId: newBeautyRequest.id,
+              weddingPlanningId: requestIds.weddingPlanning,
+              selectedCategories: formData.selectedRequests,
+              vendor: vendorData
+            }
+          });
+        }
+      } else if (isRequestType(selectedCategories[currentStep - 1], "DJ")) {
         console.log('Starting DJ request submission...');
         const request = formData.requests.DJ || {};
         console.log('DJ request data:', request);
@@ -1081,7 +1355,7 @@ function MasterRequestFlow() {
 
         const djRequestData = {
           user_id: user.id,
-          vendor_id: vendorData?.id || null, // Add vendor_id here
+          vendor_id: formData.vendor?.id || vendorData?.id || null, // Try both sources for vendor ID
           title: requestTitle,
           status: 'open',
           event_type: formData.commonDetails.eventType,
@@ -1127,11 +1401,69 @@ function MasterRequestFlow() {
 
         console.log('DJ request inserted successfully:', newDjRequest);
         submissionSuccess = true;
-      } else if (isRequestType(currentRequestType, "Catering")) {
+        setRequestIds(prev => ({ ...prev, dj: newDjRequest.id }));
+        
+        // Check if there are more categories to complete
+        const remainingCategories = formData.selectedRequests.filter(
+          cat => !completedCategories.includes(cat) && cat !== selectedCategories[currentStep - 1]
+        );
+
+        if (remainingCategories.length > 0) {
+          // Move to the next category
+          handleContinueToNextCategory();
+        } else {
+          // All categories completed, show success message
+          toast.success('All requests submitted successfully!');
+          
+          // Send email notification to the user
+          if (userEmail) {
+            const emailContent = `
+              <h2>Your Bidi Request Has Been Submitted</h2>
+              <p>Dear ${firstName},</p>
+              <p>Your request has been successfully submitted. Here are the details:</p>
+              <ul>
+                <li>Event Type: ${selectedCategories[currentStep - 1]}</li>
+                <li>Location: ${formData.location || 'Not specified'}</li>
+                <li>Date: ${formData.date || 'Not specified'}</li>
+                <li>Number of Guests: ${formData.guests || 'Not specified'}</li>
+              </ul>
+              <p>You can now:</p>
+              <ul>
+                <li>Browse and select vendors for your request</li>
+                <li>Wait for vendors to find your request and send bids</li>
+              </ul>
+              <p>Best regards,<br>The Bidi Team</p>
+            `;
+
+            await sendEmailNotification(
+              userEmail,
+              'Your Bidi Request Has Been Submitted',
+              emailContent
+            );
+          }
+
+          // Clear form data and navigate to success page
+          setFormData({});
+          navigate('/success-request', {
+            state: {
+              message: 'Your request has been submitted successfully!',
+              photographyId: requestIds.photography,
+              videographyId: requestIds.videography,
+              cateringId: requestIds.catering,
+              djId: newDjRequest.id,
+              floristId: requestIds.florist,
+              beautyId: requestIds.beauty,
+              weddingPlanningId: requestIds.weddingPlanning,
+              selectedCategories: formData.selectedRequests,
+              vendor: vendorData
+            }
+          });
+        }
+      } else if (isRequestType(selectedCategories[currentStep - 1], "Catering")) {
         const request = formData.requests.Catering || {};
         const cateringRequestData = {
           user_id: user.id,
-          vendor_id: vendorData?.id || null, // Add vendor_id here
+          vendor_id: formData.vendor?.id || vendorData?.id || null, // Try both sources for vendor ID
           title: requestTitle,
           status: 'pending',
           event_type: formData.commonDetails.eventType,
@@ -1172,11 +1504,69 @@ function MasterRequestFlow() {
 
         console.log('Successfully inserted catering request:', newCateringRequest);
         submissionSuccess = true;
-      } else if (isRequestType(currentRequestType, "WeddingPlanning")) {
+        setRequestIds(prev => ({ ...prev, catering: newCateringRequest.id }));
+        
+        // Check if there are more categories to complete
+        const remainingCategories = formData.selectedRequests.filter(
+          cat => !completedCategories.includes(cat) && cat !== selectedCategories[currentStep - 1]
+        );
+
+        if (remainingCategories.length > 0) {
+          // Move to the next category
+          handleContinueToNextCategory();
+        } else {
+          // All categories completed, show success message
+          toast.success('All requests submitted successfully!');
+          
+          // Send email notification to the user
+          if (userEmail) {
+            const emailContent = `
+              <h2>Your Bidi Request Has Been Submitted</h2>
+              <p>Dear ${firstName},</p>
+              <p>Your request has been successfully submitted. Here are the details:</p>
+              <ul>
+                <li>Event Type: ${selectedCategories[currentStep - 1]}</li>
+                <li>Location: ${formData.location || 'Not specified'}</li>
+                <li>Date: ${formData.date || 'Not specified'}</li>
+                <li>Number of Guests: ${formData.guests || 'Not specified'}</li>
+              </ul>
+              <p>You can now:</p>
+              <ul>
+                <li>Browse and select vendors for your request</li>
+                <li>Wait for vendors to find your request and send bids</li>
+              </ul>
+              <p>Best regards,<br>The Bidi Team</p>
+            `;
+
+            await sendEmailNotification(
+              userEmail,
+              'Your Bidi Request Has Been Submitted',
+              emailContent
+            );
+          }
+
+          // Clear form data and navigate to success page
+          setFormData({});
+          navigate('/success-request', {
+            state: {
+              message: 'Your request has been submitted successfully!',
+              photographyId: requestIds.photography,
+              videographyId: requestIds.videography,
+              cateringId: newCateringRequest.id,
+              djId: requestIds.dj,
+              floristId: requestIds.florist,
+              beautyId: requestIds.beauty,
+              weddingPlanningId: requestIds.weddingPlanning,
+              selectedCategories: formData.selectedRequests,
+              vendor: vendorData
+            }
+          });
+        }
+      } else if (isRequestType(selectedCategories[currentStep - 1], "WeddingPlanning")) {
         const request = formData.requests.WeddingPlanning || {};
         const weddingPlanningRequestData = {
           user_id: user.id,
-          vendor_id: vendorData?.id || null,
+          vendor_id: formData.vendor?.id || vendorData?.id || null, // Try both sources for vendor ID
           event_title: requestTitle,
           status: 'pending',
           event_type: formData.commonDetails.eventType,
@@ -1310,51 +1700,74 @@ function MasterRequestFlow() {
         }
 
         submissionSuccess = true;
+        setRequestIds(prev => ({ ...prev, weddingPlanning: newWeddingPlanningRequest.id }));
+        
+        // Check if there are more categories to complete
+        const remainingCategories = formData.selectedRequests.filter(
+          cat => !completedCategories.includes(cat) && cat !== selectedCategories[currentStep - 1]
+        );
+
+        if (remainingCategories.length > 0) {
+          // Move to the next category
+          handleContinueToNextCategory();
+        } else {
+          // All categories completed, show success message
+          toast.success('All requests submitted successfully!');
+          
+          // Send email notification to the user
+          if (userEmail) {
+            const emailContent = `
+              <h2>Your Bidi Request Has Been Submitted</h2>
+              <p>Dear ${firstName},</p>
+              <p>Your request has been successfully submitted. Here are the details:</p>
+              <ul>
+                <li>Event Type: ${selectedCategories[currentStep - 1]}</li>
+                <li>Location: ${formData.location || 'Not specified'}</li>
+                <li>Date: ${formData.date || 'Not specified'}</li>
+                <li>Number of Guests: ${formData.guests || 'Not specified'}</li>
+              </ul>
+              <p>You can now:</p>
+              <ul>
+                <li>Browse and select vendors for your request</li>
+                <li>Wait for vendors to find your request and send bids</li>
+              </ul>
+              <p>Best regards,<br>The Bidi Team</p>
+            `;
+
+            await sendEmailNotification(
+              userEmail,
+              'Your Bidi Request Has Been Submitted',
+              emailContent
+            );
+          }
+
+          // Clear form data and navigate to success page
+          setFormData({});
+          navigate('/success-request', {
+            state: {
+              message: 'Your request has been submitted successfully!',
+              photographyId: requestIds.photography,
+              videographyId: requestIds.videography,
+              cateringId: requestIds.catering,
+              djId: requestIds.dj,
+              floristId: requestIds.florist,
+              beautyId: requestIds.beauty,
+              weddingPlanningId: newWeddingPlanningRequest.id,
+              selectedCategories: formData.selectedRequests,
+              vendor: vendorData
+            }
+          });
+        }
       }
 
       // Only proceed if submission was successful
       if (submissionSuccess) {
         // Add the current request type to completed categories
-        setCompletedCategories(prev => [...prev, currentRequestType]);
-
-        // Check if there are more categories to complete
-        const remainingCategories = formData.selectedRequests.filter(
-          cat => !completedCategories.includes(cat) && cat !== currentRequestType
-        );
-
-        if (remainingCategories.length > 0) {
-          // Move to the next category
-          const nextCategoryIndex = formData.selectedRequests.indexOf(remainingCategories[0]);
-          setCurrentStep(nextCategoryIndex + 1);
-          setShowReview(false);
-          // Reset sub-steps for the new category
-          setPhotographySubStep(0);
-          setVideographySubStep(0);
-          setCateringSubStep(0);
-          setDjSubStep(0);
-          setFloristSubStep(0);
-          setHairAndMakeupSubStep(0);
-          setWeddingPlanningSubStep(0);
-          // Update visited steps
-          setVisitedSteps(prev => new Set([...prev, nextCategoryIndex + 1]));
-        } else {
-          // All categories completed, clear form data and navigate to success page
-          clearFormData();
-          navigate('/success-request', { 
-            state: { 
-              message: 'Your requests have been submitted successfully!'
-            }
-          });
-        }
-      } else {
-        throw new Error('Submission failed - no success flag was set');
+        setCompletedCategories(prev => [...prev, selectedCategories[currentStep - 1]]);
       }
-
-    } catch (err) {
-      console.error('Error submitting form:', err);
-      setError('Failed to submit form. Please try again.');
-      // Don't proceed to next category if there was an error
-      return;
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      toast.error('Failed to submit request. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -1537,6 +1950,7 @@ function MasterRequestFlow() {
         return (
           <div className="form-scrollable-content">
             <HairAndMakeupStepper
+             
               formData={formData}
               setFormData={setFormData}
               currentStep={currentStep}
@@ -2212,7 +2626,7 @@ function formatDateString(dateString) {
               marginTop: '20px' 
             }}>
               <img 
-                src={vendorData.image} 
+                src={vendorData.image || vendorData.vendor.profile_photo_url} 
                 alt={vendorData.vendor.business_name} 
                 className="vendor-profile-image" 
                 style={{ marginRight: '8px' }}

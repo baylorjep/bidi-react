@@ -152,11 +152,30 @@
   align-items: center;
   margin: 5px;
   width: 100%;
+  position: relative;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.vendor-card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.vendor-card.selected {
+  border: 2px solid #4CAF50;
+  box-shadow: 0 4px 12px rgba(76,175,80,0.2);
 }
 
 .portfolio-images {
   width: 330px;
   position: relative;
+  overflow: hidden; /* Add this to prevent overflow */
 }
 
 .portfolio-images .slick-slider {
@@ -188,6 +207,7 @@
   transform: translateZ(0);
   backface-visibility: hidden;
   perspective: 1000px;
+  object-fit: cover; /* Ensure image covers area without distortion */
 }
 
 .portfolio-image.video {
@@ -293,55 +313,50 @@
   gap: 10px;
 }
 
-.vendor-button {
-  padding: 10px 20px;
-  border-radius: 100px;
-  background: #ff008a;
-  box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04),
-    0px 2px 4px 0px rgba(52, 60, 68, 0.16);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  max-width: 400px;
-  transition: 0.3s ease-in-out;
-  padding: 12px 48px;
-}
-
-.vendor-button:hover {
-  background-color: #e6007e;
-  transition: background-color 0.3s ease-in-out;
-  scale: 1.02;
-  transition: scale 0.3s ease-in-out;
-}
-
-.vendor-button-secondary {
-  padding: 10px 20px;
-  border-radius: 100px;
-  background: white;
-  box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04),
-    0px 2px 4px 0px rgba(52, 60, 68, 0.16);
-  color: #ff008a;
-  border: none;
-  cursor: pointer;
-  max-width: 400px;
-  transition: 0.3s ease-in-out;
-  border: 1px solid #ff008a;
-  padding: 12px 48px;
-}
-
-.vendor-button-secondary:hover {
-  transition: background-color 0.3s ease-in-out;
-  scale: 1.02;
-  transition: scale 0.3s ease-in-out;
-}
-
-.vendor-button,
-.vendor-button-secondary {
+.vendor-button, .vendor-button-secondary {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  padding: 10px;
+  padding: 12px 48px;
+  border-radius: 100px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04),
+    0px 2px 4px 0px rgba(52, 60, 68, 0.16);
+}
+
+.vendor-button {
+  background: #ff008a;
+  color: #fff;
+  border: none;
+}
+
+.vendor-button:hover {
+  background-color: #e6007e;
+  scale: 1.02;
+}
+
+.vendor-button-secondary {
+  background: white;
+  color: #ff008a;
+  border: 1px solid #ff008a;
+}
+
+.vendor-button-secondary:hover {
+  scale: 1.02;
+}
+
+.vendor-button.selected {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+}
+
+.vendor-button.selected:hover {
+  background-color: #45a049;
 }
 
 .modal {
@@ -569,149 +584,188 @@
 
   .vendor-card {
     flex-direction: column;
-    gap: 30px;
-    padding: 30px;
+    gap: 20px;  /* Reduced from 30px */
+    padding: 0;  /* Remove padding to reduce white space */
   }
 
   .portfolio-images {
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
+    height: auto; /* Add this */
+    max-height: 400px; /* Add this */
+    overflow: hidden; /* Add this */
   }
 
   .portfolio-image,
   .video-container {
-    height: 400px !important;
+    width: 100%; /* Add this */
+    height: 100% !important; /* Change this */
+    max-height: 400px; /* Add this */
+    object-fit: cover; /* Add this */
+  }
+}
+
+@media (max-width: 768px) {
+  .vendor-list {
+    padding: 10px;
+  }
+
+  .vendor-card {
+    margin: 10px 0;
+    padding: 0;
+    border-radius: 12px;
+    gap: 0; /* Remove gap completely on mobile */
+  }
+
+  .portfolio-images {
+    border-radius: 12px 12px 0 0;
+    min-height: 250px !important;
+    max-height: 250px; /* Add this */
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .portfolio-image {
+    width: 100%;
+    height: 100% !important;
+    max-height: 250px;
+    object-fit: cover;
   }
 
   .vendor-info {
-    gap: 8px;
-    width: 100%;
+    padding: 15px;
+    margin-top: 0; /* Remove top margin */
   }
 
   .vendor-header {
+    margin-top: 0; /* Remove top margin */
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
 
   .vendor-profile-image {
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
   }
 
   .vendor-name {
-    font-size: 1.3rem;
-    text-overflow: clip;
-    white-space: normal;
-    overflow: visible;
-    height: auto;
+    font-size: 18px;
+    margin: 0;
+  }
+
+  .vendor-description {
+    font-size: 14px;
+    margin: 10px 0;
   }
 
   .vendor-location,
   .vendor-price {
     font-size: 13px;
+    margin: 4px 0;
   }
 
-  .vendor-description {
-    font-size: 0.95rem;
+  .vendor-specializations {
+    gap: 6px;
+    margin: 10px 0;
+  }
+
+  .vendor-specializations li {
+    font-size: 12px;
+    padding: 4px 8px;
   }
 
   .vendor-buttons {
     flex-direction: column;
     gap: 8px;
-    justify-content: center;
-    align-items: center;
+    margin-top: 15px;
   }
 
   .vendor-button,
   .vendor-button-secondary {
     width: 100%;
     padding: 12px;
-  }
-}
-
-@media (max-width: 768px) {
-  .vendor-list {
-    width: 100%;
-    padding: 10px;
+    font-size: 14px;
   }
 
-  .vendor-card {
-    flex-direction: column;
-    gap: 20px;
-    padding: 15px;
+  /* Slider arrows */
+  .custom-arrow {
+    width: 30px !important;
+    height: 30px !important;
   }
 
-  .portfolio-images {
-    width: 100%;
-    max-width: none;
+  .custom-prev-arrow {
+    left: 5px !important;
   }
 
-  .portfolio-image,
-  .video-container {
-    height: 300px !important;
+  .custom-next-arrow {
+    right: 5px !important;
   }
 
-  .vendor-info {
-    gap: 5px;
+  /* Modal adjustments */
+  .modal-content {
+    width: 95%;
+    max-height: 80vh;
   }
 
-  .vendor-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
+  .close {
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
   }
 
-  .vendor-profile-image {
-    width: 40px;
-    height: 40px;
+  /* Rating and verified badge */
+  .vendor-rating {
+    font-size: 13px;
   }
 
-  .vendor-name {
-    font-size: 1.2rem;
+  .verified-check-container img {
+    width: 16px;
+    height: 16px;
   }
 
-  .vendor-location,
-  .vendor-price {
+  .verified-tooltip {
+    width: 200px;
     font-size: 12px;
   }
 
-  .vendor-description {
-    font-size: 0.9rem;
+  /* Fix image slider on mobile */
+  .slick-slider {
+    touch-action: pan-y !important;
   }
 
-  .vendor-buttons {
-    flex-direction: column;
-    gap: 5px;
-    width: 100%;
+  .slick-track {
+    touch-action: pan-y !important;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .vendor-card {
+    margin: 8px 0;
+  }
+
+  .portfolio-images {
+    min-height: 200px !important;
+  }
+
+  .vendor-info {
+    padding: 12px;
+  }
+
+  .vendor-name {
+    font-size: 16px;
+  }
+
+  .vendor-description {
+    font-size: 13px;
   }
 
   .vendor-button,
   .vendor-button-secondary {
-    width: 100%;
     padding: 10px;
-  }
-
-  .custom-arrow {
-    width: 32px;
-    height: 32px;
-  }
-}
-
-@media (max-width: 480px) {
-  .vendor-card {
-    padding: 10px;
-  }
-
-  .portfolio-image,
-  .video-container {
-    height: 250px !important;
-  }
-
-  .custom-arrow {
-    width: 28px;
-    height: 28px;
+    font-size: 13px;
   }
 }
 

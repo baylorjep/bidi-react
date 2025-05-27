@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import VendorList from '../components/VendorList/VendorList';
+import VendorListWithFilters from '../components/VendorList/VendorListWithFilters';
 import { Helmet } from 'react-helmet';
 import '../styles/LocationBasedVendors.css';
 import { supabase } from '../supabaseClient';
@@ -926,17 +926,15 @@ const LocationBasedVendors = () => {
 
                 <section className="vendors-section">
                     <h2 className="visually-hidden">Vendor Results</h2>
-                    <VendorList 
+                    <VendorListWithFilters 
                         selectedCategory={selectedCategory}
                         sortOrder="recommended"
-                        location={selectedCity}
+                        preferredLocation={selectedCity}
                         categoryType={selectedType === 'all' ? '' : selectedType}
                         currentPage={currentPage}
                         vendorsPerPage={vendorsPerPage}
                         setCurrentPage={setCurrentPage}
-                        totalCount={totalCount}
                         setTotalCount={setTotalCount}
-                        preferredLocation={selectedCity}
                         preferredType={selectedType}
                     />
                 </section>
