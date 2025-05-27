@@ -11,6 +11,7 @@ import { FaArrowLeft } from "react-icons/fa";
 
 export default function MobileChatList({ currentUserId, userType, onChatSelect }) {
   const [chats, setChats] = useState([]);
+  const [searchTerm, setSearchTerm] = useState(""); // Used for search functionality
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -95,6 +96,14 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
     fetchChats();
   }, [currentUserId, userType]);
 
+  const filteredChats = chats.filter(chat => {
+    const search = searchTerm.toLowerCase();
+    return (
+      chat.name.toLowerCase().includes(search) ||
+      chat.last_message.toLowerCase().includes(search)
+    );
+  });
+
   const handleChatSelect = async (chat) => {
     // Mark messages as seen when chat is opened
     const { error: updateError } = await supabase
@@ -147,6 +156,21 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
         <h2 style={{ margin: 0 }}>Messages</h2>
       </div>
 
+      <input
+        type="text"
+        placeholder="Search messages..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "0.5rem 1rem",
+          marginBottom: "1rem",
+          borderRadius: "8px",
+          border: "1px solid #ccc",
+          fontSize: "1rem"
+        }}
+      />
+
       <ul style={{ listStyle: "none", padding: 0 }}>
         {chats.length === 0 && (
           <div style={{ textAlign: "center", color: "#777", marginTop: "2rem" }}>
@@ -163,7 +187,7 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
             </p>
           </div>
         )}
-        {chats.map((chat) => (
+        {filteredChats.map((chat) => (
           <li
             key={chat.id}
             style={{
@@ -216,7 +240,9 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
                 color: "#888",
                 marginLeft: "0.5rem"
               }}>
-                {new Date(chat.last_message_time).toLocaleTimeString('en-US', {
+                {new Date(chat.last_message_time).toLocaleString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
                   hour: 'numeric',
                   minute: '2-digit',
                   hour12: true
