@@ -242,22 +242,6 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
    
             </div>
 
-            {/* Add Quiz Promo Section */}
-            <div ref={quizRef} className={`quiz-promo-section fade-in-section ${quizVisible ? 'is-visible' : ''}`}>
-                <div className="quiz-promo-container">
-                    <div className="quiz-promo-content">
-                        <span className="quiz-label">NEW</span>
-                        <h2>Discover Your Wedding Style</h2>
-                        <p>Take our quick style quiz to find vendors that match your vision!</p>
-                        <Link to="/wedding-vibe-quiz" style={{textDecoration: 'none'}}>
-                            <button className="quiz-button">Take the Quiz</button>
-                        </Link>
-                    </div>
-                    <div className="quiz-image-container">
-                        <img src={rusticWedding} alt="Wedding Style Quiz" />
-                    </div>
-                </div>
-            </div>
 
             <div ref={connectRef} className={`connect-section fade-in-section ${connectVisible ? 'is-visible' : ''}`}>
                 <div style={{display:'flex', flexDirection:'column', gap:'20px'}}> 
