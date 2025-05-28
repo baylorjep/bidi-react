@@ -17,6 +17,7 @@ import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import '../styles/animations.css';
 import { Helmet } from 'react-helmet';
 import rusticWedding from '../assets/quiz/rustic/rustic-wedding.jpg';
+import AnimatedNumber from './AnimatedNumber';
 
 // Initialize PostHog for client-side tracking
 posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
@@ -218,11 +219,15 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                         */}
                             <div className='stat-box'>
                                 <div className='stat-title-homepage'>Vendors</div>
-                                <div className='stat-homepage'>{stats.vendors}</div>
+                                <div className='stat-homepage'>
+                                    <AnimatedNumber value={stats.vendors} />
+                                </div>
                             </div>
                             <div className='stat-box final'>
                                 <div className='stat-title-homepage'>Bids</div>
-                                <div className='stat-homepage'>{stats.bids}</div>
+                                <div className='stat-homepage'>
+                                    <AnimatedNumber value={stats.bids} />
+                                </div>
                             </div>
 
                     </div>
