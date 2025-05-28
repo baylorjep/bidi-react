@@ -1,0 +1,44 @@
+.animated-number {
+  font-size: 51px;
+  font-weight: bold;
+  color: black;
+  transition: transform 0.1s ease-out;
+  display: inline-block;
+  min-width: 60px;
+}
+
+.animated-number.loading {
+  animation: loadingPulse 1s infinite;
+  opacity: 0.7;
+}
+
+.animated-number.animating {
+  animation: slotMachine 0.2s ease-out;
+}
+
+@keyframes loadingPulse {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes slotMachine {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(10px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+} 
