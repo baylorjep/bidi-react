@@ -9,6 +9,14 @@ import profileIcon from "../../assets/images/Icons/profile.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
 import { FaArrowLeft } from "react-icons/fa";
 
+function sortChats(chatList) {
+  return [...chatList].sort((a, b) => {
+    if (a.is_pinned && !b.is_pinned) return -1;
+    if (!a.is_pinned && b.is_pinned) return 1;
+    return new Date(b.last_message_time) - new Date(a.last_message_time);
+  });
+}
+
 export default function MobileChatList({ currentUserId, userType, onChatSelect }) {
   const [chats, setChats] = useState([]);
   const [searchTerm, setSearchTerm] = useState(""); // Used for search functionality
@@ -79,23 +87,16 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
             : latestMap[p.id]?.message || "",
         unseen_count: unseenCountMap[p.id] || 0,
         last_message_time: latestMap[p.id]?.created_at,
-        is_pinned: false,
+        is_pinned: false, // Local state for pinning chats
       }));
 
-      // Sort by pinned status and last message time
-      formatted.sort((a, b) => {
-        if (a.is_pinned && !b.is_pinned) return -1;
-        if (!a.is_pinned && b.is_pinned) return 1;
-        return new Date(b.last_message_time) - new Date(a.last_message_time);
-      });
-      console.log("Before setChats, chats:", formatted);
-
-      setChats(formatted);
+      setChats(sortChats(formatted)); // Sort chats by pinned status and last message time
     };
 
     fetchChats();
   }, [currentUserId, userType]);
 
+  // Filter chats based on search term
   const filteredChats = chats.filter(chat => {
     const search = searchTerm.toLowerCase();
     return (
@@ -137,11 +138,11 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
 
   // handle pinning/unpinning a chat
   const togglePin = (chatId) => {
-    setChats(prevChats =>
+    setChats(prevChats => sortChats(
       prevChats.map(c =>
         c.id === chatId ? { ...c, is_pinned: !c.is_pinned } : c
       )
-    );
+    ));
   };
 
   return (
@@ -206,6 +207,21 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
               marginBottom: "0.5rem"
             }}>
               <strong>{chat.name}</strong>
+
+              <span 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePin(chat.id);
+                }}
+                style={{
+                  cursor: "pointer",
+                  fontSize: "1.2rem",
+                  color: chat.is_pinned ? "#A328F4" : "#ccc"
+                }}
+              >
+                {chat.is_pinned ? "★" : "☆"}
+              </span>
+
               {chat.unseen_count > 0 && (
                 <span style={{
                   background: "#A328F4",
@@ -240,7 +256,7 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
                 color: "#888",
                 marginLeft: "0.5rem"
               }}>
-                {new Date(chat.last_message_time).toLocaleString('en-US', {
+                {new Date(chat.last_message_time + 'Z').toLocaleString('en-US', {
                   month: 'short',
                   day: 'numeric',
                   hour: 'numeric',

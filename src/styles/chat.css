@@ -81,6 +81,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-direction: column;
 }
 .chat-sidebar ul {
   list-style: none;
@@ -610,7 +611,7 @@
 
 .message-time {
   font-size: 0.8rem;
-  color: #ccc;
+  color: white;
   margin-top: 0.25rem;
 }
 

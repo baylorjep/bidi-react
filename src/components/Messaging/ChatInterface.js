@@ -16,6 +16,28 @@ export default function ChatInterface({ initialChat }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState(""); // Used for search message
+
+  // Sort chats by pin status and last message time
+  const sortChats = (chatList) => {
+    return [...chatList].sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+      return new Date(b.last_message_time) - new Date(a.last_message_time);
+    });
+  };
+  // Toggle pin status of a chat
+  const togglePin = (chatId) => {
+    setChats(prevChats =>
+      sortChats(
+        prevChats.map(chat =>
+          chat.business_id === chatId
+            ? { ...chat, is_pinned: !chat.is_pinned }
+            : chat
+        )
+      )
+    );
+  };
 
   // Set active business from initialChat prop or navigation state
   useEffect(() => {
@@ -167,7 +189,8 @@ export default function ChatInterface({ initialChat }) {
           ? (latestMap[p.id]?.sender_id === currentUserId ? "You sent an image" : "Image")
           : latestMap[p.id]?.message || "",
         unseen_count: unseenCountMap[p.id] || 0,
-        last_message_time: latestMap[p.id]?.created_at
+        last_message_time: latestMap[p.id]?.created_at,
+        is_pinned: false, // Temporary local state for pinning chats
       }));
 
       setChats(formatted);
@@ -211,34 +234,75 @@ export default function ChatInterface({ initialChat }) {
       <aside className="chat-sidebar">
         <header>
           <span>Your Chats</span>
+          <input
+            type="text"
+            placeholder="Search chats..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: "100%",
+              marginTop: "0.5rem",
+              marginBottom: "1rem",
+              padding: "0.5rem 1rem",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+              fontSize: "1rem"
+            }}
+          />
         </header>
 
         <ul>
-          {chats.map((c) => (
-            <li
-              key={c.business_id}
-              className={activeBusiness === c.business_id ? "active" : ""}
-              onClick={() => handleChatSelect(c)}
-            >
-              <div className="chat-list-item-content">
-                <div className="chat-list-header">
-                  <span className="chat-name">{c.business_name}</span>
-                  {c.unseen_count > 0 && (
-                    <span className="unseen-badge">{c.unseen_count}</span>
-                  )}
-                </div>
-                <div className="chat-list-footer">
-                  <div className="message-preview">{c.last_message}</div>
-                  <div className="message-time" style={{ color: "black"}}>
-                    {new Date(c.last_message_time).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
+          {chats
+            .filter((chat) => {
+              const term = searchTerm.toLowerCase();
+              return (
+                chat.business_name.toLowerCase().includes(term) ||
+                (chat.last_message && chat.last_message.toLowerCase().includes(term))
+              );
+            })
+            .slice() // copy array to avoid mutating state
+            .sort((a, b) => sortChats([a, b])[0] === a ? -1 : 1)
+            .map((c) => (
+              <li
+                key={c.business_id}
+                className={activeBusiness === c.business_id ? "active" : ""}
+                onClick={() => handleChatSelect(c)}
+              >
+                <div className="chat-list-item-content">
+                  <div className="chat-list-header">
+                    <span className="chat-name">{c.business_name}</span>
+                    {c.unseen_count > 0 && (
+                      <span className="unseen-badge">{c.unseen_count}</span>
+                    )}
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePin(c.business_id);
+                      }}
+                      style={{
+                        cursor: "pointer",
+                        fontSize: "1.2rem",
+                        color: c.is_pinned ? "#A328F4" : "#ccc",
+                        marginLeft: "auto"
+                      }}
+                    >
+                      {c.is_pinned ? "★" : "☆"}
+                    </span>
+                  </div>
+                  <div className="chat-list-footer">
+                    <div className="message-preview">{c.last_message}</div>
+                    <div className="message-time" style={{ color: "black"}}>
+                      {new Date(c.last_message_time + 'Z').toLocaleTimeString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </li>
+              </li>
           ))}
         </ul>
       </aside>

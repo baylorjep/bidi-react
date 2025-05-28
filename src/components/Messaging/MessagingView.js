@@ -457,7 +457,9 @@ export default function MessagingView({
               formatMessageText(msg.message)
           )}
             <div className="message-time">
-              {new Date(msg.createdAt).toLocaleTimeString('en-US', {
+              {new Date(msg.createdAt + 'Z').toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
                 hour: 'numeric',
                 minute: '2-digit',
                 hour12: true
