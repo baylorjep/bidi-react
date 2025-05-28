@@ -28,6 +28,7 @@ import MobileChatList from "../Messaging/MobileChatList.js";
 import MessagingView from "../Messaging/MessagingView.js";
 import AdminDashboard from "../admin/AdminDashboard.js";
 import ContractTemplateEditor from "./ContractTemplateEditor.js";
+import NewFeaturesModal from "./NewFeaturesModal";
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -64,6 +65,8 @@ const BusinessDashSidebar = () => {
   const [isHoveringSidebar, setIsHoveringSidebar] = useState(false);
   const sidebarRef = React.useRef(null);
   const [selectedChat, setSelectedChat] = useState(null);
+  const [showNewFeatures, setShowNewFeatures] = useState(false);
+  const [hasSeenNewFeatures, setHasSeenNewFeatures] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -131,6 +134,17 @@ const BusinessDashSidebar = () => {
           console.error("Error fetching bids:", bidsError);
         } else {
           setBids(bids);
+        }
+
+        // Check if user has seen the new features
+        const { data: userPreferences } = await supabase
+          .from("user_preferences")
+          .select("has_seen_new_features")
+          .eq("user_id", user.id)
+          .single();
+
+        if (!userPreferences?.has_seen_new_features) {
+          setShowNewFeatures(true);
         }
       } catch (error) {
         console.error("An error occurred while fetching data:", error);
@@ -292,6 +306,26 @@ const BusinessDashSidebar = () => {
       delete window.handleMessageFromRequest;
     };
   }, []);
+
+  const handleCloseNewFeatures = async () => {
+    setShowNewFeatures(false);
+    setHasSeenNewFeatures(true);
+
+    // Update user preferences in the database
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("user_preferences")
+          .upsert({
+            user_id: user.id,
+            has_seen_new_features: true
+          });
+      }
+    } catch (error) {
+      console.error("Error updating user preferences:", error);
+    }
+  };
 
   return (
     <div className="business-dashboard text-left">
@@ -503,6 +537,12 @@ const BusinessDashSidebar = () => {
           </nav>
         )}
       </div>
+
+      <NewFeaturesModal
+        isOpen={showNewFeatures}
+        onClose={handleCloseNewFeatures}
+        loomVideoUrl="YOUR_LOOM_VIDEO_URL_HERE"
+      />
     </div>
   );
 };

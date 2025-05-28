@@ -8,7 +8,7 @@ function BidSuccess() {
                 <br/>
                 <h2>Bid Submitted Successfully!</h2>
                 <p>Your bid has been submitted. We will notify you if your bid is selected.</p>
-                <Link className="btn btn-secondary" to="/dashboard">Back to Dashboard</Link>
+                <Link className="btn-secondary" to="/business-dashboard" style={{padding: '10px 20px', borderRadius: '5px'}}>Back to Dashboard</Link>
             </div>
         </div>
     );
