@@ -520,16 +520,20 @@ export default function MessagingView({
       </footer>
       {showImageModal && (
         <div className="modal-backdrop" onClick={() => setShowImageModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div onClick={(e) => e.stopPropagation()}>
           <img
             src={modalImageSrc}
             alt="Full Size"
             style={{
-              maxWidth: "100%",
-              maxHeight: "100%",
+              maxWidth: "100vw",
+              maxHeight: "100vh",
               objectFit: "contain",
               border: "none",
-              boxShadow: "none"
+              boxShadow: "none",
+              margin: 0,
+              padding: 0,
+              display: "block",
+              background: "transparent"
             }}
           />
           </div>
