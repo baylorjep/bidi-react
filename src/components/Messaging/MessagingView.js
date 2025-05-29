@@ -7,6 +7,7 @@ import "../../styles/chat.css";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { formatMessageText } from "../../utils/formatMessageText";
+import MediaPopup from "./MediaPopup";
 
 export default function MessagingView({
   currentUserId,
@@ -28,6 +29,7 @@ export default function MessagingView({
   const [pendingFile, setPendingFile] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [modalImageSrc, setModalImageSrc] = useState("");
+  const [showMediaPopup, setShowMediaPopup] = useState(false);
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -434,6 +436,14 @@ export default function MessagingView({
               <span className="business-name-messaging">{businessName}</span>
             </div>
           </div>
+          <div className="media-button-container">
+            <button
+              className="media-tab-button"
+              onClick={() => setShowMediaPopup(true)}
+            >
+              Media
+            </button>
+          </div>
         </header>
       )}
 
@@ -538,6 +548,12 @@ export default function MessagingView({
           />
           </div>
         </div>
+      )}
+      {showMediaPopup && (
+        <MediaPopup
+          messages={messages}
+          onClose={() => setShowMediaPopup(false)}
+        />
       )}
     </div>
   );
