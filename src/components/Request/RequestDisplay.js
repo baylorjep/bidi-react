@@ -263,18 +263,30 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
 
     useEffect(() => {
         if (!request) return;
+        // If servicePhotos are provided, use them. Otherwise, fetch from the correct table.
+        if (servicePhotos && servicePhotos.length > 0) {
+            setFilteredPhotos(servicePhotos);
+            return;
+        }
         const fetchPhotos = async () => {
             try {
                 let photoTable;
+                // Only 'requests' (general/regular) use service_photos, others use their own tables
                 switch (getRequestType()) {
                     case 'photography_requests':
-                        photoTable = 'photography_photos';
+                        photoTable = 'event_photos';
                         break;
-                    case 'videography_requests':
-                        photoTable = 'videography_photos';
+                    case 'dj_requests':
+                        photoTable = 'dj_photos';
+                        break;
+                    case 'catering_requests':
+                        photoTable = 'catering_photos';
                         break;
                     case 'beauty_requests':
                         photoTable = 'beauty_photos';
+                        break;
+                    case 'videography_requests':
+                        photoTable = 'videography_photos';
                         break;
                     case 'florist_requests':
                         photoTable = 'florist_photos';
@@ -283,29 +295,26 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                         photoTable = 'wedding_planning_photos';
                         break;
                     default:
-                        console.log('No specific photo table for request type:', getRequestType());
-                        return;
+                        photoTable = 'service_photos'; // For 'requests' (general/regular)
                 }
-
                 const { data: photos, error } = await supabase
                     .from(photoTable)
                     .select('*')
                     .eq('request_id', request.id)
                     .order('created_at', { ascending: false });
-
                 if (error) {
                     console.error('Error fetching photos:', error);
-                    return;
+                    setFilteredPhotos([]);
+                } else {
+                    setFilteredPhotos(photos);
                 }
-
-                setFilteredPhotos(photos);
             } catch (err) {
                 console.error('Error in fetchPhotos:', err);
+                setFilteredPhotos([]);
             }
         };
-
         fetchPhotos();
-    }, [request]);
+    }, [request, servicePhotos]);
 
     useEffect(() => {
         if (!request) return;
@@ -1540,7 +1549,65 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                     </div>
                 );
             default:
-                return <div>Unsupported request type</div>;
+                return (
+                    <div className="request-summary-grid">
+                        <InfoField label="Service Title" value={request.service_title} />
+                        <InfoField label="Service Category" value={request.service_category} />
+                        <InfoField label="Event Title" value={request.event_title || request.title} />
+                        <InfoField label="Event Type" value={request.event_type} />
+                        <InfoField label="Date" value={request.service_date ? new Date(request.service_date).toLocaleDateString() : (request.start_date ? new Date(request.start_date).toLocaleDateString() : null)} />
+                        <InfoField label="End Date" value={request.end_date ? new Date(request.end_date).toLocaleDateString() : null} />
+                        <InfoField label="Time of Day" value={request.time_of_day} />
+                        <InfoField label="Location" value={request.location} />
+                        <InfoField label="Budget" value={request.price_range ? `$${request.price_range}` : (request.budget_range ? `$${request.budget_range}` : null)} />
+                        <InfoField label="Coupon Code" value={request.coupon_code} />
+                        {request.pinterest_link && (
+                            <InfoField 
+                                label="Pinterest Board" 
+                                value={<a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">View Board</a>} 
+                            />
+                        )}
+                        {request.media_url && (
+                            <InfoField 
+                                label="Media URL" 
+                                value={<a href={request.media_url} target="_blank" rel="noopener noreferrer">View Media</a>} 
+                            />
+                        )}
+                        {request.service_description && (
+                            <InfoField 
+                                label="Service Description" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.service_description }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+                        {request.additional_info && (
+                            <InfoField 
+                                label="Additional Information" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_info }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+
+                        {request.additional_comments && (
+                            <InfoField 
+                                label="Additional Comments" 
+                                value={<div dangerouslySetInnerHTML={{ __html: request.additional_comments }} />} 
+                                gridColumn="1 / -1" 
+                            />
+                        )}
+                        {(servicePhotos && servicePhotos.length > 0
+                            ? servicePhotos
+                            : filteredPhotos && filteredPhotos.length > 0
+                                ? filteredPhotos
+                                : []).length > 0 && (
+                            <PhotoGrid
+                                photos={servicePhotos && servicePhotos.length > 0 ? servicePhotos : filteredPhotos}
+                                onPhotoClick={handlePhotoClick}
+                                getPublicUrl={getPublicUrl}
+                            />
+                        )}
+                    </div>
+                );
         }
     };
 

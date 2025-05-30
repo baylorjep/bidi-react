@@ -849,7 +849,8 @@ export default function BidsPage({ onOpenChat }) {
     };
 
     const handleEdit = (request) => {
-        navigate(`/edit-request/${request.type}/${request.id}`);
+        // Use navigate with state to pass the full request object
+        navigate(`/edit-request/${request.table_name || 'requests'}/${request.id}`, { state: { request } });
     };
 
     const toggleRequestStatus = async (request) => {
@@ -1442,7 +1443,7 @@ export default function BidsPage({ onOpenChat }) {
                         </div>
 
                         <div className="bids-container">
-                            {bids.filter(bid => bid.request_id === selectedRequest.id)
+                            {bids.filter(bid => bid.request_id === requests[currentRequestIndex].id)
                                 .map(bid => renderBidCard(bid))}
                             {renderNoBidsMessage()}
                         </div>

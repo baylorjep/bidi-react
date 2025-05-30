@@ -1,122 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { FaTrash } from 'react-icons/fa';
 
 function EditRequest() {
+    const location = useLocation();
     const { type, id } = useParams();
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        // Regular request fields
-        service_type: '',
-        service_title: '',
-        service_description: '',
-        service_date: '',
-        end_date: '',
-
-        // Photography request fields
-        event_title: '',
-        event_type: '',
-        event_description: '',
-        start_date: '',
-        num_people: '',
-        duration: '',
-        indoor_outdoor: '',
-        extras: {},
-        date_type: '',
-        date_flexibility: '',
-        date_timeframe: '',
-        start_time: '',
-        end_time: '',
-        start_time_unknown: false,
-        end_time_unknown: false,
-        second_photographer: '',
-        second_photographer_unknown: false,
-        duration_unknown: false,
-        num_people_unknown: false,
-        style_preferences: {},
-        deliverables: {},
-        wedding_details: {},
-        additional_info: '',
-        pinterest_link: '',
-
-        // DJ request fields
-        event_type: '',
-        event_title: '',
-        date_flexibility: '',
-        start_date: '',
-        end_date: '',
-        date_timeframe: '',
-        start_time: '',
-        end_time: '',
-        event_duration: '',
-        estimated_guests: '',
-        indoor_outdoor: '',
-        music_preferences: {},
-        special_songs: { playlists: '', requests: '' },
-        equipment_needed: '',
-        equipment_notes: '',
-        additional_services: [],
-        special_requests: '',
-        budget_range: '',
-
-        // Beauty request fields
-        serviceType: '',
-        hairstyle_preferences: '',
-        hair_length_type: '',
-        extensions_needed: '',
-        trial_session_hair: '',
-        makeup_style_preferences: '',
-        skin_type_concerns: '',
-        preferred_products_allergies: '',
-        lashes_included: '',
-        trial_session_makeup: '',
-        group_discount_inquiry: '',
-        on_site_service_needed: '',
-        specific_time_needed: '',
-        specific_time: '',
-
-        // Florist request fields
-        budget: '',
-        budget_unknown: false,
-        floral_arrangements: {},
-        flower_preferences: {},
-        flower_preferences_text: '',
-        color_scheme: '',
-        indoor_outdoor: '',
-
-        // Catering request fields
-        title: '',
-        guest_count: '',
-        guest_count_unknown: false,
-        food_preferences: {},
-        service_type: '',
-        event_duration: '',
-        dietary_restrictions: '',
-        other_dietary_details: '',
-        dining_items_notes: '',
-
-        // Wedding Planning request fields
-        planning_type: '',
-        services_needed: {},
-        venue_status: '',
-        wedding_style: '',
-        theme_preferences: '',
-        planning_level: '',
-        experience_level: '',
-        communication_style: '',
-        planner_budget: '',
-
-        // Videography request fields
-        duration: '',
-        coverage: {},
-        style: ''
+    const [formData, setFormData] = useState(() => {
+        // If request is passed via location.state, use it as initial form data
+        if (location.state && location.state.request) {
+            return { ...location.state.request };
+        }
+        // Otherwise, use default blank schema
+        return {
+            service_type: '',
+            service_title: '',
+            service_description: '',
+            service_date: '',
+            end_date: '',
+            event_title: '',
+            event_type: '',
+            location: '',
+            price_range: '',
+            budget_range: '',
+            coupon_code: '',
+            pinterest_link: '',
+            media_url: '',
+            additional_info: '',
+            additional_comments: '',
+            // Add any other fields that exist in the requests table schema
+        };
     });
     const [error, setError] = useState('');
     const [photos, setPhotos] = useState([]);
     const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef();
 
     useEffect(() => {
         const fetchRequest = async () => {
@@ -207,14 +128,17 @@ function EditRequest() {
 
         fetchRequest();
 
-        // Fetch photos for this request (photography only for now)
+        // Fetch photos for this request (all types via service_photos)
         const fetchPhotos = async () => {
-            if (type === 'photography') {
-                const { data, error } = await supabase
-                    .from('event_photos')
-                    .select('*')
-                    .eq('request_id', id);
-                if (!error) setPhotos(data || []);
+            let requestId = id;
+            let requestType = type;
+            // For all types, fetch from service_photos
+            const { data, error } = await supabase
+                .from('service_photos')
+                .select('*')
+                .eq('request_id', requestId);
+            if (!error && data) {
+                setPhotos(data);
             }
         };
         fetchPhotos();
@@ -340,52 +264,78 @@ function EditRequest() {
     // Photo upload handler
     const handlePhotoUpload = async (e) => {
         const files = e.target.files;
-        if (!files.length) return;
+        if (!files || !files.length) return;
         setUploading(true);
         try {
-            for (let file of files) {
+            // Get user id from formData or supabase.auth
+            let userId = formData.user_id;
+            if (!userId && supabase.auth.getUser) {
+                const { data: userData } = await supabase.auth.getUser();
+                userId = userData?.user?.id;
+            }
+            if (!userId) throw new Error('User not authenticated');
+            const requestId = id;
+            const uploadedPhotos = [];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
                 const fileExt = file.name.split('.').pop();
-                const fileName = `${id}-${Date.now()}-${Math.random()}.${fileExt}`;
-                const filePath = `request-media/${fileName}`;
-                // Upload to storage
-                let { error: uploadError } = await supabase.storage
+                const filePath = `${userId}/${requestId}/${Date.now()}_${i}.${fileExt}`;
+                // Upload to request-media bucket
+                const { error: uploadError } = await supabase.storage
                     .from('request-media')
-                    .upload(fileName, file);
+                    .upload(filePath, file, { upsert: false });
                 if (uploadError) throw uploadError;
                 // Get public URL
-                const { data: { publicUrl } } = supabase.storage
+                const { data: publicUrlData, error: urlError } = supabase.storage
                     .from('request-media')
-                    .getPublicUrl(fileName);
-                // Insert into event_photos
-                const user = await supabase.auth.getUser();
-                await supabase.from('event_photos').insert({
-                    request_id: id,
-                    user_id: user.data.user.id,
-                    photo_url: publicUrl,
-                    file_path: fileName
-                });
+                    .getPublicUrl(filePath);
+                if (urlError) throw urlError;
+                const publicURL = publicUrlData?.publicUrl;
+                // Insert into service_photos
+                const { data: photoData, error: insertError } = await supabase
+                    .from('service_photos')
+                    .insert([
+                        {
+                            user_id: userId,
+                            request_id: requestId,
+                            photo_url: publicURL,
+                            file_path: filePath
+                        }
+                    ])
+                    .select();
+                if (insertError) throw insertError;
+                uploadedPhotos.push(photoData?.[0]);
             }
-            // Refresh photos
-            const { data } = await supabase
-                .from('event_photos')
-                .select('*')
-                .eq('request_id', id);
-            setPhotos(data || []);
+            setPhotos(prev => [...prev, ...uploadedPhotos]);
         } catch (err) {
-            setError('Failed to upload photo(s)');
+            setError('Photo upload failed.');
+            console.error('Photo upload error:', err);
         } finally {
             setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
     // Remove photo handler
     const handleRemovePhoto = async (photoId, filePath) => {
+        setUploading(true);
         try {
-            await supabase.from('event_photos').delete().eq('id', photoId);
-            await supabase.storage.from('request-media').remove([filePath]);
-            setPhotos(photos.filter(p => p.id !== photoId));
+            // Remove from storage
+            const { error: storageError } = await supabase.storage
+                .from('request-media')
+                .remove([filePath]);
+            if (storageError) throw storageError;
+            // Remove from service_photos
+            const { error: dbError } = await supabase
+                .from('service_photos')
+                .delete()
+                .eq('id', photoId);
+            if (dbError) throw dbError;
+            setPhotos(prev => prev.filter(p => p.id !== photoId));
         } catch (err) {
-            setError('Failed to remove photo');
+            setError('Failed to remove photo.');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -1314,6 +1264,41 @@ function EditRequest() {
                                 />
                                 <label className="custom-label">Additional Information</label>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Photo Upload Section for Requests */}
+                {(type === 'requests' || type === 'regular') && (
+                    <div className="photo-upload-section">
+                        <label htmlFor="photo-upload">Upload Photos</label>
+                        <input
+                            id="photo-upload"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            ref={fileInputRef}
+                            onChange={handlePhotoUpload}
+                            disabled={uploading}
+                        />
+                        {uploading && <div>Uploading...</div>}
+                        <div className="photo-preview-grid">
+                            {photos && photos.length > 0 && photos.map(photo => (
+                                <div key={photo.id || photo.file_path} className="photo-preview-item">
+                                    <img
+                                        src={photo.file_path ? `${process.env.REACT_APP_SUPABASE_STORAGE_URL || ''}/${photo.file_path}` : photo.url}
+                                        alt="Request Photo"
+                                        style={{ maxWidth: 120, maxHeight: 120, objectFit: 'cover', borderRadius: 8 }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemovePhoto(photo.id, photo.file_path)}
+                                        style={{ marginTop: 4, color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}

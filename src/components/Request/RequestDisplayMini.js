@@ -16,10 +16,19 @@ function RequestDisplayMini({
     const [timeLeft, setTimeLeft] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
 
+    // Helper to parse created_at as UTC if needed
+    const parseUTCDate = (dateString) => {
+        if (!dateString) return null;
+        // If already ISO, just use it
+        if (dateString.includes('T')) return new Date(dateString);
+        // Convert 'YYYY-MM-DD HH:mm:ss.ssssss' to 'YYYY-MM-DDTHH:mm:ss.sssZ'
+        return new Date(dateString.replace(' ', 'T').replace(/([.\d]+)$/, '$1Z'));
+    };
+
     const isNew = (createdAt) => {
         if (!createdAt) return false;
         const now = new Date();
-        const created = new Date(createdAt);
+        const created = parseUTCDate(createdAt);
         const diffInDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
         return diffInDays < 7;
     };
@@ -28,7 +37,8 @@ function RequestDisplayMini({
         if (!createdAt) return null;
 
         const now = Date.now();
-        const created = new Date(createdAt).getTime();
+        const created = parseUTCDate(createdAt)?.getTime();
+        if (!created) return null;
         const minutesSinceCreation = (now - created) / (1000 * 60);
 
         if (minutesSinceCreation < 30) {
@@ -51,10 +61,21 @@ function RequestDisplayMini({
         const timer = setInterval(() => {
             const promotion = checkPromotion(request.created_at);
             if (promotion && promotion.endTime) {
-                const now = new Date();
-                const timeRemaining = promotion.endTime.getTime() - now.getTime();
-                
-                if (timeRemaining > 0) {
+                const nowUTC = Date.now();
+                const createdUTC = parseUTCDate(request.created_at)?.getTime();
+                if (!createdUTC) {
+                    setTimeLeft('');
+                    return;
+                }
+                const timeRemaining = promotion.endTime.getTime() - nowUTC;
+                const minutesSinceCreation = (nowUTC - createdUTC) / (1000 * 60);
+
+                // Only cap if created_at is in the future (negative minutesSinceCreation)
+                if (promotion.message === "⚡Save 2%" && minutesSinceCreation < 0) {
+                    setTimeLeft("30:00");
+                } else if (promotion.message === "⏳Save 1%" && minutesSinceCreation < 0) {
+                    setTimeLeft("60:00");
+                } else if (timeRemaining > 0) {
                     const totalSeconds = Math.floor(timeRemaining / 1000);
                     const minutes = Math.floor(totalSeconds / 60);
                     const seconds = totalSeconds % 60;
