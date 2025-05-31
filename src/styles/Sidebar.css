@@ -56,89 +56,127 @@
 
 /* Profile Section */
 .profile-section {
-  position: relative;
-  text-align: center;
-}
-
-.profile-pic {
-  width: 6vw;
-  height: 6vw;
-  border-radius: 50%;
-  background: lightgray 50% / cover no-repeat;
-  object-fit: cover;
-  display: block;
-  margin: 0 auto;
-  border: none;
-}
-
-.verified-badge {
-  position: absolute;
-  margin-top: -5px;
-  left: 50%;
-  top: 50%;
-  transform: translateX(-50%);
-  background-color: #a328f4;
-  color: white;
-  font-size: 0.8vw;
-  font-weight: 400;
-  padding: 0.1vw 0.8vw;
-}
-
-.profile-name {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  padding: 20px 0;
+  width: 100%;
   text-align: center;
-  max-width: 12vw;
-  line-height: 1.2;
-  font-size: 0.9vw;
-  margin-top: 1.3vw;
 }
 
-.name-under-picture,
-.business-name-under-picture {
-  display: inline-block;
-  max-width: 100%;
-  text-align: center;
+.profile-section .bidi-logo {
+  width: 120px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.profile-section .profile-pic {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-section .verified-badge {
+  position: absolute;
+  top: 140px;
+  right: 50%;
+  transform: translateX(50%);
+  background: #FF008A;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.profile-section .profile-name {
+  margin: 10px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  width: 100%;
+  padding: 0 15px;
   word-break: break-word;
-  white-space: normal;
+}
+
+.profile-section .name-under-picture,
+.profile-section .business-name-under-picture {
+  display: inline-block;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.profile-section .verified-icon {
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  vertical-align: middle;
 }
 
 /* Sidebar Links */
 .sidebar-links {
-  list-style: none;
-  padding: 0;
   width: 100%;
-  text-align: center;
+  padding: 0;
+  margin: 0;
+  list-style: none;
 }
 
 .sidebar-links li {
   display: flex;
   align-items: center;
-  padding: 0.3vh 0;
-  font-size: 1.2vw;
-  margin-left: 2.5vw;
+  padding: 12px 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  color: #333;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  margin: 4px 8px;
 }
 
 .sidebar-links li img {
-  width: 1.5vw;
-  margin-right: 1vw;
-  color: #a328f4;
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+}
+
+.sidebar-links li span {
+  font-size: 14px;
+  color: #333;
 }
 
 .sidebar-links li.active {
   background: #f6eafe;
-  border-radius: 0.5vw;
-  color: #a328f4;
+  color: #9633eb;
 }
 
 .sidebar-links li.active img {
-  color: #a328f4;
-  fill: #a328f4;
+  /* Remove the filter that changes icon color */
+}
+
+.sidebar-links li:hover {
+  background: #f6eafe;
+  color: #9633eb;
+}
+
+.sidebar-links li:hover img {
+  /* Remove the filter that changes icon color */
+}
+
+.sidebar-links .sidebar-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  padding: 20px 20px 8px;
+  cursor: default;
+  margin: 0;
+}
+
+.sidebar-links .sidebar-section-title:hover {
+  background-color: transparent;
+  color: #666;
 }
 
 /* Show sidebar button */
@@ -159,30 +197,22 @@
 /* Pin button styles */
 .pin-button {
   position: absolute;
-  right: -12px;
-  top: 20px;
-  background: white;
+  top: 10px;
+  right: 10px;
+  background: none;
   border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  z-index: 1001;
-}
-
-.pin-button i {
-  font-size: 12px;
   color: #666;
-  transition: transform 0.3s ease;
+  cursor: pointer;
+  padding: 5px;
+  z-index: 1;
 }
 
-.pin-button i.pinned {
-  transform: rotate(45deg);
-  color: #9633eb;
+.pin-button:hover {
+  color: #FF008A;
+}
+
+.pin-button .pinned {
+  color: #FF008A;
 }
 
 /* Bottom Navigation Bar */
@@ -303,8 +333,15 @@
   }
 
   .sidebar-links li img {
-    width: 20px;
-    margin-right: 10px;
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+  }
+
+  .bottom-nav button img {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 8px;
   }
 }
 
@@ -317,8 +354,8 @@
   }
 
   .bottom-nav button img {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
   }
 
   .nav-label {
@@ -348,35 +385,29 @@
 .sidebar-footer {
   margin-top: auto;
   padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+  border-top: 1px solid #eee;
 }
 
 .logout-button {
+  width: 100%;
   display: flex;
   align-items: center;
-  width: 100%;
-  padding: 12px;
+  justify-content: center;
+  padding: 10px;
   background: none;
   border: none;
   color: #666;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border-radius: 8px;
+  transition: color 0.2s;
 }
 
 .logout-button:hover {
-  background: rgba(255, 0, 138, 0.1);
   color: #FF008A;
 }
 
 .logout-button i {
-  margin-right: 10px;
-  font-size: 16px;
-}
-
-.logout-button span {
-  font-size: 14px;
-  font-weight: 500;
+  margin-right: 8px;
 }
 
 /* Profile Nav Button and Menu Styles */

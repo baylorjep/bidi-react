@@ -9,6 +9,7 @@ import bidsIcon from "../../assets/images/Icons/bids.svg";
 import messageIcon from "../../assets/images/Icons/message.svg";
 import profileIcon from "../../assets/images/Icons/profile.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
+import logo from "../../assets/images/Bidi-Logo.svg";
 import ChatInterface from "../Messaging/ChatInterface.js";
 import BidsPage from "./BidsPage.js";
 import LoadingSpinner from "../LoadingSpinner.js";
@@ -356,6 +357,7 @@ const IndividualDashboard = () => {
 
           {/* Profile Section */}
           <div className="profile-section">
+            <img src={logo} alt="Bidi Logo" className="bidi-logo" style={{ width: '120px', marginBottom: '20px' }} />
             <img src={profileImage} alt="Profile" className="profile-pic" />
             {isVerified && <div className="verified-badge">Verified</div>}
             <h4 className="profile-name">
