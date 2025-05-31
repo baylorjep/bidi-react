@@ -7,6 +7,11 @@
   overflow-x: hidden;
 }
 
+/* Add padding to dashboard main for desktop */
+.dashboard-main {
+  padding-top: 20px;
+}
+
 /* Profile Section Styles */
 .profile-content {
   padding: 2vw;
@@ -158,6 +163,7 @@
     width: 100%;
     margin-left: 0;
     padding: 10px;
+    padding-top: 60px;
   }
 
   .chat-app {

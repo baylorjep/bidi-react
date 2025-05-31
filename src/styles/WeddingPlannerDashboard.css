@@ -3,6 +3,11 @@
   background-color: #f5f5f5;
 }
 
+/* Add padding to dashboard main for desktop */
+.dashboard-main {
+  padding-top: 20px;
+}
+
 /* Mobile Menu Styles */
 .mobile-menu-overlay {
   position: fixed;
@@ -143,4 +148,11 @@
 .wedding-planner-dashboard .info-group p {
   margin: 0;
   color: #333;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .dashboard-main {
+    padding-top: 60px; /* Keep existing mobile padding */
+  }
 } 

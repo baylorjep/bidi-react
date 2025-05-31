@@ -7,6 +7,11 @@
   overflow-x: hidden;
 }
 
+/* Add padding to dashboard main for desktop */
+.dashboard-main {
+  padding-top: 20px;
+}
+
 /* Upgrade to PRO Box */
 .upgrade-box {
   background: #f6eafe;
@@ -340,6 +345,10 @@
 @media (max-width: 768px) {
   .sidebar {
     display: none;
+  }
+
+  .dashboard-main {
+    padding-top: 60px; /* Keep existing mobile padding */
   }
 
   .job-listings {
