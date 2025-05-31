@@ -1,7 +1,7 @@
 // App Imports
 import "./App.css";
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -134,322 +134,346 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 import VendorSelection from "./components/Request/VendorSelection";
 import WrongWithWeddings from "./components/Article/WrongWithWeddings";
 
-function App() {
-  subscribeToPush();
-  const [eventType, setEventType] = useState("");
-  const [eventDetails, setEventDetails] = useState({});
+// Create a wrapper component to use useLocation
+function AppContent() {
+  const location = useLocation();
+  const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [eventType, setEventType] = useState(null);
+  const [eventDetails, setEventDetails] = useState(null);
   const [userId, setUserId] = useState(null);
   const [userType, setUserType] = useState(null);
 
-// grab user so we dont have to do it in every component
   useEffect(() => {
-    const fetchUser = async () => {
+    const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
       if (user) {
         setUserId(user.id);
-        console.log('App - User ID:', user.id); // Debug log
-
-        // First check the profiles table for the user's role
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
+        // Fetch user role from profiles
+        const { data: businessProfile } = await supabase
+          .from('business_profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        const { data: individualProfile } = await supabase
+          .from('individual_profiles')
+          .select('role')
+          .eq('id', user.id)
           .single();
 
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          return;
-        }
-
-        if (profile) {
-          console.log('App - Setting userType to:', profile.role); // Debug log
-          setUserType(profile.role);
+        if (businessProfile && individualProfile) {
+          setUserRole('both');
+        } else if (businessProfile) {
+          setUserRole('business');
+        } else if (individualProfile) {
+          setUserRole('individual');
         }
       }
     };
-    fetchUser();
+    getUser();
   }, []);
 
+  // Function to check if current route is a dashboard
+  const isDashboardRoute = () => {
+    const dashboardRoutes = [
+      '/individual-dashboard',
+      '/business-dashboard',
+      '/wedding-planner-dashboard'
+    ];
+    return dashboardRoutes.some(route => location.pathname === route);
+  };
+
+  return (
+    <div className="app-container">
+      <LocationBanner />
+      <Navbar />
+      <div className="content">
+        <Routes>
+          {/* Layout Routes */}
+          <Route path="/" element={<Homepage />} />
+          <Route path="/for-vendors" element={<VendorHomepage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-use" element={<TermsOfUse />} />
+          <Route path="/about" element={<AboutAndContact />} />
+          {/* Bid Routes */}
+          <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
+          <Route path="/bid-accepted" element={<BidAccepted />} />
+          <Route path="/bid-success" element={<BidSuccess />} />
+          {/* Request Routes */}
+          <Route
+            path="/request-categories"
+            element={<RequestCategories />}
+          />
+          <Route path="/success-request" element={<SuccessRequest />} />
+
+          <Route
+            path="/master-request-flow"
+            element={<MasterRequestFlow />}
+          />
+          {/* New Staged Request Routes */}
+          <Route path="/request-form" element={<MultiStepRequestForm />} />
+          <Route path="/success-request" element={<SuccessRequest />} />
+          {/* Event Routes */}
+          <Route
+            path="/select-event"
+            element={<SelectEvent setEventType={setEventType} />}
+          />
+          <Route
+            path="/event-details"
+            element={
+              <EventDetails
+                eventType={eventType}
+                setEventDetails={setEventDetails}
+              />
+            }
+          />
+          <Route
+            path="/event-photos"
+            element={
+              <EventPhotos
+                eventType={eventType}
+                setEventDetails={setEventDetails}
+              />
+            }
+          />
+          <Route
+            path="/personal-details"
+            element={
+              <PersonalDetails
+                eventType={eventType}
+                setEventDetails={setEventDetails}
+              />
+            }
+          />
+          <Route
+            path="/event-summary"
+            element={
+              <EventSummary
+                eventType={eventType}
+                eventDetails={eventDetails}
+              />
+            }
+          />
+          {/* Profile Routes */}
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/success-signup" element={<SuccessSignup />} />
+          <Route
+            path="/choose-pricing-plan"
+            element={<ChoosePricingPlan />}
+          />
+          <Route path="/signin" element={<SignIn />} />
+          <Route
+            path="/request-password-reset"
+            element={<ResetPassword />}
+          />
+          <Route path="/reset-password" element={<UpdatePassword />} />
+          <Route path="/createaccount" element={<CreateAccount />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          {/* Individual Routes */}
+          <Route path="/individual-dashboard" element={
+            <PrivateRoute>
+              <IndividualDashboard />
+            </PrivateRoute>
+          } />
+          <Route path="/business-dashboard" element={
+            <PrivateRoute>
+              <BusinessDashboard />
+            </PrivateRoute>
+          } />
+          <Route path="/wedding-planner-dashboard" element={
+            <PrivateRoute>
+              <WeddingPlannerDashboard />
+            </PrivateRoute>
+          } />
+          <Route path="/my-requests" element={<MyRequests />} />
+          <Route path="/edit-request/:type/:id" element={<EditRequest />} />
+          {/* Test API Routes */}
+          <Route path="/test-email" element={<TestEmail />} />
+          {/* Business Routes */}
+          <Route path="/open-requests" element={<OpenRequests />} />
+          <Route
+            path="/edit-bid/:requestId/:bidId"
+            element={<EditBid />}
+          />
+          <Route
+            path="/verification-application"
+            element={<VerificationApplication />}
+          />
+          <Route
+            path="/contract-template"
+            element={
+              <PrivateRoute>
+                <ContractTemplateEditor />
+              </PrivateRoute>
+            }
+          />
+          {/* Dynamic URL for viewing portfolio */}
+          <Route path="/portfolio/:businessId" element={<Portfolio />} />
+          <Route
+            path="/portfolio/:businessId/gallery"
+            element={<Gallery />}
+          />
+          {/* Misc Routes */}
+          <Route path="/contact-us" element={<ContactForm />} />
+          <Route path="/about-us" element={<Navigate to="/about" replace />} />
+          {/* Messaging Routes */}
+          <Route path="/messages" element={
+            <PrivateRoute>
+              <MessagingViewWrapper currentUserId={userId} userType={userType} />
+            </PrivateRoute>
+          } />
+          <Route path="/messages/:businessId" element={
+            <PrivateRoute>
+              <MessagingViewWrapper currentUserId={userId} userType={userType} />
+            </PrivateRoute>
+          } />
+
+          {/* Spanish Routes */}
+          <Route path="/inicio" element={<HomepageES />} />
+          <Route path="/contactenos" element={<ContactFormES />} />
+          {/* Stripe Routes */}
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/stripe-onboarding" element={<StripeOnboarding />} />
+          <Route path="/checkout" element={<EmbeddedCheckoutForm />} />
+          <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-status" element={<PaymentStatus />} />
+          {/* Admin Routes */}
+          <Route
+            path="/admin-dashboard"
+            element={
+              <PrivateRoute>
+                <AdminDashboard />
+              </PrivateRoute>
+            }
+          />
+          {/* Combined Bids Route */}
+          <Route
+            path="/bids"
+            element={
+              <PrivateRoute>
+                <IndividualDashboard />
+              </PrivateRoute>
+            }
+          />
+          {/* Articles Route */}
+          <Route path="/articles" element={<ArticleNavigation />} />
+          <Route path="/articles/:articleId" element={<ArticleDetail />} />
+          <Route
+            path="/articles/utah-wedding-videographer-guide"
+            element={<UtahWeddingVideographerGuide />}
+          />
+          <Route
+            path="/articles/utah-catering-costs"
+            element={<UtahCateringCosts />}
+          />
+          <Route path="/articles/utah-dj-costs" element={<UtahDJCosts />} />
+          <Route
+            path="/articles/wedding-market-guide"
+            element={<WeddingMarketGuide />}
+          />
+          <Route
+            path="/articles/wedding-vibe-quiz"
+            element={<WeddingVibeQuiz />}
+          />
+          <Route
+            path="/articles/related-articles"
+            element={<RelatedArticles />}
+          />
+          <Route
+            path="/articles/everything-wrong-with-the-wedding-industry"
+            element={<WrongWithWeddings />}
+          />
+          {/* Photography Routes */}
+          <Route
+            path="/request/photography"
+            element={<PhotographyRequest />}
+          />
+          <Route
+            path="/request/videography"
+            element={<VideographyRequest />}
+          />
+          <Route path="/request/dj" element={<DjRequest />} />
+          <Route
+            path="/request/beauty"
+            element={<HairAndMakeUpRequest />}
+          />
+          <Route path="/request/florist" element={<FloristRequest />} />
+          <Route path="/request/catering" element={<CateringRequest />} />  
+          <Route path="/welcome" element={<NewsletterLanding />} />
+          <Route path="/unsubscribe" element={<Unsubscribe />} />
+          <Route
+            path="/wedding-market-guide"
+            element={<WeddingMarketGuide />}
+          />
+          <Route path="/vendors" element={<VendorListWithFilters />} />
+          {/* LocationBasedVendors Routes - Order matters! Most specific to least specific */}
+          <Route
+            path="/:type/wedding planner/coordinator/:location"
+            element={<LocationBasedVendors />}
+          />
+          <Route
+            path="/:type/wedding planner/coordinator"
+            element={<LocationBasedVendors />}
+          />
+          <Route
+            path="/:type/wedding planner/:location"
+            element={<LocationBasedVendors />}
+          />
+          <Route
+            path="/:type/wedding planner"
+            element={<LocationBasedVendors />}
+          />
+          <Route
+            path="/:type/:category/:location"
+            element={<LocationBasedVendors />}
+          />
+          <Route
+            path="/:type/:category"
+            element={<LocationBasedVendors />}
+          />
+          <Route
+            path="/:category/:location"
+            element={<LocationBasedVendors />}
+          />
+          <Route 
+            path="/:category" 
+            element={<LocationBasedVendors />} 
+          />
+          <Route
+            path="/wedding-vibe-quiz"
+            element={<WeddingVibeQuizPage />}
+          />
+          <Route path="/vendor-selection/:category" element={<VendorSelection />} />
+        </Routes>
+      </div>
+      {(!user || !isDashboardRoute()) && <Footer />}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      <PWAInstallPrompt />
+    </div>
+  );
+}
+
+function App() {
+  subscribeToPush();
+  
   return (
     <HelmetProvider>
       <Router>
         <ScrollToTop />
-        <div className="app-container">
-          <LocationBanner />
-          <Navbar />
-          <div className="content">
-            <Routes>
-              {/* Layout Routes */}
-              <Route path="/" element={<Homepage />} />
-              <Route path="/for-vendors" element={<VendorHomepage />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/terms-of-use" element={<TermsOfUse />} />
-              <Route path="/about" element={<AboutAndContact />} />
-              {/* Bid Routes */}
-              <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
-              <Route path="/bid-accepted" element={<BidAccepted />} />
-              <Route path="/bid-success" element={<BidSuccess />} />
-              {/* Request Routes */}
-              <Route
-                path="/request-categories"
-                element={<RequestCategories />}
-              />
-              <Route path="/success-request" element={<SuccessRequest />} />
-
-              <Route
-                path="/master-request-flow"
-                element={<MasterRequestFlow />}
-              />
-              {/* New Staged Request Routes */}
-              <Route path="/request-form" element={<MultiStepRequestForm />} />
-              <Route path="/success-request" element={<SuccessRequest />} />
-              {/* Event Routes */}
-              <Route
-                path="/select-event"
-                element={<SelectEvent setEventType={setEventType} />}
-              />
-              <Route
-                path="/event-details"
-                element={
-                  <EventDetails
-                    eventType={eventType}
-                    setEventDetails={setEventDetails}
-                  />
-                }
-              />
-              <Route
-                path="/event-photos"
-                element={
-                  <EventPhotos
-                    eventType={eventType}
-                    setEventDetails={setEventDetails}
-                  />
-                }
-              />
-              <Route
-                path="/personal-details"
-                element={
-                  <PersonalDetails
-                    eventType={eventType}
-                    setEventDetails={setEventDetails}
-                  />
-                }
-              />
-              <Route
-                path="/event-summary"
-                element={
-                  <EventSummary
-                    eventType={eventType}
-                    eventDetails={eventDetails}
-                  />
-                }
-              />
-              {/* Profile Routes */}
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/success-signup" element={<SuccessSignup />} />
-              <Route
-                path="/choose-pricing-plan"
-                element={<ChoosePricingPlan />}
-              />
-              <Route path="/signin" element={<SignIn />} />
-              <Route
-                path="/request-password-reset"
-                element={<ResetPassword />}
-              />
-              <Route path="/reset-password" element={<UpdatePassword />} />
-              <Route path="/createaccount" element={<CreateAccount />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              {/* Individual Routes */}
-              <Route path="/individual-dashboard" element={
-                <PrivateRoute>
-                  <IndividualDashboard />
-                </PrivateRoute>
-              } />
-              <Route path="/business-dashboard" element={
-                <PrivateRoute>
-                  <BusinessDashboard />
-                </PrivateRoute>
-              } />
-              <Route path="/wedding-planner-dashboard" element={
-                <PrivateRoute>
-                  <WeddingPlannerDashboard />
-                </PrivateRoute>
-              } />
-              <Route path="/my-requests" element={<MyRequests />} />
-              <Route path="/edit-request/:type/:id" element={<EditRequest />} />
-              {/* Test API Routes */}
-              <Route path="/test-email" element={<TestEmail />} />
-              {/* Business Routes */}
-              <Route path="/open-requests" element={<OpenRequests />} />
-              <Route
-                path="/edit-bid/:requestId/:bidId"
-                element={<EditBid />}
-              />
-              <Route
-                path="/verification-application"
-                element={<VerificationApplication />}
-              />
-              <Route
-                path="/contract-template"
-                element={
-                  <PrivateRoute>
-                    <ContractTemplateEditor />
-                  </PrivateRoute>
-                }
-              />
-              {/* Dynamic URL for viewing portfolio */}
-              <Route path="/portfolio/:businessId" element={<Portfolio />} />
-              <Route
-                path="/portfolio/:businessId/gallery"
-                element={<Gallery />}
-              />
-              {/* Misc Routes */}
-              <Route path="/contact-us" element={<ContactForm />} />
-              <Route path="/about-us" element={<Navigate to="/about" replace />} />
-              {/* Messaging Routes */}
-              <Route path="/messages" element={
-                <PrivateRoute>
-                  <MessagingViewWrapper currentUserId={userId} userType={userType} />
-                </PrivateRoute>
-              } />
-              <Route path="/messages/:businessId" element={
-                <PrivateRoute>
-                  <MessagingViewWrapper currentUserId={userId} userType={userType} />
-                </PrivateRoute>
-              } />
-
-              {/* Spanish Routes */}
-              <Route path="/inicio" element={<HomepageES />} />
-              <Route path="/contactenos" element={<ContactFormES />} />
-              {/* Stripe Routes */}
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/stripe-onboarding" element={<StripeOnboarding />} />
-              <Route path="/checkout" element={<EmbeddedCheckoutForm />} />
-              <Route path="/payment-cancelled" element={<PaymentCancelled />} />
-              <Route path="/payment-success" element={<PaymentSuccess />} />
-              <Route path="/payment-status" element={<PaymentStatus />} />
-              {/* Admin Routes */}
-              <Route
-                path="/admin-dashboard"
-                element={
-                  <PrivateRoute>
-                    <AdminDashboard />
-                  </PrivateRoute>
-                }
-              />
-              {/* Combined Bids Route */}
-              <Route
-                path="/bids"
-                element={
-                  <PrivateRoute>
-                    <IndividualDashboard />
-                  </PrivateRoute>
-                }
-              />
-              {/* Articles Route */}
-              <Route path="/articles" element={<ArticleNavigation />} />
-              <Route path="/articles/:articleId" element={<ArticleDetail />} />
-              <Route
-                path="/articles/utah-wedding-videographer-guide"
-                element={<UtahWeddingVideographerGuide />}
-              />
-              <Route
-                path="/articles/utah-catering-costs"
-                element={<UtahCateringCosts />}
-              />
-              <Route path="/articles/utah-dj-costs" element={<UtahDJCosts />} />
-              <Route
-                path="/articles/wedding-market-guide"
-                element={<WeddingMarketGuide />}
-              />
-              <Route
-                path="/articles/wedding-vibe-quiz"
-                element={<WeddingVibeQuiz />}
-              />
-              <Route
-                path="/articles/related-articles"
-                element={<RelatedArticles />}
-              />
-              <Route
-                path="/articles/everything-wrong-with-the-wedding-industry"
-                element={<WrongWithWeddings />}
-              />
-              {/* Photography Routes */}
-              <Route
-                path="/request/photography"
-                element={<PhotographyRequest />}
-              />
-              <Route
-                path="/request/videography"
-                element={<VideographyRequest />}
-              />
-              <Route path="/request/dj" element={<DjRequest />} />
-              <Route
-                path="/request/beauty"
-                element={<HairAndMakeUpRequest />}
-              />
-              <Route path="/request/florist" element={<FloristRequest />} />
-              <Route path="/request/catering" element={<CateringRequest />} />  
-              <Route path="/welcome" element={<NewsletterLanding />} />
-              <Route path="/unsubscribe" element={<Unsubscribe />} />
-              <Route
-                path="/wedding-market-guide"
-                element={<WeddingMarketGuide />}
-              />
-              <Route path="/vendors" element={<VendorListWithFilters />} />
-              {/* LocationBasedVendors Routes - Order matters! Most specific to least specific */}
-              <Route
-                path="/:type/wedding planner/coordinator/:location"
-                element={<LocationBasedVendors />}
-              />
-              <Route
-                path="/:type/wedding planner/coordinator"
-                element={<LocationBasedVendors />}
-              />
-              <Route
-                path="/:type/wedding planner/:location"
-                element={<LocationBasedVendors />}
-              />
-              <Route
-                path="/:type/wedding planner"
-                element={<LocationBasedVendors />}
-              />
-              <Route
-                path="/:type/:category/:location"
-                element={<LocationBasedVendors />}
-              />
-              <Route
-                path="/:type/:category"
-                element={<LocationBasedVendors />}
-              />
-              <Route
-                path="/:category/:location"
-                element={<LocationBasedVendors />}
-              />
-              <Route 
-                path="/:category" 
-                element={<LocationBasedVendors />} 
-              />
-              <Route
-                path="/wedding-vibe-quiz"
-                element={<WeddingVibeQuizPage />}
-              />
-              <Route path="/vendor-selection/:category" element={<VendorSelection />} />
-            </Routes>          </div>
-          <Footer />
-          <ToastContainer
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
-          <PWAInstallPrompt />
-        </div>
+        <AppContent />
       </Router>
     </HelmetProvider>
   );
