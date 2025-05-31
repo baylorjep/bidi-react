@@ -30,6 +30,7 @@ import MessagingView from "../Messaging/MessagingView.js";
 import AdminDashboard from "../admin/AdminDashboard.js";
 import ContractTemplateEditor from "./ContractTemplateEditor.js";
 import NewFeaturesModal from "./NewFeaturesModal";
+import NotificationBell from '../Notifications/NotificationBell';
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -371,8 +372,11 @@ const BusinessDashSidebar = () => {
           {/* Profile Section */}
           <div className="profile-section">
             <img src={logo} alt="Bidi Logo" className="bidi-logo" style={{ width: '120px', marginBottom: '20px' }} />
-            <img src={profileImage} alt="Vendor" className="profile-pic" />
-            {BidiPlus && <div className="verified-badge">Verified</div>}
+            <div className="profile-header">
+              <img src={profileImage} alt="Vendor" className="profile-pic" />
+              {BidiPlus && <div className="verified-badge">Verified</div>}
+              <NotificationBell />
+            </div>
             <h4 className="profile-name">
               <span className="business-name-under-picture">
                 {formatBusinessName(businessName)}
