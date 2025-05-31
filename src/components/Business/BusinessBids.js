@@ -362,6 +362,10 @@ const pendingBids = bids.filter((bid) =>
 
   return (
     <div className="business-bids-container">
+      <h1 style={{ fontFamily: "Outfit", fontWeight: "bold" }}>
+        Your Bids
+      </h1>
+      <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>View and manage your bids for client requests</p>
       {/* Always Render Tab Selector */}
       <div className="bids-status-container">{renderTabSelector()}</div>
 

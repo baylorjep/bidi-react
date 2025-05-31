@@ -207,6 +207,11 @@ export default function ChatInterface({ initialChat }) {
   };
 
   return (
+    <div>
+            <h1 style={{ fontFamily: "Outfit", fontWeight: "bold" }}>
+        Messages
+      </h1>
+      <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>Chat with your clients and vendors</p>
     <div className="chat-app">
       <aside className="chat-sidebar">
         <header>
@@ -265,6 +270,7 @@ export default function ChatInterface({ initialChat }) {
           onStartChat={(bizId) => handleChatSelect({ business_id: bizId, business_name: "New Chat" })}
         />
       )}
+    </div>
     </div>
   );
 }

@@ -663,6 +663,10 @@ useEffect(() => {
 
   return (
     <div className="business-settings-container">
+      <h1 style={{ fontFamily: "Outfit", fontWeight: "bold" }}>
+        Business Settings
+      </h1>
+      <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>Manage your business profile, payment settings, and preferences</p>
       {/* Setup Progress Stepper */}
       {Object.values(setupProgress).some(v => !v) && (
         <div className="setup-stepper mb-4">
@@ -1014,7 +1018,13 @@ useEffect(() => {
                         </div>
                       </div>
                     )}
-                    <div className="category-grid">
+                    <div className="category-grid" style={{ 
+                      display: "grid", 
+                      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", 
+                      gap: "10px",
+                      maxHeight: "40vh",
+                      overflowY: "auto"
+                    }}>
                       {businessCategories.map((category) => (
                         <div key={category.id} className="category-item" onClick={() => {
                           if (selectedCategories.includes(category.id)) {
@@ -1257,11 +1267,11 @@ useEffect(() => {
           </Modal.Footer>
         </Modal>
         {/* Categories Modal */}
-        <Modal show={showCategoryModal} onHide={() => { setShowCategoryModal(false); setSelectedCategories(currentCategories); setCustomCategory(""); }} centered>
+        <Modal show={showCategoryModal} onHide={() => { setShowCategoryModal(false); setSelectedCategories(currentCategories); setCustomCategory(""); }} centered size="lg" dialogClassName="category-modal">
           <Modal.Header closeButton>
             <Modal.Title>Manage Business Categories</Modal.Title>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
             <div className="mb-3">
               <label className="form-label">Select your business categories:</label>
               {currentCategories.length > 0 && (
@@ -1279,7 +1289,13 @@ useEffect(() => {
                   </div>
                 </div>
               )}
-              <div className="category-grid">
+              <div className="category-grid" style={{ 
+                display: "grid", 
+                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", 
+                gap: "10px",
+                maxHeight: "40vh",
+                overflowY: "auto"
+              }}>
                 {businessCategories.map((category) => (
                   <div key={category.id} className="category-item" onClick={() => {
                     if (selectedCategories.includes(category.id)) {
@@ -1311,8 +1327,8 @@ useEffect(() => {
               )}
             </div>
           </Modal.Body>
-          <Modal.Footer>
-            <div style={{ display: "flex", flexDirection: "row", gap: "20px", justifyContent: "center", marginTop: 20 }}>
+          <Modal.Footer style={{ borderTop: "1px solid #dee2e6" }}>
+            <div style={{ display: "flex", flexDirection: "row", gap: "20px", justifyContent: "center", width: "100%" }}>
               <button className="btn-danger" onClick={() => { setShowCategoryModal(false); setSelectedCategories(currentCategories); setCustomCategory(""); }}>Cancel</button>
               <button className="btn-success" onClick={handleCategorySubmit} disabled={selectedCategories.length === 0 || (selectedCategories.includes('other') && !customCategory.trim())}>Save Changes</button>
             </div>
