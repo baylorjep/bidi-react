@@ -896,14 +896,6 @@ useEffect(() => {
                     className="vendor-profile-image-bid-display"
                     onClick={handleProfileClick}
                   />
-                  <div
-                    className="profile-tooltip"
-                    style={{
-                      display: showBubble ? "block" : "none",
-                    }}
-                  >
-                    Click to view profile
-                  </div>
                 </div>
                 <div className="business-info">
                   <div className="business-name-container">
