@@ -1309,6 +1309,18 @@ export default function BidsPage({ onOpenChat }) {
                             {selectedRequest.event_title || selectedRequest.title || 'Selected Request'}
                         </h2>
                     </div>
+                    <div style={{ 
+                        textAlign: 'center', 
+                        padding: '10px', 
+                        backgroundColor: '#f8f9fa', 
+                        borderRadius: '8px',
+                        color: '#FF008A',
+                        fontWeight: 'bold',
+                        margin: '10px',
+                        fontSize: '14px'
+                    }}>
+                        Get 5% off everything when you book through Bidi! Limited time offer.
+                    </div>
                     <div className="mobile-bids-content">
                         <div className="tabs" style={{
                             display: 'flex',
@@ -1474,10 +1486,14 @@ export default function BidsPage({ onOpenChat }) {
                 <meta name="keywords" content="bids, wedding vendors, Bidi, manage bids" />
             </Helmet>
             <div className="bids-page">
+                <div>
+                </div>
                 <h1 className="section-title">Your Service Requests</h1>
+ 
                 <p className="section-description">
                     View all your service requests and manage the bids you've received.
                 </p>
+
                 
                 <style>
                     {`
@@ -1660,6 +1676,17 @@ export default function BidsPage({ onOpenChat }) {
                         <p className="section-description">
                             Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
                         </p>
+                        <div style={{ 
+                            textAlign: 'center', 
+                            marginBottom: '20px', 
+                            padding: '10px', 
+                            backgroundColor: '#f8f9fa', 
+                            borderRadius: '8px',
+                            color: '#FF008A',
+                            fontWeight: 'bold'
+                        }}>
+                            Get 5% off everything when you book through Bidi! Limited time offer.
+                        </div>
 
                         <div className="tabs" style={{
                             display: 'flex',
@@ -1804,60 +1831,7 @@ export default function BidsPage({ onOpenChat }) {
                 {/* Mobile bids view */}
                 {window.innerWidth <= 1024 && renderMobileBidsView()}
 
-                {showShareSection && (
-                    <div className="share-earn-section" style={{ 
-                        padding: '20px',
-                        marginTop: '40px',
-                        background: '#f8f9fa',
-                        borderRadius: '8px',
-                        textAlign: 'center',
-                        position: 'relative'
-                    }}>
-                        <button 
-                            onClick={() => setShowShareSection(false)}
-                            style={{
-                                position: 'absolute',
-                                right: '10px',
-                                top: '10px',
-                                background: 'none',
-                                border: 'none',
-                                fontSize: '20px',
-                                cursor: 'pointer',
-                                color: '#666'
-                            }}
-                        >
-                            ×
-                        </button>
-                        <h2 style={{ marginBottom: '15px', color: '#333' }}>
-                            Share Bidi & Earn
-                        </h2>
-                        <p style={{ marginBottom: '20px', color: '#666' }}>
-                            Share Bidi with your friends! They get $50 off their vendor, and you get $50 when they book!
-                        </p>
-                        <div style={{display: 'flex', justifyContent: 'center'}}>
-                            <button
-                                className="btn-primary"
-                                onClick={handleShareAndEarn}
-                                style={{
-                                    padding: '12px 24px',
-                                    fontSize: '16px',
-                                    fontWeight: 'bold',
-                                    background: '#9633eb',
-                                    color:'white',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderRadius: '40px',
-                                    border: 'none',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
-                                Get Your Referral Code
-                            </button>
-                        </div>
-                    </div>
-                )}
+
 
                 {/* Add mobile navigation at the bottom */}
                 {window.innerWidth <= 1024 && renderMobileNav()}

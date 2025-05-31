@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../../supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../../App.css";
@@ -43,6 +43,8 @@ const WeddingPlannerDashboard = () => {
   const [bids, setBids] = useState([]);
   const [showPlannerMenu, setShowPlannerMenu] = useState(false);
   const [showVendorMenu, setShowVendorMenu] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef(null);
 
   useEffect(() => {
     if (location.state?.activeSection) {
@@ -267,6 +269,20 @@ const WeddingPlannerDashboard = () => {
     }
   };
 
+  // Add click outside handler for profile menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   if (error) {
     return <div>Error: {error}</div>;
   }
@@ -379,6 +395,24 @@ const WeddingPlannerDashboard = () => {
               <span>Settings</span>
             </li>
           </ul>
+
+          {/* Logout Button */}
+          <div className="sidebar-footer">
+            <button 
+              onClick={async () => {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                  console.error('Error signing out:', error.message);
+                } else {
+                  navigate('/');
+                }
+              }}
+              className="logout-button"
+            >
+              <i className="fas fa-sign-out-alt"></i>
+              <span>Log Out</span>
+            </button>
+          </div>
         </aside>
 
         {/* Overlay for click-away behavior */}
@@ -485,59 +519,92 @@ const WeddingPlannerDashboard = () => {
                   <span className="nav-label">Get Clients</span>
                 </div>
               </button>
+              <button 
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className={`profile-nav-button ${showProfileMenu ? 'active' : ''}`}
+              >
+                <div className="nav-item">
+                  <img src={profileImage} alt="Profile" className="profile-nav-image" />
+                  <span className="nav-label">Profile</span>
+                </div>
+              </button>
             </nav>
+
+            {/* Profile Menu */}
+            {showProfileMenu && (
+              <div className="profile-menu" ref={profileMenuRef}>
+                <button 
+                  onClick={() => {
+                    setActiveSection("settings");
+                    setShowProfileMenu(false);
+                  }}
+                  className="profile-menu-item"
+                >
+                  <i className="fas fa-cog"></i>
+                  <span>Settings</span>
+                </button>
+                <button 
+                  onClick={async () => {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) {
+                      console.error('Error signing out:', error.message);
+                    } else {
+                      navigate('/');
+                    }
+                  }}
+                  className="profile-menu-item"
+                >
+                  <i className="fas fa-sign-out-alt"></i>
+                  <span>Log Out</span>
+                </button>
+              </div>
+            )}
 
             {/* Find Vendors Menu */}
             {showPlannerMenu && (
-              <div className="mobile-menu-overlay">
-                <div className="mobile-menu">
-                  <h3>Find Vendors</h3>
-                  <button onClick={() => handleMenuOptionClick('received-bids')}>
-                    <img src={bidsIcon} alt="Received Bids" />
-                    <span>Received Bids</span>
-                  </button>
-                  <button onClick={() => handleMenuOptionClick('vendor-messages')}>
-                    <img src={messageIcon} alt="Message Vendors" />
-                    <span>Message Vendors</span>
-                  </button>
-                  <button onClick={() => handleMenuOptionClick('request')}>
-                    <img src={bidsIcon} alt="Request Bid" />
-                    <span>Request Bid</span>
-                  </button>
-                  <button onClick={() => handleMenuOptionClick('vendors')}>
-                    <img src={profileIcon} alt="Find Vendors" />
-                    <span>Find Vendors</span>
-                  </button>
-                </div>
+              <div className="profile-menu" style={{ right: 'auto', left: '16px' }}>
+                <button onClick={() => handleMenuOptionClick('received-bids')} className="profile-menu-item">
+                  <i className="fas fa-file-invoice"></i>
+                  <span>Received Bids</span>
+                </button>
+                <button onClick={() => handleMenuOptionClick('vendor-messages')} className="profile-menu-item">
+                  <i className="fas fa-comments"></i>
+                  <span>Message Vendors</span>
+                </button>
+                <button onClick={() => handleMenuOptionClick('request')} className="profile-menu-item">
+                  <i className="fas fa-clipboard-list"></i>
+                  <span>Request Bid</span>
+                </button>
+                <button onClick={() => handleMenuOptionClick('vendors')} className="profile-menu-item">
+                  <i className="fas fa-search"></i>
+                  <span>Find Vendors</span>
+                </button>
               </div>
             )}
 
             {/* Get Clients Menu */}
             {showVendorMenu && (
-              <div className="mobile-menu-overlay">
-                <div className="mobile-menu">
-                  <h3>Get Clients</h3>
-                  <button onClick={() => handleMenuOptionClick('home')}>
-                    <img src={dashboardIcon} alt="Open Requests" />
-                    <span>Open Requests</span>
-                  </button>
-                  <button onClick={() => handleMenuOptionClick('my-bids')}>
-                    <img src={bidsIcon} alt="My Bids" />
-                    <span>My Bids</span>
-                  </button>
-                  <button onClick={() => handleMenuOptionClick('client-messages')}>
-                    <img src={messageIcon} alt="Message Clients" />
-                    <span>Message Clients</span>
-                  </button>
-                  <button onClick={() => handleMenuOptionClick('portfolio')}>
-                    <img src={profileIcon} alt="Portfolio" />
-                    <span>My Portfolio</span>
-                  </button>
-                  <button onClick={() => handleMenuOptionClick('settings')}>
-                    <img src={settingsIcon} alt="Settings" />
-                    <span>Settings</span>
-                  </button>
-                </div>
+              <div className="profile-menu" style={{ right: 'auto', left: '16px' }}>
+                <button onClick={() => handleMenuOptionClick('home')} className="profile-menu-item">
+                  <i className="fas fa-list"></i>
+                  <span>Open Requests</span>
+                </button>
+                <button onClick={() => handleMenuOptionClick('my-bids')} className="profile-menu-item">
+                  <i className="fas fa-file-invoice-dollar"></i>
+                  <span>My Bids</span>
+                </button>
+                <button onClick={() => handleMenuOptionClick('client-messages')} className="profile-menu-item">
+                  <i className="fas fa-comments"></i>
+                  <span>Message Clients</span>
+                </button>
+                <button onClick={() => handleMenuOptionClick('portfolio')} className="profile-menu-item">
+                  <i className="fas fa-images"></i>
+                  <span>My Portfolio</span>
+                </button>
+                <button onClick={() => handleMenuOptionClick('settings')} className="profile-menu-item">
+                  <i className="fas fa-cog"></i>
+                  <span>Settings</span>
+                </button>
               </div>
             )}
           </>

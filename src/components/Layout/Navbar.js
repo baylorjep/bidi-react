@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import logo from "../../assets/images/Bidi-Logo.svg";
 import "../../App.css";
@@ -13,6 +13,7 @@ function Navbar() {
   const [profilePhoto, setProfilePhoto] = useState(null);
   const navigate = useNavigate();
   const navbarRef = useRef(null);
+  const location = useLocation();
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -119,6 +120,14 @@ function Navbar() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [navbarRef]);
+
+  // Check if we're in a dashboard route
+  const isDashboardRoute = location.pathname.includes('-dashboard');
+
+  // If we're in a dashboard route, don't render the navbar
+  if (isDashboardRoute) {
+    return null;
+  }
 
   return (
     <nav className="navbar navbar-expand-lg" id="mainNav" ref={navbarRef}>

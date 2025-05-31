@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../../supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../../App.css";
@@ -16,6 +16,7 @@ import MobileChatList from "../Messaging/MobileChatList.js";
 import MessagingView from "../Messaging/MessagingView.js";
 import RequestCategories from "../Request/RequestCategories.js";
 import VendorListWithFilters from "../VendorListWithFilters/VendorListWithFilters.js";
+import MasterRequestFlow from "../Request/MasterRequestFlow.js";
 
 const IndividualDashboard = () => {
   const [user, setUser] = useState(null);
@@ -41,6 +42,12 @@ const IndividualDashboard = () => {
   const [showOverlay, setShowOverlay] = useState(false);
   const sidebarRef = React.useRef(null);
   const location = useLocation();
+  const [showShareSection, setShowShareSection] = useState(() => {
+    const savedState = localStorage.getItem('bidiShareNotificationDismissed');
+    return savedState !== 'true';
+  });
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef(null);
 
   useEffect(() => {
     if (location.state?.activeSection) {
@@ -296,6 +303,25 @@ const IndividualDashboard = () => {
     }
   };
 
+  const handleDismissShareNotification = () => {
+    setShowShareSection(false);
+    localStorage.setItem('bidiShareNotificationDismissed', 'true');
+  };
+
+  // Add click outside handler for profile menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   if (error) {
     return <div>Error: {error}</div>;
   }
@@ -377,6 +403,24 @@ const IndividualDashboard = () => {
               <span>Profile</span>
             </li>
           </ul>
+
+          {/* Logout Button */}
+          <div className="sidebar-footer">
+            <button 
+              onClick={async () => {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                  console.error('Error signing out:', error.message);
+                } else {
+                  navigate('/');
+                }
+              }}
+              className="logout-button"
+            >
+              <i className="fas fa-sign-out-alt"></i>
+              <span>Log Out</span>
+            </button>
+          </div>
         </aside>
 
         {/* Overlay for click-away behavior */}
@@ -427,12 +471,90 @@ const IndividualDashboard = () => {
               />
             )
           ) : activeSection === "request" ? (
-            <RequestCategories />
+            location.state?.showRequestFlow ? (
+              <MasterRequestFlow 
+                selectedCategories={location.state.selectedCategories}
+                onComplete={() => {
+                  navigate("/individual-dashboard", { 
+                    state: { 
+                      activeSection: "request",
+                      showRequestFlow: false
+                    }
+                  });
+                }}
+              />
+            ) : (
+              <RequestCategories />
+            )
           ) : activeSection === "vendors" ? (
             <VendorListWithFilters />
           ) : activeSection === "profile" ? (
             <div className="profile-content">
               <h2>My Profile</h2>
+              {showShareSection && (
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '20px', 
+                  backgroundColor: '#f8f9fa', 
+                  borderRadius: '8px',
+                  color: '#FF008A',
+                  fontWeight: 'bold',
+                  marginBottom: '20px',
+                  fontSize: '14px',
+                  position: 'relative',
+                  border: '1px solid #FF008A',
+                  boxShadow: '0 2px 8px rgba(255,0,138,0.1)'
+                }}>
+                  <button 
+                    onClick={handleDismissShareNotification}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '8px',
+                      background: 'none',
+                      border: 'none',
+                      color: '#666',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      fontSize: '16px',
+                      zIndex: 1
+                    }}
+                  >
+                    ×
+                  </button>
+                  <h3 style={{ marginBottom: '15px', color: '#333' }}>
+                    Share Bidi & Earn
+                  </h3>
+                  <p style={{ marginBottom: '20px', color: '#666' }}>
+                    Share Bidi with your friends! They get $50 off their vendor, and you get $50 when they book!
+                  </p>
+                  <div style={{display: 'flex', justifyContent: 'center'}}>
+                    <button
+                      className="btn-primary"
+                      onClick={() => {
+                        // Add your share functionality here
+                        console.log('Share clicked');
+                      }}
+                      style={{
+                        padding: '12px 24px',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        background: '#9633eb',
+                        color:'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '40px',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
+                      Get Your Referral Code
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="profile-form">
                 {editMode ? (
                   <form onSubmit={handleProfileUpdate}>
@@ -536,15 +658,45 @@ const IndividualDashboard = () => {
               </div>
             </button>
             <button 
-              onClick={() => setActiveSection("profile")}
-              className={activeSection === "profile" ? "active" : ""}
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              className={`profile-nav-button ${showProfileMenu ? 'active' : ''}`}
             >
               <div className="nav-item">
-                <img src={settingsIcon} alt="Profile" />
+                <img src={profileImage} alt="Profile" className="profile-nav-image" />
                 <span className="nav-label">Profile</span>
               </div>
             </button>
           </nav>
+        )}
+
+        {/* Profile Menu */}
+        {isMobile && showProfileMenu && (
+          <div className="profile-menu" ref={profileMenuRef}>
+            <button 
+              onClick={() => {
+                setActiveSection("profile");
+                setShowProfileMenu(false);
+              }}
+              className="profile-menu-item"
+            >
+              <i className="fas fa-user"></i>
+              <span>My Profile</span>
+            </button>
+            <button 
+              onClick={async () => {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                  console.error('Error signing out:', error.message);
+                } else {
+                  navigate('/');
+                }
+              }}
+              className="profile-menu-item"
+            >
+              <i className="fas fa-sign-out-alt"></i>
+              <span>Log Out</span>
+            </button>
+          </div>
         )}
       </div>
     </div>

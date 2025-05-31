@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 // import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import { supabase } from "../../supabaseClient";
 import { useNavigate } from "react-router-dom";
@@ -67,6 +67,8 @@ const BusinessDashSidebar = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const [showNewFeatures, setShowNewFeatures] = useState(false);
   const [hasSeenNewFeatures, setHasSeenNewFeatures] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -327,6 +329,20 @@ const BusinessDashSidebar = () => {
     }
   };
 
+  // Add click outside handler for profile menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="business-dashboard text-left">
       <div className="dashboard-container">
@@ -403,14 +419,23 @@ const BusinessDashSidebar = () => {
             </li>
           </ul>
 
-          {/* Upgrade Prompt */}
-          {/* {!BidiPlus && (
-            <div className="upgrade-box">
-              <p>
-                Upgrade to <strong>PRO</strong> to get access to all features!
-              </p>
-            </div>
-          )} */}
+          {/* Logout Button */}
+          <div className="sidebar-footer">
+            <button 
+              onClick={async () => {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                  console.error('Error signing out:', error.message);
+                } else {
+                  navigate('/');
+                }
+              }}
+              className="logout-button"
+            >
+              <i className="fas fa-sign-out-alt"></i>
+              <span>Log Out</span>
+            </button>
+          </div>
         </aside>
 
         {/* Overlay for click-away behavior */}
@@ -484,57 +509,85 @@ const BusinessDashSidebar = () => {
 
         {/* Bottom Navigation Bar */}
         {isMobile && (
-          <nav className="bottom-nav">
-            <button 
-              onClick={() => setActiveSection("dashboard")}
-              className={activeSection === "dashboard" ? "active" : ""}
-            >
-              <div className="nav-item">
-                <img src={dashboardIcon} alt="Dashboard" />
-                <span className="nav-label">Requests</span>
+          <>
+            <nav className="bottom-nav">
+              <button 
+                onClick={() => setActiveSection("dashboard")}
+                className={activeSection === "dashboard" ? "active" : ""}
+              >
+                <div className="nav-item">
+                  <img src={dashboardIcon} alt="Dashboard" />
+                  <span className="nav-label">Requests</span>
+                </div>
+              </button>
+              <button 
+                onClick={() => setActiveSection("bids")}
+                className={activeSection === "bids" ? "active" : ""}
+              >
+                <div className="nav-item">
+                  <img src={bidsIcon} alt="Bids" />
+                  <span className="nav-label">Bids</span>
+                </div>
+              </button>
+              <button 
+                onClick={handleMessagesClick}
+                className={activeSection === "messages" ? "active" : ""}
+              >
+                <div className="nav-item">
+                  <img src={messageIcon} alt="Message" />
+                  <span className="nav-label">Messages</span>
+                </div>
+              </button>
+              <button 
+                onClick={() => handleViewPortfolio()}
+                className={activeSection === "portfolio" ? "active" : ""}
+              >
+                <div className="nav-item profile-nav-item">
+                  <img src={profileIcon} alt="Portfolio" className="profile-icon" />
+                  <span className="nav-label">Portfolio</span>
+                </div>
+              </button>
+              <button 
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className={`profile-nav-button ${showProfileMenu ? 'active' : ''}`}
+              >
+                <div className="nav-item">
+                  <img src={profileImage} alt="Profile" className="profile-nav-image" />
+                  <span className="nav-label">Profile</span>
+                </div>
+              </button>
+            </nav>
+
+            {/* Profile Menu */}
+            {showProfileMenu && (
+              <div className="profile-menu" ref={profileMenuRef}>
+                <button 
+                  onClick={() => {
+                    setActiveSection("settings");
+                    setShowProfileMenu(false);
+                  }}
+                  className="profile-menu-item"
+                >
+                  <i className="fas fa-cog"></i>
+                  <span>Settings</span>
+                </button>
+                <button 
+                  onClick={async () => {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) {
+                      console.error('Error signing out:', error.message);
+                    } else {
+                      navigate('/');
+                    }
+                  }}
+                  className="profile-menu-item"
+                >
+                  <i className="fas fa-sign-out-alt"></i>
+                  <span>Log Out</span>
+                </button>
               </div>
-            </button>
-            <button 
-              onClick={() => setActiveSection("bids")}
-              className={activeSection === "bids" ? "active" : ""}
-            >
-              <div className="nav-item">
-                <img src={bidsIcon} alt="Bids" />
-                <span className="nav-label">Bids</span>
-              </div>
-            </button>
-            <button 
-              onClick={handleMessagesClick}
-              className={activeSection === "messages" ? "active" : ""}
-            >
-              <div className="nav-item">
-                <img src={messageIcon} alt="Message" />
-                <span className="nav-label">Messages</span>
-              </div>
-            </button>
-            <button 
-              onClick={() => handleViewPortfolio()}
-              className={activeSection === "portfolio" ? "active" : ""}
-            >
-              <div className="nav-item profile-nav-item">
-                <img src={profileIcon} alt="Portfolio" className="profile-icon" />
-                <span className="nav-label">Portfolio</span>
-              </div>
-            </button>
-            <button 
-              onClick={() => setActiveSection("settings")}
-              className={activeSection === "settings" ? "active" : ""}
-            >
-              <div className="nav-item">
-                <img
-                  src={settingsIcon}
-                  alt="Settings"
-                  className="settings-icon"
-                />
-                <span className="nav-label">Settings</span>
-              </div>
-            </button>
-          </nav>
+            )}
+          </>
         )}
       </div>
 

@@ -291,12 +291,20 @@
     transform: translateY(-1px);
 }
 
+.bids-page .request-category {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+
 /* Bids Section Styles */
 .bids-page .bids-section {
     background: white;
     border-radius: 16px;
     padding: 30px;
-    height: 100vh;
+    min-height: calc(100vh - 200px);
     overflow-y: auto;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
@@ -374,6 +382,35 @@
     transform: translateY(-1px);
 }
 
+.bids-page .profile-image-container {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+    position: relative;
+    cursor: pointer;
+}
+
+.bids-page .profile-tooltip {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.bids-page .profile-image-container:hover .profile-tooltip {
+    opacity: 1;
+}
+
 .bids-page .bids-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -382,6 +419,8 @@
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
+    height: auto;
+    min-height: 0;
 }
 
 @container (min-width: 901px) {
@@ -423,259 +462,7 @@
     font-size: 1rem;
 }
 
-/* Mobile Responsive Styles */
-@media screen and (max-width: 1024px) {
-    .bids-page {
-        grid-template-columns: 1fr;
-        gap: 20px;
-        padding: 15px;
-        min-height: auto;
-        padding-bottom: 20px; /* Reduced bottom padding since we removed the nav */
-    }
 
-    .bids-page .requests-list-container {
-        max-height: none;
-        overflow: visible;
-        height: auto;
-    }
-
-    .bids-page .requests-list {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        height: auto;
-        max-height: none;
-    }
-
-    /* Remove bottom navigation styles */
-    .bids-page .mobile-nav {
-        display: none;
-    }
-
-    /* Adjust tabs to be more mobile-friendly */
-    .bids-page .tabs {
-        position: sticky;
-        top: 0;
-        background: white;
-        padding: 10px 0;
-        margin: 0 -15px 20px -15px; /* Negative margin to extend full width */
-        z-index: 10;
-        border-bottom: 1px solid #eee;
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-    }
-
-    .bids-page .tab {
-        flex: 1;
-        padding: 10px;
-        font-size: 0.9rem;
-        text-align: center;
-        white-space: nowrap;
-    }
-
-    .bids-page .tab i {
-        display: none; /* Hide icons on mobile to save space */
-    }
-
-    /* Ensure content starts right after tabs */
-    .bids-page .requests-list {
-        margin-top: 0;
-    }
-
-    .bids-page .request-display {
-        background: white;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 16px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border: 1px solid #eee;
-    }
-
-    .bids-page .bid-display-head-container {
-        flex-direction: column;
-        gap: 16px;
-        align-items: center;
-        justify-content: center;
-
-    }
-
-    .bids-page .bid-display-head {
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        text-align: center;
-    }
-
-    .bids-page .profile-image-container {
-        width: 80px;
-        height: 80px;
-        margin: 0 auto;
-    }
-
-    .bids-page .vendor-profile-image {
-        border-radius: 16px;
-    }
-
-    .bids-page .business-info {
-        width: 100%;
-        text-align: center;
-    }
-
-    .bids-page .business-name-container {
-        justify-content: center;
-    }
-
-    .bids-page .business-badges {
-        justify-content: center;
-    }
-
-    .bids-page .business-name-bid-display {
-        font-size: 1.1rem;
-    }
-
-    .bids-page .bidi-check-icon {
-        width: 18px;
-        height: 18px;
-    }
-
-    .bids-page .bid-display-btn-container {
-        width: 100%;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .bids-page .bid-amount-container {
-        width: 100%;
-        align-items: flex-start;
-    }
-
-    .bids-page .bid-display-button {
-        width: auto;
-        min-width: 160px;
-        margin: 0 auto;
-        display: inline-flex;
-    }
-
-    .bids-page .expiration-badge {
-        margin-top: 8px;
-    }
-
-    .bids-page .request-content {
-        padding: 16px 0;
-    }
-
-    .bids-page .request-category,
-    .bids-page .request-description {
-        margin-bottom: 16px;
-    }
-
-    .bids-page .bid-description-content {
-        margin-top: 8px;
-        line-height: 1.5;
-    }
-
-    .bids-page .business-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-top: 20px;
-        padding-bottom: 80px; /* Extra padding for bottom nav */
-    }
-
-    .bids-page .btn-chat,
-    .bids-page .btn-success,
-    .bids-page .btn-danger {
-        width: 100%;
-        padding: 14px;
-        font-size: 1rem;
-        justify-content: center;
-        gap: 8px;
-    }
-
-    .bids-page .bidi-verified-info {
-        margin: 16px 0;
-        padding: 12px;
-    }
-
-    .bids-page .bidi-verified-title {
-        font-size: 1rem;
-    }
-
-    .bids-page .bidi-verified-subtitle {
-        font-size: 0.9rem;
-        margin-top: 4px;
-    }
-
-    .bids-page .coupon-section {
-        margin: 16px 0;
-    }
-
-    .bids-page .coupon-applied-info {
-        background: #f8f9fa;
-        padding: 12px;
-        border-radius: 8px;
-        margin: 16px 0;
-        font-size: 0.9rem;
-    }
-
-    /* Ensure proper spacing in mobile view */
-    .bids-page .mobile-bids-content {
-        padding: 16px;
-        padding-bottom: 100px; /* Extra padding for bottom nav */
-    }
-
-    .bids-page .bids-container {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-
-    .bids-page .bid-display {
-        width: 100%;
-    }
-}
-
-/* Additional styles for very small screens */
-@media screen and (max-width: 360px) {
-    .bids-page .tab {
-        padding: 8px;
-        font-size: 0.8rem;
-    }
-
-    .bids-page .request-display {
-        padding: 12px;
-    }
-
-    .bids-page .profile-image-container {
-        width: 70px;
-        height: 70px;
-    }
-
-    .bids-page .business-name-container {
-        margin-bottom: 8px;
-    }
-
-    .bids-page .business-name-bid-display {
-        font-size: 1rem;
-    }
-
-    .bids-page .bidi-check-icon {
-        width: 16px;
-        height: 16px;
-    }
-
-    .bids-page .bid-display-button {
-        font-size: 1rem;
-        padding: 10px;
-    }
-
-    .bids-page .btn-chat,
-    .bids-page .btn-success,
-    .bids-page .btn-danger {
-        padding: 12px;
-        font-size: 0.9rem;
-    }
-}
 
 /* Desktop Bid Display Styles */
 .bids-page .request-display {
@@ -697,13 +484,13 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 20px; /* Add gap between left and right sections */
+    gap: 0px; /* Add gap between left and right sections */
 }
 
 .bids-page .bid-display-head {
     display: flex;
     align-items: flex-start;
-    gap: 24px; /* Increased gap between profile image and business info */
+    gap: 0px; /* Increased gap between profile image and business info */
 }
 
 .bids-page .profile-image-container {
@@ -1354,34 +1141,7 @@
     }
 }
 
-.bids-page .profile-image-container {
-    width: 60px;
-    height: 60px;
-    flex-shrink: 0;
-    position: relative;
-    cursor: pointer;
-}
 
-.bids-page .profile-tooltip {
-    position: absolute;
-    bottom: -30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    z-index: 10;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.bids-page .profile-image-container:hover .profile-tooltip {
-    opacity: 1;
-}
 
 @media screen and (max-width: 1024px) {
     .bids-page .profile-image-container {
@@ -1428,11 +1188,349 @@
     }
 }
 
-.bids-page .request-category {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
+/* Move all mobile styles to the very end of the file */
+@media screen and (max-width: 1024px) {
+    .bids-page {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 15px;
+        min-height: auto;
+        height: auto;
+        padding-bottom: 20px;
+        overflow: visible;
+    }
+
+    .bids-page .requests-list-container {
+        max-height: none;
+        overflow: visible;
+        height: auto;
+        position: relative;
+        top: 0;
+    }
+
+    .bids-page .requests-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        height: auto;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .bids-page .bids-section {
+        min-height: auto;
+        height: auto;
+        overflow: visible;
+        position: relative;
+        padding: 20px 15px;
+    }
+
+    .bids-page .bids-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    .bids-page .request-display {
+        height: auto;
+        min-height: 0;
+        margin-bottom: 15px;
+        padding: 16px;
+    }
+
+    .bids-page .mobile-bids-view {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 100%;
+        height: 100vh;
+        background: white;
+        z-index: 1000;
+        transition: right 0.3s ease-in-out;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .bids-page .mobile-bids-view.active {
+        right: 0;
+    }
+
+    .bids-page .mobile-bids-content {
+        height: auto;
+        min-height: 0;
+        padding: 12px;
+        padding-bottom: 80px;
+        overflow-y: auto;
+    }
+
+    .bids-page .mobile-nav {
+        display: none;
+    }
+
+    .bids-page .tabs {
+        position: sticky;
+        top: 0;
+        background: white;
+        padding: 10px 0;
+        margin: 0 -15px 20px -15px;
+        z-index: 10;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .bids-page .tab {
+        flex: 1;
+        padding: 10px;
+        font-size: 0.9rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .bids-page .tab i {
+        display: none;
+    }
+
+    .bids-page .requests-list {
+        margin-top: 0;
+    }
+
+    .bids-page .request-display {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #eee;
+    }
+
+    .bids-page .bid-display-head-container {
+        flex-direction: column;
+        gap: 0px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 8px;
+    }
+
+    .bids-page .bid-display-head {
+        flex-direction: column;
+        align-items: center;
+        gap: 0px;
+        text-align: center;
+        padding: 0 8px;
+    }
+    .bid-display-head-container .profile-image-container-bid-display {
+        margin: 0;
+    }
+
+    .bids-page .profile-image-container {
+        width: 50px;
+        height: 50px;
+        margin: 0 auto;
+    }
+
+    .bids-page .vendor-profile-image {
+        border-radius: 12px;
+    }
+
+    .bids-page .business-info {
+        width: 100%;
+        text-align: center;
+        gap: 12px;
+        margin:8px;
+    }
+
+    .bids-page .business-name-container {
+        justify-content: center;
+    }
+
+    .bids-page .business-badges {
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .bids-page .business-name-bid-display {
+        font-size: 16px;
+    }
+
+    .bids-page .bidi-check-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .bids-page .bid-display-btn-container {
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bids-page .bid-amount-container {
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .bids-page .bid-display-button {
+        width: auto;
+        min-width: 140px;
+        margin: 0 auto;
+        display: inline-flex;
+        font-size: 18px;
+        padding: 8px 16px;
+    }
+
+    .bids-page .expiration-badge {
+        margin-top: 8px;
+        font-size: 12px;
+        padding: 2px 8px;
+    }
+
+    .bids-page .request-content {
+        padding: 12px 0;
+        font-size: 12px;
+    }
+
+    .bids-page .request-category,
+    .bids-page .request-description {
+        margin-bottom: 12px;
+        font-size: 12px;
+    }
+
+    .bids-page .bid-description-content {
+        margin-top: 6px;
+        line-height: 1.4;
+        font-size: 12px;
+    }
+
+    .bids-page .business-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 16px;
+        padding-bottom: 60px;
+    }
+
+    .bids-page .btn-chat,
+    .bids-page .btn-success,
+    .bids-page .btn-danger {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .bids-page .bidi-verified-info {
+        margin: 12px 0;
+        padding: 10px;
+    }
+
+    .bids-page .bidi-verified-title {
+        font-size: 14px;
+    }
+
+    .bids-page .bidi-verified-subtitle {
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    .bids-page .coupon-section {
+        margin: 12px 0;
+    }
+
+    .bids-page .coupon-applied-info {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 8px;
+        margin: 12px 0;
+        font-size: 12px;
+    }
+
+    .bids-page .mobile-bids-content {
+        padding: 12px;
+        padding-bottom: 80px;
+    }
+
+    .bids-page .bids-container {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        height: auto;
+    }
+
+    .bids-page .bid-display {
+        width: 100%;
+    }
+
+    .bids-page .bids-section {
+        min-height: auto;
+        height: auto;
+    }
+
+    .bids-page .vendor-rating {
+        font-size: 12px;
+        padding: 2px 8px;
+    }
+
+    .bids-page .star-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .bids-page .new-badge {
+        font-size: 10px;
+        padding: 2px 8px;
+    }
+
+    .bids-page .profile-tooltip {
+        bottom: -32px;
+        font-size: 10px;
+        padding: 3px 8px;
+    }
 }
+
+/* Additional styles for very small screens */
+@media screen and (max-width: 360px) {
+    .bids-page .tab {
+        padding: 8px;
+        font-size: 0.8rem;
+    }
+
+    .bids-page .request-display {
+        padding: 12px;
+    }
+
+    .bids-page .profile-image-container {
+        width: 45px;
+        height: 45px;
+    }
+
+    .bids-page .business-name-container {
+        margin-bottom: 6px;
+    }
+
+    .bids-page .business-name-bid-display {
+        font-size: 14px;
+    }
+
+    .bids-page .bidi-check-icon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .bids-page .bid-display-button {
+        font-size: 16px;
+        padding: 8px 12px;
+    }
+
+    .bids-page .btn-chat,
+    .bids-page .btn-success,
+    .bids-page .btn-danger {
+        padding: 8px;
+        font-size: 12px;
+    }
+}
+
 
 

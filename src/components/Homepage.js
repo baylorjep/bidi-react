@@ -179,6 +179,9 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                         All you do is tell us what you need, and we'll find the right wedding vendors for you. 
                         No more hours and hours of searching through endless listings or playing phone tag with vendors. 
                         Our platform connects you directly with pre-screened, professional wedding vendors who are ready to bring your vision to life.
+                        <span style={{ display: 'block', marginTop: '15px', color: '#FF008A', fontWeight: 'bold' }}>
+                            Plus, get 5% off everything when you book through Bidi! Limited time offer.
+                        </span>
                     </h2>
                        <div className='landing-page-button-container'>
                             {user ? (
@@ -253,7 +256,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                     <div className='connect-sub-title'>Connect</div>
                     <div className='connect-title'>Discover Wedding Vendors <br></br><span className='connect-highlight'>Effortlessly</span></div>
                     <div className='connect-text'>Our platform simplifies the process of finding local services. Say goodbye to endless forms and hello to instant connections.  
-                    Simply post your wedding needs, and Bidi does the work—matching you with the best local vendors in minutes.</div>
+                    Simply post your wedding needs, and Bidi does the work—matching you with the best local vendors in minutes. Plus, get 5% off everything when you book through Bidi - limited time offer!</div>
                     <Link to="/request-categories" style={{textDecoration:'none'}}>
                     <button className='connect-button'>Try Now</button>
                     </Link>

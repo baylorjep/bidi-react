@@ -15,7 +15,7 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import MessagingView from "../Messaging/MessagingView";
 import { FaArrowLeft } from 'react-icons/fa';
-import VideoCallIcon from '@mui/icons-material/VideoCall';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ConsultationModal from '../Consultation/ConsultationModal';
 import { useConsultation } from '../../hooks/useConsultation';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -61,7 +61,6 @@ function BidDisplay({
   const [showShareCouponModal, setShowShareCouponModal] = useState(false);
   const [newCouponCode, setNewCouponCode] = useState('');
   const [activeCoupon, setActiveCoupon] = useState(null);
-  const [showShareSection, setShowShareSection] = useState(true);
   const [activeSection, setActiveSection] = useState("messages");
   const [selectedChat, setSelectedChat] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -446,16 +445,6 @@ useEffect(() => {
               <FavoriteBorderIcon style={iconStyle} />
             )}
           </button>
-          {showInterested && isCalendarConnected && (
-            <button
-              className="btn-icon"
-              style={buttonStyle}
-              onClick={() => setShowConsultationModal(true)}
-              aria-label="Schedule Consultation"
-            >
-              <VideoCallIcon style={iconStyle} />
-            </button>
-          )}
         </div>
       </div>
     );
@@ -874,7 +863,7 @@ useEffect(() => {
 }, [navigate]);
 
   return (
-    <div className={`request-display bid-display${isAnimating ? ' fade-out' : ''}`}> 
+    <div className={`bid-display${isAnimating ? ' fade-out' : ''}`}> 
       <div className="card-flip-container" style={{ height: cardHeight }}>
         <div className={`card-flip${isFlipped ? ' flipped' : ''}`}>
           {/* Front of card - Bid Display */}
@@ -885,20 +874,20 @@ useEffect(() => {
               </div>
             )}
             <div className="bid-display-head-container">
-            {showEditNotification && (
-        <div style={{
-          background: "#9633eb",
-          color: "#fff",
-          padding: "10px 20px",
-          borderRadius: "8px",
-          marginBottom: "12px",
-          textAlign: "center",
-          fontWeight: 600,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
-        }}>
-          This bid was recently updated by the business.
-        </div>
-      )}
+              {showEditNotification && (
+                <div style={{
+                  background: "#9633eb",
+                  color: "#fff",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  marginBottom: "12px",
+                  textAlign: "center",
+                  fontWeight: 600,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+                }}>
+                  This bid was recently updated by the business.
+                </div>
+              )}
               <div className="bid-display-head">
                 <div className="profile-image-container-bid-display">
                   <img
@@ -924,24 +913,32 @@ useEffect(() => {
                     >
                       {bid.business_profiles.business_name}
                     </Link>
-                    {isBidiVerified && (
-                      <div 
-                        className="bidi-verified-compact"
-                        onMouseEnter={() => setShowVerifiedTooltip(true)}
-                        onMouseLeave={() => setShowVerifiedTooltip(false)}
-                        onClick={() => setShowVerifiedTooltip(!showVerifiedTooltip)}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M5.68638 8.5104C6.06546 8.13132 6.68203 8.13329 7.06354 8.5148L7.79373 9.24498L9.93117 7.10754C10.3102 6.72847 10.9268 6.73044 11.3083 7.11195C11.6898 7.49345 11.6918 8.11003 11.3127 8.48911L8.48891 11.3129C8.10983 11.692 7.49326 11.69 7.11175 11.3085L5.69078 9.88756C5.30927 9.50605 5.3073 8.88947 5.68638 8.5104Z" fill="#A328F4"/>
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M6.3585 1.15414C7.77571 -0.384714 10.2243 -0.384714 11.6415 1.15414C11.904 1.43921 12.2814 1.59377 12.6709 1.57577C14.7734 1.4786 16.5048 3.19075 16.4065 5.26985C16.3883 5.655 16.5446 6.02814 16.8329 6.28775C18.389 7.68919 18.389 10.1105 16.8329 11.512C16.5446 11.7716 16.3883 12.1447 16.4065 12.5299C16.5048 14.609 14.7734 16.3211 12.6709 16.2239C12.2814 16.2059 11.904 16.3605 11.6415 16.6456C10.2243 18.1844 7.77571 18.1844 6.3585 16.6456C6.09596 16.3605 5.71863 16.2059 5.32915 16.2239C3.22665 16.3211 1.49524 14.609 1.5935 12.5299C1.6117 12.1447 1.4554 11.7716 1.16713 11.512C-0.389043 10.1105 -0.389043 7.68919 1.16713 6.28775C1.4554 6.02814 1.6117 5.655 1.5935 5.26985C1.49524 3.19075 3.22665 1.4786 5.32915 1.57577C5.71863 1.59377 6.09596 1.43921 6.3585 1.15414ZM9.96822 2.66105C9.44875 2.097 8.55125 2.097 8.03178 2.66105C7.31553 3.43878 6.28608 3.86045 5.22349 3.81134C4.45284 3.77572 3.81821 4.40329 3.85422 5.16537C3.90388 6.21614 3.47747 7.23413 2.69099 7.94241C2.12059 8.4561 2.12059 9.34362 2.69099 9.8573C3.47747 10.5656 3.90388 11.5836 3.85422 12.6343C3.81821 13.3964 4.45284 14.024 5.22349 13.9884C6.28608 13.9393 7.31553 14.3609 8.03178 15.1387C8.55125 15.7027 9.44875 15.7027 9.96822 15.1387C10.6845 14.3609 11.7139 13.9393 12.7765 13.9884C13.5472 14.024 14.1818 13.3964 14.1458 12.6343C14.0961 11.5836 14.5225 10.5656 15.309 9.8573C15.8794 9.34362 15.8794 8.4561 15.309 7.94241C14.5225 7.23414 14.0961 6.21614 14.1458 5.16537C14.1818 4.40329 13.5472 3.77572 12.7765 3.81134C11.7139 3.86045 10.6845 3.43878 9.96822 2.66105Z" fill="#A328F4"/>
-                        </svg>
-                        <span>Verified</span>
-                        <div className={`verified-tooltip ${showVerifiedTooltip ? 'show' : ''}`}>
-                          <p className="verified-tooltip-title">Bidi Verified</p>
-                          <p className="verified-tooltip-subtitle">100% Money-Back Guarantee When You Pay Through Bidi</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {isBidiVerified && (
+                        <div 
+                          className="bidi-verified-compact"
+                          onMouseEnter={() => setShowVerifiedTooltip(true)}
+                          onMouseLeave={() => setShowVerifiedTooltip(false)}
+                          onClick={() => setShowVerifiedTooltip(!showVerifiedTooltip)}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path fill-rule="evenodd" clip-rule="evenodd" d="M5.68638 8.5104C6.06546 8.13132 6.68203 8.13329 7.06354 8.5148L7.79373 9.24498L9.93117 7.10754C10.3102 6.72847 10.9268 6.73044 11.3083 7.11195C11.6898 7.49345 11.6918 8.11003 11.3127 8.48911L8.48891 11.3129C8.10983 11.692 7.49326 11.69 7.11175 11.3085L5.69078 9.88756C5.30927 9.50605 5.3073 8.88947 5.68638 8.5104Z" fill="#A328F4"/>
+                          <path fill-rule="evenodd" clip-rule="evenodd" d="M6.3585 1.15414C7.77571 -0.384714 10.2243 -0.384714 11.6415 1.15414C11.904 1.43921 12.2814 1.59377 12.6709 1.57577C14.7734 1.4786 16.5048 3.19075 16.4065 5.26985C16.3883 5.655 16.5446 6.02814 16.8329 6.28775C18.389 7.68919 18.389 10.1105 16.8329 11.512C16.5446 11.7716 16.3883 12.1447 16.4065 12.5299C16.5048 14.609 14.7734 16.3211 12.6709 16.2239C12.2814 16.2059 11.904 16.3605 11.6415 16.6456C10.2243 18.1844 7.77571 18.1844 6.3585 16.6456C6.09596 16.3605 5.71863 16.2059 5.32915 16.2239C3.22665 16.3211 1.49524 14.609 1.5935 12.5299C1.6117 12.1447 1.4554 11.7716 1.16713 11.512C-0.389043 10.1105 -0.389043 7.68919 1.16713 6.28775C1.4554 6.02814 1.6117 5.655 1.5935 5.26985C1.49524 3.19075 3.22665 1.4786 5.32915 1.57577C5.71863 1.59377 6.09596 1.43921 6.3585 1.15414ZM9.96822 2.66105C9.44875 2.097 8.55125 2.097 8.03178 2.66105C7.31553 3.43878 6.28608 3.86045 5.22349 3.81134C4.45284 3.77572 3.81821 4.40329 3.85422 5.16537C3.90388 6.21614 3.47747 7.23413 2.69099 7.94241C2.12059 8.4561 2.12059 9.34362 2.69099 9.8573C3.47747 10.5656 3.90388 11.5836 3.85422 12.6343C3.81821 13.3964 4.45284 14.024 5.22349 13.9884C6.28608 13.9393 7.31553 14.3609 8.03178 15.1387C8.55125 15.7027 9.44875 15.7027 9.96822 15.1387C10.6845 14.3609 11.7139 13.9393 12.7765 13.9884C13.5472 14.024 14.1818 13.3964 14.1458 12.6343C14.0961 11.5836 14.5225 10.5656 15.309 9.8573C15.8794 9.34362 15.8794 8.4561 15.309 7.94241C14.5225 7.23414 14.0961 6.21614 14.1458 5.16537C14.1818 4.40329 13.5472 3.77572 12.7765 3.81134C11.7139 3.86045 10.6845 3.43878 9.96822 2.66105Z" fill="#A328F4"/>
+                          </svg>
+                          <span>Verified</span>
+                          <div className={`verified-tooltip ${showVerifiedTooltip ? 'show' : ''}`}>
+                            <p className="verified-tooltip-title">Bidi Verified</p>
+                            <p className="verified-tooltip-subtitle">100% Money-Back Guarantee When You Pay Through Bidi</p>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                      {averageRating && (
+                        <span className="vendor-rating">
+                          <img src={StarIcon} alt="Star" className="star-icon" />
+                          {averageRating}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="bid-amount-section">
                     <div className="bid-amount-container">
@@ -981,12 +978,6 @@ useEffect(() => {
                     </div>
                   </div>
                   <div className="business-badges">
-                    {averageRating && (
-                      <span className="vendor-rating">
-                        <img src={StarIcon} alt="Star" className="star-icon" />
-                        {averageRating}
-                      </span>
-                    )}
                     {bid.isNew && (
                       <span className="new-badge">New</span>
                     )}
@@ -1258,6 +1249,31 @@ useEffect(() => {
                 >
                   <CheckCircleIcon style={{ fontSize: 20 }} />
                   Approve and Pay
+                </button>
+              )}
+              {isCalendarConnected && (
+                <button
+                  className="consultation-button"
+                  onClick={() => setShowConsultationModal(true)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    marginBottom: '12px',
+                    background: '#fff',
+                    color: '#9633eb',
+                    border: '1px solid #9633eb',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <CalendarMonthIcon style={{ fontSize: 20 }} />
+                  Schedule Consultation
                 </button>
               )}
               <p className="request-description" style={{ marginBottom: '8px' }}>
