@@ -7,12 +7,42 @@ import AcceptedBids from './AcceptedBids';
 import ImageConverter from '../admin/ImageConverter';
 import MessageNotifier from './MessageNotifier';
 import OldRequests from './OldRequests';
+import UncontactedBusinesses from './UncontactedBusinesses';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('bids');
+    const [activeGroup, setActiveGroup] = useState('requests');
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Tab groups configuration
+    const tabGroups = {
+        requests: {
+            name: 'Requests',
+            tabs: [
+                { id: 'bids', label: 'Unviewed Bids' },
+                { id: 'accepted', label: 'Accepted Bids' },
+                { id: 'old-requests', label: 'Old Requests' },
+                { id: 'uncontacted-businesses', label: 'Uncontacted Businesses' }
+            ]
+        },
+        management: {
+            name: 'Management',
+            tabs: [
+                { id: 'verification', label: 'Verification' },
+                { id: 'users', label: 'Users List' },
+                { id: 'messages', label: 'Message Notifier' }
+            ]
+        },
+        tools: {
+            name: 'Tools',
+            tabs: [
+                { id: 'converter', label: 'Image Converter' }
+            ]
+        }
+    };
 
     useEffect(() => {
         fetchUsers();
@@ -100,57 +130,59 @@ function AdminDashboard() {
         }
     };
 
+    const handleTabClick = (tabId) => {
+        setActiveTab(tabId);
+        // Find and set the active group based on the selected tab
+        for (const [group, config] of Object.entries(tabGroups)) {
+            if (config.tabs.some(tab => tab.id === tabId)) {
+                setActiveGroup(group);
+                break;
+            }
+        }
+    };
+
+    const filteredUsers = users.filter(user => {
+        const searchLower = searchQuery.toLowerCase();
+        return (
+            user.displayName.toLowerCase().includes(searchLower) ||
+            user.email.toLowerCase().includes(searchLower) ||
+            user.role.toLowerCase().includes(searchLower)
+        );
+    });
+
     return (
         <div className="admin-dashboard-container">
             <div className="admin-dashboard-content">
                 <h2 className="admin-dashboard-title">Admin Dashboard</h2>
 
-                {/* Tabs */}
-                <div className="admin-tabs-container">
-                    <div className="admin-tabs">
-                        <button
-                            className={`admin-tab ${activeTab === 'bids' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('bids')}
+                {/* Group Navigation */}
+                <div className="admin-groups-container">
+                    {Object.entries(tabGroups).map(([groupId, group]) => (
+                        <div 
+                            key={groupId}
+                            className={`admin-group ${activeGroup === groupId ? 'active' : ''}`}
                         >
-                            Unviewed Bids
-                        </button>
-                        <button
-                            className={`admin-tab ${activeTab === 'verification' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('verification')}
-                        >
-                            Verification
-                        </button>
-                        <button
-                            className={`admin-tab ${activeTab === 'accepted' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('accepted')}
-                        >
-                            Accepted Bids
-                        </button>
-                        <button
-                            className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('users')}
-                        >
-                            Users List
-                        </button>
-                        <button
-                            className={`admin-tab ${activeTab === 'converter' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('converter')}
-                        >
-                            Image Converter
-                        </button>
-                        <button
-                            className={`admin-tab ${activeTab === 'messages' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('messages')}
-                        >
-                            Message Notifier
-                        </button>
-                        <button
-                            className={`admin-tab ${activeTab === 'old-requests' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('old-requests')}
-                        >
-                            Old Requests
-                        </button>
-                    </div>
+                            <button
+                                className="admin-group-button"
+                                onClick={() => setActiveGroup(groupId)}
+                            >
+                                {group.name}
+                            </button>
+                            {activeGroup === groupId && (
+                                <div className="admin-tabs">
+                                    {group.tabs.map(tab => (
+                                        <button
+                                            key={tab.id}
+                                            className={`admin-tab ${activeTab === tab.id ? 'active' : ''}`}
+                                            onClick={() => handleTabClick(tab.id)}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
 
                 {/* Content */}
@@ -170,6 +202,7 @@ function AdminDashboard() {
                         </div>
                     )}
                     {activeTab === 'old-requests' && <OldRequests />}
+                    {activeTab === 'uncontacted-businesses' && <UncontactedBusinesses />}
                     {activeTab === 'users' && (
                         <div className="admin-card">
                             <div className="admin-card-header">
@@ -179,35 +212,77 @@ function AdminDashboard() {
                                 {loading ? (
                                     <p>Loading users...</p>
                                 ) : (
-                                    <div className="admin-table-container">
-                                        <table className="admin-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Name</th>
-                                                    <th>Email</th>
-                                                    <th>Type</th>
-                                                    <th>Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {users.map(user => (
-                                                    <tr key={user.id}>
-                                                        <td className="user-name">{user.displayName}</td>
-                                                        <td className="user-email">{user.email}</td>
-                                                        <td className="user-type">{user.role}</td>
-                                                        <td>
-                                                            <button 
-                                                                onClick={() => handleSignInAsUser(user.id)}
-                                                                className="sign-in-button"
-                                                            >
-                                                                👤 Sign in as user
-                                                            </button>
-                                                        </td>
+                                    <>
+                                        <div className="search-container">
+                                            <input
+                                                type="text"
+                                                placeholder="Search users by name, email, or role..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="search-input"
+                                            />
+                                            {searchQuery && (
+                                                <button
+                                                    className="clear-search"
+                                                    onClick={() => setSearchQuery('')}
+                                                >
+                                                    ✕
+                                                </button>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Desktop Table View */}
+                                        <div className="admin-table-container desktop-view">
+                                            <table className="admin-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Email</th>
+                                                        <th>Type</th>
+                                                        <th>Action</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                </thead>
+                                                <tbody>
+                                                    {filteredUsers.map(user => (
+                                                        <tr key={user.id}>
+                                                            <td className="user-name">{user.displayName}</td>
+                                                            <td className="user-email">{user.email}</td>
+                                                            <td className="user-type">{user.role}</td>
+                                                            <td>
+                                                                <button 
+                                                                    onClick={() => handleSignInAsUser(user.id)}
+                                                                    className="sign-in-button"
+                                                                >
+                                                                    👤 Sign in as user
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {/* Mobile Card View */}
+                                        <div className="mobile-view">
+                                            {filteredUsers.map(user => (
+                                                <div key={user.id} className="user-card">
+                                                    <div className="user-card-header">
+                                                        <h6 className="user-name">{user.displayName}</h6>
+                                                        <span className="user-type-badge">{user.role}</span>
+                                                    </div>
+                                                    <div className="user-card-body">
+                                                        <p className="user-email">{user.email}</p>
+                                                        <button 
+                                                            onClick={() => handleSignInAsUser(user.id)}
+                                                            className="sign-in-button"
+                                                        >
+                                                            👤 Sign in as user
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         </div>
