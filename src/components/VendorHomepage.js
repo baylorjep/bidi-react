@@ -151,7 +151,7 @@ function VendorHomepage() {
                     `)
                     .in('id', userIdsWithPhotos)
                     .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true')
-                    .in('business_category', ['photography', 'videography', 'dj', 'catering', 'florist', 'beauty', 'wedding planner/coordinator'])
+                    .or('business_category.cs.{photography},business_category.cs.{videography},business_category.cs.{dj},business_category.cs.{catering},business_category.cs.{florist},business_category.cs.{beauty},business_category.cs.{wedding planner/coordinator}')
                     .limit(100); // Fetch more vendors
 
                 const { data: allVendorData, error: vendorError } = await query;
@@ -358,7 +358,9 @@ function VendorHomepage() {
                                             {vendor.business_name}
                                         </div>
                                         <div className="vendor-waterfall-item-category">
-                                            {vendor.business_category}
+                                            {Array.isArray(vendor.business_category) 
+                                                ? vendor.business_category.join(', ')
+                                                : vendor.business_category}
                                         </div>
                                     </div>
                                 </div>
