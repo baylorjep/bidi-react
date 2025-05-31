@@ -49,6 +49,7 @@
     min-height: 100vh;
     padding: 20px;
     background-color: #f8f9fa;
+    font-family: 'Outfit', sans-serif;
 }
 
 .admin-dashboard-content {
@@ -61,6 +62,7 @@
     margin-bottom: 2rem;
     color: #333;
     font-size: 2rem;
+    font-weight: 600;
 }
 
 .admin-tabs-container {
@@ -503,24 +505,25 @@
 .admin-group-button {
     background: none;
     border: none;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
     font-size: 1.1rem;
     font-weight: 600;
-    color: #495057;
+    color: #333;
     cursor: pointer;
     text-align: left;
-    border-radius: 0.25rem;
+    border-radius: 0.5rem;
     transition: all 0.2s ease;
+    font-family: 'Outfit', sans-serif;
 }
 
 .admin-group-button:hover {
-    background-color: #f8f9fa;
-    color: #0d6efd;
+    background-color: #f0e6ff;
+    color: #A328F4;
 }
 
 .admin-group.active .admin-group-button {
-    color: #0d6efd;
-    background-color: #e9ecef;
+    color: #A328F4;
+    background-color: #f0e6ff;
 }
 
 .admin-tabs {
@@ -532,24 +535,23 @@
 
 .admin-tab {
     background: none;
-    border: 1px solid #dee2e6;
+    border: 2px solid #A328F4;
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
-    color: #495057;
+    color: #A328F4;
     cursor: pointer;
-    border-radius: 0.25rem;
+    border-radius: 20px;
     transition: all 0.2s ease;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
 }
 
 .admin-tab:hover {
-    background-color: #f8f9fa;
-    border-color: #0d6efd;
-    color: #0d6efd;
+    background-color: #f0e6ff;
 }
 
 .admin-tab.active {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+    background-color: #A328F4;
     color: white;
 }
 
@@ -746,16 +748,17 @@
     width: 100%;
     padding: 0.75rem 1rem;
     padding-right: 2.5rem;
-    border: 1px solid #dee2e6;
-    border-radius: 0.5rem;
+    border: 2px solid #dee2e6;
+    border-radius: 20px;
     font-size: 1rem;
     transition: all 0.2s ease;
+    font-family: 'Outfit', sans-serif;
 }
 
 .search-input:focus {
     outline: none;
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    border-color: #A328F4;
+    box-shadow: 0 0 0 0.2rem rgba(163, 40, 244, 0.25);
 }
 
 .clear-search {
@@ -779,8 +782,8 @@
 }
 
 .clear-search:hover {
-    background-color: #e9ecef;
-    color: #495057;
+    background-color: #f0e6ff;
+    color: #A328F4;
 }
 
 /* Mobile Styles for Search */
