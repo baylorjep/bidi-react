@@ -27,7 +27,8 @@ function UncontactedBusinesses() {
                 { data: cateringRequests, error: cateringError },
                 { data: beautyRequests, error: beautyError },
                 { data: floristRequests, error: floristError },
-                { data: planningRequests, error: planningError }
+                { data: planningRequests, error: planningError },
+                { data: generalRequests, error: generalError }
             ] = await Promise.all([
                 supabaseAdmin
                     .from('photography_requests')
@@ -63,6 +64,11 @@ function UncontactedBusinesses() {
                     .from('wedding_planning_requests')
                     .select('id, created_at, event_title, event_type, status')
                     .in('status', ['open', 'pending'])
+                    .order('created_at', { ascending: false }),
+                supabaseAdmin
+                    .from('requests')
+                    .select('id, created_at, event_title, service_category, open')
+                    .eq('open', true)
                     .order('created_at', { ascending: false })
             ]);
 
@@ -74,6 +80,7 @@ function UncontactedBusinesses() {
             if (beautyError) throw beautyError;
             if (floristError) throw floristError;
             if (planningError) throw planningError;
+            if (generalError) throw generalError;
 
             // Combine all requests with their service categories
             const allRequests = [
@@ -83,7 +90,8 @@ function UncontactedBusinesses() {
                 ...(cateringRequests || []).map(req => ({ ...req, service_category: 'catering', event_title: req.title })),
                 ...(beautyRequests || []).map(req => ({ ...req, service_category: 'beauty' })),
                 ...(floristRequests || []).map(req => ({ ...req, service_category: 'florist' })),
-                ...(planningRequests || []).map(req => ({ ...req, service_category: 'wedding_planning' }))
+                ...(planningRequests || []).map(req => ({ ...req, service_category: 'wedding_planning' })),
+                ...(generalRequests || []).map(req => ({ ...req, event_type: req.service_category }))
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
             // Get all businesses
