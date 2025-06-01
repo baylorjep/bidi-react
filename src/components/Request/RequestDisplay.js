@@ -9,9 +9,29 @@ import { supabase } from '../../supabaseClient';
 
 // Helper Components
 const InfoField = ({ label, value, gridColumn = 'auto' }) => (
-    <div style={{display: 'flex', flexDirection: 'column', gap: '4px', gridColumn}}>
-        <div className="request-subtype">{label}</div>
-        <div className="request-info">{value || 'Not specified'}</div>
+    <div style={{
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '4px', 
+        gridColumn,
+        background: '#fff',
+        padding: '12px 16px',
+        borderRadius: '8px',
+        border: '1px solid #f0e6ff',
+        transition: 'all 0.2s ease'
+    }}>
+        <div style={{
+            color: '#666',
+            fontSize: '14px',
+            fontWeight: '500',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+        }}>{label}</div>
+        <div style={{
+            color: '#333',
+            fontSize: '16px',
+            lineHeight: '1.4'
+        }}>{value || 'Not specified'}</div>
     </div>
 );
 
@@ -224,8 +244,49 @@ const WeddingPlanningRequest = ({ request, filteredPhotos, onPhotoClick, getPubl
                 <InfoField 
                     label="Pinterest Board" 
                     value={
-                        <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
+                        <a 
+                            href={request.pinterest_link} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                background: '#f6eafe',
+                                color: '#9633eb',
+                                padding: '8px 16px',
+                                borderRadius: '20px',
+                                textDecoration: 'none',
+                                fontWeight: '500',
+                                transition: 'all 0.2s ease',
+                                border: '1px solid #f0e6ff'
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.background = '#f0e6ff';
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.background = '#f6eafe';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                        >
                             View Board
+                            <svg 
+                                width="16" 
+                                height="16" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                xmlns="http://www.w3.org/2000/svg"
+                                style={{ transition: 'transform 0.2s ease' }}
+                            >
+                                <path 
+                                    d="M7 17L17 7M17 7H8M17 7V16" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
                         </a>
                     } 
                 />
@@ -554,8 +615,49 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                             <InfoField 
                                 label="Pinterest Board" 
                                 value={
-                                    <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
+                                    <a 
+                                        href={request.pinterest_link} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            background: '#f6eafe',
+                                            color: '#9633eb',
+                                            padding: '8px 16px',
+                                            borderRadius: '20px',
+                                            textDecoration: 'none',
+                                            fontWeight: '500',
+                                            transition: 'all 0.2s ease',
+                                            border: '1px solid #f0e6ff'
+                                        }}
+                                        onMouseOver={(e) => {
+                                            e.currentTarget.style.background = '#f0e6ff';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                        }}
+                                        onMouseOut={(e) => {
+                                            e.currentTarget.style.background = '#f6eafe';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                        }}
+                                    >
                                         View Board
+                                        <svg 
+                                            width="16" 
+                                            height="16" 
+                                            viewBox="0 0 24 24" 
+                                            fill="none" 
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            style={{ transition: 'transform 0.2s ease' }}
+                                        >
+                                            <path 
+                                                d="M7 17L17 7M17 7H8M17 7V16" 
+                                                stroke="currentColor" 
+                                                strokeWidth="2" 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round"
+                                            />
+                                        </svg>
                                     </a>
                                 } 
                             />
@@ -1003,8 +1105,49 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                             <InfoField 
                                 label="Pinterest Board" 
                                 value={
-                                    <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
+                                    <a 
+                                        href={request.pinterest_link} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            background: '#f6eafe',
+                                            color: '#9633eb',
+                                            padding: '8px 16px',
+                                            borderRadius: '20px',
+                                            textDecoration: 'none',
+                                            fontWeight: '500',
+                                            transition: 'all 0.2s ease',
+                                            border: '1px solid #f0e6ff'
+                                        }}
+                                        onMouseOver={(e) => {
+                                            e.currentTarget.style.background = '#f0e6ff';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                        }}
+                                        onMouseOut={(e) => {
+                                            e.currentTarget.style.background = '#f6eafe';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                        }}
+                                    >
                                         View Board
+                                        <svg 
+                                            width="16" 
+                                            height="16" 
+                                            viewBox="0 0 24 24" 
+                                            fill="none" 
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            style={{ transition: 'transform 0.2s ease' }}
+                                        >
+                                            <path 
+                                                d="M7 17L17 7M17 7H8M17 7V16" 
+                                                stroke="currentColor" 
+                                                strokeWidth="2" 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round"
+                                            />
+                                        </svg>
                                     </a>
                                 } 
                             />
@@ -1388,8 +1531,49 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                             <InfoField 
                                 label="Pinterest Board" 
                                 value={
-                                    <a href={request.pinterest_link} target="_blank" rel="noopener noreferrer">
+                                    <a 
+                                        href={request.pinterest_link} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            background: '#f6eafe',
+                                            color: '#9633eb',
+                                            padding: '8px 16px',
+                                            borderRadius: '20px',
+                                            textDecoration: 'none',
+                                            fontWeight: '500',
+                                            transition: 'all 0.2s ease',
+                                            border: '1px solid #f0e6ff'
+                                        }}
+                                        onMouseOver={(e) => {
+                                            e.currentTarget.style.background = '#f0e6ff';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                        }}
+                                        onMouseOut={(e) => {
+                                            e.currentTarget.style.background = '#f6eafe';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                        }}
+                                    >
                                         View Board
+                                        <svg 
+                                            width="16" 
+                                            height="16" 
+                                            viewBox="0 0 24 24" 
+                                            fill="none" 
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            style={{ transition: 'transform 0.2s ease' }}
+                                        >
+                                            <path 
+                                                d="M7 17L17 7M17 7H8M17 7V16" 
+                                                stroke="currentColor" 
+                                                strokeWidth="2" 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round"
+                                            />
+                                        </svg>
                                     </a>
                                 } 
                             />
@@ -1613,22 +1797,61 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
 
     return (
         <div className="request-display text-center mb-4">
-            <div className="request-content p-3">
-                <h2 className="request-title">{getTitle()}</h2>
+            <div className="request-content p-3" style={{
+                background: '#fff',
+                borderRadius: '16px',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                maxWidth: '1200px',
+                margin: '0 auto'
+            }}>
+                <h2 className="request-title" style={{
+                    color: '#9633eb',
+                    fontSize: '28px',
+                    fontWeight: '600',
+                    marginBottom: '24px',
+                    paddingBottom: '16px',
+                    borderBottom: '2px solid #f0e6ff'
+                }}>{getTitle()}</h2>
                 
-                <div className='status-request-container' style={{marginBottom:'16px', display: isNew(request.created_at) ? 'flex' : 'none'}}>
-                    <div className="request-status">
+                <div className='status-request-container' style={{
+                    marginBottom: '24px',
+                    display: isNew(request.created_at) ? 'flex' : 'none',
+                    gap: '12px',
+                    justifyContent: 'center'
+                }}>
+                    <div className="request-status" style={{
+                        background: '#f6eafe',
+                        color: '#9633eb',
+                        padding: '8px 16px',
+                        borderRadius: '20px',
+                        fontWeight: '500',
+                        fontSize: '14px'
+                    }}>
                         {isNew(request.created_at) && 'New'}
                     </div>
                     {checkPromotion(request.created_at) && (
-                        <div className="promotion-status">
+                        <div className="promotion-status" style={{
+                            background: '#fff3e6',
+                            color: '#ff9500',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '500',
+                            fontSize: '14px'
+                        }}>
                             {checkPromotion(request.created_at).message}
                             {timeLeft && <span> ({timeLeft})</span>}
                         </div>
                     )}
                 </div>
 
-                <div className="event-summary-container" style={{padding: '0'}}>
+                <div className="event-summary-container" style={{
+                    padding: '24px',
+                    background: '#faf5ff',
+                    borderRadius: '12px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                    gap: '16px'
+                }}>
                     {renderRequestDetails()}
                 </div>
             </div>

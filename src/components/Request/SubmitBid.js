@@ -70,11 +70,39 @@ function SubmitBid({ onClose }) { // Remove request from props since we're fetch
     const [businessProfile, setBusinessProfile] = useState(null);
     const [profileImage, setProfileImage] = useState("/images/default.jpg");
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
+    const [bidStats, setBidStats] = useState({ min: null, max: null, avg: null });
+
 useEffect(() => {
   const handleResize = () => setIsMobile(window.innerWidth <= 600);
   window.addEventListener('resize', handleResize);
   return () => window.removeEventListener('resize', handleResize);
 }, []);
+
+useEffect(() => {
+  const fetchBidStats = async () => {
+    try {
+      const { data: bids, error } = await supabase
+        .from('bids')
+        .select('bid_amount')
+        .eq('request_id', requestId);
+
+      if (error) throw error;
+
+      if (bids && bids.length > 0) {
+        const amounts = bids.map(bid => parseFloat(bid.bid_amount));
+        setBidStats({
+          min: Math.min(...amounts),
+          max: Math.max(...amounts),
+          avg: amounts.reduce((a, b) => a + b, 0) / amounts.length
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching bid statistics:', error);
+    }
+  };
+
+  fetchBidStats();
+}, [requestId]);
 
     useEffect(() => {
         const fetchRequestDetails = async () => {
@@ -483,6 +511,63 @@ useEffect(() => {
                 </div>
                 
                 <div style={{padding:"20px"}}>
+                    {bidStats.min !== null && (
+                        <div style={{
+                            background: 'white',
+                            padding: '20px',
+                            borderRadius: '12px',
+                            marginBottom: '24px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                            border: '1px solid #eee'
+                        }}>
+                            <h4 style={{ 
+                                margin: '0 0 16px 0', 
+                                color: '#9633eb',
+                                fontSize: '18px',
+                                fontWeight: '600'
+                            }}>Current Bid Statistics</h4>
+                            <div style={{ 
+                                display: 'flex', 
+                                gap: '32px', 
+                                flexWrap: 'wrap',
+                                justifyContent: 'space-between'
+                            }}>
+                                <div style={{
+                                    background: '#faf5ff',
+                                    padding: '12px 20px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #f0e6ff',
+                                    flex: '1',
+                                    minWidth: '200px'
+                                }}>
+                                    <div style={{ color: '#666', fontSize: '14px', marginBottom: '4px' }}>Minimum Bid</div>
+                                    <div style={{ color: '#9633eb', fontSize: '20px', fontWeight: '600' }}>${bidStats.min.toFixed(2)}</div>
+                                </div>
+                                <div style={{
+                                    background: '#faf5ff',
+                                    padding: '12px 20px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #f0e6ff',
+                                    flex: '1',
+                                    minWidth: '200px'
+                                }}>
+                                    <div style={{ color: '#666', fontSize: '14px', marginBottom: '4px' }}>Average Bid</div>
+                                    <div style={{ color: '#9633eb', fontSize: '20px', fontWeight: '600' }}>${bidStats.avg.toFixed(2)}</div>
+                                </div>
+                                <div style={{
+                                    background: '#faf5ff',
+                                    padding: '12px 20px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #f0e6ff',
+                                    flex: '1',
+                                    minWidth: '200px'
+                                }}>
+                                    <div style={{ color: '#666', fontSize: '14px', marginBottom: '4px' }}>Maximum Bid</div>
+                                    <div style={{ color: '#9633eb', fontSize: '20px', fontWeight: '600' }}>${bidStats.max.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <form onSubmit={handleSubmit}>
                         <div className="custom-input-container">
                             <input
