@@ -899,6 +899,27 @@ useEffect(() => {
                 </div>
                 <div className="business-info">
                   <div className="business-name-container">
+                  <button
+                      onClick={handleProfileClick}
+                      style={{
+                        padding: '6px 12px',
+                        background: '#f0f0f0',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        color: '#666',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.background = '#e0e0e0'}
+                      onMouseOut={(e) => e.currentTarget.style.background = '#f0f0f0'}
+                    >
+                      <i className="fas fa-user"></i>
+                      View Profile
+                    </button>
                     <Link
                       to={`/portfolio/${bid.business_profiles.id}`}
                       className="business-name-bid-display"
