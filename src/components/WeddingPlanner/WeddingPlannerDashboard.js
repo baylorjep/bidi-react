@@ -284,6 +284,20 @@ const WeddingPlannerDashboard = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleBackButton = (event) => {
+      if (activeSection !== "portfolio") {
+        event.preventDefault();
+        setActiveSection("portfolio");
+      }
+    };
+
+    window.addEventListener('popstate', handleBackButton);
+    return () => {
+      window.removeEventListener('popstate', handleBackButton);
+    };
+  }, [activeSection]);
+
   if (error) {
     return <div>Error: {error}</div>;
   }

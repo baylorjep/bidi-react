@@ -323,6 +323,20 @@ const IndividualDashboard = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleBackButton = (event) => {
+      if (activeSection !== "profile") {
+        event.preventDefault();
+        setActiveSection("profile");
+      }
+    };
+
+    window.addEventListener('popstate', handleBackButton);
+    return () => {
+      window.removeEventListener('popstate', handleBackButton);
+    };
+  }, [activeSection]);
+
   if (error) {
     return <div>Error: {error}</div>;
   }

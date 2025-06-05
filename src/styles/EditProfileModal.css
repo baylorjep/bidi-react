@@ -14,13 +14,13 @@
   padding: 20px 0 80px 0;
 }
 
-.modal-content {
+.modal-content-edit-profile {
   position: relative;
   background: white;
   padding: 2rem;
   border-radius: 12px;
   width: 90%;
-  max-width: 600px;
+  max-width: 800px;
   max-height: 90vh;
   overflow-y: auto;
   display: flex;
@@ -52,35 +52,67 @@
 
 .image-container {
   position: relative;
+  width: 200px;
   height: 200px;
-  background: #f8f8f8;
   border-radius: 8px;
   overflow: hidden;
-  cursor: move;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.portfolio-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.image-container.dragging {
+  opacity: 0.8;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.portfolio-image.video {
-  object-fit: contain;
-  background: #000;
+.image-container.drag-over-above {
+  border-top: 2px solid #9633eb;
+}
+
+.image-container.drag-over-below {
+  border-bottom: 2px solid #9633eb;
 }
 
 .drag-handle {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background: rgba(0, 0, 0, 0.5);
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background-color: rgba(150, 51, 235, 0.9);
   color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  border: none;
+  border-radius: 50%;
   cursor: move;
-  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  transition: background-color 0.2s;
+  z-index: 1;
+  user-select: none;
+  touch-action: none;
+}
+
+.drag-handle:hover {
+  background-color: rgba(150, 51, 235, 1);
+}
+
+.drag-feedback {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 1000;
 }
 
 .delete-btn {
@@ -174,7 +206,7 @@
 }
 
 /* 🔹 Modal Header */
-.edit-portfolio-modal .modal-content h2 {
+.edit-portfolio-modal .modal-content-edit-profile h2 {
   font-size: 24px;
   margin-bottom: 15px;
 }
@@ -354,7 +386,7 @@
 }
 
 /* 🔹 Modal Header - Consistent Styling */
-.edit-portfolio-modal .modal-content h2 {
+.edit-portfolio-modal .modal-content-edit-profile h2 {
   font-size: 24px;
   margin-bottom: 15px;
   font-weight: 600; /* Slightly bolder */
@@ -650,7 +682,7 @@
     padding: 0;
   }
 
-  .modal-content {
+  .modal-content-edit-profile {
     width: 95%;
     padding: 1.5rem;
     max-height: 85vh;
@@ -962,5 +994,221 @@
   .reactEasyCrop_CropAreaGrid::before,
   .reactEasyCrop_CropAreaGrid::after {
     border: 2px solid rgba(255, 255, 255, 0.6);
+  }
+}
+
+.category-management {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: move;
+  transition: all 0.2s ease;
+}
+
+.category-item:hover {
+  border-color: #a328f4;
+  box-shadow: 0 2px 4px rgba(163, 40, 244, 0.1);
+}
+
+.category-item input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #a328f4;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.category-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-button,
+.delete-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-button {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.edit-button:hover {
+  background: #e0e0e0;
+}
+
+.delete-button {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.delete-button:hover {
+  background: #ffcdd2;
+}
+
+.add-category {
+  display: flex;
+  gap: 10px;
+}
+
+.add-category input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.add-category input:focus {
+  border-color: #a328f4;
+  outline: none;
+}
+
+.add-category button {
+  padding: 10px 20px;
+  background: #a328f4;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.add-category button:hover {
+  background: #8c1ecc;
+}
+
+.portfolio-description {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.gallery-link {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.gallery-link p {
+  color: #666;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.gallery-btn {
+  background-color: #9633eb;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.gallery-btn:hover {
+  background-color: #7b2cbf;
+}
+
+.order-input {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 4px;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.order-btn {
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 4px;
+  color: #333;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.order-btn:hover:not(:disabled) {
+  background: white;
+  transform: scale(1.1);
+}
+
+.order-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.order-number {
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .order-input {
+    bottom: 12px;
+    right: 12px;
+    padding: 6px;
+  }
+
+  .order-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+  }
+
+  .order-number {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
   }
 }

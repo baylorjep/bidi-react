@@ -4,9 +4,15 @@ import { v4 as uuidv4 } from 'uuid';
 import "../../../styles/EditProfileModal.css";
 import { convertToWebP } from "../../../utils/imageUtils";
 import Cropper from 'react-easy-crop';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import { useNavigate } from 'react-router-dom';
 
 const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
-  const [formData, setFormData] = useState(initialData || {}); // Store editable fields
+  const [formData, setFormData] = useState({
+    business_address: initialData?.business_address || '',
+    packages: Array.isArray(initialData?.packages) ? initialData.packages : []
+  });
   const [portfolioPics, setPortfolioPics] = useState([]);
   const [portfolioVideos, setPortfolioVideos] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -17,9 +23,6 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const [uploadingProfile, setUploadingProfile] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
   const [mediaOrder, setMediaOrder] = useState([]);
-  const [touchStartY, setTouchStartY] = useState(null);
-  const [draggedElement, setDraggedElement] = useState(null);
-  const [dragFeedback, setDragFeedback] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
@@ -27,6 +30,30 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   const [isResizing, setIsResizing] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState(null);
   const [minZoom, setMinZoom] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [newCategory, setNewCategory] = useState("");
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const navigate = useNavigate();
+
+  // Add Quill modules configuration
+  const quillModules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['link'],
+      ['clean']
+    ],
+  };
+
+  const quillFormats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike',
+    'list', 'bullet',
+    'link'
+  ];
 
   useEffect(() => {
     if (isOpen) {
@@ -38,6 +65,12 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       fetchProfilePicture(); // Fetch the current profile picture
     }
   }, [isOpen, initialData]);
+
+  useEffect(() => {
+    if (isOpen && initialData.currentSection === 'portfolio') {
+      fetchCategories();
+    }
+  }, [isOpen, initialData.currentSection]);
 
   // 🔹 Fetch portfolio images if needed
   const fetchPortfolioImages = async () => {
@@ -111,6 +144,21 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("portfolio_categories")
+        .select("*")
+        .eq("business_id", businessId)
+        .order("display_order", { ascending: true });
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
   // 🔹 Handle input changes dynamically
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -119,25 +167,50 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
   // 🔹 Handle saving data back to Supabase
   const handleSave = async () => {
     try {
-      // Create a copy of formData and remove UI-only fields
-      const updatedData = { ...formData };
-      delete updatedData.portfolio; // Remove portfolio field if it exists
-      delete updatedData.profile_picture; // Remove profile_picture flag
-      delete updatedData.currentSection; // Remove currentSection field
+      setIsSaving(true);
+      const updates = {};
 
-      // Only proceed if there are actual business profile fields to update
-      if (Object.keys(updatedData).length > 0) {
-        const { error } = await supabase
-          .from("business_profiles")
-          .update(updatedData)
-          .eq("id", businessId);
-          
-        if (error) throw error;
+      // Ensure packages is an array before processing
+      const packagesToSave = Array.isArray(formData.packages) ? formData.packages : [];
+
+      switch (initialData.currentSection) {
+        case 'business_details':
+          updates.business_address = formData.business_address;
+          // Save packages
+          if (packagesToSave.length > 0) {
+            // Delete existing packages
+            await supabase
+              .from('business_packages')
+              .delete()
+              .eq('business_id', businessId);
+
+            // Insert new packages
+            const { error: packagesError } = await supabase
+              .from('business_packages')
+              .insert(
+                packagesToSave.map(pkg => ({
+                  business_id: businessId,
+                  name: pkg.name,
+                  price: pkg.price,
+                  description: pkg.description,
+                  features: pkg.features || [],
+                  image_url: pkg.image_url
+                }))
+              );
+
+            if (packagesError) throw packagesError;
+          }
+          break;
+
+        // ... rest of the switch cases ...
       }
-      onClose(); // Close modal after successful save
+
+      // ... rest of the function ...
     } catch (error) {
-      console.error("Error updating business data:", error);
-      alert("Failed to update profile. Please try again.");
+      console.error('Error saving changes:', error);
+      alert('Failed to save changes. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -160,6 +233,53 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
       alert('Only JPG, PNG, and MP4 files are supported. HEIC files are not accepted.');
       e.target.value = ''; // Clear the file input
       return;
+    }
+
+    let selectedCategoryId = null;
+
+    // If there are categories, show category selection dialog
+    if (categories.length > 0) {
+      const selectedCategory = window.prompt(
+        'Enter category name for these files (or leave empty for uncategorized):',
+        ''
+      );
+      
+      if (selectedCategory === null) {
+        // User cancelled the upload
+        e.target.value = '';
+        return;
+      }
+
+      // Find the category ID if it exists
+      const category = categories.find(cat => 
+        cat.name.toLowerCase() === selectedCategory.toLowerCase()
+      );
+
+      if (selectedCategory && !category) {
+        // Create new category if it doesn't exist
+        try {
+          const { data: newCategory, error } = await supabase
+            .from("portfolio_categories")
+            .insert({
+              business_id: businessId,
+              name: selectedCategory.trim(),
+              display_order: categories.length
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+          
+          setCategories(prev => [...prev, newCategory]);
+          selectedCategoryId = newCategory.id;
+        } catch (error) {
+          console.error("Error creating category:", error);
+          alert("Failed to create category. Files will be uploaded as uncategorized.");
+          selectedCategoryId = null;
+        }
+      } else {
+        selectedCategoryId = category?.id || null;
+      }
     }
 
     setUploading(true);
@@ -261,7 +381,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
           .getPublicUrl(filePath);
         console.log('Public URL:', publicUrl);
 
-        // Save to database with order
+        // Save to database with order and category
         const { error: insertError } = await supabase
           .from('profile_photos')
           .insert({
@@ -269,7 +389,8 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
             photo_url: publicUrl,
             photo_type: fileType,
             file_path: filePath,
-            display_order: mediaOrder.length
+            display_order: mediaOrder.length,
+            category_id: selectedCategoryId
           });
 
         if (insertError) {
@@ -713,306 +834,348 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
     </div>
   );
 
-  // Add this function to handle reordering
-  const handleReorder = async (draggedUrl, droppedUrl) => {
+  // Replace handleReorder with a simpler function
+  const handleOrderChange = async (mediaUrl, newOrder) => {
     try {
-      // Get current order
-      const { data: currentMedia } = await supabase
+      // Ensure the new order is between 1 and 5
+      const validOrder = Math.max(1, Math.min(5, parseInt(newOrder) || 1));
+      
+      // Update the database
+      const { error } = await supabase
         .from("profile_photos")
-        .select("photo_url, display_order")
+        .update({ display_order: validOrder - 1 }) // Convert to 0-based index
         .eq("user_id", businessId)
-        .or("photo_type.eq.portfolio,photo_type.eq.video")
-        .order("display_order", { ascending: true });
+        .eq("photo_url", mediaUrl);
 
-      if (!currentMedia) return;
+      if (error) throw error;
 
-      // Create new order array
-      const newOrder = [...mediaOrder];
-      const draggedIndex = newOrder.indexOf(draggedUrl);
-      const droppedIndex = newOrder.indexOf(droppedUrl);
-      
-      // Remove dragged item and insert at new position
-      newOrder.splice(draggedIndex, 1);
-      newOrder.splice(droppedIndex, 0, draggedUrl);
-      
-      // Update display_order in database
-      const updates = newOrder.map((url, index) => {
-        const media = currentMedia.find(m => m.photo_url === url);
-        if (media) {
-          return supabase
-            .from("profile_photos")
-            .update({ display_order: index })
-            .eq("user_id", businessId)
-            .eq("photo_url", url);
+      // Refresh the media order
+      fetchPortfolioImages();
+    } catch (error) {
+      console.error("Error updating order:", error);
+      alert("Failed to update order. Please try again.");
+    }
+  };
+
+  const handleOrderUp = async (url, currentOrder) => {
+    if (currentOrder > 1) {
+      await handleOrderChange(url, currentOrder - 1);
+    }
+  };
+
+  const handleOrderDown = async (url, currentOrder) => {
+    if (currentOrder < 5) {
+      await handleOrderChange(url, currentOrder + 1);
+    }
+  };
+
+  const handlePackageChange = (index, field, value) => {
+    setFormData(prevData => {
+      const updatedPackages = [...prevData.packages];
+      updatedPackages[index] = {
+        ...updatedPackages[index],
+        [field]: value
+      };
+      return {
+        ...prevData,
+        packages: updatedPackages
+      };
+    });
+  };
+
+  const handleAddPackage = () => {
+    setFormData({
+      ...formData,
+      packages: [
+        ...formData.packages,
+        {
+          name: '',
+          price: '',
+          description: '',
+          features: []
         }
-        return Promise.resolve();
+      ]
+    });
+  };
+
+  const handleDeletePackage = async (index) => {
+    const packageToDelete = formData.packages[index];
+    if (packageToDelete.id) {
+      try {
+        const { error } = await supabase
+          .from('business_packages')
+          .delete()
+          .eq('id', packageToDelete.id);
+        
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error deleting package:', error);
+        alert('Failed to delete package. Please try again.');
+        return;
+      }
+    }
+    
+    const updatedPackages = formData.packages.filter((_, i) => i !== index);
+    setFormData({ ...formData, packages: updatedPackages });
+  };
+
+  const handleAddFeature = (packageIndex) => {
+    const updatedPackages = [...formData.packages];
+    updatedPackages[packageIndex].features = [
+      ...(updatedPackages[packageIndex].features || []),
+      ''
+    ];
+    setFormData({ ...formData, packages: updatedPackages });
+  };
+
+  const handleFeatureChange = (packageIndex, featureIndex, value) => {
+    const updatedPackages = [...formData.packages];
+    updatedPackages[packageIndex].features[featureIndex] = value;
+    setFormData({ ...formData, packages: updatedPackages });
+  };
+
+  const handleDeleteFeature = (packageIndex, featureIndex) => {
+    const updatedPackages = [...formData.packages];
+    updatedPackages[packageIndex].features = updatedPackages[packageIndex].features.filter((_, i) => i !== featureIndex);
+    setFormData({ ...formData, packages: updatedPackages });
+  };
+
+  const handlePackageImageUpload = async (packageIndex, file) => {
+    console.log('Starting package image upload for package index:', packageIndex);
+    console.log('File details:', {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
+
+    try {
+      const packageToUpdate = formData.packages[packageIndex];
+      console.log('Current package data:', packageToUpdate);
+
+      // Convert image to WebP
+      console.log('Starting WebP conversion...');
+      const objectUrl = URL.createObjectURL(file);
+      console.log('Created object URL:', objectUrl);
+
+      // Create a canvas element
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Create an image element
+      const img = new Image();
+      
+      // Wait for image to load
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = objectUrl;
+      });
+      
+      // Set canvas dimensions
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      // Draw image on canvas
+      ctx.drawImage(img, 0, 0);
+      
+      // Convert to WebP
+      console.log('Converting to WebP format...');
+      const webpBlob = await new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/webp', 0.8);
       });
 
-      await Promise.all(updates);
-      setMediaOrder(newOrder);
+      // Generate filename and path
+      const fileName = `${uuidv4()}.webp`;
+      const filePath = `${businessId}/packages/${fileName}`;
+      console.log('File path for upload:', filePath);
+
+      // Upload to storage
+      console.log('Uploading to Supabase storage...');
+      const { error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(filePath, webpBlob, { upsert: true });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+      console.log('Upload successful');
+
+      // Get public URL
+      console.log('Getting public URL...');
+      const { data } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(filePath);
+      console.log('Public URL:', data.publicUrl);
+
+      // Update package with new image URL
+      console.log('Updating package data with new image URL...');
+      const updatedPackages = [...formData.packages];
+      updatedPackages[packageIndex] = {
+        ...updatedPackages[packageIndex],
+        image_url: data.publicUrl
+      };
+      console.log('Updated package data:', updatedPackages[packageIndex]);
+
+      setFormData(prev => {
+        console.log('Previous form data:', prev);
+        const newData = {
+          ...prev,
+          packages: updatedPackages
+        };
+        console.log('New form data:', newData);
+        return newData;
+      });
+
+      // Clean up
+      URL.revokeObjectURL(objectUrl);
+      console.log('Temporary URL cleaned up');
+
     } catch (error) {
-      console.error("Error reordering media:", error);
-      alert("Failed to reorder media. Please try again.");
+      console.error('Error in handlePackageImageUpload:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details
+      });
+      alert('Failed to upload package image. Please try again.');
     }
   };
 
-  // Update the touch event handlers to allow scrolling when not dragging
-  const handleTouchStart = (e, url) => {
-    // Only start drag if touching the drag handle
-    if (!e.target.closest('.drag-handle')) {
-      return; // Allow default scrolling behavior
-    }
-    
-    const touch = e.touches[0];
-    const element = e.currentTarget;
-    
-    setTouchStartY(touch.clientY);
-    setDraggedElement(element);
-    element.classList.add('dragging');
-    
-    // Store the original URL and position
-    element.dataset.originalUrl = url;
-    element.dataset.initialY = element.getBoundingClientRect().top;
-    
-    // Add feedback element
-    setDragFeedback('Hold and drag to reorder');
-    
-    // Only prevent default when actually dragging
-    e.preventDefault();
-  };
+  const handleDeletePackageImage = async (packageIndex) => {
+    try {
+      const packageToUpdate = formData.packages[packageIndex];
+      if (!packageToUpdate.image_url) return;
 
-  const handleTouchMove = (e) => {
-    if (!draggedElement) {
-      return; // Allow default scrolling behavior
-    }
-    
-    const touch = e.touches[0];
-    const elements = Array.from(document.querySelectorAll('.image-container:not(.dragging)'));
-    
-    // Calculate drag distance
-    const deltaY = touch.clientY - touchStartY;
-    draggedElement.style.transform = `translateY(${deltaY}px)`;
-    
-    // Remove existing drag-over states
-    elements.forEach(el => {
-      el.classList.remove('drag-over-above', 'drag-over-below');
-    });
-    
-    // Find the element we're dragging over
-    let closestElement = null;
-    let closestDistance = Infinity;
-    let isAbove = false;
+      // Delete from storage
+      const filePath = packageToUpdate.image_url.split('/profile-photos/')[1];
+      const { error: deleteError } = await supabase.storage
+        .from('profile-photos')
+        .remove([filePath]);
 
-    elements.forEach(el => {
-      const box = el.getBoundingClientRect();
-      const distance = Math.abs(touch.clientY - (box.top + box.height / 2));
-      
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestElement = el;
-        isAbove = touch.clientY < box.top + box.height / 2;
-      }
-    });
-    
-    if (closestElement) {
-      if (isAbove) {
-        closestElement.classList.add('drag-over-above');
-        setDragFeedback('Release to place before');
-      } else {
-        closestElement.classList.add('drag-over-below');
-        setDragFeedback('Release to place after');
-      }
-    }
-    
-    // Only prevent default when actually dragging
-    e.preventDefault();
-  };
+      if (deleteError) throw deleteError;
 
-  const handleTouchEnd = async (e) => {
-    if (!draggedElement) return;
-    
-    const dropTarget = document.querySelector('.drag-over-above, .drag-over-below');
-    
-    if (dropTarget) {
-      const draggedUrl = draggedElement.dataset.originalUrl;
-      const droppedUrl = dropTarget.querySelector('img, video').src;
-      const dropAbove = dropTarget.classList.contains('drag-over-above');
-      
-      // Update the order based on drop position
-      const newOrder = [...mediaOrder];
-      const draggedIndex = newOrder.indexOf(draggedUrl);
-      let droppedIndex = newOrder.indexOf(droppedUrl);
-      
-      if (!dropAbove) droppedIndex += 1;
-      
-      // Remove dragged item and insert at new position
-      newOrder.splice(draggedIndex, 1);
-      newOrder.splice(droppedIndex, 0, draggedUrl);
-      
-      // Update state immediately for smooth UI
-      setMediaOrder(newOrder);
-      
-      try {
-        // Get current order from database
-        const { data: currentMedia } = await supabase
-          .from("profile_photos")
-          .select("photo_url, display_order")
-          .eq("user_id", businessId)
-          .or("photo_type.eq.portfolio,photo_type.eq.video")
-          .order("display_order", { ascending: true });
+      // Update package to remove image URL
+      const updatedPackages = [...formData.packages];
+      updatedPackages[packageIndex] = {
+        ...updatedPackages[packageIndex],
+        image_url: null
+      };
+      setFormData({ ...formData, packages: updatedPackages });
 
-        if (currentMedia) {
-          // Update display_order in database
-          const updates = newOrder.map((url, index) => 
-            supabase
-              .from("profile_photos")
-              .update({ display_order: index })
-              .eq("user_id", businessId)
-              .eq("photo_url", url)
-          );
-
-          await Promise.all(updates);
-        }
-      } catch (error) {
-        console.error("Error updating order:", error);
-        // Revert to previous order if update fails
-        setMediaOrder(mediaOrder);
-      }
-    }
-    
-    // Reset styles and states
-    draggedElement.style.transform = '';
-    draggedElement.classList.remove('dragging');
-    document.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
-      el.classList.remove('drag-over-above', 'drag-over-below');
-    });
-    
-    setDraggedElement(null);
-    setTouchStartY(null);
-    setDragFeedback(null);
-  };
-
-  const handleMouseDown = (e, url) => {
-    if (!e.target.closest('.drag-handle')) return;
-    
-    const element = e.currentTarget;
-    setDraggedElement(element);
-    element.classList.add('dragging');
-    element.dataset.originalUrl = url;
-    element.dataset.initialX = element.getBoundingClientRect().left;
-    element.dataset.initialY = element.getBoundingClientRect().top;
-    setDragFeedback('Drag to reorder');
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!draggedElement) return;
-    
-    const elements = Array.from(document.querySelectorAll('.image-container:not(.dragging)'));
-    const deltaX = e.clientX - draggedElement.getBoundingClientRect().left;
-    const deltaY = e.clientY - draggedElement.getBoundingClientRect().top;
-    draggedElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-    
-    elements.forEach(el => el.classList.remove('drag-over-above', 'drag-over-below', 'drag-over-left', 'drag-over-right'));
-    
-    let closestElement = null;
-    let closestDistance = Infinity;
-    let position = '';
-
-    elements.forEach(el => {
-      const box = el.getBoundingClientRect();
-      const centerX = box.left + box.width / 2;
-      const centerY = box.top + box.height / 2;
-      const distanceX = Math.abs(e.clientX - centerX);
-      const distanceY = Math.abs(e.clientY - centerY);
-      const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-      
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestElement = el;
-        
-        // Determine position relative to the closest element
-        if (distanceX > distanceY) {
-          position = e.clientX < centerX ? 'left' : 'right';
-        } else {
-          position = e.clientY < centerY ? 'above' : 'below';
-        }
-      }
-    });
-    
-    if (closestElement) {
-      closestElement.classList.add(`drag-over-${position}`);
-      setDragFeedback(`Release to place ${position}`);
+    } catch (error) {
+      console.error('Error deleting package image:', error);
+      alert('Failed to delete package image. Please try again.');
     }
   };
 
-  const handleMouseUp = async (e) => {
-    if (!draggedElement) return;
-    
-    const dropTarget = document.querySelector('.drag-over-above, .drag-over-below, .drag-over-left, .drag-over-right');
-    if (dropTarget) {
-      const draggedUrl = draggedElement.dataset.originalUrl;
-      const droppedUrl = dropTarget.querySelector('img, video').src;
-      const position = dropTarget.classList.contains('drag-over-above') ? 'above' :
-                      dropTarget.classList.contains('drag-over-below') ? 'below' :
-                      dropTarget.classList.contains('drag-over-left') ? 'left' : 'right';
-      
-      const newOrder = [...mediaOrder];
-      const draggedIndex = newOrder.indexOf(draggedUrl);
-      let droppedIndex = newOrder.indexOf(droppedUrl);
-      
-      // Adjust dropped index based on position
-      if (position === 'below' || position === 'right') {
-        droppedIndex += 1;
-      }
-      
-      newOrder.splice(draggedIndex, 1);
-      newOrder.splice(droppedIndex, 0, draggedUrl);
-      setMediaOrder(newOrder);
-      
-      try {
-        const { data: currentMedia } = await supabase
-          .from("profile_photos")
-          .select("photo_url, display_order")
-          .eq("user_id", businessId)
-          .or("photo_type.eq.portfolio,photo_type.eq.video")
-          .order("display_order", { ascending: true });
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) return;
 
-        if (currentMedia) {
-          const updates = newOrder.map((url, index) => 
-            supabase
-              .from("profile_photos")
-              .update({ display_order: index })
-              .eq("user_id", businessId)
-              .eq("photo_url", url)
-          );
-          await Promise.all(updates);
-        }
-      } catch (error) {
-        console.error("Error updating order:", error);
-        setMediaOrder(mediaOrder);
-      }
+    try {
+      const { data, error } = await supabase
+        .from("portfolio_categories")
+        .insert({
+          business_id: businessId,
+          name: newCategory.trim(),
+          display_order: categories.length
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCategories(prev => [...prev, data]);
+      setNewCategory("");
+    } catch (error) {
+      console.error("Error adding category:", error);
+      alert("Failed to add category. Please try again.");
     }
-    
-    draggedElement.style.transform = '';
-    draggedElement.classList.remove('dragging');
-    document.querySelectorAll('.drag-over-above, .drag-over-below, .drag-over-left, .drag-over-right').forEach(el => {
-      el.classList.remove('drag-over-above', 'drag-over-below', 'drag-over-left', 'drag-over-right');
-    });
-    
-    setDraggedElement(null);
-    setDragFeedback(null);
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleUpdateCategory = async (categoryId, newName) => {
+    if (!newName.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from("portfolio_categories")
+        .update({ name: newName.trim() })
+        .eq("id", categoryId);
+
+      if (error) throw error;
+
+      setCategories(prev => 
+        prev.map(cat => 
+          cat.id === categoryId ? { ...cat, name: newName.trim() } : cat
+        )
+      );
+      setEditingCategory(null);
+    } catch (error) {
+      console.error("Error updating category:", error);
+      alert("Failed to update category. Please try again.");
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId) => {
+    if (!window.confirm("Are you sure you want to delete this category? Media in this category will become uncategorized.")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("portfolio_categories")
+        .delete()
+        .eq("id", categoryId);
+
+      if (error) throw error;
+
+      // Update media in this category to be uncategorized
+      const { error: updateError } = await supabase
+        .from("profile_photos")
+        .update({ category_id: null })
+        .eq("category_id", categoryId);
+
+      if (updateError) throw updateError;
+
+      setCategories(prev => prev.filter(cat => cat.id !== categoryId));
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      alert("Failed to delete category. Please try again.");
+    }
+  };
+
+  const handleReorderCategories = async (draggedId, droppedId) => {
+    try {
+      const draggedIndex = categories.findIndex(cat => cat.id === draggedId);
+      const droppedIndex = categories.findIndex(cat => cat.id === droppedId);
+      
+      const newCategories = [...categories];
+      const [draggedCategory] = newCategories.splice(draggedIndex, 1);
+      newCategories.splice(droppedIndex, 0, draggedCategory);
+
+      // Update display_order for all categories
+      const updates = newCategories.map((category, index) => 
+        supabase
+          .from("portfolio_categories")
+          .update({ display_order: index })
+          .eq("id", category.id)
+      );
+
+      await Promise.all(updates);
+      setCategories(newCategories);
+    } catch (error) {
+      console.error("Error reordering categories:", error);
+      alert("Failed to reorder categories. Please try again.");
+    }
   };
 
   return (
     isOpen && (
       <div className="edit-portfolio-modal">
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content-edit-profile">
             {/* Dynamic header based on section */}
             <h2>
               {(() => {
@@ -1361,25 +1524,139 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
 
             {/* Business Details Section */}
             {initialData.currentSection === 'business_details' && (
-              <div>
+              <div className="section-content">
                 <div className="modal-input-group">
                   <label>Location</label>
                   <input
                     type="text"
                     name="business_address"
-                    value={formData.business_address || ""}
+                    value={formData.business_address}
                     onChange={handleChange}
-                    placeholder="Enter the areas you cover (e.g., Utah)"
+                    placeholder="Enter your business address"
+                    className="modal-input"
                   />
                 </div>
-                <div className="modal-input-group">
-                  <label>Base Price</label>
-                  <input
-                    type="text"
-                    name="minimum_price"
-                    value={formData.minimum_price || ""}
-                    onChange={handleChange}
-                  />
+
+                <div className="packages-editor">
+                  <h3>Packages</h3>
+                  {(formData.packages || []).map((pkg, packageIndex) => (
+                    <div key={packageIndex} className="package-editor-card">
+                      <div className="package-editor-header">
+                        <input
+                          type="text"
+                          value={pkg.name}
+                          onChange={(e) => handlePackageChange(packageIndex, 'name', e.target.value)}
+                          placeholder="Package Name"
+                        />
+                        <input
+                          type="number"
+                          value={pkg.price}
+                          onChange={(e) => handlePackageChange(packageIndex, 'price', e.target.value)}
+                          placeholder="Price"
+                        />
+                        <button
+                          className="delete-button"
+                          onClick={() => handleDeletePackage(packageIndex)}
+                        >
+                          Delete Package
+                        </button>
+                      </div>
+                      
+                      {/* Add package image section */}
+                      <div className="package-image-section">
+                        {pkg.image_url ? (
+                          <div className="package-image-preview">
+                            <img src={pkg.image_url} alt={`${pkg.name} preview`} />
+                            <button
+                              className="delete-image-button"
+                              onClick={() => handleDeletePackageImage(packageIndex)}
+                            >
+                              ✖
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="package-image-upload">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                console.log('File input changed');
+                                console.log('Event target:', e.target);
+                                console.log('Files:', e.target.files);
+                                const file = e.target.files[0];
+                                console.log('Selected file:', file);
+                                if (file) {
+                                  console.log('Calling handlePackageImageUpload');
+                                  handlePackageImageUpload(packageIndex, file);
+                                }
+                              }}
+                              style={{ display: 'none' }}
+                              id={`package-image-${packageIndex}`}
+                            />
+                            <label 
+                              htmlFor={`package-image-${packageIndex}`} 
+                              className="upload-image-button"
+                              onClick={() => {
+                                console.log('Upload button clicked');
+                                console.log('Label clicked for package:', packageIndex);
+                              }}
+                            >
+                              Add Package Image
+                            </label>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="modal-input-group">
+                        <label>Description</label>
+                        <ReactQuill
+                          theme="snow"
+                          value={pkg.description || ""}
+                          onChange={(content) => {
+                            // Use a debounced update for the description field
+                            const timeoutId = setTimeout(() => {
+                              handlePackageChange(packageIndex, 'description', content);
+                            }, 300);
+                            return () => clearTimeout(timeoutId);
+                          }}
+                          modules={quillModules}
+                          formats={quillFormats}
+                          className="package-description-editor"
+                        />
+                      </div>
+                      <div className="features-section">
+                        <h4>Features</h4>
+                        {pkg.features && pkg.features.map((feature, featureIndex) => (
+                          <div key={featureIndex} className="feature-input">
+                            <input
+                              type="text"
+                              value={feature}
+                              onChange={(e) => handleFeatureChange(packageIndex, featureIndex, e.target.value)}
+                              placeholder="Feature"
+                            />
+                            <button
+                              className="delete-button"
+                              onClick={() => handleDeleteFeature(packageIndex, featureIndex)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          className="add-button"
+                          onClick={() => handleAddFeature(packageIndex)}
+                        >
+                          Add Feature
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    className="add-button"
+                    onClick={handleAddPackage}
+                  >
+                    Add Package
+                  </button>
                 </div>
               </div>
             )}
@@ -1398,13 +1675,13 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                 </div>
                 <div className="modal-input-group">
                   <label>Story</label>
-                  <textarea
-                    name="story"
+                  <ReactQuill
+                    theme="snow"
                     value={formData.story || ""}
-                    onChange={handleChange}
-                    rows={6}
-                    placeholder="Write about you, your business, your story..."
-                    style={{ resize: 'vertical', minHeight: '150px' }}
+                    onChange={(content) => setFormData(prev => ({ ...prev, story: content }))}
+                    modules={quillModules}
+                    formats={quillFormats}
+                    className="story-editor"
                   />
                 </div>
               </div>
@@ -1454,7 +1731,10 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
             {/* Portfolio Section */}
             {initialData.currentSection === 'portfolio' && (
               <div className="portfolio-preview-container">
-                <h3>Portfolio Media</h3>
+                <h3>Top 5 Portfolio Photos</h3>
+                <p className="portfolio-description">
+                  Upload your best 5 photos to showcase on your main profile. Additional photos can be added in the gallery.
+                </p>
                 
                 {/* Add Media Button at the top */}
                 <div className="upload-btn-container">
@@ -1469,9 +1749,9 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                   <button
                     className="upload-btn"
                     onClick={() => fileInputRef.current.click()}
-                    disabled={uploading}
+                    disabled={uploading || mediaOrder.length >= 5}
                   >
-                    {uploading ? "Uploading..." : "Add Media"}
+                    {uploading ? "Uploading..." : mediaOrder.length >= 5 ? "Maximum 5 photos" : "Add Media"}
                   </button>
                 </div>
 
@@ -1484,17 +1764,12 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                 ))}
 
                 <div className="portfolio-preview" style={{ touchAction: 'pan-y' }}>
-                  {mediaOrder.map((url, index) => {
+                  {mediaOrder.slice(0, 5).map((url, index) => {
                     const isVideo = url.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
                     return (
                       <div 
                         key={url} 
                         className="image-container"
-                        style={{ touchAction: 'pan-y' }}
-                        onTouchStart={(e) => handleTouchStart(e, url)}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                        onMouseDown={(e) => handleMouseDown(e, url)}
                       >
                         {isVideo ? (
                           <video 
@@ -1502,7 +1777,6 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                             className="portfolio-image video" 
                             controls
                             playsInline
-                            style={{ touchAction: 'pan-y' }}
                           />
                         ) : (
                           <img 
@@ -1510,7 +1784,6 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                             alt={`Portfolio ${index + 1}`} 
                             className="portfolio-image" 
                             loading="lazy"
-                            style={{ touchAction: 'pan-y' }}
                           />
                         )}
                         <button 
@@ -1520,21 +1793,39 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                         >
                           ✖
                         </button>
-                        <div 
-                          className="drag-handle" 
-                          title="Drag to reorder"
-                          aria-label="Drag to reorder"
-                        >
-                          ⋮⋮
+                        <div className="order-input">
+                          <button 
+                            className="order-btn up"
+                            onClick={() => handleOrderUp(url, index + 1)}
+                            disabled={index === 0}
+                            aria-label="Move up"
+                          >
+                            ↑
+                          </button>
+                          <span className="order-number">{index + 1}</span>
+                          <button 
+                            className="order-btn down"
+                            onClick={() => handleOrderDown(url, index + 1)}
+                            disabled={index === mediaOrder.length - 1}
+                            aria-label="Move down"
+                          >
+                            ↓
+                          </button>
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                {dragFeedback && (
-                  <div className="drag-feedback">
-                    {dragFeedback}
+                {mediaOrder.length >= 5 && (
+                  <div className="gallery-link">
+                    <p>You've reached the maximum number of photos for the main profile.</p>
+                    <button 
+                      className="gallery-btn"
+                      onClick={() => navigate(`/portfolio/${businessId}/gallery`)}
+                    >
+                      Manage Gallery Photos
+                    </button>
                   </div>
                 )}
               </div>
@@ -1542,8 +1833,27 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
 
             {/* Action Buttons */}
             <div className="modal-actions">
-              <button className="close-btn" onClick={onClose}>Cancel</button>
-              <button className="save-btn" onClick={handleSave}>Save Changes</button>
+              <button 
+                className="close-btn" 
+                onClick={onClose}
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+              <button 
+                className="save-btn" 
+                onClick={handleSave}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <div className="loading-spinner"></div>
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </button>
             </div>
           </div>
         </div>

@@ -93,6 +93,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const [isSelected, setIsSelected] = useState(false);
   // Add this state to detect vendor selection context
   const [fromVendorSelection, setFromVendorSelection] = useState(false);
+  const [packages, setPackages] = useState([]);
 
   // Add slider settings
   const sliderSettings = {
@@ -249,131 +250,161 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   }, [businessId]);
 
   const fetchBusinessData = async () => {
-    const { data: businessData, error: businessError } = await supabase
-      .from("business_profiles")
-      .select("*")
-      .eq("id", businessId)
-      .single();
-    if (businessError) console.error("Error fetching business:", businessError);
-    else setBusiness(businessData);
+    try {
+      // Fetch business profile
+      const { data: businessProfile, error: businessError } = await supabase
+        .from("business_profiles")
+        .select("*")
+        .eq("id", businessId)
+        .single();
+      if (businessError) console.error("Error fetching business:", businessError);
+      else setBusiness(businessProfile);
 
-    const { data: profileData, error: profileError } = await supabase
-      .from("profile_photos")
-      .select("photo_url")
-      .eq("user_id", businessId)
-      .eq("photo_type", "profile")
-      .single();
-    if (profileData) setProfileImage(profileData.photo_url);
-    else if (profileError)
-      console.error("Error fetching profile image:", profileError);
+      // Fetch profile photo
+      const { data: profileData, error: profileError } = await supabase
+        .from("profile_photos")
+        .select("photo_url")
+        .eq("user_id", businessId)
+        .eq("photo_type", "profile")
+        .single();
+      if (profileData) setProfileImage(profileData.photo_url);
+      else if (profileError)
+        console.error("Error fetching profile image:", profileError);
 
-    const { data: portfolioData, error: portfolioError } = await supabase
-      .from("profile_photos")
-      .select("photo_url, photo_type, display_order")
-      .eq("user_id", businessId)
-      .or("photo_type.eq.portfolio,photo_type.eq.video")
-      .order("display_order", { ascending: true });
+      // Fetch portfolio media
+      const { data: portfolioData, error: portfolioError } = await supabase
+        .from("profile_photos")
+        .select("photo_url, photo_type, display_order")
+        .eq("user_id", businessId)
+        .or("photo_type.eq.portfolio,photo_type.eq.video")
+        .order("display_order", { ascending: true });
 
-    if (portfolioError) {
-      console.error("Error fetching portfolio media:", portfolioError);
-    } else {
-      // Sort by display_order
-      const sortedMedia = portfolioData.sort(
-        (a, b) => a.display_order - b.display_order
-      );
-
-      const videos = [];
-      const images = [];
-
-      sortedMedia.forEach((item) => {
-        if (item.photo_type === "video") {
-          videos.push(item.photo_url);
-        } else {
-          images.push(item.photo_url);
-        }
-      });
-
-      setPortfolioVideos(videos);
-      setPortfolioPics(images);
-    }
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (!userError && user) {
-      if (user.id === businessId) {
-        setIsOwner(true);
+      if (portfolioError) {
+        console.error("Error fetching portfolio media:", portfolioError);
       } else {
-        const { data: userData } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-        setIsIndividual(userData?.role === "individual");
+        // Sort by display_order
+        const sortedMedia = portfolioData.sort(
+          (a, b) => a.display_order - b.display_order
+        );
+
+        const videos = [];
+        const images = [];
+
+        sortedMedia.forEach((item) => {
+          if (item.photo_type === "video") {
+            videos.push(item.photo_url);
+          } else {
+            images.push(item.photo_url);
+          }
+        });
+
+        setPortfolioVideos(videos);
+        setPortfolioPics(images);
       }
-    }
 
-    const { data: reviewData, error: reviewError } = await supabase
-      .from("reviews")
-      .select("rating, first_name")
-      .eq("vendor_id", businessId);
+      // Fetch packages
+      const { data: packagesData, error: packagesError } = await supabase
+        .from("business_packages")
+        .select("*")
+        .eq("business_id", businessId)
+        .order("price", { ascending: true });
 
-    if (reviewError) {
-      console.error("Error fetching reviews:", reviewError);
-    } else {
-      const avgRating =
-        reviewData.length > 0
-          ? (
-              reviewData.reduce((acc, review) => acc + review.rating, 0) /
-              reviewData.length
-            ).toFixed(1)
-          : null;
-      setAverageRating(avgRating);
-    }
+      if (packagesError) {
+        console.error("Error fetching packages:", packagesError);
+      } else {
+        setPackages(packagesData || []);
+      }
 
-    const { data: bidData, error: bidError } = await supabase
-      .from("bids")
-      .select("bid_amount")
-      .eq("user_id", businessId);
+      // Check user role and ownership
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (!userError && user) {
+        if (user.id === businessId) {
+          setIsOwner(true);
+        } else {
+          const { data: userData, error: userDataError } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+          
+          if (userDataError) {
+            console.error("Error fetching user role:", userDataError);
+          } else {
+            setIsIndividual(userData?.role === "individual");
+          }
+        }
+      }
 
-    if (bidError) {
-      console.error("Error fetching bids:", bidError);
-    } else if (bidData && bidData.length > 0) {
-      const totalBids = bidData.reduce((acc, bid) => acc + bid.bid_amount, 0);
-      const averageBid = (totalBids / bidData.length).toFixed(0);
-      setBidStats({
-        average: averageBid,
-        count: bidData.length,
-      });
-    }
+      // Fetch reviews
+      const { data: reviewData, error: reviewError } = await supabase
+        .from("reviews")
+        .select("rating, first_name")
+        .eq("vendor_id", businessId);
 
-    const { data: reviewsData, error: reviewsError } = await supabase
-      .from("reviews")
-      .select("rating, comment, first_name, created_at")
-      .eq("vendor_id", businessId);
+      if (reviewError) {
+        console.error("Error fetching reviews:", reviewError);
+      } else {
+        const avgRating =
+          reviewData.length > 0
+            ? (
+                reviewData.reduce((acc, review) => acc + review.rating, 0) /
+                reviewData.length
+              ).toFixed(1)
+            : null;
+        setAverageRating(avgRating);
+      }
 
-    if (reviewsError) {
-      console.error("Error fetching reviews:", reviewsError);
-    } else {
-      setReviews(reviewsData);
-      const avgRating =
-        reviewsData.length > 0
-          ? (
-              reviewsData.reduce((acc, review) => acc + review.rating, 0) /
-              reviewsData.length
-            ).toFixed(1)
-          : null;
-      setAverageRating(avgRating);
-    }
+      // Fetch bids
+      const { data: bidData, error: bidError } = await supabase
+        .from("bids")
+        .select("bid_amount")
+        .eq("user_id", businessId);
 
-    setLoading(false);
+      if (bidError) {
+        console.error("Error fetching bids:", bidError);
+      } else if (bidData && bidData.length > 0) {
+        const totalBids = bidData.reduce((acc, bid) => acc + bid.bid_amount, 0);
+        const averageBid = (totalBids / bidData.length).toFixed(0);
+        setBidStats({
+          average: averageBid,
+          count: bidData.length,
+        });
+      }
 
-    // Helper function to normalize business_category
-    const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
+      // Fetch detailed reviews
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("reviews")
+        .select("rating, comment, first_name, created_at")
+        .eq("vendor_id", businessId);
 
-    if (businessData) {
-      setBusiness({ ...businessData, business_category: getCategories(businessData.business_category) });
+      if (reviewsError) {
+        console.error("Error fetching reviews:", reviewsError);
+      } else {
+        setReviews(reviewsData);
+        const avgRating =
+          reviewsData.length > 0
+            ? (
+                reviewsData.reduce((acc, review) => acc + review.rating, 0) /
+                reviewsData.length
+              ).toFixed(1)
+            : null;
+        setAverageRating(avgRating);
+      }
+
+      setLoading(false);
+
+      // Helper function to normalize business_category
+      const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
+
+      if (businessProfile) {
+        setBusiness({ ...businessProfile, business_category: getCategories(businessProfile.business_category) });
+      }
+    } catch (error) {
+      console.error("Error in fetchBusinessData:", error);
+      setLoading(false);
     }
   };
 
@@ -511,14 +542,59 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   };
 
   const handleImageClick = (media) => {
+    console.log('handleImageClick called with:', media);
+    
+    // Create the categoryMedia array first, but only take first 5 items
+    const allMedia = [...portfolioVideos, ...portfolioPics]
+      .slice(0, 5)
+      .map(item => ({
+        url: item,
+        type: portfolioVideos.includes(item) ? 'video' : 'image'
+      }));
+    
+    console.log('All media:', allMedia);
+
     // If media is already an object with url and isVideo properties
     if (media && typeof media === 'object' && 'url' in media) {
-      setSelectedImage(media);
+      // For profile picture, we need to create a categoryMedia array with just that image
+      if (media.isProfile) {
+        console.log('Profile picture clicked');
+        setSelectedImage({
+          url: media.url,
+          isVideo: false,
+          categoryMedia: [{
+            url: media.url,
+            type: 'image'
+          }],
+          currentIndex: 0
+        });
+      } else {
+        // For portfolio images/videos
+        console.log('Portfolio media clicked');
+        const currentIndex = allMedia.findIndex(item => item.url === media.url);
+        console.log('Current index:', currentIndex);
+        
+        setSelectedImage({
+          url: media.url,
+          isVideo: media.isVideo,
+          categoryMedia: allMedia,
+          currentIndex: currentIndex >= 0 ? currentIndex : 0
+        });
+      }
     } 
     // If media is just a URL string (for backward compatibility)
     else if (typeof media === 'string') {
+      console.log('String URL clicked');
       const isVideo = media.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
-      setSelectedImage({ url: media, isVideo: !!isVideo });
+      const currentIndex = allMedia.findIndex(item => item.url === media);
+      console.log('Current index:', currentIndex);
+      
+      setSelectedImage({
+        url: media,
+        isVideo: !!isVideo,
+        categoryMedia: allMedia,
+        currentIndex: currentIndex >= 0 ? currentIndex : 0
+      });
     }
   };
 
@@ -709,6 +785,27 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     // For example, adding/removing from a global selected vendors list
   };
 
+  const handleLearnMore = (packageName) => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    const messageTemplate = `Hi, I'm interested in learning more about your "${packageName}" package. Could you provide more details?`;
+    
+    navigate('/individual-dashboard', {
+      state: {
+        activeSection: 'messages',
+        selectedChat: {
+          id: businessId,
+          name: business.business_name,
+          profileImage: profileImage
+        },
+        initialMessage: messageTemplate
+      }
+    });
+  };
+
   if (loading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -737,6 +834,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         mediaUrl={selectedImage?.url}
         isVideo={selectedImage?.isVideo}
         onClose={handleCloseImageModal}
+        categoryMedia={selectedImage?.categoryMedia || []}
+        currentIndex={selectedImage?.currentIndex || 0}
+        businessId={businessId}
       />
 
       {isAuthModalOpen && (
@@ -763,7 +863,37 @@ const Portfolio = ({ businessId: propBusinessId }) => {
           {/* Mobile Swiper */}
           <div className="portfolio-images-mobile">
             <Slider {...sliderSettings}>
-              {[...portfolioVideos, ...portfolioPics].map((item, index) => renderMediaItem(item, index))}
+              {[...portfolioVideos, ...portfolioPics].map((item, index) => {
+                const isVideo = portfolioVideos.includes(item);
+                return (
+                  <div key={index} className="portfolio-slide">
+                    {isVideo ? (
+                      <video
+                        src={item}
+                        className="portfolio-image video"
+                        controls
+                        muted
+                        autoPlay
+                        loop
+                        playsInline
+                        onClick={() => handleImageClick({ url: item, isVideo: true })}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    ) : (
+                      <img
+                        src={convertedUrls[item] || item}
+                        alt={`Portfolio ${index + 1}`}
+                        className="portfolio-image"
+                        onClick={() => handleImageClick({ url: item, isVideo: false })}
+                        loading="lazy"
+                        style={{ cursor: 'pointer' }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </Slider>
           </div>
 
@@ -807,6 +937,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                         : ""
                       }`}
                       onClick={() => handleImageClick({ url: firstMedia, isVideo: false })}
+                      style={{ cursor: 'pointer' }}
                     />
                   );
                 }
@@ -839,6 +970,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                         loop
                         playsInline
                         onClick={() => handleImageClick({ url: item, isVideo: true })}
+                        style={{ cursor: 'pointer' }}
                       >
                         Your browser does not support the video tag.
                       </video>
@@ -849,17 +981,16 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                         alt={`Portfolio ${index}`}
                         className="portfolio-image-portfolio"
                         onClick={() => handleImageClick({ url: item, isVideo: false })}
+                        style={{ cursor: 'pointer' }}
                       />
                     );
                   })}
-                {portfolioPics.length + portfolioVideos.length > 5 && (
                   <button
                     className="see-all-button"
                     onClick={() => navigate(`/portfolio/${businessId}/gallery`)}
                   >
-                    + See All
+                    View Gallery
                   </button>
-                )}
               </div>
             )}
 
@@ -945,12 +1076,39 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 </div>
 
                 <div className="business-detail">
-                  <p className="detail-title">Base Price</p>
-                  <div className="detail-content">
-                    <i className="fa-solid fa-dollar-sign detail-icon"></i>
-                    <p className="detail-text">
-                      {business.minimum_price || "Pricing Not Yet Set"}
-                    </p>
+                  <p className="detail-title">Packages</p>
+                  <div className="packages-container">
+                    {packages.map((pkg, index) => (
+                      <div key={index} className="package-card">
+                        {pkg.image_url && (
+                          <div className="package-image">
+                            <img src={pkg.image_url} alt={pkg.name} />
+                          </div>
+                        )}
+                        <div className="package-header">
+                          <h3>{pkg.name}</h3>
+                          <p className="package-price">${pkg.price}</p>
+                        </div>
+                        <div 
+                          className="package-description"
+                          dangerouslySetInnerHTML={{ __html: pkg.description || '' }}
+                        />
+                        {pkg.features && pkg.features.length > 0 && (
+                          <ul className="package-features">
+                            {pkg.features.map((feature, featureIndex) => (
+                              <li key={featureIndex}>{feature}</li>
+                            ))}
+                          </ul>
+                        )}
+                        <button 
+                          className="learn-more-button"
+                          onClick={() => handleLearnMore(pkg.name)}
+                        >
+                          <ChatIcon />
+                          Learn More
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <div
@@ -966,7 +1124,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       onClick={() =>
                         openEditModal({
                           business_address: business.business_address,
-                          minimum_price: business.minimum_price,
+                          packages: packages || [],
                         }, 'business_details')}
                     >
                       ✎
@@ -984,7 +1142,15 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                   </p>
                 </div>
                 <div className="vendor-profile-container">
-                  <div className="vendor-profile-left" onClick={() => setSelectedImage({ url: convertedUrls.profile || profileImage, isVideo: false })} style={{ cursor: 'pointer' }}>
+                  <div 
+                    className="vendor-profile-left" 
+                    onClick={() => handleImageClick({ 
+                      url: convertedUrls.profile || profileImage, 
+                      isVideo: false,
+                      isProfile: true 
+                    })} 
+                    style={{ cursor: 'pointer' }}
+                  >
                     <img
                       src={convertedUrls.profile || profileImage}
                       alt={`${business.business_name} profile`}

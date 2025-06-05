@@ -10,6 +10,7 @@ import StarIcon from '../../assets/star-duotone.svg'; // Assuming you have a sta
 import { convertHeicToJpeg, convertToWebP, convertImagesToWebP, clearImageCache, registerServiceWorker } from "../../utils/imageUtils";
 import LoadingPlaceholder from '../Common/LoadingPlaceholder';
 import ImageErrorBoundary from '../Common/ImageErrorBoundary';
+import ImageModal from '../Business/Portfolio/ImageModal';
 
 const VendorList = ({ 
     vendors: initialVendors = [], // Add default empty array
@@ -50,6 +51,7 @@ const VendorList = ({
     const observerRef = useRef(null);
     const vendorRefs = useRef({});
     const navigate = useNavigate();
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const truncateText = (text, maxLength = 150) => {
         if (!text) return "";
@@ -846,6 +848,22 @@ const VendorList = ({
         }
     };
 
+    const handleProfileImageClick = (vendor) => {
+        setSelectedImage({
+            url: vendor.profile_photo_url,
+            isVideo: false,
+            categoryMedia: [{
+                url: vendor.profile_photo_url,
+                type: 'image'
+            }],
+            currentIndex: 0
+        });
+    };
+
+    const handleCloseImageModal = () => {
+        setSelectedImage(null);
+    };
+
     return (
         <div className="vendor-list">
             {Array.isArray(vendors) && vendors.map(vendor => (
@@ -894,7 +912,14 @@ const VendorList = ({
                     </div>
                     <div className="vendor-info">
                         <div className="vendor-header">
-                            <img src={vendor.profile_photo_url} alt={vendor.business_name} className="vendor-profile-image" onError={(e) => { e.target.src = '/images/default.jpg'; }} />
+                            <img 
+                                src={vendor.profile_photo_url} 
+                                alt={vendor.business_name} 
+                                className="vendor-profile-image" 
+                                onClick={() => handleProfileImageClick(vendor)}
+                                style={{ cursor: 'pointer' }}
+                                onError={(e) => { e.target.src = '/images/default.jpg'; }} 
+                            />
                             <div style={{display:'flex', flexDirection:'row', justifyContent:'center', alignItems:'left', marginLeft:'12px'}}>
                             <h2 className="vendor-name">
                                 {vendor.business_name}
@@ -1025,6 +1050,14 @@ const VendorList = ({
                     )}
                 </div>
             )}
+            <ImageModal
+                isOpen={!!selectedImage}
+                mediaUrl={selectedImage?.url}
+                isVideo={selectedImage?.isVideo}
+                onClose={handleCloseImageModal}
+                categoryMedia={selectedImage?.categoryMedia || []}
+                currentIndex={selectedImage?.currentIndex || 0}
+            />
         </div>
     );
 };

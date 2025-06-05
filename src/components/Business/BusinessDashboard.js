@@ -345,6 +345,20 @@ const BusinessDashSidebar = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleBackButton = (event) => {
+      if (activeSection !== "portfolio") {
+        event.preventDefault();
+        setActiveSection("portfolio");
+      }
+    };
+
+    window.addEventListener('popstate', handleBackButton);
+    return () => {
+      window.removeEventListener('popstate', handleBackButton);
+    };
+  }, [activeSection]);
+
   return (
     <div className="business-dashboard text-left">
       <div className="dashboard-container">

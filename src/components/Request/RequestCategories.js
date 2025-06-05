@@ -62,9 +62,8 @@ function RequestCategories() {
 
   const handleNext = () => {
     if (selectedCategories.length > 0) {
-      navigate("/individual-dashboard", { 
+      navigate("/master-request-flow", { 
         state: { 
-          activeSection: "request",
           selectedCategories,
           showRequestFlow: true
         } 
