@@ -54,7 +54,6 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding-right: 10px;
     min-width: 350px;
 }
 
@@ -997,6 +996,8 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 80px; /* Add padding to account for bottom nav */
+    display: flex;
+    flex-direction: column;
 }
 
 .bids-page .mobile-bids-view.active {
@@ -1036,7 +1037,48 @@
 }
 
 .bids-page .mobile-bids-content {
+    flex: 1;
+    overflow-y: auto;
     padding: 16px;
+    padding-bottom: 120px; /* Increased padding to prevent content from being cut off */
+    -webkit-overflow-scrolling: touch;
+    height: calc(100vh - 60px); /* Subtract header height */
+    position: relative;
+}
+
+/* Ensure the messaging view has proper spacing */
+.bids-page .messaging-view-container {
+    position: relative;
+    height: 100%;
+    padding-bottom: 80px; /* Space for bottom navigation */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Adjust the bottom navigation to stay above content */
+.bids-page .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    z-index: 1001; /* Higher than mobile-bids-view */
+    border-top: 1px solid #eee;
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+}
+
+/* Ensure proper stacking context */
+.bids-page .bids-container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Add proper spacing for action buttons */
+.bids-page .business-actions {
+    margin-bottom: 80px; /* Space for bottom navigation */
+    padding-bottom: 20px;
 }
 
 /* Bid Display Styles for Mobile */
@@ -1491,7 +1533,7 @@
 }
 
 /* Additional styles for very small screens */
-@media screen and (max-width: 360px) {
+@media screen and (max-width: 400px) {
     .bids-page .tab {
         padding: 8px;
         font-size: 0.8rem;
@@ -1529,6 +1571,19 @@
     .bids-page .btn-danger {
         padding: 8px;
         font-size: 12px;
+    }
+
+    .request-actions {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .bids-page .requests-list {
+        min-width:0;
+    }
+
+    .bids-page {
+        padding:8px;
     }
 }
 

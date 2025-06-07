@@ -75,6 +75,7 @@ import Gallery from "./components/Business/Portfolio/Gallery";
 import VerificationApplication from "./components/Business/VerificationApplication";
 import VendorHomepage from "./components/VendorHomepage";
 import ContractTemplateEditor from "./components/Business/ContractTemplateEditor";
+import GoogleBusinessCallback from "./components/Business/GoogleBusinessCallback";
 
 // Misc Imports
 import Homepage from "./components/Homepage";
@@ -308,6 +309,10 @@ function AppContent() {
                 <ContractTemplateEditor />
               </PrivateRoute>
             }
+          />
+          <Route
+            path="/google-business-callback"
+            element={<GoogleBusinessCallback />}
           />
           {/* Dynamic URL for viewing portfolio */}
           <Route path="/portfolio/:businessId" element={<Portfolio />} />

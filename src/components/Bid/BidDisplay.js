@@ -256,12 +256,20 @@ useEffect(() => {
   };
 
   const handleChatClick = () => {
-    if (!currentUserId) {
-      console.error('No currentUserId provided for messaging');
-      return;
+    if (window.innerWidth <= 768) {
+      // On mobile, call the onMessage prop to trigger dashboard state change
+      if (onMessage) {
+        onMessage({
+          id: bid.business_profiles.id,
+          name: bid.business_profiles.business_name,
+          profileImage: bid.business_profiles.profile_image,
+        });
+      }
+    } else {
+      // On desktop, flip the card to show messaging
+      setIsFlipped(true);
+      setShowMessagingView(true);
     }
-    setIsFlipped(true);
-    setShowMessagingView(true);
   };
 
   const handleBackFromMessaging = () => {

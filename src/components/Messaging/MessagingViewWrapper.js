@@ -88,8 +88,16 @@ export default function MessagingViewWrapper({ currentUserId, userType }) {
       userType={userType}
       onBack={() => {
         if (location.state?.fromDashboard) {
-          navigate('/individual-dashboard');
+          // If we came from a dashboard, go back to the appropriate dashboard
+          const dashboardPath = userType === 'individual' ? '/individual-dashboard' : '/business-dashboard';
+          navigate(dashboardPath, { 
+            state: { 
+              activeSection: 'messages',
+              fromMessaging: true 
+            }
+          });
         } else {
+          // Otherwise go back to the messages list
           navigate('/messages/0');
         }
       }}

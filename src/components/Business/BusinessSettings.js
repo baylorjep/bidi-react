@@ -13,6 +13,7 @@ import "react-quill/dist/quill.snow.css";
 import { useGoogleCalendar } from '../../hooks/useGoogleCalendar';
 import ProgressBar from 'react-bootstrap/ProgressBar';
 import { sendNotification, notificationTypes } from '../../utils/notifications';
+import { useGoogleBusinessReviews } from '../../hooks/useGoogleBusinessReviews.js';
 
 const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [isVerified, setIsVerified] = useState(false);
@@ -47,6 +48,7 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [profileDetails, setProfileDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState(null);
   const [bidTemplate, setBidTemplate] = useState("");
   const [showBidTemplateModal, setShowBidTemplateModal] = useState(false);
   const [bidTemplateError, setBidTemplateError] = useState("");
@@ -64,6 +66,20 @@ const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [contractTemplate, setContractTemplate] = useState("");
   const [showContractTemplateModal, setShowContractTemplateModal] = useState(false);
   const [contractTemplateError, setContractTemplateError] = useState("");
+  const [googleBusinessProfile, setGoogleBusinessProfile] = useState({
+    isConnected: false,
+    businessName: '',
+    location: '',
+    status: 'disconnected',
+    error: null,
+    accountId: null,
+    locationId: null,
+  });
+  const [showGoogleBusinessModal, setShowGoogleBusinessModal] = useState(false);
+  const [googleReviewsStatus, setGoogleReviewsStatus] = useState('disconnected');
+  const [googleMapsUrl, setGoogleMapsUrl] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [googleReviewsError, setGoogleReviewsError] = useState(null);
 const { 
   isCalendarConnected, 
   calendarError, 
@@ -71,6 +87,15 @@ const {
   connectCalendar, 
   disconnectCalendar 
 } = useGoogleCalendar();
+
+const { 
+  reviews,
+  totalReviews,
+  averageRating,
+  loading: reviewsLoading,
+  error: reviewsError,
+  fetchReviews 
+} = useGoogleBusinessReviews(connectedAccountId);
 
 // Add this useEffect to debug the state
 useEffect(() => {
@@ -147,18 +172,19 @@ useEffect(() => {
       setIsLoading(true);
       try {
         const {
-          data: { user },
+          data: { user: currentUser },
         } = await supabase.auth.getUser();
-        if (!user) {
+        if (!currentUser) {
           setIsLoading(false);
           return;
         }
+        setUser(currentUser);
 
         // Step 1: Fetch the business profile using the user ID
         const { data: profile, error: profileError } = await supabase
           .from("business_profiles")
           .select("*")
-          .eq("id", user.id)
+          .eq("id", currentUser.id)
           .single();
 
         if (profileError) {
@@ -209,21 +235,21 @@ useEffect(() => {
         // Send notifications for incomplete important items
         if (!newSetupProgress.paymentAccount) {
           sendNotification(
-            user.id,
+            currentUser.id,
             notificationTypes.SETUP_REMINDER,
             'Complete your payment account setup to start receiving payments'
           );
         }
         if (!newSetupProgress.verification) {
           sendNotification(
-            user.id,
+            currentUser.id,
             notificationTypes.SETUP_REMINDER,
             'Get verified to build trust with potential clients'
           );
         }
         if (!newSetupProgress.story) {
           sendNotification(
-            user.id,
+            currentUser.id,
             notificationTypes.SETUP_REMINDER,
             'Set up your profile to showcase your work and attract more clients'
           );
@@ -265,6 +291,38 @@ useEffect(() => {
 
     fetchSetupProgress();
   }, [isCalendarConnected]);
+
+  useEffect(() => {
+    const fetchGoogleReviewsStatus = async () => {
+      try {
+        const { data: businessData, error } = await supabase
+          .from('business_profiles')
+          .select('google_place_id, google_reviews_status')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+
+        if (businessData) {
+          setGoogleBusinessProfile({
+            isConnected: true,
+            businessName: businessData.name,
+            location: businessData.address,
+            status: 'connected',
+            error: null,
+            accountId: businessData.google_business_account_id,
+            locationId: businessData.google_place_id,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching Google reviews status:', error);
+      }
+    };
+
+    if (user) {
+      fetchGoogleReviewsStatus();
+    }
+  }, [user]);
 
   const handleResetStripeAccount = async () => {
     const {
@@ -701,6 +759,12 @@ useEffect(() => {
       important: true,
       description: 'Sync your calendar to manage consultations and prevent double bookings'
     },
+    { 
+      key: 'googleBusiness', 
+      label: 'Google Business', 
+      important: true,
+      description: 'Connect your Google Business Profile to display reviews and build trust'
+    },
     { key: 'downPayment', label: 'Down Payment', important: false },
     { key: 'minimumPrice', label: 'Minimum Price', important: false },
     { key: 'affiliateCoupon', label: 'Affiliate Coupon', important: false },
@@ -709,6 +773,427 @@ useEffect(() => {
   ];
 
   const isBidiVerified = profileDetails && profileDetails.membership_tier === 'Verified';
+
+  const handleFetchReviews = async () => {
+    if (!googleBusinessProfile.accountId || !googleBusinessProfile.locationId) {
+      setGoogleBusinessProfile(prev => ({
+        ...prev,
+        error: 'Missing account or location information',
+      }));
+      return;
+    }
+
+    await fetchReviews(googleBusinessProfile.accountId, googleBusinessProfile.locationId);
+  };
+
+  // Add Google Business Profile section render function
+  const renderGoogleBusinessSection = () => {
+    return (
+      <div className="settings-section">
+        <div className="settings-header">
+          <h3>Google Business Profile</h3>
+          <div className="settings-status">
+            {googleBusinessProfile.isConnected ? (
+              <span className="status-badge connected">
+                <i className="fas fa-check"></i> Connected
+              </span>
+            ) : (
+              <span className="status-badge disconnected">
+                <i className="fas fa-times"></i> Not Connected
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="settings-content">
+          <p>Connect your Google Business Profile to display reviews and build trust with potential clients.</p>
+          <button 
+            className="btn btn-primary"
+            onClick={() => setShowGoogleBusinessModal(true)}
+          >
+            Manage Google Business Profile
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Add back the renderGoogleReviewsSection function
+  const renderGoogleReviewsSection = () => {
+    const isConnected = googleReviewsStatus === 'connected';
+    const isPending = googleReviewsStatus === 'pending';
+    const isError = googleReviewsStatus === 'error';
+
+    return (
+      <div className="settings-section">
+        <div className="settings-header">
+          <h3>Google Reviews</h3>
+          <div className="settings-status">
+            {isConnected && (
+              <span className="status-badge connected">
+                <i className="fas fa-check"></i> Connected
+              </span>
+            )}
+            {isPending && (
+              <span className="status-badge pending">
+                <i className="fas fa-clock"></i> Pending Approval
+              </span>
+            )}
+            {isError && (
+              <span className="status-badge error">
+                <i className="fas fa-exclamation-circle"></i> Error
+              </span>
+            )}
+            {!isConnected && !isPending && !isError && (
+              <span className="status-badge disconnected">
+                <i className="fas fa-times"></i> Not Connected
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="settings-content">
+          {isConnected ? (
+            <div className="connected-content">
+              <p>Your Google reviews are connected and visible on your profile.</p>
+              <div className="settings-actions">
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleResetGoogleReviews}
+                  disabled={isProcessing}
+                >
+                  <i className="fas fa-sync"></i> Refresh Reviews
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleResetGoogleReviews}
+                  disabled={isProcessing}
+                >
+                  <i className="fas fa-unlink"></i> Disconnect
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="disconnected-content">
+              <p>Connect your Google Business reviews to display them on your profile.</p>
+              <div className="settings-form">
+                <div className="form-group">
+                  <label htmlFor="googleMapsUrl">Google Maps URL</label>
+                  <input
+                    type="text"
+                    id="googleMapsUrl"
+                    value={googleMapsUrl}
+                    onChange={(e) => setGoogleMapsUrl(e.target.value)}
+                    placeholder="https://maps.app.goo.gl/..."
+                    className="form-control"
+                    disabled={isProcessing}
+                  />
+                  {googleReviewsError && (
+                    <div className="error-message">{googleReviewsError}</div>
+                  )}
+                </div>
+                <div className="settings-actions">
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleGoogleReviewsRequest}
+                    disabled={!googleMapsUrl || isProcessing}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin"></i> Processing...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-link"></i> Connect Reviews
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Add Google Business Profile functions
+  const handleConnectGoogleBusiness = async () => {
+    try {
+      setGoogleBusinessProfile(prev => ({ ...prev, status: 'connecting', error: null }));
+      
+      // Make request to get auth URL with the correct base URL
+      const response = await fetch('http://localhost:5000/api/google-places/business-profile/auth', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        let errorMessage;
+        try {
+          const jsonError = JSON.parse(errorData);
+          errorMessage = jsonError.message || 'Failed to get authorization URL';
+        } catch {
+          errorMessage = errorData || 'Failed to get authorization URL';
+        }
+        throw new Error(errorMessage);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.authUrl) {
+        throw new Error('No authorization URL received from server');
+      }
+      
+      // Open auth window
+      const width = 600;
+      const height = 600;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const authWindow = window.open(
+        data.authUrl,
+        'Google Business Profile Auth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!authWindow) {
+        throw new Error('Popup blocked. Please allow popups for this site.');
+      }
+
+      // Listen for message from popup
+      const handleMessage = async (event) => {
+        if (event.origin !== window.location.origin) return;
+        
+        if (event.data.type === 'GOOGLE_BUSINESS_AUTH_SUCCESS') {
+          const { accountId, locationId, businessName, location } = event.data;
+          
+          try {
+            // Update the business profile in Supabase
+            const { error: updateError } = await supabase
+              .from('business_profiles')
+              .update({
+                google_business_name: businessName,
+                google_business_address: location,
+                google_place_id: locationId,
+                google_business_account_id: accountId,
+                google_reviews_status: 'connected'
+              })
+              .eq('id', connectedAccountId);
+
+            if (updateError) {
+              throw new Error('Failed to save business profile information');
+            }
+
+            setGoogleBusinessProfile({
+              isConnected: true,
+              businessName,
+              location,
+              status: 'connected',
+              error: null,
+              accountId,
+              locationId,
+            });
+            window.removeEventListener('message', handleMessage);
+          } catch (error) {
+            setGoogleBusinessProfile(prev => ({
+              ...prev,
+              status: 'error',
+              error: error.message || 'Failed to save business profile information',
+            }));
+            window.removeEventListener('message', handleMessage);
+          }
+        } else if (event.data.type === 'GOOGLE_BUSINESS_AUTH_ERROR') {
+          setGoogleBusinessProfile(prev => ({
+            ...prev,
+            status: 'error',
+            error: event.data.error,
+          }));
+          window.removeEventListener('message', handleMessage);
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      // Add a timeout to handle cases where the popup is closed without completing the flow
+      setTimeout(() => {
+        if (authWindow && !authWindow.closed) {
+          authWindow.close();
+          setGoogleBusinessProfile(prev => ({
+            ...prev,
+            status: 'error',
+            error: 'Authentication timed out. Please try again.'
+          }));
+          window.removeEventListener('message', handleMessage);
+        }
+      }, 300000); // 5 minutes timeout
+
+    } catch (error) {
+      console.error('Error connecting Google Business Profile:', error);
+      setGoogleBusinessProfile(prev => ({
+        ...prev,
+        status: 'error',
+        error: error.message || 'Failed to connect to Google Business Profile'
+      }));
+    }
+  };
+
+  const handleDisconnectGoogleBusiness = async () => {
+    try {
+      console.log('Starting disconnect process...');
+      setGoogleBusinessProfile(prev => ({
+        ...prev,
+        status: 'connecting'
+      }));
+
+      // First update the database
+      const { error: dbUpdateError } = await supabase
+        .from('business_profiles')
+        .update({
+          google_business_name: null,
+          google_business_address: null,
+          google_place_id: null,
+          google_business_account_id: null
+        })
+        .eq('id', user.id);
+
+      if (dbUpdateError) {
+        console.error('Database update error:', dbUpdateError);
+        throw new Error('Failed to clear business profile information');
+      }
+
+      // Then call the disconnect endpoint
+      const response = await fetch('http://localhost:5000/api/google-places/business-profile/disconnect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API error:', errorData);
+        throw new Error(errorData.message || 'Failed to disconnect from Google Business Profile');
+      }
+
+      // Update local state
+      setGoogleBusinessProfile({
+        isConnected: false,
+        businessName: '',
+        location: '',
+        status: 'disconnected',
+        error: null,
+        accountId: null,
+        locationId: null
+      });
+
+      // Also update the reviews status
+      setGoogleReviewsStatus('disconnected');
+      
+      console.log('Google Business Profile disconnected successfully');
+    } catch (error) {
+      console.error('Error in handleDisconnectGoogleBusiness:', error);
+      setGoogleBusinessProfile(prev => ({
+        ...prev,
+        status: 'disconnected',
+        error: error.message || 'Failed to disconnect Google Business Profile'
+      }));
+    }
+  };
+
+  const handleResetGoogleReviews = async () => {
+    try {
+      setIsProcessing(true);
+      setGoogleReviewsError(null);
+
+      const { error } = await supabase
+        .from('business_profiles')
+        .update({
+          google_place_id: null,
+          google_reviews_status: 'disconnected'
+        })
+        .eq('id', connectedAccountId);
+
+      if (error) throw error;
+
+      setGoogleReviewsStatus('disconnected');
+      setGoogleMapsUrl('');
+    } catch (error) {
+      console.error('Error resetting Google reviews:', error);
+      setGoogleReviewsError(error.message || 'Failed to reset Google reviews');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleGoogleReviewsRequest = async () => {
+    try {
+      setIsProcessing(true);
+      setGoogleReviewsError(null);
+
+      const placeId = extractPlaceIdFromUrl(googleMapsUrl);
+      if (!placeId) {
+        throw new Error('Invalid Google Maps URL');
+      }
+
+      const { error } = await supabase
+        .from('business_profiles')
+        .update({
+          google_place_id: placeId,
+          google_reviews_status: 'pending'
+        })
+        .eq('id', connectedAccountId);
+
+      if (error) throw error;
+
+      setGoogleReviewsStatus('pending');
+      setGoogleMapsUrl('');
+    } catch (error) {
+      console.error('Error requesting Google reviews:', error);
+      setGoogleReviewsError(error.message || 'Failed to request Google reviews');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const extractPlaceIdFromUrl = (url) => {
+    try {
+      // Handle different Google Maps URL formats
+      if (!url) return null;
+
+      // Format 1: https://maps.app.goo.gl/...
+      if (url.includes('maps.app.goo.gl')) {
+        const match = url.match(/[?&]q=([^&]+)/);
+        if (match) {
+          const decoded = decodeURIComponent(match[1]);
+          const placeIdMatch = decoded.match(/place_id=([^&]+)/);
+          if (placeIdMatch) return placeIdMatch[1];
+        }
+      }
+
+      // Format 2: https://www.google.com/maps/place/...
+      if (url.includes('google.com/maps/place')) {
+        const match = url.match(/place\/([^/]+)/);
+        if (match) return match[1];
+      }
+
+      // Format 3: https://www.google.com/maps?cid=...
+      if (url.includes('cid=')) {
+        const match = url.match(/cid=([^&]+)/);
+        if (match) return match[1];
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error extracting place ID:', error);
+      return null;
+    }
+  };
 
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
@@ -1385,6 +1870,75 @@ useEffect(() => {
           <button className="btn-danger" onClick={() => setShowDefaultExpirationModal(false)}>Close</button>
           <button className="btn-success" onClick={handleDefaultExpirationSubmit}>Save</button>
         </Modal.Footer>
+      </Modal>
+
+      {/* Google Business Profile Section */}
+      {renderGoogleBusinessSection()}
+
+      {/* Google Business Profile Modal */}
+      <Modal show={showGoogleBusinessModal} onHide={() => setShowGoogleBusinessModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Google Business Profile</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="google-business-modal-content">
+            {googleBusinessProfile.isConnected ? (
+              <>
+                <div className="business-info">
+                  <p><strong>Business Name:</strong> {googleBusinessProfile.businessName}</p>
+                  <p><strong>Location:</strong> {googleBusinessProfile.location}</p>
+                  <div className="reviews-summary">
+                    <p><strong>Reviews Status:</strong> {googleReviewsStatus}</p>
+                    {averageRating && (
+                      <p><strong>Average Rating:</strong> {averageRating.toFixed(1)} ({totalReviews} reviews)</p>
+                    )}
+                  </div>
+                </div>
+                <div className="action-buttons">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleFetchReviews}
+                    disabled={isProcessing}
+                  >
+                    <i className="fas fa-sync"></i> Refresh Reviews
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={handleDisconnectGoogleBusiness}
+                    disabled={isProcessing}
+                  >
+                    <i className="fas fa-unlink"></i> Disconnect
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="disconnected-content">
+                <p>Connect your Google Business Profile to display reviews and build trust with potential clients.</p>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleConnectGoogleBusiness}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i> Processing...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-link"></i> Connect Google Business Profile
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+            {googleBusinessProfile.error && (
+              <div className="error-message">
+                <i className="fas fa-exclamation-circle"></i>
+                {googleBusinessProfile.error}
+              </div>
+            )}
+          </div>
+        </Modal.Body>
       </Modal>
     </div>
   );

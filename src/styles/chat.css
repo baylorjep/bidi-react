@@ -47,11 +47,6 @@
   font-size: 0.95rem;
 }
 
-/* Prevent overlap with typing indicator */
-.dashboard-main .chat-body {
-  padding-bottom: 3rem; /* space for input bar */
-}
-
 /* Main layout */
 .chat-app {
   display: flex;
@@ -213,9 +208,17 @@
   border-radius: 8px;
   cursor: pointer;
   align-self: flex-end;
+  margin-bottom:2px;
 }
+
 .chat-send-btn:hover {
   background: #8200c2;
+}
+
+@media (max-width: 600px) {
+  .chat-send-btn {
+    margin-bottom: 6px;
+  }
 }
 
 .typing-indicator {
@@ -298,55 +301,39 @@
 }
 
 @media (max-width: 600px) {
-  .chat-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-    padding-bottom: 80px; /* reserve space so last message isn't hidden */
-  }
-
-  .chat-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    z-index: 10;
-    border-top: 1px solid #eee;
-    background: white;
-  }
-
-  .messaging-view {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  
-}
-
-@media (max-width: 600px) {
-  .chat-header {
+  .messaging-view .chat-header {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
     width: 100%;
-    z-index: 10;
+    height: 56px;
+    z-index: 100;
+    background: white;
+    border-bottom: 1px solid #eee;
   }
-
-  .chat-body {
-    margin-top: 70px; /* adjust to match actual .chat-header height */
-    padding-bottom: 80px; /* adjust to match actual .chat-footer height */
-    overflow-y: auto;
-    flex: 1;
-  }
-
-  .chat-footer {
+  .messaging-view .chat-footer {
     position: fixed;
-    bottom: 0;
     left: 0;
-    right: 0;
     width: 100%;
-    z-index: 10;
+    height: 64px;
+    bottom: 56px; /* height of bottom nav */
+    z-index: 100;
+    background: white;
+    border-top: 1px solid #eee;
+    padding: 8px 8px 12px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+  }
+  .messaging-view .chat-body {
+    position: relative;
+    padding-top: 300px;   /* header height */
+    padding-bottom: 60px; /* footer + bottom nav height */
+    height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
 }
 
@@ -396,65 +383,71 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  height: 56px;
 }
 
 .back-button-messaging {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 8px 12px;
   background: none;
   border: none;
-  font-size: 1rem;
-  color: #A328F4;
+  color: var(--bidi-text-dark);
+  font-size: 16px;
   cursor: pointer;
-  padding: 8px;
-  margin-top: 10px;
-  position: absolute;
-  left: 0;
-  top: 0;
+  transition: opacity 0.2s ease;
+  min-width: 80px;
+  min-height: 40px;
 }
 
-.back-button:hover {
-  color: rgba(163, 40, 244, 0.8);
+.back-button-messaging:hover {
+  opacity: 0.8;
 }
 
-.back-button span {
-  color: #A328F4;
+.back-button-messaging:active {
+  opacity: 0.6;
 }
 
-.back-button svg {
-  font-size: 1.2rem;
+.back-button-messaging svg {
+  font-size: 18px;
 }
 
-.header-center {
+@media (max-width: 768px) {
+  .back-button-messaging {
+    padding: 12px 16px;
+    font-size: 18px;
+    min-width: 100px;
+    min-height: 48px;
+  }
+
+  .back-button-messaging svg {
+    font-size: 20px;
+  }
+}
+
+.header-center-messaging {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
+  margin: 0;
+  z-index: 100;
+  overflow: visible;
 }
 
 .business-name-messaging {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   color: #A328F4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 150px;
-  text-align: center;
+  margin-top: 2px;
+  margin-bottom: 0;
 }
 
 .profile-circle {
-  flex-shrink: 0;
-  width: 60px; /* Slightly larger for better visibility */
-  height: 60px;
-  border-radius: 50%;
-  background: #f0f0f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 2px solid #A328F4; /* Add back the purple border */
+  width: 44px;
+  height: 44px;
+  margin-bottom: 2px;
 }
 
 .profile-image {
@@ -472,23 +465,48 @@
 .messaging-view {
   display: flex;
   flex-direction: column;
-  height: 80vh; /* Subtract header height */
-  position: relative;
-  overflow: hidden; /* Prevent body scroll */
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  z-index: 1000;
 }
 
 .messaging-view .chat-header {
   flex-shrink: 0;
   height: 100px;
+  background: white;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 8px;
+  position: relative;
 }
 
-.messaging-view .chat-body {
+.messaging-view .chat-window {
   flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
-  padding-bottom: 80px; /* Space for input bar */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  scroll-behavior: smooth; /* Smooth scrolling */
+  position: relative;
+  overflow: hidden;
+}
+
+
+.messaging-view .chat-footer {
+  flex-shrink: 0;
+  height: 64px;
+  background: white;
+  padding: 8px 8px 12px 8px;
+  border-top: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  position: sticky;
+  bottom: 56px; /* Height of bottom nav bar */
+  z-index: 10;
 }
 
 /* Style the scrollbar */
@@ -510,10 +528,7 @@
 }
 
 .messaging-view .chat-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: sticky;
   background: white;
   padding: 0.75rem;
   border-top: 1px solid #eee;
@@ -529,20 +544,6 @@
   border: 1px solid #ccc;
   border-radius: 8px;
   outline: none;
-}
-
-.chat-send-btn {
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  background: #A328F4;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.chat-send-btn:hover {
-  background: rgba(163, 40, 244, 0.8);
 }
 
 .message-container {
@@ -630,11 +631,30 @@
 }
 
 @media (max-width: 768px) {
-  .chat-sidebar {
-    display: none !important;
+  .messaging-view {
+    height: 100vh;
+    padding-bottom: 90px; /* Space for bottom nav */
   }
-  .chat-main {
-    width: 100%;
+
+  .messaging-view .chat-footer {
+    height: 80px;
+    
+  }
+}
+
+/* Remove conflicting mobile styles */
+@media (max-width: 600px) {
+  .chat-header {
+    position: relative; /* Remove fixed positioning */
+  }
+
+  .chat-body {
+    margin-top: 0; /* Remove margin */
+    padding-bottom: 0; /* Remove padding */
+  }
+
+  .chat-footer {
+    position: relative; /* Remove fixed positioning */
   }
 }
 
@@ -861,4 +881,360 @@ body.modal-open {
   background: transparent;
   box-shadow: none;
   border: none;
+}
+
+/* Desktop: messaging view is not fullscreen */
+@media (min-width: 901px) {
+  .messaging-view {
+    position: relative !important;
+    height: 100% !important;
+    width: 100% !important;
+    top: unset !important;
+    left: unset !important;
+    right: unset !important;
+    bottom: unset !important;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    background: white;
+    z-index: 1;
+    padding-bottom: 0 !important;
+  }
+  .messaging-view .chat-header,
+  .messaging-view .chat-footer {
+    position: relative !important;
+    width: 100%;
+    left: unset;
+    right: unset;
+    top: unset;
+    bottom: unset;
+    z-index: 1;
+    border-radius: 0;
+  }
+  .messaging-view .chat-header {
+    height: 100px !important;
+    min-height: 64px;
+    padding: 0 24px !important;
+  }
+  .messaging-view .chat-footer {
+    height: 64px !important;
+    min-height: 64px;
+    max-height: 80px;
+    padding: 8px 24px !important;
+    margin-bottom: 0 !important;
+    box-shadow: none;
+  }
+  .messaging-view .chat-body {
+    position: relative !important;
+    height: auto !important;
+    min-height: 300px;
+    max-height: 60vh;
+    padding-top: 80px !important;
+    padding-bottom: 80px !important;
+    margin: 0 !important;
+    border-radius: 0 0 12px 12px;
+  }
+}
+
+/* Bid card messaging view styles */
+.bid-card .messaging-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  z-index: 2;
+  background: transparent;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.bid-card .messaging-view .chat-header {
+  height: 48px;
+  min-height: 48px;
+  padding: 0 12px;
+  background: transparent;
+  border-bottom: none;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.bid-card .messaging-view .back-button-messaging {
+  padding: 4px 6px;
+  min-width: 0;
+  min-height: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  font-size: 18px;
+  color: #9633eb;
+  margin-right: 8px;
+}
+
+.bid-card .messaging-view .back-button-messaging span {
+  display: none;
+}
+
+.bid-card .messaging-view .back-button-messaging svg {
+  font-size: 22px;
+}
+
+.bid-card .messaging-view .header-center-messaging {
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bid-card .messaging-view .profile-circle {
+  width: 32px;
+  height: 32px;
+  margin: 0 4px 0 0;
+}
+
+.bid-card .messaging-view .business-name-messaging {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #9633eb;
+  margin: 0;
+}
+
+.bid-card .messaging-view .chat-body {
+  height: calc(100% - 96px); /* header + footer */
+  padding: 8px 8px 0 8px;
+  margin: 0;
+  background: transparent;
+}
+
+.bid-card .messaging-view .chat-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  padding: 0 8px;
+  background: transparent;
+  border-top: none;
+  box-shadow: none;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.bid-card .messaging-view .chat-input-wrapper {
+  margin: 0 4px;
+}
+
+.bid-card .messaging-view .chat-input {
+  font-size: 1rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.bid-card .messaging-view .chat-send-btn {
+  font-size: 1rem;
+  padding: 6px 14px;
+  border-radius: 8px;
+  margin-left: 4px;
+  height: 32px;
+}
+
+.bid-card .messaging-view .chat-upload-btn {
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
+  min-width: 32px;
+  min-height: 32px;
+  margin-right: 4px;
+}
+
+.bid-card .messaging-view .inline-image-preview img {
+  max-width: 60px;
+  max-height: 60px;
+}
+
+.bid-card .messaging-view .inline-remove-button {
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+}
+
+/* Remove modal backdrop for image modal inside card */
+.bid-card .messaging-view .modal-backdrop {
+  background: rgba(0,0,0,0.7);
+  border-radius: inherit;
+}
+
+@media (max-width: 768px) {
+  .bid-card .messaging-view {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    background: transparent !important;
+    border-radius: inherit !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+  .bid-card .messaging-view .chat-header,
+  .bid-card .messaging-view .chat-footer {
+    position: relative !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+  }
+  .bid-card .messaging-view .chat-header {
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 8px !important;
+  }
+  .bid-card .messaging-view .chat-footer {
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 8px !important;
+  }
+  .bid-card .messaging-view .chat-body {
+    height: calc(100% - 88px) !important;
+    padding: 4px 4px 0 4px !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+  .bid-card .messaging-view .header-center-messaging {
+    gap: 4px !important;
+  }
+  .bid-card .messaging-view .profile-circle {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  .bid-card .messaging-view .business-name-messaging {
+    font-size: 0.98rem !important;
+  }
+  .bid-card .messaging-view .chat-input {
+    font-size: 0.98rem !important;
+    padding: 4px 8px !important;
+  }
+  .bid-card .messaging-view .chat-send-btn {
+    font-size: 0.98rem !important;
+    padding: 4px 10px !important;
+    height: 28px !important;
+  }
+  .bid-card .messaging-view .chat-upload-btn {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 1rem !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+  }
+  .bid-card .messaging-view .inline-image-preview img {
+    max-width: 40px !important;
+    max-height: 40px !important;
+  }
+  .bid-card .messaging-view .inline-remove-button {
+    width: 12px !important;
+    height: 12px !important;
+    font-size: 10px !important;
+  }
+}
+
+.bid-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.bid-amount-messaging {
+  color: #2ecc71;
+  font-weight: 600;
+}
+
+.view-bid-button {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-bid-button:hover {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+}
+
+.bid-info-header {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  background: white;
+  border-bottom: 1px solid #eee;
+  padding: 8px 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.bid-info-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.bid-info-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bid-label {
+  color: var(--bidi-text-muted);
+  font-size: 14px;
+}
+
+.bid-amount {
+  color: #2ecc71;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.view-bid-button {
+  background-color: var(--bidi-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-bid-button:hover {
+  background-color: #8200c2;
+  transform: translateY(-1px);
 }

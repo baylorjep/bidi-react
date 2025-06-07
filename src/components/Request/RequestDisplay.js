@@ -10,16 +10,21 @@ import { supabase } from '../../supabaseClient';
 // Helper Components
 const InfoField = ({ label, value, gridColumn = 'auto' }) => (
     <div style={{
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: '4px', 
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
         gridColumn,
         background: '#fff',
-        padding: '12px 16px',
-        borderRadius: '8px',
+        padding: window.innerWidth < 768 ? '10px 12px' : '12px 16px',
+        borderRadius: window.innerWidth < 768 ? '6px' : '8px', 
         border: '1px solid #f0e6ff',
-        transition: 'all 0.2s ease'
+        transition: 'all 0.2s ease',
+        width: window.innerWidth < 768 ? '100%' : 'auto',
+        margin: window.innerWidth < 768 ? '0 0 8px 0' : '0'
     }}>
+
+
+        
         <div style={{
             color: '#666',
             fontSize: '14px',
@@ -1849,7 +1854,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                     background: '#faf5ff',
                     borderRadius: '12px',
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(1fr, 1fr))',
                     gap: '16px'
                 }}>
                     {renderRequestDetails()}

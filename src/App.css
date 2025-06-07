@@ -630,7 +630,7 @@ progress {
   color: #6c757d;
 }
 .blockquote-footer::before {
-  content: "— ";
+  content: "— ";
 }
 
 .img-fluid {
@@ -12710,14 +12710,57 @@ line-height: normal;
   width: 100%;
   position: relative;
   min-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
-@media (max-width:500px) {
+@media (max-width: 768px) {
   .request-display {
-    max-width: 300px !important;
+    margin: 0;
+    padding: 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .request-content {
+    padding: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .request-title {
+    font-size: 20px !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .status-request-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
   }
 }
 
+@media (max-width: 480px) {
+  .request-display {
+    padding: 4px;
+  }
+
+  .request-content {
+    padding: 0 !important;
+  }
+
+  .request-title {
+    font-size: 18px !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 8px !important;
+  }
+}
 
 .request-display-mini {
   background-color: #ffffff;

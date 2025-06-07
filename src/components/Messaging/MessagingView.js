@@ -28,6 +28,9 @@ export default function MessagingView({
   const [pendingFile, setPendingFile] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [modalImageSrc, setModalImageSrc] = useState("");
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [bidInfo, setBidInfo] = useState(null);
+  const [isCurrentUserBusiness, setIsCurrentUserBusiness] = useState(false);
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -45,6 +48,16 @@ export default function MessagingView({
       window.scrollTo(0, 0);
       document.body.scrollIntoView({ behavior: 'instant' });
     }
+  }, []);
+
+  // Add window resize listener
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Get profile image from navigation state
@@ -252,6 +265,152 @@ export default function MessagingView({
     chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages, isTyping]);
 
+  // Add new useEffect to fetch bid information
+  useEffect(() => {
+    const fetchBidInfo = async () => {
+      console.log('Starting bid fetch with:', { currentUserId, businessId });
+      
+      if (!currentUserId || !businessId) {
+        console.log('Missing required IDs:', { currentUserId, businessId });
+        return;
+      }
+
+      try {
+        // First determine if current user is a business or individual
+        console.log('Checking if current user is a business...');
+        const { data: businessData, error: businessError } = await supabase
+          .from('business_profiles')
+          .select('id')
+          .eq('id', currentUserId)
+          .single();
+
+        console.log('Business check result:', { businessData, businessError });
+        const isCurrentUserBusiness = !businessError && businessData;
+        console.log('Is current user a business?', isCurrentUserBusiness);
+
+        // Get all request IDs from various request tables
+        const requestTables = [
+          'beauty_requests',
+          'catering_requests',
+          'dj_requests',
+          'florist_requests',
+          'photography_requests',
+          'videography_requests',
+          'wedding_planning_requests'
+        ];
+
+        let allRequestIds = [];
+
+        // If current user is a business, get requests they've bid on
+        if (isCurrentUserBusiness) {
+          console.log('Fetching bids for business user...');
+          const { data: bids, error: bidsError } = await supabase
+            .from('bids')
+            .select('request_id')
+            .eq('user_id', currentUserId);
+
+          console.log('Business bids result:', { bids, bidsError });
+          if (!bidsError && bids) {
+            allRequestIds = bids.map(bid => bid.request_id);
+            console.log('Request IDs from business bids:', allRequestIds);
+          }
+        } else {
+          // If current user is an individual, get their requests
+          console.log('Fetching requests for individual user...');
+          for (const table of requestTables) {
+            console.log(`Checking ${table}...`);
+            try {
+              // Special handling for photography_requests which uses profile_id instead of user_id
+              const columnName = table === 'photography_requests' ? 'profile_id' : 'user_id';
+              
+              const { data: requests, error: requestsError } = await supabase
+                .from(table)
+                .select('id')
+                .eq(columnName, currentUserId)
+                .limit(1);  // Add limit to optimize query
+
+              if (requestsError) {
+                console.error(`Error querying ${table}:`, requestsError);
+                continue;  // Skip this table if there's an error
+              }
+
+              console.log(`${table} result:`, { requests, requestsError });
+              if (requests && requests.length > 0) {
+                // If we found at least one request, get all of them
+                const { data: allRequests, error: allRequestsError } = await supabase
+                  .from(table)
+                  .select('id')
+                  .eq(columnName, currentUserId);
+
+                if (!allRequestsError && allRequests) {
+                  allRequestIds = [...allRequestIds, ...allRequests.map(req => req.id)];
+                }
+              }
+            } catch (error) {
+              console.error(`Error fetching ${table}:`, error);
+            }
+          }
+          console.log('All request IDs from individual:', allRequestIds);
+        }
+
+        if (allRequestIds.length > 0) {
+          console.log('Fetching most recent bid for request IDs:', allRequestIds);
+          try {
+            // Get the most recent bid
+            const { data: bids, error: bidsError } = await supabase
+              .from('bids')
+              .select('*')
+              .in('request_id', allRequestIds)
+              .eq('user_id', isCurrentUserBusiness ? currentUserId : businessId)
+              .order('created_at', { ascending: false })
+              .limit(1);
+
+            console.log('Final bids query result:', { bids, bidsError });
+            if (!bidsError && bids && bids.length > 0) {
+              console.log('Setting bid info:', bids[0]);
+              setBidInfo(bids[0]);
+            } else {
+              console.log('No bids found or error occurred');
+              setBidInfo(null);
+            }
+          } catch (error) {
+            console.error('Error fetching bids:', error);
+            setBidInfo(null);
+          }
+        } else {
+          console.log('No request IDs found to check for bids');
+          setBidInfo(null);
+        }
+      } catch (error) {
+        console.error('Error in fetchBidInfo:', error);
+      }
+    };
+
+    fetchBidInfo();
+  }, [currentUserId, businessId]);
+
+  // Add new useEffect to check if current user is a business
+  useEffect(() => {
+    const checkBusinessProfile = async () => {
+      if (!currentUserId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('business_profiles')
+          .select('id')
+          .eq('id', currentUserId)
+          .single();
+        
+        console.log('Business profile check:', { data, error });
+        setIsCurrentUserBusiness(!!data);
+      } catch (error) {
+        console.error('Error checking business profile:', error);
+      }
+    };
+
+    checkBusinessProfile();
+  }, [currentUserId]);
+
   if (!currentUserId || !businessId) {
     return <div style={{ padding: 32, textAlign: 'center' }}>Loading chat…</div>;
   }
@@ -361,10 +520,13 @@ export default function MessagingView({
   };
 
   const handleBack = () => {
+    console.log('Back button clicked');
     if (onBack) {
+      console.log('Using onBack prop');
       onBack();
     } else {
-      navigate('/messages');
+      console.log('Navigating to /messages');
+      navigate('/messages/0');
     }
   };
 
@@ -409,16 +571,21 @@ export default function MessagingView({
   };
 
   return (
-    <div className="messaging-view chat-main">
+    <div className="messaging-view">
       {!location.state?.fromDashboard && (
         <header className="chat-header">
-          {window.innerWidth <= 768 && (
-            <button className="back-button-messaging" onClick={handleBack}>
+          {isMobile && (
+            <button 
+              className="back-button-messaging" 
+              onClick={handleBack}
+              type="button"
+              aria-label="Go back"
+            >
               <FaArrowLeft />
               <span>Back</span>
             </button>
           )}
-          <div className="header-center">
+          <div className="header-center-messaging">
             <div 
               className="profile-circle"
               onClick={isBusinessProfile ? () => navigate(`/portfolio/${businessId}`) : undefined}
@@ -437,48 +604,89 @@ export default function MessagingView({
         </header>
       )}
 
-      <div className="chat-body">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`message-bubble ${msg.senderId === currentUserId ? "sent" : "received"} ${!msg.seen && msg.senderId === currentUserId ? "unseen" : ""}`}
-          >
-            {msg.type === 'image' ? (
-              <img
-              src={msg.message}
-              alt="Sent"
-              style={{ maxWidth: "200px", borderRadius: "8px", cursor: "pointer" }}
+      {bidInfo && (
+        <div className="bid-info-header">
+          {console.log('Rendering bid info:', bidInfo)}
+          <div className="bid-info-content">
+            <div className="bid-info-left">
+              <span className="bid-label">Bid Amount:</span>
+              <span className="bid-amount-messaging">${bidInfo.bid_amount}</span>
+            </div>
+            <button 
+              className="view-bid-button"
               onClick={() => {
-                setModalImageSrc(msg.message);
-                setShowImageModal(true);
+                console.log('Bid button clicked');
+                navigate('/bids');
+              }}
+            >
+              View Bids
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="chat-window">
+        <div className="chat-body">
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`message-bubble ${msg.senderId === currentUserId ? "sent" : "received"} ${!msg.seen && msg.senderId === currentUserId ? "unseen" : ""}`}
+            >
+              {msg.type === 'image' ? (
+                <img
+                  src={msg.message}
+                  alt="Sent"
+                  style={{ maxWidth: "200px", borderRadius: "8px", cursor: "pointer" }}
+                  onClick={() => {
+                    setModalImageSrc(msg.message);
+                    setShowImageModal(true);
+                  }}
+                />
+              ) : (
+                formatMessageText(msg.message)
+              )}
+              <div className="message-time">
+                {new Date(msg.createdAt).toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true
+                })}
+                {msg.senderId === currentUserId && (
+                  <span className="seen-indicator">
+                    {msg.seen ? "✓✓" : "✓"}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+          {isTyping && (
+            <div className="typing-indicator">
+              <span className="dot"></span>
+              <span className="dot"></span>
+              <span className="dot"></span>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+      </div>
+
+      {showImageModal && (
+        <div className="modal-backdrop" onClick={() => setShowImageModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={modalImageSrc}
+              alt="Full Size"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+                border: "none",
+                boxShadow: "none"
               }}
             />
-            ) : (
-              formatMessageText(msg.message)
-          )}
-            <div className="message-time">
-              {new Date(msg.createdAt).toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-              })}
-              {msg.senderId === currentUserId && (
-                <span className="seen-indicator">
-                  {msg.seen ? "✓✓" : "✓"}
-                </span>
-              )}
-            </div>
           </div>
-        ))}
-        {isTyping && (
-          <div className="typing-indicator">
-            <span className="dot"></span>
-            <span className="dot"></span>
-            <span className="dot"></span>
-          </div>
-        )}
-        <div ref={chatEndRef} />
-      </div>
+        </div>
+      )}
 
       <footer className="chat-footer">
         <label htmlFor="file-upload" className="chat-upload-btn">
@@ -516,23 +724,6 @@ export default function MessagingView({
           Send
         </button>
       </footer>
-      {showImageModal && (
-        <div className="modal-backdrop" onClick={() => setShowImageModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <img
-            src={modalImageSrc}
-            alt="Full Size"
-            style={{
-              maxWidth: "100%",
-              maxHeight: "100%",
-              objectFit: "contain",
-              border: "none",
-              boxShadow: "none"
-            }}
-          />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

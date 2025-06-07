@@ -103,3 +103,328 @@
 .current-categories .badge:hover {
   background-color: #7a29bc;
 }
+
+.google-reviews-form {
+  margin-top: 1rem;
+}
+
+.google-reviews-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.google-reviews-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.google-reviews-form input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+.google-reviews-form small {
+  display: block;
+  margin-top: 0.5rem;
+  color: #64748b;
+}
+
+.google-reviews-form small a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.google-reviews-form small a:hover {
+  text-decoration: underline;
+}
+
+.google-reviews-status {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f8fafc;
+  border-radius: 0.375rem;
+}
+
+.google-reviews-status .status-pending {
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+.google-reviews-status .status-approved {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.google-reviews-status .status-rejected {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.google-reviews-status .status-message {
+  margin-top: 0.5rem;
+  color: #64748b;
+}
+
+/* Google Business Profile Section Styles */
+.google-business-modal-content {
+  padding: 1rem;
+}
+
+.google-business-modal-content .business-info {
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.google-business-modal-content .business-info p {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  color: #495057;
+}
+
+.google-business-modal-content .business-info p:last-child {
+  margin-bottom: 0;
+}
+
+.google-business-modal-content .business-info strong {
+  color: #212529;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.google-business-modal-content .reviews-summary {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.google-business-modal-content .action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.google-business-modal-content .disconnected-content {
+  text-align: center;
+  padding: 2rem;
+}
+
+.google-business-modal-content .disconnected-content p {
+  margin-bottom: 1.5rem;
+  color: #6c757d;
+  font-size: 1.1rem;
+}
+
+.google-business-modal-content .error-message {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 0.375rem;
+  color: #721c24;
+  font-size: 0.875rem;
+}
+
+/* Settings Section Styles */
+.settings-section {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.settings-header h3 {
+  margin: 0;
+  color: #212529;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.settings-content {
+  color: #6c757d;
+}
+
+.settings-content p {
+  margin-bottom: 1rem;
+}
+
+.settings-status {
+  display: flex;
+  align-items: center;
+}
+
+/* Status Badge Styles */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-badge i {
+  margin-right: 0.5rem;
+}
+
+.status-badge.connected {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.disconnected {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+/* Error Message Styles */
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f8d7da;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.error-message i {
+  margin-right: 0.5rem;
+}
+
+/* Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn i {
+  margin-right: 0.5rem;
+}
+
+.btn-primary {
+  background-color: #9633eb;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #7b2cbf;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .settings-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .settings-actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+
+.reviews-summary {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.reviews-summary p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.reviews-summary strong {
+  color: #2c3e50;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.error-message {
+  color: #dc3545;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.status-badge.connected {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-badge.disconnected {
+  background-color: #6c757d;
+  color: white;
+}
+
+.status-badge.error {
+  background-color: #dc3545;
+  color: white;
+}
+
+.settings-section .btn-primary,
+.business-info .btn-primary {
+  background-color: #9633eb !important;
+  color: white !important;
+  border: none !important;
+}
+
+.settings-section .btn-primary:hover:not(:disabled),
+.business-info .btn-primary:hover:not(:disabled) {
+  background-color: #7b2cbf !important;
+}

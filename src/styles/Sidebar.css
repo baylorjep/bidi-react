@@ -314,6 +314,7 @@
   .sidebar.hidden + .dashboard-main {
     margin-left: 0 !important;
     width: 100% !important;
+    padding:0 !important;
   }
 
   .show-sidebar-button {

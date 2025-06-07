@@ -15,6 +15,7 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import ChatIcon from '@mui/icons-material/Chat';
 import AuthModal from "../../Request/Authentication/AuthModal";
+import GoogleReviews from './GoogleReviews';
 
 // ReviewModal component for writing a review
 const ReviewModal = ({ isOpen, onClose, onSubmit, rating, setRating, comment, setComment, loading }) => {
@@ -1425,6 +1426,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 <p className="no-reviews">No reviews yet.</p>
               )}
             </div>
+
+            {/* Google Reviews Section */}
+            <GoogleReviews businessId={businessId} />
           </div>
         </div>
       </div>
