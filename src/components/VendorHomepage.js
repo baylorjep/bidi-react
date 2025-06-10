@@ -8,6 +8,7 @@ import '../styles/animations.css';
 import '../styles/VendorComparison.css';
 import { Helmet } from 'react-helmet';
 import '../styles/VendorHomepage.css';
+import { formatBusinessName } from '../utils/formatBusinessName';
 
 // Import vendor-specific images (you'll need to add these to your assets)
 import VendorHero from '../assets/images/Landing Page Photo 6.jpg';

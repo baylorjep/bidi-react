@@ -8,7 +8,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useNavigate } from 'react-router-dom';
 
-const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
+const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }) => {
   const [formData, setFormData] = useState({
     business_address: initialData?.business_address || '',
     packages: Array.isArray(initialData?.packages) ? initialData.packages : []
@@ -1822,7 +1822,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData }) => {
                     <p>You've reached the maximum number of photos for the main profile.</p>
                     <button 
                       className="gallery-btn"
-                      onClick={() => navigate(`/portfolio/${businessId}/gallery`)}
+                      onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
                     >
                       Manage Gallery Photos
                     </button>

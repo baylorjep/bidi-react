@@ -1104,7 +1104,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                   })}
                   <button
                     className="see-all-button"
-                    onClick={() => navigate(`/portfolio/${businessId}/gallery`)}
+                    onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
                   >
                     View Gallery
                   </button>

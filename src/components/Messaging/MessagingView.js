@@ -7,6 +7,7 @@ import "../../styles/chat.css";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { formatMessageText } from "../../utils/formatMessageText";
+import { formatBusinessName } from '../../utils/formatBusinessName';
 
 export default function MessagingView({
   currentUserId,

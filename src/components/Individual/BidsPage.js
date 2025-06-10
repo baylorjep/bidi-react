@@ -1465,6 +1465,11 @@ export default function BidsPage({ onOpenChat }) {
         );
     };
 
+    const handlePortfolioClick = (businessId, businessName) => {
+        const formattedName = formatBusinessName(businessName);
+        navigate(`/portfolio/${businessId}/${formattedName}`);
+    };
+
     if (loading) {
         return (
             <div className="bids-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>

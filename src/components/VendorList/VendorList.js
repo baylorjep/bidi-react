@@ -873,10 +873,8 @@ const VendorList = ({
     };
 
     const handleVendorClick = (vendor) => {
-        if (vendor.business_name) {
-            const formattedName = formatBusinessName(vendor.business_name);
-            navigate(`/portfolio/${vendor.id}/${formattedName}`);
-        }
+        const formattedName = formatBusinessName(vendor.business_name);
+        navigate(`/portfolio/${vendor.id}/${formattedName}`);
     };
 
     return (

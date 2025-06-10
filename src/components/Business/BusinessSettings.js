@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 // import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import Verification from "../../assets/Frame 1162.svg";
@@ -14,6 +14,7 @@ import { useGoogleCalendar } from '../../hooks/useGoogleCalendar';
 import ProgressBar from 'react-bootstrap/ProgressBar';
 import { sendNotification, notificationTypes } from '../../utils/notifications';
 import { useGoogleBusinessReviews } from '../../hooks/useGoogleBusinessReviews.js';
+import { formatBusinessName } from '../../utils/formatBusinessName';
 
 const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [isVerified, setIsVerified] = useState(false);
