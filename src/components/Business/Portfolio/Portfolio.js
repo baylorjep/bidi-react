@@ -3,10 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
 import "../../../styles/Portfolio.css";
 import EditProfileModal from "./EditProfileModal"; // Import modal component
-import Verified from "../../../assets/Frame 1162.svg"; // Import the verified icon
-import StarIcon from "../../../assets/star-duotone.svg"; // Add this import
 import ImageModal from "./ImageModal"; // Import the new ImageModal component
-import EmptyStarIcon from "../../../assets/userpov-vendor-profile-star.svg"; // Import the empty star icon
 import Modal from "react-modal"; // Import the modal library
 import { convertHeicToJpeg } from "../../../utils/imageUtils";
 import LoadingSpinner from "../../LoadingSpinner"; // Import the loading spinner component
@@ -16,6 +13,28 @@ import 'slick-carousel/slick/slick-theme.css';
 import ChatIcon from '@mui/icons-material/Chat';
 import AuthModal from "../../Request/Authentication/AuthModal";
 import GoogleReviews from './GoogleReviews';
+
+// SVG Components
+const StarIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g id="Star_duotone">
+      <path id="Star 1" d="M7.60826 4.97077C8.19821 3.50002 8.49319 2.76465 9.00044 2.76465C9.50768 2.76465 9.80266 3.50002 10.3926 4.97077L10.4201 5.03926C10.7534 5.87016 10.92 6.28561 11.2597 6.53813C11.5993 6.79064 12.0451 6.83057 12.9368 6.91043L13.098 6.92487C14.5574 7.05556 15.2871 7.12091 15.4432 7.58515C15.5993 8.04939 15.0574 8.5424 13.9737 9.52841L13.612 9.85749C13.0633 10.3566 12.789 10.6062 12.6612 10.9333C12.6373 10.9943 12.6175 11.0568 12.6018 11.1204C12.5178 11.4614 12.5981 11.8235 12.7587 12.5476L12.8088 12.773C13.104 14.1037 13.2516 14.7691 12.9939 15.0561C12.8976 15.1633 12.7724 15.2406 12.6333 15.2785C12.2612 15.38 11.7328 14.9495 10.6761 14.0884C9.98221 13.523 9.63527 13.2403 9.23694 13.1767C9.08026 13.1517 8.92061 13.1517 8.76393 13.1767C8.3656 13.2403 8.01866 13.523 7.32478 14.0884C6.26807 14.9495 5.73971 15.38 5.36756 15.2785C5.2285 15.2406 5.10331 15.1633 5.007 15.0561C4.74924 14.7691 4.89686 14.1037 5.19212 12.773L5.24213 12.5476C5.40278 11.8235 5.48311 11.4614 5.39907 11.1204C5.38339 11.0568 5.36357 10.9943 5.33972 10.9333C5.21186 10.6062 4.93755 10.3566 4.38892 9.85749L4.02721 9.52841C2.94342 8.5424 2.40153 8.04939 2.55767 7.58515C2.7138 7.12091 3.44348 7.05556 4.90284 6.92487L5.06404 6.91043C5.95573 6.83057 6.40157 6.79064 6.74121 6.53813C7.08085 6.28561 7.2475 5.87016 7.58079 5.03926L7.60826 4.97077Z" fill="#FFC500" stroke="#FFC500" strokeWidth="0.862829"/>
+    </g>
+  </svg>
+);
+
+const EmptyStarIcon = () => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M18.3065 4.67953L20.6532 9.37287C20.9732 10.0262 21.8265 10.6529 22.5465 10.7729L26.7999 11.4795C29.5199 11.9329 30.1599 13.9062 28.1999 15.8529L24.8932 19.1595C24.3332 19.7195 24.0265 20.7995 24.1999 21.5729L25.1465 25.6662C25.8932 28.9062 24.1732 30.1595 21.3065 28.4662L17.3199 26.1062C16.5999 25.6795 15.4132 25.6795 14.6799 26.1062L10.6932 28.4662C7.83988 30.1595 6.10655 28.8929 6.85321 25.6662L7.79988 21.5729C7.97321 20.7995 7.66655 19.7195 7.10655 19.1595L3.79988 15.8529C1.85321 13.9062 2.47988 11.9329 5.19988 11.4795L9.45321 10.7729C10.1599 10.6529 11.0132 10.0262 11.3332 9.37287L13.6799 4.67953C14.9599 2.13286 17.0399 2.13286 18.3065 4.67953Z" stroke="#292D32" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const VerifiedIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path fillRule="evenodd" clipRule="evenodd" d="M5.68638 8.5104C6.06546 8.13132 6.68203 8.13329 7.06354 8.5148L7.79373 9.24498L9.93117 7.10754C10.3102 6.72847 10.9268 6.73044 11.3083 7.11195C11.6898 7.49345 11.6918 8.11003 11.3127 8.48911L8.48891 11.3129C8.10983 11.692 7.49326 11.69 7.11175 11.3085L5.69078 9.88756C5.30927 9.50605 5.3073 8.88947 5.68638 8.5104Z" fill="#A328F4"/>
+    <path fillRule="evenodd" clipRule="evenodd" d="M6.3585 1.15414C7.77571 -0.384714 10.2243 -0.384714 11.6415 1.15414C11.904 1.43921 12.2814 1.59377 12.6709 1.57577C14.7734 1.4786 16.5048 3.19075 16.4065 5.26985C16.3883 5.655 16.5446 6.02814 16.8329 6.28775C18.389 7.68919 18.389 10.1105 16.8329 11.512C16.5446 11.7716 16.3883 12.1447 16.4065 12.5299C16.5048 14.609 14.7734 16.3211 12.6709 16.2239C12.2814 16.2059 11.904 16.3605 11.6415 16.6456C10.2243 18.1844 7.77571 18.1844 6.3585 16.6456C6.09596 16.3605 5.71863 16.2059 5.32915 16.2239C3.22665 16.3211 1.49524 14.609 1.5935 12.5299C1.6117 12.1447 1.4554 11.7716 1.16713 11.512C-0.389043 10.1105 -0.389043 7.68919 1.16713 6.28775C1.4554 6.02814 1.6117 5.655 1.5935 5.26985C1.49524 3.19075 3.22665 1.4786 5.32915 1.57577C5.71863 1.59377 6.09596 1.43921 6.3585 1.15414ZM9.96822 2.66105C9.44875 2.097 8.55125 2.097 8.03178 2.66105C7.31553 3.43878 6.28608 3.86045 5.22349 3.81134C4.45284 3.77572 3.81821 4.40329 3.85422 5.16537C3.90388 6.21614 3.47747 7.23413 2.69099 7.94241C2.12059 8.4561 2.12059 9.34362 2.69099 9.8573C3.47747 10.5656 3.90388 11.5836 3.85422 12.6343C3.81821 13.3964 4.45284 14.024 5.22349 13.9884C6.28608 13.9393 7.31553 14.3609 8.03178 15.1387C8.55125 15.7027 9.44875 15.7027 9.96822 15.1387C10.6845 14.3609 11.7139 13.9393 12.7765 13.9884C13.5472 14.024 14.1818 13.3964 14.1458 12.6343C14.0961 11.5836 14.5225 10.5656 15.309 9.8573C15.8794 9.34362 15.8794 8.4561 15.309 7.94241C14.5225 7.23414 14.0961 6.21614 14.1458 5.16537C14.1818 4.40329 13.5472 3.77572 12.7765 3.81134C11.7139 3.86045 10.6845 3.43878 9.96822 2.66105Z" fill="#A328F4"/>
+  </svg>
+);
 
 // ReviewModal component for writing a review
 const ReviewModal = ({ isOpen, onClose, onSubmit, rating, setRating, comment, setComment, loading }) => {
@@ -1020,11 +1039,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       className="verified-check-container"
                       onClick={handleCheckClick}
                     >
-                      <img
-                        style={{ marginLeft: "4px", marginBottom: "14px" }}
-                        src={Verified}
-                        alt="Verified"
-                      />
+                      <div style={{ marginLeft: "4px", marginBottom: "14px" }}>
+                        <VerifiedIcon />
+                      </div>
                       <span className="verified-tooltip">
                         This business is verified by Bidi. You will have a 100%
                         money back guarantee if you pay through Bidi.
@@ -1350,12 +1367,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                   <span className="reviews-summary-average">{averageRating || '—'} out of 5</span>
                   <div className="reviews-summary-stars">
                     {[...Array(5)].map((_, i) => (
-                      <img
-                        key={i}
-                        src={i < Math.round(averageRating) ? StarIcon : EmptyStarIcon}
-                        alt="Star"
-                        className="star-icon-portfolio"
-                      />
+                      <div key={i} className="star-icon-portfolio">
+                        {i < Math.round(averageRating) ? <StarIcon /> : <EmptyStarIcon />}
+                      </div>
                     ))}
                   </div>
                   <span className="reviews-summary-count">
