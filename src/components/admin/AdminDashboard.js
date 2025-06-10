@@ -10,6 +10,9 @@ import OldRequests from './OldRequests';
 import UncontactedBusinesses from './UncontactedBusinesses';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
+// Add API URL configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('users');
     const [activeGroup, setActiveGroup] = useState('requests');
@@ -267,7 +270,7 @@ function AdminDashboard() {
             console.log('Starting Google Reviews import for business:', selectedBusiness);
 
             // Step 1: Convert URL to Place ID
-            const placeIdResponse = await fetch(`http://localhost:5000/api/google-places/url-to-place-id?url=${encodeURIComponent(googleMapsUrl)}`);
+            const placeIdResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/url-to-place-id?url=${encodeURIComponent(googleMapsUrl)}`);
             if (!placeIdResponse.ok) {
                 const errorData = await placeIdResponse.json();
                 throw new Error(errorData.message || 'Failed to convert URL to Place ID');
@@ -280,7 +283,7 @@ function AdminDashboard() {
             }
 
             // Step 2: Fetch reviews using the Place ID
-            const reviewsResponse = await fetch(`http://localhost:5000/api/google-places/google-reviews?placeId=${placeId}`);
+            const reviewsResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/google-reviews?placeId=${placeId}`);
             if (!reviewsResponse.ok) {
                 const errorData = await reviewsResponse.json();
                 throw new Error(errorData.message || 'Failed to fetch Google reviews');

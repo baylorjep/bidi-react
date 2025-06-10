@@ -121,11 +121,13 @@ function Navbar() {
     };
   }, [navbarRef]);
 
-  // Check if we're in a dashboard route
+  // Check if we're in a dashboard route or portfolio route with signed in user
   const isDashboardRoute = location.pathname.includes('-dashboard');
+  const isPortfolioRoute = location.pathname.includes('/portfolio/');
+  const shouldHideNavbar = isDashboardRoute || (isPortfolioRoute && user);
 
-  // If we're in a dashboard route, don't render the navbar
-  if (isDashboardRoute) {
+  // If we're in a dashboard route or portfolio route with signed in user, don't render the navbar
+  if (shouldHideNavbar) {
     return null;
   }
 
