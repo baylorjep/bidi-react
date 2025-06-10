@@ -1,0 +1,45 @@
+.error-page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.error-content {
+  max-width: 600px;
+}
+
+.error-content h1 {
+  font-size: 120px;
+  margin: 0;
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.error-content h2 {
+  font-size: 32px;
+  margin: 20px 0;
+  color: #2c3e50;
+}
+
+.error-content p {
+  font-size: 18px;
+  color: #7f8c8d;
+  margin-bottom: 30px;
+}
+
+.home-button {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #3498db;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.home-button:hover {
+  background-color: #2980b9;
+} 
