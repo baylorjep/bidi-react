@@ -4,7 +4,7 @@ import './index.css';
 import "./socket";
 import App from './App.js';
 import reportWebVitals from './reportWebVitals.js';
-import './i18n';
+import './i18n.js';
 import { registerServiceWorker } from './serviceWorkerRegistration';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
