@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
+import { formatBusinessName } from '../../utils/formatBusinessName';
 import '../../styles/BidsPage.css';
 import BidDisplay from '../Bid/BidDisplay';
 import RequestDisplay from '../Request/RequestDisplay';
