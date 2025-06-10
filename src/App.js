@@ -134,6 +134,7 @@ import WeddingPlannerDashboard from "./components/WeddingPlanner/WeddingPlannerD
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import VendorSelection from "./components/Request/VendorSelection";
 import WrongWithWeddings from "./components/Article/WrongWithWeddings";
+import ErrorPage from "./components/Error/ErrorPage";
 
 // Create a wrapper component to use useLocation
 function AppContent() {
@@ -453,6 +454,8 @@ function AppContent() {
             element={<WeddingVibeQuizPage />}
           />
           <Route path="/vendor-selection/:category" element={<VendorSelection />} />
+          {/* Catch-all route for 404 errors - must be last */}
+          <Route path="*" element={<ErrorPage />} />
         </Routes>
       </div>
       {(!user || !isDashboardRoute()) && <Footer />}
