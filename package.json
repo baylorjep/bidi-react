@@ -33,7 +33,7 @@
     "core-js": "^3.36.0",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.6.5",
@@ -114,5 +114,6 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "supabase": "^2.20.5",
     "tailwindcss": "^3.4.12"
-  }
+  },
+  "type": "module"
 }

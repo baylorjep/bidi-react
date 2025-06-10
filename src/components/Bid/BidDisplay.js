@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import { supabase } from "../../supabaseClient"; // Import your Supabase client
 import bidiCheck from "../../assets/Frame 1162.svg";
 import StarIcon from "../../assets/star-duotone.svg";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./BidDisplay.css";
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ChatIcon from '@mui/icons-material/Chat';
@@ -22,6 +22,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { saveAs } from 'file-saver';
 import ContractSignatureModal from "./ContractSignatureModal";
+import { generatePortfolioUrl } from '../../utils/navigation';
 // Set the workerSrc for pdfjs to use the local public directory for compatibility
 pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.js`;
 
@@ -70,6 +71,7 @@ function BidDisplay({
   const [isExiting, setIsExiting] = useState(false);
   const cardRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const frontRef = useRef(null);
   const [isCalendarConnected, setIsCalendarConnected] = useState(false);
   const backRef = useRef(null);
@@ -150,20 +152,12 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
 
   const handleProfileClick = () => {
     setShowBubble(false);
-    navigate(`/portfolio/${bid.business_profiles.id}`, {
+    navigate(generatePortfolioUrl(bid.business_profiles.id, bid.business_profiles.business_name, bid.business_profiles.business_category?.[0]), {
       state: {
+        from: location.pathname,
         fromBid: true,
-        bidId: bid.id,
-        bidData: {
-          amount: bid.bid_amount,
-          description: bid.bid_description,
-          expirationDate: bid.expiration_date,
-          status: bid.status,
-          couponCode: bid.coupon_code,
-          couponApplied: bid.coupon_applied,
-          originalAmount: bid.original_amount,
-          discountAmount: bid.discount_amount
-        }
+        bidData: bid,
+        bidId: bid.id
       }
     });
   };

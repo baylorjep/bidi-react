@@ -1,3 +1,19 @@
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Load environment variables
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_ANON_KEY
+);
+
 const categories = [
     { id: 'photography', name: 'Photographer' },
     { id: 'videography', name: 'Videographer' },
@@ -170,118 +186,157 @@ const cities = [
     { id: 'monticello', name: 'Monticello', county: 'san-juan-county' }
 ];
 
-function generateSitemap() {
-    const baseUrl = 'https://savewithbidi.com';
-    const urls = [];
+// Helper function to generate SEO-friendly URL
+const generateSeoFriendlyUrl = (businessName, businessId, category) => {
+    // Convert business name to URL-friendly format
+    const seoFriendlyName = businessName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric chars with hyphens
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+
+    // Convert category to URL-friendly format
+    const seoFriendlyCategory = category
+        ? category
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+        : '';
+
+    // Construct the URL
+    return `/vendor/${businessId}/${seoFriendlyName}${seoFriendlyCategory ? `/${seoFriendlyCategory}` : ''}`;
+};
+
+// Function to generate sitemap XML
+const generateSitemapXML = (urls) => {
+    const baseUrl = 'https://bidi.com'; // Replace with your actual domain
     const today = new Date().toISOString().split('T')[0];
 
-    // Add homepage
-    urls.push({
-        loc: baseUrl,
-        lastmod: today,
-        priority: '1.0',
-        changefreq: 'daily'
-    });
+    const xmlUrls = urls.map(url => `
+        <url>
+            <loc>${baseUrl}${url}</loc>
+            <lastmod>${today}</lastmod>
+            <changefreq>weekly</changefreq>
+            <priority>0.8</priority>
+        </url>
+    `).join('');
 
-    // Add articles
-    const articles = [
-        '/wedding-market-guide',
-        '/wedding-vibe-quiz',
-        '/articles/utah-wedding-planning-guide',
-        '/articles/utah-photography-cost-guide',
-        '/articles/wedding-photographer-cost-guide',
-        '/articles/wedding-videographer-cost-guide',
-        '/articles/wedding-catering-cost-guide',
-        '/articles/wedding-florist-cost-guide',
-        '/articles/wedding-dj-cost-guide',
-        '/articles/wedding-hair-makeup-cost-guide',
-        '/articles/utah-wedding-videographer-guide'
-    ];
-
-    // Add article pages with high priority
-    articles.forEach(article => {
-        urls.push({
-            loc: `${baseUrl}${article}`,
-            lastmod: today,
-            priority: '0.9',
-            changefreq: 'weekly'
-        });
-    });
-
-    // Generate URLs for each category
-    categories.forEach(category => {
-        // Category only URL
-        urls.push({
-            loc: `${baseUrl}/${category.id}`,
-            lastmod: today,
-            priority: '0.8',
-            changefreq: 'daily'
-        });
-
-        // Category + Type combinations
-        const types = categoryTypes[category.id] || [];
-        types.forEach(type => {
-            urls.push({
-                loc: `${baseUrl}/${category.id}/${type.id}`,
-                lastmod: today,
-                priority: '0.8',
-                changefreq: 'daily'
-            });
-        });
-
-        // Category + County combinations
-        counties.forEach(county => {
-            urls.push({
-                loc: `${baseUrl}/${category.id}/${county.id}`,
-                lastmod: today,
-                priority: '0.8',
-                changefreq: 'daily'
-            });
-
-            // Category + Type + County combinations
-            types.forEach(type => {
-                urls.push({
-                    loc: `${baseUrl}/${category.id}/${type.id}/${county.id}`,
-                    lastmod: today,
-                    priority: '0.7',
-                    changefreq: 'daily'
-                });
-            });
-        });
-
-        // Category + City combinations
-        cities.forEach(city => {
-            urls.push({
-                loc: `${baseUrl}/${category.id}/${city.id}`,
-                lastmod: today,
-                priority: '0.8',
-                changefreq: 'daily'
-            });
-
-            // Category + Type + City combinations
-            types.forEach(type => {
-                urls.push({
-                    loc: `${baseUrl}/${category.id}/${type.id}/${city.id}`,
-                    lastmod: today,
-                    priority: '0.7',
-                    changefreq: 'daily'
-                });
-            });
-        });
-    });
-
-    // Generate XML
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+    return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(url => `    <url>
-        <loc>${url.loc}</loc>
-        <lastmod>${url.lastmod}</lastmod>
-        <changefreq>${url.changefreq}</changefreq>
-        <priority>${url.priority}</priority>
-    </url>`).join('\n')}
+    ${xmlUrls}
 </urlset>`;
+};
 
-    return xml;
-}
+// Function to generate sitemap index
+const generateSitemapIndex = (sitemaps) => {
+    const baseUrl = 'https://bidi.com'; // Replace with your actual domain
+    const today = new Date().toISOString().split('T')[0];
 
-module.exports = generateSitemap; 
+    const sitemapUrls = sitemaps.map(sitemap => `
+        <sitemap>
+            <loc>${baseUrl}/${sitemap.filename}</loc>
+            <lastmod>${sitemap.lastmod || today}</lastmod>
+        </sitemap>
+    `).join('');
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    ${sitemapUrls}
+</sitemapindex>`;
+};
+
+// Main function to generate vendor sitemap
+export const generateVendorSitemap = async () => {
+    try {
+        console.log('Fetching business profiles from Supabase...');
+        
+        // First, let's check how many total businesses we have
+        const { count, error: countError } = await supabase
+            .from('business_profiles')
+            .select('*', { count: 'exact', head: true });
+
+        if (countError) {
+            console.error('Error getting total count:', countError);
+        } else {
+            console.log(`Total businesses in database: ${count}`);
+        }
+
+        // Fetch all business profiles with less restrictive filters
+        const { data: businesses, error } = await supabase
+            .from('business_profiles')
+            .select('id, business_name, business_category')
+            .eq('is_admin', false); // Only exclude admin accounts
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return null;
+        }
+
+        if (!businesses || businesses.length === 0) {
+            console.log('No businesses found in the database');
+            return null;
+        }
+
+        console.log(`Found ${businesses.length} businesses`);
+        console.log('Sample business:', businesses[0]); // Log first business for debugging
+
+        // Generate URLs for each business
+        const urls = businesses.map(business => {
+            // Get the primary category (first one in the array)
+            const primaryCategory = Array.isArray(business.business_category) 
+                ? business.business_category[0] 
+                : business.business_category;
+
+            const url = generateSeoFriendlyUrl(
+                business.business_name,
+                business.id,
+                primaryCategory
+            );
+
+            console.log(`Generated URL for ${business.business_name}: ${url}`);
+            return url;
+        });
+
+        // Generate the sitemap XML
+        const sitemapXML = generateSitemapXML(urls);
+
+        return {
+            filename: 'sitemap-vendors.xml',
+            content: sitemapXML
+        };
+    } catch (error) {
+        console.error('Error generating vendor sitemap:', error);
+        return null;
+    }
+};
+
+// Function to save all sitemaps
+export const saveSitemaps = async () => {
+    try {
+        // Generate vendor sitemap
+        const vendorSitemap = await generateVendorSitemap();
+        if (!vendorSitemap) {
+            throw new Error('Failed to generate vendor sitemap');
+        }
+
+        // Create array of all sitemaps
+        const sitemaps = [
+            {
+                filename: 'sitemap-vendors.xml',
+                content: vendorSitemap.content,
+                lastmod: new Date().toISOString().split('T')[0]
+            }
+            // Add other sitemaps here as needed
+        ];
+
+        // Generate sitemap index
+        const sitemapIndex = generateSitemapIndex(sitemaps);
+
+        return {
+            sitemaps,
+            sitemapIndex
+        };
+    } catch (error) {
+        console.error('Error saving sitemaps:', error);
+        return null;
+    }
+}; 

@@ -18,6 +18,7 @@ import MessagingView from "../Messaging/MessagingView.js";
 import RequestCategories from "../Request/RequestCategories.js";
 import VendorListWithFilters from "../VendorListWithFilters/VendorListWithFilters.js";
 import MasterRequestFlow from "../Request/MasterRequestFlow.js";
+import { generatePortfolioUrl } from '../../utils/navigation';
 
 const IndividualDashboard = () => {
   const [user, setUser] = useState(null);

@@ -31,6 +31,7 @@ import AdminDashboard from "../admin/AdminDashboard.js";
 import ContractTemplateEditor from "./ContractTemplateEditor.js";
 import NewFeaturesModal from "./NewFeaturesModal";
 import NotificationBell from '../Notifications/NotificationBell';
+import { generatePortfolioUrl } from '../../utils/navigation';
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -186,25 +187,15 @@ const BusinessDashSidebar = () => {
   }, []);
 
   const handleViewPortfolio = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: profileDetails, error } = await supabase
-      .from("business_profiles")
-      .select("id")
-      .eq("id", user.id)
+    const { data: profile } = await supabase
+      .from('business_profiles')
+      .select('business_name, business_category')
+      .eq('id', user.id)
       .single();
 
-    if (error) {
-      console.error("Error fetching profile details:", error);
-      return;
+    if (profile) {
+      navigate(generatePortfolioUrl(user.id, profile.business_name, profile.business_category?.[0]));
     }
-
-    // Set the active section to "portfolio" and pass the profile ID
-    setProfile(profileDetails.id); // Store the profile ID in state
-    setActiveSection("portfolio");
   };
 
   const formatBusinessName = (name) => {

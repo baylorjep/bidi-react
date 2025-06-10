@@ -13,6 +13,7 @@ import 'slick-carousel/slick/slick-theme.css';
 import ChatIcon from '@mui/icons-material/Chat';
 import AuthModal from "../../Request/Authentication/AuthModal";
 import GoogleReviews from './GoogleReviews';
+import { Helmet } from 'react-helmet-async';
 
 // SVG Components
 const StarIcon = () => (
@@ -74,8 +75,28 @@ const ReviewModal = ({ isOpen, onClose, onSubmit, rating, setRating, comment, se
   );
 };
 
+// Add this utility function at the top of the file
+const generateSeoFriendlyUrl = (businessName, businessId, category) => {
+  // Convert business name to URL-friendly format
+  const seoFriendlyName = businessName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric chars with hyphens
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+
+  // Convert category to URL-friendly format
+  const seoFriendlyCategory = category
+    ? category
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    : '';
+
+  // Construct the URL
+  return `/vendor/${businessId}/${seoFriendlyName}${seoFriendlyCategory ? `/${seoFriendlyCategory}` : ''}`;
+};
+
 const Portfolio = ({ businessId: propBusinessId }) => {
-  const { businessId: paramBusinessId } = useParams();
+  const { businessId: paramBusinessId, businessName: paramBusinessName, category: paramCategory } = useParams();
   const location = useLocation();
   const [businessId, setBusinessId] = useState(
     propBusinessId || paramBusinessId || null
@@ -794,7 +815,11 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    if (location.state?.from) {
+      navigate(location.state.from);
+    } else {
+      navigate(-1);
+    }
   };
 
   const handleToggleSelection = () => {
@@ -824,6 +849,58 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     });
   };
 
+  // Add structured data for business profile
+  const generateStructuredData = () => {
+    if (!business) return null;
+
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": business.business_name,
+      "description": business.business_description,
+      "image": profileImage,
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": business.business_address
+      },
+      "aggregateRating": averageRating ? {
+        "@type": "AggregateRating",
+        "ratingValue": averageRating,
+        "reviewCount": reviews.length
+      } : undefined,
+      "review": reviews.slice(0, 3).map(review => ({
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": review.rating
+        },
+        "author": {
+          "@type": "Person",
+          "name": review.first_name
+        },
+        "reviewBody": review.comment
+      }))
+    };
+
+    return JSON.stringify(structuredData);
+  };
+
+  // Add this effect to handle URL updates
+  useEffect(() => {
+    if (business && !location.pathname.includes(business.business_name)) {
+      const seoFriendlyUrl = generateSeoFriendlyUrl(
+        business.business_name,
+        business.id,
+        business.business_category?.[0]
+      );
+      
+      // Only update URL if it's different
+      if (seoFriendlyUrl !== location.pathname) {
+        navigate(seoFriendlyUrl, { replace: true });
+      }
+    }
+  }, [business, location.pathname, navigate]);
+
   if (loading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -836,6 +913,44 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
   return (
     <>
+      <Helmet>
+        <title>{`Is ${business.business_name} a Good ${business.business_category?.[0] || 'Wedding Vendor'}? Reviews & Portfolio | Bidi`}</title>
+        <meta name="description" content={`Looking for a ${business.business_category?.[0] || 'wedding vendor'}? See ${business.business_name}'s portfolio, ${reviews.length} reviews, and ${averageRating ? `${averageRating}/5 star rating` : 'customer feedback'}. View their work and packages.`} />
+        <meta name="keywords" content={`${business.business_name}, ${business.business_category?.join(', ')}, wedding vendor, wedding services, reviews, portfolio`} />
+        
+        {/* Canonical URL */}
+        <link 
+          rel="canonical" 
+          href={`${window.location.origin}${generateSeoFriendlyUrl(
+            business.business_name,
+            business.id,
+            business.business_category?.[0]
+          )}`} 
+        />
+        
+        {/* Open Graph tags */}
+        <meta property="og:title" content={`Is ${business.business_name} a Good ${business.business_category?.[0] || 'Wedding Vendor'}? Reviews & Portfolio`} />
+        <meta property="og:description" content={`Looking for a ${business.business_category?.[0] || 'wedding vendor'}? See ${business.business_name}'s portfolio, ${reviews.length} reviews, and ${averageRating ? `${averageRating}/5 star rating` : 'customer feedback'}. View their work and packages.`} />
+        <meta property="og:image" content={profileImage} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`${window.location.origin}${generateSeoFriendlyUrl(
+          business.business_name,
+          business.id,
+          business.business_category?.[0]
+        )}`} />
+        
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`Is ${business.business_name} a Good ${business.business_category?.[0] || 'Wedding Vendor'}? Reviews & Portfolio`} />
+        <meta name="twitter:description" content={`Looking for a ${business.business_category?.[0] || 'wedding vendor'}? See ${business.business_name}'s portfolio, ${reviews.length} reviews, and ${averageRating ? `${averageRating}/5 star rating` : 'customer feedback'}. View their work and packages.`} />
+        <meta name="twitter:image" content={profileImage} />
+
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {generateStructuredData()}
+        </script>
+      </Helmet>
+
       <div className="portfolio-back-button" onClick={handleBack}>
         <i className="fas fa-arrow-left"></i> Back
       </div>
@@ -896,13 +1011,14 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                         playsInline
                         onClick={() => handleImageClick({ url: item, isVideo: true })}
                         style={{ cursor: 'pointer' }}
+                        aria-label={`Portfolio video ${index + 1} for ${business.business_name}`}
                       >
                         Your browser does not support the video tag.
                       </video>
                     ) : (
                       <img
                         src={convertedUrls[item] || item}
-                        alt={`Portfolio ${index + 1}`}
+                        alt={`${business.business_name}'s portfolio image ${index + 1}`}
                         className="portfolio-image"
                         onClick={() => handleImageClick({ url: item, isVideo: false })}
                         loading="lazy"
@@ -1025,11 +1141,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
           <div className="section-container">
             <div className="section-left">
-              <div className="business-header">
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  <div className="business-name">{business.business_name}</div>
+              <header className="business-header">
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <h1 className="business-name" style={{ fontSize: "2rem", fontWeight: "700", margin: "0", color: "#333" }}>{business.business_name}</h1>
 
                   {(business.membership_tier === "Verified" ||
                     business.Bidi_Plus) && (
@@ -1080,15 +1194,16 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                     </button>
                   )}
                 </div>
-              </div>
+              </header>
 
               <div className="section-divider"></div>
 
-              <div className="business-details">
+              <section className="business-details">
+                <h2 className="visually-hidden">Business Details</h2>
                 <div className="business-detail">
-                  <p className="detail-title">Location</p>
+                  <h3 className="detail-title">Location</h3>
                   <div className="detail-content">
-                    <i className="fa-solid fa-location-dot detail-icon"></i>
+                    <i className="fa-solid fa-location-dot detail-icon" aria-hidden="true"></i>
                     <p className="detail-text">
                       {business.business_address || "Location not available"}
                     </p>
@@ -1096,17 +1211,20 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 </div>
 
                 <div className="business-detail">
-                  <p className="detail-title">Packages</p>
+                  <h3 className="detail-title">Packages</h3>
                   <div className="packages-container">
                     {packages.map((pkg, index) => (
-                      <div key={index} className="package-card">
+                      <article key={index} className="package-card">
                         {pkg.image_url && (
                           <div className="package-image">
-                            <img src={pkg.image_url} alt={pkg.name} />
+                            <img 
+                              src={pkg.image_url} 
+                              alt={`${pkg.name} package for ${business.business_name}`} 
+                            />
                           </div>
                         )}
                         <div className="package-header">
-                          <h3>{pkg.name}</h3>
+                          <h4>{pkg.name}</h4>
                           <p className="package-price">${pkg.price}</p>
                         </div>
                         <div 
@@ -1127,31 +1245,11 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                           <ChatIcon />
                           Learn More
                         </button>
-                      </div>
+                      </article>
                     ))}
                   </div>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    width: "100%",
-                  }}
-                >
-                  {isOwner && (
-                    <button
-                      className="edit-icon"
-                      onClick={() =>
-                        openEditModal({
-                          business_address: business.business_address,
-                          packages: packages || [],
-                        }, 'business_details')}
-                    >
-                      ✎
-                    </button>
-                  )}
-                </div>
-              </div>
+              </section>
 
               <div className="section-divider"></div>
 
@@ -1508,8 +1606,33 @@ const styles = `
 }
 `;
 
+const additionalStyles = `
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.business-header {
+  margin-bottom: 2rem;
+}
+
+.business-name {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  color: #333;
+}
+`;
+
 const styleSheet = document.createElement("style");
-styleSheet.innerText = styles;
+styleSheet.innerText = styles + additionalStyles;
 document.head.appendChild(styleSheet);
 
 export default Portfolio;

@@ -22,6 +22,7 @@ import OpenRequests from "../Request/OpenRequests.js";
 import BusinessBids from "../Business/BusinessBids.js";
 import PortfolioPage from "../Business/Portfolio/Portfolio.js";
 import BusinessSettings from "../Business/BusinessSettings.js";
+import { generatePortfolioUrl } from '../../utils/navigation';
 
 const WeddingPlannerDashboard = () => {
   const [user, setUser] = useState(null);

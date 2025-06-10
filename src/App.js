@@ -315,9 +315,10 @@ function AppContent() {
             element={<GoogleBusinessCallback />}
           />
           {/* Dynamic URL for viewing portfolio */}
-          <Route path="/portfolio/:businessId" element={<Portfolio />} />
+          <Route path="/vendor/:businessId/:businessName/:category" element={<Portfolio />} />
+          <Route path="/vendor/:businessId/:businessName" element={<Portfolio />} />
           <Route
-            path="/portfolio/:businessId/gallery"
+            path="/vendor/:businessId/:businessName/gallery"
             element={<Gallery />}
           />
           {/* Misc Routes */}

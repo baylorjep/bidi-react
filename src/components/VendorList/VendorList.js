@@ -11,6 +11,7 @@ import { convertHeicToJpeg, convertToWebP, convertImagesToWebP, clearImageCache,
 import LoadingPlaceholder from '../Common/LoadingPlaceholder';
 import ImageErrorBoundary from '../Common/ImageErrorBoundary';
 import ImageModal from '../Business/Portfolio/ImageModal';
+import { generatePortfolioUrl } from '../../utils/navigation';
 
 const VendorList = ({ 
     vendors: initialVendors = [], // Add default empty array
@@ -660,7 +661,7 @@ const VendorList = ({
     };
 
     const handleMoreInfo = (vendor) => {
-        navigate(`/portfolio/${vendor.id}`);
+        navigate(generatePortfolioUrl(vendor.id, vendor.business_name, vendor.business_category?.[0]));
     };
 
     // Add click handler for loading more photos

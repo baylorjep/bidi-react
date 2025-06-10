@@ -7,6 +7,7 @@ import "../../styles/chat.css";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { formatMessageText } from "../../utils/formatMessageText";
+import { generatePortfolioUrl } from '../../utils/navigation';
 
 export default function MessagingView({
   currentUserId,
@@ -31,6 +32,7 @@ export default function MessagingView({
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [bidInfo, setBidInfo] = useState(null);
   const [isCurrentUserBusiness, setIsCurrentUserBusiness] = useState(false);
+  const [businessCategory, setBusinessCategory] = useState(null);
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -392,6 +394,24 @@ export default function MessagingView({
   // Add new useEffect to check if current user is a business
   useEffect(() => {
     const checkBusinessProfile = async () => {
+      if (!businessId) return;
+
+      const { data: profile, error } = await supabase
+        .from("business_profiles")
+        .select("business_name, business_category")
+        .eq("id", businessId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching business profile:", error);
+        return;
+      }
+
+      if (profile) {
+        setIsBusinessProfile(true);
+        setBusinessName(profile.business_name);
+        setBusinessCategory(profile.business_category);
+      }
       if (!currentUserId) return;
       
       try {
@@ -588,7 +608,7 @@ export default function MessagingView({
           <div className="header-center-messaging">
             <div 
               className="profile-circle"
-              onClick={isBusinessProfile ? () => navigate(`/portfolio/${businessId}`) : undefined}
+              onClick={isBusinessProfile ? () => navigate(generatePortfolioUrl(businessId, businessName, businessCategory?.[0])) : undefined}
               style={{ cursor: isBusinessProfile ? 'pointer' : 'default' }}
             >
               {profilePhoto ? (
