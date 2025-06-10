@@ -570,6 +570,11 @@ export default function MessagingView({
     e.target.value = null;
   };
 
+  const handleBusinessClick = (businessId, businessName) => {
+    const formattedName = formatBusinessName(businessName);
+    navigate(`/portfolio/${businessId}/${formattedName}`);
+  };
+
   return (
     <div className="messaging-view">
       {!location.state?.fromDashboard && (
@@ -588,7 +593,7 @@ export default function MessagingView({
           <div className="header-center-messaging">
             <div 
               className="profile-circle"
-              onClick={isBusinessProfile ? () => navigate(`/portfolio/${businessId}`) : undefined}
+              onClick={isBusinessProfile ? () => handleBusinessClick(businessId, businessName) : undefined}
               style={{ cursor: isBusinessProfile ? 'pointer' : 'default' }}
             >
               {profilePhoto ? (

@@ -1195,6 +1195,11 @@ useEffect(() => {
     }
   };
 
+  const handlePortfolioClick = (businessId, businessName) => {
+    const formattedName = formatBusinessName(businessName);
+    navigate(`/portfolio/${businessId}/${formattedName}`);
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -1274,7 +1279,7 @@ useEffect(() => {
                   return (
                     <button 
                       className={`checklist-action${complete ? ' complete' : ''}`}
-                      onClick={() => navigate(`/portfolio/${profileDetails?.id}`)}
+                      onClick={() => handlePortfolioClick(profileDetails?.id, profileDetails?.business_name)}
                     >
                       {complete ? 'Edit Profile' : 'Complete Profile'}
                     </button>
@@ -1402,7 +1407,7 @@ useEffect(() => {
             <div className="card-body">
               <button
                 className={`btn-primary flex-fill${!setupProgress.story ? ' pulse' : ''}`}
-                onClick={() => navigate(`/portfolio/${profileDetails?.id}`)}
+                onClick={() => handlePortfolioClick(profileDetails?.id, profileDetails?.business_name)}
               >
                 <i className="fas fa-user-edit me-2"></i>
                 {setupProgress.story ? "Edit Profile" : "Complete Profile"}

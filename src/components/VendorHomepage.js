@@ -205,8 +205,9 @@ function VendorHomepage() {
         setActiveIndex(activeIndex === index ? null : index);
     };
 
-    const handleVendorClick = (vendorId) => {
-        navigate(`/portfolio/${vendorId}`);
+    const handleVendorClick = (vendorId, businessName) => {
+        const formattedName = formatBusinessName(businessName);
+        navigate(`/portfolio/${vendorId}/${formattedName}`);
     };
 
     return (
@@ -345,7 +346,7 @@ function VendorHomepage() {
                                 <div 
                                     key={`${vendor.id}-${index}`} 
                                     className="vendor-waterfall-item"
-                                    onClick={() => handleVendorClick(vendor.id)}
+                                    onClick={() => handleVendorClick(vendor.id, vendor.business_name)}
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <img 
