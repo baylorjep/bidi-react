@@ -45,7 +45,8 @@ function BidDisplay({
   currentUserId = null,
   onScheduleConsultation = null,
   onPayNow = null,
-  onMoveToPending = null
+  onMoveToPending = null,
+  onProfileClick = null
 }) {
   const [isBidiVerified, setIsBidiVerified] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -157,15 +158,11 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
   };
 
   const handleProfileClick = () => {
-    if (bid.vendor_name) {
-      const formattedName = formatBusinessName(bid.vendor_name);
-      navigate(`/portfolio/${bid.vendor_id}/${formattedName}`, {
-        state: {
-          fromBid: true,
-          bidData: bid,
-          bidId: bid.id
-        }
-      });
+    if (onProfileClick) {
+      onProfileClick();
+    } else {
+      const formattedName = formatBusinessName(bid.business_profiles.business_name);
+      navigate(`/portfolio/${bid.business_profiles.id}/${formattedName}`);
     }
   };
 

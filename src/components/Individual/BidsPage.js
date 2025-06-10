@@ -963,7 +963,8 @@ export default function BidsPage({ onOpenChat }) {
             onMessage: onOpenChat,
             currentUserId: currentUserId,
             handleDeny: () => handleMoveToNotInterested(bid),
-            handleInterested: () => handleMoveToInterested(bid)
+            handleInterested: () => handleMoveToInterested(bid),
+            onProfileClick: () => handlePortfolioClick(bid.business_profiles.id, bid.business_profiles.business_name)
         };
 
         // State-specific props

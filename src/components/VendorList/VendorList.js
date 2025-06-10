@@ -660,7 +660,8 @@ const VendorList = ({
     };
 
     const handleMoreInfo = (vendor) => {
-        navigate(`/portfolio/${vendor.id}`);
+        const formattedName = formatBusinessName(vendor.business_name);
+        navigate(`/portfolio/${vendor.id}/${formattedName}`);
     };
 
     // Add click handler for loading more photos
