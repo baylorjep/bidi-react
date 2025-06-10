@@ -864,6 +864,23 @@ const VendorList = ({
         setSelectedImage(null);
     };
 
+    const formatBusinessName = (name) => {
+        if (!name) return '';
+        return name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+    };
+
+    const handleVendorClick = (vendor) => {
+        if (vendor.business_name) {
+            const formattedName = formatBusinessName(vendor.business_name);
+            navigate(`/portfolio/${vendor.id}/${formattedName}`, {
+                state: { fromVendorSelection: true }
+            });
+        }
+    };
+
     return (
         <div className="vendor-list">
             {Array.isArray(vendors) && vendors.map(vendor => (

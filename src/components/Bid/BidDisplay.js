@@ -148,24 +148,25 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
     return discounted > 0 ? discounted.toFixed(2) : '0.00';
   }
 
+  const formatBusinessName = (name) => {
+    if (!name) return '';
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+  };
+
   const handleProfileClick = () => {
-    setShowBubble(false);
-    navigate(`/portfolio/${bid.business_profiles.id}`, {
-      state: {
-        fromBid: true,
-        bidId: bid.id,
-        bidData: {
-          amount: bid.bid_amount,
-          description: bid.bid_description,
-          expirationDate: bid.expiration_date,
-          status: bid.status,
-          couponCode: bid.coupon_code,
-          couponApplied: bid.coupon_applied,
-          originalAmount: bid.original_amount,
-          discountAmount: bid.discount_amount
+    if (bid.vendor_name) {
+      const formattedName = formatBusinessName(bid.vendor_name);
+      navigate(`/portfolio/${bid.vendor_id}/${formattedName}`, {
+        state: {
+          fromBid: true,
+          bidData: bid,
+          bidId: bid.id
         }
-      }
-    });
+      });
+    }
   };
 
   const profileImage =

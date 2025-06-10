@@ -283,8 +283,16 @@ const IndividualDashboard = () => {
   };
 
   const handleOpenChat = (chat) => {
-    setActiveSection("messages");
-    setSelectedChat(chat);
+    if (chat.business_name) {
+      const formattedName = formatName(chat.business_name);
+      navigate(`/portfolio/${chat.id}/${formattedName}`, {
+        state: {
+          fromBid: true,
+          bidData: chat.bidData,
+          bidId: chat.bidId
+        }
+      });
+    }
   };
 
   useEffect(() => {

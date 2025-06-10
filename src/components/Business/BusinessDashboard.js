@@ -186,25 +186,20 @@ const BusinessDashSidebar = () => {
   }, []);
 
   const handleViewPortfolio = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: businessProfile } = await supabase
+        .from("business_profiles")
+        .select("business_name")
+        .eq("id", user.id)
+        .single();
 
-    const { data: profileDetails, error } = await supabase
-      .from("business_profiles")
-      .select("id")
-      .eq("id", user.id)
-      .single();
-
-    if (error) {
-      console.error("Error fetching profile details:", error);
-      return;
+      if (businessProfile) {
+        const formattedName = formatBusinessName(businessProfile.business_name);
+        navigate(`/portfolio/${user.id}/${formattedName}`);
+      }
+    } catch (error) {
+      console.error("Error navigating to portfolio:", error);
     }
-
-    // Set the active section to "portfolio" and pass the profile ID
-    setProfile(profileDetails.id); // Store the profile ID in state
-    setActiveSection("portfolio");
   };
 
   const formatBusinessName = (name) => {

@@ -298,6 +298,23 @@ const WeddingPlannerDashboard = () => {
     };
   }, [activeSection]);
 
+  const handleViewPortfolio = async () => {
+    try {
+      const { data: businessProfile } = await supabase
+        .from("business_profiles")
+        .select("business_name")
+        .eq("id", user.id)
+        .single();
+
+      if (businessProfile) {
+        const formattedName = formatBusinessName(businessProfile.business_name);
+        navigate(`/portfolio/${user.id}/${formattedName}`);
+      }
+    } catch (error) {
+      console.error("Error navigating to portfolio:", error);
+    }
+  };
+
   if (error) {
     return <div>Error: {error}</div>;
   }

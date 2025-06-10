@@ -13,6 +13,7 @@ import 'slick-carousel/slick/slick-theme.css';
 import ChatIcon from '@mui/icons-material/Chat';
 import AuthModal from "../../Request/Authentication/AuthModal";
 import GoogleReviews from './GoogleReviews';
+import { Helmet } from 'react-helmet-async';
 
 // SVG Components
 const StarIcon = () => (
@@ -824,11 +825,50 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     });
   };
 
+  // Add SEO title and description
+  const getSeoTitle = () => {
+    if (!business) return 'Vendor Portfolio | Bidi';
+    const category = Array.isArray(business.business_category) 
+      ? business.business_category[0] 
+      : business.business_category;
+    return `Is ${business.business_name} a Good ${category}? | Reviews & Portfolio`;
+  };
+
+  const getSeoDescription = () => {
+    if (!business) return 'View vendor portfolio and reviews on Bidi';
+    const category = Array.isArray(business.business_category) 
+      ? business.business_category[0] 
+      : business.business_category;
+    return `Discover ${business.business_name}'s ${category} services, portfolio, and ${reviews.length} verified reviews. View their work, packages, and contact them directly on Bidi.`;
+  };
+
   if (loading) {
-    return <LoadingSpinner color="#9633eb" size={50} />;
+    return (
+      <>
+        <Helmet>
+          <title>Loading Vendor Portfolio | Bidi</title>
+          <meta name="description" content="Loading vendor portfolio and reviews on Bidi" />
+          <meta httpEquiv="Content-Language" content="en" />
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+        <LoadingSpinner color="#9633eb" size={50} />
+      </>
+    );
   }
 
-  if (!business) return <p>Error: Business not found.</p>;
+  if (!business) {
+    return (
+      <>
+        <Helmet>
+          <title>Vendor Not Found | Bidi</title>
+          <meta name="description" content="The requested vendor portfolio could not be found on Bidi" />
+          <meta httpEquiv="Content-Language" content="en" />
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+        <p>Error: Business not found.</p>
+      </>
+    );
+  }
 
   const categories = Array.isArray(business?.business_category)
     ? business.business_category
@@ -836,6 +876,65 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
   return (
     <>
+      <Helmet>
+        <title>{getSeoTitle()}</title>
+        <meta name="description" content={getSeoDescription()} />
+        <meta property="og:title" content={getSeoTitle()} />
+        <meta property="og:description" content={getSeoDescription()} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.href} />
+        {profileImage && (
+          <>
+            <meta property="og:image" content={profileImage} />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            <meta property="og:image:alt" content={`${business.business_name} portfolio image`} />
+          </>
+        )}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={getSeoTitle()} />
+        <meta name="twitter:description" content={getSeoDescription()} />
+        {profileImage && (
+          <>
+            <meta name="twitter:image" content={profileImage} />
+            <meta name="twitter:image:alt" content={`${business.business_name} portfolio image`} />
+          </>
+        )}
+        <link rel="canonical" href={window.location.href} />
+        <meta name="robots" content="index, follow" />
+        <meta httpEquiv="Content-Language" content="en" />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            "name": business?.business_name,
+            "image": profileImage,
+            "description": business?.business_description,
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": business?.business_address
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": averageRating,
+              "reviewCount": reviews.length
+            },
+            "review": reviews.slice(0, 3).map(review => ({
+              "@type": "Review",
+              "reviewRating": {
+                "@type": "Rating",
+                "ratingValue": review.rating
+              },
+              "author": {
+                "@type": "Person",
+                "name": review.first_name
+              },
+              "reviewBody": review.comment
+            }))
+          })}
+        </script>
+      </Helmet>
+
       <div className="portfolio-back-button" onClick={handleBack}>
         <i className="fas fa-arrow-left"></i> Back
       </div>
