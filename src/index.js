@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import "./socket";
 import App from './App.js';
-import reportWebVitals from './reportWebVitals';
+import reportWebVitals from './reportWebVitals.js';
 import './i18n';
 import { registerServiceWorker } from './serviceWorkerRegistration';
 import '@fortawesome/fontawesome-free/css/all.min.css';
