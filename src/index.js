@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import "./socket";
+import "./socket.js";
 import App from './App.js';
 import reportWebVitals from './reportWebVitals.js';
 import './i18n.js';
-import { registerServiceWorker } from './serviceWorkerRegistration';
+import { registerServiceWorker } from './serviceWorkerRegistration.js';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
