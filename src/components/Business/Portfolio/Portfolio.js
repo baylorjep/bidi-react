@@ -48,14 +48,14 @@ const ReviewModal = ({ isOpen, onClose, onSubmit, rating, setRating, comment, se
         <div className="review-modal-title">Write a Review</div>
         <div className="review-modal-rating-row">
           {[1,2,3,4,5].map((star) => (
-            <img
+            <div
               key={star}
-              src={star <= rating ? StarIcon : EmptyStarIcon}
-              alt={star <= rating ? 'Filled Star' : 'Empty Star'}
               className="star-icon-portfolio"
               style={{ cursor: 'pointer', width: 28, height: 28 }}
               onClick={() => setRating(star)}
-            />
+            >
+              {star <= rating ? <StarIcon /> : <EmptyStarIcon />}
+            </div>
           ))}
         </div>
         <textarea
@@ -1050,7 +1050,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                   )}
                   {averageRating && (
                     <span className="vendor-rating-portfolio">
-                      <img src={StarIcon} alt="Star" className="star-icon" />
+                      <div className="star-icon">
+                        <StarIcon />
+                      </div>
                       {averageRating}
                     </span>
                   )}
@@ -1386,14 +1388,14 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 <div className="star-and-write-review">
                   <div className="write-review-stars">
                     {[1,2,3,4,5].map((star) => (
-                      <img
+                      <div
                         key={star}
-                        src={star <= newReview.rating ? StarIcon : EmptyStarIcon}
-                        alt={star <= newReview.rating ? 'Filled Star' : 'Empty Star'}
                         className="star-icon-portfolio"
                         style={{ cursor: 'pointer' }}
                         onClick={() => setNewReview({ ...newReview, rating: star })}
-                      />
+                      >
+                        {star <= newReview.rating ? <StarIcon /> : <EmptyStarIcon />}
+                      </div>
                     ))}
                   </div>
                   <button className="write-review-button" onClick={openReviewModal}>
@@ -1419,12 +1421,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                         </div>
                         <div className="review-card-stars">
                           {[...Array(5)].map((_, i) => (
-                            <img
-                              key={i}
-                              src={i < review.rating ? StarIcon : EmptyStarIcon}
-                              alt="Star"
-                              className="review-star"
-                            />
+                            <div key={i} className="review-star">
+                              {i < review.rating ? <StarIcon /> : <EmptyStarIcon />}
+                            </div>
                           ))}
                         </div>
                       </div>
