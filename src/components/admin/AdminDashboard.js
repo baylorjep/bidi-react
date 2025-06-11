@@ -267,14 +267,37 @@ function AdminDashboard() {
                 return;
             }
 
+            // First, update the business profile with pending status
+            const { error: updateError } = await supabaseAdmin
+                .from('business_profiles')
+                .update({
+                    google_reviews_status: 'pending',
+                    google_maps_url: googleMapsUrl
+                })
+                .eq('id', selectedBusiness);
+
+            if (updateError) {
+                console.error('Database update error:', updateError);
+                throw new Error(`Failed to update business profile: ${updateError.message}`);
+            }
+
             console.log('Starting Google Reviews import for business:', selectedBusiness);
 
             // Step 1: Convert URL to Place ID
-            const placeIdResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/url-to-place-id?url=${encodeURIComponent(googleMapsUrl)}`);
+            const placeIdResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/url-to-place-id?url=${encodeURIComponent(googleMapsUrl)}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            });
+
             if (!placeIdResponse.ok) {
                 const errorData = await placeIdResponse.json();
                 throw new Error(errorData.message || 'Failed to convert URL to Place ID');
             }
+
             const { placeId } = await placeIdResponse.json();
             console.log('Retrieved Place ID:', placeId);
 
@@ -283,31 +306,39 @@ function AdminDashboard() {
             }
 
             // Step 2: Fetch reviews using the Place ID
-            const reviewsResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/google-reviews?placeId=${placeId}`);
+            const reviewsResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/google-reviews?placeId=${placeId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            });
+
             if (!reviewsResponse.ok) {
                 const errorData = await reviewsResponse.json();
                 throw new Error(errorData.message || 'Failed to fetch Google reviews');
             }
+
             const reviewsData = await reviewsResponse.json();
             console.log('Retrieved reviews data:', reviewsData);
 
-            // First, update the business profile with the Google business data
-            const { error: updateError } = await supabaseAdmin
+            // Update the business profile with the Google business data
+            const { error: finalUpdateError } = await supabaseAdmin
                 .from('business_profiles')
                 .update({
                     google_place_id: placeId,
-                    google_reviews_status: 'pending',
+                    google_reviews_status: 'connected',
                     google_business_name: reviewsData.business_name,
                     google_business_address: reviewsData.business_address,
                     google_rating: reviewsData.rating,
-                    google_total_ratings: reviewsData.total_ratings,
-                    google_maps_url: googleMapsUrl
+                    google_total_ratings: reviewsData.total_ratings
                 })
                 .eq('id', selectedBusiness);
 
-            if (updateError) {
-                console.error('Database update error:', updateError);
-                throw new Error(`Failed to update business profile: ${updateError.message}`);
+            if (finalUpdateError) {
+                console.error('Database update error:', finalUpdateError);
+                throw new Error(`Failed to update business profile: ${finalUpdateError.message}`);
             }
 
             // Then, insert the reviews into the reviews table
@@ -358,6 +389,18 @@ function AdminDashboard() {
         } catch (error) {
             console.error('Error importing Google reviews:', error);
             setGoogleReviewsError(error.message || 'Failed to import Google reviews');
+            
+            // Update the business profile to error status
+            try {
+                await supabaseAdmin
+                    .from('business_profiles')
+                    .update({
+                        google_reviews_status: 'error'
+                    })
+                    .eq('id', selectedBusiness);
+            } catch (updateError) {
+                console.error('Error updating error status:', updateError);
+            }
         } finally {
             setIsProcessing(false);
         }
