@@ -274,116 +274,138 @@ function AdminDashboard() {
             }
 
             console.log('Starting Google Reviews import for business:', selectedBusiness);
+            console.log('Using Google Maps URL:', googleMapsUrl);
 
             // Step 1: Convert URL to Place ID
-            const placeIdResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/url-to-place-id?url=${encodeURIComponent(googleMapsUrl)}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                credentials: 'include'
-            });
+            try {
+                const placeIdResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/url-to-place-id?url=${encodeURIComponent(googleMapsUrl)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include'
+                });
 
-            if (!placeIdResponse.ok) {
-                const errorData = await placeIdResponse.json();
-                if (errorData.status === 'ZERO_RESULTS') {
+                if (!placeIdResponse.ok) {
+                    const errorText = await placeIdResponse.text();
+                    console.error('Server error response:', {
+                        status: placeIdResponse.status,
+                        statusText: placeIdResponse.statusText,
+                        body: errorText
+                    });
+
+                    let errorMessage;
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.message || errorData.error || 'Unknown server error';
+                    } catch (e) {
+                        errorMessage = `Server error (${placeIdResponse.status}): ${placeIdResponse.statusText}`;
+                    }
+
+                    throw new Error(errorMessage);
+                }
+
+                const placeIdData = await placeIdResponse.json();
+                console.log('Place ID response:', placeIdData);
+
+                if (!placeIdData.placeId) {
                     throw new Error('Could not find this business on Google Maps. Please make sure the business is properly registered on Google Maps and try again.');
                 }
-                throw new Error(errorData.message || 'Failed to convert URL to Place ID');
-            }
 
-            const { placeId } = await placeIdResponse.json();
-            console.log('Retrieved Place ID:', placeId);
+                // Step 2: Fetch reviews using the Place ID
+                const reviewsResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/google-reviews?placeId=${placeIdData.placeId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include'
+                });
 
-            if (!placeId) {
-                throw new Error('Could not find this business on Google Maps. Please make sure the business is properly registered on Google Maps and try again.');
-            }
-
-            // Step 2: Fetch reviews using the Place ID
-            const reviewsResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/google-reviews?placeId=${placeId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                credentials: 'include'
-            });
-
-            if (!reviewsResponse.ok) {
-                const errorData = await reviewsResponse.json();
-                throw new Error(errorData.message || 'Failed to fetch Google reviews');
-            }
-
-            const reviewsData = await reviewsResponse.json();
-            console.log('Retrieved reviews data:', reviewsData);
-
-            // Update the business profile with the Google business data
-            const { error: updateError } = await supabaseAdmin
-                .from('business_profiles')
-                .update({
-                    google_place_id: placeId,
-                    google_business_name: reviewsData.business_name,
-                    google_business_address: reviewsData.business_address,
-                    google_rating: reviewsData.rating,
-                    google_total_ratings: reviewsData.total_ratings,
-                    google_maps_url: googleMapsUrl
-                })
-                .eq('id', selectedBusiness);
-
-            if (updateError) {
-                console.error('Database update error:', updateError);
-                throw new Error(`Failed to update business profile: ${updateError.message}`);
-            }
-
-            // Then, insert the reviews into the reviews table
-            if (reviewsData.reviews && reviewsData.reviews.length > 0) {
-                // First, delete any existing Google reviews for this business
-                const { error: deleteError } = await supabaseAdmin
-                    .from('reviews')
-                    .delete()
-                    .eq('vendor_id', selectedBusiness)
-                    .eq('is_google_review', true);
-
-                if (deleteError) {
-                    console.error('Error deleting existing reviews:', deleteError);
-                    throw new Error(`Failed to delete existing reviews: ${deleteError.message}`);
+                if (!reviewsResponse.ok) {
+                    const errorText = await reviewsResponse.text();
+                    console.error('Reviews API error:', {
+                        status: reviewsResponse.status,
+                        statusText: reviewsResponse.statusText,
+                        body: errorText
+                    });
+                    throw new Error('Failed to fetch Google reviews. Please try again later.');
                 }
 
-                // Then insert the new reviews
-                const reviewsToInsert = reviewsData.reviews.map(review => ({
-                    vendor_id: selectedBusiness,
-                    rating: review.rating,
-                    comment: review.text,
-                    first_name: review.author_name,
-                    profile_photo_url: review.profile_photo_url,
-                    relative_time_description: review.relative_time_description,
-                    is_google_review: true,
-                    google_review_id: review.time.toString(), // Using timestamp as a unique ID
-                    review_rating: review.rating,
-                    is_approved: true // Auto-approve Google reviews
-                }));
+                const reviewsData = await reviewsResponse.json();
+                console.log('Retrieved reviews data:', reviewsData);
 
-                const { error: reviewsError } = await supabaseAdmin
-                    .from('reviews')
-                    .insert(reviewsToInsert);
+                // Update the business profile with the Google business data
+                const { error: updateError } = await supabaseAdmin
+                    .from('business_profiles')
+                    .update({
+                        google_place_id: placeIdData.placeId,
+                        google_business_name: reviewsData.business_name,
+                        google_business_address: reviewsData.business_address,
+                        google_rating: reviewsData.rating,
+                        google_total_ratings: reviewsData.total_ratings,
+                        google_maps_url: googleMapsUrl
+                    })
+                    .eq('id', selectedBusiness);
 
-                if (reviewsError) {
-                    console.error('Error inserting reviews:', reviewsError);
-                    throw new Error(`Failed to insert reviews: ${reviewsError.message}`);
+                if (updateError) {
+                    console.error('Database update error:', updateError);
+                    throw new Error(`Failed to update business profile: ${updateError.message}`);
                 }
+
+                // Then, insert the reviews into the reviews table
+                if (reviewsData.reviews && reviewsData.reviews.length > 0) {
+                    // First, delete any existing Google reviews for this business
+                    const { error: deleteError } = await supabaseAdmin
+                        .from('reviews')
+                        .delete()
+                        .eq('vendor_id', selectedBusiness)
+                        .eq('is_google_review', true);
+
+                    if (deleteError) {
+                        console.error('Error deleting existing reviews:', deleteError);
+                        throw new Error(`Failed to delete existing reviews: ${deleteError.message}`);
+                    }
+
+                    // Then insert the new reviews
+                    const reviewsToInsert = reviewsData.reviews.map(review => ({
+                        vendor_id: selectedBusiness,
+                        rating: review.rating,
+                        comment: review.text,
+                        first_name: review.author_name,
+                        profile_photo_url: review.profile_photo_url,
+                        relative_time_description: review.relative_time_description,
+                        is_google_review: true,
+                        google_review_id: review.time.toString(),
+                        review_rating: review.rating,
+                        is_approved: true
+                    }));
+
+                    const { error: reviewsError } = await supabaseAdmin
+                        .from('reviews')
+                        .insert(reviewsToInsert);
+
+                    if (reviewsError) {
+                        console.error('Error inserting reviews:', reviewsError);
+                        throw new Error(`Failed to insert reviews: ${reviewsError.message}`);
+                    }
+                }
+
+                // Clear the form
+                setGoogleMapsUrl('');
+                setSelectedBusiness(null);
+                setBusinessSearchQuery('');
+
+                // Show success message
+                alert('Google reviews imported successfully!');
+            } catch (error) {
+                console.error('API request error:', error);
+                throw error;
             }
-
-            // Clear the form
-            setGoogleMapsUrl('');
-            setSelectedBusiness(null);
-            setBusinessSearchQuery('');
-
-            // Show success message
-            alert('Google reviews imported successfully!');
         } catch (error) {
             console.error('Error importing Google reviews:', error);
-            setGoogleReviewsError(error.message || 'Failed to import Google reviews');
+            setGoogleReviewsError(error.message || 'Failed to import Google reviews. Please try again later.');
         } finally {
             setIsProcessing(false);
         }
