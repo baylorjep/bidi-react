@@ -267,20 +267,6 @@ function AdminDashboard() {
                 return;
             }
 
-            // First, update the business profile with pending status
-            const { error: updateError } = await supabaseAdmin
-                .from('business_profiles')
-                .update({
-                    google_reviews_status: 'pending',
-                    google_maps_url: googleMapsUrl
-                })
-                .eq('id', selectedBusiness);
-
-            if (updateError) {
-                console.error('Database update error:', updateError);
-                throw new Error(`Failed to update business profile: ${updateError.message}`);
-            }
-
             console.log('Starting Google Reviews import for business:', selectedBusiness);
 
             // Step 1: Convert URL to Place ID
@@ -324,21 +310,21 @@ function AdminDashboard() {
             console.log('Retrieved reviews data:', reviewsData);
 
             // Update the business profile with the Google business data
-            const { error: finalUpdateError } = await supabaseAdmin
+            const { error: updateError } = await supabaseAdmin
                 .from('business_profiles')
                 .update({
                     google_place_id: placeId,
-                    google_reviews_status: 'connected',
                     google_business_name: reviewsData.business_name,
                     google_business_address: reviewsData.business_address,
                     google_rating: reviewsData.rating,
-                    google_total_ratings: reviewsData.total_ratings
+                    google_total_ratings: reviewsData.total_ratings,
+                    google_maps_url: googleMapsUrl
                 })
                 .eq('id', selectedBusiness);
 
-            if (finalUpdateError) {
-                console.error('Database update error:', finalUpdateError);
-                throw new Error(`Failed to update business profile: ${finalUpdateError.message}`);
+            if (updateError) {
+                console.error('Database update error:', updateError);
+                throw new Error(`Failed to update business profile: ${updateError.message}`);
             }
 
             // Then, insert the reviews into the reviews table
@@ -385,22 +371,10 @@ function AdminDashboard() {
             setBusinessSearchQuery('');
 
             // Show success message
-            alert('Google reviews imported successfully! The reviews will be processed and updated shortly.');
+            alert('Google reviews imported successfully!');
         } catch (error) {
             console.error('Error importing Google reviews:', error);
             setGoogleReviewsError(error.message || 'Failed to import Google reviews');
-            
-            // Update the business profile to error status
-            try {
-                await supabaseAdmin
-                    .from('business_profiles')
-                    .update({
-                        google_reviews_status: 'error'
-                    })
-                    .eq('id', selectedBusiness);
-            } catch (updateError) {
-                console.error('Error updating error status:', updateError);
-            }
         } finally {
             setIsProcessing(false);
         }
