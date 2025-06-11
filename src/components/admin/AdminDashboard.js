@@ -267,6 +267,12 @@ function AdminDashboard() {
                 return;
             }
 
+            // Validate URL format
+            if (!googleMapsUrl.includes('google.com/maps') && !googleMapsUrl.includes('maps.app.goo.gl')) {
+                setGoogleReviewsError('Please enter a valid Google Maps URL (should start with https://www.google.com/maps or https://maps.app.goo.gl)');
+                return;
+            }
+
             console.log('Starting Google Reviews import for business:', selectedBusiness);
 
             // Step 1: Convert URL to Place ID
@@ -281,6 +287,9 @@ function AdminDashboard() {
 
             if (!placeIdResponse.ok) {
                 const errorData = await placeIdResponse.json();
+                if (errorData.status === 'ZERO_RESULTS') {
+                    throw new Error('Could not find this business on Google Maps. Please make sure the business is properly registered on Google Maps and try again.');
+                }
                 throw new Error(errorData.message || 'Failed to convert URL to Place ID');
             }
 
@@ -288,7 +297,7 @@ function AdminDashboard() {
             console.log('Retrieved Place ID:', placeId);
 
             if (!placeId) {
-                throw new Error('Could not extract Place ID from the provided URL');
+                throw new Error('Could not find this business on Google Maps. Please make sure the business is properly registered on Google Maps and try again.');
             }
 
             // Step 2: Fetch reviews using the Place ID
