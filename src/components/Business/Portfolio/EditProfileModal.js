@@ -174,6 +174,19 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
       const packagesToSave = Array.isArray(formData.packages) ? formData.packages : [];
 
       switch (initialData.currentSection) {
+        case 'business_info':
+          // Update business name and description
+          const { error: businessInfoError } = await supabase
+            .from('business_profiles')
+            .update({
+              business_name: formData.business_name,
+              business_description: formData.business_description
+            })
+            .eq('id', businessId);
+
+          if (businessInfoError) throw businessInfoError;
+          break;
+
         case 'business_details':
           updates.business_address = formData.business_address;
           // Save packages
@@ -202,10 +215,38 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
           }
           break;
 
-        // ... rest of the switch cases ...
+        case 'profile':
+          // Update business owner and story
+          const { error: profileError } = await supabase
+            .from('business_profiles')
+            .update({
+              business_owner: formData.business_owner,
+              story: formData.story
+            })
+            .eq('id', businessId);
+
+          if (profileError) throw profileError;
+          break;
+
+        case 'specialties':
+          // Update specializations
+          const { error: specialtiesError } = await supabase
+            .from('business_profiles')
+            .update({
+              specializations: formData.specializations || []
+            })
+            .eq('id', businessId);
+
+          if (specialtiesError) throw specialtiesError;
+          break;
+
+        case 'portfolio':
+          // Portfolio changes are handled separately through media uploads
+          break;
       }
 
-      // ... rest of the function ...
+      // Close the modal after successful save
+      onClose();
     } catch (error) {
       console.error('Error saving changes:', error);
       alert('Failed to save changes. Please try again.');
