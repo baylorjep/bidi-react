@@ -9,7 +9,12 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./i18n";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { HelmetProvider } from "react-helmet-async";
+
+
+// Supabase Imports
 import { supabase } from "./supabaseClient";
+import { SupabaseStatusProvider } from './context/SupabaseStatusProvider';
+import SupabaseDownModal from './components/Modals/SupabaseDownModal';
 
 // Layout Imports
 import Navbar from "./components/Layout/Navbar";
@@ -191,6 +196,7 @@ function AppContent() {
 
   return (
     <div className="app-container">
+      <SupabaseDownModal />
       <LocationBanner />
       <Navbar />
       <div className="content">
@@ -480,10 +486,12 @@ function App() {
   
   return (
     <HelmetProvider>
+      <SupabaseStatusProvider>
       <Router>
         <ScrollToTop />
         <AppContent />
       </Router>
+      </SupabaseStatusProvider>
     </HelmetProvider>
   );
 }
