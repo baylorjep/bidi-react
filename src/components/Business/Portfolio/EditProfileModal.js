@@ -188,7 +188,16 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
           break;
 
         case 'business_details':
-          updates.business_address = formData.business_address;
+          // Update business address
+          const { error: addressError } = await supabase
+            .from('business_profiles')
+            .update({
+              business_address: formData.business_address
+            })
+            .eq('id', businessId);
+
+          if (addressError) throw addressError;
+
           // Save packages
           if (packagesToSave.length > 0) {
             // Delete existing packages
