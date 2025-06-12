@@ -350,34 +350,75 @@ const VendorList = ({
             videos: v.video_count,
             verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true,
             specializations: v.specializations,
-            location: v.business_address
+            location: v.business_address,
+            hasReviews: v.average_rating !== null,
+            rating: v.average_rating
         })));
 
         const sorted = [...vendors].sort((a, b) => {
-            // First priority: Has photos AND is verified
-            const aHasPhotos = a.photo_count > 0;
-            const bHasPhotos = b.photo_count > 0;
+            // If sortOrder is rating, base_price_low, or base_price_high, prioritize that sorting
+            if (sortOrder === 'rating') {
+                const aRating = a.average_rating || 0;
+                const bRating = b.average_rating || 0;
+                if (aRating !== bRating) {
+                    return bRating - aRating;
+                }
+            } else if (sortOrder === 'base_price_low') {
+                const aPrice = a.minimum_price || 0;
+                const bPrice = b.minimum_price || 0;
+                if (aPrice !== bPrice) {
+                    return aPrice - bPrice;
+                }
+            } else if (sortOrder === 'base_price_high') {
+                const aPrice = a.minimum_price || 0;
+                const bPrice = b.minimum_price || 0;
+                if (aPrice !== bPrice) {
+                    return bPrice - aPrice;
+                }
+            }
+
+            // If sortOrder is 'recommended' or if the primary sort didn't differentiate, use the default sorting
+            // First priority: Has reviews AND is verified
+            const aHasReviews = a.average_rating !== null;
+            const bHasReviews = b.average_rating !== null;
             const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
             const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
 
-            const aHasPhotosAndVerified = aHasPhotos && aIsVerified;
-            const bHasPhotosAndVerified = bHasPhotos && bIsVerified;
+            const aHasReviewsAndVerified = aHasReviews && aIsVerified;
+            const bHasReviewsAndVerified = bHasReviews && bIsVerified;
 
-            if (aHasPhotosAndVerified !== bHasPhotosAndVerified) {
-                return aHasPhotosAndVerified ? -1 : 1;
+            if (aHasReviewsAndVerified !== bHasReviewsAndVerified) {
+                return aHasReviewsAndVerified ? -1 : 1;
             }
 
-            // Second priority: Has photos
-            if (aHasPhotos !== bHasPhotos) {
-                return aHasPhotos ? -1 : 1;
+            // If both have reviews and are verified, sort by rating
+            if (aHasReviewsAndVerified && bHasReviewsAndVerified) {
+                return (b.average_rating || 0) - (a.average_rating || 0);
             }
 
-            // Third priority: Is verified
+            // Second priority: Is verified
             if (aIsVerified !== bIsVerified) {
                 return aIsVerified ? -1 : 1;
             }
 
-            // Fourth priority: Has the selected specialization
+            // Third priority: Has reviews
+            if (aHasReviews !== bHasReviews) {
+                return aHasReviews ? -1 : 1;
+            }
+
+            // If both have reviews but aren't verified, sort by rating
+            if (aHasReviews && bHasReviews) {
+                return (b.average_rating || 0) - (a.average_rating || 0);
+            }
+
+            // Fourth priority: Has photos
+            const aHasPhotos = a.photo_count > 0;
+            const bHasPhotos = b.photo_count > 0;
+            if (aHasPhotos !== bHasPhotos) {
+                return aHasPhotos ? -1 : 1;
+            }
+
+            // Fifth priority: Has the selected specialization
             if (categoryType && categoryType !== 'all') {
                 const aHasSpecialization = a.specializations?.includes(categoryType);
                 const bHasSpecialization = b.specializations?.includes(categoryType);
@@ -386,7 +427,7 @@ const VendorList = ({
                 }
             }
 
-            // Fifth priority: Location match
+            // Sixth priority: Location match
             if (preferredLocation) {
                 const aLocation = a.business_address?.toLowerCase() || '';
                 const bLocation = b.business_address?.toLowerCase() || '';
@@ -400,24 +441,14 @@ const VendorList = ({
                 }
             }
 
-            // Sixth priority: Total media count
+            // Seventh priority: Total media count
             const aTotalMedia = a.photo_count;
             const bTotalMedia = b.photo_count;
             if (aTotalMedia !== bTotalMedia) {
                 return bTotalMedia - aTotalMedia;
             }
 
-            // Finally, apply the selected sort order
-            switch (sortOrder) {
-                case 'rating':
-                    return (b.average_rating || 0) - (a.average_rating || 0);
-                case 'base_price_low':
-                    return (a.minimum_price || 0) - (b.minimum_price || 0);
-                case 'base_price_high':
-                    return (b.minimum_price || 0) - (a.minimum_price || 0);
-                default:
-                    return 0;
-            }
+            return 0;
         });
 
         console.log('Vendors after sorting:', sorted.map(v => ({
@@ -427,7 +458,9 @@ const VendorList = ({
             videos: v.video_count,
             verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true,
             specializations: v.specializations,
-            location: v.business_address
+            location: v.business_address,
+            hasReviews: v.average_rating !== null,
+            rating: v.average_rating
         })));
 
         return sorted;

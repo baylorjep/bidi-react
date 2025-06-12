@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import VendorList from './VendorList';
 import '../../styles/VendorList.css';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +22,13 @@ const VendorListWithFilters = ({
     const [sortType, setSortType] = useState(sortOrder || 'recommended');
     const navigate = useNavigate();
 
+    // Update sortType when sortOrder prop changes
+    useEffect(() => {
+        if (sortOrder && sortOrder !== sortType) {
+            setSortType(sortOrder);
+        }
+    }, [sortOrder]);
+
     const formatBusinessName = (name) => {
         if (!name) return '';
         return name
@@ -39,18 +46,25 @@ const VendorListWithFilters = ({
         }
     };
 
+    const handleSortChange = (e) => {
+        const newSortType = e.target.value;
+        setSortType(newSortType);
+        // Reset to first page when sort changes
+        setCurrentPage(1);
+    };
+
     return (
         <div className="vendor-list-with-filters">
             <div className="sort-controls">
                 <select 
                     value={sortType} 
-                    onChange={(e) => setSortType(e.target.value)}
+                    onChange={handleSortChange}
                     className="sort-select"
                 >
                     <option value="recommended">Recommended</option>
                     <option value="rating">Highest Rated</option>
-                    <option value="base_price_low">Price: Low to High</option>
-                    <option value="base_price_high">Price: High to Low</option>
+                    <option value="base_price_low">Starting at: Low to High</option>
+                    <option value="base_price_high">Starting at: High to Low</option>
                 </select>
             </div>
 

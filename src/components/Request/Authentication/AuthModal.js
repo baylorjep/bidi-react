@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 // Update these import paths to be relative to the AuthModal location
 import SignIn from '../../../components/Profile/SignIn';
 import Signup from '../../../components/Profile/Signup';
+import { useNavigate } from 'react-router-dom';
 
 const AuthModal = ({ setIsModalOpen, onSuccess }) => {
     const [currentView, setCurrentView] = useState('options'); // 'options', 'signin', or 'signup'
+    const navigate = useNavigate();
 
     const handleClose = () => {
         setIsModalOpen(false);
+        navigate('/'); // Navigate to homepage
     };
 
     const renderContent = () => {
