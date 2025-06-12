@@ -1,70 +1,66 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../supabaseClient';
-import { GoogleReviewsResponse } from '../types/google-reviews';
+import { useState } from 'react';
+import { toast } from 'react-toastify';
 
-const CACHE_DURATION = 3600000; // 1 hour in milliseconds
-const reviewsCache = new Map<string, { data: GoogleReviewsResponse; timestamp: number }>();
+interface FetchReviewsResponse {
+  success: boolean;
+  message: string;
+  count: number;
+  error?: string;
+  details?: string;
+}
 
-export const useGoogleReviews = (businessId: string) => {
-  const [reviews, setReviews] = useState<GoogleReviewsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+export const useGoogleReviews = (businessProfileId: string) => {
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchReviews = useCallback(async (placeId: string) => {
-    try {
-      // Check cache first
-      const cachedData = reviewsCache.get(placeId);
-      if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
-        setReviews(cachedData.data);
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch(`/api/google-reviews?placeId=${placeId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch Google reviews');
-      }
-
-      const data: GoogleReviewsResponse = await response.json();
-      
-      // Update cache
-      reviewsCache.set(placeId, { data, timestamp: Date.now() });
-      
-      setReviews(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      setReviews(null);
-    } finally {
-      setLoading(false);
+  const fetchReviews = async () => {
+    if (!businessProfileId) {
+      setError('Business profile ID is required');
+      toast.error('Business profile ID is required');
+      return;
     }
-  }, []);
 
-  useEffect(() => {
-    const fetchBusinessData = async () => {
-      try {
-        const { data: businessData, error: businessError } = await supabase
-          .from('business_profiles')
-          .select('google_place_id, google_reviews_status')
-          .eq('id', businessId)
-          .single();
+    setIsLoading(true);
+    setError(null);
 
-        if (businessError) throw businessError;
+    try {
+      const response = await fetch('http://localhost:5000/api/google-places/fetch-reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ businessProfileId }),
+        credentials: 'include',
+      });
 
-        if (!businessData?.google_place_id || businessData.google_reviews_status !== 'approved') {
-          setLoading(false);
-          return;
+      const data: FetchReviewsResponse = await response.json();
+
+      if (data.success) {
+        toast.success(`Successfully fetched ${data.count} reviews`);
+        return data;
+      } else {
+        const errorMessage = data.error || 'Failed to fetch reviews';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        if (data.details) {
+          console.error('Review fetch error details:', data.details);
         }
-
-        await fetchReviews(businessData.google_place_id);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        setLoading(false);
+        return null;
       }
-    };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch reviews';
+      setError(errorMessage);
+      toast.error('Failed to fetch reviews. Please try again later.');
+      console.error('Error fetching reviews:', err);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchBusinessData();
-  }, [businessId, fetchReviews]);
-
-  return { reviews, loading, error };
+  return {
+    fetchReviews,
+    isLoading,
+    error,
+  };
 }; 

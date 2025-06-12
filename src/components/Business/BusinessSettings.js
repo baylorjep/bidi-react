@@ -15,6 +15,7 @@ import ProgressBar from 'react-bootstrap/ProgressBar';
 import { sendNotification, notificationTypes } from '../../utils/notifications';
 import { useGoogleBusinessReviews } from '../../hooks/useGoogleBusinessReviews.js';
 import { formatBusinessName } from '../../utils/formatBusinessName';
+import FetchReviewsButton from '../GoogleBusiness/FetchReviewsButton.js';
 
 const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [isVerified, setIsVerified] = useState(false);
@@ -791,6 +792,7 @@ useEffect(() => {
   const renderGoogleBusinessSection = () => {
     return (
       <div className="settings-section">
+        {/* 
         <div className="settings-header">
           <h3>Google Business Profile</h3>
           <div className="settings-status">
@@ -805,16 +807,8 @@ useEffect(() => {
             )}
           </div>
         </div>
-        <div className="settings-content">
-          <p>Connect your Google Business Profile to display reviews and build trust with potential clients.</p>
-          <button 
-            className="btn btn-primary"
-            onClick={() => setShowGoogleBusinessModal(true)}
-          >
-            Manage Google Business Profile
-          </button>
-        </div>
-      </div>
+        */}
+      </div> 
     );
   };
 
@@ -922,14 +916,21 @@ useEffect(() => {
     try {
       setGoogleBusinessProfile(prev => ({ ...prev, status: 'connecting', error: null }));
       
-      // Make request to get auth URL with the correct base URL
-      const response = await fetch('http://localhost:5000/api/google-places/business-profile/auth', {
+      // Get the current user's ID
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      // Make request to get auth URL with the business profile ID
+      const response = await fetch(`http://localhost:5000/api/google-places/business-profile/auth?businessProfileId=${currentUser.id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        credentials: 'include'
+        credentials: 'include',
+        mode: 'cors'
       });
 
       if (!response.ok) {
@@ -968,7 +969,12 @@ useEffect(() => {
 
       // Listen for message from popup
       const handleMessage = async (event) => {
-        if (event.origin !== window.location.origin) return;
+        // Allow messages from localhost:5000 and localhost:3000
+        const allowedOrigins = ['http://localhost:5000', 'http://localhost:3000'];
+        if (!allowedOrigins.includes(event.origin)) {
+          console.log('Rejected message from origin:', event.origin);
+          return;
+        }
         
         if (event.data.type === 'GOOGLE_BUSINESS_AUTH_SUCCESS') {
           const { accountId, locationId, businessName, location } = event.data;
@@ -984,21 +990,30 @@ useEffect(() => {
                 google_business_account_id: accountId,
                 google_reviews_status: 'connected'
               })
-              .eq('id', connectedAccountId);
+              .eq('id', currentUser.id);
 
             if (updateError) {
               throw new Error('Failed to save business profile information');
             }
 
-            setGoogleBusinessProfile({
-              isConnected: true,
-              businessName,
-              location,
-              status: 'connected',
-              error: null,
-              accountId,
-              locationId,
-            });
+            // Check connection status
+            const statusResponse = await fetch(`http://localhost:5000/api/google-places/business-profile/status?businessProfileId=${currentUser.id}`);
+            const statusData = await statusResponse.json();
+
+            if (statusData.connected) {
+              setGoogleBusinessProfile({
+                isConnected: true,
+                businessName,
+                location,
+                status: 'connected',
+                error: null,
+                accountId,
+                locationId,
+              });
+            } else {
+              throw new Error('Connection verification failed');
+            }
+
             window.removeEventListener('message', handleMessage);
           } catch (error) {
             setGoogleBusinessProfile(prev => ({
@@ -1015,6 +1030,10 @@ useEffect(() => {
             error: event.data.error,
           }));
           window.removeEventListener('message', handleMessage);
+        } else if (event.data.type === 'GOOGLE_BUSINESS_AUTH_RETRY') {
+          // Retry the connection process
+          window.removeEventListener('message', handleMessage);
+          handleConnectGoogleBusiness();
         }
       };
 

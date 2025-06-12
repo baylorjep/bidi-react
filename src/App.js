@@ -76,6 +76,8 @@ import VerificationApplication from "./components/Business/VerificationApplicati
 import VendorHomepage from "./components/VendorHomepage";
 import ContractTemplateEditor from "./components/Business/ContractTemplateEditor";
 import GoogleBusinessCallback from "./components/Business/GoogleBusinessCallback";
+import GoogleBusinessSuccess from './components/Business/GoogleBusinessSuccess';
+import GoogleBusinessError from './components/Business/GoogleBusinessError';
 
 // Misc Imports
 import Homepage from "./components/Homepage";
@@ -315,6 +317,8 @@ function AppContent() {
             path="/google-business-callback"
             element={<GoogleBusinessCallback />}
           />
+          <Route path="/business-profile/success" element={<GoogleBusinessSuccess />} />
+          <Route path="/business-profile/error" element={<GoogleBusinessError />} />
           {/* Dynamic URL for viewing portfolio */}
           <Route path="/portfolio/:businessId/:businessName" element={<Portfolio />} />
           <Route path="/portfolio/:businessId/:businessName/gallery" element={<Gallery />} />
