@@ -4,7 +4,7 @@ import { supabase } from "../../../supabaseClient";
 import "../../../styles/Portfolio.css";
 import EditProfileModal from "./EditProfileModal"; // Import modal component
 import ImageModal from "./ImageModal"; // Import the new ImageModal component
-import Modal from "react-modal"; // Import the modal library
+import Modal from "react-modal"; // Import the modal 
 import { convertHeicToJpeg } from "../../../utils/imageUtils";
 import LoadingSpinner from "../../LoadingSpinner"; // Import the loading spinner component
 import Slider from 'react-slick';
@@ -244,6 +244,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
         if (error || !user) {
           console.error("Error fetching user:", error || "No user found.");
+          setLoading(false);
           return;
         }
 
@@ -256,20 +257,33 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
         if (profileError || !profile) {
           console.error("Error fetching business profile:", profileError);
+          setLoading(false);
           return;
         }
 
         setBusinessId(profile.id); // Set the businessId
       } catch (err) {
         console.error("Error fetching businessId:", err);
+        setLoading(false);
       }
     };
 
-    fetchBusinessId();
+    if (!businessId) {
+      fetchBusinessId();
+    }
+  }, [businessId]);
+
+  useEffect(() => {
+    if (businessId) {
+      fetchBusinessData();
+    }
   }, [businessId]);
 
   const fetchBusinessData = async () => {
+    if (!businessId) return; // Don't fetch if no businessId
+
     try {
+      setLoading(true);
       // Fetch business profile
       const { data: businessProfile, error: businessError } = await supabase
         .from("business_profiles")
@@ -426,10 +440,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchBusinessData();
-  }, [businessId]);
 
   useEffect(() => {
     const convertImages = async () => {
@@ -1281,9 +1291,10 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                     <div className="vendor-profile-owner">Owner</div>
                   </div>
                   <div className="vendor-profile-right">
-                    <p className="vendor-profile-description">
-                      {business.story || "No vendor description available"}
-                    </p>
+                    <div 
+                      className="vendor-profile-description"
+                      dangerouslySetInnerHTML={{ __html: business.story || "No vendor description available" }}
+                    />
                   </div>
                   {isOwner && (
                     <button

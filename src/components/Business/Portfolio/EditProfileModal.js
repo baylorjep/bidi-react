@@ -174,8 +174,30 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
       const packagesToSave = Array.isArray(formData.packages) ? formData.packages : [];
 
       switch (initialData.currentSection) {
+        case 'business_info':
+          // Update business name and description
+          const { error: businessInfoError } = await supabase
+            .from('business_profiles')
+            .update({
+              business_name: formData.business_name,
+              business_description: formData.business_description
+            })
+            .eq('id', businessId);
+
+          if (businessInfoError) throw businessInfoError;
+          break;
+
         case 'business_details':
-          updates.business_address = formData.business_address;
+          // Update business address
+          const { error: addressError } = await supabase
+            .from('business_profiles')
+            .update({
+              business_address: formData.business_address
+            })
+            .eq('id', businessId);
+
+          if (addressError) throw addressError;
+
           // Save packages
           if (packagesToSave.length > 0) {
             // Delete existing packages
@@ -202,10 +224,38 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
           }
           break;
 
-        // ... rest of the switch cases ...
+        case 'profile':
+          // Update business owner and story
+          const { error: profileError } = await supabase
+            .from('business_profiles')
+            .update({
+              business_owner: formData.business_owner,
+              story: formData.story
+            })
+            .eq('id', businessId);
+
+          if (profileError) throw profileError;
+          break;
+
+        case 'specialties':
+          // Update specializations
+          const { error: specialtiesError } = await supabase
+            .from('business_profiles')
+            .update({
+              specializations: formData.specializations || []
+            })
+            .eq('id', businessId);
+
+          if (specialtiesError) throw specialtiesError;
+          break;
+
+        case 'portfolio':
+          // Portfolio changes are handled separately through media uploads
+          break;
       }
 
-      // ... rest of the function ...
+      // Close the modal after successful save
+      onClose();
     } catch (error) {
       console.error('Error saving changes:', error);
       alert('Failed to save changes. Please try again.');
@@ -1612,13 +1662,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
                         <ReactQuill
                           theme="snow"
                           value={pkg.description || ""}
-                          onChange={(content) => {
-                            // Use a debounced update for the description field
-                            const timeoutId = setTimeout(() => {
-                              handlePackageChange(packageIndex, 'description', content);
-                            }, 300);
-                            return () => clearTimeout(timeoutId);
-                          }}
+                          onChange={(content) => handlePackageChange(packageIndex, 'description', content)}
                           modules={quillModules}
                           formats={quillFormats}
                           className="package-description-editor"
