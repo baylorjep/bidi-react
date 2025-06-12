@@ -1662,13 +1662,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
                         <ReactQuill
                           theme="snow"
                           value={pkg.description || ""}
-                          onChange={(content) => {
-                            // Use a debounced update for the description field
-                            const timeoutId = setTimeout(() => {
-                              handlePackageChange(packageIndex, 'description', content);
-                            }, 300);
-                            return () => clearTimeout(timeoutId);
-                          }}
+                          onChange={(content) => handlePackageChange(packageIndex, 'description', content)}
                           modules={quillModules}
                           formats={quillFormats}
                           className="package-description-editor"
