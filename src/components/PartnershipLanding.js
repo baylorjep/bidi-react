@@ -38,6 +38,18 @@ const PartnershipLanding = () => {
         setPartner(data);
         sessionStorage.setItem('referralPartnerId', data.id);
 
+        // Increment the visit counter
+        const { error: updateError } = await supabase
+          .from('partners')
+          .update({ 
+            visit_count: (data.visit_count || 0) + 1 
+          })
+          .eq('id', partnerName);
+
+        if (updateError) {
+          console.error('Error updating visit count:', updateError);
+        }
+
         // Handle the logo URL
         if (data.logo_url) {
           // If it's a Supabase URL, use it directly
