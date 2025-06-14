@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import EmailCaptureModal from '../EmailCaptureModal/EmailCaptureModal';
 import { Helmet } from 'react-helmet';
 import { supabase } from '../../supabaseClient';
+import ArticleLayout from './ArticleLayout';
 
 // Import all article components
 import UtahPhotographyCostGuide from '../Article/UtahPhotographyCostGuide';
@@ -13,6 +14,9 @@ import WeddingFloristCostGuide from '../Article/WeddingFloristCostGuide';
 import WeddingDJCostGuide from '../Article/WeddingDJCostGuide';
 import WeddingHairMakeupCostGuide from '../Article/WeddingHairMakeupCostGuide';
 import UtahWeddingPlanningGuide from '../Article/UtahWeddingPlanningGuide';
+import UtahWeddingVideographerGuide from '../Article/UtahWeddingVideographerGuide';
+import UtahCateringCosts from '../Article/UtahCateringCosts';
+import UtahDJCosts from '../Article/UtahDJCosts';
 
 const articleComponents = {
     'utah-photography-cost-guide': UtahPhotographyCostGuide,
@@ -22,7 +26,10 @@ const articleComponents = {
     'wedding-florist-cost-guide': WeddingFloristCostGuide,
     'wedding-dj-cost-guide': WeddingDJCostGuide,
     'wedding-hair-makeup-cost-guide': WeddingHairMakeupCostGuide,
-    'utah-wedding-planning-guide': UtahWeddingPlanningGuide
+    'utah-wedding-planning-guide': UtahWeddingPlanningGuide,
+    'utah-wedding-videographer-guide': UtahWeddingVideographerGuide,
+    'utah-catering-costs': UtahCateringCosts,
+    'utah-dj-costs': UtahDJCosts
 };
 
 const ArticleDetail = () => {
@@ -83,14 +90,14 @@ const ArticleDetail = () => {
     if (!ArticleComponent) return null;
 
     return (
-        <div>
+        <ArticleLayout articleId={articleId}>
             <ArticleComponent />
             <EmailCaptureModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 onSubmit={handleEmailSubmit}
             />
-        </div>
+        </ArticleLayout>
     );
 };
 

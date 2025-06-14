@@ -546,7 +546,7 @@ const WeddingVibeQuiz = () => {
               }
             }}
           >
-            <div className="image-container">
+            <div className="image-container-wedding-vibe-quiz" style={{width:'100%',height:'100%',position:'relative'}}>
               {isLoading && (
                 <div className="loading-overlay">
                   <FaSpinner className="spinner" />

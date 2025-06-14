@@ -4,7 +4,6 @@ import './Articles.css';
 import djHero from '../../assets/articles/UtahDJ/pexels-elvir-novruzov-2147880849-31694643.jpg';
 import pricingChart from '../../assets/articles/UtahDJ/pexels-gaby-tenda-1075944-2123606.jpg';
 import equipment from '../../assets/articles/UtahDJ/pexels-stephendn-63703.jpg';
-import RelatedArticles from './RelatedArticles';
 
 
 const UtahDJCosts = () => {
@@ -483,7 +482,9 @@ const UtahDJCosts = () => {
                     Ready to get real quotes from Utah's top DJs? <a href="https://www.savewithbidi.com" className="article-reference">Bidi</a> connects you with local DJ professionals who can provide personalized bids for your specific event needs - completely free. Compare prices, read reviews, and find the perfect DJ for your budget and style.
                 </p>
 
-                <RelatedArticles currentArticle="utah-dj-costs" />
+                <p>
+                    Remember, your wedding DJ is more than just a music player - they're the conductor of your celebration's energy. Choose wisely, and you'll have a party that your guests will remember for years to come.
+                </p>
             </article>
         </div>
     );

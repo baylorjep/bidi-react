@@ -1,62 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Define all possible categories
-const categories = [
-    { id: 'photography', name: 'Photographer' },
-    { id: 'videography', name: 'Videographer' },
-    { id: 'florist', name: 'Florist' },
-    { id: 'catering', name: 'Caterer' },
-    { id: 'dj', name: 'DJ' },
-    { id: 'beauty', name: 'Hair and Makeup Artist' },
-    { id: 'wedding planner/coordinator', name: 'Wedding Planner' }
-];
-
-// Define types for each category
-const categoryTypes = {
-    photography: [
-        { id: 'wedding', name: 'Wedding' },
-        { id: 'engagement', name: 'Engagement' },
-        { id: 'event', name: 'Event' },
-        { id: 'family', name: 'Family' },
-        { id: 'portrait', name: 'Portrait' }
-    ],
-    videography: [
-        { id: 'wedding', name: 'Wedding' },
-        { id: 'engagement', name: 'Engagement' },
-        { id: 'event', name: 'Event' },
-        { id: 'commercial', name: 'Commercial' }
-    ],
-    florist: [
-        { id: 'wedding', name: 'Wedding' },
-        { id: 'event', name: 'Event' },
-        { id: 'arrangement', name: 'Arrangement' }
-    ],
-    catering: [
-        { id: 'wedding', name: 'Wedding' },
-        { id: 'corporate', name: 'Corporate' },
-        { id: 'event', name: 'Event' },
-        { id: 'private', name: 'Private Chef' }
-    ],
-    dj: [
-        { id: 'wedding', name: 'Wedding' },
-        { id: 'party', name: 'Party' },
-        { id: 'corporate', name: 'Corporate' },
-        { id: 'event', name: 'Event' }
-    ],
-    beauty: [
-        { id: 'wedding', name: 'Wedding' },
-        { id: 'event', name: 'Event' },
-        { id: 'photoshoot', name: 'Photoshoot' }
-    ],
-    'wedding-planner-coordinator': [
-        { id: 'full-service', name: 'Full Service' },
-        { id: 'partial-planning', name: 'Partial Planning' },
-        { id: 'day-of', name: 'Day of Coordination' },
-        { id: 'month-of', name: 'Month of Coordination' }
-    ]
-};
-
 // Define counties
 const counties = [
     { id: 'salt-lake-county', name: 'Salt Lake County' },
@@ -137,16 +81,10 @@ const cities = [
     { id: 'tremonton', name: 'Tremonton', county: 'box-elder-county' }
 ];
 
-const VendorSearch = ({ onLocationPage }) => {
+const VendorSearch = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState('');
-    const [selectedType, setSelectedType] = useState('');
-    const [selectedCounty, setSelectedCounty] = useState('');
-    const [selectedCity, setSelectedCity] = useState('');
-    const [filteredCities, setFilteredCities] = useState([]);
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
-    const location = window.location.pathname;
 
     // Handle clicks outside the dropdown to close it
     useEffect(() => {
@@ -160,61 +98,8 @@ const VendorSearch = ({ onLocationPage }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Update filtered cities when county changes
-    useEffect(() => {
-        if (selectedCounty) {
-            setFilteredCities(cities.filter(city => city.county === selectedCounty));
-            setSelectedCity(''); // Reset city when county changes
-        } else {
-            setFilteredCities([]);
-            setSelectedCity('');
-        }
-    }, [selectedCounty]);
-
-    // Reset type when category changes
-    const handleCategoryChange = (e) => {
-        const newCategory = e.target.value;
-        setSelectedCategory(newCategory);
-        setSelectedType(''); // Reset type when category changes
-    };
-
-    const handleSearch = () => {
-        const segments = [];
-
-        // Build URL path based on selected filters
-        if (selectedType && selectedCategory) {
-            // If both type and category are selected, type comes first
-            segments.push(selectedType);
-            // Replace spaces and slashes with hyphens for the category
-            segments.push(selectedCategory.replace(/[\s\/]/g, '-'));
-        } else if (selectedCategory) {
-            // If only category is selected
-            segments.push(selectedCategory.replace(/[\s\/]/g, '-'));
-        }
-
-        // Add location (city takes precedence over county)
-        if (selectedCity) {
-            segments.push(selectedCity);
-        } else if (selectedCounty) {
-            segments.push(selectedCounty);
-        }
-
-        // Construct the URL
-        const path = segments.length > 0 ? `/${segments.join('/')}` : '/vendors';
-        
-        // Navigate with state information
-        navigate(path, {
-            state: {
-                requestId: selectedCategory,
-                table: `${selectedCategory}_requests`,
-                categories: [{
-                    id: selectedCategory,
-                    name: categories.find(cat => cat.id === selectedCategory)?.name || selectedCategory,
-                    table: `${selectedCategory}_requests`
-                }]
-            }
-        });
-        
+    const handleLocationSearch = () => {
+        navigate('/location-based-vendors');
         setIsOpen(false);
     };
 
@@ -231,81 +116,9 @@ const VendorSearch = ({ onLocationPage }) => {
 
             {isOpen && (
                 <div className="search-dropdown">
-                    {/* Category Selection */}
-                    <div className="search-section">
-                        <label>Category</label>
-                        <select 
-                            value={selectedCategory} 
-                            onChange={handleCategoryChange}
-                            className="search-select"
-                        >
-                            <option value="">Select Category</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>
-                                    {cat.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Type Selection - Only show if category is selected */}
-                    {selectedCategory && (
-                        <div className="search-section">
-                            <label>Type</label>
-                            <select 
-                                value={selectedType} 
-                                onChange={(e) => setSelectedType(e.target.value)}
-                                className="search-select"
-                            >
-                                <option value="">Select Type</option>
-                                {categoryTypes[selectedCategory]?.map(type => (
-                                    <option key={type.id} value={type.id}>
-                                        {type.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
-
-                    {/* County Selection */}
-                    <div className="search-section">
-                        <label>County</label>
-                        <select 
-                            value={selectedCounty} 
-                            onChange={(e) => setSelectedCounty(e.target.value)}
-                            className="search-select"
-                        >
-                            <option value="">Select County</option>
-                            {counties.map(county => (
-                                <option key={county.id} value={county.id}>
-                                    {county.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* City Selection - Only show if county is selected */}
-                    {selectedCounty && (
-                        <div className="search-section">
-                            <label>City</label>
-                            <select 
-                                value={selectedCity} 
-                                onChange={(e) => setSelectedCity(e.target.value)}
-                                className="search-select"
-                            >
-                                <option value="">Select City</option>
-                                {filteredCities.map(city => (
-                                    <option key={city.id} value={city.id}>
-                                        {city.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
-
                     {/* Search Buttons */}
-                    <button className="search-submit" onClick={handleSearch}>
-                        Search Vendors
+                    <button className="search-submit" onClick={handleLocationSearch}>
+                        <i className="fas fa-map-marker-alt"></i> Search by Location
                     </button>
                     <button 
                         className="search-submit" 
@@ -315,7 +128,7 @@ const VendorSearch = ({ onLocationPage }) => {
                         }} 
                         onClick={handleViewAll}
                     >
-                        View All Vendors
+                        <i className="fas fa-th-list"></i> View All Vendors
                     </button>
                 </div>
             )}

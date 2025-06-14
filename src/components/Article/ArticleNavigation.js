@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom'; // Import Link from react-router-dom
 import './Articles.css'; // Import the CSS file
 import Helmet from 'react-helmet'; // Import Helmet for SEO
+import Ads from '../Ads/Ads'; // Import Ads component
 import weddingPlanning from '../../assets/articles/weddingplanning.jpg'
 import florist from '../../assets/articles/Florist/pexels-digitle-pixels-1775950082-30891131.jpg'
 import catering from '../../assets/articles/Catering/pexels-fu-zhichao-176355-587741.jpg'
@@ -121,77 +122,82 @@ const Articles = () => {
                 <meta name="description" content="Explore our collection of articles on wedding photography, including cost guides, budgeting tips, and insights from real couples." />
                 <meta name="keywords" content="wedding photography, articles, guides, budgeting, wedding planning" />
             </Helmet>
-            <h1 className="articles-navigation-title">Wedding Guides</h1>
 
-            {/* Featured Guide Section - now with better mobile layout */}
-            <div className="featured-guide">
-                <Link to="/wedding-market-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div className="featured-guide-content">
-                        <div className="featured-guide-text">
-                            <span className="featured-label">NEW & EXCLUSIVE</span>
-                            <h2 className="featured-title">2024 State of Utah Wedding Markets Guide</h2>
-                            <p className="featured-description">
-                                Get exclusive data on real wedding costs in Utah based on thousands of actual vendor bids. 
-                                Compare prices across different regions and vendor categories.
-                            </p>
-                            <div className="button-container">
-                                <button className="download-guide-button">Download Free Guide</button>
-                            </div>
-                        </div>
-                        <div className="featured-guide-image">
-                            <img 
-                                src={weddingMarketGuide} 
-                                alt="State of Utah Wedding Markets Guide" 
-                            />
-                        </div>
-                    </div>
-                </Link>
-            </div>
+            <div className="articles-layout">
+                <div className="articles-main">
+                    <h1 className="articles-navigation-title">Wedding Guides</h1>
 
-            <div className="interactive-feature">
-                <Link to="/wedding-vibe-quiz" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div className="interactive-feature-content">
-                        <div className="interactive-feature-text">
-                            <span className="featured-label">INTERACTIVE</span>
-                            <h2 className="featured-title">What's Your Wedding Style?</h2>
-                            <p className="featured-description">
-                                Take our quick quiz to discover your perfect wedding aesthetic and get matched with vendors who match your vision. 
-                                From classic elegance to modern chic, find your unique style in minutes!
-                            </p>
-                            <div className="button-container">
-                                <button className="take-quiz-button">Take the Quiz</button>
-                            </div>
-                        </div>
-                        <div className="interactive-feature-image">
-                            <img 
-                                src={rusticWedding}
-                                alt="Wedding Style Quiz" 
-                            />
-                        </div>
-                    </div>
-                </Link>
-            </div>
-
-            <h2 className="section-title">All Guides</h2>
-            <ul className="articles-navigation-list">
-                {sortedArticles.map((article) => (
-                    <li key={article.id} className="article-navigation-item">
-                        <Link to={`/articles/${article.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                            <div className="article-preview">
-                                <img 
-                                    src={article.image} 
-                                    alt={article.title} 
-                                    className="article-image" 
-                                />
-                                <div className="article-content">
-                                    <h2>{article.title}</h2>
-                                    <p>{article.description}</p>
+                    {/* Featured Guide Section */}
+                    <div className="featured-guide">
+                        <Link to="/wedding-market-guide" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <div className="featured-guide-content">
+                                <div className="featured-guide-text">
+                                    <span className="featured-label">NEW & EXCLUSIVE</span>
+                                    <h2 className="featured-title">2024 State of Utah Wedding Markets Guide</h2>
+                                    <p className="featured-description">
+                                        Get exclusive data on real wedding costs in Utah based on thousands of actual vendor bids. 
+                                        Compare prices across different regions and vendor categories.
+                                    </p>
+                                    <div className="button-container">
+                                        <button className="download-guide-button">Download Free Guide</button>
+                                    </div>
+                                </div>
+                                <div className="featured-guide-image">
+                                    <img 
+                                        src={weddingMarketGuide} 
+                                        alt="State of Utah Wedding Markets Guide" 
+                                    />
                                 </div>
                             </div>
                         </Link>
-                    </li>
-                ))}
-            </ul>
+                    </div>
+
+                    <div className="interactive-feature">
+                        <Link to="/wedding-vibe-quiz" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <div className="interactive-feature-content">
+                                <div className="interactive-feature-text">
+                                    <span className="featured-label">INTERACTIVE</span>
+                                    <h2 className="featured-title">What's Your Wedding Style?</h2>
+                                    <p className="featured-description">
+                                        Take our quick quiz to discover your perfect wedding aesthetic and get matched with vendors who match your vision. 
+                                        From classic elegance to modern chic, find your unique style in minutes!
+                                    </p>
+                                    <div className="button-container">
+                                        <button className="take-quiz-button">Take the Quiz</button>
+                                    </div>
+                                </div>
+                                <div className="interactive-feature-image">
+                                    <img 
+                                        src={rusticWedding}
+                                        alt="Wedding Style Quiz" 
+                                    />
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+
+                    <h2 className="section-title">All Guides</h2>
+                    <ul className="articles-navigation-list">
+                        {sortedArticles.map((article) => (
+                            <li key={article.id} className="article-navigation-item">
+                                <Link to={`/articles/${article.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <div className="article-preview">
+                                        <img 
+                                            src={article.image} 
+                                            alt={article.title} 
+                                            className="article-image" 
+                                        />
+                                        <div className="article-content">
+                                            <h2>{article.title}</h2>
+                                            <p>{article.description}</p>
+                                        </div>
+                                    </div>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
         </div>
     );
 };

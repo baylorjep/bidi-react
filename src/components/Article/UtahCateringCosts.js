@@ -5,7 +5,9 @@ import cateringHero from '../../assets/articles/Utah Catering/utah_catering_timp
 import regionalPricing from '../../assets/articles/Utah Catering/regional-pricing.jpg';
 import serviceStyles from '../../assets/articles/Utah Catering/pexels-ibrahimboran-903400.jpg';
 import hiddenCosts from '../../assets/articles/Utah Catering/pexels-angel-ayala-321556-28976215.jpg';
-import RelatedArticles from './RelatedArticles';
+import ArticleLayout from './ArticleLayout';
+import ArticleNavigation from './ArticleNavigation';
+import Ads from '../Ads/Ads';
 
 const UtahCateringCosts = () => {
     return (
@@ -440,7 +442,9 @@ const UtahCateringCosts = () => {
                     Ready to get real quotes from Utah's top caterers? <a href="https://www.savewithbidi.com" className="article-reference">Bidi</a> connects you with local catering professionals who can provide personalized bids for your specific event needs - completely free. Compare prices, read reviews, and find the perfect caterer for your budget and style.
                 </p>
 
-                <RelatedArticles currentArticle="utah-catering-costs" />
+                <p>
+                    Remember, great food is essential for a memorable wedding celebration. With careful planning and the right vendor, you can create an unforgettable dining experience for your guests.
+                </p>
             </article>
         </div>
     );

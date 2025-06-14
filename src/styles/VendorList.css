@@ -175,7 +175,6 @@
 .portfolio-images {
   width: 330px;
   position: relative;
-  overflow: hidden; /* Add this to prevent overflow */
 }
 
 .portfolio-images .slick-slider {
@@ -576,7 +575,7 @@
   cursor: pointer;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1500px) {
   .vendor-list {
     width: 100%;
     padding: 15px;

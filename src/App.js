@@ -143,6 +143,7 @@ import VendorSelection from "./components/Request/VendorSelection";
 import WrongWithWeddings from "./components/Article/WrongWithWeddings";
 import ErrorPage from "./components/ErrorPage";
 import PartnershipLanding from "./components/PartnershipLanding";
+import NoGhostingGuarantee from "./components/NoGhostingGuarantee";
 
 // Create a wrapper component to use useLocation
 function AppContent() {
@@ -208,6 +209,7 @@ function AppContent() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-use" element={<TermsOfUse />} />
           <Route path="/about" element={<AboutAndContact />} />
+          <Route path="/no-ghosting-guarantee" element={<NoGhostingGuarantee />} />
           {/* Bid Routes */}
           <Route path="/submit-bid/:requestId" element={<SubmitBid />} />
           <Route path="/bid-accepted" element={<BidAccepted />} />
@@ -375,15 +377,6 @@ function AppContent() {
           {/* Articles Route */}
           <Route path="/articles" element={<ArticleNavigation />} />
           <Route path="/articles/:articleId" element={<ArticleDetail />} />
-          <Route
-            path="/articles/utah-wedding-videographer-guide"
-            element={<UtahWeddingVideographerGuide />}
-          />
-          <Route
-            path="/articles/utah-catering-costs"
-            element={<UtahCateringCosts />}
-          />
-          <Route path="/articles/utah-dj-costs" element={<UtahDJCosts />} />
           <Route
             path="/articles/wedding-market-guide"
             element={<WeddingMarketGuide />}

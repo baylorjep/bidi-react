@@ -1,7 +1,6 @@
 import React from 'react';
 import './Articles.css';
 import Helmet from 'react-helmet';
-import RelatedArticles from './RelatedArticles';
 
 const UtahWeddingVideographerGuide = () => {
     return (
@@ -217,8 +216,9 @@ const UtahWeddingVideographerGuide = () => {
             
             <p>Through <a href="https://savewithbidi.com" target="_blank" rel="noopener noreferrer">Bidi</a>, you can connect with talented Utah videographers who match your style and budget. Our platform simplifies the process of finding and comparing qualified professionals, helping you make an informed decision for your special day.</p>
 
-
-            <RelatedArticles currentArticle="utah-videographer" />
+            <p>
+                Remember, your wedding video is a lasting memory of your special day. Choose wisely, plan carefully, and you'll have a beautiful keepsake that captures all the moments that matter most.
+            </p>
         </article>
     );
 };

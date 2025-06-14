@@ -447,3 +447,260 @@ h1 {
     max-width: 800px;
     padding: 0 20px;
 }
+
+/* Layout Structure */
+.vendors-layout {
+    display: flex;
+    gap: 24px;
+    padding: 0 20px;
+    width: 100%;
+    margin: 0 auto;
+    max-width: 1600px;
+}
+
+@media screen and (max-width: 768px) {
+    .vendors-layout {
+        flex-direction: column;
+        padding: 0 16px;
+        gap: 16px;
+    }
+
+    .vendors-main {
+        width: 100%;
+        padding: 0;
+    }
+
+    .ad-space {
+        width: 100%;
+        position: static;
+        margin-top: 24px;
+        padding: 0;
+    }
+
+    .ad-container {
+        width: 100%;
+    }
+
+    .ad-card {
+        max-width: 100%;
+        margin-bottom: 16px;
+    }
+
+    .filters-container-SEO {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 0;
+        margin: 12px 0;
+    }
+
+    .filter-content-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+    }
+
+    .filter-content.open {
+        max-height: 75vh;
+    }
+
+    .filter-button-SEO {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        border-radius: 8px;
+        margin: 0;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
+
+    .filter-search {
+        padding: 12px;
+        font-size: 0.95rem;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        border: 1px solid #e0e0e0;
+    }
+
+    .reset-filter-button {
+        padding: 4px 10px;
+        font-size: 1rem;
+    }
+
+    .filter-accordion.active .filter-header {
+        background-color: #f8f9fa;
+    }
+
+    .dropdown-arrow {
+        font-size: 1rem;
+        color: #666;
+    }
+
+    .breadcrumb-container {
+        padding: 8px 16px;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        padding: 0 16px;
+        margin: 16px 0 12px;
+    }
+
+    .location-description {
+        font-size: 1rem;
+        padding: 0 16px;
+        margin-bottom: 16px;
+    }
+}
+
+/* Additional mobile refinements for smaller screens */
+@media screen and (max-width: 480px) {
+    .vendors-layout {
+        padding: 0 12px;
+    }
+
+    .filters-container-SEO {
+        padding: 0;
+        margin: 8px 0;
+    }
+
+    .filter-header {
+        padding: 10px 14px;
+    }
+
+    .filter-title {
+        font-size: 0.9rem;
+    }
+
+    .filter-button-SEO {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    .filter-content.open {
+        padding: 12px;
+    }
+
+    .filter-search {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .page-title {
+        font-size: 1.3rem;
+        padding: 0 12px;
+    }
+
+    .location-description {
+        font-size: 0.9rem;
+        padding: 0 12px;
+    }
+}
+
+/* Main Content */
+.vendors-main {
+    flex: 1;
+    min-width: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Ad Space */
+.ad-space {
+    flex-shrink: 0;
+    position: sticky;
+    top: 24px;
+    height: fit-content;
+    align-self: flex-start;
+}
+
+@media screen and (max-width: 768px) {
+    .ad-space {
+        width: 100%;
+        position: static;
+        margin-top: 32px;
+        padding: 0 16px;
+    }
+}
+
+.ad-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+.ad-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #111827;
+    font-family: Outfit, sans-serif;
+}
+
+.ad-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #4B5563;
+    margin-bottom: 20px;
+}
+
+.ad-text-center {
+    text-align: center;
+}
+
+/* Ad Button */
+.ad-button {
+    background-color: #ae18ed;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s ease;
+    font-family: Outfit, sans-serif;
+}
+
+.ad-button:hover {
+    background-color: #8b12b9;
+}
+
+/* Savings Amount */
+.savings-amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: #ae18ed;
+    margin-bottom: 16px;
+    text-align: center;
+    font-family: Outfit, sans-serif;
+}
+
+/* Guarantee List */
+.guarantee-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.guarantee-item {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.guarantee-item:last-child {
+    margin-bottom: 0;
+}
+
+.guarantee-check {
+    color: #ae18ed;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.guarantee-text {
+    color: #4B5563;
+}

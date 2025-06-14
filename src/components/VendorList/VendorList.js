@@ -142,7 +142,8 @@ const VendorList = ({
     customButtonText = "Get a Tailored Bid",
     showSelectionButton = false,
     selectedCity,
-    selectedCounty
+    selectedCounty,
+    searchQuery = '' // Add searchQuery prop with default empty string
 }) => {
     const [vendors, setVendors] = useState([]);  // Initialize as empty array
     const [loading, setLoading] = useState(true);
@@ -257,7 +258,7 @@ const VendorList = ({
         if (!initialVendors || initialVendors.length === 0) {
             fetchVendors();
         }
-    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, selectedCounty, selectedCity]);
+    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, selectedCounty, selectedCity, searchQuery]);
 
     // Add effect to check when all vendors are loaded
     useEffect(() => {
@@ -381,6 +382,11 @@ const VendorList = ({
 
             if (selectedCategory) {
                 query = query.contains('business_category', [selectedCategory]);
+            }
+
+            // Add search query filter
+            if (searchQuery) {
+                query = query.ilike('business_name', `%${searchQuery}%`);
             }
 
             const { data: allVendorData, error: vendorError } = await query;
@@ -747,7 +753,9 @@ const VendorList = ({
                     content: '"→"'
                 }}
             >
-                <span style={{ color: '#fff', fontSize: '20px' }}>→</span>
+                <span style={{ color: '#fff', fontSize: '20px' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="m9 18 6-6-6-6"/></svg>
+                </span>
             </button>
         );
     }
@@ -776,7 +784,9 @@ const VendorList = ({
                     zIndex: 2
                 }}
             >
-                <span style={{ color: '#fff', fontSize: '20px' }}>←</span>
+                <span style={{ color: '#fff', fontSize: '20px' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left"><path d="m15 18-6-6 6-6"/></svg>
+                </span>
             </button>
         );
     }

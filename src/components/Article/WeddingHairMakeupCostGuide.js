@@ -2,7 +2,6 @@ import React from 'react';
 import './Articles.css';
 import { Helmet } from 'react-helmet';
 import HairStylist from '../../assets/articles/WeddingHairStylist/pexels-enginakyurt-3065096.jpg';
-import RelatedArticles from './RelatedArticles';
 
 const WeddingHairMakeupCostGuide = () => {
     return (
@@ -288,7 +287,10 @@ const WeddingHairMakeupCostGuide = () => {
             <p>
                 Stop searching endless websites and scrolling through reviews. Let <a target="_blank" rel="noopener noreferrer" href="https://savewithbidi.com">Bidi</a> find your perfect hair stylist match today. Your wedding memories deserve nothing less than the best, and that starts with the right person holding the hairspray.
             </p>
-            <RelatedArticles currentArticle="hair-makeup" />
+
+            <p>
+                Remember, your wedding day beauty look is an investment in your confidence and comfort. Choose wisely, plan ahead, and you'll look and feel your absolute best on your special day.
+            </p>
         </article>
     );
 };

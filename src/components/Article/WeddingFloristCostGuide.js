@@ -2,7 +2,6 @@ import React from 'react';
 import './Articles.css';
 import Helmet from 'react-helmet';
 import florist from '../../assets/articles/Florist/pexels-digitle-pixels-1775950082-30891131.jpg'
-import RelatedArticles from './RelatedArticles';
 
 const WeddingFloristCostGuide = () => {
     return (
@@ -267,8 +266,6 @@ const WeddingFloristCostGuide = () => {
             <p>
                 Remember - stunning wedding flowers don't always need premium prices. They just need your vision, some creative thinking, and the right florist to bring it all together.
             </p>
-
-            <RelatedArticles currentArticle="florist" />
         </article>
     );
 };

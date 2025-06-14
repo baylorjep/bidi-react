@@ -78,10 +78,6 @@
     text-align: left;
 } 
 
-.article-container {
-    padding: 20px 20%; 
-}
-
 .article-container-image { 
   width: 100%;
   height: 100%;
@@ -893,6 +889,8 @@ td {
 .related-articles h2 {
     text-align: center;
     margin-bottom: 30px;
+    font-weight: 700;
+    font-family: Outfit;
 }
 
 .related-articles-grid {
@@ -1025,6 +1023,108 @@ td {
     .interactive-feature-image {
         max-width: 100%;
     }
+}
+
+.articles-layout {
+    display: flex;
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.articles-main {
+    flex: 1;
+    min-width: 0; /* Prevents flex item from overflowing */
+}
+
+.articles-ads {
+    width: 350px;
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+    align-self: flex-start;
+}
+
+/* Responsive styles */
+@media (max-width: 1024px) {
+    .articles-layout {
+        flex-direction: column;
+    }
+
+    .articles-ads {
+        width: 100%;
+        position: static;
+    }
+}
+
+/* Article Layout Styles */
+.article-layout {
+    display: flex;
+    gap: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.article-main {
+    flex: 1;
+    min-width: 0; /* Prevents flex item from overflowing */
+}
+
+.article-ads {
+    width: 300px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+    .article-layout {
+        flex-direction: column;
+    }
+
+    .article-ads {
+        width: 100%;
+        position: static;
+    }
+}
+
+.contextual-ad {
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #dee2e6;
+}
+
+.contextual-ad h3 {
+    color: #212529;
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.contextual-ad p {
+    color: #495057;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.contextual-ad .cta-button-contextual-ad {
+    background-color: #f247d1;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: 100%;
+}
+
+.contextual-ad .cta-button-contextual-ad:hover {
+    background-color: #bc37a2;
 }
 
 

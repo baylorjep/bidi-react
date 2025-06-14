@@ -287,17 +287,6 @@
     overflow: hidden;
 }
 
-.mission-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(to right, #A328F4, #FF6B6B);
-    border-radius: 4px 4px 0 0;
-}
-
 .mission-title {
     font-size: 2.8rem;
     text-align: center;
@@ -369,27 +358,7 @@
     box-shadow: 0 8px 30px rgba(163, 40, 244, 0.15);
 }
 
-.value-prop-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(to bottom, #A328F4, #FF6B6B);
-    border-radius: 4px;
-}
 
-.value-prop-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(to right, #A328F4, #FF6B6B);
-    border-radius: 4px;
-}
 
 .value-prop-title {
     font-size: 1.6rem;
@@ -400,21 +369,6 @@
     position: relative;
     display: flex;
     align-items: center;
-}
-
-.value-prop-title::before {
-    content: '';
-    position: absolute;
-    left: -1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 2.5rem;
-    height: 2.5rem;
-    background-size: contain;
-    background-repeat: no-repeat;
-    opacity: 0.25;
-    filter: drop-shadow(0 2px 4px rgba(163, 40, 244, 0.2));
-    z-index: 1;
 }
 
 .value-prop-card:first-child .value-prop-title::before {

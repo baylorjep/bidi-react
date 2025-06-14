@@ -2,7 +2,6 @@ import React from 'react';
 import './Articles.css'
 import Helmet from 'react-helmet';
 import catering from '../../assets/articles/Catering/pexels-fu-zhichao-176355-587741.jpg'
-import RelatedArticles from './RelatedArticles';
 
 const WeddingCateringCostGuide = () => {
     return (
@@ -168,7 +167,7 @@ const WeddingCateringCostGuide = () => {
                 While traditional catering still dominates the wedding scene, alternative options like food trucks and virtual catering services offer creative solutions that might better match your vision and budget. Regardless of which path you choose, understanding the full scope of expenses - from service charges to equipment rentals - helps prevent unwanted surprises.
             </p>
             <p>
-                Remember that investing time in thorough research and careful planning typically results in better value for your catering budget. Armed with the right information and tools, you can confidently choose a catering solution that delivers both the experience and value you desire for your special day.
+                Remember, great food is a cornerstone of any memorable wedding celebration. Plan carefully, choose wisely, and your guests will leave with full hearts and satisfied appetites.
             </p>
             <h2>References</h2>
             <p>
@@ -179,7 +178,6 @@ const WeddingCateringCostGuide = () => {
                 <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://loverly.com/planning/budget/wedding-catering-budget-breakdown">Loverly - Wedding Catering Budget Breakdown</a><br />
                 <a target="_blank" rel="noopener noreferrer nofollow" className="link" href="https://platinumbanquet.com/blog/wedding-planning-apps/">Platinum Banquet - Wedding Planning Apps Guide</a>
             </p>
-            <RelatedArticles currentArticle="catering" />
         </article>
     );
 };

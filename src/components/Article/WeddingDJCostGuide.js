@@ -1,7 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import './Articles.css';
-import RelatedArticles from './RelatedArticles';
 
 const WeddingDJCostGuide = () => {
     return (
@@ -307,8 +306,11 @@ const WeddingDJCostGuide = () => {
 
                 <h2>Conclusion</h2>
                 <p>Finding the right wedding DJ involves careful consideration of costs, experience, and services offered. Ready to find the perfect DJ for your wedding? Let <a target="_blank" rel="noopener noreferrer" href="https://savewithbidi.com">Bidi</a> help you compare local DJs and get accurate pricing for your special day. Our platform makes it easy to find experienced professionals within your budget.</p>
+
+                <p>
+                    Remember, your wedding DJ is more than just a music player - they're the conductor of your celebration's energy. Choose wisely, and you'll have a party that your guests will remember for years to come.
+                </p>
             </div>
-            <RelatedArticles currentArticle="dj" />
         </article>
     );
 };

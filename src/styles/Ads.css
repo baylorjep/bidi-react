@@ -1,0 +1,135 @@
+.ad-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+width: 100%;
+}
+
+.ad-card {
+    background-color: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E5E7EB;
+    width: 100%;
+    max-width: 300px;
+}
+
+@media (max-width: 768px) {
+    .ad-card {
+        max-width: 100%;
+    }
+}
+
+.ad-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #111827;
+    font-family: Outfit, sans-serif;
+}
+
+.ad-title span {
+    position: relative;
+    display: inline-block;
+}
+
+.ad-title span::before {
+    content: '';
+    position: absolute;
+    top: -15%;
+    left: -15%;
+    right: -15%;
+    bottom: -15%;
+    border: 3px solid var(--primary-color);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.ad-title span::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -15%;
+    right: -15%;
+    height: 3px;
+    background: var(--primary-color);
+    transform: rotate(45deg);
+    z-index: 1;
+}
+
+.ad-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #4B5563;
+    margin-bottom: 20px;
+}
+
+.ad-text-center {
+    text-align: center;
+}
+
+.ad-button {
+    background-color: #ae18ed;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s ease;
+    font-family: Outfit, sans-serif;
+}
+
+.ad-button:hover {
+    background-color: #8b12b9;
+}
+
+.savings-amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: #ae18ed;
+    margin-bottom: 16px;
+    text-align: center;
+    font-family: Outfit, sans-serif;
+}
+
+.guarantee-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.guarantee-item {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.guarantee-item:last-child {
+    margin-bottom: 0;
+}
+
+.guarantee-check {
+    color: #ae18ed;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.guarantee-text {
+    color: #4B5563;
+}
+
+@media screen and (max-width: 768px) {
+    .ad-container {
+        gap: 16px;
+    }
+
+    .ad-card {
+        max-width: 100%;
+        margin-bottom: 16px;
+    }
+} 

@@ -5,7 +5,6 @@ import decision from '../../assets/articles/Utah Photography/Making a Decision.j
 import photographyBudget from '../../assets/articles/Utah Photography/photography budget.jpg';
 import question from '../../assets/articles/Utah Photography/Question.jpg';
 import style from '../../assets/articles/Utah Photography/Style Types.jpg';
-import RelatedArticles from './RelatedArticles';
 
 const UtahPhotographyCostGuide = () => {
     return (
@@ -255,7 +254,9 @@ const UtahPhotographyCostGuide = () => {
                     [22] - <a href="https://taileephotography.com/utah-photography-pricing" target="_blank" rel="noopener noreferrer">Utah Wedding Photography Pricing</a>
                 </p>
 
-                <RelatedArticles currentArticle="utah-photographer" />
+                <p>
+                    Remember, your wedding photos are a lasting memory of your special day. Choose wisely, plan carefully, and you'll have beautiful images that capture all the moments that matter most.
+                </p>
             </article>
         </div>
     );

@@ -11,7 +11,6 @@ import leJardin from '../../assets/articles/Utah Wedding Planning/Le Jardin.jpg'
 import weddingTeam from '../../assets/articles/Utah Wedding Planning/Wedding Team.jpg'
 import summer from '../../assets/articles/Utah Wedding Planning/summer.jpg'
 import winter from '../../assets/articles/Utah Wedding Planning/winter.jpg'
-import RelatedArticles from './RelatedArticles';
 
 const UtahWeddingPlanningGuide = () => {
     return (
@@ -355,8 +354,6 @@ const UtahWeddingPlanningGuide = () => {
             <p>
                 Your dream Utah wedding awaits - start planning early, stay organized, and trust experienced professionals to guide your journey toward a memorable celebration that reflects your unique vision and values.
             </p>
-
-            <RelatedArticles currentArticle="planning" />
         </article>
     );
 };

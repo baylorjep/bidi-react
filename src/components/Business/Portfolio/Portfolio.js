@@ -270,7 +270,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
           zIndex: 2
         }}
       >
-        <span style={{ color: '#fff', fontSize: '20px' }}>→</span>
+        <span style={{ color: '#fff', fontSize: '20px' }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="m9 18 6-6-6-6"/></svg>
+        </span>
       </button>
     );
   }
@@ -299,7 +301,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
           zIndex: 2
         }}
       >
-        <span style={{ color: '#fff', fontSize: '20px' }}>←</span>
+        <span style={{ color: '#fff', fontSize: '20px' }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left"><path d="m15 18-6-6 6-6"/></svg>
+        </span>
       </button>
     );
   }
@@ -1176,19 +1180,19 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 {[...portfolioVideos, ...portfolioPics]
                   .slice(1, 5) // Show up to 4 more items (total of 5 including the first one)
                   .map((mediaItem, index) => {
-                    const isVideo = mediaItem.photo_type === 'video';
+                    const isVideo = portfolioVideos.includes(mediaItem);
                     return isVideo ? (
                       <video
                         key={index}
-                        src={mediaItem.photo_url}
+                        src={mediaItem}
                         className="portfolio-image-portfolio"
-                        poster={`${mediaItem.photo_url}?thumb`}
+                        poster={`${mediaItem}?thumb`}
                         preload="metadata"
                         muted
                         autoPlay
                         loop
                         playsInline
-                        onClick={() => handleImageClick({ url: mediaItem.photo_url, isVideo: true })}
+                        onClick={() => handleImageClick({ url: mediaItem, isVideo: true })}
                         style={{ cursor: 'pointer' }}
                       >
                         Your browser does not support the video tag.
@@ -1196,20 +1200,14 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                     ) : (
                       <img
                         key={index}
-                        src={mediaItem.photo_url}
+                        src={mediaItem}
                         alt={`Portfolio ${index}`}
                         className="portfolio-image-portfolio"
-                        onClick={() => handleImageClick({ url: mediaItem.photo_url, isVideo: false })}
+                        onClick={() => handleImageClick({ url: mediaItem, isVideo: false })}
                         style={{ cursor: 'pointer' }}
                       />
                     );
                   })}
-                <button
-                  className="see-all-button"
-                  onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
-                >
-                  View Gallery
-                </button>
               </div>
             )}
 
