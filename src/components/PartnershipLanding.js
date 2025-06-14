@@ -38,12 +38,22 @@ const PartnershipLanding = () => {
         setPartner(data);
         sessionStorage.setItem('referralPartnerId', data.id);
 
-        // Dynamically import the partner logo
-        try {
-          const logoModule = await import(`../assets/Partnership Logos/${data.logo_url.split('/').pop()}`);
-          setPartnerLogo(logoModule.default);
-        } catch (error) {
-          console.error('Error loading partner logo:', error);
+        // Handle the logo URL
+        if (data.logo_url) {
+          // If it's a Supabase URL, use it directly
+          if (data.logo_url.startsWith('http')) {
+            setPartnerLogo(data.logo_url);
+          } else {
+            // Try to load as a local asset
+            try {
+              const logoModule = await import(`../assets/Partnership Logos/${data.logo_url.split('/').pop()}`);
+              setPartnerLogo(logoModule.default);
+            } catch (error) {
+              console.error('Error loading partner logo:', error);
+              // Fallback to a default logo or null
+              setPartnerLogo(null);
+            }
+          }
         }
 
         setLoading(false);
@@ -90,12 +100,18 @@ const PartnershipLanding = () => {
               </div>
               <div className="logo-divider">×</div>
               <div className="logo-container">
-                <img 
-                  src={partnerLogo} 
-                  alt={`${partner.name} Logo`} 
-                  className="partner-logo"
-                  style={{ maxWidth: '100%', height: 'auto' }}
-                />
+                {partnerLogo ? (
+                  <img 
+                    src={partnerLogo} 
+                    alt={`${partner.name} Logo`} 
+                    className="partner-logo"
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
+                ) : (
+                  <div className="partner-logo-placeholder">
+                    {partner.name.charAt(0)}
+                  </div>
+                )}
               </div>
             </div>
             <div className="landing-page-subtitle">
@@ -282,3 +298,20 @@ const PartnershipLanding = () => {
 };
 
 export default PartnershipLanding; 
+
+<style>
+{`
+  .partner-logo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #666;
+  }
+`}
+</style> 

@@ -99,6 +99,32 @@ const {
   fetchReviews 
 } = useGoogleBusinessReviews(connectedAccountId);
 
+const [partnershipData, setPartnershipData] = useState(null);
+
+// Add this state near the top with other state declarations
+const [isCopied, setIsCopied] = useState(false);
+
+const fetchPartnershipData = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("partners")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    if (error) throw error;
+    setPartnershipData(data);
+  } catch (error) {
+    console.error("Error fetching partnership data:", error);
+  }
+};
+
+useEffect(() => {
+  if (showCouponModal) {
+    fetchPartnershipData();
+  }
+}, [showCouponModal]);
+
 // Add this useEffect to debug the state
 useEffect(() => {
   console.log('Calendar state:', {
@@ -376,69 +402,79 @@ useEffect(() => {
     navigate('/onboarding');
   };
 
-  const handleGenerateCoupon = async () => {
+  const handleGeneratePartnershipLink = async () => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Check if an affiliate coupon already exists for the business
-      const { data: existingCoupon, error: fetchError } = await supabase
-        .from("coupons")
-        .select("*")
-        .eq("business_id", user.id) // Match the business_id with the logged-in user's ID
-        .eq("valid", true) // Ensure the coupon is valid
+      // Get the current user's business profile
+      const { data: businessProfile, error: businessError } = await supabase
+        .from("business_profiles")
+        .select("business_name")
+        .eq("id", user.id)
         .single();
 
-      if (fetchError && fetchError.code !== "PGRST116") {
-        // Ignore "No rows found" error (PGRST116), handle other errors
-        console.error("Error fetching existing coupon:", fetchError);
-        alert(
-          "An error occurred while fetching your coupon. Please try again."
-        );
-        return;
-      }
+      if (businessError) throw businessError;
 
-      if (existingCoupon) {
-        // If a coupon already exists, set it as the active coupon
-        setActiveCoupon(existingCoupon);
-        setNewCouponCode(existingCoupon.code); // Update the newCouponCode state
+      // Get the business's profile photo
+      const { data: profilePhoto, error: photoError } = await supabase
+        .from("profile_photos")
+        .select("photo_url")
+        .eq("user_id", user.id)
+        .eq("photo_type", "profile")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (photoError && photoError.code !== "PGRST116") throw photoError;
+
+      // Create a hyphenated ID from the business name
+      const partnershipId = businessProfile.business_name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+      // Check if a partnership already exists
+      const { data: existingPartnership, error: checkError } = await supabase
+        .from("partners")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (checkError && checkError.code !== "PGRST116") throw checkError;
+
+      const standardDescription = `Welcome to Bidi, exclusively for ${businessProfile.business_name} customers!`;
+
+      if (existingPartnership) {
+        // Update existing partnership
+        const { error: updateError } = await supabase
+          .from("partners")
+          .update({
+            name: businessProfile.business_name,
+            logo_url: profilePhoto?.photo_url || null,
+            description: standardDescription
+          })
+          .eq("user_id", user.id);
+
+        if (updateError) throw updateError;
       } else {
-        // Generate a new coupon if none exists
-        const code = `COUPON${Math.floor(Math.random() * 10000)}`; // Example coupon code
-        const expirationDate = new Date();
-        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+        // Create new partnership
+        const { error: createError } = await supabase
+          .from("partners")
+          .insert({
+            id: partnershipId,
+            user_id: user.id,
+            name: businessProfile.business_name,
+            logo_url: profilePhoto?.photo_url || null,
+            description: standardDescription
+          });
 
-        const { data: newCoupon, error: insertError } = await supabase
-          .from("coupons")
-          .insert([
-            {
-              business_id: user.id,
-              code,
-              discount_amount: 10,
-              expiration_date: expirationDate.toISOString(),
-              valid: true,
-            },
-          ])
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error("Error generating coupon:", insertError);
-          alert("Error generating coupon. Please try again.");
-          return;
-        }
-
-        setActiveCoupon(newCoupon); // Set the newly generated coupon as the active coupon
-        setNewCouponCode(newCoupon.code); // Update the newCouponCode state
+        if (createError) throw createError;
       }
 
-      // Open the coupon modal
+      // Fetch the updated partnership data
+      await fetchPartnershipData();
       setShowCouponModal(true);
     } catch (error) {
-      console.error("Error handling coupon generation:", error);
-      alert("An unexpected error occurred. Please try again.");
+      console.error("Error creating partnership:", error);
+      alert("Failed to create partnership link. Please try again.");
     }
   };
 
@@ -1559,28 +1595,36 @@ useEffect(() => {
             </div>
           </div>
         </div>
-        {/* Affiliate Coupon Section */}
+        {/* Partnership Link Section */}
         <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
           <div className="card mb-4 h-100">
             <div className="card-header d-flex align-items-center">
-              <i className="fas fa-ticket-alt me-2"></i>
-              <span>Affiliate Coupon</span>
-              { !setupProgress.affiliateCoupon && <span className="badge-new ms-2" title="Generate your affiliate coupon">New</span> }
+              <i className="fas fa-link me-2"></i>
+              <span>Partnership Link</span>
+              { !activeCoupon && <span className="badge-new ms-2" title="Create your partnership link">New</span> }
             </div>
             <div className="card-body">
               <div className="info-row">
-                <span className="info-label">Coupon Code:</span>
+                <span className="info-label">Status:</span>
                 <span className="info-value">
-                  {activeCoupon && activeCoupon.code ? activeCoupon.code : <span className="text-muted">No Coupon</span>}
+                  {activeCoupon ? 
+                    <span className="text-success">Active</span> : 
+                    <span className="text-muted">No Partnership Link</span>
+                  }
                 </span>
               </div>
               <button
-                className={`btn-primary flex-fill${!setupProgress.affiliateCoupon ? ' pulse' : ''}`}
-                onClick={() => setShowCouponModal(v => !v)}
+                className="btn-primary flex-fill"
+                onClick={() => setShowCouponModal(true)}
               >
-                {setupProgress.affiliateCoupon ? 'Edit' : 'Add'}
+                {activeCoupon ? 'View Partnership Link' : 'Create Partnership Link'}
               </button>
-              <small className="text-muted d-block mt-2">Share your coupon to earn 5% of the bid amount when your lead pays through Bidi.</small>
+              <small className="text-muted d-block mt-2">
+                {activeCoupon ? 
+                  "Share your partnership link to connect with potential clients and grow your business." :
+                  "Create a partnership link to start connecting with potential clients and grow your business."
+                }
+              </small>
             </div>
           </div>
         </div>
@@ -1718,31 +1762,54 @@ useEffect(() => {
         </Modal.Footer>
       </Modal>
 
-      {/* Coupon Modal */}
+      {/* Partnership Link Modal */}
       <Modal show={showCouponModal} onHide={() => setShowCouponModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>{activeCoupon ? "Your Affiliate Coupon" : "New Affiliate Coupon Generated"}</Modal.Title>
+          <Modal.Title>Your Partnership Link</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="text-center">
-            <h4>Your coupon code is:</h4>
-            <div className="p-3 mb-3 bg-light rounded">{newCouponCode || (activeCoupon && activeCoupon.code)}</div>
-            <p>This coupon gives customers $10 off their purchase</p>
-            <p>Valid until: {activeCoupon ? new Date(activeCoupon.expiration_date).toLocaleDateString() : ""}</p>
-            <p>Share this code with your network to earn 5% of the bid amount when your lead pays through Bidi</p>
-            <div className="mt-4 p-3 bg-light rounded">
-              <h5>Earnings Calculator</h5>
-              <div className="input-group mb-3">
-                <span className="input-group-text">$</span>
-                <input type="number" className="form-control" placeholder="Enter bid amount" value={calculatorAmount} onChange={(e) => setCalculatorAmount(e.target.value)} />
-              </div>
-              <p className="mt-2">You would earn: <strong>${calculateEarnings(calculatorAmount)}</strong></p>
-            </div>
+            {partnershipData ? (
+              <>
+                <h4>Share this link with potential clients:</h4>
+                <div className="p-3 mb-3 bg-light rounded">
+                  https://savewithbidi.com/partnership/{partnershipData.id}
+                </div>
+                <p>When clients use your partnership link:</p>
+                <ul className="text-start">
+                  <li>They'll see your business name and logo</li>
+                  <li>They can easily request your services</li>
+                  <li>You'll be notified of new requests</li>
+                </ul>
+              </>
+            ) : (
+              <>
+                <h4>Create Your Partnership Link</h4>
+                <p className="mb-4">Generate a unique partnership link to start connecting with potential clients.</p>
+                <button 
+                  className="btn-primary"
+                  onClick={handleGeneratePartnershipLink}
+                >
+                  Generate Partnership Link
+                </button>
+              </>
+            )}
           </div>
         </Modal.Body>
         <Modal.Footer>
           <button className="btn-danger" onClick={() => setShowCouponModal(false)}>Close</button>
-          <button className="btn-success" onClick={() => { navigator.clipboard.writeText(newCouponCode); }}>Copy</button>
+          {partnershipData && (
+            <button 
+              className={`btn-success ${isCopied ? 'copied' : ''}`}
+              onClick={() => {
+                navigator.clipboard.writeText(`https://savewithbidi.com/partnership/${partnershipData.id}`);
+                setIsCopied(true);
+                setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
+              }}
+            >
+              {isCopied ? '✓ Copied!' : 'Copy Link'}
+            </button>
+          )}
         </Modal.Footer>
       </Modal>
 

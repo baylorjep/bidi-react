@@ -1417,26 +1417,6 @@
   flex: 1;
 }
 
-.btn-danger {
-  background: #ff008a;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #e6007e;
-  transform: scale(1.02);
-}
-
-.btn-success {
-  background: #28a745;
-  color: white;
-}
-
-.btn-success:hover {
-  background: #218838;
-  transform: scale(1.02);
-}
-
 .btn-chat {
   background: #f6eafe;
   color: #a328f4;
