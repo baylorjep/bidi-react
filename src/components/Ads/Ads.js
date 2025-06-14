@@ -1,12 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Ads.css';
-import JessicaIcon from '../../assets/images/Jessica Williams.jpg';
+import JessicaIcon from '../../assets/images/Jessica Williams Cropped.jpg';
 import ChandraIcon from '../../assets/images/Chandra cropped.png';
 import KaylaIcon from '../../assets/images/Kayla Barnett.jpg';
 
 const Ads = () => {
     const navigate = useNavigate();
+
+    useEffect(() => {
+        console.log('Ads component mounted');
+    }, []);
+
     const reviews = useMemo(() => {
         const allReviews = [
             {
@@ -106,7 +111,15 @@ const Ads = () => {
                     </h3>
                     <div className="ad-text">
                         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-                            <img src={review.avatar} alt={review.name} style={{ width: "48px", height: "48px", borderRadius: "50%" }} />
+                            <img 
+                                src={review.avatar} 
+                                alt={review.name} 
+                                style={{ width: "48px", height: "48px", borderRadius: "50%" }}
+                                onError={(e) => {
+                                    console.error(`Failed to load image for ${review.name}:`, e);
+                                    e.target.style.display = 'none';
+                                }}
+                            />
                             <div>
                                 <div style={{ fontWeight: "bold" }}>{review.name}</div>
                                 <div style={{ fontSize: "0.9em", color: "#666" }}>{review.date}</div>
