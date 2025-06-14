@@ -18,5 +18,6 @@ Disallow: /api/
 # Add delay between requests
 Crawl-delay: 10
 
-# Sitemap location
+# Sitemap locations
 Sitemap: https://www.savewithbidi.com/sitemap.xml
+Sitemap: https://www.savewithbidi.com/vendor-sitemap.xml
