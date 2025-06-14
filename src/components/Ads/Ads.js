@@ -1,15 +1,15 @@
 import React, { useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Ads.css';
-import JessicaIcon from '../../assets/images/Jessica Williams Cropped.jpg';
+import JessicaIcon from '../../assets/images/Jessica Williams.jpg';
 import ChandraIcon from '../../assets/images/Chandra cropped.png';
 import KaylaIcon from '../../assets/images/Kayla Barnett.jpg';
 
-const Ads = () => {
+const PromotionalContent = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        console.log('Ads component mounted');
+        console.log('Promotional content mounted');
     }, []);
 
     const reviews = useMemo(() => {
@@ -41,37 +41,37 @@ const Ads = () => {
     }, []);
 
     return (
-        <div className="ad-container" style={{ display: 'block', visibility: 'visible', height: 'auto' }}>
-            <div className="ad-card" style={{ display: 'block', visibility: 'visible', height: 'auto' }}>
-                <h3 className="ad-title">
+        <div className="promo-container" style={{ display: 'block', visibility: 'visible', height: 'auto' }}>
+            <div className="promo-card" style={{ display: 'block', visibility: 'visible', height: 'auto' }}>
+                <h3 className="promo-title">
                     Get Instant Quotes
                 </h3>
-                <p className="ad-text">
+                <p className="promo-text">
                     Compare prices and services from multiple vendors in one place. Save time and find the perfect match for your event.
                 </p>
-                <button className="ad-button">
+                <button className="promo-button">
                     Request Quotes Now
                 </button>
             </div>
 
-            <div className="ad-card">
-                <h3 className="ad-title">
+            <div className="promo-card">
+                <h3 className="promo-title">
                     Save Big with Bidi
                 </h3>
                 <div className="savings-amount">
                     $300
                 </div>
-                <p className="ad-text ad-text-center">
+                <p className="promo-text promo-text-center">
                     Average savings when booking through Bidi compared to direct booking
                 </p>
             </div>
 
-            <div className="ad-card">
-                <h3 className="ad-title">
+            <div className="promo-card">
+                <h3 className="promo-title">
                     <span style={{ marginRight: '10px' }}>👻</span>
                     No Ghosting Guarantee
                 </h3>
-                <div className="ad-text">
+                <div className="promo-text">
                     <p style={{ marginBottom: '16px' }}>
                         Book with confidence knowing that if your vendor becomes unresponsive, we'll:
                     </p>
@@ -90,7 +90,7 @@ const Ads = () => {
                         </li>
                     </ul>
                     <button 
-                        className="ad-button"
+                        className="promo-button"
                         onClick={() => navigate('/no-ghosting-guarantee')}
                         style={{ 
                             marginTop: '20px',
@@ -105,11 +105,11 @@ const Ads = () => {
             </div>
 
             {reviews.map((review, index) => (
-                <div key={index} className="ad-card">
-                    <h3 className="ad-title">
+                <div key={index} className="promo-card">
+                    <h3 className="promo-title">
                         What Our Clients Say
                     </h3>
-                    <div className="ad-text">
+                    <div className="promo-text">
                         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
                             <img 
                                 src={review.avatar} 
@@ -135,4 +135,4 @@ const Ads = () => {
     );
 };
 
-export default Ads; 
+export default PromotionalContent; 

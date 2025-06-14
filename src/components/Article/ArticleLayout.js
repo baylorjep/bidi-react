@@ -1,6 +1,6 @@
 import React from 'react';
 import RelatedArticles from './RelatedArticles';
-import Ads from '../Ads/Ads';
+import PromotionalContent from '../Ads/Ads';
 import { useNavigate } from 'react-router-dom';
 import './Articles.css';
 
@@ -99,7 +99,7 @@ const ArticleLayout = ({ children, articleId }) => {
                         {contextualAd.cta}
                     </button>
                 </div>
-                <Ads />
+                <PromotionalContent />
             </aside>
         </div>
     );

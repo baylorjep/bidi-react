@@ -1,4 +1,4 @@
-.ad-container {
+.promo-container {
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -8,7 +8,7 @@
     visibility: visible;
 }
 
-.ad-card {
+.promo-card {
     background-color: white;
     border-radius: 16px;
     padding: 24px;
@@ -24,12 +24,12 @@
 }
 
 @media (max-width: 768px) {
-    .ad-card {
+    .promo-card {
         max-width: 100%;
     }
 }
 
-.ad-title {
+.promo-title {
     font-size: 20px;
     font-weight: 600;
     margin-bottom: 16px;
@@ -37,12 +37,12 @@
     font-family: Outfit, sans-serif;
 }
 
-.ad-title span {
+.promo-title span {
     position: relative;
     display: inline-block;
 }
 
-.ad-title span::before {
+.promo-title span::before {
     content: '';
     position: absolute;
     top: -15%;
@@ -54,7 +54,7 @@
     z-index: 1;
 }
 
-.ad-title span::after {
+.promo-title span::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -66,18 +66,18 @@
     z-index: 1;
 }
 
-.ad-text {
+.promo-text {
     font-size: 14px;
     line-height: 1.6;
     color: #4B5563;
     margin-bottom: 20px;
 }
 
-.ad-text-center {
+.promo-text-center {
     text-align: center;
 }
 
-.ad-button {
+.promo-button {
     background-color: #ae18ed;
     color: white;
     border: none;
@@ -91,7 +91,7 @@
     font-family: Outfit, sans-serif;
 }
 
-.ad-button:hover {
+.promo-button:hover {
     background-color: #8b12b9;
 }
 
@@ -132,11 +132,11 @@
 }
 
 @media screen and (max-width: 768px) {
-    .ad-container {
+    .promo-container {
         gap: 16px;
     }
 
-    .ad-card {
+    .promo-card {
         max-width: 100%;
         margin-bottom: 16px;
     }
