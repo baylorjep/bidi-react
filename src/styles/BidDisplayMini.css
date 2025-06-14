@@ -3,10 +3,8 @@
   text-align: left;
   width: 100%;
   padding: 0 10px;
-  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .request-title {
@@ -64,7 +62,7 @@
 /* Detail Item Styling */
 .detail-item {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   margin-bottom: 12px;
   padding: 8px 0;
 }

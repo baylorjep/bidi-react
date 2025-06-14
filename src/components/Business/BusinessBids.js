@@ -14,13 +14,15 @@ const BusinessBids = ({ setActiveSection }) => {
   const [selectedBidId, setSelectedBidId] = useState(null);
   const [activeTab, setActiveTab] = useState("pending");
   const [isFullScreen, setIsFullScreen] = useState(window.innerWidth > 1200);
-  const filteredBids = bids.filter((bid) => 
-    activeTab === "approved" 
-      ? bid.status === "approved" || bid.status === "accepted"
-      : activeTab === "pending"
-        ? bid.status === "pending" || bid.status === "interested"
-        : bid.status === activeTab
-  );
+  const filteredBids = bids
+    .filter((bid) => 
+      activeTab === "approved" 
+        ? bid.status === "approved" || bid.status === "accepted"
+        : activeTab === "pending"
+          ? bid.status === "pending" || bid.status === "interested"
+          : bid.status === activeTab
+    )
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -386,7 +388,7 @@ const pendingBids = bids.filter((bid) =>
                     }
                     openWithdrawModal={openWithdrawModal}
                     onContractUpload={handleContractUpload}
-                    onMessageClick={handleMessageClick}  // Add this prop
+                    onMessageClick={bid.status === "interested" ? () => handleMessageClick(request.user_id, `I'm interested in your request for ${request.title}`) : undefined}
                   />
                 )
               );

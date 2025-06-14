@@ -10,8 +10,15 @@ import { useNavigate } from 'react-router-dom';
 
 const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }) => {
   const [formData, setFormData] = useState({
-    business_address: initialData?.business_address || '',
-    packages: Array.isArray(initialData?.packages) ? initialData.packages : []
+    business_name: '',
+    business_description: '',
+    business_address: '',
+    city_id: '',
+    county_id: '',
+    service_areas: [],
+    latitude: null,
+    longitude: null,
+    ...(initialData || {})
   });
   const [portfolioPics, setPortfolioPics] = useState([]);
   const [portfolioVideos, setPortfolioVideos] = useState([]);
@@ -36,6 +43,18 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
   const [editingCategory, setEditingCategory] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const navigate = useNavigate();
+  const [cities, setCities] = useState([]);
+  const [counties, setCounties] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [newServiceArea, setNewServiceArea] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [activeTab, setActiveTab] = useState('counties');
+  const [citySearch, setCitySearch] = useState('');
+  const [countySearch, setCountySearch] = useState('');
+  const [serviceAreaCitySearch, setServiceAreaCitySearch] = useState('');
+  const [showCitySearch, setShowCitySearch] = useState(false);
+  const [showCountySearch, setShowCountySearch] = useState(false);
+  const [showServiceAreaCitySearch, setShowServiceAreaCitySearch] = useState(false);
 
   // Add Quill modules configuration
   const quillModules = {
@@ -57,7 +76,11 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(initialData || {}); // Reset form when modal opens
+      setFormData(prevData => ({
+        ...prevData,
+        ...(initialData || {}),
+        service_areas: initialData?.service_areas || []
+      }));
       if (initialData.portfolio) {
         fetchPortfolioImages();
         fetchPortfolioVideos();
@@ -71,6 +94,60 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
       fetchCategories();
     }
   }, [isOpen, initialData.currentSection]);
+
+  // Add useEffect to fetch cities and counties
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        // Fetch counties
+        const { data: countiesData, error: countiesError } = await supabase
+          .from('counties')
+          .select('*')
+          .order('name');
+
+        if (countiesError) throw countiesError;
+        setCounties(countiesData);
+
+        // Fetch cities
+        const { data: citiesData, error: citiesError } = await supabase
+          .from('cities')
+          .select('*')
+          .order('name');
+
+        if (citiesError) throw citiesError;
+        setCities(citiesData);
+
+        // Set initial city if available
+        if (formData.city_id) {
+          setSelectedCity(formData.city_id);
+        }
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
+
+    fetchLocations();
+  }, []);
+
+  // Add click outside handlers
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.searchable-select')) {
+        setShowCitySearch(false);
+      }
+      if (!event.target.closest('.searchable-counties')) {
+        setShowCountySearch(false);
+      }
+      if (!event.target.closest('.searchable-cities')) {
+        setShowServiceAreaCitySearch(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // 🔹 Fetch portfolio images if needed
   const fetchPortfolioImages = async () => {
@@ -167,100 +244,51 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
   // 🔹 Handle saving data back to Supabase
   const handleSave = async () => {
     try {
-      setIsSaving(true);
-      const updates = {};
+      // First, get the current business profile to maintain required fields
+      const { data: currentProfile, error: fetchError } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('id', businessId)
+        .single();
 
-      // Ensure packages is an array before processing
-      const packagesToSave = Array.isArray(formData.packages) ? formData.packages : [];
+      if (fetchError) throw fetchError;
 
-      switch (initialData.currentSection) {
-        case 'business_info':
-          // Update business name and description
-          const { error: businessInfoError } = await supabase
-            .from('business_profiles')
-            .update({
-              business_name: formData.business_name,
-              business_description: formData.business_description
-            })
-            .eq('id', businessId);
-
-          if (businessInfoError) throw businessInfoError;
-          break;
-
-        case 'business_details':
-          // Update business address
-          const { error: addressError } = await supabase
-            .from('business_profiles')
-            .update({
-              business_address: formData.business_address
-            })
-            .eq('id', businessId);
-
-          if (addressError) throw addressError;
-
-          // Save packages
-          if (packagesToSave.length > 0) {
-            // Delete existing packages
-            await supabase
-              .from('business_packages')
-              .delete()
-              .eq('business_id', businessId);
-
-            // Insert new packages
-            const { error: packagesError } = await supabase
-              .from('business_packages')
-              .insert(
-                packagesToSave.map(pkg => ({
-                  business_id: businessId,
-                  name: pkg.name,
-                  price: pkg.price,
-                  description: pkg.description,
-                  features: pkg.features || [],
-                  image_url: pkg.image_url
-                }))
-              );
-
-            if (packagesError) throw packagesError;
-          }
-          break;
-
-        case 'profile':
-          // Update business owner and story
-          const { error: profileError } = await supabase
-            .from('business_profiles')
-            .update({
-              business_owner: formData.business_owner,
-              story: formData.story
-            })
-            .eq('id', businessId);
-
-          if (profileError) throw profileError;
-          break;
-
-        case 'specialties':
-          // Update specializations
-          const { error: specialtiesError } = await supabase
-            .from('business_profiles')
-            .update({
-              specializations: formData.specializations || []
-            })
-            .eq('id', businessId);
-
-          if (specialtiesError) throw specialtiesError;
-          break;
-
-        case 'portfolio':
-          // Portfolio changes are handled separately through media uploads
-          break;
+      // Only validate business name when editing business information
+      if (initialData.currentSection === 'business_info') {
+        if (!formData.business_name || formData.business_name.trim() === '') {
+          alert('Business name is required');
+          return;
+        }
       }
 
-      // Close the modal after successful save
+      // Only include fields that exist in the database schema
+      const updateData = {
+        business_name: formData.business_name?.trim() || currentProfile.business_name,
+        business_description: formData.business_description || currentProfile.business_description,
+        business_address: formData.business_address || currentProfile.business_address,
+        city_id: formData.city_id?.toString() || currentProfile.city_id,
+        county_id: formData.county_id?.toString() || currentProfile.county_id,
+        service_areas: Array.isArray(formData.service_areas) ? formData.service_areas : currentProfile.service_areas || [],
+        latitude: formData.latitude ? parseFloat(formData.latitude) : currentProfile.latitude,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : currentProfile.longitude,
+        specializations: Array.isArray(formData.specializations) ? formData.specializations : currentProfile.specializations || [],
+        story: formData.story || currentProfile.story,
+        minimum_price: formData.minimum_price ? parseFloat(formData.minimum_price) : currentProfile.minimum_price,
+        phone: formData.phone || currentProfile.phone, // Maintain existing phone if not changed
+        website: formData.website || currentProfile.website
+      };
+
+      const { error } = await supabase
+        .from('business_profiles')
+        .update(updateData)
+        .eq('id', businessId);
+
+      if (error) throw error;
+    
       onClose();
     } catch (error) {
-      console.error('Error saving changes:', error);
-      alert('Failed to save changes. Please try again.');
-    } finally {
-      setIsSaving(false);
+      console.error('Error saving profile:', error);
+      alert('Error saving profile. Please try again.');
     }
   };
 
@@ -1221,6 +1249,125 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
     }
   };
 
+  // Add function to handle service area addition
+  const handleAddServiceArea = () => {
+    if (newServiceArea.trim() && !formData.service_areas.includes(newServiceArea.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        service_areas: [...prev.service_areas, newServiceArea.trim()]
+      }));
+      setNewServiceArea('');
+    }
+  };
+
+  // Add function to handle service area removal
+  const handleRemoveServiceArea = (areaToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      service_areas: prev.service_areas.filter(area => area !== areaToRemove)
+    }));
+  };
+
+  // Handle city selection
+  const handleCityChange = (cityId) => {
+    const selectedCity = cities.find(city => city.id === cityId);
+    if (selectedCity) {
+      setFormData(prev => ({
+        ...prev,
+        city_id: selectedCity.id,
+        county_id: selectedCity.county_id
+      }));
+    }
+  };
+
+  // Handle service areas
+  const handleServiceAreaChange = (type, id) => {
+    if (type === 'county') {
+      setFormData(prev => {
+        const currentCounties = prev.service_areas || [];
+        const county = counties.find(c => c.id === id);
+        
+        if (!county) return prev;
+
+        // If county is already selected, remove it
+        if (currentCounties.includes(county.id)) {
+          return {
+            ...prev,
+            service_areas: currentCounties.filter(c => c !== county.id)
+          };
+        }
+        
+        // Add new county
+        return {
+          ...prev,
+          service_areas: [...currentCounties, county.id]
+        };
+      });
+    } else if (type === 'city') {
+      setFormData(prev => {
+        const currentCities = prev.service_areas || [];
+        const city = cities.find(c => c.id === id);
+        
+        if (!city) return prev;
+
+        // If city is already selected, remove it
+        if (currentCities.includes(city.id)) {
+          return {
+            ...prev,
+            service_areas: currentCities.filter(c => c !== city.id)
+          };
+        }
+        
+        // Add new city
+        return {
+          ...prev,
+          service_areas: [...currentCities, city.id]
+        };
+      });
+    }
+  };
+
+  const handleSelectAll = (type) => {
+    const items = type === 'county' ? counties : cities;
+    const filteredItems = items.filter(item => 
+      type === 'county' 
+        ? item.id !== formData.county_id 
+        : item.id !== formData.city_id
+    );
+    
+    // Check if all items are already selected
+    const allSelected = filteredItems.every(item => 
+      formData.service_areas?.includes(item.id)
+    );
+    
+    if (allSelected) {
+      // If all are selected, remove all items of this type
+      const newServiceAreas = (formData.service_areas || []).filter(id => {
+        const item = items.find(i => i.id === id);
+        return type === 'county' ? item?.county_id !== id : item?.id !== id;
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        service_areas: newServiceAreas
+      }));
+    } else {
+      // If not all are selected, add all items
+      const newServiceAreas = [...(formData.service_areas || [])];
+      
+      filteredItems.forEach(item => {
+        if (!newServiceAreas.includes(item.id)) {
+          newServiceAreas.push(item.id);
+        }
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        service_areas: newServiceAreas
+      }));
+    }
+  };
+
   return (
     isOpen && (
       <div className="edit-portfolio-modal">
@@ -1240,6 +1387,8 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
                     return 'Edit Profile';
                   case 'specialties':
                     return 'Edit Specialties';
+                  case 'packages':
+                    return 'Edit Packages';
                   default:
                     return 'Edit Profile';
                 }
@@ -1574,134 +1723,281 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
 
             {/* Business Details Section */}
             {initialData.currentSection === 'business_details' && (
-              <div className="section-content">
-                <div className="modal-input-group">
-                  <label>Location</label>
-                  <input
-                    type="text"
-                    name="business_address"
-                    value={formData.business_address}
-                    onChange={handleChange}
-                    placeholder="Enter your business address"
-                    className="modal-input"
-                  />
-                </div>
-
-                <div className="packages-editor">
-                  <h3>Packages</h3>
-                  {(formData.packages || []).map((pkg, packageIndex) => (
-                    <div key={packageIndex} className="package-editor-card">
-                      <div className="package-editor-header">
+              <div className="section-content location-editor">
+                <h3>Business Location</h3>
+                <p className="location-description">Select your primary business location and any additional areas you serve.</p>
+                
+                <div className="location-section">
+                  {/* Primary Location */}
+                  <div className="form-group primary-location">
+                    <label>Primary Business Location</label>
+                    <div className="location-inputs">
+                      <div className="input-group">
+                        <label>City</label>
+                        <div className="searchable-select">
+                          <input
+                            type="text"
+                            placeholder="Search for a city..."
+                            value={citySearch}
+                            onChange={(e) => setCitySearch(e.target.value)}
+                            onFocus={() => setShowCitySearch(true)}
+                            className="search-input"
+                          />
+                          {showCitySearch && (
+                            <div className="search-results">
+                              {cities
+                                .filter(city => 
+                                  city.name.toLowerCase().includes(citySearch.toLowerCase())
+                                )
+                                .map(city => (
+                                  <div
+                                    key={city.id}
+                                    className={`search-result-item ${formData.city_id === city.id ? 'selected' : ''}`}
+                                    onClick={() => {
+                                      handleCityChange(city.id);
+                                      setShowCitySearch(false);
+                                    }}
+                                  >
+                                    {city.name}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="input-group">
+                        <label>County</label>
                         <input
                           type="text"
-                          value={pkg.name}
-                          onChange={(e) => handlePackageChange(packageIndex, 'name', e.target.value)}
-                          placeholder="Package Name"
+                          value={counties.find(c => c.id === formData.county_id)?.name || ''}
+                          disabled
+                          className="location-input"
                         />
-                        <input
-                          type="number"
-                          value={pkg.price}
-                          onChange={(e) => handlePackageChange(packageIndex, 'price', e.target.value)}
-                          placeholder="Price"
-                        />
-                        <button
-                          className="delete-button"
-                          onClick={() => handleDeletePackage(packageIndex)}
-                        >
-                          Delete Package
-                        </button>
-                      </div>
-                      
-                      {/* Add package image section */}
-                      <div className="package-image-section">
-                        {pkg.image_url ? (
-                          <div className="package-image-preview">
-                            <img src={pkg.image_url} alt={`${pkg.name} preview`} />
-                            <button
-                              className="delete-image-button"
-                              onClick={() => handleDeletePackageImage(packageIndex)}
-                            >
-                              ✖
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="package-image-upload">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                console.log('File input changed');
-                                console.log('Event target:', e.target);
-                                console.log('Files:', e.target.files);
-                                const file = e.target.files[0];
-                                console.log('Selected file:', file);
-                                if (file) {
-                                  console.log('Calling handlePackageImageUpload');
-                                  handlePackageImageUpload(packageIndex, file);
-                                }
-                              }}
-                              style={{ display: 'none' }}
-                              id={`package-image-${packageIndex}`}
-                            />
-                            <label 
-                              htmlFor={`package-image-${packageIndex}`} 
-                              className="upload-image-button"
-                              onClick={() => {
-                                console.log('Upload button clicked');
-                                console.log('Label clicked for package:', packageIndex);
-                              }}
-                            >
-                              Add Package Image
-                            </label>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="modal-input-group">
-                        <label>Description</label>
-                        <ReactQuill
-                          theme="snow"
-                          value={pkg.description || ""}
-                          onChange={(content) => handlePackageChange(packageIndex, 'description', content)}
-                          modules={quillModules}
-                          formats={quillFormats}
-                          className="package-description-editor"
-                        />
-                      </div>
-                      <div className="features-section">
-                        <h4>Features</h4>
-                        {pkg.features && pkg.features.map((feature, featureIndex) => (
-                          <div key={featureIndex} className="feature-input">
-                            <input
-                              type="text"
-                              value={feature}
-                              onChange={(e) => handleFeatureChange(packageIndex, featureIndex, e.target.value)}
-                              placeholder="Feature"
-                            />
-                            <button
-                              className="delete-button"
-                              onClick={() => handleDeleteFeature(packageIndex, featureIndex)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          className="add-button"
-                          onClick={() => handleAddFeature(packageIndex)}
-                        >
-                          Add Feature
-                        </button>
                       </div>
                     </div>
-                  ))}
-                  <button
-                    className="add-button"
-                    onClick={handleAddPackage}
-                  >
-                    Add Package
-                  </button>
+                  </div>
+
+                  {/* Additional Service Areas */}
+                  <div className="form-group service-areas">
+                    <label>Additional Service Areas</label>
+                    <p className="sub-description">Select other counties or cities where you provide services</p>
+                    
+                    <div className="service-areas-tabs">
+                      <button 
+                        className={`tab-button ${activeTab === 'counties' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('counties')}
+                      >
+                        Counties
+                      </button>
+                      <button 
+                        className={`tab-button ${activeTab === 'cities' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('cities')}
+                      >
+                        Cities
+                      </button>
+                    </div>
+
+                    {activeTab === 'counties' ? (
+                      <div className="counties-list">
+                        <div className="searchable-counties">
+                          <div className="search-header">
+                            <input
+                              type="text"
+                              placeholder="Search counties..."
+                              value={countySearch}
+                              onChange={(e) => setCountySearch(e.target.value)}
+                              className="search-input"
+                            />
+                            <label className="select-all-checkbox">
+                              <input
+                                type="checkbox"
+                                checked={counties
+                                  .filter(county => county.id !== formData.county_id)
+                                  .every(county => formData.service_areas?.includes(county.id))
+                                }
+                                onChange={() => handleSelectAll('county')}
+                              />
+                              <span>Select All</span>
+                            </label>
+                          </div>
+                          <div className="counties-results">
+                            {counties
+                              .filter(county => 
+                                county.id !== formData.county_id &&
+                                county.name.toLowerCase().includes(countySearch.toLowerCase())
+                              )
+                              .map(county => (
+                                <div key={county.id} className="county-item">
+                                  <label className="county-checkbox">
+                                    <input
+                                      type="checkbox"
+                                      checked={formData.service_areas?.includes(county.id)}
+                                      onChange={() => handleServiceAreaChange('county', county.id)}
+                                    />
+                                    <span>{county.name}</span>
+                                  </label>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="cities-section">
+                        <div className="searchable-cities">
+                          <div className="search-header">
+                            <input
+                              type="text"
+                              placeholder="Search for a city..."
+                              value={serviceAreaCitySearch}
+                              onChange={(e) => setServiceAreaCitySearch(e.target.value)}
+                              className="search-input"
+                            />
+                            <label className="select-all-checkbox">
+                              <input
+                                type="checkbox"
+                                checked={cities
+                                  .filter(city => city.id !== formData.city_id)
+                                  .every(city => formData.service_areas?.includes(city.id))
+                                }
+                                onChange={() => handleSelectAll('city')}
+                              />
+                              <span>Select All</span>
+                            </label>
+                          </div>
+                          <div className="cities-results">
+                            {cities
+                              .filter(city => 
+                                city.id !== formData.city_id && 
+                                city.name.toLowerCase().includes(serviceAreaCitySearch.toLowerCase())
+                              )
+                              .map(city => (
+                                <div key={city.id} className="city-item">
+                                  <label className="city-checkbox">
+                                    <input
+                                      type="checkbox"
+                                      checked={formData.service_areas?.includes(city.id)}
+                                      onChange={() => handleServiceAreaChange('city', city.id)}
+                                    />
+                                    <span>{city.name}</span>
+                                  </label>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
+              </div>
+            )}
+
+            {/* Packages Section */}
+            {initialData.currentSection === 'packages' && (
+              <div className="packages-editor">
+                <h3>Packages</h3>
+                {(formData.packages || []).map((pkg, packageIndex) => (
+                  <div key={packageIndex} className="package-editor-card">
+                    <div className="package-editor-header">
+                      <input
+                        type="text"
+                        value={pkg.name}
+                        onChange={(e) => handlePackageChange(packageIndex, 'name', e.target.value)}
+                        placeholder="Package Name"
+                      />
+                      <input
+                        type="number"
+                        value={pkg.price}
+                        onChange={(e) => handlePackageChange(packageIndex, 'price', e.target.value)}
+                        placeholder="Price"
+                      />
+                      <button
+                        className="delete-button"
+                        onClick={() => handleDeletePackage(packageIndex)}
+                      >
+                        Delete Package
+                      </button>
+                    </div>
+                    
+                    {/* Add package image section */}
+                    <div className="package-image-section">
+                      {pkg.image_url ? (
+                        <div className="package-image-preview">
+                          <img src={pkg.image_url} alt={`${pkg.name} preview`} />
+                          <button
+                            className="delete-image-button"
+                            onClick={() => handleDeletePackageImage(packageIndex)}
+                          >
+                            ✖
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="package-image-upload">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                handlePackageImageUpload(packageIndex, file);
+                              }
+                            }}
+                            style={{ display: 'none' }}
+                            id={`package-image-${packageIndex}`}
+                          />
+                          <label 
+                            htmlFor={`package-image-${packageIndex}`} 
+                            className="upload-image-button"
+                          >
+                            Add Package Image
+                          </label>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="modal-input-group">
+                      <label>Description</label>
+                      <ReactQuill
+                        theme="snow"
+                        value={pkg.description || ""}
+                        onChange={(content) => handlePackageChange(packageIndex, 'description', content)}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        className="package-description-editor"
+                      />
+                    </div>
+                    <div className="features-section">
+                      <h4>Features</h4>
+                      {pkg.features && pkg.features.map((feature, featureIndex) => (
+                        <div key={featureIndex} className="feature-input">
+                          <input
+                            type="text"
+                            value={feature}
+                            onChange={(e) => handleFeatureChange(packageIndex, featureIndex, e.target.value)}
+                            placeholder="Feature"
+                          />
+                          <button
+                            className="delete-button"
+                            onClick={() => handleDeleteFeature(packageIndex, featureIndex)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        className="add-button"
+                        onClick={() => handleAddFeature(packageIndex)}
+                      >
+                        Add Feature
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  className="add-button"
+                  onClick={handleAddPackage}
+                >
+                  Add Package
+                </button>
               </div>
             )}
 
@@ -1907,3 +2203,230 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
 };
 
 export default EditProfileModal;
+
+// Add these styles to your CSS
+const styles = `
+.location-editor {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.location-description {
+  color: #666;
+  margin-bottom: 24px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.location-section {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.primary-location {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.location-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+  .location-inputs {
+    grid-template-columns: 1fr;
+  }
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 14px;
+  color: #495057;
+  font-weight: 500;
+}
+
+.location-select,
+.location-input {
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+
+.location-select:focus {
+  border-color: #80bdff;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.location-input:disabled {
+  background: #e9ecef;
+  cursor: not-allowed;
+}
+
+.service-areas {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.sub-description {
+  color: #6c757d;
+  font-size: 13px;
+  margin: 8px 0 16px;
+}
+
+.service-areas-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 12px;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: #6c757d;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.tab-button:hover {
+  color: #495057;
+  background: #f8f9fa;
+}
+
+.tab-button.active {
+  color: #A328F4;
+  background: #f8f9fa;
+}
+
+.county-item {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  border: 1px solid #e9ecef;
+}
+
+.county-item:hover {
+  background: #e9ecef;
+  border-color: #dee2e6;
+}
+
+.county-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.county-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #A328F4;
+}
+
+.cities-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.city-input-group {
+  display: flex;
+  gap: 12px;
+}
+
+.city-select {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.add-city-button {
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.add-city-button:hover {
+  background: #0056b3;
+}
+
+.additional-cities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.city-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #e7f1ff;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  color: #0056b3;
+  border: 1px solid #b8daff;
+}
+
+.remove-city {
+  background: none;
+  border: none;
+  color: #0056b3;
+  cursor: pointer;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.remove-city:hover {
+  background: #0056b3;
+  color: white;
+}
+`;
+
+// Add the styles to the document
+const styleSheet = document.createElement("style");
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);

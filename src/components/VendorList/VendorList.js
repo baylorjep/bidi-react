@@ -12,6 +12,119 @@ import LoadingPlaceholder from '../Common/LoadingPlaceholder';
 import ImageErrorBoundary from '../Common/ImageErrorBoundary';
 import ImageModal from '../Business/Portfolio/ImageModal';
 
+// Import cities data
+const cities = [
+    // Salt Lake County
+    { id: 'salt-lake-city', name: 'Salt Lake City', county: 'salt-lake' },
+    { id: 'west-valley-city', name: 'West Valley City', county: 'salt-lake' },
+    { id: 'west-jordan', name: 'West Jordan', county: 'salt-lake' },
+    { id: 'sandy', name: 'Sandy', county: 'salt-lake' },
+    { id: 'south-jordan', name: 'South Jordan', county: 'salt-lake' },
+    { id: 'taylorsville', name: 'Taylorsville', county: 'salt-lake' },
+    { id: 'murray', name: 'Murray', county: 'salt-lake' },
+    { id: 'millcreek', name: 'Millcreek', county: 'salt-lake' },
+    { id: 'cottonwood-heights', name: 'Cottonwood Heights', county: 'salt-lake' },
+    { id: 'holladay', name: 'Holladay', county: 'salt-lake' },
+    { id: 'herriman', name: 'Herriman', county: 'salt-lake' },
+    { id: 'riverton', name: 'Riverton', county: 'salt-lake' },
+    { id: 'draper', name: 'Draper', county: 'salt-lake' },
+    { id: 'midvale', name: 'Midvale', county: 'salt-lake' },
+    { id: 'south-salt-lake', name: 'South Salt Lake', county: 'salt-lake' },
+
+    // Utah County
+    { id: 'provo', name: 'Provo', county: 'utah' },
+    { id: 'orem', name: 'Orem', county: 'utah' },
+    { id: 'lehi', name: 'Lehi', county: 'utah' },
+    { id: 'spanish-fork', name: 'Spanish Fork', county: 'utah' },
+    { id: 'pleasant-grove', name: 'Pleasant Grove', county: 'utah' },
+    { id: 'american-fork', name: 'American Fork', county: 'utah' },
+    { id: 'springville', name: 'Springville', county: 'utah' },
+    { id: 'payson', name: 'Payson', county: 'utah' },
+    { id: 'saratoga-springs', name: 'Saratoga Springs', county: 'utah' },
+    { id: 'eagle-mountain', name: 'Eagle Mountain', county: 'utah' },
+    { id: 'highland', name: 'Highland', county: 'utah' },
+    { id: 'lindon', name: 'Lindon', county: 'utah' },
+    { id: 'mapleton', name: 'Mapleton', county: 'utah' },
+    { id: 'vineyard', name: 'Vineyard', county: 'utah' },
+    { id: 'cedar-hills', name: 'Cedar Hills', county: 'utah' },
+
+    // Davis County
+    { id: 'layton', name: 'Layton', county: 'davis' },
+    { id: 'bountiful', name: 'Bountiful', county: 'davis' },
+    { id: 'clearfield', name: 'Clearfield', county: 'davis' },
+    { id: 'syracuse', name: 'Syracuse', county: 'davis' },
+    { id: 'kaysville', name: 'Kaysville', county: 'davis' },
+    { id: 'farmington', name: 'Farmington', county: 'davis' },
+    { id: 'centerville', name: 'Centerville', county: 'davis' },
+    { id: 'north-salt-lake', name: 'North Salt Lake', county: 'davis' },
+    { id: 'woods-cross', name: 'Woods Cross', county: 'davis' },
+    { id: 'clinton', name: 'Clinton', county: 'davis' },
+    { id: 'fruit-heights', name: 'Fruit Heights', county: 'davis' },
+    { id: 'west-bountiful', name: 'West Bountiful', county: 'davis' },
+    { id: 'sunset', name: 'Sunset', county: 'davis' },
+
+    // Weber County
+    { id: 'ogden', name: 'Ogden', county: 'weber' },
+    { id: 'roy', name: 'Roy', county: 'weber' },
+    { id: 'south-ogden', name: 'South Ogden', county: 'weber' },
+    { id: 'north-ogden', name: 'North Ogden', county: 'weber' },
+    { id: 'washington-terrace', name: 'Washington Terrace', county: 'weber' },
+    { id: 'riverdale', name: 'Riverdale', county: 'weber' },
+    { id: 'west-haven', name: 'West Haven', county: 'weber' },
+    { id: 'pleasant-view', name: 'Pleasant View', county: 'weber' },
+    { id: 'harrisville', name: 'Harrisville', county: 'weber' },
+
+    // Washington County
+    { id: 'st-george', name: 'St. George', county: 'washington' },
+    { id: 'washington-city', name: 'Washington City', county: 'washington' },
+    { id: 'hurricane', name: 'Hurricane', county: 'washington' },
+    { id: 'santa-clara', name: 'Santa Clara', county: 'washington' },
+    { id: 'ivins', name: 'Ivins', county: 'washington' },
+    { id: 'la-verkin', name: 'La Verkin', county: 'washington' },
+
+    // Cache County
+    { id: 'logan', name: 'Logan', county: 'cache' },
+    { id: 'north-logan', name: 'North Logan', county: 'cache' },
+    { id: 'smithfield', name: 'Smithfield', county: 'cache' },
+    { id: 'hyrum', name: 'Hyrum', county: 'cache' },
+    { id: 'providence', name: 'Providence', county: 'cache' },
+    { id: 'nibley', name: 'Nibley', county: 'cache' },
+
+    // Box Elder County
+    { id: 'brigham-city', name: 'Brigham City', county: 'box-elder' },
+    { id: 'tremonton', name: 'Tremonton', county: 'box-elder' },
+    { id: 'perry', name: 'Perry', county: 'box-elder' },
+
+    // Tooele County
+    { id: 'tooele', name: 'Tooele', county: 'tooele' },
+    { id: 'grantsville', name: 'Grantsville', county: 'tooele' },
+    { id: 'stansbury-park', name: 'Stansbury Park', county: 'tooele' },
+
+    // Summit County
+    { id: 'park-city', name: 'Park City', county: 'summit' },
+    { id: 'snyderville', name: 'Snyderville', county: 'summit' },
+    { id: 'kimball-junction', name: 'Kimball Junction', county: 'summit' },
+
+    // Iron County
+    { id: 'cedar-city', name: 'Cedar City', county: 'iron' },
+    { id: 'enoch', name: 'Enoch', county: 'iron' },
+
+    // Other Notable Cities
+    { id: 'vernal', name: 'Vernal', county: 'uintah' },
+    { id: 'moab', name: 'Moab', county: 'grand' },
+    { id: 'price', name: 'Price', county: 'carbon' },
+    { id: 'richfield', name: 'Richfield', county: 'sevier' },
+    { id: 'heber-city', name: 'Heber City', county: 'wasatch' },
+    { id: 'midway', name: 'Midway', county: 'wasatch' },
+    { id: 'roosevelt', name: 'Roosevelt', county: 'duchesne' },
+    { id: 'ephraim', name: 'Ephraim', county: 'sanpete' },
+    { id: 'nephi', name: 'Nephi', county: 'juab' },
+    { id: 'delta', name: 'Delta', county: 'millard' },
+    { id: 'kanab', name: 'Kanab', county: 'kane' },
+    { id: 'blanding', name: 'Blanding', county: 'san-juan' },
+    { id: 'monticello', name: 'Monticello', county: 'san-juan' }
+];
+
 const VendorList = ({ 
     vendors: initialVendors = [], // Add default empty array
     selectedCategory, 
@@ -27,7 +140,9 @@ const VendorList = ({
     onVendorDeselect,
     selectedVendors = [],
     customButtonText = "Get a Tailored Bid",
-    showSelectionButton = false
+    showSelectionButton = false,
+    selectedCity,
+    selectedCounty
 }) => {
     const [vendors, setVendors] = useState([]);  // Initialize as empty array
     const [loading, setLoading] = useState(true);
@@ -142,7 +257,7 @@ const VendorList = ({
         if (!initialVendors || initialVendors.length === 0) {
             fetchVendors();
         }
-    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, preferredLocation, preferredType]);
+    }, [selectedCategory, sortOrder, currentPage, vendorsPerPage, selectedCounty, selectedCity]);
 
     // Add effect to check when all vendors are loaded
     useEffect(() => {
@@ -218,6 +333,33 @@ const VendorList = ({
     // Helper function to normalize business_category
     const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
 
+    // Utility to map selector county to short county id
+    function getShortCountyId(selectedCounty) {
+        console.log('Getting short county ID for:', selectedCounty);
+        if (!selectedCounty) {
+            console.log('No county selected');
+            return '';
+        }
+        
+        // Log the input county
+        console.log('Input county:', selectedCounty);
+        
+        // Handle special cases
+        if (selectedCounty === 'salt-lake-county') {
+            console.log('Converting salt-lake-county to salt-lake');
+            return ['salt-lake', 'slc']; // Return both possible IDs
+        }
+        if (selectedCounty === 'slc-county') {
+            console.log('Converting slc-county to slc');
+            return ['slc', 'salt-lake']; // Return both possible IDs
+        }
+        
+        // Remove -county suffix and log the result
+        const result = selectedCounty.replace('-county', '');
+        console.log('Converted county ID:', result);
+        return [result]; // Return as array for consistency
+    }
+
     const fetchVendors = async () => {
         setLoading(true);
         setVendorPhotosLoaded({});
@@ -229,16 +371,26 @@ const VendorList = ({
                     *,
                     reviews (
                         rating
+                    ),
+                    cities (
+                        id,
+                        county_id
                     )
                 `)
                 .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
 
             if (selectedCategory) {
-                query = query.filter('business_category', 'ov', `{${selectedCategory}}`);
+                query = query.contains('business_category', [selectedCategory]);
             }
 
             const { data: allVendorData, error: vendorError } = await query;
-            if (vendorError) throw vendorError;
+            
+            if (vendorError) {
+                console.error('Error fetching vendors:', vendorError);
+                throw vendorError;
+            }
+
+            console.log('Total vendors found:', allVendorData?.length || 0);
 
             // Add debug logging
             console.log('Fetched vendors:', allVendorData.map(v => ({
@@ -247,7 +399,9 @@ const VendorList = ({
                 category: v.business_category,
                 specializations: v.specializations,
                 location: v.business_address,
-                type: categoryType
+                type: categoryType,
+                city_id: v.cities?.id,
+                county_id: v.cities?.county_id
             })));
 
             // Calculate average ratings
@@ -259,7 +413,9 @@ const VendorList = ({
                 return {
                     ...vendor,
                     business_category: getCategories(vendor.business_category),
-                    average_rating: averageRating
+                    average_rating: averageRating,
+                    city_id: vendor.cities?.id,
+                    county_id: vendor.cities?.county_id
                 };
             });
 
@@ -356,7 +512,34 @@ const VendorList = ({
         })));
 
         const sorted = [...vendors].sort((a, b) => {
-            // If sortOrder is rating, base_price_low, or base_price_high, prioritize that sorting
+            // First priority: Location match
+            let aInLocation = false;
+            let bInLocation = false;
+
+            if (selectedCity) {
+                // Check both primary city and service areas
+                aInLocation = a.city_id === selectedCity || (a.service_areas && a.service_areas.includes(selectedCity));
+                bInLocation = b.city_id === selectedCity || (b.service_areas && b.service_areas.includes(selectedCity));
+            } else if (selectedCounty) {
+                // For county, check if the vendor's city or any service area city is in the selected county
+                const countyIds = getShortCountyId(selectedCounty);
+                aInLocation = countyIds.includes(a.county_id) || 
+                             (a.service_areas && a.service_areas.some(area => 
+                                 cities.find(c => c.id === area)?.county === selectedCounty
+                             ));
+                bInLocation = countyIds.includes(b.county_id) || 
+                             (b.service_areas && b.service_areas.some(area => 
+                                 cities.find(c => c.id === area)?.county === selectedCounty
+                             ));
+            }
+
+            // If one is in location and other isn't, prioritize the one in location
+            if (aInLocation !== bInLocation) {
+                return aInLocation ? -1 : 1;
+            }
+
+            // If both are in the same location category, continue with other sorting criteria
+            // Second priority: Sort order (rating, price, etc.)
             if (sortOrder === 'rating') {
                 const aRating = a.average_rating || 0;
                 const bRating = b.average_rating || 0;
@@ -377,8 +560,7 @@ const VendorList = ({
                 }
             }
 
-            // If sortOrder is 'recommended' or if the primary sort didn't differentiate, use the default sorting
-            // First priority: Has reviews AND is verified
+            // Third priority: Has reviews AND is verified
             const aHasReviews = a.average_rating !== null;
             const bHasReviews = b.average_rating !== null;
             const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
@@ -396,12 +578,12 @@ const VendorList = ({
                 return (b.average_rating || 0) - (a.average_rating || 0);
             }
 
-            // Second priority: Is verified
+            // Fourth priority: Is verified
             if (aIsVerified !== bIsVerified) {
                 return aIsVerified ? -1 : 1;
             }
 
-            // Third priority: Has reviews
+            // Fifth priority: Has reviews
             if (aHasReviews !== bHasReviews) {
                 return aHasReviews ? -1 : 1;
             }
@@ -411,14 +593,14 @@ const VendorList = ({
                 return (b.average_rating || 0) - (a.average_rating || 0);
             }
 
-            // Fourth priority: Has photos
+            // Sixth priority: Has photos
             const aHasPhotos = a.photo_count > 0;
             const bHasPhotos = b.photo_count > 0;
             if (aHasPhotos !== bHasPhotos) {
                 return aHasPhotos ? -1 : 1;
             }
 
-            // Fifth priority: Has the selected specialization
+            // Seventh priority: Has the selected specialization
             if (categoryType && categoryType !== 'all') {
                 const aHasSpecialization = a.specializations?.includes(categoryType);
                 const bHasSpecialization = b.specializations?.includes(categoryType);
@@ -427,21 +609,7 @@ const VendorList = ({
                 }
             }
 
-            // Sixth priority: Location match
-            if (preferredLocation) {
-                const aLocation = a.business_address?.toLowerCase() || '';
-                const bLocation = b.business_address?.toLowerCase() || '';
-                const searchLocation = preferredLocation.replace(/-/g, ' ').toLowerCase();
-                
-                const aMatchesLocation = aLocation.includes(searchLocation);
-                const bMatchesLocation = bLocation.includes(searchLocation);
-                
-                if (aMatchesLocation !== bMatchesLocation) {
-                    return aMatchesLocation ? -1 : 1;
-                }
-            }
-
-            // Seventh priority: Total media count
+            // Eighth priority: Total media count
             const aTotalMedia = a.photo_count;
             const bTotalMedia = b.photo_count;
             if (aTotalMedia !== bTotalMedia) {
@@ -967,7 +1135,7 @@ const VendorList = ({
                                 style={{ cursor: 'pointer' }}
                                 onError={(e) => { e.target.src = '/images/default.jpg'; }} 
                             />
-                            <div style={{display:'flex', flexDirection:'row', justifyContent:'center', alignItems:'left', marginLeft:'12px'}}>
+                            <div style={{display:'flex', flexDirection:'row', justifyContent:'center', alignItems:'left', marginLeft:'12px', gap:'4px'}}>
                             <h2 className="vendor-name">
                                 {vendor.business_name}
                             </h2>
@@ -987,6 +1155,7 @@ const VendorList = ({
                                     <span className="vendor-rating">
                                         <img src={StarIcon} alt="Star" className="star-icon" />
                                         {vendor.average_rating}
+                                        <span className="review-count">({vendor.reviews?.length || 0} reviews)</span>
                                     </span>
                                 )}
                             </div>

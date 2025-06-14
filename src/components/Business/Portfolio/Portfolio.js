@@ -35,6 +35,48 @@ const VerifiedIcon = () => (
   </svg>
 );
 
+// Add this utility function after the VerifiedIcon component
+const formatLocationName = (name) => {
+    if (!name) return '';
+    
+    // Handle special cases
+    const specialCases = {
+        'slc': 'Salt Lake City',
+        'salt-lake': 'Salt Lake',
+        'salt-lake-county': 'Salt Lake County',
+        'slc-county': 'Salt Lake County',
+        'slc county': 'Salt Lake County',
+        'salt lake county': 'Salt Lake County',
+        'salt lake': 'Salt Lake',
+        'saltlake': 'Salt Lake',
+        'saltlakecounty': 'Salt Lake County',
+        'slc County': 'Salt Lake County',
+        'slc': "Salt Lake"
+    };
+
+    // Convert to lowercase for comparison
+    const lowerName = name.toLowerCase();
+    
+    // Check for special cases
+    if (specialCases[lowerName]) {
+        return specialCases[lowerName];
+    }
+
+    // Handle cases where "county" is appended
+    if (lowerName.includes('county')) {
+        const baseName = lowerName.replace('county', '').trim();
+        if (specialCases[baseName]) {
+            return specialCases[baseName] + ' County';
+        }
+    }
+
+    // Split by hyphens and spaces, capitalize each word
+    return name
+        .split(/[- ]/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+};
+
 // ReviewModal component for writing a review
 const ReviewModal = ({ isOpen, onClose, onSubmit, rating, setRating, comment, setComment, loading }) => {
   if (!isOpen) return null;
@@ -75,6 +117,62 @@ const ReviewModal = ({ isOpen, onClose, onSubmit, rating, setRating, comment, se
   );
 };
 
+// Add this component before the Portfolio component
+const MediaItem = ({ item, index, onImageClick }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const videoRef = useRef(null);
+
+    const handleVideoClick = (e) => {
+        e.stopPropagation();
+        if (videoRef.current) {
+            if (isPlaying) {
+                videoRef.current.pause();
+            } else {
+                videoRef.current.play().catch(error => {
+                    console.error('Error playing video:', error);
+                });
+            }
+            setIsPlaying(!isPlaying);
+        }
+    };
+
+    const isVideo = item.photo_type === 'video';
+
+    return (
+        <div className="media-item" onClick={() => onImageClick(item)}>
+            {isVideo ? (
+                <div className="video-container">
+                    <video
+                        ref={videoRef}
+                        src={item.photo_url}
+                        className="portfolio-image video"
+                        muted={!isPlaying}
+                        loop
+                        playsInline
+                        onClick={handleVideoClick}
+                        onEnded={() => setIsPlaying(false)}
+                        preload="metadata"
+                    >
+                        Your browser does not support the video tag.
+                    </video>
+                    {!isPlaying && (
+                        <div className="video-play-overlay">
+                            <button className="play-button">▶</button>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <img
+                    src={item.photo_url}
+                    alt={`Portfolio ${index + 1}`}
+                    className="portfolio-image"
+                    loading="lazy"
+                />
+            )}
+        </div>
+    );
+};
+
 const Portfolio = ({ businessId: propBusinessId }) => {
   const { businessId: paramBusinessId } = useParams();
   const location = useLocation();
@@ -110,34 +208,40 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const [showReadMore, setShowReadMore] = useState(false);
   const descriptionRef = useRef(null);
   const [isSelected, setIsSelected] = useState(false);
-  // Add this state to detect vendor selection context
   const [fromVendorSelection, setFromVendorSelection] = useState(false);
   const [packages, setPackages] = useState([]);
+  const [showServiceAreas, setShowServiceAreas] = useState(false);
 
   // Add slider settings
-  const sliderSettings = {
+  const settings = {
     infinite: false,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    dots: false,
-    arrows: true,
     nextArrow: <SampleNextArrow />,
     prevArrow: <SamplePrevArrow />,
-    accessibility: true,
-    draggable: true,
-    swipe: true,
-    touchMove: true,
-    waitForAnimate: true,
-    touchAction: 'pan-y',
-    onInit: () => {
-      const sliderContainer = document.querySelector('.portfolio-images');
-      if (sliderContainer) {
-        setSliderDimensions({
-          width: sliderContainer.offsetWidth,
-          height: sliderContainer.offsetHeight
+    dots: false,
+    beforeChange: (oldIndex, newIndex) => {
+        // Pause any playing videos when changing slides
+        const videos = document.querySelectorAll('.portfolio-image.video');
+        videos.forEach(video => {
+            video.pause();
+            const overlay = video.parentElement?.querySelector('.video-play-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
         });
-      }
+    },
+    afterChange: (currentSlide) => {
+        // Reset video state when changing slides
+        const videos = document.querySelectorAll('.portfolio-image.video');
+        videos.forEach(video => {
+            video.currentTime = 0;
+            const overlay = video.parentElement?.querySelector('.video-play-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
+        });
     }
   };
 
@@ -200,34 +304,15 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     );
   }
 
-  // Add function to render media items
+  // Update the renderMediaItem function in the Portfolio component
   const renderMediaItem = (item, index) => {
-    const isVideo = item.toLowerCase().match(/\.(mp4|mov|avi|wmv|webm)$/);
     return (
-      <div key={index} className="portfolio-slide">
-        {isVideo ? (
-          <video
-            src={item}
-            className="portfolio-image video"
-            controls
-            muted
-            autoPlay
-            loop
-            playsInline
-            onClick={() => handleImageClick({ url: item, isVideo: true })}
-          >
-            Your browser does not support the video tag.
-          </video>
-        ) : (
-          <img
-            src={convertedUrls[item] || item}
-            alt={`Portfolio ${index + 1}`}
-            className="portfolio-image"
-            onClick={() => handleImageClick({ url: item, isVideo: false })}
-            loading="lazy"
-          />
-        )}
-      </div>
+        <MediaItem 
+            key={index}
+            item={item}
+            index={index}
+            onImageClick={handleImageClick}
+        />
     );
   };
 
@@ -290,8 +375,16 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         .select("*")
         .eq("id", businessId)
         .single();
-      if (businessError) console.error("Error fetching business:", businessError);
-      else setBusiness(businessProfile);
+      
+      console.log('Fetched business profile:', businessProfile); // Add logging
+      console.log('Business name:', businessProfile?.business_name); // Add logging
+      
+      if (businessError) {
+        console.error("Error fetching business:", businessError);
+      } else {
+        setBusiness(businessProfile);
+        console.log('Set business state:', businessProfile); // Add logging
+      }
 
       // Fetch profile photo
       const { data: profileData, error: profileError } = await supabase
@@ -989,7 +1082,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         <div className={`portfolio-layout ${portfolioVideos.length + portfolioPics.length <= 1 ? "single-media" : ""}`}>
           {/* Mobile Swiper */}
           <div className="portfolio-images-mobile">
-            <Slider {...sliderSettings}>
+            <Slider {...settings}>
               {[...portfolioVideos, ...portfolioPics].map((item, index) => {
                 const isVideo = portfolioVideos.includes(item);
                 return (
@@ -1010,12 +1103,11 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       </video>
                     ) : (
                       <img
-                        src={convertedUrls[item] || item}
+                        src={item}
                         alt={`Portfolio ${index + 1}`}
                         className="portfolio-image"
                         onClick={() => handleImageClick({ url: item, isVideo: false })}
                         loading="lazy"
-                        style={{ cursor: 'pointer' }}
                       />
                     )}
                   </div>
@@ -1056,7 +1148,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 } else if (firstMedia) {
                   return (
                     <img
-                      src={convertedUrls[firstMedia] || firstMedia}
+                      src={firstMedia}
                       alt="Main Portfolio"
                       className={`main-portfolio-image ${
                         portfolioVideos.length + portfolioPics.length <= 1
@@ -1083,20 +1175,20 @@ const Portfolio = ({ businessId: propBusinessId }) => {
               <div className="portfolio-grid">
                 {[...portfolioVideos, ...portfolioPics]
                   .slice(1, 5) // Show up to 4 more items (total of 5 including the first one)
-                  .map((item, index) => {
-                    const isVideo = portfolioVideos.includes(item);
+                  .map((mediaItem, index) => {
+                    const isVideo = mediaItem.photo_type === 'video';
                     return isVideo ? (
                       <video
                         key={index}
-                        src={item}
+                        src={mediaItem.photo_url}
                         className="portfolio-image-portfolio"
-                        poster={`${item}?thumb`}
+                        poster={`${mediaItem.photo_url}?thumb`}
                         preload="metadata"
                         muted
                         autoPlay
                         loop
                         playsInline
-                        onClick={() => handleImageClick({ url: item, isVideo: true })}
+                        onClick={() => handleImageClick({ url: mediaItem.photo_url, isVideo: true })}
                         style={{ cursor: 'pointer' }}
                       >
                         Your browser does not support the video tag.
@@ -1104,20 +1196,20 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                     ) : (
                       <img
                         key={index}
-                        src={convertedUrls[item] || item}
+                        src={mediaItem.photo_url}
                         alt={`Portfolio ${index}`}
                         className="portfolio-image-portfolio"
-                        onClick={() => handleImageClick({ url: item, isVideo: false })}
+                        onClick={() => handleImageClick({ url: mediaItem.photo_url, isVideo: false })}
                         style={{ cursor: 'pointer' }}
                       />
                     );
                   })}
-                  <button
-                    className="see-all-button"
-                    onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
-                  >
-                    View Gallery
-                  </button>
+                <button
+                  className="see-all-button"
+                  onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
+                >
+                  View Gallery
+                </button>
               </div>
             )}
 
@@ -1197,11 +1289,74 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 <div className="business-detail">
                   <p className="detail-title">Location</p>
                   <div className="detail-content">
-                    <i className="fa-solid fa-location-dot detail-icon"></i>
-                    <p className="detail-text">
-                      {business.business_address || "Location not available"}
-                    </p>
+
+                    <div className="location-details">
+                      <div className="location-primary">
+                        <i className="fa-solid fa-location-dot"></i>
+                        <div className="location-text">
+                          {(!business.city_id && !business.county_id) && business.business_address && (
+                            <p className="detail-text address">
+                              {business.business_address}
+                            </p>
+                          )}
+                          {business.city_id && (
+                            <p className="detail-text city">
+                              {business.city_id.split(' ').map(word => 
+                                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                              ).join(' ')}
+                            </p>
+                          )}
+                          {business.county_id && (
+                            <p className="detail-text county">
+                              {business.county_id.split(' ').map(word => 
+                                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                              ).join(' ')} County
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {business.service_areas && Object.keys(business.service_areas).length > 1 && (
+                        <div className="service-areas">
+                          <button 
+                            className="service-areas-toggle"
+                            onClick={() => setShowServiceAreas(!showServiceAreas)}
+                          >
+                            {showServiceAreas ? 'Hide Additional Service Areas' : 'Show Additional Service Areas'}
+                          </button>
+                          {showServiceAreas && (
+                            <div className="service-areas-content">
+                              <h3 className="service-areas-title">Additional Service Areas</h3>
+                              <div className="service-areas-list">
+                                {Object.entries(business.service_areas).map(([area, value]) => (
+                                  value && <span key={area} className="service-area-tag">
+                                    {formatLocationName(area)}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  {isOwner && (
+                    <div className="edit-button" style={{ display: "flex", justifyContent: "flex-end", width: "100%", maxWidth: "50px" }}>
+                      <button
+                        className="edit-icon"
+                        onClick={() =>
+                          openEditModal({
+                            business_address: business.business_address,
+                            city_id: business.city_id,
+                            county_id: business.county_id,
+                            service_areas: business.service_areas,
+                            latitude: business.latitude,
+                            longitude: business.longitude
+                          }, 'business_details')}
+                      >
+                        ✎
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="business-detail">
@@ -1252,9 +1407,8 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       className="edit-icon"
                       onClick={() =>
                         openEditModal({
-                          business_address: business.business_address,
                           packages: packages || [],
-                        }, 'business_details')}
+                        }, 'packages')}
                     >
                       ✎
                     </button>
@@ -1615,6 +1769,99 @@ const styles = `
 
 .vendor-button.selected:hover {
   background: #388e3c;
+}
+
+.location-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.location-primary {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.location-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-icon {
+  color: #7E7684;
+  font-size: 18px;
+  margin-top: 2px;
+}
+
+.detail-text {
+  margin: 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.detail-text.address {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.detail-text.city {
+  font-weight: 500;
+  color: #333;
+}
+
+.detail-text.county {
+  color: #666;
+  font-size: 14px;
+}
+
+.service-areas {
+  margin-top: 8px;
+}
+
+.service-areas-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.service-areas-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.service-area-tag {
+  background: #f5f5f5;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #666;
+}
+
+.view-map-link {
+  margin-top: 12px;
+  color: #A328F4;
+  text-decoration: none;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f8f8f8;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.view-map-link:hover {
+  background: #f0f0f0;
+  text-decoration: none;
+}
+
+.view-map-link i {
+  font-size: 16px;
 }
 `;
 

@@ -17,7 +17,9 @@ const VendorListWithFilters = ({
     onVendorDeselect,
     selectedVendors,
     customButtonText,
-    showSelectionButton
+    showSelectionButton,
+    selectedCity,
+    selectedCounty
 }) => {
     const [sortType, setSortType] = useState(sortOrder || 'recommended');
     const navigate = useNavigate();
@@ -46,28 +48,8 @@ const VendorListWithFilters = ({
         }
     };
 
-    const handleSortChange = (e) => {
-        const newSortType = e.target.value;
-        setSortType(newSortType);
-        // Reset to first page when sort changes
-        setCurrentPage(1);
-    };
-
     return (
         <div className="vendor-list-with-filters">
-            <div className="sort-controls">
-                <select 
-                    value={sortType} 
-                    onChange={handleSortChange}
-                    className="sort-select"
-                >
-                    <option value="recommended">Recommended</option>
-                    <option value="rating">Highest Rated</option>
-                    <option value="base_price_low">Starting at: Low to High</option>
-                    <option value="base_price_high">Starting at: High to Low</option>
-                </select>
-            </div>
-
             <VendorList
                 selectedCategory={selectedCategory}
                 sortOrder={sortType}
@@ -83,6 +65,8 @@ const VendorListWithFilters = ({
                 selectedVendors={selectedVendors}
                 customButtonText={customButtonText}
                 showSelectionButton={showSelectionButton}
+                selectedCity={selectedCity}
+                selectedCounty={selectedCounty}
             />
         </div>
     );

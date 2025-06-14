@@ -561,11 +561,33 @@ const BidDisplayMini = ({
   };
 
   return (
-    <div className="request-display-mini">
+    <div className={`request-display-mini ${bid.status === "interested" ? "interested-bid" : ""}`} style={{
+      border: bid.status === "interested" ? "2px solid #9633eb" : undefined,
+      boxShadow: bid.status === "interested" ? "0 4px 12px rgba(150, 51, 235, 0.15)" : undefined,
+      background: bid.status === "interested" ? "linear-gradient(to right, #fff, #faf5ff)" : undefined,
+      transition: "all 0.3s ease"
+    }}>
       <div className="request-content p-3">
         <div className="request-header">
           <h2 className="request-title">{getTitle()}</h2>
           <div className="header-actions">
+            {bid.status === "interested" && (
+              <div style={{
+                background: "#9633eb",
+                color: "white",
+                padding: "6px 12px",
+                borderRadius: "20px",
+                fontSize: "0.9rem",
+                fontWeight: "600",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                animation: "pulse 2s infinite"
+              }}>
+                <FaCommentAlt />
+                Client Interested!
+              </div>
+            )}
             {showFollowUpButton && (
               <button
                 className="follow-up-btn"
@@ -637,22 +659,34 @@ const BidDisplayMini = ({
                 {bid.status === 'pending' ? (
                   bid.viewed ? (
                     <>
-                      <span style={{ color: '#9633eb', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <FaEye style={{ marginRight: 4 }} />
-                        Viewed by Client
-                      </span>
-                      <span
-                        className="info-icon-purple"
-                        title="The client has seen your bid but has not yet approved or denied it."
-                        onClick={e => {
-                          e.stopPropagation();
-                          setShowInfoTooltip(v => !v);
-                        }}
-                        tabIndex={0}
-                        aria-label="Show info about viewed status"
-                      >
-                        <FaInfoCircle />
-                      </span>
+                      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                        <span style={{ color: '#9633eb', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <FaEye style={{ marginRight: 4 }} />
+                          Viewed
+                        </span>
+                        <span
+                          className="info-icon-purple"
+                          title={`The client has seen your bid but has not yet approved or denied it. Viewed on ${new Date(bid.viewed_at).toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}`}
+                          onClick={e => {
+                            e.stopPropagation();
+                            setShowInfoTooltip(v => !v);
+                          }}
+                          tabIndex={0}
+                          aria-label="Show info about viewed status"
+                          style={{
+                            position: 'absolute',
+                            top: -8,
+                            right: -20,
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          <FaInfoCircle />
+                        </span>
+                      </div>
                       {showInfoTooltip && (
                         <div
                           style={{
@@ -731,20 +765,23 @@ const BidDisplayMini = ({
                     </>
                   )
                 ) : (
-                  bid.status
+                  bid.status === "interested" ? (
+                    <span style={{
+                      color: '#ff4d8d',
+                      fontWeight: 700,
+                      textTransform: 'capitalize',
+                      letterSpacing: '0.5px',
+                      background: 'linear-gradient(45deg, #ff4d8d, #ff6b6b)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      animation: 'pulse 2s infinite'
+                    }}>
+                      Interested
+                    </span>
+                  ) : (
+                    bid.status
+                  )
                 )}
-              </span>
-            </div>
-          )}
-          {bid?.viewed && (
-            <div className="detail-item">
-              <span className="detail-label">Viewed on:</span>
-              <span className="detail-value">
-                {bid.viewed_at ? new Date(bid.viewed_at).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric'
-                }) : 'N/A'}
               </span>
             </div>
           )}
@@ -933,28 +970,47 @@ const BidDisplayMini = ({
         ) : null}
 
         {/* Restore action buttons here so they always show */}
-        <div className="action-buttons">
+        <div className="action-buttons" style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '8px',
+          width: '100%'
+        }}>
           <button 
             className="action-button secondary" 
             onClick={() => openWithdrawModal(bid.id)}
+            style={{ width: '100%' }}
           >
             Withdraw
           </button>
-          {(bid.status === "approved" || bid.status === "accepted") && (
+          {(bid.status === "approved" || bid.status === "accepted" || bid.status === "interested") && (
             <button
               className="action-button message"
               onClick={() => onMessageClick(
                 request.profile_id || request.user_id,
-                null
+                bid.status === "interested" ? `I'm interested in your request for ${getTitle()}` : null
               )}
+              style={{ 
+                width: '100%',
+                background: bid.status === "interested" ? "#9633eb" : undefined,
+                color: bid.status === "interested" ? "white" : undefined,
+                transform: bid.status === "interested" ? "scale(1.02)" : undefined,
+                boxShadow: bid.status === "interested" ? "0 4px 12px rgba(150, 51, 235, 0.2)" : undefined,
+                animation: bid.status === "interested" ? "pulse 2s infinite" : undefined
+              }}
             >
-              <FaCommentAlt />
-              Message
+              <FaCommentAlt style={{ 
+                fontSize: '1.2rem', 
+                marginRight: '8px',
+                animation: bid.status === "interested" ? "bounce 1s infinite" : undefined
+              }} />
+              {bid.status === "interested" ? "Message Client Now!" : "Message"}
             </button>
           )}
           <button 
             className="action-button primary"
             onClick={() => onEditBid(bid.request_id, bid.id)}
+            style={{ width: '100%' }}
           >
             View/Edit
           </button>
