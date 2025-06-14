@@ -2,15 +2,44 @@ import React, { useState } from 'react';
 // Update these import paths to be relative to the AuthModal location
 import SignIn from '../../../components/Profile/SignIn';
 import Signup from '../../../components/Profile/Signup';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../../../supabaseClient';
 
 const AuthModal = ({ setIsModalOpen, onSuccess }) => {
     const [currentView, setCurrentView] = useState('options'); // 'options', 'signin', or 'signup'
     const navigate = useNavigate();
+    const location = useLocation();
+    const partnershipInfo = location.state?.partnershipInfo;
 
     const handleClose = () => {
         setIsModalOpen(false);
         navigate('/'); // Navigate to homepage
+    };
+
+    const handleSignupSuccess = async (userData) => {
+        try {
+            if (partnershipInfo && userData?.id) {
+                // Store the partnership referral in Supabase
+                const { error } = await supabase
+                    .from('partnership_referrals')
+                    .insert({
+                        user_id: userData.id,
+                        partner_id: partnershipInfo.partnerId,
+                        partner_name: partnershipInfo.partnerName,
+                        created_at: new Date().toISOString()
+                    });
+
+                if (error) {
+                    console.error('Error storing partnership referral:', error);
+                }
+            }
+            
+            if (onSuccess) {
+                onSuccess(userData);
+            }
+        } catch (error) {
+            console.error('Error in handleSignupSuccess:', error);
+        }
     };
 
     const renderContent = () => {
@@ -18,7 +47,13 @@ const AuthModal = ({ setIsModalOpen, onSuccess }) => {
             case 'signin':
                 return <SignIn onSuccess={onSuccess} />;
             case 'signup':
-                return <Signup onSuccess={onSuccess} initialUserType="individual" />;
+                return (
+                    <Signup 
+                        onSuccess={handleSignupSuccess} 
+                        initialUserType="individual"
+                        partnershipInfo={partnershipInfo}
+                    />
+                );
             default:
                 return (
                     <div className='sign-up-modal-content'>
@@ -30,7 +65,6 @@ const AuthModal = ({ setIsModalOpen, onSuccess }) => {
                         <div className="sign-up-modal-title">Sign In to Continue</div>
                         <div className="sign-up-modal-subtitle">*You must have an account to continue</div>
                         <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', justifyContent: 'center', alignItems: 'center' }}>
-
                             <button className="sign-up-modal-button-primary" onClick={() => setCurrentView('signin')}>
                                 Sign In
                             </button>

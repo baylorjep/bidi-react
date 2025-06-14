@@ -52,7 +52,9 @@ const PrivateRoute = ({ children }) => {
                     setIsModalOpen={setShowAuthModal} 
                     onSuccess={() => {
                         setShowAuthModal(false);
-                        // Only refresh after successful authentication
+                        // Set active section to bids in localStorage before reloading
+                        localStorage.setItem('activeSection', 'bids');
+                        // Reload the page
                         window.location.reload();
                     }}
                 />

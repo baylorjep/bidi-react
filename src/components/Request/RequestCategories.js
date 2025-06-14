@@ -1,10 +1,16 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../../styles/RequestCategories.css";
 
 function RequestCategories() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const partnershipInfo = location.state?.fromPartnership ? {
+    partnerId: location.state.partnerId,
+    partnerName: location.state.partnerName
+  } : null;
+  const vendorData = location.state?.vendor ? location.state.vendor : null;
 
   const categories = [
     {
@@ -65,7 +71,11 @@ function RequestCategories() {
       navigate("/master-request-flow", { 
         state: { 
           selectedCategories,
-          showRequestFlow: true
+          showRequestFlow: true,
+          partnershipInfo: location.state?.fromPartnership ? {
+            partnerId: location.state.partnerId,
+            partnerName: location.state.partnerName
+          } : null
         } 
       });
     }

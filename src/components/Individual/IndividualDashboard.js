@@ -22,9 +22,16 @@ import MasterRequestFlow from "../Request/MasterRequestFlow.js";
 const IndividualDashboard = () => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [activeSection, setActiveSection] = useState(
-    localStorage.getItem("activeSection") || "bids"
-  );
+  const [activeSection, setActiveSection] = useState(() => {
+    // Check if we're coming from a sign-in
+    const fromSignIn = sessionStorage.getItem('fromSignIn');
+    if (fromSignIn) {
+      sessionStorage.removeItem('fromSignIn');
+      return 'bids';
+    }
+    // Otherwise use the stored section or default to bids
+    return localStorage.getItem("activeSection") || "bids";
+  });
   const [profileImage, setProfileImage] = useState("/images/default.jpg");
   const [isMobile, setIsMobile] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
@@ -344,6 +351,57 @@ const IndividualDashboard = () => {
       window.removeEventListener('popstate', handleBackButton);
     };
   }, [activeSection]);
+
+  // Add authentication state listener
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          // Set flag for sign-in
+          sessionStorage.setItem('fromSignIn', 'true');
+          // Set active section to bids
+          setActiveSection('bids');
+          localStorage.setItem('activeSection', 'bids');
+          
+          // Fetch user profile data
+          const { data: profileData, error: profileError } = await supabase
+            .from('individual_profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            setError('Error loading profile data');
+          } else {
+            setProfile(profileData);
+            setFormData({
+              first_name: profileData.first_name || '',
+              last_name: profileData.last_name || '',
+              phone: profileData.phone || '',
+            });
+          }
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setProfile(null);
+        navigate('/');
+      }
+    });
+
+    return () => {
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
+  }, [navigate]);
+
+  // Add error boundary
+  if (!React.isValidElement(<div>test</div>)) {
+    console.error('Invalid JSX detected');
+    return <div>Error: Invalid component structure</div>;
+  }
 
   if (error) {
     return <div>Error: {error}</div>;
@@ -727,4 +785,5 @@ const IndividualDashboard = () => {
   );
 };
 
-export default IndividualDashboard; 
+// Ensure proper export
+export default React.memo(IndividualDashboard); 

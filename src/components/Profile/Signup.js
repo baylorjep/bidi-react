@@ -122,6 +122,9 @@ const Signup = ({ onSuccess, initialUserType }) => {
 
         const finalUserType = businessCategory.includes('wedding planner/coordinator') ? 'both' : userType;
 
+        // Get referral partner ID from session storage
+        const referralPartnerId = sessionStorage.getItem('referralPartnerId');
+
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -150,6 +153,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
                 id: user.id,
                 email: email,
                 role: finalUserType,
+                referral_partner_id: referralPartnerId
             }]);
 
         if (profileError) {
@@ -157,6 +161,9 @@ const Signup = ({ onSuccess, initialUserType }) => {
             console.error('Profile insertion error:', profileError);
             return;
         }
+
+        // Clear the referral partner ID from session storage after successful signup
+        sessionStorage.removeItem('referralPartnerId');
 
         if (finalUserType === 'individual' || finalUserType === 'both') {
             const { error: individualError } = await supabase

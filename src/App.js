@@ -142,6 +142,7 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 import VendorSelection from "./components/Request/VendorSelection";
 import WrongWithWeddings from "./components/Article/WrongWithWeddings";
 import ErrorPage from "./components/ErrorPage";
+import PartnershipLanding from "./components/PartnershipLanding";
 
 // Create a wrapper component to use useLocation
 function AppContent() {
@@ -198,11 +199,11 @@ function AppContent() {
     <div className="app-container">
       <SupabaseDownModal />
       <LocationBanner />
-      <Navbar />
-      <div className="content">
+      {!isDashboardRoute() && <Navbar />}
+      <div className="content-wrapper">
         <Routes>
-          {/* Layout Routes */}
           <Route path="/" element={<Homepage />} />
+          <Route path="/partnership/:partnerName" element={<PartnershipLanding />} />
           <Route path="/for-vendors" element={<VendorHomepage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-use" element={<TermsOfUse />} />
