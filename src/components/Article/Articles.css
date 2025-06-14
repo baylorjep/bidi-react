@@ -1074,17 +1074,23 @@ td {
 
 .article-ads {
     width: 300px;
-    flex-shrink: 0;
+    position: sticky;
+    top: 20px;
+    height: auto;
+    min-height: 100px;
+    display: block;
+    visibility: visible;
 }
 
 @media (max-width: 1024px) {
     .article-layout {
         flex-direction: column;
     }
-
     .article-ads {
         width: 100%;
-        position: static;
+        position: relative;
+        top: 0;
+        margin-top: 40px;
     }
 }
 

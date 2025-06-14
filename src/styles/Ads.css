@@ -2,7 +2,10 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
-width: 100%;
+    width: 100%;
+    min-height: 100px;
+    position: relative;
+    visibility: visible;
 }
 
 .ad-card {
@@ -13,6 +16,11 @@ width: 100%;
     border: 1px solid #E5E7EB;
     width: 100%;
     max-width: 300px;
+    min-height: 100px;
+    position: relative;
+    visibility: visible;
+    display: block;
+    margin-top: 20px;
 }
 
 @media (max-width: 768px) {

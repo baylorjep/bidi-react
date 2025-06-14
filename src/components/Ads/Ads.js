@@ -41,8 +41,8 @@ const Ads = () => {
     }, []);
 
     return (
-        <div className="ad-container">
-            <div className="ad-card">
+        <div className="ad-container" style={{ display: 'block', visibility: 'visible', height: 'auto' }}>
+            <div className="ad-card" style={{ display: 'block', visibility: 'visible', height: 'auto' }}>
                 <h3 className="ad-title">
                     Get Instant Quotes
                 </h3>
