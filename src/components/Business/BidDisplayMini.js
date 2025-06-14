@@ -985,7 +985,7 @@ const BidDisplayMini = ({
           </button>
           {(bid.status === "approved" || bid.status === "accepted" || bid.status === "interested") && (
             <button
-              className="action-button message"
+              className="action-button"
               onClick={() => onMessageClick(
                 request.profile_id || request.user_id,
                 bid.status === "interested" ? `I'm interested in your request for ${getTitle()}` : null
