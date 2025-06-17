@@ -108,15 +108,7 @@ const [showConsultationHoursModal, setShowConsultationHoursModal] = useState(fal
 const [consultationHours, setConsultationHours] = useState({
   startTime: "09:00",
   endTime: "17:00",
-  daysAvailable: {
-    monday: true,
-    tuesday: true,
-    wednesday: true,
-    thursday: true,
-    friday: true,
-    saturday: false,
-    sunday: false
-  }
+  daysAvailable: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 });
 
 const fetchPartnershipData = async () => {
@@ -328,7 +320,16 @@ useEffect(() => {
 
         // Set consultation hours if they exist
         if (profile.consultation_hours) {
-          setConsultationHours(profile.consultation_hours);
+          // Ensure daysAvailable is an array
+          const consultationHoursData = {
+            ...profile.consultation_hours,
+            daysAvailable: Array.isArray(profile.consultation_hours.daysAvailable) 
+              ? profile.consultation_hours.daysAvailable 
+              : Object.entries(profile.consultation_hours.daysAvailable || {})
+                  .filter(([_, value]) => value)
+                  .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
+          };
+          setConsultationHours(consultationHoursData);
         }
       } catch (error) {
         console.error("Error fetching setup progress:", error);
@@ -2040,7 +2041,7 @@ useEffect(() => {
       </Modal>
 
       {/* Calendar Modal */}
-      <Modal show={showGoogleCalendarModal} onHide={() => setShowGoogleCalendarModal(false)} centered>
+      <Modal show={showGoogleCalendarModal} onHide={() => setShowGoogleCalendarModal(false)} centered size="lg">
         <Modal.Header closeButton>
           <Modal.Title>{isCalendarConnected ? "Manage Google Calendar" : "Connect Google Calendar"}</Modal.Title>
         </Modal.Header>
@@ -2051,20 +2052,124 @@ useEffect(() => {
           {isCalendarLoading ? (
             <div className="text-center"><LoadingSpinner color="#9633eb" size={30} /></div>
           ) : isCalendarConnected ? (
-            <div>
-              <p>Your Google Calendar is connected. You can now manage your availability for consultations.</p>
-              <button className="btn btn-danger" onClick={async () => { try { await disconnectCalendar(); setShowGoogleCalendarModal(false); } catch (error) {} }}>Disconnect Calendar</button>
+            <div className="calendar-settings">
+              <div className="calendar-status mb-4">
+                <div className="status-badge connected">
+                  <i className="fas fa-check-circle me-2"></i>
+                  Google Calendar Connected
+                </div>
+                <p className="text-muted mt-2">Your calendar is connected and ready to manage consultations.</p>
+              </div>
+
+              <div className="consultation-hours-section">
+                <h4 className="section-title">Consultation Hours</h4>
+                <p className="text-muted mb-3">Set your available hours for consultations.</p>
+                
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <div className="form-group">
+                      <label className="form-label">Start Time</label>
+                      <input
+                        type="time"
+                        className="form-control"
+                        value={consultationHours.startTime}
+                        onChange={(e) => setConsultationHours(prev => ({ ...prev, startTime: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="form-group">
+                      <label className="form-label">End Time</label>
+                      <input
+                        type="time"
+                        className="form-control"
+                        value={consultationHours.endTime}
+                        onChange={(e) => setConsultationHours(prev => ({ ...prev, endTime: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-group mt-3">
+                  <label className="form-label">Available Days</label>
+                  <div className="days-grid">
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                      <label key={day} className="day-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={consultationHours.daysAvailable.includes(day)}
+                          onChange={(e) => {
+                            setConsultationHours(prev => ({
+                              ...prev,
+                              daysAvailable: e.target.checked
+                                ? [...prev.daysAvailable, day]
+                                : prev.daysAvailable.filter(d => d !== day)
+                            }));
+                          }}
+                        />
+                        <span className="day-label">{day}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="calendar-actions mt-4">
+                <button 
+                  className="btn btn-danger me-2" 
+                  onClick={async () => { 
+                    try { 
+                      await disconnectCalendar(); 
+                      setShowGoogleCalendarModal(false); 
+                    } catch (error) {} 
+                  }}
+                >
+                  <i className="fas fa-unlink me-2"></i>
+                  Disconnect Calendar
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={handleConsultationHoursSubmit}
+                >
+                  <i className="fas fa-save me-2"></i>
+                  Save Changes
+                </button>
+              </div>
             </div>
           ) : (
-            <div>
-              <p>Connect your Google Calendar to manage your availability for consultations.</p>
-              <p>This will allow you to:</p>
-              <ul>
-                <li>Automatically sync your availability</li>
-                <li>Prevent double bookings</li>
-                <li>Manage your consultation schedule</li>
-              </ul>
-              <button className="btn btn-primary" onClick={async () => { try { await connectCalendar(); } catch (error) {} }}>Connect Google Calendar</button>
+            <div className="calendar-connect">
+              <div className="connect-content text-center">
+                <i className="fas fa-calendar-plus fa-3x mb-3 text-primary"></i>
+                <h4>Connect Your Google Calendar</h4>
+                <p className="text-muted mb-4">Sync your calendar to manage consultations and prevent double bookings.</p>
+                
+                <div className="benefits-list mb-4">
+                  <div className="benefit-item">
+                    <i className="fas fa-sync text-success"></i>
+                    <span>Automatically sync your availability</span>
+                  </div>
+                  <div className="benefit-item">
+                    <i className="fas fa-calendar-check text-success"></i>
+                    <span>Prevent double bookings</span>
+                  </div>
+                  <div className="benefit-item">
+                    <i className="fas fa-clock text-success"></i>
+                    <span>Manage your consultation schedule</span>
+                  </div>
+                </div>
+
+                <button 
+                  className="btn btn-primary btn-lg" 
+                  onClick={async () => { 
+                    try { 
+                      await connectCalendar(); 
+                    } catch (error) {} 
+                  }}
+                >
+                  <i className="fab fa-google me-2"></i>
+                  Connect Google Calendar
+                </button>
+              </div>
             </div>
           )}
         </Modal.Body>
@@ -2238,95 +2343,6 @@ useEffect(() => {
           </div>
         </Modal.Body>
       </Modal>
-
-      {/* Consultation Hours Card */}
-      <div className="settings-card">
-        <div className="settings-card-header">
-          <h3>Consultation Hours</h3>
-          <button className="settings-edit-button" onClick={() => setShowConsultationHoursModal(true)}>Edit</button>
-        </div>
-        <div className="consultation-hours-display">
-          <div className="time-range">
-            <span className="time-label">Available Hours:</span>
-            <span className="time-value">
-              {consultationHours.startTime} - {consultationHours.endTime}
-            </span>
-          </div>
-          <div>
-            <span className="days-label">Available Days:</span>
-            <div className="days-list">
-              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                <span
-                  key={day}
-                  className={`day-tag ${consultationHours.daysAvailable.includes(day) ? 'available' : 'unavailable'}`}
-                >
-                  {day}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Consultation Hours Modal */}
-      {showConsultationHoursModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Set Consultation Hours</h2>
-              <button className="modal-close" onClick={() => setShowConsultationHoursModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Start Time</label>
-                <input
-                  type="time"
-                  value={consultationHours.startTime}
-                  onChange={(e) => setConsultationHours(prev => ({ ...prev, startTime: e.target.value }))}
-                />
-              </div>
-              <div className="form-group">
-                <label>End Time</label>
-                <input
-                  type="time"
-                  value={consultationHours.endTime}
-                  onChange={(e) => setConsultationHours(prev => ({ ...prev, endTime: e.target.value }))}
-                />
-              </div>
-              <div className="form-group">
-                <label>Available Days</label>
-                <div className="days-checkboxes">
-                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                    <label key={day} className="day-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={consultationHours.daysAvailable.includes(day)}
-                        onChange={(e) => {
-                          setConsultationHours(prev => ({
-                            ...prev,
-                            daysAvailable: e.target.checked
-                              ? [...prev.daysAvailable, day]
-                              : prev.daysAvailable.filter(d => d !== day)
-                          }));
-                        }}
-                      />
-                      {day}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="modal-cancel" onClick={() => setShowConsultationHoursModal(false)}>
-                Cancel
-              </button>
-              <button className="modal-save" onClick={handleConsultationHoursSubmit}>
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
