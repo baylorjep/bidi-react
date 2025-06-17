@@ -428,3 +428,165 @@
 .business-info .btn-primary:hover:not(:disabled) {
   background-color: #7b2cbf !important;
 }
+
+/* Consultation Hours Styles */
+.consultation-hours-display {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.time-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-label, .days-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.time-value {
+  color: #333;
+}
+
+.days-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.day-tag {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+}
+
+.day-tag.available {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.day-tag.unavailable {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+.days-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.day-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.day-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.modal-body {
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group input[type="time"] {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.modal-cancel {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  color: #666;
+  cursor: pointer;
+}
+
+.modal-save {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #A328F4;
+  color: white;
+  cursor: pointer;
+}
+
+.modal-save:hover {
+  background: #8a1fd1;
+}

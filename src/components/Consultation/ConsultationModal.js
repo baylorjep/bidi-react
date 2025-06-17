@@ -109,7 +109,7 @@ function ConsultationModal({
           </button>
           <button 
             className="btn-primary-consultation"
-            onClick={() => onSchedule({ businessId, bidId, startTime: selectedTimeSlot })}
+            onClick={() => onSchedule(selectedDate, selectedTimeSlot)}
             disabled={!selectedDate || !selectedTimeSlot || isLoading}
           >
             {isLoading ? 'Scheduling...' : 'Schedule Now'}

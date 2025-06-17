@@ -11,9 +11,13 @@ import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import ChatIcon from '@mui/icons-material/Chat';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AuthModal from "../../Request/Authentication/AuthModal";
 import GoogleReviews from './GoogleReviews';
 import { Helmet } from 'react-helmet-async';
+import ConsultationModal from '../../Consultation/ConsultationModal';
+import { useConsultation } from '../../../hooks/useConsultation';
+import { useGoogleCalendar } from '../../../hooks/useGoogleCalendar';
 
 // SVG Components
 const StarIcon = () => (
@@ -175,42 +179,57 @@ const MediaItem = ({ item, index, onImageClick }) => {
 
 const Portfolio = ({ businessId: propBusinessId }) => {
   const { businessId: paramBusinessId } = useParams();
+  const businessId = propBusinessId || paramBusinessId;
+  const navigate = useNavigate();
   const location = useLocation();
-  const [businessId, setBusinessId] = useState(
-    propBusinessId || paramBusinessId || null
-  );
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [portfolioPics, setPortfolioPics] = useState([]);
-  const [profileImage, setProfileImage] = useState("/images/default.jpg");
+  const [error, setError] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editFields, setEditFields] = useState({});
-  const [averageRating, setAverageRating] = useState(null);
-  const [bidStats, setBidStats] = useState({ average: null, count: 0 });
-  const [reviews, setReviews] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [expandedReviews, setExpandedReviews] = useState({});
-  const [portfolioVideos, setPortfolioVideos] = useState([]);
   const [isIndividual, setIsIndividual] = useState(false);
-  const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false); // State for modal visibility
-  const navigate = useNavigate();
-  const [convertedUrls, setConvertedUrls] = useState({});
-  const [sliderDimensions, setSliderDimensions] = useState({ width: 0, height: 0 });
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
+  const [portfolioPics, setPortfolioPics] = useState([]);
+  const [portfolioVideos, setPortfolioVideos] = useState([]);
+  const [averageRating, setAverageRating] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [bidStats, setBidStats] = useState({ average: null, count: 0 });
+  const [services, setServices] = useState([]);
+  const [packages, setPackages] = useState([]);
+  const [serviceAreas, setServiceAreas] = useState([]);
+  const [showServiceAreas, setShowServiceAreas] = useState(false);
+  const [showConsultationModal, setShowConsultationModal] = useState(false);
+  const [isCalendarConnected, setIsCalendarConnected] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [convertedUrls, setConvertedUrls] = useState({});
   const [fromBid, setFromBid] = useState(false);
   const [bidData, setBidData] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
-  const descriptionRef = useRef(null);
   const [isSelected, setIsSelected] = useState(false);
   const [fromVendorSelection, setFromVendorSelection] = useState(false);
-  const [packages, setPackages] = useState([]);
-  const [showServiceAreas, setShowServiceAreas] = useState(false);
+  const [editFields, setEditFields] = useState({});
+  const [expandedReviews, setExpandedReviews] = useState({});
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
+  const [showCalendarReconnectModal, setShowCalendarReconnectModal] = useState(false);
+  const descriptionRef = useRef(null);
+  const { connectCalendar } = useGoogleCalendar();
+  const {
+    selectedDate,
+    selectedTimeSlot,
+    availableTimeSlots,
+    isLoading: isConsultationLoading,
+    error: consultationError,
+    handleDateSelect,
+    handleTimeSlotSelect,
+    fetchTimeSlots,
+    scheduleConsultation
+  } = useConsultation();
 
   // Add slider settings
   const settings = {
@@ -320,223 +339,156 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     );
   };
 
-  useEffect(() => {
-    const fetchBusinessId = async () => {
-      if (businessId) return; // Skip if businessId is already set
-
-      try {
-        // Get the logged-in user
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-
-        if (error || !user) {
-          console.error("Error fetching user:", error || "No user found.");
-          setLoading(false);
-          return;
-        }
-
-        // Fetch the businessId from the business_profiles table
-        const { data: profile, error: profileError } = await supabase
-          .from("business_profiles")
-          .select("id")
-          .eq("id", user.id)
-          .single();
-
-        if (profileError || !profile) {
-          console.error("Error fetching business profile:", profileError);
-          setLoading(false);
-          return;
-        }
-
-        setBusinessId(profile.id); // Set the businessId
-      } catch (err) {
-        console.error("Error fetching businessId:", err);
-        setLoading(false);
-      }
-    };
-
-    if (!businessId) {
-      fetchBusinessId();
-    }
-  }, [businessId]);
-
-  useEffect(() => {
-    if (businessId) {
-      fetchBusinessData();
-    }
-  }, [businessId]);
-
   const fetchBusinessData = async () => {
-    if (!businessId) return; // Don't fetch if no businessId
-
     try {
       setLoading(true);
-      // Fetch business profile
-      const { data: businessProfile, error: businessError } = await supabase
+      const { data: businessData, error: businessError } = await supabase
         .from("business_profiles")
         .select("*")
         .eq("id", businessId)
         .single();
-      
-      console.log('Fetched business profile:', businessProfile); // Add logging
-      console.log('Business name:', businessProfile?.business_name); // Add logging
-      
-      if (businessError) {
-        console.error("Error fetching business:", businessError);
-      } else {
-        setBusiness(businessProfile);
-        console.log('Set business state:', businessProfile); // Add logging
-      }
 
-      // Fetch profile photo
-      const { data: profileData, error: profileError } = await supabase
-        .from("profile_photos")
-        .select("photo_url")
-        .eq("user_id", businessId)
-        .eq("photo_type", "profile")
-        .single();
-      if (profileData) setProfileImage(profileData.photo_url);
-      else if (profileError)
-        console.error("Error fetching profile image:", profileError);
+      if (businessError) throw businessError;
 
-      // Fetch portfolio media
-      const { data: portfolioData, error: portfolioError } = await supabase
-        .from("profile_photos")
-        .select("photo_url, photo_type, display_order")
-        .eq("user_id", businessId)
-        .or("photo_type.eq.portfolio,photo_type.eq.video")
-        .order("display_order", { ascending: true });
+      if (businessData) {
+        setBusiness(businessData);
+        // Set services from specializations array
+        setServices(businessData.specializations || []);
+        // Set service areas from service_areas array
+        setServiceAreas(businessData.service_areas || []);
+        // Set packages to empty array since we don't have a packages table
+        setPackages([]);
+        
+        // Check if business has Google Calendar connected
+        setIsCalendarConnected(!!businessData.google_calendar_connected);
 
-      if (portfolioError) {
-        console.error("Error fetching portfolio media:", portfolioError);
-      } else {
-        // Sort by display_order
-        const sortedMedia = portfolioData.sort(
-          (a, b) => a.display_order - b.display_order
-        );
+        // Fetch profile photo
+        const { data: profileData, error: profileError } = await supabase
+          .from("profile_photos")
+          .select("photo_url")
+          .eq("user_id", businessId)
+          .eq("photo_type", "profile")
+          .single();
+        if (profileData) setProfileImage(profileData.photo_url);
+        else if (profileError) console.error("Error fetching profile image:", profileError);
 
-        const videos = [];
-        const images = [];
+        // Fetch portfolio media
+        const { data: portfolioData, error: portfolioError } = await supabase
+          .from("profile_photos")
+          .select("photo_url, photo_type, display_order")
+          .eq("user_id", businessId)
+          .or("photo_type.eq.portfolio,photo_type.eq.video")
+          .order("display_order", { ascending: true });
 
-        sortedMedia.forEach((item) => {
-          if (item.photo_type === "video") {
-            videos.push(item.photo_url);
-          } else {
-            images.push(item.photo_url);
-          }
-        });
-
-        setPortfolioVideos(videos);
-        setPortfolioPics(images);
-      }
-
-      // Fetch packages
-      const { data: packagesData, error: packagesError } = await supabase
-        .from("business_packages")
-        .select("*")
-        .eq("business_id", businessId)
-        .order("price", { ascending: true });
-
-      if (packagesError) {
-        console.error("Error fetching packages:", packagesError);
-      } else {
-        setPackages(packagesData || []);
-      }
-
-      // Check user role and ownership
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (!userError && user) {
-        if (user.id === businessId) {
-          setIsOwner(true);
+        if (portfolioError) {
+          console.error("Error fetching portfolio media:", portfolioError);
         } else {
-          const { data: userData, error: userDataError } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .single();
-          
-          if (userDataError) {
-            console.error("Error fetching user role:", userDataError);
+          const sortedMedia = portfolioData.sort(
+            (a, b) => a.display_order - b.display_order
+          );
+
+          const videos = [];
+          const images = [];
+
+          sortedMedia.forEach((item) => {
+            if (item.photo_type === "video") {
+              videos.push(item.photo_url);
+            } else {
+              images.push(item.photo_url);
+            }
+          });
+
+          setPortfolioVideos(videos);
+          setPortfolioPics(images);
+        }
+
+        // Check user role and ownership
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (!userError && user) {
+          if (user.id === businessId) {
+            setIsOwner(true);
           } else {
-            setIsIndividual(userData?.role === "individual");
+            const { data: userData, error: userDataError } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", user.id)
+              .single();
+            
+            if (userDataError) {
+              console.error("Error fetching user role:", userDataError);
+            } else {
+              setIsIndividual(userData?.role === "individual");
+            }
           }
         }
-      }
 
-      // Fetch reviews
-      const { data: reviewData, error: reviewError } = await supabase
-        .from("reviews")
-        .select("rating, first_name")
-        .eq("vendor_id", businessId);
+        // Fetch reviews
+        const { data: reviewData, error: reviewError } = await supabase
+          .from("reviews")
+          .select("rating, first_name")
+          .eq("vendor_id", businessId);
 
-      if (reviewError) {
-        console.error("Error fetching reviews:", reviewError);
-      } else {
-        const avgRating =
-          reviewData.length > 0
-            ? (
-                reviewData.reduce((acc, review) => acc + review.rating, 0) /
-                reviewData.length
-              ).toFixed(1)
-            : null;
-        setAverageRating(avgRating);
-      }
+        if (reviewError) {
+          console.error("Error fetching reviews:", reviewError);
+        } else {
+          const avgRating =
+            reviewData.length > 0
+              ? (
+                  reviewData.reduce((acc, review) => acc + review.rating, 0) /
+                  reviewData.length
+                ).toFixed(1)
+              : null;
+          setAverageRating(avgRating);
+        }
 
-      // Fetch bids
-      const { data: bidData, error: bidError } = await supabase
-        .from("bids")
-        .select("bid_amount")
-        .eq("user_id", businessId);
+        // Fetch bids
+        const { data: bidData, error: bidError } = await supabase
+          .from("bids")
+          .select("bid_amount")
+          .eq("user_id", businessId);
 
-      if (bidError) {
-        console.error("Error fetching bids:", bidError);
-      } else if (bidData && bidData.length > 0) {
-        const totalBids = bidData.reduce((acc, bid) => acc + bid.bid_amount, 0);
-        const averageBid = (totalBids / bidData.length).toFixed(0);
-        setBidStats({
-          average: averageBid,
-          count: bidData.length,
-        });
-      }
+        if (bidError) {
+          console.error("Error fetching bids:", bidError);
+        } else if (bidData && bidData.length > 0) {
+          const totalBids = bidData.reduce((acc, bid) => acc + bid.bid_amount, 0);
+          const averageBid = (totalBids / bidData.length).toFixed(0);
+          setBidStats({
+            average: averageBid,
+            count: bidData.length,
+          });
+        }
 
-      // Fetch detailed reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from("reviews")
-        .select("rating, comment, first_name, created_at")
-        .eq("vendor_id", businessId);
+        // Fetch detailed reviews
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from("reviews")
+          .select("rating, comment, first_name, created_at")
+          .eq("vendor_id", businessId);
 
-      if (reviewsError) {
-        console.error("Error fetching reviews:", reviewsError);
-      } else {
-        setReviews(reviewsData);
-        const avgRating =
-          reviewsData.length > 0
-            ? (
-                reviewsData.reduce((acc, review) => acc + review.rating, 0) /
-                reviewsData.length
-              ).toFixed(1)
-            : null;
-        setAverageRating(avgRating);
-      }
-
-      setLoading(false);
-
-      // Helper function to normalize business_category
-      const getCategories = (category) => Array.isArray(category) ? category : [category].filter(Boolean);
-
-      if (businessProfile) {
-        setBusiness({ ...businessProfile, business_category: getCategories(businessProfile.business_category) });
+        if (reviewsError) {
+          console.error("Error fetching reviews:", reviewsError);
+        } else {
+          setReviews(reviewsData);
+          const avgRating =
+            reviewsData.length > 0
+              ? (
+                  reviewsData.reduce((acc, review) => acc + review.rating, 0) /
+                  reviewsData.length
+                ).toFixed(1)
+              : null;
+          setAverageRating(avgRating);
+        }
       }
     } catch (error) {
-      console.error("Error in fetchBusinessData:", error);
+      console.error("Error fetching business data:", error);
+      setError("Failed to load business data");
+    } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchBusinessData();
+  }, [businessId]);
 
   useEffect(() => {
     const convertImages = async () => {
@@ -607,11 +559,11 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         videos: portfolioVideos
       }
     });
-    setModalOpen(true);
+    setShowEditModal(true);
   };
 
   const handleModalClose = () => {
-    setModalOpen(false);
+    setShowEditModal(false);
     fetchBusinessData();
   };
 
@@ -793,7 +745,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
   const handleChatClick = async () => {
     if (!isAuthenticated) {
-      setIsAuthModalOpen(true);
+      setShowAuthModal(true);
       return;
     }
 
@@ -810,17 +762,38 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   };
 
   const handleAuthSuccess = () => {
-    setIsAuthModalOpen(false);
-    navigate('/individual-dashboard', {
-      state: {
-        activeSection: 'messages',
-        selectedChat: {
-          id: businessId,
-          name: business.business_name,
-          profileImage: profileImage
+    setShowAuthModal(false);
+    setShowConsultationModal(true);
+  };
+
+  const handleScheduleConsultation = async (selectedDate, selectedTimeSlot) => {
+    try {
+      await scheduleConsultation(selectedDate, selectedTimeSlot);
+      setShowConsultationModal(false);
+      // Show success message or handle post-scheduling actions
+    } catch (error) {
+      // Show a more user-friendly error message
+      const errorMessage = error.message || 'Failed to schedule consultation. Please try again.';
+      alert(errorMessage);
+      
+      // If it's a calendar authorization error, suggest reconnecting
+      if (errorMessage.includes('authorization expired') || errorMessage.includes('access denied')) {
+        if (isOwner) {
+          setShowCalendarReconnectModal(true);
         }
       }
-    });
+    }
+  };
+
+  const handleCalendarReconnect = async () => {
+    try {
+      setShowConsultationModal(false);
+      await connectCalendar();
+      setShowCalendarReconnectModal(false);
+    } catch (error) {
+      console.error('Error reconnecting calendar:', error);
+      alert('Failed to reconnect calendar. Please try again.');
+    }
   };
 
   useEffect(() => {
@@ -886,7 +859,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       // Update local state
       setBidData(prev => ({
         ...prev,
-        status: 'accepted'
+      status: 'accepted'
       }));
 
       // Navigate based on user type
@@ -913,7 +886,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
   const handleLearnMore = (packageName) => {
     if (!isAuthenticated) {
-      setIsAuthModalOpen(true);
+      setShowAuthModal(true);
       return;
     }
 
@@ -938,7 +911,21 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     const category = Array.isArray(business.business_category) 
       ? business.business_category[0] 
       : business.business_category;
-    return `Is ${business.business_name} a Good ${category}? | Reviews & Portfolio`;
+    
+    // Format the category name to be more natural
+    let formattedCategory = category;
+    if (category.toLowerCase().includes('photography')) {
+      formattedCategory = 'Photographer';
+    } else if (category.toLowerCase().includes('wedding planner')) {
+      formattedCategory = 'Wedding Planner';
+    } else if (category.toLowerCase().includes('beauty')) {
+      formattedCategory = 'Beauty Professional';
+    } else {
+      // Capitalize first letter and remove any extra spaces
+      formattedCategory = category.charAt(0).toUpperCase() + category.slice(1).replace(/\s+/g, ' ');
+    }
+    
+    return `${business.business_name} - Professional ${formattedCategory} | Reviews & Portfolio`;
   };
 
   const getSeoDescription = () => {
@@ -947,6 +934,14 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       ? business.business_category[0] 
       : business.business_category;
     return `Discover ${business.business_name}'s ${category} services, portfolio, and ${reviews.length} verified reviews. View their work, packages, and contact them directly on Bidi.`;
+  };
+
+  const handleConsultationClick = () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    setShowConsultationModal(true);
   };
 
   if (loading) {
@@ -1047,7 +1042,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       </div>
 
       <EditProfileModal
-        isOpen={modalOpen}
+        isOpen={showEditModal}
         onClose={handleModalClose}
         businessId={businessId}
         initialData={editFields}
@@ -1063,9 +1058,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         businessId={businessId}
       />
 
-      {isAuthModalOpen && (
+      {showAuthModal && (
         <AuthModal 
-          setIsModalOpen={setIsAuthModalOpen}
+          setIsModalOpen={setShowAuthModal}
           onSuccess={handleAuthSuccess}
         />
       )}
@@ -1208,6 +1203,15 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       />
                     );
                   })}
+                {/* Add gallery button if there are more than 5 items */}
+                {portfolioVideos.length + portfolioPics.length > 5 && (
+                  <button
+                    className="see-all-button"
+                    onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
+                  >
+                    View Gallery
+                  </button>
+                )}
               </div>
             )}
 
@@ -1611,6 +1615,15 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                           <ChatIcon style={{ fontSize: '20px', marginRight: 6 }} />
                           Message
                         </button>
+                                {isCalendarConnected && (
+          <button
+            className="vendor-button"
+            style={{ background: "linear-gradient(90deg, #A328F4 0%, #e6007e 100%)", color: "#fff" }}
+            onClick={handleConsultationClick}
+          >
+            <CalendarMonthIcon /> Schedule Consultation
+          </button>
+        )}
                       </div>
                     </div>
                   )}
@@ -1707,6 +1720,48 @@ const Portfolio = ({ businessId: propBusinessId }) => {
           </div>
         </div>
       </div>
+
+
+      {/* Consultation Modal */}
+      <ConsultationModal
+        isOpen={showConsultationModal}
+        onClose={() => setShowConsultationModal(false)}
+        onSchedule={handleScheduleConsultation}
+        businessName={business.business_name}
+        businessId={businessId}
+        selectedDate={selectedDate}
+        selectedTimeSlot={selectedTimeSlot}
+        availableTimeSlots={availableTimeSlots}
+        isLoading={isConsultationLoading}
+        error={consultationError}
+        onDateSelect={handleDateSelect}
+        onTimeSlotSelect={handleTimeSlotSelect}
+        onFetchTimeSlots={fetchTimeSlots}
+      />
+
+      {/* Add Calendar Reconnect Modal */}
+      {showCalendarReconnectModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Calendar Connection Required</h3>
+            <p>Your Google Calendar connection needs to be refreshed. Would you like to reconnect now?</p>
+            <div className="modal-buttons">
+              <button 
+                className="btn-secondary-consultation"
+                onClick={() => setShowCalendarReconnectModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn-primary-consultation"
+                onClick={handleCalendarReconnect}
+              >
+                Reconnect Calendar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

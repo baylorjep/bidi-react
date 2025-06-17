@@ -2155,3 +2155,25 @@
     padding: 12px;
   }
 }
+
+.consultation-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #9633eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.consultation-button:hover {
+  background-color: #8c1ecc;
+}
+
+.consultation-button svg {
+  font-size: 20px;
+}

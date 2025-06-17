@@ -48,15 +48,45 @@ export const createCalendarEvent = async (eventData) => {
       ...eventData,
       API_URL
     });
-    const response = await axios.post(`${API_URL}/api/calendar/events`, eventData);
+
+    // Add timeout and validate API URL
+    if (!API_URL) {
+      throw new Error('API URL is not configured');
+    }
+
+    const response = await axios.post(`${API_URL}/api/calendar/events`, eventData, {
+      timeout: 10000, // 10 second timeout
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.data) {
+      throw new Error('No response data received');
+    }
+
     return response.data;
   } catch (error) {
     console.error('Error creating calendar event:', error);
     console.error('Error response:', error.response?.data);
+    
+    if (error.code === 'ERR_NETWORK') {
+      throw new Error('Network error: Unable to connect to the server. Please check your internet connection.');
+    }
+    
     if (error.response?.status === 400) {
       throw new Error(error.response.data.message || 'Invalid request parameters');
     }
-    throw new Error('Failed to schedule consultation');
+    
+    if (error.response?.status === 401) {
+      throw new Error('Calendar authorization expired. Please reconnect your Google Calendar.');
+    }
+    
+    if (error.response?.status === 403) {
+      throw new Error('Calendar access denied. Please check your calendar permissions.');
+    }
+    
+    throw new Error('Failed to schedule consultation. Please try again later.');
   }
 };
 

@@ -104,6 +104,21 @@ const [partnershipData, setPartnershipData] = useState(null);
 // Add this state near the top with other state declarations
 const [isCopied, setIsCopied] = useState(false);
 
+const [showConsultationHoursModal, setShowConsultationHoursModal] = useState(false);
+const [consultationHours, setConsultationHours] = useState({
+  startTime: "09:00",
+  endTime: "17:00",
+  daysAvailable: {
+    monday: true,
+    tuesday: true,
+    wednesday: true,
+    thursday: true,
+    friday: true,
+    saturday: false,
+    sunday: false
+  }
+});
+
 const fetchPartnershipData = async () => {
   try {
     const { data, error } = await supabase
@@ -309,6 +324,11 @@ useEffect(() => {
 
         if (profile.contract_template) {
           setContractTemplate(profile.contract_template);
+        }
+
+        // Set consultation hours if they exist
+        if (profile.consultation_hours) {
+          setConsultationHours(profile.consultation_hours);
         }
       } catch (error) {
         console.error("Error fetching setup progress:", error);
@@ -1256,9 +1276,195 @@ useEffect(() => {
     navigate(`/portfolio/${businessId}/${formattedName}`);
   };
 
+  // Add this function to handle consultation hours changes
+  const handleConsultationHoursSubmit = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("User not found. Please log in again.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("business_profiles")
+        .update({
+          consultation_hours: consultationHours
+        })
+        .eq("id", user.id);
+
+      if (error) {
+        console.error("Error updating consultation hours:", error);
+        alert("An error occurred while updating your consultation hours.");
+      } else {
+        setShowConsultationHoursModal(false);
+      }
+    } catch (error) {
+      console.error("Error saving consultation hours:", error);
+      alert("Failed to save consultation hours. Please try again.");
+    }
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
+
+  const styles = {
+    settingsCard: {
+      background: '#fff',
+      borderRadius: '12px',
+      padding: '24px',
+      marginBottom: '24px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+    },
+    settingsCardHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '16px'
+    },
+    settingsCardHeaderH3: {
+      margin: 0,
+      fontSize: '18px',
+      color: '#333'
+    },
+    settingsEditButton: {
+      background: 'none',
+      border: 'none',
+      color: '#A328F4',
+      cursor: 'pointer',
+      fontSize: '14px',
+      padding: '4px 8px',
+      borderRadius: '4px'
+    },
+    consultationHoursDisplay: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px'
+    },
+    timeRange: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px'
+    },
+    timeLabel: {
+      fontWeight: 500,
+      color: '#666'
+    },
+    timeValue: {
+      color: '#333'
+    },
+    daysList: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '8px',
+      marginTop: '8px'
+    },
+    dayTag: {
+      padding: '4px 12px',
+      borderRadius: '16px',
+      fontSize: '13px'
+    },
+    dayTagAvailable: {
+      background: '#e8f5e9',
+      color: '#2e7d32'
+    },
+    dayTagUnavailable: {
+      background: '#f5f5f5',
+      color: '#757575'
+    },
+    daysCheckboxes: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+      gap: '12px',
+      marginTop: '8px'
+    },
+    dayCheckbox: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      cursor: 'pointer'
+    },
+    modalOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    },
+    modalContent: {
+      background: 'white',
+      borderRadius: '12px',
+      padding: '24px',
+      width: '90%',
+      maxWidth: '500px',
+      maxHeight: '90vh',
+      overflowY: 'auto'
+    },
+    modalHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '24px'
+    },
+    modalHeaderH2: {
+      margin: 0,
+      fontSize: '20px',
+      color: '#333'
+    },
+    modalClose: {
+      background: 'none',
+      border: 'none',
+      fontSize: '24px',
+      color: '#666',
+      cursor: 'pointer',
+      padding: '4px'
+    },
+    modalBody: {
+      marginBottom: '24px'
+    },
+    formGroup: {
+      marginBottom: '20px'
+    },
+    formGroupLabel: {
+      display: 'block',
+      marginBottom: '8px',
+      fontWeight: 500,
+      color: '#333'
+    },
+    formGroupInput: {
+      width: '100%',
+      padding: '8px 12px',
+      border: '1px solid #ddd',
+      borderRadius: '6px',
+      fontSize: '14px'
+    },
+    modalFooter: {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: '12px'
+    },
+    modalCancel: {
+      padding: '8px 16px',
+      border: '1px solid #ddd',
+      borderRadius: '6px',
+      background: 'white',
+      color: '#666',
+      cursor: 'pointer'
+    },
+    modalSave: {
+      padding: '8px 16px',
+      border: 'none',
+      borderRadius: '6px',
+      background: '#A328F4',
+      color: 'white',
+      cursor: 'pointer'
+    }
+  };
 
   return (
     <div className="business-settings-container">
@@ -2032,6 +2238,95 @@ useEffect(() => {
           </div>
         </Modal.Body>
       </Modal>
+
+      {/* Consultation Hours Card */}
+      <div className="settings-card">
+        <div className="settings-card-header">
+          <h3>Consultation Hours</h3>
+          <button className="settings-edit-button" onClick={() => setShowConsultationHoursModal(true)}>Edit</button>
+        </div>
+        <div className="consultation-hours-display">
+          <div className="time-range">
+            <span className="time-label">Available Hours:</span>
+            <span className="time-value">
+              {consultationHours.startTime} - {consultationHours.endTime}
+            </span>
+          </div>
+          <div>
+            <span className="days-label">Available Days:</span>
+            <div className="days-list">
+              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                <span
+                  key={day}
+                  className={`day-tag ${consultationHours.daysAvailable.includes(day) ? 'available' : 'unavailable'}`}
+                >
+                  {day}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Consultation Hours Modal */}
+      {showConsultationHoursModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Set Consultation Hours</h2>
+              <button className="modal-close" onClick={() => setShowConsultationHoursModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Start Time</label>
+                <input
+                  type="time"
+                  value={consultationHours.startTime}
+                  onChange={(e) => setConsultationHours(prev => ({ ...prev, startTime: e.target.value }))}
+                />
+              </div>
+              <div className="form-group">
+                <label>End Time</label>
+                <input
+                  type="time"
+                  value={consultationHours.endTime}
+                  onChange={(e) => setConsultationHours(prev => ({ ...prev, endTime: e.target.value }))}
+                />
+              </div>
+              <div className="form-group">
+                <label>Available Days</label>
+                <div className="days-checkboxes">
+                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                    <label key={day} className="day-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={consultationHours.daysAvailable.includes(day)}
+                        onChange={(e) => {
+                          setConsultationHours(prev => ({
+                            ...prev,
+                            daysAvailable: e.target.checked
+                              ? [...prev.daysAvailable, day]
+                              : prev.daysAvailable.filter(d => d !== day)
+                          }));
+                        }}
+                      />
+                      {day}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="modal-cancel" onClick={() => setShowConsultationHoursModal(false)}>
+                Cancel
+              </button>
+              <button className="modal-save" onClick={handleConsultationHoursSubmit}>
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

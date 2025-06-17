@@ -33,7 +33,7 @@ export const useConsultation = () => {
     }
   }, []);
 
-  const scheduleConsultation = async ({ businessId, bidId, startTime }) => {
+  const scheduleConsultation = async ({ businessId, bidId, startTime, customerEmail, customerName }) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -41,7 +41,9 @@ export const useConsultation = () => {
         businessId,
         bidId,
         startTime,
-        duration: 30 // 30-minute consultation
+        duration: 30, // 30-minute consultation
+        customerEmail,
+        customerName
       };
       const result = await createCalendarEvent(eventData);
       return result;
