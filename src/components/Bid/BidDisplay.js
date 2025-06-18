@@ -496,7 +496,34 @@ useEffect(() => {
 
   const handleScheduleConsultation = async (data) => {
     try {
-      const result = await scheduleConsultation(data);
+      // Get current user information
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get user profile information
+      const { data: profile, error: profileError } = await supabase
+        .from('individual_profiles')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        throw new Error('Failed to get user profile');
+      }
+
+      const customerName = `${profile.first_name} ${profile.last_name}`.trim();
+      const customerEmail = user.email;
+
+      const result = await scheduleConsultation({
+        businessId: bid.business_profiles.id,
+        bidId: bid.id,
+        startTime: data.selectedTimeSlot,
+        customerEmail,
+        customerName
+      });
+      
       if (onScheduleConsultation) {
         onScheduleConsultation(result);
       }

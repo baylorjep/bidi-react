@@ -768,7 +768,34 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
   const handleScheduleConsultation = async (selectedDate, selectedTimeSlot) => {
     try {
-      await scheduleConsultation(selectedDate, selectedTimeSlot);
+      // Get current user information
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get user profile information
+      const { data: profile, error: profileError } = await supabase
+        .from('individual_profiles')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        throw new Error('Failed to get user profile');
+      }
+
+      const customerName = `${profile.first_name} ${profile.last_name}`.trim();
+      const customerEmail = user.email;
+
+      await scheduleConsultation({
+        businessId,
+        bidId: null, // Not needed for portfolio consultations
+        startTime: selectedTimeSlot,
+        customerEmail,
+        customerName
+      });
+      
       setShowConsultationModal(false);
       // Show success message or handle post-scheduling actions
     } catch (error) {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useConsultation } from '../../hooks/useConsultation';
 import ConsultationModal from '../../components/Consultation/ConsultationModal';
 import { toast } from 'react-toastify';
+import { supabase } from '../../supabaseClient';
 
 const ConsultationPage = ({ businessId, businessName, bidId }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,9 +21,36 @@ const ConsultationPage = ({ businessId, businessName, bidId }) => {
     scheduleConsultation
   } = useConsultation();
 
-  const handleSchedule = async ({ businessId, bidId, startTime }) => {
+  const handleSchedule = async (data) => {
     try {
-      await scheduleConsultation({ businessId, bidId, startTime });
+      // Get current user information
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get user profile information
+      const { data: profile, error: profileError } = await supabase
+        .from('individual_profiles')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        throw new Error('Failed to get user profile');
+      }
+
+      const customerName = `${profile.first_name} ${profile.last_name}`.trim();
+      const customerEmail = user.email;
+
+      await scheduleConsultation({
+        businessId,
+        bidId,
+        startTime: data.selectedTimeSlot,
+        customerEmail,
+        customerName
+      });
+      
       toast.success('Consultation scheduled successfully!');
       setIsModalOpen(false);
       // Navigate to the consultations list or dashboard
