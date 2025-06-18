@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const checkCalendarConnection = async (businessId) => {
   try {
-    const API_URL = 'http://localhost:4242';
+    const API_URL = 'https://bidi-express.vercel.app';
     const response = await axios.get(`${API_URL}/api/business-profiles/${businessId}`);
     return response.data.google_calendar_connected || false;
   } catch (error) {
@@ -13,7 +13,7 @@ export const checkCalendarConnection = async (businessId) => {
 
 export const getConsultationHours = async (businessId) => {
   try {
-    const API_URL = 'http://localhost:4242';
+    const API_URL = 'https://bidi-express.vercel.app';
     const response = await axios.get(`${API_URL}/api/google-calendar/consultation-hours/${businessId}`);
     return response.data;
   } catch (error) {
@@ -24,7 +24,7 @@ export const getConsultationHours = async (businessId) => {
 
 export const updateConsultationHours = async (businessId, consultationHoursData) => {
   try {
-    const API_URL = 'http://localhost:4242';
+    const API_URL = 'https://bidi-express.vercel.app';
     const response = await axios.put(`${API_URL}/api/google-calendar/consultation-hours/${businessId}`, consultationHoursData, {
       headers: {
         'Content-Type': 'application/json'
@@ -44,7 +44,7 @@ export const fetchAvailableTimeSlots = async (businessId, date) => {
       throw new Error('Invalid date provided');
     }    // Format date as YYYY-MM-DD
     const formattedDate = date.toISOString().split('T')[0];
-    const API_URL = 'http://localhost:4242';
+    const API_URL = 'https://bidi-express.vercel.app';
     console.log('Fetching time slots for:', { businessId, date: formattedDate, API_URL });
     const response = await axios.get(`${API_URL}/api/google-calendar/availability/${businessId}/${formattedDate}`);    console.log('API Response:', response.data);
     
@@ -69,7 +69,7 @@ export const fetchAvailableTimeSlots = async (businessId, date) => {
 
 export const createCalendarEvent = async (eventData) => {
   try {
-    const API_URL = 'http://localhost:4242';
+    const API_URL = 'https://bidi-express.vercel.app';
     console.log('Creating calendar event with data:', {
       ...eventData,
       API_URL
@@ -152,7 +152,7 @@ export const createCalendarEvent = async (eventData) => {
 };
 
 export const connectGoogleCalendar = (businessId) => {
-  const API_URL = 'http://localhost:4242';
+  const API_URL = 'https://bidi-express.vercel.app';
   window.location.href = `${API_URL}/api/google-calendar/auth?businessId=${businessId}`;
 };
 

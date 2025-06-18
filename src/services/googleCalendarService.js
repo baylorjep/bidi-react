@@ -1,6 +1,6 @@
 import { supabase } from '../supabaseClient';
 
-const API_URL = 'http://localhost:4242';
+const API_URL = 'https://bidi-express.vercel.app';
 
 export const googleCalendarService = {
   async connectCalendar(userId) {
