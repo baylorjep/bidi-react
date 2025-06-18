@@ -8,14 +8,40 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  // Log the incoming request body for debugging
-  console.log('Received schedule consultation request:', req.body);
+  // Log the incoming request for debugging
+  console.log('=== API RECEIVED REQUEST ===');
+  console.log('Request method:', req.method);
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', req.body);
+  console.log('Request body type:', typeof req.body);
+  console.log('Request body keys:', Object.keys(req.body || {}));
+  console.log('Content-Type header:', req.headers['content-type']);
 
   const { businessId, startTime, duration = 30, customerEmail, customerName } = req.body;
 
+  console.log('Extracted parameters:', {
+    businessId,
+    startTime,
+    customerEmail,
+    customerName,
+    hasBusinessId: !!businessId,
+    hasStartTime: !!startTime,
+    hasCustomerEmail: !!customerEmail,
+    hasCustomerName: !!customerName
+  });
+
   if (!businessId || !startTime || !customerEmail || !customerName) {
     console.error('Missing required parameters:', { businessId, startTime, customerEmail, customerName });
-    return res.status(400).json({ message: 'Missing required parameters', received: req.body });
+    return res.status(400).json({ 
+      message: 'Missing required parameters', 
+      received: req.body,
+      missing: {
+        businessId: !businessId,
+        startTime: !startTime,
+        customerEmail: !customerEmail,
+        customerName: !customerName
+      }
+    });
   }
 
   try {

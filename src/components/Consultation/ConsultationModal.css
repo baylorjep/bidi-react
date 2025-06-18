@@ -62,6 +62,23 @@
   color: #9633eb;
 }
 
+.timezone-info {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #e3f2fd;
+  border-radius: 6px;
+  border-left: 3px solid #2196f3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #1976d2;
+}
+
+.timezone-info i {
+  color: #2196f3;
+}
+
 .scheduling-container {
   margin-bottom: 24px;
 }

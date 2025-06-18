@@ -18,7 +18,8 @@ function ConsultationModal({
   availableTimeSlots,
   onDateSelect,
   onTimeSlotSelect,
-  onFetchTimeSlots
+  onFetchTimeSlots,
+  businessTimezone = null
 }) {
   useEffect(() => {
     if (isOpen && selectedDate) {
@@ -29,8 +30,22 @@ function ConsultationModal({
   if (!isOpen) return null;
 
   const formatTimeSlot = (timeSlot) => {
+    // Ensure we're working with a proper Date object
     const date = new Date(timeSlot);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      console.error('Invalid date:', timeSlot);
+      return 'Invalid time';
+    }
+    
+    // Format in local timezone with explicit options
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
   };
 
   // Modal JSX
@@ -58,6 +73,12 @@ function ConsultationModal({
               Discuss your event details and requirements
             </li>
           </ul>
+          {businessTimezone && (
+            <div className="timezone-info">
+              <i className="fas fa-globe"></i>
+              <small>Times shown in your local timezone. Business operates in {businessTimezone}.</small>
+            </div>
+          )}
         </div>
 
         <div className="scheduling-container">
@@ -109,7 +130,7 @@ function ConsultationModal({
           </button>
           <button 
             className="btn-primary-consultation"
-            onClick={() => onSchedule(selectedDate, selectedTimeSlot)}
+            onClick={() => onSchedule({ selectedDate, selectedTimeSlot })}
             disabled={!selectedDate || !selectedTimeSlot || isLoading}
           >
             {isLoading ? 'Scheduling...' : 'Schedule Now'}

@@ -120,7 +120,7 @@ router.get('/business-profile/auth', async (req, res) => {
     // Generate the OAuth URL
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${process.env.GOOGLE_CLIENT_ID}` +
-      `&redirect_uri=${encodeURIComponent('http://localhost:3000/google-business-callback')}` +
+      `&redirect_uri=${encodeURIComponent('https://bidi-express.vercel.app/google-business-callback')}` +
       `&response_type=code` +
       `&scope=${encodeURIComponent('https://www.googleapis.com/auth/business.manage')}` +
       `&access_type=offline` +
@@ -234,7 +234,7 @@ router.get('/callback', async (req, res) => {
       code,
       client_id: process.env.GOOGLE_CLIENT_ID,
       client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: 'http://localhost:3000/google-business-callback',
+      redirect_uri: 'https://bidi-express.vercel.app/google-business-callback',
       grant_type: 'authorization_code'
     });
 
@@ -291,7 +291,7 @@ router.get('/callback', async (req, res) => {
         <body>
           <script>
             if (window.opener) {
-              window.opener.postMessage(${JSON.stringify(successMessage)}, 'http://localhost:3000');
+              window.opener.postMessage(${JSON.stringify(successMessage)}, 'https://bidi-express.vercel.app');
               window.location.href = '/google-business-success';
             } else {
               window.location.href = '/google-business-error?error=no_opener';
@@ -312,7 +312,7 @@ router.get('/callback', async (req, res) => {
         <body>
           <script>
             if (window.opener) {
-              window.opener.postMessage(${JSON.stringify(errorMessage)}, 'http://localhost:3000');
+              window.opener.postMessage(${JSON.stringify(errorMessage)}, 'https://bidi-express.vercel.app');
               window.location.href = '/google-business-error?error=${encodeURIComponent(error.message)}';
             } else {
               window.location.href = '/google-business-error?error=no_opener';

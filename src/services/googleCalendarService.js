@@ -1,12 +1,12 @@
 import { supabase } from '../supabaseClient';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://bidi-express.vercel.app';
+const API_URL = 'http://localhost:4242';
 
 export const googleCalendarService = {
   async connectCalendar(userId) {
     try {
       console.log('API URL:', API_URL); // Log the API URL to verify it
-      const response = await fetch(`${API_URL}/api/calendar/auth?businessId=${userId}`);
+      const response = await fetch(`${API_URL}/api/google-calendar/auth?businessId=${userId}`);
       if (!response.ok) {
         console.error('Failed to fetch Google OAuth URL:', response.status, response.statusText);
         throw new Error('Failed to get Google OAuth URL');
@@ -47,17 +47,17 @@ export const googleCalendarService = {
 
   async getAvailableTimeSlots(businessId, date) {
     const response = await fetch(
-      `${API_URL}api/calendar/availability?businessId=${businessId}&date=${date}`
+      `${API_URL}/api/google-calendar/availability/${businessId}/${date}`
     );
     if (!response.ok) throw new Error('Failed to fetch available time slots');
     return response.json();
   },
 
   async scheduleConsultation({ businessId, bidId, startTime }) {
-    const response = await fetch(`${API_URL}/calendar/schedule`, {
+    const response = await fetch(`${API_URL}/api/google-calendar/events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ businessId, bidId, startTime }),
+      body: JSON.stringify({ businessId, bidId, startTime, duration: 30 }),
     });
     if (!response.ok) throw new Error('Failed to schedule consultation');
     return response.json();

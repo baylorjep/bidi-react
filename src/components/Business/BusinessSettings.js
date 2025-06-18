@@ -16,6 +16,7 @@ import { sendNotification, notificationTypes } from '../../utils/notifications';
 import { useGoogleBusinessReviews } from '../../hooks/useGoogleBusinessReviews.js';
 import { formatBusinessName } from '../../utils/formatBusinessName';
 import FetchReviewsButton from '../GoogleBusiness/FetchReviewsButton.js';
+import { updateConsultationHours } from '../../utils/calendarUtils';
 
 const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
   const [isVerified, setIsVerified] = useState(false);
@@ -110,6 +111,18 @@ const [consultationHours, setConsultationHours] = useState({
   endTime: "17:00",
   daysAvailable: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 });
+const [timezone, setTimezone] = useState("America/Denver");
+
+// Day conversion utilities
+const dayNameToNumber = {
+  'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+  'Thursday': 4, 'Friday': 5, 'Saturday': 6
+};
+
+const dayNumberToName = {
+  0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
+  4: 'Thursday', 5: 'Friday', 6: 'Saturday'
+};
 
 const fetchPartnershipData = async () => {
   try {
@@ -320,15 +333,36 @@ useEffect(() => {
 
         // Set consultation hours if they exist
         if (profile.consultation_hours) {
-          // Ensure daysAvailable is an array
-          const consultationHoursData = {
-            ...profile.consultation_hours,
-            daysAvailable: Array.isArray(profile.consultation_hours.daysAvailable) 
-              ? profile.consultation_hours.daysAvailable 
+          // Handle both old and new formats
+          let consultationHoursData;
+          
+          if (profile.consultation_hours.consultation_hours) {
+            // New format with nested consultation_hours
+            consultationHoursData = {
+              ...profile.consultation_hours.consultation_hours,
+              daysAvailable: Array.isArray(profile.consultation_hours.consultation_hours.daysAvailable) 
+                ? profile.consultation_hours.consultation_hours.daysAvailable.map(dayNum => dayNumberToName[dayNum] || dayNum)
+                : Object.entries(profile.consultation_hours.consultation_hours.daysAvailable || {})
+                    .filter(([_, value]) => value)
+                    .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
+            };
+            setTimezone(profile.consultation_hours.timezone || "America/Denver");
+          } else {
+            // Old format - convert day numbers to names if needed
+            const daysAvailable = Array.isArray(profile.consultation_hours.daysAvailable) 
+              ? profile.consultation_hours.daysAvailable.map(day => 
+                  typeof day === 'number' ? dayNumberToName[day] : day
+                )
               : Object.entries(profile.consultation_hours.daysAvailable || {})
                   .filter(([_, value]) => value)
-                  .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
-          };
+                  .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1));
+            
+            consultationHoursData = {
+              ...profile.consultation_hours,
+              daysAvailable
+            };
+          }
+          
           setConsultationHours(consultationHoursData);
         }
       } catch (error) {
@@ -1286,19 +1320,24 @@ useEffect(() => {
         return;
       }
 
-      const { error } = await supabase
-        .from("business_profiles")
-        .update({
-          consultation_hours: consultationHours
-        })
-        .eq("id", user.id);
+      // Convert day names to numbers for the API
+      const daysAvailableNumbers = consultationHours.daysAvailable.map(dayName => dayNameToNumber[dayName]);
 
-      if (error) {
-        console.error("Error updating consultation hours:", error);
-        alert("An error occurred while updating your consultation hours.");
-      } else {
+      // Prepare data in new API format
+      const consultationHoursData = {
+        consultation_hours: {
+          startTime: consultationHours.startTime,
+          endTime: consultationHours.endTime,
+          daysAvailable: daysAvailableNumbers
+        },
+        timezone: timezone
+      };
+
+      // Use the new API function
+      await updateConsultationHours(user.id, consultationHoursData);
+      
         setShowConsultationHoursModal(false);
-      }
+      alert("Consultation hours updated successfully!");
     } catch (error) {
       console.error("Error saving consultation hours:", error);
       alert("Failed to save consultation hours. Please try again.");
@@ -2111,6 +2150,23 @@ useEffect(() => {
                       </label>
                     ))}
                   </div>
+                </div>
+
+                <div className="form-group mt-3">
+                  <label className="form-label">Timezone</label>
+                  <select 
+                    className="form-control"
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                  >
+                    <option value="America/Denver">Mountain Time (MT)</option>
+                    <option value="America/New_York">Eastern Time (ET)</option>
+                    <option value="America/Chicago">Central Time (CT)</option>
+                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                    <option value="America/Anchorage">Alaska Time (AKT)</option>
+                    <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
+                  </select>
+                  <small className="text-muted">Select your local timezone for consultation hours</small>
                 </div>
               </div>
 

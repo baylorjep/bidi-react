@@ -18,6 +18,7 @@ import { Helmet } from 'react-helmet-async';
 import ConsultationModal from '../../Consultation/ConsultationModal';
 import { useConsultation } from '../../../hooks/useConsultation';
 import { useGoogleCalendar } from '../../../hooks/useGoogleCalendar';
+import { toast } from 'react-toastify';
 
 // SVG Components
 const StarIcon = () => (
@@ -360,7 +361,10 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         setPackages([]);
         
         // Check if business has Google Calendar connected
+        console.log('Business data google_calendar_connected:', businessData.google_calendar_connected);
+        console.log('Business data keys:', Object.keys(businessData));
         setIsCalendarConnected(!!businessData.google_calendar_connected);
+        console.log('Setting isCalendarConnected to:', !!businessData.google_calendar_connected);
 
         // Fetch profile photo
         const { data: profileData, error: profileError } = await supabase
@@ -565,6 +569,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const handleModalClose = () => {
     setShowEditModal(false);
     fetchBusinessData();
+    toast.success('Profile updated successfully!');
   };
 
   const handleCheckClick = (event) => {
@@ -572,6 +577,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     tooltip.style.visibility = "visible";
     tooltip.style.opacity = "1";
     tooltip.style.zIndex = "1000";
+    toast.info('This business is verified by Bidi with 100% money-back guarantee!');
     setTimeout(() => {
       tooltip.style.visibility = "hidden";
       tooltip.style.opacity = "0";
@@ -610,6 +616,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       }
     }
 
+    toast.info('Redirecting to request form for ' + business.business_name);
     // Navigate to the master request flow with the vendor data and selected category
     navigate("/master-request-flow", { 
       state: { 
@@ -699,7 +706,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     } = await supabase.auth.getUser();
 
     if (!user || userError) {
-      alert("Please sign in to leave a review");
       return;
     }
 
@@ -713,7 +719,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
       if (profileError || !userData) {
         console.error("Error fetching user profile:", profileError);
-        alert("Unable to submit review. Please try again.");
         return;
       }
 
@@ -730,7 +735,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
       if (reviewError) {
         console.error("Error posting review:", reviewError);
-        alert("Error posting review. Please try again.");
         return;
       }
 
@@ -739,7 +743,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       fetchBusinessData();
     } catch (error) {
       console.error("Error in review submission:", error);
-      alert("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -764,9 +767,10 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     setShowConsultationModal(true);
+    toast.success('Successfully authenticated!');
   };
 
-  const handleScheduleConsultation = async (selectedDate, selectedTimeSlot) => {
+  const handleScheduleConsultation = async (data) => {
     try {
       // Get current user information
       const { data: { user } } = await supabase.auth.getUser();
@@ -791,17 +795,17 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       await scheduleConsultation({
         businessId,
         bidId: null, // Not needed for portfolio consultations
-        startTime: selectedTimeSlot,
+        startTime: data.selectedTimeSlot,
         customerEmail,
         customerName
       });
       
       setShowConsultationModal(false);
+      toast.success('Consultation scheduled successfully! Please check your email for details.');
       // Show success message or handle post-scheduling actions
     } catch (error) {
       // Show a more user-friendly error message
       const errorMessage = error.message || 'Failed to schedule consultation. Please try again.';
-      alert(errorMessage);
       
       // If it's a calendar authorization error, suggest reconnecting
       if (errorMessage.includes('authorization expired') || errorMessage.includes('access denied')) {
@@ -819,7 +823,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       setShowCalendarReconnectModal(false);
     } catch (error) {
       console.error('Error reconnecting calendar:', error);
-      alert('Failed to reconnect calendar. Please try again.');
     }
   };
 
@@ -842,7 +845,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     try {
       if (!bidId) {
         console.error('No bid ID provided');
-        alert('Failed to deny bid: Missing bid ID');
+        toast.error('Failed to deny bid: Missing bid ID');
         return;
       }
 
@@ -870,7 +873,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       }
     } catch (error) {
       console.error('Error denying bid:', error);
-      alert('Failed to deny bid. Please try again.');
+      toast.error('Failed to deny bid. Please try again.');
     }
   };
 
@@ -897,7 +900,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       }
     } catch (error) {
       console.error('Error approving bid:', error);
-      alert('Failed to approve bid. Please try again.');
+      toast.error('Failed to approve bid. Please try again.');
     }
   };
 
@@ -919,6 +922,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
     const messageTemplate = `Hi, I'm interested in learning more about your "${packageName}" package. Could you provide more details?`;
     
+    toast.info('Opening chat to learn more about ' + packageName);
     navigate('/individual-dashboard', {
       state: {
         activeSection: 'messages',
@@ -964,11 +968,20 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   };
 
   const handleConsultationClick = () => {
+    console.log('=== handleConsultationClick START ===');
+    console.log('isAuthenticated:', isAuthenticated);
+    console.log('isCalendarConnected:', isCalendarConnected);
+    console.log('business:', business);
+    
     if (!isAuthenticated) {
+      console.log('User not authenticated, showing auth modal');
       setShowAuthModal(true);
       return;
     }
+    
+    console.log('User authenticated, showing consultation modal');
     setShowConsultationModal(true);
+    toast.info('Opening consultation scheduler for ' + business.business_name);
   };
 
   if (loading) {
@@ -1756,6 +1769,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         onSchedule={handleScheduleConsultation}
         businessName={business.business_name}
         businessId={businessId}
+        bidId={null}
         selectedDate={selectedDate}
         selectedTimeSlot={selectedTimeSlot}
         availableTimeSlots={availableTimeSlots}
@@ -1764,6 +1778,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         onDateSelect={handleDateSelect}
         onTimeSlotSelect={handleTimeSlotSelect}
         onFetchTimeSlots={fetchTimeSlots}
+        businessTimezone={business.consultation_hours?.timezone || null}
       />
 
       {/* Add Calendar Reconnect Modal */}

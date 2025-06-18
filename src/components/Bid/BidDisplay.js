@@ -495,26 +495,68 @@ useEffect(() => {
   };
 
   const handleScheduleConsultation = async (data) => {
+    console.log('=== handleScheduleConsultation START ===');
+    console.log('Function called with data:', data);
+    console.log('Function called with data type:', typeof data);
+    console.log('Function called with data keys:', data ? Object.keys(data) : 'data is null/undefined');
+    
     try {
-      // Get current user information
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log('handleScheduleConsultation called with data:', data);
+      console.log('bid object:', bid);
+      console.log('bid.business_profiles:', bid.business_profiles);
+      console.log('currentUserId prop:', currentUserId);
+      
+      if (!currentUserId) {
+        throw new Error('No current user ID available');
+      }
+
+      console.log('About to get user profile using currentUserId...');
+
+      // Get user email from auth system
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw new Error('Failed to get user authentication: ' + authError.message);
+      }
+
       if (!user) {
+        console.error('No authenticated user found');
         throw new Error('User not authenticated');
       }
 
-      // Get user profile information
+      const customerEmail = user.email;
+
+      // Get user profile information from individual_profiles table
       const { data: profile, error: profileError } = await supabase
         .from('individual_profiles')
         .select('first_name, last_name')
-        .eq('id', user.id)
+        .eq('id', currentUserId)
         .single();
 
+      console.log('Profile query result:', { profile, profileError });
+
       if (profileError) {
-        throw new Error('Failed to get user profile');
+        console.error('Profile error:', profileError);
+        throw new Error('Failed to get user profile: ' + profileError.message);
+      }
+
+      if (!profile) {
+        console.error('No profile found');
+        throw new Error('User profile not found');
       }
 
       const customerName = `${profile.first_name} ${profile.last_name}`.trim();
-      const customerEmail = user.email;
+
+      console.log('Customer info prepared:', { customerName, customerEmail });
+
+      console.log('About to call scheduleConsultation with:', {
+        businessId: bid.business_profiles.id,
+        bidId: bid.id,
+        startTime: data.selectedTimeSlot,
+        customerEmail,
+        customerName
+      });
 
       const result = await scheduleConsultation({
         businessId: bid.business_profiles.id,
@@ -524,14 +566,17 @@ useEffect(() => {
         customerName
       });
       
+      console.log('scheduleConsultation result:', result);
+      
       if (onScheduleConsultation) {
         onScheduleConsultation(result);
       }
       setShowConsultationModal(false);
       toast.success('Consultation scheduled successfully! Please check your email for details.');
     } catch (error) {
-      toast.error('Failed to schedule consultation');
-      console.error('Error scheduling consultation:', error);
+      console.error('Error in handleScheduleConsultation:', error);
+      console.error('Error stack:', error.stack);
+      toast.error('Failed to schedule consultation: ' + error.message);
     }
   };
 
@@ -1394,7 +1439,7 @@ useEffect(() => {
         isOpen={showConsultationModal}
         onClose={() => setShowConsultationModal(false)}
         onSchedule={handleScheduleConsultation}
-        businessName={bid.business_profiles.name}
+        businessName={bid.business_profiles.business_name}
         businessId={bid.business_profiles.id}
         bidId={bid.id}
         selectedDate={selectedDate}
@@ -1405,6 +1450,7 @@ useEffect(() => {
         onDateSelect={handleDateSelect}
         onTimeSlotSelect={handleTimeSlotSelect}
         onFetchTimeSlots={fetchTimeSlots}
+        businessTimezone={bid.business_profiles.consultation_hours?.timezone || null}
       />
       <ContractSignatureModal
         isOpen={showContractModal}
