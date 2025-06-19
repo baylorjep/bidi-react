@@ -142,14 +142,29 @@ const BusinessDashSidebar = () => {
         }
 
         // Check if user has seen the new features
-        const { data: userPreferences } = await supabase
+        const { data: userPrefs, error: userPreferencesError } = await supabase
           .from("user_preferences")
           .select("has_seen_new_features")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle(); // Use maybeSingle() instead of single() to handle no record case
 
-        if (!userPreferences?.has_seen_new_features) {
+        console.log("New Features Modal Check:", {
+          userId: user.id,
+          userPrefs,
+          userPreferencesError,
+          hasSeenNewFeatures: userPrefs?.has_seen_new_features
+        });
+
+        // Show modal if no record exists (user hasn't seen it) or if has_seen_new_features is false
+        if (userPreferencesError) {
+          console.error("Error fetching user preferences:", userPreferencesError);
+          // If there's an error, show the modal to be safe
           setShowNewFeatures(true);
+        } else if (!userPrefs || !userPrefs.has_seen_new_features) {
+          console.log("Showing new features modal - user hasn't seen it yet");
+          setShowNewFeatures(true);
+        } else {
+          console.log("Not showing new features modal - user has already seen it");
         }
       } catch (error) {
         console.error("An error occurred while fetching data:", error);

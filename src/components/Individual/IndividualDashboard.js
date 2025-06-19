@@ -418,8 +418,8 @@ const IndividualDashboard = () => {
         localStorage.removeItem('activeSection');
         sessionStorage.removeItem('fromSignIn');
         
-        // Navigate to home page
-        navigate('/', { replace: true });
+        // Force a full page reload to ensure clean logout
+        window.location.href = '/';
       }
     });
 

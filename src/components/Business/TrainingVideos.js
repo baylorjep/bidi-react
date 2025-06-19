@@ -54,10 +54,10 @@ const TrainingVideos = () => {
             title: 'Setting Up Payment Processing',
             description: 'Configure your payment settings and understand the billing process.',
             category: 'payments',
-            duration: '2:30',
-            thumbnail: '/images/training/payments-thumb.jpg',
-            videoUrl: 'https://www.youtube.com/watch?v=YOUR_VIDEO_ID',
-            platform: 'youtube'
+            duration: '1:40',
+            thumbnail: 'https://cdn.loom.com/sessions/thumbnails/085d23cc6fa042478cdbe0d7fcd4d495-72287aa73d32fb85-full-play.gif',
+            videoUrl: 'https://www.loom.com/share/085d23cc6fa042478cdbe0d7fcd4d495?sid=83df5369-e635-48f3-861b-f8b7ce529c6a',
+            platform: 'loom'
         },
         {
             id: 3,
