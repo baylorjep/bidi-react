@@ -1909,7 +1909,7 @@ useEffect(() => {
         <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
           <div className="card mb-4 h-100">
             <div className="card-header d-flex align-items-center">
-              <i className="fas fa-calendar me-2"></i>
+              <i className="fas fa-calendar me-2" style={{ color: "#9633eb" }}></i>
               <span>Google Calendar</span>
               {/* No setupProgress for calendar, but show badge if not connected */}
               { !isCalendarConnected && <span className="badge-new ms-2" title="Connect your Google Calendar">New</span> }
@@ -2195,7 +2195,7 @@ useEffect(() => {
           ) : (
             <div className="calendar-connect">
               <div className="connect-content text-center">
-                <i className="fas fa-calendar-plus fa-3x mb-3 text-primary"></i>
+                <i className="fas fa-calendar-plus fa-3x mb-3" style={{ color: "#9633eb" }}></i>
                 <h4>Connect Your Google Calendar</h4>
                 <p className="text-muted mb-4">Sync your calendar to manage consultations and prevent double bookings.</p>
                 
@@ -2215,7 +2215,8 @@ useEffect(() => {
                 </div>
 
                 <button 
-                  className="btn btn-primary btn-lg" 
+                  className="btn btn-primary btn-lg"
+                  style={{ backgroundColor: "#9633eb", borderColor: "#9633eb" }}
                   onClick={async () => { 
                     try { 
                       await connectCalendar(); 
