@@ -641,6 +641,86 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const handleImageClick = (media) => {
     console.log('handleImageClick called with:', media);
     
+    // Check if it's a video and handle full screen
+    if (media && typeof media === 'object' && media.isVideo) {
+      // Create full screen video element
+      const fullScreenVideo = document.createElement('video');
+      fullScreenVideo.src = media.url;
+      fullScreenVideo.controls = true;
+      fullScreenVideo.autoplay = true;
+      fullScreenVideo.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        z-index: 9999;
+        object-fit: contain;
+      `;
+      
+      // Create close button
+      const closeButton = document.createElement('button');
+      closeButton.innerHTML = '×';
+      closeButton.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+        cursor: pointer;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+      `;
+      
+      closeButton.onmouseenter = () => {
+        closeButton.style.background = 'rgba(0, 0, 0, 0.9)';
+      };
+      
+      closeButton.onmouseleave = () => {
+        closeButton.style.background = 'rgba(0, 0, 0, 0.7)';
+      };
+      
+      const closeFullScreen = () => {
+        document.body.removeChild(fullScreenVideo);
+        document.body.removeChild(closeButton);
+        document.removeEventListener('keydown', handleEscKey);
+        document.removeEventListener('click', handleOutsideClick);
+      };
+      
+      const handleEscKey = (e) => {
+        if (e.key === 'Escape') {
+          closeFullScreen();
+        }
+      };
+      
+      const handleOutsideClick = (e) => {
+        if (e.target === fullScreenVideo) {
+          closeFullScreen();
+        }
+      };
+      
+      closeButton.onclick = closeFullScreen;
+      
+      // Add event listeners
+      document.addEventListener('keydown', handleEscKey);
+      document.addEventListener('click', handleOutsideClick);
+      
+      // Add to DOM
+      document.body.appendChild(fullScreenVideo);
+      document.body.appendChild(closeButton);
+      
+      return; // Exit early for videos
+    }
+    
     // Create the categoryMedia array first, but only take first 5 items
     const allMedia = [...portfolioVideos, ...portfolioPics]
       .slice(0, 5)

@@ -191,21 +191,19 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
       background: transparent !important;
     }
     .modal-media {
-      max-width: 100%;
-      max-height: 80vh;
-      object-fit: contain;
-      background: transparent !important;
-    }
-    .video-container {
+      max-height: 100vh;
       width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      object-fit: contain;
     }
     .modal-media.video {
+      max-height: 100vh;
       width: 100%;
-      max-height: 80vh;
       object-fit: contain;
+      background: #000;
+    }
+    .video-container {
+      height: 100vh;
+      background: #000;
     }
     .slick-prev, .slick-next {
       z-index: 1000 !important;
@@ -287,15 +285,34 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
       .slick-next {
         right: 5px !important;
       }
+      .modal-slide {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       .modal-media {
         max-height: 100vh;
-        width: 100%;
+        max-width: 100vw;
+        width: auto;
+        height: auto;
         object-fit: contain;
       }
       .modal-media.video {
         max-height: 100vh;
-        width: 100%;
+        max-width: 100vw;
+        width: auto;
+        height: auto;
         object-fit: contain;
+        background: #000;
+      }
+      .video-container {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
       }
       .image-container {
         width: 100%;
@@ -337,15 +354,34 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
       .slick-next {
         right: 2px !important;
       }
+      .modal-slide {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       .modal-media {
         max-height: 100vh;
-        width: 100%;
+        max-width: 100vw;
+        width: auto;
+        height: auto;
         object-fit: contain;
       }
       .modal-media.video {
         max-height: 100vh;
-        width: 100%;
+        max-width: 100vw;
+        width: auto;
+        height: auto;
         object-fit: contain;
+        background: #000;
+      }
+      .video-container {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
       }
       .image-container {
         width: 100%;

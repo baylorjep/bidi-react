@@ -402,13 +402,14 @@
   opacity: 0.8;
 }
 
-.drag-handle:hover {
-  background-color: rgba(150, 51, 235, 1);
-  transform: scale(1.1);
-}
-
 .delete-btn:hover {
   background-color: rgba(220, 53, 69, 1);
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.drag-handle:hover {
+  background-color: rgba(150, 51, 235, 1);
   transform: scale(1.1);
 }
 

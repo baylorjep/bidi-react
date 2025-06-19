@@ -428,7 +428,7 @@ const EditGalleryModal = ({ isOpen, onClose, businessId, categories: initialCate
                       onClick={() => handleDeleteMedia(item.id, item.photo_url)}
                       aria-label="Delete media"
                     >
-                      ×
+                      ✖
                     </button>
                   </div>
                   <div className="media-actions">

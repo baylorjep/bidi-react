@@ -12,7 +12,7 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 const Gallery = () => {
-  const { businessId } = useParams();
+  const { businessId, businessName } = useParams();
   const [portfolioMedia, setPortfolioMedia] = useState({});
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -284,6 +284,100 @@ const Gallery = () => {
 
   const handleMediaClick = (media, index) => {
     console.log('Gallery - handleMediaClick:', { media, index });
+    
+    // If it's a video, go full screen instead of opening modal
+    if (media.type === 'video') {
+      // Create container for video and close button
+      const container = document.createElement('div');
+      container.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      `;
+      
+      // Create video element
+      const video = document.createElement('video');
+      video.src = media.url;
+      video.controls = true;
+      video.autoplay = true;
+      video.style.cssText = `
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      `;
+      
+      // Create close button
+      const closeButton = document.createElement('button');
+      closeButton.innerHTML = '✖';
+      closeButton.style.cssText = `
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: 2px solid white;
+        border-radius: 50%;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      `;
+      
+      // Add hover effect
+      closeButton.addEventListener('mouseenter', () => {
+        closeButton.style.background = 'rgba(220, 53, 69, 0.9)';
+        closeButton.style.transform = 'scale(1.1)';
+      });
+      
+      closeButton.addEventListener('mouseleave', () => {
+        closeButton.style.background = 'rgba(0, 0, 0, 0.7)';
+        closeButton.style.transform = 'scale(1)';
+      });
+      
+      // Add close functionality
+      const closeVideo = () => {
+        document.body.removeChild(container);
+        document.removeEventListener('keydown', handleEscape);
+      };
+      
+      closeButton.addEventListener('click', closeVideo);
+      
+      // Add escape key functionality
+      const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+          closeVideo();
+        }
+      };
+      document.addEventListener('keydown', handleEscape);
+      
+      // Add click outside video to close
+      container.addEventListener('click', (e) => {
+        if (e.target === container) {
+          closeVideo();
+        }
+      });
+      
+      // Append elements
+      container.appendChild(video);
+      container.appendChild(closeButton);
+      document.body.appendChild(container);
+      return;
+    }
+    
+    // For images, proceed with normal modal behavior
     const currentCategoryMedia = selectedCategory === 'all' 
       ? Object.values(portfolioMedia).flat()
       : portfolioMedia[selectedCategory] || [];
@@ -474,12 +568,15 @@ const Gallery = () => {
       position: relative;
       width: 100%;
       overflow: visible;
+      margin: 0 -20px;
     }
     .slick-slider {
       overflow: visible;
+      margin: 0 -20px;
     }
     .slick-list {
       overflow: visible;
+      padding: 0 20px;
     }
     .slick-track {
       display: flex;
@@ -497,11 +594,25 @@ const Gallery = () => {
       object-fit: cover;
       border-radius: 12px;
       transition: all 0.2s ease;
+      background: #f8f9fa;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      image-rendering: high-quality;
     }
     .video-container {
       position: relative;
-      border-radius: 12px;
+      border-radius: 8px;
       overflow: hidden;
+      background: #f8f9fa;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 600px;
+    }
+    .video-container video {
+      width: 100%;
+      height: 100%;
     }
     .video-play-overlay {
       position: absolute;
@@ -515,6 +626,7 @@ const Gallery = () => {
       justify-content: center;
       opacity: 0;
       transition: opacity 0.2s ease;
+      border-radius: 12px;
     }
     .video-container:hover .video-play-overlay {
       opacity: 1;
@@ -673,7 +785,17 @@ const Gallery = () => {
         margin-bottom: 15px;
       }
       .gallery-image, .gallery-video {
-        height: 280px;
+        height: 250px;
+        border-radius: 8px;
+        object-fit: contain;
+      }
+      .video-container {
+        height: 250px;
+        border-radius: 8px;
+      }
+      .video-container video {
+        height: 100%;
+        object-fit: contain;
         border-radius: 8px;
       }
       .category-stats {
@@ -690,7 +812,7 @@ const Gallery = () => {
         min-width: 0;
       }
       .carousel-container {
-        margin: 0;
+        margin: 0 -10px;
         padding: 0 10px;
       }
       .slick-slider {
@@ -770,7 +892,17 @@ const Gallery = () => {
         margin-bottom: 12px;
       }
       .gallery-image, .gallery-video {
-        height: 220px;
+        height: 200px;
+        border-radius: 6px;
+        object-fit: contain;
+      }
+      .video-container {
+        height: 200px;
+        border-radius: 6px;
+      }
+      .video-container video {
+        height: 100%;
+        object-fit: contain;
         border-radius: 6px;
       }
       .category-stats {
@@ -786,7 +918,7 @@ const Gallery = () => {
         text-align: center;
       }
       .carousel-container {
-        margin: 0;
+        margin: 0 -8px;
         padding: 0 8px;
       }
       .slick-slider {
@@ -867,6 +999,14 @@ const Gallery = () => {
       }
       .gallery-image, .gallery-video {
         height: 200px;
+        border-radius: 4px;
+      }
+      .video-container {
+        border-radius: 4px;
+      }
+      .video-container video {
+        height: 100%;
+        object-fit: contain;
         border-radius: 4px;
       }
       .category-stats {
@@ -1013,6 +1153,46 @@ const Gallery = () => {
     setHoveredMedia(media);
   };
 
+  // Add a key to force slider re-render when currentIndex changes
+  const sliderKey = `slider-${selectedMedia?.currentIndex}`;
+
+  // Create dynamic settings based on media count
+  const getDynamicSettings = (mediaArray) => {
+    const hasMultipleItems = mediaArray.length > 1;
+    const hasVideos = mediaArray.some(media => media.type === 'video');
+    
+    return {
+      ...settings,
+      infinite: hasMultipleItems,
+      centerMode: hasMultipleItems && !hasVideos, // Don't use center mode if there are videos
+      centerPadding: hasMultipleItems && !hasVideos ? '15%' : '0px',
+      slidesToShow: hasMultipleItems ? 
+        (windowWidth >= 1200 ? 3 : windowWidth >= 768 ? 2 : 1) : 1,
+      responsive: hasMultipleItems ? settings.responsive : [
+        {
+          breakpoint: 1200,
+          settings: {
+            slidesToShow: 1,
+            slidesToScroll: 1,
+          }
+        },
+        {
+          breakpoint: 768,
+          settings: {
+            slidesToShow: 1,
+            slidesToScroll: 1,
+            dots: false
+          }
+        }
+      ]
+    };
+  };
+
+  const handleViewGallery = () => {
+    handleCloseModal();
+    navigate(-1);
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -1027,7 +1207,7 @@ const Gallery = () => {
     <div className="gallery-container-main">
       <style>{styles}</style>
       <div className="gallery-header-container">
-        <button className="back-button" onClick={() => navigate(-1)}>
+        <button className="back-button" onClick={handleViewGallery}>
           <span style={{display: 'inline-block', marginRight: 8, verticalAlign: 'middle'}} aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display: 'block'}}>
               <circle cx="11" cy="11" r="11" fill="rgba(163,40,244,0.13)"/>
@@ -1100,7 +1280,7 @@ const Gallery = () => {
       {categories.length === 1 ? (
         <div className="category-carousel">
           <div className="carousel-container">
-            <Slider {...settings}>
+            <Slider {...getDynamicSettings(portfolioMedia[categories[0].id])}>
               {portfolioMedia[categories[0].id]?.map((media, index) => (
                 <div
                   key={index}
@@ -1159,7 +1339,7 @@ const Gallery = () => {
                 <div key={category.id} className="category-carousel">
                   <h3 className="category-title">{category.name}</h3>
                   <div className="carousel-container">
-                    <Slider {...settings}>
+                    <Slider {...getDynamicSettings(portfolioMedia[category.id])}>
                       {portfolioMedia[category.id].map((media, index) => (
                         <div
                           key={index}
@@ -1215,7 +1395,7 @@ const Gallery = () => {
               <div className="category-carousel">
                 <h3 className="category-title">Photos</h3>
                 <div className="carousel-container">
-                  <Slider {...settings}>
+                  <Slider {...getDynamicSettings(portfolioMedia['photos'])}>
                     {portfolioMedia['photos'].map((media, index) => (
                       <div
                         key={index}
@@ -1270,7 +1450,7 @@ const Gallery = () => {
         ) : (
           <div className="category-carousel">
             <div className="carousel-container">
-              <Slider {...settings}>
+              <Slider {...getDynamicSettings(portfolioMedia[selectedCategory] || [])}>
                 {(portfolioMedia[selectedCategory] || []).map((media, index) => (
                   <div
                     key={index}
