@@ -19,9 +19,11 @@ const Signup = ({ onSuccess, initialUserType }) => {
         otherBusinessCategory: '',
         businessAddress: '',
         website: '',
+        signature: false,
     });
     const [errorMessage, setErrorMessage] = useState('');
     const [userType, setUserType] = useState('');
+    const [termsExpanded, setTermsExpanded] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -85,7 +87,12 @@ const Signup = ({ onSuccess, initialUserType }) => {
     const handleChange = (e) => {
         if (e.target.type === 'checkbox') {
             const categoryId = e.target.value;
-            if (e.target.checked) {
+            if (e.target.name === 'signature') {
+                setFormData({
+                    ...formData,
+                    signature: e.target.checked
+                });
+            } else if (e.target.checked) {
                 setFormData({
                     ...formData,
                     businessCategory: [...formData.businessCategory, categoryId]
@@ -109,6 +116,11 @@ const Signup = ({ onSuccess, initialUserType }) => {
 
         if (formData.password !== formData.confirmPassword) {
             setErrorMessage("Passwords do not match");
+            return;
+        }
+
+        if (!formData.signature) {
+            setErrorMessage("You must agree to the terms and conditions by checking the signature box");
             return;
         }
 
@@ -223,7 +235,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
                 <meta name="keywords" content="sign up, create account, wedding vendors, Bidi" />
             </Helmet>
             
-            <div className="pricing-container">
+            <div className="pricing-container" style={{ backgroundColor: 'white' , borderRadius: '20px', padding: '40px'}}>
                 <div className="pricing-header">
                     <h1 className="pricing-title landing-page-title heading-reset">
                         Create Your Account
@@ -235,10 +247,9 @@ const Signup = ({ onSuccess, initialUserType }) => {
                     justifyContent: 'center', 
                     marginTop: '20px'
                 }}>
-                    <div className="plan-card" style={{
+                    <div style={{
                         maxWidth: '800px',
                         width: '100%',
-                        padding: '40px'
                     }}>
                         {errorMessage && (
                             <div style={{
@@ -463,8 +474,8 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                     <div style={{ marginBottom: '20px' }}>
                                         <label style={{
                                             display: 'block',
-                                            marginBottom: '8px',
-                                            fontWeight: '500'
+                                            fontWeight: '500',
+                                            marginBottom: '0px'
                                         }}>Email</label>
                                         <input
                                             type="email"
@@ -477,7 +488,8 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                                 padding: '12px',
                                                 borderRadius: '8px',
                                                 border: '1px solid #ddd',
-                                                fontSize: '1rem'
+                                                fontSize: '1rem',
+                                                marginBottom: '0px'
                                             }}
                                             placeholder="name@example.com"
                                         />
@@ -605,7 +617,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                     </div>
 
                                     <div>
-                                        <div style={{ marginBottom: '20px' }}>
+                                        <div>
                                             <label style={{
                                                 display: 'block',
                                                 marginBottom: '8px',
@@ -622,7 +634,8 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                                     padding: '12px',
                                                     borderRadius: '8px',
                                                     border: '1px solid #ddd',
-                                                    fontSize: '1rem'
+                                                    fontSize: '1rem',
+                                                    marginBottom:'20px'
                                                 }}
                                                 placeholder="name@example.com"
                                             />
@@ -677,17 +690,108 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                 </div>
                             )}
 
-                            <div style={{
-                                backgroundColor: '#f9f9f9',
-                                border: '1px solid #ddd',
-                                borderRadius: '8px',
-                                padding: '15px',
-                                marginBottom: '20px',
-                                fontSize: '0.9rem',
-                                color: '#666',
-                                textAlign: 'center'
-                            }}>
-                                By signing up, you agree to receive notifications related to your account.
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    gap: '10px'
+                                }}>
+                                    <input
+                                        type="checkbox"
+                                        name="signature"
+                                        id={userType === 'individual' ? 'signature-individual' : 'signature'}
+                                        checked={formData.signature}
+                                        onChange={handleChange}
+                                        required
+                                        style={{
+                                            marginTop: '3px',
+                                            transform: 'scale(1.2)'
+                                        }}
+                                    />
+                                    <label 
+                                        htmlFor={userType === 'individual' ? 'signature-individual' : 'signature'}
+                                        style={{
+                                            fontSize: '0.9rem',
+                                            color: '#666',
+                                            lineHeight: '1.4'
+                                        }}
+                                    >
+                                        {userType === 'individual' ? (
+                                            <>
+                                                I agree to the <a href="/terms" target="_blank" style={{ color: 'var(--primary-color, #A328F4)', textDecoration: 'none' }}>Terms of Service</a> and <a href="/privacy" target="_blank" style={{ color: 'var(--primary-color, #A328F4)', textDecoration: 'none' }}>Privacy Policy</a>, including the{' '}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setTermsExpanded(!termsExpanded)}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: 'var(--primary-color, #A328F4)',
+                                                        textDecoration: 'underline',
+                                                        cursor: 'pointer',
+                                                        padding: 0,
+                                                        font: 'inherit'
+                                                    }}
+                                                >
+                                                    payment terms
+                                                </button>
+                                                . I understand that by creating an account, I consent to receive communications from Bidi regarding my account and services.
+                                                
+                                                {termsExpanded && (
+                                                    <div style={{
+                                                        marginTop: '10px',
+                                                        padding: '12px',
+                                                        backgroundColor: '#f8f9fa',
+                                                        borderRadius: '6px',
+                                                        border: '1px solid #e9ecef',
+                                                        fontSize: '0.85rem'
+                                                    }}>
+                                                        <strong>📄 Bidi User Agreement — Payment Terms:</strong><br />
+                                                        By submitting a request on Bidi, I agree to pay all vendors discovered through Bidi through the Bidi platform. I acknowledge that Bidi provides a marketplace and communication tools at no cost to me and is funded through transaction fees paid by vendors. Circumventing Bidi's payment system by paying vendors directly undermines the platform and is strictly prohibited. If I engage a vendor I discovered on Bidi and do not complete payment through the Bidi platform, I may be held responsible for any resulting damages or losses incurred by Bidi, including the vendor's unpaid referral fees.
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <>
+                                                I agree to the <a href="/terms" target="_blank" style={{ color: 'var(--primary-color, #A328F4)', textDecoration: 'none' }}>Terms of Service</a> and <a href="/privacy" target="_blank" style={{ color: 'var(--primary-color, #A328F4)', textDecoration: 'none' }}>Privacy Policy</a>, including the{' '}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setTermsExpanded(!termsExpanded)}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: 'var(--primary-color, #A328F4)',
+                                                        textDecoration: 'underline',
+                                                        cursor: 'pointer',
+                                                        padding: 0,
+                                                        font: 'inherit'
+                                                    }}
+                                                >
+                                                    vendor agreement terms
+                                                </button>
+                                                . I understand that by creating an account, I consent to receive communications from Bidi regarding my account and services.
+                                                
+                                                {termsExpanded && (
+                                                    <div style={{
+                                                        marginTop: '10px',
+                                                        padding: '12px',
+                                                        backgroundColor: '#f8f9fa',
+                                                        borderRadius: '6px',
+                                                        border: '1px solid #e9ecef',
+                                                        fontSize: '0.85rem'
+                                                    }}>
+                                                        <strong>📄 Bidi Vendor Agreement — Referral Protection Clause:</strong><br />
+                                                        <strong>Referral Fee Obligation</strong><br />
+                                                        By registering as a vendor on Bidi, you ("Vendor") agree to the following:<br /><br />
+                                                        If a customer ("User") is introduced to you through the Bidi platform—whether by submitting a request, viewing your profile, or otherwise discovering your business through Bidi—and you accept payment outside of Bidi's payment system, you agree to pay Bidi a referral fee equal to ten percent (10%) of all amounts you receive from that User in connection with the booked services.<br /><br />
+                                                        You must remit the 10% referral fee to Bidi within seven (7) calendar days of receiving each payment from the User, including any deposits, retainers, installment payments, or final balances.<br /><br />
+                                                        Failure to remit the required referral fee may result in suspension or termination of your account and/or additional collection efforts.
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </label>
+                                </div>
                             </div>
 
                             <button 
