@@ -436,6 +436,11 @@
   gap: 16px;
 }
 
+.modal-dialog {
+  max-width: 100% !important;
+  margin:0 !important;
+}
+
 .time-range {
   display: flex;
   align-items: center;
@@ -515,14 +520,13 @@
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
-  overflow-y: auto;
+  overflow-y:hidden;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
 }
 
 .modal-header h2 {
@@ -538,10 +542,6 @@
   color: #666;
   cursor: pointer;
   padding: 4px;
-}
-
-.modal-body {
-  margin-bottom: 24px;
 }
 
 .form-group {
@@ -591,11 +591,6 @@
   background: #8a1fd1;
 }
 
-/* Calendar Modal Styles */
-.calendar-settings {
-  padding: 1rem;
-}
-
 .calendar-status {
   background: #f8f9fa;
   padding: 1rem;
@@ -619,10 +614,9 @@
 
 .consultation-hours-section {
   background: white;
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 8px;
   border: 1px solid #e9ecef;
-  margin-top: 1.5rem;
 }
 
 .section-title {
@@ -670,7 +664,6 @@
   justify-content: flex-end;
   gap: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #e9ecef;
 }
 
 /* Calendar Connect Styles */
@@ -709,6 +702,11 @@
   color: #495057;
 }
 
+.modal-body {
+  margin-bottom: 24px;
+  max-height: 80vh !important;
+}
+
 /* Form Controls */
 .form-control {
   border: 1px solid #ced4da;
@@ -741,5 +739,457 @@
   
   .calendar-actions .btn {
     width: 100%;
+  }
+}
+
+/* Mobile Calendar Modal Styles */
+@media (max-width: 768px) {
+  .calendar-modal-mobile {
+    margin: 10px !important;
+    max-width: calc(100vw - 20px) !important;
+    width: calc(100vw - 20px) !important;
+  }
+  
+  .calendar-modal-mobile .modal-dialog {
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: calc(100vh - 20px) !important;
+  }
+  
+  .calendar-modal-mobile .modal-content {
+    border-radius: 12px !important;
+    max-height: calc(100vh - 20px) !important;
+    height: auto !important;
+  }
+  
+  .calendar-modal-mobile .modal-header {
+    padding: 1rem !important;
+    border-bottom: 1px solid #dee2e6 !important;
+  }
+  
+  .calendar-modal-mobile .modal-title {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+  }
+  
+  .calendar-modal-mobile .modal-body {
+    padding: 1rem !important;
+    max-height: calc(100vh - 140px) !important;
+    overflow-y: auto !important;
+  }
+  
+  .calendar-modal-mobile .modal-footer {
+    padding: 1rem !important;
+    border-top: 1px solid #dee2e6 !important;
+  }
+  
+  .calendar-modal-mobile .btn {
+    font-size: 0.9rem !important;
+    padding: 0.5rem 1rem !important;
+  }
+  
+  .calendar-modal-mobile .calendar-actions {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .calendar-modal-mobile .calendar-actions .btn {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  .calendar-modal-mobile .days-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  .calendar-modal-mobile .day-checkbox {
+    font-size: 0.9rem !important;
+  }
+  
+  .calendar-modal-mobile .benefits-list {
+    margin-bottom: 1rem !important;
+  }
+  
+  .calendar-modal-mobile .benefit-item {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .calendar-modal-mobile .connect-content h4 {
+    font-size: 1.2rem !important;
+  }
+  
+  .calendar-modal-mobile .connect-content p {
+    font-size: 0.9rem !important;
+  }
+}
+
+/* Enhanced Mobile Styles for BusinessSettings */
+@media (max-width: 768px) {
+  .business-settings-container {
+    margin-left: 0.5vh;
+    margin-right: 0.5vh;
+    padding: 0 10px;
+  }
+
+  .business-settings-container h1 {
+    font-size: 1.8rem !important;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .business-settings-container p {
+    font-size: 0.9rem !important;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Setup Checklist Mobile Improvements */
+  .setup-checklist {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .checklist-header h3 {
+    font-size: 1.3rem !important;
+    margin-bottom: 0.5rem;
+  }
+
+  .checklist-header p {
+    font-size: 0.9rem !important;
+    margin-bottom: 1rem;
+  }
+
+  .checklist-item {
+    padding: 1rem !important;
+    margin-bottom: 0.75rem !important;
+    border-radius: 10px !important;
+  }
+
+  .checklist-circle {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 14px !important;
+  }
+
+  .checklist-label-header {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+  }
+
+  .checklist-description {
+    font-size: 0.85rem !important;
+    margin-top: 0.25rem;
+  }
+
+  .checklist-status {
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+  }
+
+  .checklist-action {
+    padding: 0.6rem 1rem !important;
+    font-size: 0.9rem !important;
+    border-radius: 8px !important;
+    min-height: 44px !important;
+  }
+
+  .important-badge {
+    font-size: 0.7rem !important;
+    padding: 0.2rem 0.5rem !important;
+  }
+
+  /* Card Layout Improvements */
+  .row {
+    margin-left: -0.5rem !important;
+    margin-right: -0.5rem !important;
+  }
+
+  .col-lg-5, .col-md-6, .col-sm-12 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  .card {
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    margin-bottom: 1rem !important;
+    border: none !important;
+  }
+
+  .card-header {
+    padding: 1rem !important;
+    border-bottom: 1px solid #e9ecef !important;
+    background-color: #f8f9fa !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  .card-header span {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+  }
+
+  .card-body {
+    padding: 1rem !important;
+  }
+
+  /* Button Improvements */
+  .btn-primary {
+    width: 100% !important;
+    height: 48px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    border: none !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(150, 51, 235, 0.3) !important;
+  }
+
+  .btn-primary:active {
+    transform: translateY(0) !important;
+  }
+
+  .btn-primary.pulse {
+    animation: pulse 2s infinite !important;
+  }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(150, 51, 235, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(150, 51, 235, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(150, 51, 235, 0); }
+  }
+
+  /* Info Row Improvements */
+  .info-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.75rem 0 !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+  }
+
+  .info-row:last-child {
+    border-bottom: none !important;
+  }
+
+  .info-label {
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    color: #666 !important;
+  }
+
+  .info-value {
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    text-align: right !important;
+  }
+
+  .info-value i {
+    margin-right: 0.25rem !important;
+  }
+
+  /* Badge Improvements */
+  .badge-new {
+    font-size: 0.7rem !important;
+    padding: 0.2rem 0.5rem !important;
+    border-radius: 12px !important;
+    background: linear-gradient(45deg, #ff6b6b, #ff8e8e) !important;
+    color: white !important;
+    font-weight: 600 !important;
+  }
+
+  /* Small Text Improvements */
+  .text-muted {
+    font-size: 0.8rem !important;
+    line-height: 1.4 !important;
+    margin-top: 0.5rem !important;
+  }
+
+  /* Alert Improvements */
+  .alert {
+    border-radius: 8px !important;
+    padding: 0.75rem !important;
+    font-size: 0.85rem !important;
+    margin-top: 0.75rem !important;
+  }
+
+  .alert-danger {
+    background-color: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+    color: #dc2626 !important;
+  }
+
+  .btn-link {
+    color: #9633eb !important;
+    text-decoration: underline !important;
+    font-weight: 500 !important;
+  }
+
+  /* Admin Logo Improvements */
+  .admin-logo {
+    height: 20px !important;
+    width: auto !important;
+  }
+
+  /* Card Modal Content (for desktop-only content) */
+  .card-modal-content {
+    background: #f8f9fa !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+    margin-top: 1rem !important;
+  }
+
+  /* Status Badge Improvements */
+  .status-badge {
+    padding: 0.4rem 0.8rem !important;
+    border-radius: 20px !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+  }
+
+  .status-badge.connected {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+  }
+
+  .status-badge.disconnected {
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+  }
+
+  /* Text Success/Muted Improvements */
+  .text-success {
+    color: #059669 !important;
+    font-weight: 600 !important;
+  }
+
+  .text-muted {
+    color: #6b7280 !important;
+  }
+
+  /* Flex Fill Improvements */
+  .flex-fill {
+    flex: 1 1 auto !important;
+  }
+
+  /* Spacing Improvements */
+  .mb-4 {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .mt-2 {
+    margin-top: 0.75rem !important;
+  }
+
+  .mt-3 {
+    margin-top: 1rem !important;
+  }
+
+  .me-2 {
+    margin-right: 0.5rem !important;
+  }
+
+  .ms-2 {
+    margin-left: 0.5rem !important;
+  }
+
+  .d-block {
+    display: block !important;
+  }
+
+  .d-flex {
+    display: flex !important;
+  }
+
+  .align-items-center {
+    align-items: center !important;
+  }
+
+  .justify-content-center {
+    justify-content: center !important;
+  }
+
+  .text-center {
+    text-align: center !important;
+  }
+
+  /* Icon Improvements */
+  .fas, .far, .fab {
+    font-size: 1rem !important;
+  }
+
+  /* Responsive Grid Improvements */
+  .row.justify-content-center {
+    margin: 0 !important;
+  }
+
+  .row.justify-content-center > div {
+    margin-bottom: 1rem !important;
+  }
+
+  /* Hover Effects for Touch Devices */
+  @media (hover: none) {
+    .btn-primary:hover {
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    
+    .card:hover {
+      transform: none !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+  }
+
+  /* Focus States for Accessibility */
+  .btn-primary:focus {
+    outline: 2px solid #9633eb !important;
+    outline-offset: 2px !important;
+  }
+
+  .card:focus-within {
+    outline: 2px solid #9633eb !important;
+    outline-offset: 2px !important;
+  }
+}
+
+/* Additional Mobile Optimizations */
+@media (max-width: 480px) {
+  .business-settings-container {
+    padding: 0 5px;
+  }
+
+  .business-settings-container h1 {
+    font-size: 1.6rem !important;
+  }
+
+  .card-header {
+    padding: 0.75rem !important;
+  }
+
+  .card-body {
+    padding: 0.75rem !important;
+  }
+
+  .btn-primary {
+    height: 44px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .checklist-item {
+    padding: 0.75rem !important;
+  }
+
+  .info-row {
+    padding: 0.5rem 0 !important;
   }
 }

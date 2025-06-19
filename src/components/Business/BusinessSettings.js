@@ -2080,11 +2080,17 @@ useEffect(() => {
       </Modal>
 
       {/* Calendar Modal */}
-      <Modal show={showGoogleCalendarModal} onHide={() => setShowGoogleCalendarModal(false)} centered size="lg">
+      <Modal 
+        show={showGoogleCalendarModal} 
+        onHide={() => setShowGoogleCalendarModal(false)} 
+        centered 
+        dialogClassName="calendar-modal-mobile"
+        style={{ margin: '10px' }}
+      >
         <Modal.Header closeButton>
           <Modal.Title>{isCalendarConnected ? "Manage Google Calendar" : "Connect Google Calendar"}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           {calendarError && (
             <div className="alert alert-danger" role="alert">{calendarError}</div>
           )}
@@ -2092,16 +2098,12 @@ useEffect(() => {
             <div className="text-center"><LoadingSpinner color="#9633eb" size={30} /></div>
           ) : isCalendarConnected ? (
             <div className="calendar-settings">
-              <div className="calendar-status mb-4">
+              <div className="consultation-hours-section">
+                <h4 className="section-title" style={{marginBottom:"0px"}}>Consultation Hours</h4>
                 <div className="status-badge connected">
                   <i className="fas fa-check-circle me-2"></i>
                   Google Calendar Connected
                 </div>
-                <p className="text-muted mt-2">Your calendar is connected and ready to manage consultations.</p>
-              </div>
-
-              <div className="consultation-hours-section">
-                <h4 className="section-title">Consultation Hours</h4>
                 <p className="text-muted mb-3">Set your available hours for consultations.</p>
                 
                 <div className="row g-3">
@@ -2146,7 +2148,7 @@ useEffect(() => {
                             }));
                           }}
                         />
-                        <span className="day-label">{day}</span>
+                        <span className="day-label">{" "}{day}</span>
                       </label>
                     ))}
                   </div>
@@ -2170,7 +2172,7 @@ useEffect(() => {
                 </div>
               </div>
 
-              <div className="calendar-actions mt-4">
+              <div className="calendar-actions">
                 <button 
                   className="btn btn-danger me-2" 
                   onClick={async () => { 
@@ -2184,7 +2186,7 @@ useEffect(() => {
                   Disconnect Calendar
                 </button>
                 <button 
-                  className="btn btn-primary" 
+                  className="btn btn-success" 
                   onClick={handleConsultationHoursSubmit}
                 >
                   <i className="fas fa-save me-2"></i>
