@@ -85,15 +85,25 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
         fetchPortfolioImages();
         fetchPortfolioVideos();
       }
+      if (initialData.currentSection === 'packages') {
+        fetchPackages();
+      }
       fetchProfilePicture(); // Fetch the current profile picture
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, businessId]);
 
   useEffect(() => {
     if (isOpen && initialData.currentSection === 'portfolio') {
       fetchCategories();
     }
-  }, [isOpen, initialData.currentSection]);
+  }, [isOpen, initialData.currentSection, businessId]);
+
+  // Add useEffect to fetch packages when packages section is opened
+  useEffect(() => {
+    if (isOpen && initialData.currentSection === 'packages') {
+      fetchPackages();
+    }
+  }, [isOpen, initialData.currentSection, businessId]);
 
   // Add useEffect to fetch cities and counties
   useEffect(() => {
@@ -236,6 +246,29 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
     }
   };
 
+  // Add function to fetch existing packages
+  const fetchPackages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("business_packages")
+        .select("*")
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      setFormData(prev => ({
+        ...prev,
+        packages: data || []
+      }));
+    } catch (error) {
+      console.error("Error fetching packages:", error);
+      setFormData(prev => ({
+        ...prev,
+        packages: []
+      }));
+    }
+  };
+
   // 🔹 Handle input changes dynamically
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -284,6 +317,91 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
         .eq('id', businessId);
 
       if (error) throw error;
+
+      // Handle packages if editing packages section
+      if (initialData.currentSection === 'packages' && formData.packages) {
+        console.log('Saving packages:', formData.packages);
+        
+        // Get existing packages to compare
+        const { data: existingPackages, error: fetchPackagesError } = await supabase
+          .from('business_packages')
+          .select('id')
+          .eq('business_id', businessId);
+
+        if (fetchPackagesError) throw fetchPackagesError;
+
+        const existingPackageIds = existingPackages.map(pkg => pkg.id);
+        const newPackages = [];
+        const updatedPackages = [];
+        const packagesToDelete = [];
+
+        // Process each package
+        formData.packages.forEach((pkg, index) => {
+          const packageData = {
+            business_id: businessId,
+            name: pkg.name,
+            price: parseFloat(pkg.price) || 0,
+            description: pkg.description || '',
+            features: pkg.features || [],
+            image_url: pkg.image_url || null
+          };
+
+          if (pkg.id) {
+            // Update existing package
+            updatedPackages.push({
+              id: pkg.id,
+              ...packageData
+            });
+          } else {
+            // New package
+            newPackages.push(packageData);
+          }
+        });
+
+        // Find packages to delete (existing packages not in the form)
+        const formPackageIds = formData.packages.filter(pkg => pkg.id).map(pkg => pkg.id);
+        packagesToDelete.push(...existingPackageIds.filter(id => !formPackageIds.includes(id)));
+
+        // Delete packages that are no longer in the form
+        if (packagesToDelete.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('business_packages')
+            .delete()
+            .in('id', packagesToDelete);
+
+          if (deleteError) throw deleteError;
+          console.log('Deleted packages:', packagesToDelete);
+        }
+
+        // Insert new packages
+        if (newPackages.length > 0) {
+          const { error: insertError } = await supabase
+            .from('business_packages')
+            .insert(newPackages);
+
+          if (insertError) throw insertError;
+          console.log('Inserted new packages:', newPackages);
+        }
+
+        // Update existing packages
+        for (const pkg of updatedPackages) {
+          const { error: updateError } = await supabase
+            .from('business_packages')
+            .update({
+              name: pkg.name,
+              price: pkg.price,
+              description: pkg.description,
+              features: pkg.features,
+              image_url: pkg.image_url,
+              display_order: pkg.display_order
+            })
+            .eq('id', pkg.id);
+
+          if (updateError) throw updateError;
+        }
+
+        console.log('Updated packages:', updatedPackages);
+      }
     
       onClose();
     } catch (error) {
