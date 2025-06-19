@@ -324,6 +324,26 @@ const IndividualDashboard = () => {
     localStorage.setItem('bidiShareNotificationDismissed', 'true');
   };
 
+  // Add dedicated logout handler
+  const handleLogout = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error.message);
+        setError('Failed to sign out');
+      } else {
+        console.log('Sign out successful, auth state listener will handle navigation');
+      }
+      // Don't navigate here - let the auth state listener handle it
+    } catch (error) {
+      console.error('Error signing out:', error);
+      setError('Failed to sign out');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Add click outside handler for profile menu
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -355,6 +375,8 @@ const IndividualDashboard = () => {
   // Add authentication state listener
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session?.user?.id);
+      
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -384,9 +406,20 @@ const IndividualDashboard = () => {
           }
         }
       } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out, clearing state and navigating...');
+        // Clear all state
         setUser(null);
         setProfile(null);
-        navigate('/');
+        setSelectedChat(null);
+        setActiveSection('bids');
+        setError(null);
+        
+        // Clear localStorage and sessionStorage
+        localStorage.removeItem('activeSection');
+        sessionStorage.removeItem('fromSignIn');
+        
+        // Navigate to home page
+        navigate('/', { replace: true });
       }
     });
 
@@ -489,14 +522,7 @@ const IndividualDashboard = () => {
           {/* Logout Button */}
           <div className="sidebar-footer">
             <button 
-              onClick={async () => {
-                const { error } = await supabase.auth.signOut();
-                if (error) {
-                  console.error('Error signing out:', error.message);
-                } else {
-                  navigate('/');
-                }
-              }}
+              onClick={handleLogout}
               className="logout-button"
             >
               <i className="fas fa-sign-out-alt"></i>
@@ -765,14 +791,7 @@ const IndividualDashboard = () => {
               <span>My Profile</span>
             </button>
             <button 
-              onClick={async () => {
-                const { error } = await supabase.auth.signOut();
-                if (error) {
-                  console.error('Error signing out:', error.message);
-                } else {
-                  navigate('/');
-                }
-              }}
+              onClick={handleLogout}
               className="profile-menu-item"
             >
               <i className="fas fa-sign-out-alt"></i>
