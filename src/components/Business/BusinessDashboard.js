@@ -326,6 +326,55 @@ const BusinessDashSidebar = () => {
     }
   };
 
+  // Function to reset new features modal for all users (admin only)
+  const resetNewFeaturesForAllUsers = async () => {
+    try {
+      const { error } = await supabase
+        .from("user_preferences")
+        .update({ has_seen_new_features: false })
+        .neq('user_id', null); // Update all records
+
+      if (error) {
+        console.error("Error resetting new features for all users:", error);
+        alert("Failed to reset new features modal for all users.");
+      } else {
+        console.log("Successfully reset new features modal for all users.");
+        alert("New features modal has been reset for all users!");
+      }
+    } catch (error) {
+      console.error("Error in resetNewFeaturesForAllUsers:", error);
+      alert("An error occurred while resetting the new features modal.");
+    }
+  };
+
+  // Function to reset new features modal for current user (for testing)
+  const resetNewFeaturesForCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error } = await supabase
+          .from("user_preferences")
+          .upsert({
+            user_id: user.id,
+            has_seen_new_features: false
+          });
+
+        if (error) {
+          console.error("Error resetting new features for current user:", error);
+          alert("Failed to reset new features modal for current user.");
+        } else {
+          console.log("Successfully reset new features modal for current user.");
+          setShowNewFeatures(true);
+          setHasSeenNewFeatures(false);
+          alert("New features modal has been reset for current user!");
+        }
+      }
+    } catch (error) {
+      console.error("Error in resetNewFeaturesForCurrentUser:", error);
+      alert("An error occurred while resetting the new features modal.");
+    }
+  };
+
   // Add click outside handler for profile menu
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -432,6 +481,15 @@ const BusinessDashSidebar = () => {
               <img src={settingsIcon} alt="Settings" />
               <span>Settings</span>
             </li>
+            {isAdmin && (
+              <li 
+                onClick={() => setActiveSection("admin")}
+                className={activeSection === "admin" ? "active" : ""}
+              >
+                <i className="fas fa-shield-alt" style={{ fontSize: '20px', color: '#9633eb' }}></i>
+                <span>Admin</span>
+              </li>
+            )}
           </ul>
 
           {/* Logout Button */}

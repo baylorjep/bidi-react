@@ -253,161 +253,123 @@ function AdminDashboard() {
     });
 
     const handleGoogleReviewsRequest = async () => {
+        if (!selectedBusiness || !googleMapsUrl) {
+            setGoogleReviewsError('Please select a business and provide a Google Maps URL');
+            return;
+        }
+
+        setIsProcessing(true);
+        setGoogleReviewsError(null);
+
         try {
-            setIsProcessing(true);
-            setGoogleReviewsError(null);
-
-            if (!selectedBusiness) {
-                setGoogleReviewsError('Please select a business');
-                return;
+            // Extract place ID from URL
+            const placeId = extractPlaceIdFromUrl(googleMapsUrl);
+            if (!placeId) {
+                throw new Error('Invalid Google Maps URL');
             }
 
-            if (!googleMapsUrl.trim()) {
-                setGoogleReviewsError('Please enter a Google Maps URL');
-                return;
+            // Make API request to import reviews
+            const response = await fetch(`${API_BASE_URL}/api/google-places/import-reviews`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    businessId: selectedBusiness,
+                    placeId: placeId
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to import Google reviews');
             }
 
-            // Validate URL format
-            if (!googleMapsUrl.includes('google.com/maps') && !googleMapsUrl.includes('maps.app.goo.gl')) {
-                setGoogleReviewsError('Please enter a valid Google Maps URL (should start with https://www.google.com/maps or https://maps.app.goo.gl)');
-                return;
-            }
+            // Clear form
+            setGoogleMapsUrl('');
+            setSelectedBusiness(null);
+            setBusinessSearchQuery('');
 
-            console.log('Starting Google Reviews import for business:', selectedBusiness);
-            console.log('Using Google Maps URL:', googleMapsUrl);
-
-            // Step 1: Convert URL to Place ID
-            try {
-                const placeIdResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/url-to-place-id?url=${encodeURIComponent(googleMapsUrl)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    credentials: 'include'
-                });
-
-                if (!placeIdResponse.ok) {
-                    const errorText = await placeIdResponse.text();
-                    console.error('Server error response:', {
-                        status: placeIdResponse.status,
-                        statusText: placeIdResponse.statusText,
-                        body: errorText
-                    });
-
-                    let errorMessage;
-                    try {
-                        const errorData = JSON.parse(errorText);
-                        errorMessage = errorData.message || errorData.error || 'Unknown server error';
-                    } catch (e) {
-                        errorMessage = `Server error (${placeIdResponse.status}): ${placeIdResponse.statusText}`;
-                    }
-
-                    throw new Error(errorMessage);
-                }
-
-                const placeIdData = await placeIdResponse.json();
-                console.log('Place ID response:', placeIdData);
-
-                if (!placeIdData.placeId) {
-                    throw new Error('Could not find this business on Google Maps. Please make sure the business is properly registered on Google Maps and try again.');
-                }
-
-                // Step 2: Fetch reviews using the Place ID
-                const reviewsResponse = await fetch(`https://bidi-express.vercel.app/api/google-places/google-reviews?placeId=${placeIdData.placeId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    credentials: 'include'
-                });
-
-                if (!reviewsResponse.ok) {
-                    const errorText = await reviewsResponse.text();
-                    console.error('Reviews API error:', {
-                        status: reviewsResponse.status,
-                        statusText: reviewsResponse.statusText,
-                        body: errorText
-                    });
-                    throw new Error('Failed to fetch Google reviews. Please try again later.');
-                }
-
-                const reviewsData = await reviewsResponse.json();
-                console.log('Retrieved reviews data:', reviewsData);
-
-                // Update the business profile with the Google business data
-                const { error: updateError } = await supabaseAdmin
-                    .from('business_profiles')
-                    .update({
-                        google_place_id: placeIdData.placeId,
-                        google_business_name: reviewsData.business_name,
-                        google_business_address: reviewsData.business_address,
-                        google_rating: reviewsData.rating,
-                        google_total_ratings: reviewsData.total_ratings,
-                        google_maps_url: googleMapsUrl
-                    })
-                    .eq('id', selectedBusiness);
-
-                if (updateError) {
-                    console.error('Database update error:', updateError);
-                    throw new Error(`Failed to update business profile: ${updateError.message}`);
-                }
-
-                // Then, insert the reviews into the reviews table
-                if (reviewsData.reviews && reviewsData.reviews.length > 0) {
-                    // First, delete any existing Google reviews for this business
-                    const { error: deleteError } = await supabaseAdmin
-                        .from('reviews')
-                        .delete()
-                        .eq('vendor_id', selectedBusiness)
-                        .eq('is_google_review', true);
-
-                    if (deleteError) {
-                        console.error('Error deleting existing reviews:', deleteError);
-                        throw new Error(`Failed to delete existing reviews: ${deleteError.message}`);
-                    }
-
-                    // Then insert the new reviews
-                    const reviewsToInsert = reviewsData.reviews.map(review => ({
-                        vendor_id: selectedBusiness,
-                        rating: review.rating,
-                        comment: review.text,
-                        first_name: review.author_name,
-                        profile_photo_url: review.profile_photo_url,
-                        relative_time_description: review.relative_time_description,
-                        is_google_review: true,
-                        google_review_id: review.time.toString(),
-                        review_rating: review.rating,
-                        is_approved: true
-                    }));
-
-                    const { error: reviewsError } = await supabaseAdmin
-                        .from('reviews')
-                        .insert(reviewsToInsert);
-
-                    if (reviewsError) {
-                        console.error('Error inserting reviews:', reviewsError);
-                        throw new Error(`Failed to insert reviews: ${reviewsError.message}`);
-                    }
-                }
-
-                // Clear the form
-                setGoogleMapsUrl('');
-                setSelectedBusiness(null);
-                setBusinessSearchQuery('');
-
-                // Show success message
-                alert('Google reviews imported successfully!');
-            } catch (error) {
-                console.error('API request error:', error);
-                throw error;
-            }
+            // Show success message
+            alert('Google reviews imported successfully!');
         } catch (error) {
             console.error('Error importing Google reviews:', error);
             setGoogleReviewsError(error.message || 'Failed to import Google reviews. Please try again later.');
         } finally {
             setIsProcessing(false);
+        }
+    };
+
+    // Function to reset new features modal for all users
+    const resetNewFeaturesForAllUsers = async () => {
+        try {
+            // First, get all user preferences records
+            const { data: userPreferences, error: fetchError } = await supabaseAdmin
+                .from("user_preferences")
+                .select("user_id, has_seen_new_features");
+
+            if (fetchError) {
+                console.error("Error fetching user preferences:", fetchError);
+                alert("Failed to fetch user preferences.");
+                return;
+            }
+
+            if (!userPreferences || userPreferences.length === 0) {
+                alert("No user preferences found to reset.");
+                return;
+            }
+
+            // Update all records that have has_seen_new_features = true
+            const { error: updateError } = await supabaseAdmin
+                .from("user_preferences")
+                .update({ has_seen_new_features: false })
+                .eq('has_seen_new_features', true);
+
+            if (updateError) {
+                console.error("Error resetting new features for all users:", updateError);
+                alert("Failed to reset new features modal for all users.");
+            } else {
+                console.log("Successfully reset new features modal for all users.");
+                alert(`New features modal has been reset for users who had seen it! They will see the updated modal on their next visit.`);
+            }
+        } catch (error) {
+            console.error("Error in resetNewFeaturesForAllUsers:", error);
+            alert("An error occurred while resetting the new features modal.");
+        }
+    };
+
+    // Function to extract place ID from Google Maps URL
+    const extractPlaceIdFromUrl = (url) => {
+        try {
+            // Handle different Google Maps URL formats
+            if (!url) return null;
+
+            // Format 1: https://maps.app.goo.gl/...
+            if (url.includes('maps.app.goo.gl')) {
+                const match = url.match(/[?&]q=([^&]+)/);
+                if (match) {
+                    const decoded = decodeURIComponent(match[1]);
+                    const placeIdMatch = decoded.match(/place_id=([^&]+)/);
+                    if (placeIdMatch) return placeIdMatch[1];
+                }
+            }
+
+            // Format 2: https://www.google.com/maps/place/...
+            if (url.includes('google.com/maps/place')) {
+                const match = url.match(/place\/([^/]+)/);
+                if (match) return match[1];
+            }
+
+            // Format 3: https://www.google.com/maps?cid=...
+            if (url.includes('cid=')) {
+                const match = url.match(/cid=([^&]+)/);
+                if (match) return match[1];
+            }
+
+            return null;
+        } catch (error) {
+            console.error('Error extracting place ID:', error);
+            return null;
         }
     };
 
@@ -435,6 +397,12 @@ function AdminDashboard() {
             tabs: [
                 { id: 'converter', label: 'Image Converter' },
                 { id: 'google-reviews', label: 'Google Reviews' }
+            ]
+        },
+        system: {
+            name: 'System',
+            tabs: [
+                { id: 'features', label: 'Feature Management' }
             ]
         }
     };
@@ -706,6 +674,29 @@ function AdminDashboard() {
                                 >
                                     {isProcessing ? 'Processing...' : 'Import Reviews'}
                                 </button>
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === 'features' && (
+                        <div className="admin-card">
+                            <div className="admin-card-header">
+                                <h5>Feature Management</h5>
+                            </div>
+                            <div className="admin-card-body">
+                                <div className="feature-management-section">
+                                    <h6>New Features Modal</h6>
+                                    <p>Reset the new features modal so all users will see it again on their next visit.</p>
+                                    <div className="alert alert-info">
+                                        <strong>Note:</strong> This will reset the "has_seen_new_features" flag for all users in the user_preferences table.
+                                    </div>
+                                    <button
+                                        className="btn btn-warning"
+                                        onClick={resetNewFeaturesForAllUsers}
+                                        style={{ marginTop: '10px' }}
+                                    >
+                                        <i className="fas fa-redo"></i> Reset New Features Modal for All Users
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}

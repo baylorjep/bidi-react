@@ -1515,6 +1515,70 @@ useEffect(() => {
         Business Settings
       </h1>
       <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>Manage your business profile, payment settings, and preferences</p>
+      
+      {/* Instagram Support Banner */}
+      {showSupportBanner && (
+        <div className="support-banner mb-4" style={{
+          background: 'linear-gradient(135deg, #F247D1 0%, #764ba2 100%)',
+          color: 'white',
+          padding: '16px 20px',
+          borderRadius: '12px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <i className="fab fa-instagram" style={{ fontSize: '24px' }}></i>
+            <div>
+              <div style={{ fontWeight: '600', fontSize: '16px', marginBottom: '4px' }}>
+                Join Our Instagram Support Group
+              </div>
+              <div style={{ fontSize: '14px', opacity: 0.9 }}>
+                Connect with other vendors and get support from the Bidi team
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <a 
+              href="https://www.instagram.com/bidiweddings/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '20px',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.3)'}
+              onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
+            >
+              Join Group
+            </a>
+            <button 
+              onClick={handleDismissBanner}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '20px',
+                cursor: 'pointer',
+                opacity: 0.7,
+                padding: '4px'
+              }}
+              onMouseOver={(e) => e.target.style.opacity = '1'}
+              onMouseOut={(e) => e.target.style.opacity = '0.7'}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Setup Progress Checklist */}
       {Object.values(setupProgress).some(v => !v) && (
         <div className="setup-checklist">
