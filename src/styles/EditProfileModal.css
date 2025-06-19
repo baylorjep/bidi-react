@@ -1014,15 +1014,6 @@
   transition: all 0.2s ease;
 }
 
-.edit-button {
-  background: #f0f0f0;
-  color: #333;
-}
-
-.edit-button:hover {
-  background: #e0e0e0;
-}
-
 .delete-button {
   background: #ffebee;
   color: #d32f2f;

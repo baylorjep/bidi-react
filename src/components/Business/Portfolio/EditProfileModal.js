@@ -1724,7 +1724,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
             {/* Business Details Section */}
             {initialData.currentSection === 'business_details' && (
               <div className="section-content location-editor">
-                <h3>Business Location</h3>
+                <h3 style={{marginBottom:"0px", fontFamily:"Outfit"}}>Business Location</h3>
                 <p className="location-description">Select your primary business location and any additional areas you serve.</p>
                 
                 <div className="location-section">

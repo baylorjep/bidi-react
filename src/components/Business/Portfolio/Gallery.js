@@ -610,30 +610,58 @@ const Gallery = () => {
     @media (max-width: 768px) {
       .gallery-container-main {
         padding: 10px;
+        margin-top: 60px; /* Add space for fixed back button */
       }
       .gallery-header-container {
         padding: 0 10px;
         margin-bottom: 20px;
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
       }
       .gallery-header {
         font-size: 24px;
+        order: 2;
+        width: 100%;
+        text-align: center;
       }
       .back-button {
-        padding: 6px 12px;
+        padding: 8px 16px;
         font-size: 14px;
+        order: 1;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       }
       .edit-gallery-button {
-        padding: 6px 16px;
+        padding: 8px 18px;
         font-size: 14px;
+        order: 3;
+        align-self: flex-end;
       }
       .gallery-categories {
         padding: 0 10px;
         margin-bottom: 20px;
         gap: 8px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .gallery-categories::-webkit-scrollbar {
+        display: none;
       }
       .category-button {
-        padding: 6px 16px;
+        padding: 8px 16px;
         font-size: 13px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-width: fit-content;
       }
       .category-title {
         font-size: 18px;
@@ -642,15 +670,20 @@ const Gallery = () => {
       }
       .gallery-image, .gallery-video {
         height: 280px;
+        border-radius: 8px;
       }
       .category-stats {
         padding: 0 10px;
         gap: 10px;
         margin-bottom: 15px;
+        justify-content: center;
       }
       .stat-item {
         padding: 8px 16px;
         font-size: 13px;
+        flex: 1;
+        text-align: center;
+        min-width: 0;
       }
       .carousel-container {
         margin: 0;
@@ -670,26 +703,52 @@ const Gallery = () => {
         height: 40px;
         font-size: 16px;
       }
+      .video-container {
+        border-radius: 8px;
+      }
+      .custom-arrow {
+        width: 35px !important;
+        height: 35px !important;
+        border-radius: 35px !important;
+      }
+      .custom-next-arrow {
+        right: 5px !important;
+      }
+      .custom-prev-arrow {
+        left: 5px !important;
+      }
+      .custom-dots {
+        bottom: -25px;
+      }
+      .custom-dots li button {
+        width: 6px;
+        height: 6px;
+      }
     }
 
     /* Small Mobile Styles */
     @media (max-width: 480px) {
       .gallery-container-main {
         padding: 8px;
+        margin-top: 70px;
       }
       .gallery-header-container {
         padding: 0 8px;
         margin-bottom: 15px;
+        gap: 12px;
       }
       .gallery-header {
         font-size: 20px;
+        margin-top: 10px;
       }
       .back-button {
-        padding: 5px 10px;
+        padding: 6px 12px;
         font-size: 13px;
+        top: 8px;
+        left: 8px;
       }
       .edit-gallery-button {
-        padding: 5px 14px;
+        padding: 6px 14px;
         font-size: 13px;
       }
       .gallery-categories {
@@ -698,7 +757,7 @@ const Gallery = () => {
         gap: 6px;
       }
       .category-button {
-        padding: 5px 14px;
+        padding: 6px 14px;
         font-size: 12px;
       }
       .category-title {
@@ -707,16 +766,20 @@ const Gallery = () => {
         margin-bottom: 12px;
       }
       .gallery-image, .gallery-video {
-        height: 300px;
+        height: 220px;
+        border-radius: 6px;
       }
       .category-stats {
         padding: 0 8px;
         gap: 8px;
         margin-bottom: 12px;
+        flex-direction: column;
       }
       .stat-item {
-        padding: 6px 14px;
+        padding: 6px 12px;
         font-size: 12px;
+        width: 100%;
+        text-align: center;
       }
       .carousel-container {
         margin: 0;
@@ -735,6 +798,181 @@ const Gallery = () => {
         width: 35px;
         height: 35px;
         font-size: 14px;
+      }
+      .video-container {
+        border-radius: 6px;
+      }
+      .custom-arrow {
+        width: 30px !important;
+        height: 30px !important;
+        border-radius: 30px !important;
+      }
+      .custom-next-arrow {
+        right: 2px !important;
+      }
+      .custom-prev-arrow {
+        left: 2px !important;
+      }
+      .custom-dots {
+        bottom: -20px;
+      }
+      .custom-dots li button {
+        width: 5px;
+        height: 5px;
+      }
+    }
+
+    /* Extra Small Mobile Styles */
+    @media (max-width: 360px) {
+      .gallery-container-main {
+        padding: 6px;
+        margin-top: 65px;
+      }
+      .gallery-header-container {
+        padding: 0 6px;
+        margin-bottom: 12px;
+        gap: 10px;
+      }
+      .gallery-header {
+        font-size: 18px;
+        margin-top: 8px;
+      }
+      .back-button {
+        padding: 5px 10px;
+        font-size: 12px;
+        top: 6px;
+        left: 6px;
+      }
+      .edit-gallery-button {
+        padding: 5px 12px;
+        font-size: 12px;
+      }
+      .gallery-categories {
+        padding: 0 6px;
+        margin-bottom: 12px;
+        gap: 4px;
+      }
+      .category-button {
+        padding: 5px 12px;
+        font-size: 11px;
+      }
+      .category-title {
+        font-size: 15px;
+        padding: 0 6px;
+        margin-bottom: 10px;
+      }
+      .gallery-image, .gallery-video {
+        height: 200px;
+        border-radius: 4px;
+      }
+      .category-stats {
+        padding: 0 6px;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .stat-item {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
+      .carousel-container {
+        margin: 0;
+        padding: 0 6px;
+      }
+      .slick-slider {
+        margin: 0 -6px;
+      }
+      .slick-list {
+        padding: 0 6px;
+      }
+      .carousel-item {
+        padding: 3px;
+      }
+      .play-button {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+      }
+      .video-container {
+        border-radius: 4px;
+      }
+      .custom-arrow {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 28px !important;
+      }
+      .custom-next-arrow {
+        right: 1px !important;
+      }
+      .custom-prev-arrow {
+        left: 1px !important;
+      }
+      .custom-dots {
+        bottom: -18px;
+      }
+      .custom-dots li button {
+        width: 4px;
+        height: 4px;
+      }
+    }
+
+    /* Touch-friendly improvements */
+    @media (hover: none) and (pointer: coarse) {
+      .carousel-item {
+        min-height: 200px;
+      }
+      .gallery-image, .gallery-video {
+        cursor: pointer;
+      }
+      .category-button {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .play-button {
+        min-width: 44px;
+        min-height: 44px;
+      }
+      .custom-arrow {
+        min-width: 44px !important;
+        min-height: 44px !important;
+      }
+    }
+
+    /* Landscape mobile optimization */
+    @media (max-width: 768px) and (orientation: landscape) {
+      .gallery-container-main {
+        margin-top: 50px;
+      }
+      .gallery-header-container {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+      }
+      .gallery-header {
+        order: 2;
+        flex: 1;
+        text-align: center;
+        margin: 0;
+      }
+      .back-button {
+        order: 1;
+        position: static;
+        background: rgba(163, 40, 244, 0.1);
+      }
+      .edit-gallery-button {
+        order: 3;
+      }
+      .gallery-image, .gallery-video {
+        height: 180px;
+      }
+      .category-stats {
+        flex-direction: row;
+        justify-content: space-around;
+      }
+      .stat-item {
+        flex: 1;
+        max-width: 120px;
       }
     }
   `;
