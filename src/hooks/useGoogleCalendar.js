@@ -52,8 +52,8 @@ export const useGoogleCalendar = () => {
 
       console.log('Connecting calendar for user:', user.id);
 
-      // Hardcode the base URL and construct the full URL
-      const authUrl = `https://bidi-express.vercel.app/api/calendar/auth?businessId=${user.id}`;
+      // Use the correct API endpoint
+      const authUrl = `https://bidi-express.vercel.app/api/google-calendar/auth?businessId=${user.id}`;
       console.log('Redirecting to:', authUrl);
       window.location.href = authUrl;
     } catch (error) {
