@@ -1336,7 +1336,10 @@ useEffect(() => {
       // Use the new API function
       await updateConsultationHours(user.id, consultationHoursData);
       
-        setShowConsultationHoursModal(false);
+      // Refresh the setup progress to reflect the changes
+      setSetupProgress(prev => ({ ...prev }));
+      
+      setShowConsultationHoursModal(false);
       alert("Consultation hours updated successfully!");
     } catch (error) {
       console.error("Error saving consultation hours:", error);

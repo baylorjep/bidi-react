@@ -1,39 +1,67 @@
 import axios from 'axios';
+import { supabase } from '../supabaseClient';
 
 export const checkCalendarConnection = async (businessId) => {
   try {
-    const API_URL = 'https://bidi-express.vercel.app';
-    const response = await axios.get(`${API_URL}/api/business-profiles/${businessId}`);
-    return response.data.google_calendar_connected || false;
+    // Check calendar connection directly from Supabase
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .select('google_calendar_connected')
+      .eq('id', businessId)
+      .single();
+
+    if (error) {
+      console.error('Error checking calendar connection in Supabase:', error);
+      throw new Error(error.message || 'Failed to check calendar connection');
+    }
+
+    return data?.google_calendar_connected || false;
   } catch (error) {
     console.error('Error checking calendar connection:', error);
-    throw new Error(getErrorMessage(error));
+    throw new Error(error.message || 'Failed to check calendar connection');
   }
 };
 
 export const getConsultationHours = async (businessId) => {
   try {
-    const API_URL = 'https://bidi-express.vercel.app';
-    const response = await axios.get(`${API_URL}/api/google-calendar/consultation-hours/${businessId}`);
-    return response.data;
+    // Get consultation hours directly from Supabase
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .select('consultation_hours')
+      .eq('id', businessId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching consultation hours from Supabase:', error);
+      throw new Error(error.message || 'Failed to fetch consultation hours');
+    }
+
+    return data?.consultation_hours || null;
   } catch (error) {
     console.error('Error fetching consultation hours:', error);
-    throw new Error(getErrorMessage(error));
+    throw new Error(error.message || 'Failed to fetch consultation hours');
   }
 };
 
 export const updateConsultationHours = async (businessId, consultationHoursData) => {
   try {
-    const API_URL = 'https://bidi-express.vercel.app';
-    const response = await axios.put(`${API_URL}/api/google-calendar/consultation-hours/${businessId}`, consultationHoursData, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    return response.data;
+    // Update consultation hours directly in Supabase
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .update({
+        consultation_hours: consultationHoursData
+      })
+      .eq('id', businessId);
+
+    if (error) {
+      console.error('Error updating consultation hours in Supabase:', error);
+      throw new Error(error.message || 'Failed to update consultation hours');
+    }
+
+    return data;
   } catch (error) {
     console.error('Error updating consultation hours:', error);
-    throw new Error(getErrorMessage(error));
+    throw new Error(error.message || 'Failed to update consultation hours');
   }
 };
 
