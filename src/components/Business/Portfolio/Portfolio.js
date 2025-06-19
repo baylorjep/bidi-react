@@ -792,6 +792,13 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       const customerName = `${profile.first_name} ${profile.last_name}`.trim();
       const customerEmail = user.email;
 
+      console.log('About to schedule consultation with data:', {
+        businessId,
+        startTime: data.selectedTimeSlot,
+        customerEmail,
+        customerName
+      });
+
       await scheduleConsultation({
         businessId,
         bidId: null, // Not needed for portfolio consultations
@@ -804,14 +811,20 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       toast.success('Consultation scheduled successfully! Please check your email for details.');
       // Show success message or handle post-scheduling actions
     } catch (error) {
+      console.error('Error in handleScheduleConsultation:', error);
+      
       // Show a more user-friendly error message
       const errorMessage = error.message || 'Failed to schedule consultation. Please try again.';
+      console.error('Error message:', errorMessage);
       
       // If it's a calendar authorization error, suggest reconnecting
       if (errorMessage.includes('authorization expired') || errorMessage.includes('access denied')) {
         if (isOwner) {
           setShowCalendarReconnectModal(true);
         }
+      } else {
+        // Show error toast for other errors
+        toast.error(errorMessage);
       }
     }
   };

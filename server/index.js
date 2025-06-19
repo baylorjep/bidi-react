@@ -23,6 +23,15 @@ app.use(express.static(path.join(__dirname, '../build')));
 app.use('/api', googleReviewsRouter);
 app.use('/api', googlePlacesRoutes);
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'Server is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Handle client-side routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../build', 'index.html'));

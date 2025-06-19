@@ -115,12 +115,22 @@ export const createCalendarEvent = async (eventData) => {
       data: JSON.stringify(requestData)
     });
 
-    const response = await axios.post(`${API_URL}/api/google-calendar/events`, requestData, {
-      timeout: 10000, // 10 second timeout
+    // Add a timeout promise to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout after 15 seconds')), 15000);
+    });
+
+    const requestPromise = axios.post(`${API_URL}/api/google-calendar/events`, requestData, {
+      timeout: 15000, // 15 second timeout
       headers: {
         'Content-Type': 'application/json'
       }
     });
+
+    // Race between the request and timeout
+    const response = await Promise.race([requestPromise, timeoutPromise]);
+
+    console.log('Response received:', response.status, response.data);
 
     if (!response.data) {
       throw new Error('No response data received');
@@ -130,9 +140,15 @@ export const createCalendarEvent = async (eventData) => {
   } catch (error) {
     console.error('Error creating calendar event:', error);
     console.error('Error response:', error.response?.data);
+    console.error('Error status:', error.response?.status);
+    console.error('Error message:', error.message);
     
     if (error.code === 'ERR_NETWORK') {
       throw new Error('Network error: Unable to connect to the server. Please check your internet connection.');
+    }
+    
+    if (error.message === 'Request timeout after 15 seconds') {
+      throw new Error('Request timed out. The server is taking too long to respond. Please try again.');
     }
     
     if (error.response?.status === 400) {
@@ -145,6 +161,14 @@ export const createCalendarEvent = async (eventData) => {
     
     if (error.response?.status === 403) {
       throw new Error('Calendar access denied. Please check your calendar permissions.');
+    }
+    
+    if (error.response?.status === 404) {
+      throw new Error('Calendar service not found. Please contact support.');
+    }
+    
+    if (error.response?.status === 500) {
+      throw new Error('Server error. Please try again later.');
     }
     
     throw new Error(getErrorMessage(error));
@@ -177,4 +201,22 @@ const getErrorMessage = (error) => {
     return errorMessages[error.message] || error.message;
   }
   return 'An unexpected error occurred';
+};
+
+// Add a function to test backend connectivity
+export const testBackendConnectivity = async () => {
+  try {
+    const API_URL = 'https://bidi-express.vercel.app';
+    console.log('Testing backend connectivity to:', API_URL);
+    
+    const response = await axios.get(`${API_URL}/api/health`, {
+      timeout: 5000
+    });
+    
+    console.log('Backend connectivity test successful:', response.status);
+    return true;
+  } catch (error) {
+    console.error('Backend connectivity test failed:', error);
+    return false;
+  }
 };
