@@ -201,7 +201,7 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                                 </Link>
                                 ) :
                                 // Default route if no role is found or unhandled role
-                                <Link to="/dashboard">
+                                <Link to="/signin">
                                     <button className='landing-page-button'>Get Started</button>
                                 </Link>
                                 )

@@ -69,6 +69,12 @@
   color: #333;
 }
 
+.notification-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .mark-all-read {
   background: none;
   border: none;
@@ -79,6 +85,22 @@
 }
 
 .mark-all-read:hover {
+  text-decoration: underline;
+}
+
+.clear-all-notifications {
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.clear-all-notifications:hover {
+  background-color: #f8d7da;
   text-decoration: underline;
 }
 

@@ -22,9 +22,9 @@ function CreateAccount() {
                     .single();
 
                 if (profile?.role === 'business') {
-                    navigate('/dashboard');
+                    navigate('/business-dashboard');
                 } else if (profile?.role === 'individual') {
-                    navigate('/my-dashboard');
+                    navigate('/individual-dashboard');
                 }
             }
         };

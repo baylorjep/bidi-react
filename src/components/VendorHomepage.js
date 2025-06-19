@@ -257,7 +257,7 @@ function VendorHomepage() {
                     }}>
                         {user ? (
                             role === 'business' ? (
-                                <Link to="/dashboard" onClick={() => posthog.capture('vendor_dashboard')}>
+                                <Link to="/business-dashboard" onClick={() => posthog.capture('vendor_dashboard')}>
                                     <button className='landing-page-button' style={{
                                         width: window.innerWidth <= 768 ? '100%' : 'auto'
                                     }}>View Dashboard</button>

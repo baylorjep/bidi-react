@@ -106,6 +106,26 @@ const NotificationBell = () => {
     }
   };
 
+  const clearAllNotifications = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const notificationIds = notifications.map(n => n.id);
+    
+    if (notificationIds.length === 0) return;
+
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .in('id', notificationIds);
+
+    if (error) {
+      console.error('Error clearing notifications:', error);
+    } else {
+      setNotifications([]);
+    }
+  };
+
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'new_request':
@@ -137,11 +157,18 @@ const NotificationBell = () => {
         <div className="notification-dropdown">
           <div className="notification-header">
             <h3>Notifications</h3>
-            {unreadCount > 0 && (
-              <button className="mark-all-read" onClick={markAllAsRead}>
-                Mark all as read
-              </button>
-            )}
+            <div className="notification-actions">
+              {unreadCount > 0 && (
+                <button className="mark-all-read" onClick={markAllAsRead}>
+                  Mark all as read
+                </button>
+              )}
+              {notifications.length > 0 && (
+                <button className="clear-all-notifications" onClick={clearAllNotifications}>
+                  Clear all
+                </button>
+              )}
+            </div>
           </div>
           <div className="notification-list">
             {notifications.length > 0 ? (

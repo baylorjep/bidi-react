@@ -107,7 +107,7 @@ const VerificationApplication = () => {
       }
 
       alert('Application submitted successfully! Our team will review your application and update your membership tier if approved.');
-      navigate('/dashboard');
+      navigate('/business-dashboard');
     } catch (error) {
       console.error('Error:', error);
       alert('Error submitting application. Please try again.');

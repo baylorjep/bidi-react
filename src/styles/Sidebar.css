@@ -367,6 +367,11 @@
     height: 28px;
   }
 
+  .profile-nav-image {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
   .nav-label {
     font-size: 11px;
   }
@@ -425,8 +430,8 @@
 }
 
 .profile-nav-image {
-  width: 28px !important;
-  height: 28px !important;
+  width: 32px !important;
+  height: 32px !important;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 8px;

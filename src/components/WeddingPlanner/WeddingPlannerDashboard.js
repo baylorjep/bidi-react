@@ -22,6 +22,8 @@ import OpenRequests from "../Request/OpenRequests.js";
 import BusinessBids from "../Business/BusinessBids.js";
 import PortfolioPage from "../Business/Portfolio/Portfolio.js";
 import BusinessSettings from "../Business/BusinessSettings.js";
+import TrainingVideos from "../Business/TrainingVideos.js";
+import AdminDashboard from "../admin/AdminDashboard.js";
 
 const WeddingPlannerDashboard = () => {
   const [user, setUser] = useState(null);
@@ -46,6 +48,7 @@ const WeddingPlannerDashboard = () => {
   const [showVendorMenu, setShowVendorMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (location.state?.activeSection) {
@@ -108,6 +111,7 @@ const WeddingPlannerDashboard = () => {
         if (businessProfile.data) {
           setBusinessName(businessProfile.data.business_name || "Business Name Not Found");
           setBidiPlus(!!businessProfile.data.Bidi_Plus);
+          setIsAdmin(!!businessProfile.data.is_admin);
           setProfile({ ...businessProfile.data, business_category: getCategories(businessProfile.data.business_category) });
         }
 
@@ -427,6 +431,13 @@ const WeddingPlannerDashboard = () => {
               <img src={settingsIcon} alt="Settings" />
               <span>Settings</span>
             </li>
+            <li 
+              onClick={() => handleSectionChange('training')}
+              className={activeSection === 'training' ? 'active' : ''}
+            >
+              <i className="fas fa-play-circle" style={{ width: '24px', height: '24px', marginRight: '12px', fontSize: '20px', color: '#9633eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}></i>
+              <span>Training</span>
+            </li>
           </ul>
 
           {/* Logout Button */}
@@ -528,6 +539,8 @@ const WeddingPlannerDashboard = () => {
           {activeSection === 'vendors' && <VendorListWithFilters />}
           {activeSection === 'portfolio' && <PortfolioPage profileId={profile?.id} />}
           {activeSection === 'settings' && <BusinessSettings setActiveSection={setActiveSection} connectedAccountId={profile?.stripe_account_id} />}
+          {activeSection === 'training' && <TrainingVideos />}
+          {activeSection === 'admin' && <AdminDashboard />}
         </main>
 
         {/* Bottom Navigation Bar */}
@@ -568,6 +581,16 @@ const WeddingPlannerDashboard = () => {
               <div className="profile-menu" ref={profileMenuRef}>
                 <button 
                   onClick={() => {
+                    setActiveSection("training");
+                    setShowProfileMenu(false);
+                  }}
+                  className="profile-menu-item"
+                >
+                  <i className="fas fa-play-circle"></i>
+                  <span>Training</span>
+                </button>
+                <button 
+                  onClick={() => {
                     setActiveSection("settings");
                     setShowProfileMenu(false);
                   }}
@@ -576,6 +599,18 @@ const WeddingPlannerDashboard = () => {
                   <i className="fas fa-cog"></i>
                   <span>Settings</span>
                 </button>
+                {isAdmin && (
+                  <button 
+                    onClick={() => {
+                      setActiveSection("admin");
+                      setShowProfileMenu(false);
+                    }}
+                    className="profile-menu-item"
+                  >
+                    <i className="fas fa-shield-alt"></i>
+                    <span>Admin</span>
+                  </button>
+                )}
                 <button 
                   onClick={async () => {
                     const { error } = await supabase.auth.signOut();
@@ -633,6 +668,10 @@ const WeddingPlannerDashboard = () => {
                 <button onClick={() => handleMenuOptionClick('portfolio')} className="profile-menu-item">
                   <i className="fas fa-images"></i>
                   <span>My Portfolio</span>
+                </button>
+                <button onClick={() => handleMenuOptionClick('training')} className="profile-menu-item">
+                  <i className="fas fa-play-circle"></i>
+                  <span>Training</span>
                 </button>
                 <button onClick={() => handleMenuOptionClick('settings')} className="profile-menu-item">
                   <i className="fas fa-cog"></i>

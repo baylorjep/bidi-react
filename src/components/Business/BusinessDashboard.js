@@ -31,6 +31,7 @@ import AdminDashboard from "../admin/AdminDashboard.js";
 import ContractTemplateEditor from "./ContractTemplateEditor.js";
 import NewFeaturesModal from "./NewFeaturesModal";
 import NotificationBell from '../Notifications/NotificationBell';
+import TrainingVideos from './TrainingVideos.js';
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -475,6 +476,13 @@ const BusinessDashSidebar = () => {
               <span>Portfolio</span>
             </li>
             <li 
+              onClick={() => setActiveSection("training")}
+              className={activeSection === "training" ? "active" : ""}
+            >
+              <i className="fas fa-play-circle" style={{ width: '24px', height: '24px', marginRight: '12px', fontSize: '20px', color: '#9633eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}></i>
+              <span>Training</span>
+            </li>
+            <li 
               onClick={() => setActiveSection("settings")}
               className={activeSection === "settings" ? "active" : ""}
             >
@@ -486,7 +494,7 @@ const BusinessDashSidebar = () => {
                 onClick={() => setActiveSection("admin")}
                 className={activeSection === "admin" ? "active" : ""}
               >
-                <i className="fas fa-shield-alt" style={{ fontSize: '20px', color: '#9633eb' }}></i>
+                <i className="fas fa-shield-alt" style={{ width: '24px', height: '24px', marginRight: '12px', fontSize: '20px', color: '#9633eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}></i>
                 <span>Admin</span>
               </li>
             )}
@@ -568,6 +576,8 @@ const BusinessDashSidebar = () => {
             <Onboarding setActiveSection={setActiveSection} />
           ) : activeSection === "portfolio" ? (
             <PortfolioPage profileId={profile} />
+          ) : activeSection === "training" ? (
+            <TrainingVideos />
           ) : activeSection === "settings" ? (
             <BusinessSettings
               setActiveSection={setActiveSection}
@@ -626,7 +636,7 @@ const BusinessDashSidebar = () => {
               >
                 <div className="nav-item">
                   <img src={profileImage} alt="Profile" className="profile-nav-image" />
-                  <span className="nav-label">Profile</span>
+                  <span className="nav-label">Settings</span>
                 </div>
               </button>
             </nav>
@@ -634,6 +644,16 @@ const BusinessDashSidebar = () => {
             {/* Profile Menu */}
             {showProfileMenu && (
               <div className="profile-menu" ref={profileMenuRef}>
+                <button 
+                  onClick={() => {
+                    setActiveSection("training");
+                    setShowProfileMenu(false);
+                  }}
+                  className="profile-menu-item"
+                >
+                  <i className="fas fa-play-circle"></i>
+                  <span>Training</span>
+                </button>
                 <button 
                   onClick={() => {
                     setActiveSection("settings");
@@ -644,6 +664,18 @@ const BusinessDashSidebar = () => {
                   <i className="fas fa-cog"></i>
                   <span>Settings</span>
                 </button>
+                {isAdmin && (
+                  <button 
+                    onClick={() => {
+                      setActiveSection("admin");
+                      setShowProfileMenu(false);
+                    }}
+                    className="profile-menu-item"
+                  >
+                    <i className="fas fa-shield-alt"></i>
+                    <span>Admin</span>
+                  </button>
+                )}
                 <button 
                   onClick={async () => {
                     const { error } = await supabase.auth.signOut();

@@ -41,7 +41,7 @@ function ChoosePricingPlan() {
   
         if (error) throw error;
         console.log('Data updated successfully:', data);
-        navigate('/dashboard');
+        navigate('/business-dashboard');
       } catch (err) {
         console.error('Error updating data:', err.message);
       }
