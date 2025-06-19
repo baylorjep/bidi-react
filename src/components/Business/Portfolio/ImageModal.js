@@ -382,7 +382,9 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
           lineHeight: 1
         }}
       >
-        <span style={{ color: '#fff', fontSize: '20px' }}>→</span>
+        <span style={{ color: '#fff', fontSize: '20px' }}>
+          <i className="fas fa-chevron-right"></i>
+        </span>
       </button>
     );
   }
@@ -412,7 +414,9 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
           lineHeight: 1
         }}
       >
-        <span style={{ color: '#fff', fontSize: '20px' }}>←</span>
+        <span style={{ color: '#fff', fontSize: '20px' }}>
+          <i className="fas fa-chevron-left"></i>
+        </span>
       </button>
     );
   }

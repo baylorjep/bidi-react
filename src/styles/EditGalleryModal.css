@@ -37,6 +37,7 @@
   margin: 0;
   color: #333;
   font-size: 1.5rem;
+  font-family: Outfit;
 }
 
 .category-management {
@@ -69,9 +70,10 @@
   background-color: white;
   border: 1px solid #dee2e6;
   border-radius: 4px;
-  cursor: move;
+  cursor: grab;
   user-select: none;
   touch-action: none;
+  transition: all 0.2s ease;
 }
 
 .category-item span {
@@ -302,20 +304,25 @@
   flex-direction: column;
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: default;
 }
 
 .media-item.dragging {
-  opacity: 0.8;
+  opacity: 0.7;
   z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transform: rotate(5deg) scale(1.05);
+  cursor: grabbing;
 }
 
 .media-item.drag-over-above {
-  border-top: 2px solid #9633eb;
+  border-top: 3px solid #a328f4;
+  margin-top: 10px;
 }
 
 .media-item.drag-over-below {
-  border-bottom: 2px solid #9633eb;
+  border-bottom: 3px solid #a328f4;
+  margin-bottom: 10px;
 }
 
 .media-preview-container {
@@ -353,51 +360,56 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 28px;
-  height: 28px;
-  background-color: rgba(150, 51, 235, 0.9);
+  width: 32px;
+  height: 32px;
+  background-color: rgba(150, 51, 235, 0.95);
   color: white;
-  border: none;
+  border: 2px solid white;
   border-radius: 50%;
   cursor: move;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
-  transition: background-color 0.2s;
-  z-index: 1;
+  transition: all 0.2s ease;
+  z-index: 20;
   user-select: none;
   touch-action: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .delete-btn {
   position: absolute;
   top: 8px;
-  right: 44px;
-  width: 28px;
-  height: 28px;
-  background-color: rgba(150, 51, 235, 0.9);
+  left: 8px;
+  width: 32px;
+  height: 32px;
+  background-color: rgba(220, 53, 69, 0.95);
   color: white;
-  border: none;
+  border: 2px solid white;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: bold;
   line-height: 1;
-  transition: background-color 0.2s;
-  z-index: 1;
+  transition: all 0.2s ease;
+  z-index: 20;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0.8;
 }
 
 .drag-handle:hover {
   background-color: rgba(150, 51, 235, 1);
+  transform: scale(1.1);
 }
 
 .delete-btn:hover {
-  background-color: rgba(150, 51, 235, 1);
+  background-color: rgba(220, 53, 69, 1);
+  transform: scale(1.1);
 }
 
 .drag-feedback {
@@ -436,15 +448,18 @@
   }
 
   .drag-handle {
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    top: 6px;
+    right: 6px;
   }
 
   .delete-btn {
-    width: 24px;
-    height: 24px;
-    font-size: 20px;
-    right: 36px;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+    top: 6px;
+    left: 6px;
   }
 } 

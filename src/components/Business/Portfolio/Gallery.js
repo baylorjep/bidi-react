@@ -49,7 +49,7 @@ const Gallery = () => {
   }, []);
 
   const settings = {
-    dots: true,
+    dots: false,
     infinite: false,
     speed: 500,
     slidesToShow: windowWidth >= 1200 ? 3 : windowWidth >= 768 ? 2 : 1,
@@ -112,7 +112,9 @@ const Gallery = () => {
           zIndex: 2
         }}
       >
-        <span style={{ color: '#fff', fontSize: '20px' }}>→</span>
+        <span style={{ color: '#fff', fontSize: '20px' }}>
+          <i className="fas fa-chevron-right"></i>
+        </span>
       </button>
     );
   }
@@ -140,7 +142,9 @@ const Gallery = () => {
           zIndex: 2
         }}
       >
-        <span style={{ color: '#fff', fontSize: '20px' }}>←</span>
+        <span style={{ color: '#fff', fontSize: '20px' }}>
+          <i className="fas fa-chevron-left"></i>
+        </span>
       </button>
     );
   }

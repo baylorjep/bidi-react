@@ -12,10 +12,6 @@ const EditGalleryModal = ({ isOpen, onClose, businessId, categories: initialCate
   const [editCategoryName, setEditCategoryName] = useState('');
   const [mediaItems, setMediaItems] = useState([]);
   const fileInputRef = useRef(null);
-  const [draggedItem, setDraggedItem] = useState(null);
-  const [touchStartY, setTouchStartY] = useState(null);
-  const [draggedElement, setDraggedElement] = useState(null);
-  const [dragFeedback, setDragFeedback] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -321,272 +317,6 @@ const EditGalleryModal = ({ isOpen, onClose, businessId, categories: initialCate
     </div>
   );
 
-  const handleDragStart = (e, category) => {
-    setDraggedItem(category);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', category.id);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = async (e, targetCategory) => {
-    e.preventDefault();
-    if (!draggedItem || draggedItem.id === targetCategory.id) return;
-
-    const draggedIndex = categories.findIndex(cat => cat.id === draggedItem.id);
-    const targetIndex = categories.findIndex(cat => cat.id === targetCategory.id);
-    
-    const newCategories = [...categories];
-    const [movedCategory] = newCategories.splice(draggedIndex, 1);
-    newCategories.splice(targetIndex, 0, movedCategory);
-
-    // Update display_order for all affected categories
-    const updates = newCategories.map((category, index) => ({
-      id: category.id,
-      name: category.name,
-      business_id: businessId,
-      display_order: index,
-      created_at: category.created_at,
-      updated_at: new Date().toISOString()
-    }));
-
-    try {
-      const { error } = await supabase
-        .from('portfolio_categories')
-        .upsert(updates, {
-          onConflict: 'id'
-        });
-
-      if (error) throw error;
-
-      setCategories(newCategories);
-    } catch (error) {
-      console.error('Error updating category order:', error);
-      alert('Failed to update category order');
-    }
-  };
-
-  const handleDragEnd = () => {
-    setDraggedItem(null);
-  };
-
-  const handleTouchStart = (e, mediaId) => {
-    if (!e.target.closest('.drag-handle')) {
-      return;
-    }
-    
-    const touch = e.touches[0];
-    const element = e.currentTarget;
-    
-    setTouchStartY(touch.clientY);
-    setDraggedElement(element);
-    element.classList.add('dragging');
-    
-    element.dataset.originalId = mediaId;
-    element.dataset.initialY = element.getBoundingClientRect().top;
-    
-    setDragFeedback('Hold and drag to reorder');
-    e.preventDefault();
-  };
-
-  const handleTouchMove = (e) => {
-    if (!draggedElement) return;
-    
-    const touch = e.touches[0];
-    const elements = Array.from(document.querySelectorAll('.media-item:not(.dragging)'));
-    
-    const deltaY = touch.clientY - touchStartY;
-    draggedElement.style.transform = `translateY(${deltaY}px)`;
-    
-    elements.forEach(el => {
-      el.classList.remove('drag-over-above', 'drag-over-below');
-    });
-    
-    let closestElement = null;
-    let closestDistance = Infinity;
-    let isAbove = false;
-
-    elements.forEach(el => {
-      const box = el.getBoundingClientRect();
-      const distance = Math.abs(touch.clientY - (box.top + box.height / 2));
-      
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestElement = el;
-        isAbove = touch.clientY < box.top + box.height / 2;
-      }
-    });
-    
-    if (closestElement) {
-      if (isAbove) {
-        closestElement.classList.add('drag-over-above');
-        setDragFeedback('Release to place before');
-      } else {
-        closestElement.classList.add('drag-over-below');
-        setDragFeedback('Release to place after');
-      }
-    }
-    
-    e.preventDefault();
-  };
-
-  const handleTouchEnd = async (e) => {
-    if (!draggedElement) return;
-    
-    const dropTarget = document.querySelector('.drag-over-above, .drag-over-below');
-    
-    if (dropTarget) {
-      const draggedId = draggedElement.dataset.originalId;
-      const droppedId = dropTarget.dataset.mediaId;
-      const dropAbove = dropTarget.classList.contains('drag-over-above');
-      
-      const draggedIndex = mediaItems.findIndex(item => item.id === draggedId);
-      let droppedIndex = mediaItems.findIndex(item => item.id === droppedId);
-      
-      if (!dropAbove) droppedIndex += 1;
-      
-      const newItems = [...mediaItems];
-      const [movedItem] = newItems.splice(draggedIndex, 1);
-      newItems.splice(droppedIndex, 0, movedItem);
-      
-      setMediaItems(newItems);
-      
-      try {
-        const updates = newItems.map((item, index) => ({
-          id: item.id,
-          display_order: index
-        }));
-
-        const { error } = await supabase
-          .from('profile_photos')
-          .upsert(updates, {
-            onConflict: 'id'
-          });
-
-        if (error) throw error;
-      } catch (error) {
-        console.error('Error updating order:', error);
-        setMediaItems(mediaItems);
-      }
-    }
-    
-    draggedElement.style.transform = '';
-    draggedElement.classList.remove('dragging');
-    document.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
-      el.classList.remove('drag-over-above', 'drag-over-below');
-    });
-    
-    setDraggedElement(null);
-    setTouchStartY(null);
-    setDragFeedback(null);
-  };
-
-  const handleMouseDown = (e, mediaId) => {
-    if (!e.target.closest('.drag-handle')) return;
-    
-    const element = e.currentTarget;
-    setDraggedElement(element);
-    element.classList.add('dragging');
-    element.dataset.originalId = mediaId;
-    element.dataset.initialX = element.getBoundingClientRect().left;
-    element.dataset.initialY = element.getBoundingClientRect().top;
-    setDragFeedback('Drag to reorder');
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!draggedElement) return;
-    
-    const elements = Array.from(document.querySelectorAll('.media-item:not(.dragging)'));
-    const deltaX = e.clientX - draggedElement.getBoundingClientRect().left;
-    const deltaY = e.clientY - draggedElement.getBoundingClientRect().top;
-    draggedElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-    
-    elements.forEach(el => el.classList.remove('drag-over-above', 'drag-over-below'));
-    
-    let closestElement = null;
-    let closestDistance = Infinity;
-    let position = '';
-
-    elements.forEach(el => {
-      const box = el.getBoundingClientRect();
-      const centerX = box.left + box.width / 2;
-      const centerY = box.top + box.height / 2;
-      const distanceX = Math.abs(e.clientX - centerX);
-      const distanceY = Math.abs(e.clientY - centerY);
-      const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-      
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestElement = el;
-        position = distanceX > distanceY ? 
-          (e.clientX < centerX ? 'above' : 'below') : 
-          (e.clientY < centerY ? 'above' : 'below');
-      }
-    });
-    
-    if (closestElement) {
-      closestElement.classList.add(`drag-over-${position}`);
-      setDragFeedback(`Release to place ${position}`);
-    }
-  };
-
-  const handleMouseUp = async (e) => {
-    if (!draggedElement) return;
-    
-    const dropTarget = document.querySelector('.drag-over-above, .drag-over-below');
-    if (dropTarget) {
-      const draggedId = draggedElement.dataset.originalId;
-      const droppedId = dropTarget.dataset.mediaId;
-      const position = dropTarget.classList.contains('drag-over-above') ? 'above' : 'below';
-      
-      const draggedIndex = mediaItems.findIndex(item => item.id === draggedId);
-      let droppedIndex = mediaItems.findIndex(item => item.id === droppedId);
-      
-      if (position === 'below') droppedIndex += 1;
-      
-      const newItems = [...mediaItems];
-      const [movedItem] = newItems.splice(draggedIndex, 1);
-      newItems.splice(droppedIndex, 0, movedItem);
-      
-      setMediaItems(newItems);
-      
-      try {
-        const updates = newItems.map((item, index) => ({
-          id: item.id,
-          display_order: index
-        }));
-
-        const { error } = await supabase
-          .from('profile_photos')
-          .upsert(updates, {
-            onConflict: 'id'
-          });
-
-        if (error) throw error;
-      } catch (error) {
-        console.error('Error updating order:', error);
-        setMediaItems(mediaItems);
-      }
-    }
-    
-    draggedElement.style.transform = '';
-    draggedElement.classList.remove('dragging');
-    document.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
-      el.classList.remove('drag-over-above', 'drag-over-below');
-    });
-    
-    setDraggedElement(null);
-    setDragFeedback(null);
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -604,38 +334,15 @@ const EditGalleryModal = ({ isOpen, onClose, businessId, categories: initialCate
                 <div 
                   key={category.id} 
                   className="category-item"
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, category)}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, category)}
-                  onDragEnd={handleDragEnd}
                 >
-                  {editingCategory?.id === category.id ? (
-                    <div className="category-edit">
-                      <input
-                        type="text"
-                        value={editCategoryName}
-                        onChange={(e) => setEditCategoryName(e.target.value)}
-                        placeholder="Category name"
-                      />
-                      <button onClick={handleUpdateCategory}>Save</button>
-                      <button onClick={() => {
-                        setEditingCategory(null);
-                        setEditCategoryName('');
-                      }}>Cancel</button>
-                    </div>
-                  ) : (
-                    <>
-                      <span>{category.name}</span>
-                      <div className="category-actions">
-                        <button onClick={() => {
-                          setEditingCategory(category);
-                          setEditCategoryName(category.name);
-                        }}>Edit</button>
-                        <button onClick={() => handleDeleteCategory(category.id)}>Delete</button>
-                      </div>
-                    </>
-                  )}
+                  <span>{category.name}</span>
+                  <div className="category-actions">
+                    <button onClick={() => {
+                      setEditingCategory(category);
+                      setEditCategoryName(category.name);
+                    }}>Edit</button>
+                    <button onClick={() => handleDeleteCategory(category.id)}>Delete</button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -700,11 +407,6 @@ const EditGalleryModal = ({ isOpen, onClose, businessId, categories: initialCate
                 <div 
                   key={item.id} 
                   className="media-item"
-                  data-media-id={item.id}
-                  onTouchStart={(e) => handleTouchStart(e, item.id)}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                  onMouseDown={(e) => handleMouseDown(e, item.id)}
                 >
                   <div className="media-preview-container">
                     {item.photo_type === 'video' ? (
@@ -728,13 +430,6 @@ const EditGalleryModal = ({ isOpen, onClose, businessId, categories: initialCate
                     >
                       ×
                     </button>
-                    <div 
-                      className="drag-handle" 
-                      title="Drag to reorder"
-                      aria-label="Drag to reorder"
-                    >
-                      ⋮⋮
-                    </div>
                   </div>
                   <div className="media-actions">
                     <select
@@ -753,12 +448,6 @@ const EditGalleryModal = ({ isOpen, onClose, businessId, categories: initialCate
               ))}
             </div>
           </div>
-
-          {dragFeedback && (
-            <div className="drag-feedback">
-              {dragFeedback}
-            </div>
-          )}
 
           <div className="modal-actions">
             <button 
