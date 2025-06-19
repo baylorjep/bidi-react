@@ -357,8 +357,20 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         setServices(businessData.specializations || []);
         // Set service areas from service_areas array
         setServiceAreas(businessData.service_areas || []);
-        // Set packages to empty array since we don't have a packages table
-        setPackages([]);
+        
+        // Fetch packages from business_packages table
+        const { data: packagesData, error: packagesError } = await supabase
+          .from("business_packages")
+          .select("*")
+          .eq("business_id", businessId)
+          .order("created_at", { ascending: true });
+
+        if (packagesError) {
+          console.error("Error fetching packages:", packagesError);
+          setPackages([]);
+        } else {
+          setPackages(packagesData || []);
+        }
         
         // Check if business has Google Calendar connected
         console.log('Business data google_calendar_connected:', businessData.google_calendar_connected);
@@ -1166,6 +1178,18 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 );
               })}
             </Slider>
+            
+            {/* Mobile Gallery Button */}
+            {portfolioVideos.length + portfolioPics.length > 0 && (
+              <div className="mobile-gallery-button-container">
+                <button
+                  className="see-all-button mobile"
+                  onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
+                >
+                  View Gallery
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Desktop Grid (hidden on mobile) */}
@@ -1256,8 +1280,8 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       />
                     );
                   })}
-                {/* Add gallery button if there are more than 5 items */}
-                {portfolioVideos.length + portfolioPics.length > 5 && (
+                {/* Always show gallery button if there are any media items */}
+                {portfolioVideos.length + portfolioPics.length > 0 && (
                   <button
                     className="see-all-button"
                     onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
@@ -1268,6 +1292,17 @@ const Portfolio = ({ businessId: propBusinessId }) => {
               </div>
             )}
 
+            {/* Show gallery button even when there's only one media item */}
+            {portfolioVideos.length + portfolioPics.length === 1 && (
+              <div className="portfolio-grid">
+                <button
+                  className="see-all-button"
+                  onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
+                >
+                  View Gallery
+                </button>
+              </div>
+            )}
 
           </div>
           {isOwner && (
@@ -1848,6 +1883,32 @@ const styles = `
 
 .portfolio-back-button i {
   font-size: 16px;
+}
+
+.mobile-gallery-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  padding: 0 16px;
+}
+
+.see-all-button.mobile {
+  background: #A328F4;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(163, 40, 244, 0.3);
+}
+
+.see-all-button.mobile:hover {
+  background: #8a1fd8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(163, 40, 244, 0.4);
 }
 
 .get-a-bid-container {
