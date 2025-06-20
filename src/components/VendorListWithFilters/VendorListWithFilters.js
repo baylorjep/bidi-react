@@ -101,7 +101,7 @@ const VendorListWithFilters = () => {
                             onChange={handleSearchChange}
                         />
                         <svg 
-                            className="search-icon" 
+                            className="search-icon-vendors-with-filters" 
                             width="20" 
                             height="20" 
                             viewBox="0 0 24 24" 

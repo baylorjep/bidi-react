@@ -38,7 +38,7 @@
     color: #9CA3AF;
 }
 
-.search-icon {
+.search-icon-vendors-with-filters {
     position: absolute;
     right: 16px;
     top: 50%;
@@ -48,7 +48,7 @@
     transition: color 0.2s ease;
 }
 
-.search-input:focus + .search-icon {
+.search-input:focus + .search-icon-vendors-with-filters {
     color: #8b12b9;
 }
 

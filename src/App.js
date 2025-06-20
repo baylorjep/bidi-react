@@ -145,6 +145,10 @@ import ErrorPage from "./components/ErrorPage";
 import PartnershipLanding from "./components/PartnershipLanding";
 import NoGhostingGuarantee from "./components/NoGhostingGuarantee";
 
+//wedding planner dashboard imports
+import WeddingPlanningDashboard from "./components/WeddingPlanner/WeddingPlanningDashboard";  
+import SharedTimelineView from "./components/WeddingPlanner/SharedTimelineView";
+
 // Create a wrapper component to use useLocation
 function AppContent() {
   const location = useLocation();
@@ -374,6 +378,11 @@ function AppContent() {
               </PrivateRoute>
             }
           />
+
+          {/* Wedding Planner Routes */}
+          <Route path="/wedding-planner" element={<WeddingPlanningDashboard />} />
+          <Route path="/shared-timeline/:shareId" element={<SharedTimelineView />} />
+
           {/* Articles Route */}
           <Route path="/articles" element={<ArticleNavigation />} />
           <Route path="/articles/:articleId" element={<ArticleDetail />} />
