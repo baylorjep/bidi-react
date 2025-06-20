@@ -142,29 +142,49 @@ const BusinessDashSidebar = () => {
         }
 
         // Check if user has seen the new features
-        const { data: userPrefs, error: userPreferencesError } = await supabase
-          .from("user_preferences")
-          .select("has_seen_new_features")
-          .eq("user_id", user.id)
-          .maybeSingle(); // Use maybeSingle() instead of single() to handle no record case
+        try {
+          // First check localStorage as a fallback
+          const localStorageKey = `newFeaturesSeen_${user.id}`;
+          const hasSeenInLocalStorage = localStorage.getItem(localStorageKey);
+          
+          if (hasSeenInLocalStorage === 'true') {
+            console.log("User has seen new features (localStorage)");
+            setShowNewFeatures(false);
+            return;
+          }
 
-        console.log("New Features Modal Check:", {
-          userId: user.id,
-          userPrefs,
-          userPreferencesError,
-          hasSeenNewFeatures: userPrefs?.has_seen_new_features
-        });
+          const { data: userPrefs, error: userPreferencesError } = await supabase
+            .from("user_preferences")
+            .select("has_seen")
+            .eq("user_id", user.id)
+            .maybeSingle();
 
-        // Show modal if no record exists (user hasn't seen it) or if has_seen_new_features is false
-        if (userPreferencesError) {
-          console.error("Error fetching user preferences:", userPreferencesError);
-          // If there's an error, show the modal to be safe
-          setShowNewFeatures(true);
-        } else if (!userPrefs || !userPrefs.has_seen_new_features) {
-          console.log("Showing new features modal - user hasn't seen it yet");
-          setShowNewFeatures(true);
-        } else {
-          console.log("Not showing new features modal - user has already seen it");
+          console.log("New Features Modal Check:", {
+            userId: user.id,
+            userPrefs,
+            userPreferencesError,
+            hasSeenNewFeatures: userPrefs?.has_seen
+          });
+
+          // Only show modal if user has explicitly not seen it (false) or no record exists
+          if (userPreferencesError) {
+            console.error("Error fetching user preferences:", userPreferencesError);
+            // Don't show modal on error - assume user has seen it to avoid repeated shows
+            setShowNewFeatures(false);
+          } else if (userPrefs && userPrefs.has_seen === false) {
+            console.log("Showing new features modal - user hasn't seen it yet");
+            setShowNewFeatures(true);
+          } else if (!userPrefs) {
+            console.log("Showing new features modal - no record for user");
+            setShowNewFeatures(true);
+          } else {
+            console.log("Not showing new features modal - user has already seen it or no preference set");
+            setShowNewFeatures(false);
+          }
+        } catch (error) {
+          console.error("Unexpected error checking new features preference:", error);
+          // Don't show modal on unexpected errors
+          setShowNewFeatures(false);
         }
       } catch (error) {
         console.error("An error occurred while fetching data:", error);
@@ -330,15 +350,29 @@ const BusinessDashSidebar = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase
+        // Save to localStorage as backup
+        const localStorageKey = `newFeaturesSeen_${user.id}`;
+        localStorage.setItem(localStorageKey, 'true');
+        
+        const { error } = await supabase
           .from("user_preferences")
           .upsert({
             user_id: user.id,
-            has_seen_new_features: true
+            has_seen: true
           });
+        
+        if (error) {
+          console.error("Error updating user preferences:", error);
+          // Even if the database update fails, we still close the modal locally
+          // to prevent it from showing repeatedly
+        } else {
+          console.log("Successfully updated user preferences - new features modal will not show again");
+        }
       }
     } catch (error) {
       console.error("Error updating user preferences:", error);
+      // Even if there's an error, we still close the modal locally
+      // to prevent it from showing repeatedly
     }
   };
 
@@ -347,7 +381,7 @@ const BusinessDashSidebar = () => {
     try {
       const { error } = await supabase
         .from("user_preferences")
-        .update({ has_seen_new_features: false })
+        .update({ has_seen: false })
         .neq('user_id', null); // Update all records
 
       if (error) {
@@ -372,7 +406,7 @@ const BusinessDashSidebar = () => {
           .from("user_preferences")
           .upsert({
             user_id: user.id,
-            has_seen_new_features: false
+            has_seen: false
           });
 
         if (error) {
