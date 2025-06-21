@@ -109,6 +109,7 @@
   color: #1e293b;
   margin: 0 0 6px 0;
   font-weight: 600;
+  text-align: left !important;
 }
 
 .category-info p {
@@ -1433,6 +1434,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: 16px;
 }
 
 .custom-category-item {
@@ -1448,19 +1450,20 @@
 
 .custom-category-item:hover {
   background: #f1f5f9;
-  border-color: #d1d5db;
+  border-color: #cbd5e1;
 }
 
 .category-preview {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
 }
 
 .category-preview .category-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1469,23 +1472,94 @@
 
 .category-preview .category-icon i {
   color: white;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .category-name {
-  font-weight: 500;
+  font-weight: 600;
   color: #374151;
   font-size: 0.95rem;
 }
 
-/* Category Manager Modal Override */
-.modal-content .category-manager {
-  margin-top: 0 !important;
+/* Hidden Categories Section */
+.hidden-categories-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e1e5e9;
 }
 
-.modal-content .category-manager .add-category-form {
-  margin-top: 0 !important;
+.hidden-categories-section h4 {
+  color: #6b7280;
+  font-size: 1.1rem;
+  margin: 0 0 8px 0;
+  font-weight: 600;
 }
+
+.section-description {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.hidden-categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hidden-category-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+.hidden-category-item:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  opacity: 1;
+}
+
+.hidden-badge {
+  background: #ef4444;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.unhide-category-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unhide-category-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.unhide-category-btn i {
+  font-size: 0.9rem;
+}
+
 
 .modal-content .category-manager .icon-selector {
   display: grid !important;
@@ -1718,7 +1792,7 @@
   border: none;
   padding: 8px 12px;
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1727,11 +1801,62 @@
 }
 
 .bid-notes-btn:hover {
-  background: #7c2d9e;
+  background: #f1f5f9;
   transform: translateY(-1px);
 }
 
-/* Bid Notes Modal Styles */
+.bid-notes-btn i {
+  font-size: 0.9rem;
+}
+
+/* Bid Notes Display */
+.bid-notes-display {
+  background: #f8fafc;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 8px 0;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.notes-header i {
+  color: #8b5cf6;
+  font-size: 1rem;
+}
+
+.notes-content {
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 0.85rem;
+}
+
+.notes-content p {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 .bid-notes-modal {
   max-width: 500px;
   width: 90%;
@@ -1917,13 +2042,13 @@
   
   .bid-notes-btn {
     justify-content: center;
-    padding: 12px 16px;
-    font-size: 0.9rem;
+    padding: 8px 12px;
+    font-size: 0.8rem;
     width: 100%;
   }
   
   .bid-notes-btn i {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
   
   /* Bid display wrapper mobile improvements */
@@ -2333,8 +2458,12 @@
   }
   
   .bid-notes-btn {
-    padding: 10px 12px;
-    font-size: 0.85rem;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .bid-notes-btn i {
+    font-size: 0.9rem;
   }
   
   .bid-notes-modal {

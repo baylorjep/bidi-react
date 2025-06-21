@@ -1,0 +1,1018 @@
+/* Public RSVP Page Styles */
+.public-rsvp {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f247d1 0%, #764ba2 100%);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.rsvp-header {
+  text-align: center;
+  margin-bottom: 40px;
+  color: white;
+}
+
+.wedding-info h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: -0.5px;
+  color: white;
+}
+
+.wedding-details {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.detail-item i {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.rsvp-content {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 1200px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* RSVP Form Container */
+.rsvp-form-container {
+  animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.rsvp-intro {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.rsvp-intro h2 {
+  font-size: 2rem;
+  color: #1e293b;
+  margin: 0 0 12px 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.rsvp-intro p {
+  color: #64748b;
+  font-size: 1.1rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* RSVP Form */
+.rsvp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.form-section {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e1e5e9;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.form-section:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Special styling for dietary restrictions section */
+.form-section:has(textarea[placeholder*="dietary"]) {
+  background: linear-gradient(135deg, #ffffff 0%, #fef7ff 100%);
+  border: 1px solid #e1e5e9;
+  border-left: 4px solid #f247d1;
+}
+
+.form-section:has(textarea[placeholder*="dietary"]):hover {
+  background: linear-gradient(135deg, #ffffff 0%, #f3e8ff 100%);
+  border-color: #f247d1;
+}
+
+/* Special styling for message section */
+.form-section:has(textarea[placeholder*="message"]) {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  border: 1px solid #e1e5e9;
+  border-left: 4px solid #0ea5e9;
+}
+
+.form-section:has(textarea[placeholder*="message"]):hover {
+  background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
+  border-color: #0ea5e9;
+}
+
+/* Special styling for plus one section */
+.form-section:has(.plus-one-section) {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  border: 1px solid #e1e5e9;
+  border-left: 4px solid #10b981;
+}
+
+.form-section:has(.plus-one-section):hover {
+  background: linear-gradient(135deg, #ffffff 0%, #dcfce7 100%);
+  border-color: #10b981;
+}
+
+.form-section h3 {
+  font-size: 1.3rem;
+  color: #1e293b;
+  margin: 0 0 12px 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Add icons to section headers */
+.form-section:has(textarea[placeholder*="dietary"]) h3::before {
+  content: "🍽️";
+  font-size: 1.2rem;
+}
+
+.form-section:has(textarea[placeholder*="message"]) h3::before {
+  content: "💬";
+  font-size: 1.2rem;
+}
+
+.form-section:has(.plus-one-section) h3::before {
+  content: "👥";
+  font-size: 1.2rem;
+}
+
+.form-section > p {
+  color: #64748b;
+  margin: 0 0 20px 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.form-row:last-child {
+  margin-bottom: 0;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  font-size: 0.95rem;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+  transition: color 0.3s ease;
+}
+
+.form-group:focus-within label {
+  color: #f247d1;
+}
+
+/* Required field indicator */
+.form-group label[for*="name"]::after,
+.form-group label:has(+ input[required])::after {
+  content: " *";
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 14px 18px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  transition: all 0.3s ease;
+  font-family: inherit;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  color: #1e293b;
+}
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+  border-color: #cbd5e1;
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #f247d1;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(242, 71, 209, 0.1), 0 4px 16px rgba(242, 71, 209, 0.15);
+  transform: translateY(-1px);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+  font-family: inherit;
+}
+
+.form-group textarea:focus {
+  min-height: 100px;
+}
+
+/* Enhanced textarea styling for dietary restrictions and messages */
+.form-group textarea[placeholder*="dietary"],
+.form-group textarea[placeholder*="message"],
+.form-group textarea[placeholder*="allergies"] {
+  background: linear-gradient(135deg, #ffffff 0%, #fef7ff 100%);
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 16px 18px;
+  font-size: 1rem;
+  line-height: 1.6;
+  min-height: 100px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.form-group textarea[placeholder*="dietary"]:hover,
+.form-group textarea[placeholder*="message"]:hover,
+.form-group textarea[placeholder*="allergies"]:hover {
+  border-color: #cbd5e1;
+  background: linear-gradient(135deg, #ffffff 0%, #f3e8ff 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.form-group textarea[placeholder*="dietary"]:focus,
+.form-group textarea[placeholder*="message"]:focus,
+.form-group textarea[placeholder*="allergies"]:focus {
+  outline: none;
+  border-color: #f247d1;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(242, 71, 209, 0.1), 0 4px 16px rgba(242, 71, 209, 0.15);
+  transform: translateY(-1px);
+  min-height: 120px;
+}
+
+.form-group textarea[placeholder*="dietary"]::placeholder,
+.form-group textarea[placeholder*="message"]::placeholder,
+.form-group textarea[placeholder*="allergies"]::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+/* Special styling for plus one dietary restrictions */
+.form-group textarea[placeholder*="Plus One"] {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  border: 2px solid #e1e5e9;
+  min-height: 80px;
+}
+
+.form-group textarea[placeholder*="Plus One"]:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
+  border-color: #cbd5e1;
+}
+
+.form-group textarea[placeholder*="Plus One"]:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1), 0 4px 16px rgba(14, 165, 233, 0.15);
+}
+
+/* Isolate select styling from Quill interference */
+.rsvp-form .form-group select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: right 12px center !important;
+  background-repeat: no-repeat !important;
+  background-size: 16px !important;
+  padding-right: 40px !important;
+}
+
+.rsvp-form .form-group select:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23f247d1' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+}
+
+/* Ensure Quill doesn't affect select styling */
+.quill .ql-toolbar,
+.quill .ql-editor {
+  background-image: none !important;
+}
+
+/* RSVP Options */
+.rsvp-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rsvp-option {
+  cursor: pointer;
+  display: block;
+}
+
+.rsvp-option input[type="radio"] {
+  display: none;
+}
+
+.option-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.rsvp-option input[type="radio"]:checked + .option-content {
+  border-color: #f247d1;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.rsvp-option:hover .option-content {
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.option-content i {
+  font-size: 1.2rem;
+  color: #64748b;
+  transition: all 0.3s ease;
+}
+
+.rsvp-option input[type="radio"]:checked + .option-content i {
+  color: #f247d1;
+}
+
+.rsvp-option input[type="radio"]:checked + .option-content i.fa-question {
+  color: #f59e0b;
+}
+
+.rsvp-option input[type="radio"]:checked + .option-content i.fa-times {
+  color: #ef4444;
+}
+
+.option-content span {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Not Sure Message */
+.not-sure-message {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-top: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.not-sure-message i {
+  color: #f59e0b;
+  font-size: 1.2rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.not-sure-message p {
+  color: #92400e;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Plus One Section */
+.plus-one-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 14px 18px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.checkbox-label:hover {
+  border-color: #cbd5e1;
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #f247d1;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"]:focus {
+  outline: 2px solid #f247d1;
+  outline-offset: 2px;
+}
+
+.checkbox-label span {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.plus-one-details {
+  background: #f8fafc;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 8px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #f247d1 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  min-width: 200px;
+  justify-content: center;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loading and Error States */
+.public-rsvp-loading,
+.public-rsvp-error {
+  text-align: center;
+  color: white;
+  padding: 40px 20px;
+}
+
+.public-rsvp-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.public-rsvp-loading p,
+.public-rsvp-error p {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.public-rsvp-error i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
+.public-rsvp-error h2 {
+  font-size: 1.8rem;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+}
+
+.home-btn {
+  background: white;
+  color: #667eea;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.home-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .public-rsvp {
+    padding: 16px;
+  }
+
+  .wedding-info h1 {
+    font-size: 1.8rem;
+  }
+
+  .wedding-details {
+    gap: 20px;
+  }
+
+  .detail-item {
+    justify-content: center;
+  }
+
+  .rsvp-content {
+    padding: 20px 0;
+  }
+
+  .rsvp-intro h2 {
+    font-size: 1.4rem;
+  }
+
+  .rsvp-intro p {
+    font-size: 0.9rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .form-section {
+    margin-bottom: 24px;
+    padding: 20px;
+  }
+
+  .form-section h3 {
+    font-size: 1.1rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+
+  /* React Quill responsive styles */
+  .quill {
+    border-radius: 10px;
+  }
+
+  .ql-toolbar {
+    padding: 6px 10px;
+  }
+
+  .ql-toolbar button {
+    padding: 4px 6px;
+    margin: 0 1px;
+  }
+
+  .ql-editor {
+    min-height: 100px;
+    padding: 14px 16px;
+    font-size: 0.95rem;
+  }
+
+  .ql-editor.ql-blank::before {
+    font-size: 0.9rem;
+    left: 16px;
+    right: 16px;
+  }
+
+  .option-content {
+    padding: 14px 16px;
+  }
+
+  .option-content span {
+    font-size: 0.9rem;
+  }
+
+  .form-actions {
+    margin-top: 24px;
+  }
+
+  .submit-btn {
+    padding: 14px 28px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .public-rsvp {
+    padding: 12px;
+  }
+
+  .wedding-info h1 {
+    font-size: 1.6rem;
+  }
+
+  .wedding-details {
+    gap: 20px;
+  }
+
+  .rsvp-content {
+    padding: 16px 4px;
+  }
+
+  .rsvp-intro h2 {
+    font-size: 1.3rem;
+  }
+
+  .rsvp-intro p {
+    font-size: 0.85rem;
+  }
+
+  .form-section {
+    margin-bottom: 20px;
+    padding: 16px;
+  }
+
+  .form-section h3 {
+    font-size: 1rem;
+  }
+
+  .form-section > p {
+    font-size: 0.85rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    border-radius: 10px;
+  }
+
+  .form-group label {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  /* React Quill responsive styles for small screens */
+  .quill {
+    border-radius: 8px;
+  }
+
+  .ql-toolbar {
+    padding: 4px 8px;
+  }
+
+  .ql-toolbar button {
+    padding: 3px 5px;
+    margin: 0;
+    font-size: 0.8rem;
+  }
+
+  .ql-editor {
+    min-height: 80px;
+    padding: 12px 14px;
+    font-size: 0.9rem;
+  }
+
+  .ql-editor.ql-blank::before {
+    font-size: 0.85rem;
+    left: 14px;
+    right: 14px;
+  }
+
+  .option-content {
+    padding: 12px 14px;
+  }
+
+  .option-content span {
+    font-size: 0.85rem;
+  }
+
+  .checkbox-label {
+    padding: 12px 14px;
+  }
+
+  .checkbox-label span {
+    font-size: 0.9rem;
+  }
+
+  .plus-one-details {
+    padding: 16px;
+  }
+
+  .submit-btn {
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .wedding-info h1 {
+    font-size: 1.6rem;
+  }
+
+  .rsvp-content {
+    padding: 16px;
+  }
+
+  .option-content {
+    padding: 10px 12px;
+  }
+
+  .option-content span {
+    font-size: 0.85rem;
+  }
+
+  .form-section h3 {
+    font-size: 1.1rem;
+  }
+}
+
+/* React Quill Editor Styling */
+.quill {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.quill:hover {
+  border-color: #cbd5e1;
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.quill:focus-within {
+  border-color: #f247d1;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(242, 71, 209, 0.1), 0 4px 16px rgba(242, 71, 209, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Quill Toolbar Styling */
+.ql-toolbar {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e1e5e9;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  padding: 8px 12px;
+}
+
+.ql-toolbar .ql-formats {
+  margin-right: 12px;
+}
+
+.ql-toolbar button {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin: 0 2px;
+  transition: all 0.2s ease;
+  color: #374151;
+}
+
+.ql-toolbar button:hover {
+  background: #f247d1;
+  border-color: #f247d1;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(242, 71, 209, 0.3);
+}
+
+.ql-toolbar button.ql-active {
+  background: #f247d1;
+  border-color: #f247d1;
+  color: white;
+  box-shadow: 0 2px 8px rgba(242, 71, 209, 0.3);
+}
+
+.ql-toolbar .ql-stroke {
+  stroke: currentColor;
+}
+
+.ql-toolbar .ql-fill {
+  fill: currentColor;
+}
+
+.ql-toolbar .ql-picker {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin: 0 2px;
+  transition: all 0.2s ease;
+  color: #374151;
+}
+
+.ql-toolbar .ql-picker:hover {
+  background: #f247d1;
+  border-color: #f247d1;
+  color: white;
+}
+
+.ql-toolbar .ql-picker.ql-expanded {
+  background: #f247d1;
+  border-color: #f247d1;
+  color: white;
+}
+
+/* Quill Editor Content Area */
+.ql-editor {
+  min-height: 120px;
+  padding: 16px 18px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #1e293b;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.ql-editor.ql-blank::before {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.95rem;
+  left: 18px;
+  right: 18px;
+}
+
+/* Special styling for different Quill instances */
+.form-group:has(.quill[data-placeholder*="dietary"]) .quill {
+  background: linear-gradient(135deg, #ffffff 0%, #fef7ff 100%);
+}
+
+.form-group:has(.quill[data-placeholder*="dietary"]) .quill:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #f3e8ff 100%);
+}
+
+.form-group:has(.quill[data-placeholder*="dietary"]) .quill:focus-within {
+  border-color: #f247d1;
+}
+
+.form-group:has(.quill[data-placeholder*="message"]) .quill {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+}
+
+.form-group:has(.quill[data-placeholder*="message"]) .quill:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
+}
+
+.form-group:has(.quill[data-placeholder*="message"]) .quill:focus-within {
+  border-color: #0ea5e9;
+}
+
+.form-group:has(.quill[data-placeholder*="Plus One"]) .quill {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.form-group:has(.quill[data-placeholder*="Plus One"]) .quill:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #dcfce7 100%);
+}
+
+.form-group:has(.quill[data-placeholder*="Plus One"]) .quill:focus-within {
+  border-color: #10b981;
+}
+
+/* Quill content styling */
+.ql-editor p {
+  margin-bottom: 8px;
+}
+
+.ql-editor p:last-child {
+  margin-bottom: 0;
+}
+
+.ql-editor ul,
+.ql-editor ol {
+  padding-left: 20px;
+  margin-bottom: 8px;
+}
+
+.ql-editor li {
+  margin-bottom: 4px;
+} 

@@ -16,6 +16,7 @@ function WeddingPlanningDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [isCreatingWedding, setIsCreatingWedding] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,6 +26,12 @@ function WeddingPlanningDashboard() {
   useEffect(() => {
     console.log('activeTab changed to:', activeTab);
   }, [activeTab]);
+
+  useEffect(() => {
+    if (weddingData?.wedding_date) {
+      generateNotifications();
+    }
+  }, [weddingData]);
 
   const checkUserAndLoadWedding = async () => {
     try {
@@ -102,9 +109,29 @@ function WeddingPlanningDashboard() {
 
   const updateWeddingData = async (updates) => {
     try {
+      // Validate updates parameter
+      if (!updates || typeof updates !== 'object') {
+        console.error('Invalid updates parameter:', updates);
+        toast.error('Invalid update data provided');
+        return;
+      }
+
+      // Remove any undefined or null values that could cause JSON issues
+      const cleanUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([_, value]) => value !== undefined && value !== null)
+      );
+
+      // Check if we have any valid updates
+      if (Object.keys(cleanUpdates).length === 0) {
+        console.warn('No valid updates to apply');
+        return;
+      }
+
+      console.log('Updating wedding plan with:', cleanUpdates);
+
       const { data, error } = await supabase
         .from('wedding_plans')
-        .update(updates)
+        .update(cleanUpdates)
         .eq('id', weddingData.id)
         .select()
         .single();
@@ -115,8 +142,138 @@ function WeddingPlanningDashboard() {
       toast.success('Wedding plan updated successfully!');
     } catch (error) {
       console.error('Error updating wedding plan:', error);
+      console.error('Updates that caused the error:', updates);
       toast.error('Failed to update wedding plan');
     }
+  };
+
+  const generateNotifications = () => {
+    if (!weddingData?.wedding_date) return;
+
+    const weddingDate = new Date(weddingData.wedding_date);
+    const today = new Date();
+    const daysUntilWedding = Math.ceil((weddingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const newNotifications = [];
+
+    // Wedding day notifications
+    if (daysUntilWedding === 0) {
+      newNotifications.push({
+        id: 'wedding-day',
+        type: 'celebration',
+        title: '🎉 It\'s Your Wedding Day! 🎉',
+        message: 'Congratulations! Today is your special day. Enjoy every moment!',
+        priority: 'high'
+      });
+    } else if (daysUntilWedding === 1) {
+      newNotifications.push({
+        id: 'wedding-tomorrow',
+        type: 'warning',
+        title: '💍 Wedding Tomorrow!',
+        message: 'Your wedding is tomorrow! Make sure everything is ready and get some rest.',
+        priority: 'high'
+      });
+    } else if (daysUntilWedding <= 7) {
+      newNotifications.push({
+        id: 'wedding-week',
+        type: 'info',
+        title: '⏰ Final Week!',
+        message: `Only ${daysUntilWedding} days until your wedding! Final preparations time.`,
+        priority: 'medium'
+      });
+    }
+
+    // Milestone notifications
+    if (daysUntilWedding === 30) {
+      newNotifications.push({
+        id: 'one-month',
+        type: 'info',
+        title: '📅 One Month to Go!',
+        message: 'Your wedding is in exactly one month! Time for final vendor meetings and rehearsals.',
+        priority: 'medium'
+      });
+    } else if (daysUntilWedding === 60) {
+      newNotifications.push({
+        id: 'two-months',
+        type: 'info',
+        title: '📋 Two Months to Go!',
+        message: 'Two months until your wedding! Finalize vendor contracts and start dress fittings.',
+        priority: 'medium'
+      });
+    } else if (daysUntilWedding === 90) {
+      newNotifications.push({
+        id: 'three-months',
+        type: 'info',
+        title: '🎯 Three Months to Go!',
+        message: 'Three months until your wedding! Book remaining vendors and plan honeymoon.',
+        priority: 'medium'
+      });
+    }
+
+    // Past due notifications
+    if (daysUntilWedding < 0) {
+      newNotifications.push({
+        id: 'wedding-passed',
+        type: 'info',
+        title: '💕 Wedding Memories',
+        message: 'Your wedding has passed! We hope it was everything you dreamed of.',
+        priority: 'low'
+      });
+    }
+
+    // Budget reminders
+    if (weddingData.budget && daysUntilWedding <= 30) {
+      newNotifications.push({
+        id: 'budget-final',
+        type: 'warning',
+        title: '💰 Final Budget Check',
+        message: 'Review your budget before the big day to avoid any surprises.',
+        priority: 'medium'
+      });
+    }
+
+    // Guest list reminders
+    if (weddingData.guest_count && daysUntilWedding <= 14) {
+      newNotifications.push({
+        id: 'guest-final',
+        type: 'warning',
+        title: '👥 Final Guest Count',
+        message: 'Provide final guest count to your venue and caterer.',
+        priority: 'medium'
+      });
+    }
+
+    setNotifications(newNotifications);
+  };
+
+  const dismissNotification = (notificationId) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+  };
+
+  const renderNotifications = () => {
+    if (notifications.length === 0) return null;
+
+    return (
+      <div className="notifications-panel">
+        {notifications.map(notification => (
+          <div 
+            key={notification.id} 
+            className={`notification notification-${notification.type} notification-${notification.priority}`}
+          >
+            <div className="notification-content">
+              <h4>{notification.title}</h4>
+              <p>{notification.message}</p>
+            </div>
+            <button 
+              className="notification-dismiss"
+              onClick={() => dismissNotification(notification.id)}
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   const renderTabContent = () => {
@@ -215,6 +372,46 @@ function WeddingPlanningDashboard() {
     }
   };
 
+  const renderCountdown = () => {
+    if (!weddingData?.wedding_date) return null;
+
+    const weddingDate = new Date(weddingData.wedding_date);
+    const today = new Date();
+    const daysUntilWedding = Math.ceil((weddingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilWedding < 0) {
+      return (
+        <div className="countdown-timer countdown-past">
+          <span>💕 Wedding Memories</span>
+        </div>
+      );
+    } else if (daysUntilWedding === 0) {
+      return (
+        <div className="countdown-timer countdown-today">
+          <span>🎉 It's Your Wedding Day! 🎉</span>
+        </div>
+      );
+    } else if (daysUntilWedding <= 7) {
+      return (
+        <div className="countdown-timer countdown-urgent">
+          <span>⏰ {daysUntilWedding} {daysUntilWedding === 1 ? 'Day' : 'Days'} Until Your Wedding!</span>
+        </div>
+      );
+    } else if (daysUntilWedding <= 30) {
+      return (
+        <div className="countdown-timer countdown-warning">
+          <span>📅 {daysUntilWedding} Days Until Your Wedding</span>
+        </div>
+      );
+    } else {
+      return (
+        <div className="countdown-timer countdown-normal">
+          <span>📅 {daysUntilWedding} Days Until Your Wedding</span>
+        </div>
+      );
+    }
+  };
+
   if (loading) {
     return (
       <div className="wedding-planning-loading">
@@ -245,6 +442,7 @@ function WeddingPlanningDashboard() {
             </span>
           </div>
         )}
+        {renderCountdown()}
       </div>
 
       <div className="dashboard-tabs">
@@ -320,6 +518,7 @@ function WeddingPlanningDashboard() {
       </div>
 
       <div className="dashboard-content">
+        {renderNotifications()}
         {renderTabContent()}
       </div>
     </div>

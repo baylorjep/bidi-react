@@ -38,8 +38,16 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
 
   // Combine default and custom categories, filtering out hidden ones
   const vendorCategories = [
-    ...defaultVendorCategories.filter(cat => !customCategories.find(hidden => hidden.id === cat.id && hidden.isHidden)),
-    ...customCategories.filter(cat => !cat.isHidden)
+    ...defaultVendorCategories.filter(cat => !customCategories.find(hidden => 
+      (hidden.category_id === cat.id || hidden.id === cat.id) && hidden.is_hidden
+    )),
+    ...customCategories.filter(cat => cat.is_custom && !cat.is_hidden).map(cat => ({
+      id: cat.category_id,
+      name: cat.category_name,
+      icon: cat.category_icon,
+      color: cat.category_color,
+      isDefault: false
+    }))
   ];
 
   useEffect(() => {
@@ -199,24 +207,60 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const loadCustomCategories = async () => {
-    // Since the wedding_vendor_categories table doesn't exist, 
-    // we'll just use an empty array for now
-    setCustomCategories([]);
+    try {
+      // Load category preferences from Supabase
+      const { data: preferences, error } = await supabase
+        .from('wedding_vendor_category_preferences')
+        .select('*')
+        .eq('wedding_id', weddingData.id);
+
+      if (error) {
+        console.error('Error loading category preferences:', error);
+        setCustomCategories([]);
+        return;
+      }
+
+      // Separate hidden default categories and custom categories
+      const hiddenCategories = preferences?.filter(pref => pref.is_hidden && !pref.is_custom) || [];
+      const customCategories = preferences?.filter(pref => pref.is_custom) || [];
+      
+      // Set hidden categories (these will be filtered out in the vendorCategories array)
+      setCustomCategories([...hiddenCategories, ...customCategories]);
+    } catch (error) {
+      console.error('Error loading custom categories:', error);
+      setCustomCategories([]);
+    }
   };
 
   const addCustomCategory = async (categoryData) => {
-    // Since the wedding_vendor_categories table doesn't exist,
-    // we'll just add to local state for now
-    const newCategory = {
-      id: `custom-${Date.now()}`,
-      ...categoryData,
-      isDefault: false,
-      created_at: new Date().toISOString()
-    };
+    try {
+      const newCategory = {
+        wedding_id: weddingData.id,
+        category_id: `custom-${Date.now()}`,
+        category_name: categoryData.name,
+        category_icon: categoryData.icon,
+        category_color: categoryData.color,
+        is_hidden: false,
+        is_custom: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
-    setCustomCategories([...customCategories, newCategory]);
-    setShowCategoryManager(false);
-    toast.success('Category added successfully!');
+      const { data, error } = await supabase
+        .from('wedding_vendor_category_preferences')
+        .insert([newCategory])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCustomCategories([...customCategories, data]);
+      setShowCategoryManager(false);
+      toast.success('Category added successfully!');
+    } catch (error) {
+      console.error('Error adding custom category:', error);
+      toast.error('Failed to add category');
+    }
   };
 
   const removeCustomCategory = async (categoryId) => {
@@ -235,22 +279,78 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
         return;
       }
 
-      // For default categories, we'll just hide them from the UI
-      // For custom categories, we'll remove from local state
+      // Find the category to determine if it's default or custom
       const categoryToRemove = vendorCategories.find(cat => cat.id === categoryId);
       
       if (categoryToRemove && categoryToRemove.isDefault) {
-        // For default categories, just remove from the display
-        setCustomCategories(prev => [...prev, { ...categoryToRemove, isHidden: true }]);
+        // For default categories, mark as hidden in Supabase
+        const { error } = await supabase
+          .from('wedding_vendor_category_preferences')
+          .upsert([{
+            wedding_id: weddingData.id,
+            category_id: categoryId,
+            category_name: categoryToRemove.name,
+            category_icon: categoryToRemove.icon,
+            category_color: categoryToRemove.color,
+            is_hidden: true,
+            is_custom: false,
+            updated_at: new Date().toISOString()
+          }], { onConflict: 'wedding_id,category_id' });
+
+        if (error) throw error;
+
+        // Add to local state
+        const hiddenCategory = { 
+          ...categoryToRemove, 
+          isHidden: true,
+          wedding_id: weddingData.id,
+          category_id: categoryId,
+          is_hidden: true,
+          is_custom: false
+        };
+        setCustomCategories([...customCategories, hiddenCategory]);
         toast.success('Category hidden successfully!');
       } else {
-        // For custom categories, remove from local state
-        setCustomCategories(customCategories.filter(cat => cat.id !== categoryId));
+        // For custom categories, delete from Supabase
+        const { error } = await supabase
+          .from('wedding_vendor_category_preferences')
+          .delete()
+          .eq('wedding_id', weddingData.id)
+          .eq('category_id', categoryId)
+          .eq('is_custom', true);
+
+        if (error) throw error;
+
+        // Remove from local state
+        setCustomCategories(customCategories.filter(cat => cat.category_id !== categoryId));
         toast.success('Category removed successfully!');
       }
     } catch (error) {
       console.error('Error removing category:', error);
       toast.error('Failed to remove category');
+    }
+  };
+
+  const unhideCategory = async (categoryId) => {
+    try {
+      // Remove the hidden preference from Supabase
+      const { error } = await supabase
+        .from('wedding_vendor_category_preferences')
+        .delete()
+        .eq('wedding_id', weddingData.id)
+        .eq('category_id', categoryId)
+        .eq('is_hidden', true);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setCustomCategories(customCategories.filter(cat => 
+        !(cat.category_id === categoryId && cat.is_hidden)
+      ));
+      toast.success('Category unhidden successfully!');
+    } catch (error) {
+      console.error('Error unhiding category:', error);
+      toast.error('Failed to unhide category');
     }
   };
 
@@ -273,13 +373,29 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
 
   const addVendor = async (vendorData) => {
     try {
+      // Validate required fields
+      if (!vendorData.name || !vendorData.category) {
+        toast.error('Vendor name and category are required');
+        return;
+      }
+
+      // Ensure contact_info is properly formatted
+      const contactInfo = vendorData.contact_info || '';
+      
       const { data, error } = await supabase
         .from('wedding_vendors')
         .insert([{
           wedding_id: weddingData.id,
-          ...vendorData,
+          name: vendorData.name,
+          category: vendorData.category,
+          contact_info: contactInfo,
+          notes: vendorData.notes || '',
+          pricing: vendorData.pricing || '',
+          rating: vendorData.rating || 0,
+          is_booked: vendorData.is_booked || false,
           status: 'pending',
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }])
         .select()
         .single();
@@ -299,18 +415,43 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
     try {
       const { error } = await supabase
         .from('wedding_vendors')
-        .update({ status })
+        .update({ 
+          status,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', vendorId);
 
       if (error) throw error;
 
       setVendors(vendors.map(vendor => 
-        vendor.id === vendorId ? { ...vendor, status } : vendor
+        vendor.id === vendorId ? { ...vendor, status, updated_at: new Date().toISOString() } : vendor
       ));
       toast.success('Vendor status updated!');
     } catch (error) {
       console.error('Error updating vendor status:', error);
       toast.error('Failed to update vendor status');
+    }
+  };
+
+  const updateVendorRating = async (vendorId, rating) => {
+    try {
+      const { error } = await supabase
+        .from('wedding_vendors')
+        .update({ 
+          rating,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', vendorId);
+
+      if (error) throw error;
+
+      setVendors(vendors.map(vendor => 
+        vendor.id === vendorId ? { ...vendor, rating, updated_at: new Date().toISOString() } : vendor
+      ));
+      toast.success('Vendor rating updated!');
+    } catch (error) {
+      console.error('Error updating vendor rating:', error);
+      toast.error('Failed to update vendor rating');
     }
   };
 
@@ -333,16 +474,25 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
 
   const editVendor = async (vendorData) => {
     try {
+      // Validate required fields
+      if (!vendorData.name || !vendorData.category) {
+        toast.error('Vendor name and category are required');
+        return;
+      }
+
+      // Ensure contact_info is properly formatted
+      const contactInfo = vendorData.contact_info || '';
+
       const { error } = await supabase
         .from('wedding_vendors')
         .update({
           name: vendorData.name,
           category: vendorData.category,
-          contact_info: vendorData.contact_info,
-          notes: vendorData.notes,
-          pricing: vendorData.pricing,
-          rating: vendorData.rating,
-          is_booked: vendorData.is_booked,
+          contact_info: contactInfo,
+          notes: vendorData.notes || '',
+          pricing: vendorData.pricing || '',
+          rating: vendorData.rating || 0,
+          is_booked: vendorData.is_booked || false,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingVendor.id);
@@ -350,7 +500,17 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
       if (error) throw error;
 
       setVendors(vendors.map(vendor => 
-        vendor.id === editingVendor.id ? { ...vendor, ...vendorData } : vendor
+        vendor.id === editingVendor.id ? { 
+          ...vendor, 
+          name: vendorData.name,
+          category: vendorData.category,
+          contact_info: contactInfo,
+          notes: vendorData.notes || '',
+          pricing: vendorData.pricing || '',
+          rating: vendorData.rating || 0,
+          is_booked: vendorData.is_booked || false,
+          updated_at: new Date().toISOString()
+        } : vendor
       ));
       setShowEditVendor(false);
       setEditingVendor(null);
@@ -431,6 +591,40 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
     }
   };
 
+  // Helper function to safely parse contact information
+  const parseContactInfo = (contactInfo) => {
+    if (!contactInfo || typeof contactInfo !== 'string') {
+      return [];
+    }
+    
+    try {
+      return contactInfo.split(', ').map(contact => {
+        const parts = contact.split(': ');
+        return {
+          type: parts[0] || 'other',
+          value: parts[1] || ''
+        };
+      }).filter(contact => contact.value.trim() !== '');
+    } catch (error) {
+      console.error('Error parsing contact info:', error);
+      return [];
+    }
+  };
+
+  // Helper function to get contact icon
+  const getContactIcon = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'email': return 'fas fa-envelope';
+      case 'phone': return 'fas fa-phone';
+      case 'website': return 'fas fa-globe';
+      case 'instagram': return 'fab fa-instagram';
+      case 'facebook': return 'fab fa-facebook';
+      case 'twitter': return 'fab fa-twitter';
+      case 'linkedin': return 'fab fa-linkedin';
+      default: return 'fas fa-info-circle';
+    }
+  };
+
   // Bid action handlers
   const handleApprove = async (bidId) => {
     try {
@@ -472,19 +666,25 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
 
   const handleInterested = async (bidId) => {
     try {
+      // Find the current bid to check its status
+      const currentBid = bids.find(bid => bid.id === bidId);
+      const newStatus = currentBid.status === 'interested' ? 'pending' : 'interested';
+      
       const { error } = await supabase
         .from('bids')
-        .update({ status: 'interested' })
+        .update({ status: newStatus })
         .eq('id', bidId);
 
       if (error) throw error;
       
       setBids(bids.map(bid => 
-        bid.id === bidId ? { ...bid, status: 'interested' } : bid
+        bid.id === bidId ? { ...bid, status: newStatus } : bid
       ));
-      toast.success('Marked as interested!');
+      
+      const message = newStatus === 'interested' ? 'Marked as interested!' : 'Moved back to pending';
+      toast.success(message);
     } catch (error) {
-      console.error('Error marking as interested:', error);
+      console.error('Error updating bid status:', error);
       toast.error('Failed to update bid status');
     }
   };
@@ -730,12 +930,13 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                               <button
                                 className="bid-notes-btn"
                                 onClick={() => openBidNotes(bid)}
-                                title="Add notes"
+                                title={bid.client_notes ? "View and edit notes" : "Add notes"}
                               >
                                 <i className="fas fa-sticky-note"></i>
-                                {bid.client_notes ? 'Edit Notes' : 'Add Notes'}
+                                {bid.client_notes ? 'Show Notes' : 'Add Notes'}
                               </button>
                             </div>
+                          
                             
                             <BidDisplay
                               bid={bid}
@@ -772,29 +973,12 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                               <div className="vendor-info">
                                 <h4>{vendor.name}</h4>
                                 <div className="vendor-contact-info">
-                                  {vendor.contact_info && vendor.contact_info.split(', ').map((contact, index) => {
-                                    const [type, value] = contact.split(': ');
-                                    const contactType = type?.toLowerCase();
-                                    const getContactIcon = (type) => {
-                                      switch (type) {
-                                        case 'email': return 'fas fa-envelope';
-                                        case 'phone': return 'fas fa-phone';
-                                        case 'website': return 'fas fa-globe';
-                                        case 'instagram': return 'fab fa-instagram';
-                                        case 'facebook': return 'fab fa-facebook';
-                                        case 'twitter': return 'fab fa-twitter';
-                                        case 'linkedin': return 'fab fa-linkedin';
-                                        default: return 'fas fa-info-circle';
-                                      }
-                                    };
-                                    
-                                    return (
-                                      <div key={index} className="contact-item">
-                                        <i className={getContactIcon(contactType)}></i>
-                                        <span>{value}</span>
-                                      </div>
-                                    );
-                                  })}
+                                  {parseContactInfo(vendor.contact_info).map((contact, index) => (
+                                    <div key={index} className="contact-item">
+                                      <i className={getContactIcon(contact.type)}></i>
+                                      <span>{contact.value}</span>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
                               <div className="vendor-status">
@@ -809,7 +993,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                             </div>
                             
                             {/* Pricing and Rating Row */}
-                            {(vendor.pricing || (vendor.rating && vendor.rating > 0) || vendor.is_booked) && (
+                            {(vendor.pricing || vendor.rating || vendor.is_booked) && (
                               <div className="vendor-details">
                                 {vendor.pricing && (
                                   <div className="vendor-pricing">
@@ -821,12 +1005,32 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                                   <div className="vendor-rating">
                                     <span className="interest-label">Interest:</span>
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                      <i 
-                                        key={star} 
-                                        className={`fas fa-star ${star <= vendor.rating ? 'filled' : 'empty'}`}
-                                      ></i>
+                                      <button
+                                        key={star}
+                                        className={`star-btn ${star <= vendor.rating ? 'filled' : 'empty'}`}
+                                        onClick={() => updateVendorRating(vendor.id, star)}
+                                        title={getInterestLevelText(star)}
+                                      >
+                                        <i className="fas fa-star"></i>
+                                      </button>
                                     ))}
                                     <span className="rating-number">({vendor.rating}/5 - {getInterestLevelText(vendor.rating)})</span>
+                                  </div>
+                                )}
+                                {(!vendor.rating || vendor.rating === 0) && (
+                                  <div className="vendor-rating">
+                                    <span className="interest-label">Interest:</span>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <button
+                                        key={star}
+                                        className="star-btn empty"
+                                        onClick={() => updateVendorRating(vendor.id, star)}
+                                        title={getInterestLevelText(star)}
+                                      >
+                                        <i className="fas fa-star"></i>
+                                      </button>
+                                    ))}
+                                    <span className="rating-number">(No rating)</span>
                                   </div>
                                 )}
                                 {vendor.is_booked && (
@@ -941,6 +1145,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
               onCancel={() => setShowCategoryManager(false)}
               customCategories={customCategories}
               onRemoveCategory={removeCustomCategory}
+              onUnhideCategory={unhideCategory}
             />
           </div>
         </div>
@@ -950,7 +1155,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
       {showBidNotes && selectedBid && (
         <div className="modal-overlay" onClick={() => setShowBidNotes(false)}>
           <div className="modal-content bid-notes-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Bid Notes & Rating</h3>
+            <h3>View & Edit Bid Notes</h3>
             <div className="bid-notes-content">
               <div className="business-info-summary">
                 <h4>{selectedBid.business_profiles?.business_name}</h4>
@@ -977,7 +1182,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
               </div>
               
               <div className="notes-section">
-                <label htmlFor="bid-notes">Notes:</label>
+                <label htmlFor="bid-notes">Your Notes:</label>
                 <textarea
                   id="bid-notes"
                   value={bidNotes}
@@ -1035,8 +1240,25 @@ function AddVendorForm({ onSubmit, onCancel, categories }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      toast.error('Vendor name is required');
+      return;
+    }
+    
+    if (!formData.category) {
+      toast.error('Please select a category');
+      return;
+    }
+
+    // Filter out empty contact info entries
+    const validContactInfo = formData.contact_info.filter(contact => 
+      contact.value && contact.value.trim() !== ''
+    );
+
     // Convert contact_info array to a formatted string for database storage
-    const contactInfoString = formData.contact_info
+    const contactInfoString = validContactInfo
       .map(contact => `${contact.type}: ${contact.value}`)
       .join(', ');
     
@@ -1252,17 +1474,34 @@ function AddVendorForm({ onSubmit, onCancel, categories }) {
 // Edit Vendor Form Component
 function EditVendorForm({ vendor, onSubmit, onCancel, categories }) {
   const [formData, setFormData] = useState({
-    name: vendor.name,
-    category: vendor.category,
-    contact_info: vendor.contact_info.split(', ').map(contact => ({
-      type: contact.split(': ')[0],
-      value: contact.split(': ')[1]
-    })),
-    notes: vendor.notes,
-    pricing: vendor.pricing,
-    rating: vendor.rating,
-    is_booked: vendor.is_booked
+    name: vendor.name || '',
+    category: vendor.category || '',
+    contact_info: parseContactInfo(vendor.contact_info),
+    notes: vendor.notes || '',
+    pricing: vendor.pricing || '',
+    rating: vendor.rating || 0,
+    is_booked: vendor.is_booked || false
   });
+
+  // Helper function to safely parse contact_info
+  function parseContactInfo(contactInfo) {
+    if (!contactInfo || typeof contactInfo !== 'string') {
+      return [];
+    }
+    
+    try {
+      return contactInfo.split(', ').map(contact => {
+        const parts = contact.split(': ');
+        return {
+          type: parts[0] || 'email',
+          value: parts[1] || ''
+        };
+      }).filter(contact => contact.value.trim() !== '');
+    } catch (error) {
+      console.error('Error parsing contact info:', error);
+      return [];
+    }
+  }
 
   const getInterestLevelText = (rating) => {
     switch (rating) {
@@ -1277,8 +1516,25 @@ function EditVendorForm({ vendor, onSubmit, onCancel, categories }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      toast.error('Vendor name is required');
+      return;
+    }
+    
+    if (!formData.category) {
+      toast.error('Please select a category');
+      return;
+    }
+
+    // Filter out empty contact info entries
+    const validContactInfo = formData.contact_info.filter(contact => 
+      contact.value && contact.value.trim() !== ''
+    );
+
     // Convert contact_info array to a formatted string for database storage
-    const contactInfoString = formData.contact_info
+    const contactInfoString = validContactInfo
       .map(contact => `${contact.type}: ${contact.value}`)
       .join(', ');
     
@@ -1492,7 +1748,7 @@ function EditVendorForm({ vendor, onSubmit, onCancel, categories }) {
 }
 
 // Category Manager Component
-function CategoryManager({ onSubmit, onCancel, customCategories, onRemoveCategory }) {
+function CategoryManager({ onSubmit, onCancel, customCategories, onRemoveCategory, onUnhideCategory }) {
   const [formData, setFormData] = useState({
     name: '',
     icon: 'fas fa-tag',
@@ -1602,23 +1858,55 @@ function CategoryManager({ onSubmit, onCancel, customCategories, onRemoveCategor
         <div className="custom-categories-section">
           <h4>Custom Categories</h4>
           <div className="custom-categories-list">
-            {customCategories.map(category => (
-              <div key={category.id} className="custom-category-item">
+            {customCategories.filter(cat => cat.is_custom).map(category => (
+              <div key={category.id || category.category_id} className="custom-category-item">
                 <div className="category-preview">
-                  <div className="category-icon" style={{ backgroundColor: category.color }}>
-                    <i className={category.icon}></i>
+                  <div className="category-icon" style={{ backgroundColor: category.color || category.category_color }}>
+                    <i className={category.icon || category.category_icon}></i>
                   </div>
-                  <span className="category-name">{category.name}</span>
+                  <span className="category-name">{category.name || category.category_name}</span>
                 </div>
                 <button
                   className="remove-category-btn"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onRemoveCategory(category.id);
+                    onRemoveCategory(category.id || category.category_id);
                   }}
                   title="Remove category"
                 >
                   <i className="fas fa-trash"></i>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Hidden Categories Section */}
+      {customCategories.filter(cat => cat.is_hidden && !cat.is_custom).length > 0 && (
+        <div className="hidden-categories-section">
+          <h4>Hidden Categories</h4>
+          <p className="section-description">These default categories are currently hidden. You can unhide them to make them visible again.</p>
+          <div className="hidden-categories-list">
+            {customCategories.filter(cat => cat.is_hidden && !cat.is_custom).map(category => (
+              <div key={category.id || category.category_id} className="hidden-category-item">
+                <div className="category-preview">
+                  <div className="category-icon" style={{ backgroundColor: category.color || category.category_color }}>
+                    <i className={category.icon || category.category_icon}></i>
+                  </div>
+                  <span className="category-name">{category.name || category.category_name}</span>
+                  <span className="hidden-badge">Hidden</span>
+                </div>
+                <button
+                  className="unhide-category-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUnhideCategory(category.id || category.category_id);
+                  }}
+                  title="Unhide category"
+                >
+                  <i className="fas fa-eye"></i>
+                  Unhide
                 </button>
               </div>
             ))}

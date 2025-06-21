@@ -86,26 +86,26 @@ function SharedTimelineView() {
 
   const getPhaseIcon = (phaseId) => {
     const dayOfPhases = [
-      { id: 'ceremony', icon: '💒' },
-      { id: 'cocktail', icon: '🥂' },
-      { id: 'reception', icon: '🎉' },
-      { id: 'dinner', icon: '🍽️' },
-      { id: 'dancing', icon: '💃' },
-      { id: 'sendoff', icon: '✨' }
+      { id: 'ceremony', icon: 'fas fa-church' },
+      { id: 'cocktail', icon: 'fas fa-glass-martini-alt' },
+      { id: 'reception', icon: 'fas fa-champagne-glasses' },
+      { id: 'dinner', icon: 'fas fa-utensils' },
+      { id: 'dancing', icon: 'fas fa-music' },
+      { id: 'sendoff', icon: 'fas fa-star' }
     ];
 
     const preparationPhases = [
-      { id: 'planning', icon: '📋' },
-      { id: 'booking', icon: '📅' },
-      { id: 'shopping', icon: '🛍️' },
-      { id: 'meetings', icon: '🤝' },
-      { id: 'rehearsal', icon: '🎭' },
-      { id: 'final', icon: '✨' }
+      { id: 'planning', icon: 'fas fa-clipboard-list' },
+      { id: 'booking', icon: 'fas fa-calendar-check' },
+      { id: 'shopping', icon: 'fas fa-shopping-bag' },
+      { id: 'meetings', icon: 'fas fa-handshake' },
+      { id: 'rehearsal', icon: 'fas fa-theater-masks' },
+      { id: 'final', icon: 'fas fa-magic' }
     ];
 
     const phases = activeTimeline === 'dayOf' ? dayOfPhases : preparationPhases;
     const phase = phases.find(p => p.id === phaseId);
-    return phase ? phase.icon : '📅';
+    return phase ? phase.icon : 'fas fa-calendar-check';
   };
 
   if (loading) {
@@ -202,7 +202,7 @@ function SharedTimelineView() {
             {currentItems.map((item, index) => (
               <div key={item.id} className="timeline-item">
                 <div className="timeline-marker" style={{ backgroundColor: getPhaseColor(item.phase) }}>
-                  <span className="timeline-icon">{getPhaseIcon(item.phase)}</span>
+                  <i className={`timeline-icon ${getPhaseIcon(item.phase)}`}></i>
                 </div>
                 
                 <div className="timeline-content">

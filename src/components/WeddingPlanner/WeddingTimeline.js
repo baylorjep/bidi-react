@@ -23,39 +23,30 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
     responsible: '',
     location: '',
     date: '',
-    completed: false
+    completed: false,
+    dateType: 'relative',
+    specificDate: ''
   });
 
   // Timeline phases for day-of
   const dayOfPhases = [
-    { id: 'ceremony', name: 'Ceremony', color: '#ec4899', icon: '⛪️' },
-    { id: 'cocktail', name: 'Cocktail Hou r', color: '#8b5cf6', icon: '🍸' },
-    { id: 'reception', name: 'Reception', color: '#10b981', icon: '🥂' }, 
-    { id: 'dinner', name: 'Dinner', color: '#f59e0b', icon: '🍽️' },
-    { id: 'dancing', name: 'Dancing', color: '#ef4444', icon: '💃' },
-    { id: 'sendoff', name: 'Send-off', color: '#6366f1', icon: '✨' }
+    { id: 'ceremony', name: 'Ceremony', color: '#ec4899', icon: 'fas fa-church' },
+    { id: 'cocktail', name: 'Cocktail Hour', color: '#8b5cf6', icon: 'fas fa-glass-martini-alt' },
+    { id: 'reception', name: 'Reception', color: '#10b981', icon: 'fas fa-champagne-glasses' }, 
+    { id: 'dinner', name: 'Dinner', color: '#f59e0b', icon: 'fas fa-utensils' },
+    { id: 'dancing', name: 'Dancing', color: '#ef4444', icon: 'fas fa-music' },
+    { id: 'sendoff', name: 'Send-off', color: '#6366f1', icon: 'fas fa-star' }
   ];
 
   // Timeline phases for preparation  
   const preparationPhases = [
-    { id: 'planning', name: 'Planning', color: '#fbbf24', icon: '📋' },
-    { id: 'booking', name: 'Booking', color: '#8b5cf6', icon: '📅' },
-    { id: 'shopping', name: 'Shopping', color: '#ec4899', icon: '🛍️' },
-    { id: 'meetings', name: 'Meetings', color: '#10b981', icon: '🤝' },
-    { id: 'rehearsal', name: 'Rehearsal', color: '#f59e0b', icon: '🎭' },
-    { id: 'final', name: 'Final Prep', color: '#ef4444', icon: '✨' }
+    { id: 'planning', name: 'Planning', color: '#fbbf24', icon: 'fas fa-clipboard-list' },
+    { id: 'booking', name: 'Booking', color: '#8b5cf6', icon: 'fas fa-calendar-check' },
+    { id: 'shopping', name: 'Shopping', color: '#ec4899', icon: 'fas fa-shopping-bag' },
+    { id: 'meetings', name: 'Meetings', color: '#10b981', icon: 'fas fa-handshake' },
+    { id: 'rehearsal', name: 'Rehearsal', color: '#f59e0b', icon: 'fas fa-theater-masks' },
+    { id: 'final', name: 'Final Prep', color: '#ef4444', icon: 'fas fa-magic' }
   ];
-
-  useEffect(() => {
-    if (weddingData?.timeline) {
-      setTimelineItems(weddingData.timeline);
-    } else {
-      // Set default timelines if none exist
-      if (weddingData?.id) {
-        setDefaultTimelines();
-      }
-    }
-  }, [weddingData]);
 
   // Load timeline items from database
   useEffect(() => {
@@ -73,39 +64,79 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
 
         if (data && data.length > 0) {
           // Convert database items to our format
-          const dayOfItems = data.filter(item => item.category === 'dayOf').map(item => ({
-            id: item.id,
-            time: item.title.includes(':') ? item.title.split(' ')[0] : '',
-            activity: item.title.includes(':') ? item.title.split(' ').slice(1).join(' ') : item.title,
-            description: item.description || '',
-            phase: item.priority || 'ceremony',
-            duration: 60,
-            responsible: '',
-            location: '',
-            date: item.due_date ? formatDateForDisplay(item.due_date) : '',
-            completed: item.completed || false
-          }));
+          const dayOfItems = data.filter(item => item.category === 'dayOf').map(item => {
+            // Parse title to extract time and activity
+            const titleParts = item.title.split(' ');
+            const time = titleParts[0] && titleParts[0].includes(':') ? titleParts[0] : '';
+            const activity = time ? titleParts.slice(1).join(' ') : item.title;
+            
+            return {
+              id: item.id,
+              time: time,
+              activity: activity,
+              description: item.description || '',
+              phase: item.priority || 'ceremony',
+              duration: 60,
+              responsible: item.responsible || '',
+              location: item.location || '',
+              date: '',
+              completed: item.completed || false
+            };
+          });
 
-          const preparationItems = data.filter(item => item.category === 'preparation').map(item => ({
-            id: item.id,
-            time: '',
-            activity: item.title,
-            description: item.description || '',
-            phase: item.priority || 'planning',
-            duration: 0,
-            responsible: '',
-            location: '',
-            date: item.due_date ? formatDateForDisplay(item.due_date) : '',
-            completed: item.completed || false
-          }));
+          const preparationItems = data.filter(item => item.category === 'preparation').map(item => {
+            // Use display_date if available, otherwise fall back to formatting due_date
+            let displayDate = '';
+            if (item.display_date) {
+              displayDate = item.display_date;
+            } else if (item.due_date) {
+              displayDate = formatDateForDisplay(item.due_date);
+            }
+            
+            return {
+              id: item.id,
+              time: '',
+              activity: item.title,
+              description: item.description || '',
+              phase: item.priority || 'planning',
+              duration: 0,
+              responsible: item.responsible || '',
+              location: item.location || '',
+              date: displayDate,
+              completed: item.completed || false
+            };
+          });
 
-          setTimelineItems({ dayOf: dayOfItems, preparation: preparationItems });
+          setTimelineItems({ 
+            dayOf: dayOfItems.sort((a, b) => a.time.localeCompare(b.time)), 
+            preparation: preparationItems.sort((a, b) => {
+              const months = ['12 months before', '10 months before', '8 months before', '6 months before', '4 months before', '2 months before', '1 month before', '1 week before', '1 day before', 'Wedding Day'];
+              return months.indexOf(a.date) - months.indexOf(b.date);
+            })
+          });
         } else {
-          await setDefaultTimelines();
+          // Only create default timelines if there are no existing items
+          // Check if there are any timeline items for this wedding
+          const { data: existingData, error: existingError } = await supabase
+            .from('wedding_timeline_items')
+            .select('id')
+            .eq('wedding_id', weddingData.id)
+            .limit(1);
+
+          if (existingError) throw existingError;
+
+          // Only create defaults if there are truly no items
+          if (!existingData || existingData.length === 0) {
+            await setDefaultTimelines();
+          } else {
+            // Set empty timeline if no items found but some exist (shouldn't happen, but just in case)
+            setTimelineItems({ dayOf: [], preparation: [] });
+          }
         }
       } catch (error) {
         console.error('Error loading timeline items:', error);
-        await setDefaultTimelines();
+        // Don't create default timelines on error, just set empty state
+        setTimelineItems({ dayOf: [], preparation: [] });
       }
     };
 
@@ -114,25 +145,48 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
 
   // Helper function to format date for display
   const formatDateForDisplay = (dateString) => {
+    if (!dateString) return '';
+    
     const date = new Date(dateString);
-    const now = new Date();
     const weddingDate = weddingData?.date ? new Date(weddingData.date) : null;
     
     if (!weddingDate) return dateString;
     
+    // Calculate months difference
+    const monthsDiff = (weddingDate.getFullYear() - date.getFullYear()) * 12 + 
+                      (weddingDate.getMonth() - date.getMonth());
+    
+    // Calculate days difference for closer dates
     const diffTime = weddingDate.getTime() - date.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
+    // Handle exact matches for common relative dates
     if (diffDays === 0) return 'Wedding Day';
     if (diffDays === 1) return '1 day before';
-    if (diffDays === 7) return '1 week before';
-    if (diffDays === 30) return '1 month before';
-    if (diffDays === 60) return '2 months before';
-    if (diffDays === 120) return '4 months before';
-    if (diffDays === 180) return '6 months before';
-    if (diffDays === 240) return '8 months before';
-    if (diffDays === 300) return '10 months before';
-    if (diffDays === 365) return '12 months before';
+    if (diffDays >= 6 && diffDays <= 8) return '1 week before';
+    if (monthsDiff === 1) return '1 month before';
+    if (monthsDiff === 2) return '2 months before';
+    if (monthsDiff === 4) return '4 months before';
+    if (monthsDiff === 6) return '6 months before';
+    if (monthsDiff === 8) return '8 months before';
+    if (monthsDiff === 10) return '10 months before';
+    if (monthsDiff === 12) return '12 months before';
+    
+    // If no exact match, return a more flexible format
+    if (monthsDiff > 0) {
+      return `${monthsDiff} month${monthsDiff > 1 ? 's' : ''} before`;
+    } else if (diffDays > 0) {
+      return `${diffDays} day${diffDays > 1 ? 's' : ''} before`;
+    }
+    
+    // If it's a future date, format it nicely
+    if (diffDays < 0) {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+    }
     
     return dateString;
   };
@@ -193,7 +247,9 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
           due_date: weddingData.date,
           completed: item.completed,
           category: 'dayOf',
-          priority: item.phase
+          priority: item.phase,
+          location: item.location,
+          responsible: item.responsible
         };
 
         const { data, error } = await supabase
@@ -220,7 +276,10 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
           due_date: convertDateToActualDate(item.date),
           completed: item.completed,
           category: 'preparation',
-          priority: item.phase
+          priority: item.phase,
+          location: item.location,
+          responsible: item.responsible,
+          display_date: item.date
         };
 
         const { data, error } = await supabase
@@ -233,11 +292,18 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
 
         preparationItems.push({
           id: data.id,
-          ...item
+          ...item,
+          date: item.date // Ensure the date field is set for display
         });
       }
 
-      setTimelineItems({ dayOf: dayOfItems, preparation: preparationItems });
+      setTimelineItems({ 
+        dayOf: dayOfItems.sort((a, b) => a.time.localeCompare(b.time)), 
+        preparation: preparationItems.sort((a, b) => {
+          const months = ['12 months before', '10 months before', '8 months before', '6 months before', '4 months before', '2 months before', '1 month before', '1 week before', '1 day before', 'Wedding Day'];
+          return months.indexOf(a.date) - months.indexOf(b.date);
+        })
+      });
     } catch (error) {
       console.error('Error creating default timeline items:', error);
       alert('Failed to create default timeline. Please try again.');
@@ -248,15 +314,33 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
     if (!newItem.activity) return;
     
     try {
+      // Determine the due date based on date type
+      let dueDate;
+      if (activeTimeline === 'dayOf') {
+        dueDate = weddingData.date;
+      } else {
+        // For preparation timeline
+        if (newItem.dateType === 'relative') {
+          dueDate = convertDateToActualDate(newItem.date);
+        } else {
+          dueDate = newItem.specificDate;
+        }
+      }
+
       // Prepare the item for database
       const dbItem = {
         wedding_id: weddingData.id,
         title: activeTimeline === 'dayOf' ? `${newItem.time} ${newItem.activity}` : newItem.activity,
         description: newItem.description,
-        due_date: activeTimeline === 'dayOf' ? weddingData.date : convertDateToActualDate(newItem.date),
+        due_date: dueDate,
         completed: newItem.completed,
         category: activeTimeline,
-        priority: newItem.phase
+        priority: newItem.phase,
+        location: newItem.location || '',
+        responsible: newItem.responsible || '',
+        display_date: activeTimeline === 'preparation' ? 
+          (newItem.dateType === 'relative' ? newItem.date : formatDateForDisplay(newItem.specificDate)) : 
+          null
       };
 
       // Insert into database
@@ -271,7 +355,11 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
       // Add to local state
       const item = {
         id: data.id,
-        ...newItem
+        ...newItem,
+        // For display purposes, use the display_date if available
+        date: activeTimeline === 'preparation' ? 
+          (newItem.dateType === 'relative' ? newItem.date : formatDateForDisplay(newItem.specificDate)) : 
+          newItem.date
       };
       
       const currentItems = timelineItems[activeTimeline];
@@ -302,9 +390,10 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
         responsible: '',
         location: '',
         date: '',
+        dateType: 'relative',
+        specificDate: '',
         completed: false
       });
-      
     } catch (error) {
       console.error('Error adding timeline item:', error);
       alert('Failed to add timeline item. Please try again.');
@@ -337,8 +426,38 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
   };
 
   const handleEditItem = (item) => {
+    // Determine if this is a relative date or specific date
+    let dateType = 'relative';
+    let specificDate = '';
+    let date = item.date;
+    
+    if (activeTimeline === 'preparation') {
+      // Check if the date is a relative date (contains "before" or "Wedding Day")
+      if (item.date && (item.date.includes('before') || item.date === 'Wedding Day')) {
+        dateType = 'relative';
+        date = item.date;
+      } else {
+        // It's a specific date, try to parse it
+        dateType = 'specific';
+        specificDate = item.date || '';
+        date = '';
+      }
+    }
+    
     setEditingItem(item);
-    setNewItem({ ...item });
+    setNewItem({
+      time: item.time || '',
+      activity: item.activity || '',
+      description: item.description || '',
+      phase: item.phase || (activeTimeline === 'dayOf' ? 'ceremony' : 'planning'),
+      duration: item.duration || 60,
+      responsible: item.responsible || '',
+      location: item.location || '',
+      date: date,
+      dateType: dateType,
+      specificDate: specificDate,
+      completed: item.completed || false
+    });
     setIsAddingItem(true);
   };
 
@@ -346,55 +465,65 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
     if (!newItem.activity) return;
     
     try {
+      // Determine the due date based on date type
+      let dueDate;
+      if (activeTimeline === 'dayOf') {
+        dueDate = weddingData.date;
+      } else {
+        // For preparation timeline
+        if (newItem.dateType === 'relative') {
+          dueDate = convertDateToActualDate(newItem.date);
+        } else {
+          dueDate = newItem.specificDate;
+        }
+      }
+
       // Prepare the item for database
       const dbItem = {
         title: activeTimeline === 'dayOf' ? `${newItem.time} ${newItem.activity}` : newItem.activity,
         description: newItem.description,
-        due_date: activeTimeline === 'dayOf' ? weddingData.date : convertDateToActualDate(newItem.date),
+        due_date: dueDate,
         completed: newItem.completed,
-        priority: newItem.phase
+        priority: newItem.phase,
+        location: newItem.location || '',
+        responsible: newItem.responsible || '',
+        display_date: activeTimeline === 'preparation' ? 
+          (newItem.dateType === 'relative' ? newItem.date : formatDateForDisplay(newItem.specificDate)) : 
+          null
       };
 
       // Check if this is a database record (UUID) or local default item (numeric ID)
       const isDatabaseRecord = typeof editingItem.id === 'string' && editingItem.id.length > 10;
       
       if (isDatabaseRecord) {
-        // Update existing database record
+        // Update in database
         const { error } = await supabase
           .from('wedding_timeline_items')
           .update(dbItem)
           .eq('id', editingItem.id);
 
         if (error) throw error;
-      } else {
-        // This is a local default item, create a new database record
-        const newDbItem = {
-          ...dbItem,
-          wedding_id: weddingData.id,
-          category: activeTimeline
-        };
-
-        const { data, error } = await supabase
-          .from('wedding_timeline_items')
-          .insert(newDbItem)
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        // Update the editingItem with the new database ID
-        editingItem.id = data.id;
       }
 
       // Update local state
       const currentItems = timelineItems[activeTimeline];
       const updatedItems = currentItems.map(item => 
-        item.id === editingItem.id ? { ...newItem, id: editingItem.id } : item
+        item.id === editingItem.id 
+          ? {
+              ...item,
+              ...newItem,
+              // For display purposes, use the appropriate date format
+              date: activeTimeline === 'preparation' ? 
+                (newItem.dateType === 'relative' ? newItem.date : formatDateForDisplay(newItem.specificDate)) : 
+                newItem.date
+            }
+          : item
       );
       
       if (activeTimeline === 'dayOf') {
         updatedItems.sort((a, b) => a.time.localeCompare(b.time));
       } else {
+        // For preparation timeline, sort by date
         updatedItems.sort((a, b) => {
           const months = ['12 months before', '10 months before', '8 months before', '6 months before', '4 months before', '2 months before', '1 month before', '1 week before', '1 day before', 'Wedding Day'];
           return months.indexOf(a.date) - months.indexOf(b.date);
@@ -406,8 +535,8 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
         [activeTimeline]: updatedItems
       });
       
-      setEditingItem(null);
       setIsAddingItem(false);
+      setEditingItem(null);
       setNewItem({
         time: '',
         activity: '',
@@ -417,9 +546,10 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
         responsible: '',
         location: '',
         date: '',
+        dateType: 'relative',
+        specificDate: '',
         completed: false
       });
-      
     } catch (error) {
       console.error('Error updating timeline item:', error);
       alert('Failed to update timeline item. Please try again.');
@@ -465,7 +595,7 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
   const getPhaseIcon = (phaseId) => {
     const phases = activeTimeline === 'dayOf' ? dayOfPhases : preparationPhases;
     const phase = phases.find(p => p.id === phaseId);
-    return phase ? phase.icon : '📅';
+    return phase ? phase.icon : 'fas fa-calendar-check';
   };
 
   const formatTime = (time) => {
@@ -517,10 +647,6 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
       ...timelineItems,
       [activeTimeline]: updatedItems
     });
-    
-    if (onUpdate) {
-      onUpdate({ ...weddingData, timeline: { ...timelineItems, [activeTimeline]: updatedItems } });
-    }
   };
 
   const generateShareLink = async () => {
@@ -856,21 +982,34 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
       )}
 
       {/* Preparation Progress Bar */}
-      {activeTimeline === 'preparation' && completionStats.total > 0 && (
+      {activeTimeline === 'preparation' && (
         <div className="preparation-progress">
           <div className="progress-header">
-            <h3>Preparation Progress</h3>
-            <span className="progress-percentage">{completionStats.percentage}% Complete</span>
+            <h3>Preparation Timeline</h3>
+            {completionStats.total > 0 ? (
+              <span className="progress-percentage">{completionStats.percentage}% Complete</span>
+            ) : (
+              <span className="progress-percentage">No tasks yet</span>
+            )}
           </div>
-          <div className="progress-bar">
-            <div 
-              className="progress-fill"
-              style={{ width: `${completionStats.percentage}%` }}
-            ></div>
-          </div>
-          <p className="progress-stats">
-            {completionStats.completed} of {completionStats.total} tasks completed
-          </p>
+          {completionStats.total > 0 && (
+            <>
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill"
+                  style={{ width: `${completionStats.percentage}%` }}
+                ></div>
+              </div>
+              <p className="progress-stats">
+                {completionStats.completed} of {completionStats.total} tasks completed
+              </p>
+            </>
+          )}
+          {completionStats.total === 0 && (
+            <p className="progress-stats">
+              Start adding preparation tasks to track your wedding planning progress
+            </p>
+          )}
         </div>
       )}
 
@@ -902,23 +1041,44 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
               </div>
             ) : (
               <div className="form-group">
-                <label>When</label>
+                <label>Date Type</label>
                 <select
-                  value={newItem.date}
-                  onChange={(e) => setNewItem({...newItem, date: e.target.value})}
+                  value={newItem.dateType || 'relative'}
+                  onChange={(e) => setNewItem({...newItem, dateType: e.target.value})}
                 >
-                  <option value="">Select timing</option>
-                  <option value="12 months before">12 months before</option>
-                  <option value="10 months before">10 months before</option>
-                  <option value="8 months before">8 months before</option>
-                  <option value="6 months before">6 months before</option>
-                  <option value="4 months before">4 months before</option>
-                  <option value="2 months before">2 months before</option>
-                  <option value="1 month before">1 month before</option>
-                  <option value="1 week before">1 week before</option>
-                  <option value="1 day before">1 day before</option>
-                  <option value="Wedding Day">Wedding Day</option>
+                  <option value="relative">Relative to Wedding Day</option>
+                  <option value="specific">Specific Date</option>
                 </select>
+              </div>
+            )}
+
+            {activeTimeline === 'preparation' && (
+              <div className="form-group">
+                <label>When</label>
+                {newItem.dateType === 'relative' ? (
+                  <select
+                    value={newItem.date}
+                    onChange={(e) => setNewItem({...newItem, date: e.target.value})}
+                  >
+                    <option value="">Select timing</option>
+                    <option value="12 months before">12 months before</option>
+                    <option value="10 months before">10 months before</option>
+                    <option value="8 months before">8 months before</option>
+                    <option value="6 months before">6 months before</option>
+                    <option value="4 months before">4 months before</option>
+                    <option value="2 months before">2 months before</option>
+                    <option value="1 month before">1 month before</option>
+                    <option value="1 week before">1 week before</option>
+                    <option value="1 day before">1 day before</option>
+                    <option value="Wedding Day">Wedding Day</option>
+                  </select>
+                ) : (
+                  <input
+                    type="date"
+                    value={newItem.specificDate || ''}
+                    onChange={(e) => setNewItem({...newItem, specificDate: e.target.value})}
+                  />
+                )}
               </div>
             )}
 
@@ -951,7 +1111,7 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
                 >
                   {currentPhases.map(phase => (
                     <option key={phase.id} value={phase.id}>
-                      {phase.icon} {phase.name}
+                      {phase.name}
                     </option>
                   ))}
                 </select>
@@ -992,7 +1152,9 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
                     responsible: '',
                     location: '',
                     date: '',
-                    completed: false
+                    completed: false,
+                    dateType: 'relative',
+                    specificDate: ''
                   });
                 }}
               >
@@ -1038,7 +1200,7 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
             {currentItems.map((item, index) => (
               <div key={item.id} className="timeline-item">
                 <div className="timeline-marker" style={{ backgroundColor: getPhaseColor(item.phase) }}>
-                  <span className="timeline-icon">{getPhaseIcon(item.phase)}</span>
+                  <i className={`timeline-icon ${getPhaseIcon(item.phase)}`}></i>
                 </div>
                 
                 <div 
@@ -1048,7 +1210,7 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
                   <div className="timeline-header">
                     <div className="timeline-time">
                       <span className="time">
-                        {activeTimeline === 'dayOf' ? formatTime(item.time) : item.date}
+                        {activeTimeline === 'dayOf' ? formatTime(item.time) : (item.date || 'No date set')}
                       </span>
                       {activeTimeline === 'dayOf' && item.duration > 0 && (
                         <span className="duration">({item.duration} min)</span>
