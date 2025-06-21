@@ -191,6 +191,10 @@
   height: 16px;
 }
 
+.card-flip-container {
+  padding: 8px;
+}
+
 .profile-tooltip {
   position: absolute;
   left: 50%;
@@ -305,6 +309,7 @@
 .request-description {
   text-align: left;
   margin-bottom: 10px;
+  padding: 8px;
 }
 
 .coupon-section {
@@ -368,7 +373,6 @@
   position: absolute;
   top: calc(100% + 8px);
   left: 50%;
-  transform: translateX(-50%);
   background-color: white;
   padding: 12px 16px;
   border-radius: 8px;
@@ -386,7 +390,6 @@
 .bid-display .bidi-verified-compact .verified-tooltip.show {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(0);
   pointer-events: auto;
 }
 
@@ -556,7 +559,6 @@
   }
 
   .bid-display-button {
-    width: 100%;
     padding: 10px 20px;
     font-size: 1.1rem;
     min-width: unset;

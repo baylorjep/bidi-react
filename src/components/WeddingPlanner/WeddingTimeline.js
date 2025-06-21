@@ -28,15 +28,15 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
 
   // Timeline phases for day-of
   const dayOfPhases = [
-    { id: 'ceremony', name: 'Ceremony', color: '#ec4899', icon: '💒' },
-    { id: 'cocktail', name: 'Cocktail Hour', color: '#8b5cf6', icon: '🥂' },
-    { id: 'reception', name: 'Reception', color: '#10b981', icon: '🎉' },
+    { id: 'ceremony', name: 'Ceremony', color: '#ec4899', icon: '⛪️' },
+    { id: 'cocktail', name: 'Cocktail Hou r', color: '#8b5cf6', icon: '🍸' },
+    { id: 'reception', name: 'Reception', color: '#10b981', icon: '🥂' }, 
     { id: 'dinner', name: 'Dinner', color: '#f59e0b', icon: '🍽️' },
     { id: 'dancing', name: 'Dancing', color: '#ef4444', icon: '💃' },
     { id: 'sendoff', name: 'Send-off', color: '#6366f1', icon: '✨' }
   ];
 
-  // Timeline phases for preparation
+  // Timeline phases for preparation  
   const preparationPhases = [
     { id: 'planning', name: 'Planning', color: '#fbbf24', icon: '📋' },
     { id: 'booking', name: 'Booking', color: '#8b5cf6', icon: '📅' },

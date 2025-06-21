@@ -239,8 +239,8 @@ function WeddingPlanningDashboard() {
           </h1>
         )}
         {weddingData && (
-          <div className="wedding-info">
-            <span className="wedding-date">
+          <div className="wedding-info" style={{marginTop: '10px',display: 'flex', justifyContent: 'center', width: '100%'}}>
+            <span className="wedding-date" style={{fontSize: '1.2rem', fontWeight: 'bold', fontFamily: 'cursive'}}>
               {new Date(weddingData.wedding_date).toLocaleDateString()}
             </span>
           </div>

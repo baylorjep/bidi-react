@@ -1,7 +1,8 @@
 .vendor-manager {
-  padding: 20px 0;
+  padding: 20px;
   max-width: 100%;
   overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .vendor-manager-header {
@@ -43,13 +44,14 @@
 }
 
 /* Vendor Categories */
-.vendor-categories {
+.vendor-categories-vendor-manager {
   display: flex;
   flex-direction: column;
   gap: 16px;
   margin-bottom: 40px;
   width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .vendor-category {
@@ -65,6 +67,7 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .vendor-category:hover {
@@ -120,6 +123,7 @@
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .request-bids-btn {
@@ -133,11 +137,12 @@
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .request-bids-btn:hover {
   background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
-  color: white;
+  color: white !important;
   border-color: #ec4899;
   transform: translateY(-1px);
 }
@@ -153,7 +158,7 @@
 }
 
 /* Vendor List */
-.vendor-list {
+.vendor-list-vendor-manager {
   margin-top: 16px;
   padding: 24px;
   background: #f8fafc;
@@ -173,7 +178,7 @@
   }
 }
 
-.vendor-list h3 {
+.vendor-list-vendor-manager h3 {
   font-size: 1.5rem;
   color: #1e293b;
   margin: 0 0 24px 0;
@@ -202,7 +207,7 @@
   gap: 24px;
 }
 
-.vendor-card {
+.vendor-card-vendor-manager {
   background: white;
   border: 1px solid #e1e5e9;
   border-radius: 20px;
@@ -211,7 +216,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.vendor-card:hover {
+.vendor-card-vendor-manager:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.1);
 }
@@ -271,15 +276,59 @@
 
 .vendor-actions {
   display: flex;
-  gap: 12px;
   align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.edit-vendor-form {
+  margin-top: 200px;
+}
+
+@media (max-width: 768px) {
+  .edit-vendor-form {
+    margin-top: 500px;
+  }
+}
+
+.vendor-action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-vendor-btn {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.edit-vendor-btn:hover {
+  background: #bfdbfe;
+  transform: scale(1.05);
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.3);
+}
+
+.vendor-card-vendor-manager:hover .edit-vendor-btn {
+  opacity: 1;
 }
 
 .status-select {
   flex: 1;
-  padding: 10px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
+  padding: 8px 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
   font-size: 0.9rem;
   background: white;
   transition: all 0.3s ease;
@@ -287,25 +336,35 @@
 
 .status-select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #ec4899;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
 }
 
 .delete-vendor-btn {
   background: #fee2e2;
   color: #dc2626;
   border: 1px solid #fecaca;
-  padding: 10px 16px;
-  border-radius: 12px;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .delete-vendor-btn:hover {
-  background: #dc2626;
-  color: white;
-  border-color: #dc2626;
-  transform: translateY(-1px);
+  background: #fecaca;
+  transform: scale(1.05);
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.vendor-card-vendor-manager:hover .delete-vendor-btn {
+  opacity: 1;
 }
 
 /* Compact Mode */
@@ -386,11 +445,12 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
   backdrop-filter: blur(4px);
+  overflow-y: auto;
 }
 
 .modal-content {
@@ -399,9 +459,12 @@
   padding: 40px;
   max-width: 500px;
   width: 100%;
-  max-height: 90vh;
+  max-height: calc(100vh - 40px);
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  margin: auto;
+  position: relative;
+  top: 20px;
 }
 
 .modal-content h3 {
@@ -411,6 +474,16 @@
   text-align: center;
   font-weight: 700;
   letter-spacing: -0.5px;
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 0 0 16px 0;
+  z-index: 10;
+  margin-top: -40px;
+  margin-left: -40px;
+  margin-right: -40px;
+  padding: 40px 40px 16px 40px;
+  border-radius: 20px 20px 0 0;
 }
 
 /* Form Styles */
@@ -418,6 +491,13 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  margin-top: 400px;
+}
+
+@media (max-width: 768px) {
+  .add-vendor-form {
+    margin-top: 400px;
+  }
 }
 
 .add-vendor-form .form-group {
@@ -532,27 +612,77 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .vendor-manager {
+    padding: 16px;
+  }
+
   .vendor-manager-header {
     flex-direction: column;
     gap: 20px;
     align-items: flex-start;
   }
 
-  .vendor-category {
+  .vendor-manager-actions {
+    width: 100%;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 20px;
+    gap: 12px;
+  }
+
+  .manage-categories-btn,
+  .add-vendor-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .vendor-category {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  .category-info {
+    flex: 1;
+    min-width: 0;
+    margin-right: 12px;
   }
 
   .category-actions {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .remove-category-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    opacity: 1;
+    z-index: 10;
+  }
+
+  .remove-category-btn i {
+    font-size: 0.8rem;
+  }
+
+  .request-bids-btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
   }
 
   .vendors-grid {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  .vendor-card-vendor-manager {
+    padding: 20px;
+    border-radius: 16px;
   }
 
   .vendor-header {
@@ -561,14 +691,82 @@
     align-items: flex-start;
   }
 
+  .vendor-info h4 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+
+  .vendor-contact-info {
+    gap: 6px;
+  }
+
+  .contact-item {
+    font-size: 0.85rem;
+    gap: 6px;
+  }
+
+  .vendor-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .vendor-pricing,
+  .vendor-rating,
+  .vendor-booked {
+    font-size: 0.9rem;
+  }
+
   .vendor-actions {
     flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .status-select {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1rem;
+  }
+
+  .vendor-action-buttons {
+    width: 100%;
+    justify-content: flex-end;
     gap: 12px;
+  }
+
+  .edit-vendor-btn,
+  .delete-vendor-btn {
+    width: 40px;
+    height: 40px;
+    opacity: 1;
+  }
+
+  .edit-vendor-btn i,
+  .delete-vendor-btn i {
+    font-size: 1rem;
+  }
+
+  .modal-overlay {
+    padding: 10px;
+    align-items: flex-start;
   }
 
   .modal-content {
     padding: 30px 20px;
-    margin: 20px;
+    margin: 10px auto;
+    max-height: calc(100vh - 20px);
+    top: 10px;
+  }
+
+  .modal-content h3 {
+    font-size: 1.5rem;
+    padding: 30px 20px 12px 20px;
+    margin-top: -30px;
+    margin-left: -20px;
+    margin-right: -20px;
+    border-radius: 20px 20px 0 0;
   }
 
   .form-actions {
@@ -579,25 +777,99 @@
     width: 50px;
     height: 50px;
     margin-right: 16px;
+    flex-shrink: 0;
   }
 
   .category-icon i {
     font-size: 1.2rem;
   }
 
-  .vendor-card {
-    padding: 20px;
-  }
-
   .vendor-summary {
     flex-direction: column;
     gap: 20px;
   }
+
+  .rating-input {
+    gap: 6px;
+  }
+
+  .star-btn {
+    font-size: 1.3rem;
+  }
+
+  .contact-info-item {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .contact-type-select {
+    flex: none;
+  }
+
+  .remove-contact-btn {
+    align-self: flex-end;
+    width: 32px;
+    height: 32px;
+  }
+
+  .vendor-contact-info {
+    gap: 4px;
+  }
+
+  .contact-item {
+    font-size: 0.85rem;
+  }
+
+  .icon-selector {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .color-selector {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .custom-category-item {
+    padding: 10px 12px;
+  }
 }
 
 @media (max-width: 480px) {
+  .vendor-manager {
+    padding: 12px;
+  }
+
   .vendor-category {
-    padding: 16px;
+    padding: 14px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    position: relative;
+  }
+
+  .category-info {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .category-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+
+  .remove-category-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    opacity: 1;
+    z-index: 10;
+  }
+
+  .remove-category-btn i {
+    font-size: 0.7rem;
   }
 
   .category-icon {
@@ -610,11 +882,1515 @@
     font-size: 1.1rem;
   }
 
-  .vendor-card {
+  .vendor-card-vendor-manager {
     padding: 16px;
+    border-radius: 12px;
+  }
+
+  .vendor-info h4 {
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+  }
+
+  .vendor-contact-info {
+    gap: 4px;
+  }
+
+  .contact-item {
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+
+  .vendor-details {
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+  .vendor-pricing,
+  .vendor-rating,
+  .vendor-booked {
+    font-size: 0.85rem;
+  }
+
+  .interest-label {
+    font-size: 0.8rem;
+  }
+
+  .vendor-actions {
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .status-select {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  .vendor-action-buttons {
+    gap: 8px;
+  }
+
+  .edit-vendor-btn,
+  .delete-vendor-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .edit-vendor-btn i,
+  .delete-vendor-btn i {
+    font-size: 0.9rem;
+  }
+
+  .modal-overlay {
+    padding: 5px;
   }
 
   .modal-content {
     padding: 24px 16px;
+    margin: 5px auto;
+    max-height: calc(100vh - 10px);
+    top: 5px;
+  }
+
+  .modal-content h3 {
+    font-size: 1.3rem;
+    padding: 24px 16px 10px 16px;
+    margin-top: -24px;
+    margin-left: -16px;
+    margin-right: -16px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .star-btn {
+    font-size: 1.2rem;
+  }
+
+  .rating-input {
+    gap: 4px;
+  }
+
+  .contact-info-item {
+    padding: 10px;
+  }
+
+  .contact-type-select select,
+  .contact-value-input input {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .add-contact-btn {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  .icon-selector {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .color-selector {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .icon-option {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  .color-option {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* Rating Input Styles */
+.rating-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: center;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #d1d5db;
+  transition: color 0.2s ease;
+  padding: 4px;
+}
+
+.star-btn:hover {
+  color: #fbbf24;
+}
+
+.star-btn.filled {
+  color: #fbbf24;
+}
+
+.rating-text {
+  margin-left: 8px;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Checkbox Styles */
+.checkbox-group {
+  margin-top: 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+  gap: 12px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #ec4899;
+  cursor: pointer;
+}
+
+/* Vendor Details Styles */
+.vendor-details {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.vendor-pricing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #059669;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.vendor-pricing i {
+  color: #059669;
+  font-size: 0.9rem;
+}
+
+.vendor-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.interest-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.vendor-rating .fas.fa-star {
+  font-size: 0.9rem;
+}
+
+.vendor-rating .fas.fa-star.filled {
+  color: #fbbf24;
+}
+
+.vendor-rating .fas.fa-star.empty {
+  color: #d1d5db;
+}
+
+.rating-number {
+  margin-left: 4px;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.vendor-booked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #059669;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.vendor-booked i {
+  color: #059669;
+  font-size: 0.9rem;
+}
+
+/* Contact Information Styles */
+.contact-info-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.no-contacts {
+  text-align: center;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #d1d5db;
+}
+
+.no-contacts p {
+  color: #64748b;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.contact-info-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e1e5e9;
+}
+
+.contact-type-select {
+  flex: 0 0 120px;
+}
+
+.contact-type-select select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.contact-type-select select:focus {
+  outline: none;
+  border-color: #ec4899;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+}
+
+.contact-value-input {
+  flex: 1;
+}
+
+.contact-value-input input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.contact-value-input input:focus {
+  outline: none;
+  border-color: #ec4899;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+}
+
+.remove-contact-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.remove-contact-btn:hover {
+  background: #fecaca;
+  transform: scale(1.05);
+}
+
+.add-contact-btn {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 2px dashed #0ea5e9;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.add-contact-btn:hover {
+  background: #e0f2fe;
+  border-color: #0284c7;
+  transform: translateY(-1px);
+}
+
+/* Vendor Contact Display Styles */
+.vendor-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.contact-item i {
+  width: 16px;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.contact-item span {
+  word-break: break-word;
+}
+
+/* Vendor Manager Actions */
+.vendor-manager-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.manage-categories-btn {
+  background: #f1f5f9;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.manage-categories-btn:hover {
+  background: #e1e5e9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.remove-category-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.remove-category-btn:hover {
+  background: #fecaca;
+  transform: scale(1.05);
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.vendor-category:hover .remove-category-btn {
+  opacity: 1;
+}
+
+/* Ensure trash icon doesn't flip when accordion is clicked */
+.vendor-category.active .remove-category-btn i {
+  transform: none !important;
+}
+
+/* Category Manager Styles */
+.category-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: 0;
+}
+
+.add-category-section {
+  margin-top: 50px;
+}
+
+.add-category-section h4,
+.custom-categories-section h4 {
+  font-size: 1.3rem;
+  color: #1e293b;
+  margin: 0 0 20px 0;
+  font-weight: 600;
+}
+
+.add-category-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 400px;
+}
+
+.icon-selector {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+  min-height: 120px;
+}
+
+.icon-option {
+  background: white;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.icon-option:hover {
+  border-color: #ec4899;
+  transform: scale(1.05);
+}
+
+.icon-option.selected {
+  border-color: #ec4899;
+  background: #fdf2f8;
+  color: #ec4899;
+}
+
+.color-selector {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+  min-height: 80px;
+}
+
+.color-option {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #e1e5e9;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.color-option.selected {
+  border-color: #1e293b;
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.2);
+}
+
+.color-option.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.custom-categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.custom-category-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.custom-category-item:hover {
+  background: #f1f5f9;
+  border-color: #d1d5db;
+}
+
+.category-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.category-preview .category-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.category-preview .category-icon i {
+  color: white;
+  font-size: 0.9rem;
+}
+
+.category-name {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+/* Category Manager Modal Override */
+.modal-content .category-manager {
+  margin-top: 0 !important;
+}
+
+.modal-content .category-manager .add-category-form {
+  margin-top: 0 !important;
+}
+
+.modal-content .category-manager .icon-selector {
+  display: grid !important;
+  grid-template-columns: repeat(6, 1fr) !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+  min-height: 120px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.modal-content .category-manager .icon-option {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 40px !important;
+  height: 40px !important;
+}
+
+.modal-content .category-manager .color-selector {
+  display: grid !important;
+  grid-template-columns: repeat(8, 1fr) !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+  min-height: 80px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.modal-content .category-manager .color-option {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+/* Bid Display Integration Styles */
+.bids-section {
+  margin-bottom: 32px;
+}
+
+.bids-section h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #9633eb;
+}
+
+.bids-grid {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.bid-display-wrapper {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.bid-display-wrapper:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.vendors-section {
+  margin-top: 32px;
+}
+
+.vendors-section h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f59e0b;
+}
+
+/* Responsive bid grid */
+@media (min-width: 768px) {
+  .bids-grid {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .bids-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .bid-display-wrapper {
+    margin-bottom: 16px;
+  }
+}
+
+/* Category info updates */
+.category-info p {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Section dividers */
+.vendor-list-vendor-manager > h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #9633eb;
+}
+
+/* Empty state styling */
+.no-vendors {
+  text-align: center;
+  padding: 40px 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #dee2e6;
+}
+
+.no-vendors p {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.no-vendors .request-bids-btn {
+  background: #9633eb;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.no-vendors .request-bids-btn:hover {
+  background: #7c2d9e;
+  transform: translateY(-1px);
+}
+
+/* Loading state for bids */
+.bids-loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.bids-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #9633eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Bid Interest Rating and Notes Styles */
+.bid-client-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  border-radius: 12px 12px 0 0;
+}
+
+.bid-interest-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.interest-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.star-rating {
+  display: flex;
+  gap: 2px;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.star-btn.empty {
+  color: #dee2e6;
+}
+
+.star-btn.filled {
+  color: #ffc107;
+}
+
+.star-btn:hover {
+  transform: scale(1.1);
+}
+
+.rating-text {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-left: 8px;
+}
+
+.bid-notes-btn {
+  background: #9633eb;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.bid-notes-btn:hover {
+  background: #7c2d9e;
+  transform: translateY(-1px);
+}
+
+/* Bid Notes Modal Styles */
+.bid-notes-modal {
+  max-width: 500px;
+  width: 90%;
+}
+
+.bid-notes-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.business-info-summary {
+  text-align: center;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.business-info-summary h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.bid-amount {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #9633eb;
+}
+
+.interest-rating-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.interest-rating-section label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 1rem;
+}
+
+.star-rating-large {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.star-btn-large {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.star-btn-large.empty {
+  color: #dee2e6;
+}
+
+.star-btn-large.filled {
+  color: #ffc107;
+}
+
+.star-btn-large:hover {
+  transform: scale(1.2);
+}
+
+.rating-description {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.notes-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notes-section label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 1rem;
+}
+
+.bid-notes-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+  transition: border-color 0.2s ease;
+}
+
+.bid-notes-textarea:focus {
+  outline: none;
+  border-color: #9633eb;
+  box-shadow: 0 0 0 2px rgba(150, 51, 235, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn-primary {
+  background: #9633eb;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #7c2d9e;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+/* Responsive styles for bid controls */
+@media (max-width: 768px) {
+  .bid-client-controls {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+    padding: 16px;
+  }
+  
+  .bid-interest-rating {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .interest-label {
+    font-size: 1rem;
+    min-width: 100px;
+  }
+  
+  .star-rating {
+    gap: 4px;
+  }
+  
+  .star-btn {
+    font-size: 1.2rem;
+    padding: 4px;
+  }
+  
+  .rating-text {
+    font-size: 0.9rem;
+    margin-left: 0;
+    text-align: center;
+    width: 100%;
+  }
+  
+  .bid-notes-btn {
+    justify-content: center;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+  
+  .bid-notes-btn i {
+    font-size: 1rem;
+  }
+  
+  /* Bid display wrapper mobile improvements */
+  .bid-display-wrapper {
+    margin-bottom: 20px;
+    border-radius: 16px;
+  }
+  
+  /* Modal improvements for mobile */
+  .bid-notes-modal {
+    width: 95%;
+    max-width: none;
+    margin: 10px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .bid-notes-content {
+    gap: 16px;
+  }
+  
+  .business-info-summary {
+    padding: 20px 16px;
+  }
+  
+  .business-info-summary h4 {
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+  
+  .bid-amount {
+    font-size: 1.8rem;
+  }
+  
+  .interest-rating-section {
+    gap: 16px;
+  }
+  
+  .interest-rating-section label {
+    font-size: 1.1rem;
+    text-align: center;
+  }
+  
+  .star-rating-large {
+    gap: 8px;
+  }
+  
+  .star-btn-large {
+    font-size: 1.8rem;
+    padding: 6px;
+  }
+  
+  .rating-description {
+    font-size: 1rem;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+  }
+  
+  .notes-section label {
+    font-size: 1.1rem;
+  }
+  
+  .bid-notes-textarea {
+    font-size: 1rem;
+    padding: 16px;
+    min-height: 140px;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 1rem;
+  }
+  
+  /* General vendor manager mobile improvements */
+  .vendor-manager {
+    padding: 12px;
+  }
+  
+  .vendor-manager-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .vendor-manager-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .manage-categories-btn,
+  .add-vendor-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 16px;
+    font-size: 1rem;
+  }
+  
+  /* Category improvements for mobile */
+  .vendor-category {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    position: relative;
+  }
+  
+  .category-info {
+    width: 100%;
+    margin-right: 0;
+  }
+  
+  .category-info h3 {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+  }
+  
+  .category-info p {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  
+  .category-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .request-bids-btn {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .remove-category-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    opacity: 1;
+    z-index: 10;
+  }
+  
+  .remove-category-btn i {
+    font-size: 0.9rem;
+  }
+  
+  /* Vendor list improvements */
+  .vendor-list-vendor-manager > h3 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+  }
+  
+  .bids-section h4,
+  .vendors-section h4 {
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+  
+  /* Bids grid mobile improvements */
+  .bids-grid {
+    gap: 16px;
+  }
+  
+  .bid-display-wrapper {
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  
+  /* Vendor cards mobile improvements */
+  .vendor-card-vendor-manager {
+    padding: 20px;
+    border-radius: 16px;
+  }
+  
+  .vendor-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .vendor-info h4 {
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+  
+  .vendor-contact-info {
+    gap: 8px;
+  }
+  
+  .contact-item {
+    font-size: 0.9rem;
+    gap: 8px;
+  }
+  
+  .vendor-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 20px 0;
+  }
+  
+  .vendor-pricing,
+  .vendor-rating,
+  .vendor-booked {
+    font-size: 1rem;
+  }
+  
+  .vendor-actions {
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+  }
+  
+  .status-select {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 1rem;
+  }
+  
+  .vendor-action-buttons {
+    width: 100%;
+    justify-content: center;
+    gap: 16px;
+  }
+  
+  .edit-vendor-btn,
+  .delete-vendor-btn {
+    width: 48px;
+    height: 48px;
+    opacity: 1;
+  }
+  
+  .edit-vendor-btn i,
+  .delete-vendor-btn i {
+    font-size: 1.2rem;
+  }
+  
+  /* Modal improvements for mobile */
+  .modal-content {
+    padding: 24px 20px;
+    margin: 10px;
+    max-height: calc(100vh - 20px);
+    overflow-y: auto;
+  }
+  
+  .modal-content h3 {
+    font-size: 1.4rem;
+    padding: 24px 20px 16px 20px;
+    margin-top: -24px;
+    margin-left: -20px;
+    margin-right: -20px;
+    border-radius: 20px 20px 0 0;
+  }
+  
+  /* Form improvements for mobile */
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 14px 16px;
+    font-size: 1rem;
+  }
+  
+  .contact-info-item {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .contact-type-select {
+    flex: none;
+  }
+  
+  .contact-value-input {
+    flex: 1;
+  }
+  
+  .remove-contact-btn {
+    align-self: flex-end;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .add-contact-btn {
+    padding: 12px 16px;
+    font-size: 1rem;
+    width: 100%;
+  }
+  
+  /* Icon and color selectors mobile improvements */
+  .icon-selector {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  
+  .color-selector {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+  
+  .icon-option {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+  
+  .color-option {
+    width: 40px;
+    height: 40px;
+  }
+  
+  /* Empty state mobile improvements */
+  .no-vendors {
+    padding: 40px 20px;
+  }
+  
+  .no-vendors p {
+    font-size: 1.2rem;
+    margin-bottom: 24px;
+  }
+  
+  .no-vendors .request-bids-btn {
+    padding: 16px 24px;
+    font-size: 1.1rem;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .vendor-manager {
+    padding: 8px;
+  }
+  
+  .vendor-category {
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .category-info h3 {
+    font-size: 1.2rem;
+  }
+  
+  .category-info p {
+    font-size: 0.9rem;
+  }
+  
+  .category-actions {
+    gap: 6px;
+  }
+  
+  .request-bids-btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-width: 100px;
+  }
+  
+  .remove-category-btn {
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+  }
+  
+  .remove-category-btn i {
+    font-size: 0.8rem;
+  }
+  
+  .bid-client-controls {
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .interest-label {
+    font-size: 0.9rem;
+    min-width: 80px;
+  }
+  
+  .star-btn {
+    font-size: 1.1rem;
+    padding: 3px;
+  }
+  
+  .rating-text {
+    font-size: 0.8rem;
+  }
+  
+  .bid-notes-btn {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .bid-notes-modal {
+    width: 98%;
+    margin: 5px;
+  }
+  
+  .business-info-summary {
+    padding: 16px 12px;
+  }
+  
+  .business-info-summary h4 {
+    font-size: 1.2rem;
+  }
+  
+  .bid-amount {
+    font-size: 1.6rem;
+  }
+  
+  .star-btn-large {
+    font-size: 1.6rem;
+    padding: 4px;
+  }
+  
+  .bid-notes-textarea {
+    font-size: 0.9rem;
+    padding: 12px;
+    min-height: 120px;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .vendor-card-vendor-manager {
+    padding: 16px;
+  }
+  
+  .vendor-info h4 {
+    font-size: 1.2rem;
+  }
+  
+  .contact-item {
+    font-size: 0.85rem;
+  }
+  
+  .edit-vendor-btn,
+  .delete-vendor-btn {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .edit-vendor-btn i,
+  .delete-vendor-btn i {
+    font-size: 1.1rem;
   }
 } 
