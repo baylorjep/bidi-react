@@ -19,10 +19,36 @@ const AutobidTrainer = () => {
   const [user, setUser] = useState(null);
   const [businessCategory, setBusinessCategory] = useState('');
   const [showCompletion, setShowCompletion] = useState(false);
+  const [showSampleBid, setShowSampleBid] = useState(false);
   const [completedSteps, setCompletedSteps] = useState(0);
+  const [sampleBidApproved, setSampleBidApproved] = useState(null);
   const navigate = useNavigate();
 
   const TOTAL_STEPS = 5;
+
+  // Hardcoded sample bid data
+  const sampleBidData = {
+    request: {
+      date: "2024-08-15",
+      duration: "8 hours",
+      location: "San Francisco, CA",
+      event_type: "wedding",
+      guest_count: 150,
+      requirements: [
+        "Full day coverage",
+        "Engagement shoot",
+        "Online gallery",
+        "Print release",
+        "Drone footage"
+      ]
+    },
+    generatedBid: {
+      amount: 2800,
+      description: "Complete wedding photography package including full day coverage, engagement session, online gallery with 400+ edited photos, print release, and drone footage. Professional equipment and backup gear included.",
+      breakdown: "Full day coverage (8 hours): $1,600\nEngagement shoot: $400\nOnline gallery & editing: $500\nDrone footage: $200\nPrint release: $100",
+      reasoning: "Based on your training data, this pricing reflects your premium service quality and comprehensive coverage. The amount accounts for your experience level and the high-end equipment you use."
+    }
+  };
 
   useEffect(() => {
     const fetchUserAndRequests = async () => {
@@ -127,7 +153,8 @@ const AutobidTrainer = () => {
         setPricingBreakdown('');
         setPricingReasoning('');
       } else {
-        setShowCompletion(true);
+        // Show sample bid step instead of completion
+        setShowSampleBid(true);
       }
     } catch (error) {
       console.error('Error submitting training response:', error);
@@ -135,6 +162,36 @@ const AutobidTrainer = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSampleBidResponse = async (approved) => {
+    setSampleBidApproved(approved);
+    
+    // Save the sample bid response to the database
+    try {
+      const { error } = await supabase
+        .from('autobid_training_responses')
+        .insert({
+          business_id: user.id,
+          request_id: 'sample-bid-test',
+          bid_amount: sampleBidData.generatedBid.amount,
+          bid_description: sampleBidData.generatedBid.description,
+          pricing_breakdown: sampleBidData.generatedBid.breakdown,
+          pricing_reasoning: sampleBidData.generatedBid.reasoning,
+          is_training: true,
+          is_sample_bid: true,
+          sample_bid_approved: approved
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving sample bid response:', error);
+    }
+
+    // Show completion screen after a brief delay
+    setTimeout(() => {
+      setShowCompletion(true);
+    }, 1000);
   };
 
   const formatRequestData = (requestData) => {
@@ -192,6 +249,132 @@ const AutobidTrainer = () => {
         <div className="loading-container">
           <LoadingSpinner color="#9633eb" size={50} />
           <p>Loading training scenarios...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (showSampleBid) {
+    return (
+      <div className="autobid-trainer-container">
+        <div className="trainer-header">
+          <button 
+            className="back-button"
+            onClick={() => navigate('/business-settings')}
+          >
+            ← Back to Settings
+          </button>
+          
+          <div className="header-content">
+            <div className="header-title">
+              <FaRobot className="header-icon" />
+              <h1>AI Sample Bid Test</h1>
+            </div>
+            <p className="header-description">
+              Based on your training, here's a sample bid our AI generated. Let us know if this looks accurate!
+            </p>
+          </div>
+
+          <div className="progress-section">
+            <div className="progress-bar">
+              <div 
+                className="progress-fill"
+                style={{ width: '100%' }}
+              />
+            </div>
+            <span className="progress-text">
+              Final Step: AI Sample Bid
+            </span>
+          </div>
+        </div>
+
+        <div className="trainer-content">
+          <AnimatePresence mode="wait">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="sample-bid-step"
+            >
+              <div className="request-section">
+                <div className="section-header">
+                  <FaLightbulb className="section-icon" />
+                  <h2>Sample Request</h2>
+                </div>
+                
+                {formatRequestData(sampleBidData.request)}
+              </div>
+
+              <div className="ai-bid-section">
+                <div className="section-header">
+                  <FaRobot className="section-icon" style={{ color: '#9633eb' }} />
+                  <h2>AI Generated Bid</h2>
+                </div>
+
+                <div className="ai-bid-card">
+                  <div className="bid-amount">
+                    <span className="currency">$</span>
+                    <span className="amount">{sampleBidData.generatedBid.amount.toLocaleString()}</span>
+                  </div>
+                  
+                  <div className="bid-description">
+                    <h4>Bid Description:</h4>
+                    <p>{sampleBidData.generatedBid.description}</p>
+                  </div>
+
+                  <div className="bid-breakdown">
+                    <h4>Pricing Breakdown:</h4>
+                    <pre>{sampleBidData.generatedBid.breakdown}</pre>
+                  </div>
+
+                  <div className="bid-reasoning">
+                    <h4>AI Reasoning:</h4>
+                    <p>{sampleBidData.generatedBid.reasoning}</p>
+                  </div>
+                </div>
+
+                <div className="sample-bid-actions">
+                  <h3>How accurate is this bid?</h3>
+                  <div className="action-buttons">
+                    <button
+                      className="btn-success"
+                      onClick={() => handleSampleBidResponse(true)}
+                      disabled={sampleBidApproved !== null}
+                    >
+                      <i className="fas fa-thumbs-up me-2"></i>
+                      Looks Good!
+                    </button>
+                    <button
+                      className="btn-danger"
+                      onClick={() => handleSampleBidResponse(false)}
+                      disabled={sampleBidApproved !== null}
+                    >
+                      <i className="fas fa-thumbs-down me-2"></i>
+                      Needs Adjustment
+                    </button>
+                  </div>
+                  
+                  {sampleBidApproved !== null && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="feedback-message"
+                    >
+                      <div className={`feedback-icon ${sampleBidApproved ? 'success' : 'warning'}`}>
+                        <i className={`fas fa-${sampleBidApproved ? 'check-circle' : 'exclamation-triangle'}`}></i>
+                      </div>
+                      <p>
+                        {sampleBidApproved 
+                          ? "Great! Your feedback will help improve our AI's accuracy."
+                          : "Thank you for the feedback! We'll use this to improve our AI's pricing accuracy."
+                        }
+                      </p>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     );

@@ -113,6 +113,10 @@ const [consultationHours, setConsultationHours] = useState({
 });
 const [timezone, setTimezone] = useState("America/Denver");
 
+// Add training completion state
+const [trainingCompleted, setTrainingCompleted] = useState(false);
+const [trainingLoading, setTrainingLoading] = useState(true);
+
 // Day conversion utilities
 const dayNameToNumber = {
   'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
@@ -1347,6 +1351,48 @@ useEffect(() => {
     }
   };
 
+  // Add function to check training completion status
+  const checkTrainingCompletion = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setTrainingLoading(true);
+      const { data, error } = await supabase
+        .from('autobid_training_responses')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (error) throw error;
+      setTrainingCompleted(data && data.length > 0);
+    } catch (error) {
+      console.error('Error checking training completion:', error);
+    } finally {
+      setTrainingLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+        setIsAdmin(user?.email === "baylor@savewithbidi.com");
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  // Add effect to check training completion when user is loaded
+  useEffect(() => {
+    if (user?.id) {
+      checkTrainingCompletion();
+    }
+  }, [user?.id]);
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -2036,17 +2082,55 @@ useEffect(() => {
                 <div className="info-row">
                   <span className="info-label">Status:</span>
                   <span className="info-value">
-                    <span className="text-muted">Not Trained</span>
+                    {trainingLoading ? (
+                      <span className="text-muted">Loading...</span>
+                    ) : trainingCompleted ? (
+                      <span className="text-success">
+                        <i className="fas fa-check-circle me-1"></i>
+                        Completed
+                      </span>
+                    ) : (
+                      <span className="text-muted">Not Trained</span>
+                    )}
                   </span>
                 </div>
-                <button
-                  className="btn-primary flex-fill pulse"
-                  onClick={() => navigate('/autobid-trainer')}
-                >
-                  <i className="fas fa-graduation-cap me-2"></i>
-                  Train AI Bidder
-                </button>
-                <small className="text-muted d-block mt-2">Help our AI learn your pricing strategy by providing sample bids for training scenarios.</small>
+                {trainingLoading ? (
+                  <button className="btn-secondary flex-fill" disabled>
+                    <i className="fas fa-spinner fa-spin me-2"></i>
+                    Loading...
+                  </button>
+                ) : trainingCompleted ? (
+                  <div className="d-flex gap-2">
+                    <button
+                      className="btn-success flex-fill"
+                      disabled
+                    >
+                      <i className="fas fa-check me-2"></i>
+                      Training Complete
+                    </button>
+                    <button
+                      className="btn-outline-primary"
+                      onClick={() => navigate('/autobid-trainer')}
+                      title="Retrain AI with new scenarios"
+                    >
+                      <i className="fas fa-redo"></i>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="btn-primary flex-fill pulse"
+                    onClick={() => navigate('/autobid-trainer')}
+                  >
+                    <i className="fas fa-graduation-cap me-2"></i>
+                    Train AI Bidder
+                  </button>
+                )}
+                <small className="text-muted d-block mt-2">
+                  {trainingCompleted 
+                    ? "Your AI has been trained! Use the refresh button to retrain with new scenarios."
+                    : "Help our AI learn your pricing strategy by providing sample bids for training scenarios."
+                  }
+                </small>
               </div>
             </div>
           </div>
