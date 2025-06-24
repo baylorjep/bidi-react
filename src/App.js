@@ -83,6 +83,7 @@ import ContractTemplateEditor from "./components/Business/ContractTemplateEditor
 import GoogleBusinessCallback from "./components/Business/GoogleBusinessCallback";
 import GoogleBusinessSuccess from './components/Business/GoogleBusinessSuccess';
 import GoogleBusinessError from './components/Business/GoogleBusinessError';
+import AutobidTrainer from "./pages/Dashboard/AutobidTrainer";
 
 // Misc Imports
 import Homepage from "./components/Homepage";
@@ -319,6 +320,14 @@ function AppContent() {
             element={
               <PrivateRoute>
                 <ContractTemplateEditor />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/autobid-trainer"
+            element={
+              <PrivateRoute>
+                <AutobidTrainer />
               </PrivateRoute>
             }
           />

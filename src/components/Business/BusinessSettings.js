@@ -2023,6 +2023,34 @@ useEffect(() => {
             </div>
           </div>
         </div>
+        {/* AI Bid Trainer Section */}
+        {user && user.id === 'd9be2955-b609-43c0-9eaf-5d7f10634d96' && (
+          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
+            <div className="card mb-4 h-100">
+              <div className="card-header d-flex align-items-center">
+                <i className="fas fa-robot me-2" style={{ color: "#9633eb" }}></i>
+                <span>AI Bid Trainer</span>
+                <span className="badge-new ms-2" title="Train our AI to generate better bids for your business">New</span>
+              </div>
+              <div className="card-body">
+                <div className="info-row">
+                  <span className="info-label">Status:</span>
+                  <span className="info-value">
+                    <span className="text-muted">Not Trained</span>
+                  </span>
+                </div>
+                <button
+                  className="btn-primary flex-fill pulse"
+                  onClick={() => navigate('/autobid-trainer')}
+                >
+                  <i className="fas fa-graduation-cap me-2"></i>
+                  Train AI Bidder
+                </button>
+                <small className="text-muted d-block mt-2">Help our AI learn your pricing strategy by providing sample bids for training scenarios.</small>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       {/* Move modals outside of mobile-only condition */}
       {/* Down Payment Modal */}
