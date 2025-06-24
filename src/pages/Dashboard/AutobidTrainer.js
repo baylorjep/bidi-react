@@ -30,379 +30,368 @@ const AutobidTrainer = () => {
   const [trainingProgress, setTrainingProgress] = useState({});
   const [currentSampleBidData, setCurrentSampleBidData] = useState([]);
   const [categoryProgress, setCategoryProgress] = useState({});
+  const [isLoadingSampleBid, setIsLoadingSampleBid] = useState(false);
   const navigate = useNavigate();
 
   const TOTAL_STEPS = 5;
 
-  // Dynamic sample bid data based on business category
-  const getSampleBidData = (category) => {
-    const sampleBids = {
-      photography: [
-        {
-    request: {
+  // Helper function to generate category-specific request data
+  const generateCategorySpecificRequest = (category) => {
+    const baseRequest = {
       date: "2024-08-15",
-      duration: "8 hours",
-      location: "San Francisco, CA",
       event_type: "wedding",
-      guest_count: 150,
-      requirements: [
-        "Full day coverage",
-        "Engagement shoot",
-        "Online gallery",
-        "Print release",
-        "Drone footage"
-      ]
-    },
-    generatedBid: {
-      amount: 2800,
-      description: "Complete wedding photography package including full day coverage, engagement session, online gallery with 400+ edited photos, print release, and drone footage. Professional equipment and backup gear included.",
-      breakdown: "Full day coverage (8 hours): $1,600\nEngagement shoot: $400\nOnline gallery & editing: $500\nDrone footage: $200\nPrint release: $100",
-      reasoning: "Based on your training data, this pricing reflects your premium service quality and comprehensive coverage. The amount accounts for your experience level and the high-end equipment you use."
-    }
-        },
-        {
-          request: {
-            date: "2024-09-20",
-            duration: "2 hours",
-            location: "Provo, UT",
-            event_type: "engagement",
-            guest_count: 2,
-            requirements: [
-              "Engagement session",
-              "Outdoor locations",
-              "Digital files",
-              "Print release"
-            ]
-          },
-          generatedBid: {
-            amount: 450,
-            description: "Beautiful engagement session at scenic outdoor locations. Includes 2 hours of shooting, 50+ edited photos, and print release for personal use.",
-            breakdown: "2 hours shooting: $300\nEditing & retouching: $100\nPrint release: $50",
-            reasoning: "This pricing is competitive for engagement sessions while reflecting your professional quality and experience."
-          }
-        }
-      ],
-      videography: [
-        {
-          request: {
-            date: "2024-09-20",
-            duration: "4 hours",
-            location: "Salt Lake City, UT",
-            event_type: "wedding",
-            guest_count: 80,
-            requirements: [
-              "Ceremony coverage",
-              "Reception highlights",
-              "Highlight reel",
-              "Digital files"
-            ]
-          },
-          generatedBid: {
-            amount: 1800,
-            description: "Wedding videography package covering ceremony and reception highlights. Includes professional editing, highlight reel, and digital file delivery. Perfect for capturing your special moments.",
-            breakdown: "Ceremony coverage: $800\nReception highlights: $600\nHighlight reel: $300\nDigital files: $100",
-            reasoning: "This pricing is based on your previous responses showing competitive rates for mid-sized weddings. The package provides comprehensive coverage while remaining accessible."
-          }
-        },
-        {
-          request: {
-            date: "2024-10-15",
-            duration: "6 hours",
-            location: "Park City, UT",
-            event_type: "wedding",
-            guest_count: 120,
-            requirements: [
-              "Full day coverage",
-              "Cinematic style",
-              "Highlight reel",
-              "Feature film"
-            ]
-          },
-          generatedBid: {
-            amount: 2400,
-            description: "Cinematic wedding videography with full day coverage. Includes highlight reel, feature film, and all raw footage. Professional cinematic equipment and editing.",
-            breakdown: "Full day coverage: $1,200\nCinematic editing: $800\nHighlight reel: $300\nFeature film: $100",
-            reasoning: "Premium pricing reflects cinematic quality and full day coverage requirements."
-          }
-        }
-      ],
-      florist: [
-        {
-          request: {
-            date: "2024-07-15",
-            duration: "Setup only",
-            location: "Park City, UT",
-            event_type: "wedding",
-            guest_count: 100,
-            requirements: [
-              "Bridal bouquet",
-              "8 boutonnieres",
-              "12 centerpieces",
-              "Delivery and setup"
-            ]
-          },
-          generatedBid: {
-            amount: 950,
-            description: "Complete wedding floral package featuring a stunning bridal bouquet, boutonnieres for the wedding party, elegant centerpieces, and professional delivery and setup services.",
-            breakdown: "Bridal bouquet: $200\n8 boutonnieres: $160\n12 centerpieces: $480\nDelivery & setup: $110",
-            reasoning: "Based on your training responses, this pricing reflects your quality materials and professional service while staying within typical market ranges for this scope of work."
-          }
-        },
-        {
-          request: {
-            date: "2024-08-10",
-            duration: "Setup only",
-            location: "Salt Lake City, UT",
-            event_type: "wedding",
-            guest_count: 150,
-            requirements: [
-              "Bridal bouquet",
-              "10 boutonnieres",
-              "15 centerpieces",
-              "Aisle decorations",
-              "Ceremony arch"
-            ]
-          },
-          generatedBid: {
-            amount: 1400,
-            description: "Luxury wedding floral package with premium flowers and extensive decorations. Includes ceremony arch, aisle decorations, and elegant centerpieces.",
-            breakdown: "Bridal bouquet: $250\n10 boutonnieres: $200\n15 centerpieces: $600\nAisle decorations: $200\nCeremony arch: $150",
-            reasoning: "Premium pricing for luxury package with extensive floral work and premium materials."
-          }
-        }
-      ],
-      beauty: [
-        {
-          request: {
-            date: "2024-06-10",
-            duration: "3 hours",
-            location: "Orem, UT",
-            event_type: "wedding",
-            guest_count: 4,
-            requirements: [
-              "Bridal hair and makeup",
-              "3 bridesmaids hair and makeup",
-              "On-site service",
-              "Trial session included"
-            ]
-          },
-          generatedBid: {
-            amount: 450,
-            description: "Complete bridal party beauty package including bridal hair and makeup, three bridesmaids services, on-site application, and a trial session for the bride.",
-            breakdown: "Bridal hair & makeup: $150\n3 bridesmaids: $225\nOn-site service: $50\nTrial session: $25",
-            reasoning: "This pricing structure shows competitive rates while accounting for the convenience of on-site service and the value of the trial session."
-          }
-        },
-        {
-          request: {
-            date: "2024-07-20",
-            duration: "4 hours",
-            location: "Salt Lake City, UT",
-            event_type: "wedding",
-            guest_count: 6,
-            requirements: [
-              "Bridal hair and makeup",
-              "5 bridesmaids hair and makeup",
-              "Mother of bride hair and makeup",
-              "On-site service",
-              "Trial session included"
-            ]
-          },
-          generatedBid: {
-            amount: 650,
-            description: "Complete bridal party beauty package with extended services. Includes bridal hair and makeup, five bridesmaids, mother of bride services, on-site application, and trial session.",
-            breakdown: "Bridal hair & makeup: $150\n5 bridesmaids: $375\nMother of bride: $75\nOn-site service: $50\nTrial session: $0",
-            reasoning: "Comprehensive package pricing that reflects the full scope of services and on-site convenience."
-          }
-        }
-      ],
-      dj: [
-        {
-          request: {
-            date: "2024-08-15",
-            duration: "5 hours",
-            location: "Salt Lake City, UT",
-            event_type: "wedding",
-            guest_count: 120,
-            requirements: [
-              "Ceremony music",
-              "Reception DJ",
-              "Professional sound system",
-              "Playlist consultation",
-              "MC services"
-            ]
-          },
-          generatedBid: {
-            amount: 800,
-            description: "Complete wedding DJ package including ceremony music, reception entertainment, professional sound system, playlist consultation, and MC services for your special day.",
-            breakdown: "Ceremony music: $150\nReception DJ (5 hours): $500\nProfessional sound system: $100\nPlaylist consultation: $50",
-            reasoning: "This pricing reflects your professional equipment and experience while remaining competitive in the market."
-          }
-        },
-        {
-          request: {
-            date: "2024-09-10",
-            duration: "6 hours",
-            location: "Park City, UT",
-            event_type: "wedding",
-            guest_count: 80,
-            requirements: [
-              "Ceremony music",
-              "Reception DJ",
-              "Professional sound system",
-              "Playlist consultation",
-              "MC services",
-              "Lighting effects"
-            ]
-          },
-          generatedBid: {
-            amount: 950,
-            description: "Premium wedding DJ package with lighting effects. Includes ceremony music, reception entertainment, professional sound system, playlist consultation, MC services, and atmospheric lighting.",
-            breakdown: "Ceremony music: $150\nReception DJ (6 hours): $600\nProfessional sound system: $100\nLighting effects: $100",
-            reasoning: "Premium package pricing that includes additional lighting effects for enhanced atmosphere."
-          }
-        }
-      ],
-      "wedding planning": [
-        {
-          request: {
-            date: "2024-09-15",
-            duration: "Full planning",
-            location: "Salt Lake City, UT",
-            event_type: "wedding",
-            guest_count: 150,
-            requirements: [
-              "Full wedding planning",
-              "Vendor coordination",
-              "Timeline management",
-              "Budget management",
-              "Day-of coordination"
-            ]
-          },
-          generatedBid: {
-            amount: 2500,
-            description: "Complete wedding planning package including full planning services, vendor coordination, timeline management, budget oversight, and day-of coordination to ensure your perfect day.",
-            breakdown: "Full planning services: $1,500\nVendor coordination: $400\nTimeline management: $300\nBudget management: $200\nDay-of coordination: $100",
-            reasoning: "This pricing reflects the comprehensive nature of full wedding planning services and your professional expertise."
-          }
-        },
-        {
-          request: {
-            date: "2024-10-20",
-            duration: "Partial planning",
-            location: "Park City, UT",
-            event_type: "wedding",
-            guest_count: 80,
-            requirements: [
-              "Partial planning",
-              "Vendor recommendations",
-              "Timeline assistance",
-              "Day-of coordination"
-            ]
-          },
-          generatedBid: {
-            amount: 1200,
-            description: "Partial wedding planning package including vendor recommendations, timeline assistance, and day-of coordination for couples who have started planning but need professional guidance.",
-            breakdown: "Partial planning: $600\nVendor recommendations: $200\nTimeline assistance: $200\nDay-of coordination: $200",
-            reasoning: "Partial planning pricing that provides essential services while allowing couples to maintain control over their planning process."
-          }
-        }
-      ],
-      catering: [
-        {
-          request: {
-            date: "2024-08-15",
-            duration: "Dinner service",
-            location: "Salt Lake City, UT",
-            event_type: "wedding",
-            guest_count: 120,
-            requirements: [
-              "Plated dinner service",
-              "Appetizers",
-              "Main course",
-              "Dessert",
-              "Staffing",
-              "Setup and cleanup"
-            ]
-          },
-          generatedBid: {
-            amount: 4800,
-            description: "Complete wedding catering package with plated dinner service for 120 guests. Includes appetizers, main course, dessert, professional staffing, and full setup and cleanup services.",
-            breakdown: "Plated dinner (120 guests): $3,600\nAppetizers: $600\nDessert: $300\nStaffing: $200\nSetup & cleanup: $100",
-            reasoning: "This pricing reflects the quality of plated service and comprehensive catering package for a mid-sized wedding."
-          }
-        },
-        {
-          request: {
-            date: "2024-09-20",
-            duration: "Buffet service",
-            location: "Provo, UT",
-            event_type: "wedding",
-            guest_count: 80,
-            requirements: [
-              "Buffet dinner service",
-              "Appetizers",
-              "Main course",
-              "Dessert",
-              "Staffing",
-              "Setup and cleanup"
-            ]
-          },
-          generatedBid: {
-            amount: 2800,
-            description: "Wedding buffet catering package for 80 guests. Includes appetizers, main course, dessert, professional staffing, and complete setup and cleanup services.",
-            breakdown: "Buffet dinner (80 guests): $2,000\nAppetizers: $400\nDessert: $200\nStaffing: $150\nSetup & cleanup: $50",
-            reasoning: "Buffet service pricing that provides excellent value while maintaining quality and professional service."
-          }
-        }
-      ],
-      cake: [
-        {
-          request: {
-            date: "2024-08-15",
-            duration: "Delivery only",
-            location: "Salt Lake City, UT",
-            event_type: "wedding",
-            guest_count: 120,
-            requirements: [
-              "3-tier wedding cake",
-              "Custom design",
-              "Delivery and setup",
-              "Cake cutting service"
-            ]
-          },
-          generatedBid: {
-            amount: 450,
-            description: "Beautiful 3-tier custom wedding cake designed to match your wedding theme. Includes delivery, setup, and cake cutting service for your special day.",
-            breakdown: "3-tier cake: $300\nCustom design: $100\nDelivery & setup: $30\nCake cutting service: $20",
-            reasoning: "This pricing reflects the custom design work and comprehensive service package for a wedding cake."
-          }
-        },
-        {
-          request: {
-            date: "2024-09-10",
-            duration: "Delivery only",
-            location: "Park City, UT",
-            event_type: "wedding",
-            guest_count: 80,
-            requirements: [
-              "2-tier wedding cake",
-              "Custom design",
-              "Cupcakes for guests",
-              "Delivery and setup"
-            ]
-          },
-          generatedBid: {
-            amount: 380,
-            description: "Elegant 2-tier wedding cake with custom design and cupcakes for all guests. Includes delivery and setup services.",
-            breakdown: "2-tier cake: $200\nCustom design: $80\nCupcakes (80): $80\nDelivery & setup: $20",
-            reasoning: "Combination cake and cupcake pricing that provides variety while maintaining quality and custom design elements."
-          }
-        }
-      ]
+      guest_count: 120
     };
 
-    return sampleBids[category] || sampleBids.photography;
+    const categoryRequests = {
+      photography: {
+        ...baseRequest,
+        duration: "8 hours",
+        location: "Salt Lake City, UT",
+        requirements: [
+          "Full day coverage",
+          "Engagement shoot",
+          "Online gallery",
+          "Print release",
+          "Drone footage"
+        ]
+      },
+      videography: {
+        ...baseRequest,
+        duration: "6 hours",
+        location: "Park City, UT",
+        requirements: [
+          "Ceremony coverage",
+          "Reception highlights",
+          "Highlight reel",
+          "Feature film",
+          "Digital files"
+        ]
+      },
+      florist: {
+        ...baseRequest,
+        duration: "Setup only",
+        location: "Salt Lake City, UT",
+        requirements: [
+          "Bridal bouquet",
+          "8 boutonnieres",
+          "12 centerpieces",
+          "Delivery and setup"
+        ]
+      },
+      beauty: {
+        ...baseRequest,
+        duration: "4 hours",
+        location: "Orem, UT",
+        guest_count: 6,
+        requirements: [
+          "Bridal hair and makeup",
+          "5 bridesmaids hair and makeup",
+          "On-site service",
+          "Trial session included"
+        ]
+      },
+      dj: {
+        ...baseRequest,
+        duration: "5 hours",
+        location: "Salt Lake City, UT",
+        requirements: [
+          "Ceremony music",
+          "Reception DJ",
+          "Professional sound system",
+          "Playlist consultation",
+          "MC services"
+        ]
+      },
+      "wedding planning": {
+        ...baseRequest,
+        duration: "Full planning",
+        location: "Park City, UT",
+        requirements: [
+          "Full wedding planning",
+          "Vendor coordination",
+          "Timeline management",
+          "Budget management",
+          "Day-of coordination"
+        ]
+      },
+      catering: {
+        ...baseRequest,
+        duration: "Dinner service",
+        location: "Salt Lake City, UT",
+        requirements: [
+          "Plated dinner service",
+          "Appetizers",
+          "Main course",
+          "Dessert",
+          "Staffing",
+          "Setup and cleanup"
+        ]
+      },
+      cake: {
+        ...baseRequest,
+        duration: "Delivery only",
+        location: "Salt Lake City, UT",
+        requirements: [
+          "3-tier wedding cake",
+          "Custom design",
+          "Delivery and setup",
+          "Cake cutting service"
+        ]
+      }
+    };
+
+    return categoryRequests[category] || categoryRequests.photography;
+  };
+
+  // Dynamic sample bid data based on business category - now using real API
+  const getSampleBidData = async (category) => {
+    try {
+      console.log('Fetching sample bid data from API for category:', category);
+      
+      // Get the current training request to use its data, or generate category-specific data
+      let requestData = currentRequest?.request_data;
+      
+      if (!requestData) {
+        // Generate category-specific request data if no current request
+        requestData = generateCategorySpecificRequest(category);
+        console.log('Generated category-specific request data:', requestData);
+      }
+
+      // Parse request data if it's a string
+      const parsedRequestData = typeof requestData === 'string' 
+        ? JSON.parse(requestData) 
+        : requestData;
+      
+      // Call the backend API to generate sample bids using real request data
+      const response = await fetch('https://bidi-express.vercel.app/api/autobid/generate-sample-bid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_id: user.id,
+          category: category,
+          request_data: parsedRequestData
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate sample bid from API.');
+      }
+
+      const data = await response.json();
+      console.log('API returned sample bid data:', data);
+      
+      // Convert API response to the expected format using real request data
+      const sampleBid = {
+        request: parsedRequestData,
+        generatedBid: {
+          amount: data.amount || 0,
+          description: data.description || 'AI-generated bid description',
+          breakdown: data.breakdown || 'Pricing breakdown',
+          reasoning: data.reasoning || 'AI reasoning for pricing'
+        }
+      };
+
+      return [sampleBid]; // Return as array to match existing structure
+    } catch (error) {
+      console.error('Error fetching sample bid from API:', error);
+      
+      // Fallback to hardcoded data if API fails
+      const fallbackBids = {
+        photography: [
+          {
+            request: {
+              date: "2024-08-15",
+              duration: "8 hours",
+              location: "San Francisco, CA",
+              event_type: "wedding",
+              guest_count: 150,
+              requirements: [
+                "Full day coverage",
+                "Engagement shoot",
+                "Online gallery",
+                "Print release",
+                "Drone footage"
+              ]
+            },
+            generatedBid: {
+              amount: 2800,
+              description: "Complete wedding photography package including full day coverage, engagement session, online gallery with 400+ edited photos, print release, and drone footage. Professional equipment and backup gear included.",
+              breakdown: "Full day coverage (8 hours): $1,600\nEngagement shoot: $400\nOnline gallery & editing: $500\nDrone footage: $200\nPrint release: $100",
+              reasoning: "Based on your training data, this pricing reflects your premium service quality and comprehensive coverage. The amount accounts for your experience level and the high-end equipment you use."
+            }
+          }
+        ],
+        videography: [
+          {
+            request: {
+              date: "2024-09-20",
+              duration: "4 hours",
+              location: "Salt Lake City, UT",
+              event_type: "wedding",
+              guest_count: 80,
+              requirements: [
+                "Ceremony coverage",
+                "Reception highlights",
+                "Highlight reel",
+                "Digital files"
+              ]
+            },
+            generatedBid: {
+              amount: 1800,
+              description: "Wedding videography package covering ceremony and reception highlights. Includes professional editing, highlight reel, and digital file delivery. Perfect for capturing your special moments.",
+              breakdown: "Ceremony coverage: $800\nReception highlights: $600\nHighlight reel: $300\nDigital files: $100",
+              reasoning: "This pricing is based on your previous responses showing competitive rates for mid-sized weddings. The package provides comprehensive coverage while remaining accessible."
+            }
+          }
+        ],
+        florist: [
+          {
+            request: {
+              date: "2024-07-15",
+              duration: "Setup only",
+              location: "Park City, UT",
+              event_type: "wedding",
+              guest_count: 100,
+              requirements: [
+                "Bridal bouquet",
+                "8 boutonnieres",
+                "12 centerpieces",
+                "Delivery and setup"
+              ]
+            },
+            generatedBid: {
+              amount: 950,
+              description: "Complete wedding floral package featuring a stunning bridal bouquet, boutonnieres for the wedding party, elegant centerpieces, and professional delivery and setup services.",
+              breakdown: "Bridal bouquet: $200\n8 boutonnieres: $160\n12 centerpieces: $480\nDelivery & setup: $110",
+              reasoning: "Based on your training responses, this pricing reflects your quality materials and professional service while staying within typical market ranges for this scope of work."
+            }
+          }
+        ],
+        beauty: [
+          {
+            request: {
+              date: "2024-06-10",
+              duration: "3 hours",
+              location: "Orem, UT",
+              event_type: "wedding",
+              guest_count: 4,
+              requirements: [
+                "Bridal hair and makeup",
+                "3 bridesmaids hair and makeup",
+                "On-site service",
+                "Trial session included"
+              ]
+            },
+            generatedBid: {
+              amount: 450,
+              description: "Complete bridal party beauty package including bridal hair and makeup, three bridesmaids services, on-site application, and a trial session for the bride.",
+              breakdown: "Bridal hair & makeup: $150\n3 bridesmaids: $225\nOn-site service: $50\nTrial session: $25",
+              reasoning: "This pricing structure shows competitive rates while accounting for the convenience of on-site service and the value of the trial session."
+            }
+          }
+        ],
+        dj: [
+          {
+            request: {
+              date: "2024-08-15",
+              duration: "5 hours",
+              location: "Salt Lake City, UT",
+              event_type: "wedding",
+              guest_count: 120,
+              requirements: [
+                "Ceremony music",
+                "Reception DJ",
+                "Professional sound system",
+                "Playlist consultation",
+                "MC services"
+              ]
+            },
+            generatedBid: {
+              amount: 800,
+              description: "Complete wedding DJ package including ceremony music, reception entertainment, professional sound system, playlist consultation, and MC services for your special day.",
+              breakdown: "Ceremony music: $150\nReception DJ (5 hours): $500\nProfessional sound system: $100\nPlaylist consultation: $50",
+              reasoning: "This pricing reflects your professional equipment and experience while remaining competitive in the market."
+            }
+          }
+        ],
+        "wedding planning": [
+          {
+            request: {
+              date: "2024-09-15",
+              duration: "Full planning",
+              location: "Salt Lake City, UT",
+              event_type: "wedding",
+              guest_count: 150,
+              requirements: [
+                "Full wedding planning",
+                "Vendor coordination",
+                "Timeline management",
+                "Budget management",
+                "Day-of coordination"
+              ]
+            },
+            generatedBid: {
+              amount: 2500,
+              description: "Complete wedding planning package including full planning services, vendor coordination, timeline management, budget oversight, and day-of coordination to ensure your perfect day.",
+              breakdown: "Full planning services: $1,500\nVendor coordination: $400\nTimeline management: $300\nBudget management: $200\nDay-of coordination: $100",
+              reasoning: "This pricing reflects the comprehensive nature of full wedding planning services and your professional expertise."
+            }
+          }
+        ],
+        catering: [
+          {
+            request: {
+              date: "2024-08-15",
+              duration: "Dinner service",
+              location: "Salt Lake City, UT",
+              event_type: "wedding",
+              guest_count: 120,
+              requirements: [
+                "Plated dinner service",
+                "Appetizers",
+                "Main course",
+                "Dessert",
+                "Staffing",
+                "Setup and cleanup"
+              ]
+            },
+            generatedBid: {
+              amount: 4800,
+              description: "Complete wedding catering package with plated dinner service for 120 guests. Includes appetizers, main course, dessert, professional staffing, and full setup and cleanup services.",
+              breakdown: "Plated dinner (120 guests): $3,600\nAppetizers: $600\nDessert: $300\nStaffing: $200\nSetup & cleanup: $100",
+              reasoning: "This pricing reflects the quality of plated service and comprehensive catering package for a mid-sized wedding."
+            }
+          }
+        ],
+        cake: [
+          {
+            request: {
+              date: "2024-08-15",
+              duration: "Delivery only",
+              location: "Salt Lake City, UT",
+              event_type: "wedding",
+              guest_count: 120,
+              requirements: [
+                "3-tier wedding cake",
+                "Custom design",
+                "Delivery and setup",
+                "Cake cutting service"
+              ]
+            },
+            generatedBid: {
+              amount: 450,
+              description: "Beautiful 3-tier custom wedding cake designed to match your wedding theme. Includes delivery, setup, and cake cutting service for your special day.",
+              breakdown: "3-tier cake: $300\nCustom design: $100\nDelivery & setup: $30\nCake cutting service: $20",
+              reasoning: "This pricing reflects the custom design work and comprehensive service package for a wedding cake."
+            }
+          }
+        ]
+      };
+
+      return fallbackBids[category] || fallbackBids.photography;
+    }
   };
 
   // Helper function to safely capitalize category names
@@ -415,11 +404,26 @@ const AutobidTrainer = () => {
 
   // Update sample bid data when business category changes
   useEffect(() => {
-    const sampleData = getSampleBidData(currentCategory);
-    console.log(`Loading sample bid data for category: ${currentCategory}`, sampleData);
-    setCurrentSampleBidData(sampleData);
-    console.log(`Updated sample bid data for category: ${currentCategory}`, sampleData.length, 'samples available');
-  }, [currentCategory]);
+    const loadSampleBidData = async () => {
+      if (!user || !currentCategory) return;
+      
+      setIsLoadingSampleBid(true);
+      try {
+        const sampleData = await getSampleBidData(currentCategory);
+        console.log(`Loading sample bid data for category: ${currentCategory}`, sampleData);
+        setCurrentSampleBidData(sampleData);
+        console.log(`Updated sample bid data for category: ${currentCategory}`, sampleData.length, 'samples available');
+      } catch (error) {
+        console.error('Error loading sample bid data:', error);
+        // Set empty array as fallback
+        setCurrentSampleBidData([]);
+      } finally {
+        setIsLoadingSampleBid(false);
+      }
+    };
+
+    loadSampleBidData();
+  }, [currentCategory, user]);
 
   useEffect(() => {
     const fetchUserAndRequests = async () => {
@@ -666,6 +670,32 @@ const AutobidTrainer = () => {
 
       if (aiError) throw aiError;
 
+      // Call the real training feedback API
+      try {
+        const feedbackResponse = await fetch('https://bidi-express.vercel.app/api/autobid/training-feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            business_id: user.id,
+            category: currentCategory,
+            sample_bid_id: aiResponse.id,
+            approved: approved,
+            feedback: feedbackText || (approved ? 'Approved' : 'Needs adjustment'),
+            suggested_changes: approved ? null : feedbackText
+          }),
+        });
+
+        if (feedbackResponse.ok) {
+          const feedbackData = await feedbackResponse.json();
+          console.log('Training feedback submitted to API:', feedbackData);
+        } else {
+          console.warn('Failed to submit feedback to API, but continuing with local storage');
+        }
+      } catch (apiError) {
+        console.warn('Error submitting feedback to API:', apiError);
+        // Continue with local storage even if API fails
+      }
+
       // Save detailed feedback if provided
       if (feedbackText.trim()) {
         const { error: feedbackError } = await supabase
@@ -712,7 +742,7 @@ const AutobidTrainer = () => {
       };
       setCategoryProgress(updatedProgress);
 
-      // Check if current category training is complete
+      // Check if current category training is complete (2 consecutive approvals)
       if (newConsecutiveApprovals >= 2) {
         // Check if all categories are complete
         const allCategoriesComplete = businessCategories.every(cat => 
@@ -721,8 +751,8 @@ const AutobidTrainer = () => {
 
         if (allCategoriesComplete) {
           // All categories complete - show final completion
-    setShowSampleBid(false);
-    setShowCompletion(true);
+          setShowSampleBid(false);
+          setShowCompletion(true);
         } else {
           // Move to next category
           const nextCategoryIndex = currentCategoryIndex + 1;
@@ -747,15 +777,25 @@ const AutobidTrainer = () => {
           }
         }
       } else {
-        // Show next sample bid or continue coaching
-        if (currentSampleBidIndex < currentSampleBidData.length - 1) {
-          setCurrentSampleBidIndex(currentSampleBidIndex + 1);
+        // Generate a new sample bid for continuous training
+        console.log('Generating new sample bid for continuous training...');
+        setIsLoadingSampleBid(true);
+        
+        try {
+          // Generate new sample bid data from API
+          const newSampleData = await getSampleBidData(currentCategory);
+          setCurrentSampleBidData(newSampleData);
+          setCurrentSampleBidIndex(0); // Reset to first sample bid
           setSampleBidApproved(null);
           setFeedbackText('');
-        } else {
-          // All sample bids shown, show completion for this category
+          console.log('New sample bid generated for continuous training');
+        } catch (error) {
+          console.error('Error generating new sample bid:', error);
+          // If API fails, show completion for this category
           setShowSampleBid(false);
           setShowCompletion(true);
+        } finally {
+          setIsLoadingSampleBid(false);
         }
       }
     } catch (error) {
@@ -1087,6 +1127,37 @@ const AutobidTrainer = () => {
     console.log('Sample bid data:', currentSampleBidData);
     console.log('Current sample bid index:', currentSampleBidIndex);
     console.log('Current bid:', currentBid);
+    console.log('Loading sample bid:', isLoadingSampleBid);
+    
+    // Show loading state while fetching sample bid data
+    if (isLoadingSampleBid) {
+  return (
+    <div className="autobid-trainer-container">
+      <div className="trainer-header">
+        <button 
+          className="back-button"
+              onClick={() => navigate('/business-dashboard')}
+        >
+              ← Back to Dashboard
+        </button>
+        
+        <div className="header-content">
+          <div className="header-title">
+            <FaRobot className="header-icon" />
+                <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
+          </div>
+          <p className="header-description">
+                Generating personalized AI bid based on your training data...
+              </p>
+            </div>
+          </div>
+          <div className="loading-container">
+            <LoadingSpinner color="#9633eb" size={50} />
+            <p>Generating AI sample bid...</p>
+          </div>
+        </div>
+      );
+    }
     
     // If no current bid, show error or fallback
     if (!currentBid) {
@@ -1106,13 +1177,18 @@ const AutobidTrainer = () => {
                 <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
           </div>
           <p className="header-description">
-                Loading sample bid data...
+                Unable to generate sample bid. Please try again.
               </p>
             </div>
           </div>
-          <div className="loading-container">
-            <LoadingSpinner color="#9633eb" size={50} />
-            <p>Loading sample bid data...</p>
+          <div className="error-container">
+            <p>Error: Could not generate sample bid for {capitalizeCategory(currentCategory)}</p>
+            <button 
+              className="btn-primary"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </button>
           </div>
         </div>
       );
@@ -1151,6 +1227,9 @@ const AutobidTrainer = () => {
               </div>
               <span className="progress-text">
                 {consecutiveApprovals} of 2 consecutive approvals needed
+                {consecutiveApprovals < 2 && (
+                  <span className="training-note"> (Training continues until 2 in a row)</span>
+                )}
               </span>
             </div>
           </div>
