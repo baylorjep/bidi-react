@@ -148,6 +148,7 @@ const AutobidTrainer = () => {
   const getSampleBidData = async (category) => {
     try {
       console.log('Fetching sample bid data from API for category:', category);
+      console.log('Current user ID:', user?.id);
       
       // Get the current training request to use its data, or generate category-specific data
       let requestData = currentRequest?.request_data;
@@ -163,6 +164,12 @@ const AutobidTrainer = () => {
         ? JSON.parse(requestData) 
         : requestData;
       
+      console.log('Sending request to API with data:', {
+        business_id: user.id,
+        category: category,
+        request_data: parsedRequestData
+      });
+      
       // Call the backend API to generate sample bids using real request data
       const response = await fetch('https://bidi-express.vercel.app/api/autobid/generate-sample-bid', {
         method: 'POST',
@@ -174,13 +181,22 @@ const AutobidTrainer = () => {
         }),
       });
 
+      console.log('API response status:', response.status);
+      console.log('API response ok:', response.ok);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate sample bid from API.');
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
+        throw new Error(`API failed with status ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
       console.log('API returned sample bid data:', data);
+      
+      // Validate API response
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid API response format');
+      }
       
       // Convert API response to the expected format using real request data
       const sampleBid = {
@@ -193,34 +209,38 @@ const AutobidTrainer = () => {
         }
       };
 
+      console.log('Created sample bid from API:', sampleBid);
       return [sampleBid]; // Return as array to match existing structure
     } catch (error) {
       console.error('Error fetching sample bid from API:', error);
+      console.error('Error details:', error.message);
       
-      // Fallback to hardcoded data if API fails
+      // Only fall back to hardcoded data if API completely fails
+      console.log('Falling back to hardcoded data due to API failure');
+      
       const fallbackBids = {
         photography: [
           {
-            request: {
-              date: "2024-08-15",
-              duration: "8 hours",
-              location: "San Francisco, CA",
-              event_type: "wedding",
-              guest_count: 150,
-              requirements: [
-                "Full day coverage",
-                "Engagement shoot",
-                "Online gallery",
-                "Print release",
-                "Drone footage"
-              ]
-            },
-            generatedBid: {
-              amount: 2800,
-              description: "Complete wedding photography package including full day coverage, engagement session, online gallery with 400+ edited photos, print release, and drone footage. Professional equipment and backup gear included.",
-              breakdown: "Full day coverage (8 hours): $1,600\nEngagement shoot: $400\nOnline gallery & editing: $500\nDrone footage: $200\nPrint release: $100",
-              reasoning: "Based on your training data, this pricing reflects your premium service quality and comprehensive coverage. The amount accounts for your experience level and the high-end equipment you use."
-            }
+    request: {
+      date: "2024-08-15",
+      duration: "8 hours",
+      location: "San Francisco, CA",
+      event_type: "wedding",
+      guest_count: 150,
+      requirements: [
+        "Full day coverage",
+        "Engagement shoot",
+        "Online gallery",
+        "Print release",
+        "Drone footage"
+      ]
+    },
+    generatedBid: {
+      amount: 2800,
+      description: "Complete wedding photography package including full day coverage, engagement session, online gallery with 400+ edited photos, print release, and drone footage. Professional equipment and backup gear included.",
+      breakdown: "Full day coverage (8 hours): $1,600\nEngagement shoot: $400\nOnline gallery & editing: $500\nDrone footage: $200\nPrint release: $100",
+      reasoning: "Based on your training data, this pricing reflects your premium service quality and comprehensive coverage. The amount accounts for your experience level and the high-end equipment you use."
+    }
           }
         ],
         videography: [
@@ -751,8 +771,8 @@ const AutobidTrainer = () => {
 
         if (allCategoriesComplete) {
           // All categories complete - show final completion
-          setShowSampleBid(false);
-          setShowCompletion(true);
+    setShowSampleBid(false);
+    setShowCompletion(true);
         } else {
           // Move to next category
           const nextCategoryIndex = currentCategoryIndex + 1;
@@ -1161,22 +1181,22 @@ const AutobidTrainer = () => {
     
     // If no current bid, show error or fallback
     if (!currentBid) {
-  return (
-    <div className="autobid-trainer-container">
-      <div className="trainer-header">
-        <button 
-          className="back-button"
+      return (
+        <div className="autobid-trainer-container">
+          <div className="trainer-header">
+            <button 
+              className="back-button"
               onClick={() => navigate('/business-dashboard')}
-        >
+            >
               ← Back to Dashboard
-        </button>
-        
-        <div className="header-content">
-          <div className="header-title">
-            <FaRobot className="header-icon" />
+            </button>
+            
+            <div className="header-content">
+              <div className="header-title">
+                <FaRobot className="header-icon" />
                 <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
-          </div>
-          <p className="header-description">
+              </div>
+              <p className="header-description">
                 Unable to generate sample bid. Please try again.
               </p>
             </div>
