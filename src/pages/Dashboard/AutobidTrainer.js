@@ -39,26 +39,26 @@ const AutobidTrainer = () => {
     const sampleBids = {
       photography: [
         {
-          request: {
-            date: "2024-08-15",
-            duration: "8 hours",
-            location: "San Francisco, CA",
-            event_type: "wedding",
-            guest_count: 150,
-            requirements: [
-              "Full day coverage",
-              "Engagement shoot",
-              "Online gallery",
-              "Print release",
-              "Drone footage"
-            ]
-          },
-          generatedBid: {
-            amount: 2800,
-            description: "Complete wedding photography package including full day coverage, engagement session, online gallery with 400+ edited photos, print release, and drone footage. Professional equipment and backup gear included.",
-            breakdown: "Full day coverage (8 hours): $1,600\nEngagement shoot: $400\nOnline gallery & editing: $500\nDrone footage: $200\nPrint release: $100",
-            reasoning: "Based on your training data, this pricing reflects your premium service quality and comprehensive coverage. The amount accounts for your experience level and the high-end equipment you use."
-          }
+    request: {
+      date: "2024-08-15",
+      duration: "8 hours",
+      location: "San Francisco, CA",
+      event_type: "wedding",
+      guest_count: 150,
+      requirements: [
+        "Full day coverage",
+        "Engagement shoot",
+        "Online gallery",
+        "Print release",
+        "Drone footage"
+      ]
+    },
+    generatedBid: {
+      amount: 2800,
+      description: "Complete wedding photography package including full day coverage, engagement session, online gallery with 400+ edited photos, print release, and drone footage. Professional equipment and backup gear included.",
+      breakdown: "Full day coverage (8 hours): $1,600\nEngagement shoot: $400\nOnline gallery & editing: $500\nDrone footage: $200\nPrint release: $100",
+      reasoning: "Based on your training data, this pricing reflects your premium service quality and comprehensive coverage. The amount accounts for your experience level and the high-end equipment you use."
+    }
         },
         {
           request: {
@@ -405,9 +405,18 @@ const AutobidTrainer = () => {
     return sampleBids[category] || sampleBids.photography;
   };
 
+  // Helper function to safely capitalize category names
+  const capitalizeCategory = (category) => {
+    if (!category || typeof category !== 'string') {
+      return 'Category';
+    }
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  };
+
   // Update sample bid data when business category changes
   useEffect(() => {
     const sampleData = getSampleBidData(currentCategory);
+    console.log(`Loading sample bid data for category: ${currentCategory}`, sampleData);
     setCurrentSampleBidData(sampleData);
     console.log(`Updated sample bid data for category: ${currentCategory}`, sampleData.length, 'samples available');
   }, [currentCategory]);
@@ -448,6 +457,7 @@ const AutobidTrainer = () => {
         setBusinessCategories(userCategories);
         setCurrentCategory(userCategories[0]);
         console.log('User categories:', userCategories);
+        console.log('Current category set to:', userCategories[0]);
 
         // Fetch category-specific training progress
         const { data: progressData, error: progressError } = await supabase
@@ -506,6 +516,13 @@ const AutobidTrainer = () => {
 
   const loadCategoryRequests = async (category) => {
     try {
+      console.log('Loading requests for category:', category);
+      
+      if (!category) {
+        console.error('No category provided to loadCategoryRequests');
+        return;
+      }
+
       // Fetch training requests for specific category
       const { data: requests, error } = await supabase
         .from('autobid_training_requests')
@@ -555,8 +572,12 @@ const AutobidTrainer = () => {
       setPricingBreakdown('');
       setPricingReasoning('');
 
+      console.log('Successfully loaded category requests for:', category);
+
     } catch (error) {
       console.error('Error loading category requests:', error);
+      // Show error state or fallback
+      alert('Error loading training requests. Please try refreshing the page.');
     }
   };
 
@@ -706,12 +727,21 @@ const AutobidTrainer = () => {
           // Move to next category
           const nextCategoryIndex = currentCategoryIndex + 1;
           if (nextCategoryIndex < businessCategories.length) {
-            setCurrentCategoryIndex(nextCategoryIndex);
             const nextCategory = businessCategories[nextCategoryIndex];
-            setCurrentCategory(nextCategory);
-            await loadCategoryRequests(nextCategory);
+            console.log('Moving to next category:', nextCategory, 'at index:', nextCategoryIndex);
+            
+            if (nextCategory) {
+              setCurrentCategoryIndex(nextCategoryIndex);
+              setCurrentCategory(nextCategory);
+              await loadCategoryRequests(nextCategory);
+            } else {
+              console.error('Next category is undefined at index:', nextCategoryIndex);
+              setShowSampleBid(false);
+              setShowCompletion(true);
+            }
           } else {
             // All categories complete
+            console.log('All categories completed');
             setShowSampleBid(false);
             setShowCompletion(true);
           }
@@ -815,8 +845,8 @@ const AutobidTrainer = () => {
 
     if (allCategoriesComplete) {
       // Final completion - all categories trained
-      return (
-        <div className="autobid-trainer-container">
+    return (
+      <div className="autobid-trainer-container">
           <AnimatePresence>
             <motion.div
               initial={{ opacity: 0 }}
@@ -853,7 +883,7 @@ const AutobidTrainer = () => {
                   Congratulations! You've completed AI training for all your business categories. Your pricing insights will help us generate more accurate and personalized bids for your business.
                 </motion.p>
                 
-                <motion.div
+            <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.9, duration: 0.6 }}
@@ -862,15 +892,15 @@ const AutobidTrainer = () => {
                   <div className="stat-item">
                     <span className="stat-number">{businessCategories.length}</span>
                     <span className="stat-label">Categories Trained</span>
-                  </div>
+                </div>
                   <div className="stat-item">
                     <span className="stat-number">{TOTAL_STEPS * businessCategories.length}</span>
                     <span className="stat-label">Total Scenarios</span>
-                  </div>
+              </div>
                   <div className="stat-item">
                     <span className="stat-number">✓</span>
                     <span className="stat-label">AI Ready</span>
-                  </div>
+                </div>
                 </motion.div>
 
                 <motion.div
@@ -883,9 +913,9 @@ const AutobidTrainer = () => {
                   <div className="category-list">
                     {businessCategories.map((category, index) => (
                       <div key={category} className="category-item">
-                        <span className="category-name">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                        <span className="category-name">{capitalizeCategory(category)}</span>
                         <span className="category-status">✓ Complete</span>
-                      </div>
+                  </div>
                     ))}
                   </div>
                 </motion.div>
@@ -902,95 +932,192 @@ const AutobidTrainer = () => {
               </div>
             </motion.div>
           </AnimatePresence>
-        </div>
-      );
+      </div>
+    );
     } else {
       // Category completion - show next category prompt
       const nextCategoryIndex = currentCategoryIndex + 1;
       const nextCategory = businessCategories[nextCategoryIndex];
       
-      return (
-        <div className="autobid-trainer-container">
-          <AnimatePresence>
-            <motion.div
+      // Safety check - if no next category, show final completion
+      if (!nextCategory) {
+        return (
+          <div className="autobid-trainer-container">
+            <AnimatePresence>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="completion-screen"
+              >
+                <div className="completion-content">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
+                    className="completion-icon"
+                  >
+                    <FaGraduationCap />
+                  </motion.div>
+                  
+                  <motion.h1
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.6 }}
+                    className="completion-title"
+                  >
+                    AI Training Complete!
+                  </motion.h1>
+                  
+                  <motion.p
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.7, duration: 0.6 }}
+                    className="completion-description"
+                  >
+                    Congratulations! You've completed AI training for all your business categories. Your pricing insights will help us generate more accurate and personalized bids for your business.
+                  </motion.p>
+                  
+                  <motion.button
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 1.1, duration: 0.6 }}
+                    className="btn-primary"
+                    onClick={() => navigate('/business-settings')}
+                  >
+                    Return to Settings
+                  </motion.button>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        );
+      }
+
+    return (
+      <div className="autobid-trainer-container">
+        <AnimatePresence>
+          <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="completion-screen"
-            >
-              <div className="completion-content">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
-                  className="completion-icon"
-                >
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="completion-screen"
+          >
+            <div className="completion-content">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
+                className="completion-icon"
+              >
                   <FaCheckCircle />
-                </motion.div>
-                
-                <motion.h1
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.5, duration: 0.6 }}
-                  className="completion-title"
-                >
-                  {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} Training Complete!
-                </motion.h1>
-                
-                <motion.p
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.7, duration: 0.6 }}
-                  className="completion-description"
-                >
-                  Great job! You've completed AI training for {currentCategory}. Now let's train the AI for your {nextCategory} services.
-                </motion.p>
-                
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.9, duration: 0.6 }}
-                  className="completion-stats"
-                >
+              </motion.div>
+              
+              <motion.h1
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+                className="completion-title"
+              >
+                  {currentCategory && capitalizeCategory(currentCategory)} Training Complete!
+              </motion.h1>
+              
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.7, duration: 0.6 }}
+                className="completion-description"
+              >
+                  Great job! You've completed AI training for {capitalizeCategory(currentCategory)}. Now let's train the AI for your {nextCategory} services.
+              </motion.p>
+              
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.9, duration: 0.6 }}
+                className="completion-stats"
+              >
                   <div className="stat-item">
                     <span className="stat-number">{currentCategoryIndex + 1}</span>
                     <span className="stat-label">of {businessCategories.length} Categories</span>
                   </div>
-                  <div className="stat-item">
-                    <span className="stat-number">{TOTAL_STEPS}</span>
-                    <span className="stat-label">Scenarios Completed</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-number">✓</span>
-                    <span className="stat-label">{currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} Trained</span>
-                  </div>
-                </motion.div>
-                
-                <motion.button
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 1.1, duration: 0.6 }}
-                  className="btn-primary"
+                <div className="stat-item">
+                  <span className="stat-number">{TOTAL_STEPS}</span>
+                  <span className="stat-label">Scenarios Completed</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-number">✓</span>
+                    <span className="stat-label">{capitalizeCategory(currentCategory)} Trained</span>
+                </div>
+              </motion.div>
+              
+              <motion.button
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 1.1, duration: 0.6 }}
+                className="btn-primary"
                   onClick={async () => {
+                    console.log('Button clicked - moving to next category');
+                    console.log('Current category index:', currentCategoryIndex);
+                    console.log('Next category index:', nextCategoryIndex);
+                    console.log('Business categories:', businessCategories);
+                    console.log('Next category:', nextCategory);
+                    console.log('Moving to next category:', nextCategory);
                     setCurrentCategoryIndex(nextCategoryIndex);
                     setCurrentCategory(nextCategory);
                     await loadCategoryRequests(nextCategory);
                   }}
                 >
-                  Continue to {nextCategory.charAt(0).toUpperCase() + nextCategory.slice(1)} Training
-                </motion.button>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      );
+                  Continue to {nextCategory && capitalizeCategory(nextCategory)} Training
+              </motion.button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
     }
   }
 
   if (showSampleBid) {
     const currentBid = currentSampleBidData[currentSampleBidIndex];
     
+    // Add debugging and safety checks
+    console.log('Sample bid data:', currentSampleBidData);
+    console.log('Current sample bid index:', currentSampleBidIndex);
+    console.log('Current bid:', currentBid);
+    
+    // If no current bid, show error or fallback
+    if (!currentBid) {
+      return (
+        <div className="autobid-trainer-container">
+          <div className="trainer-header">
+            <button 
+              className="back-button"
+              onClick={() => navigate('/business-settings')}
+            >
+              ← Back to Settings
+            </button>
+            
+            <div className="header-content">
+              <div className="header-title">
+                <FaRobot className="header-icon" />
+                <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
+              </div>
+              <p className="header-description">
+                Loading sample bid data...
+              </p>
+            </div>
+          </div>
+          <div className="loading-container">
+            <LoadingSpinner color="#9633eb" size={50} />
+            <p>Loading sample bid data...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="autobid-trainer-container">
         <div className="trainer-header">
@@ -1004,17 +1131,17 @@ const AutobidTrainer = () => {
           <div className="header-content">
             <div className="header-title">
               <FaRobot className="header-icon" />
-              <h1>AI Sample Bid Test - {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</h1>
+              <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
             </div>
             <p className="header-description">
-              Based on your {currentCategory} training, here's a sample bid our AI generated. Let us know if this looks accurate!
+              Based on your {capitalizeCategory(currentCategory)} training, here's a sample bid our AI generated. Let us know if this looks accurate!
             </p>
           </div>
 
           <div className="progress-section">
             <div className="category-progress">
               <span className="category-label">
-                Training {currentCategoryIndex + 1} of {businessCategories.length}: {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}
+                Training {currentCategoryIndex + 1} of {businessCategories.length}: {capitalizeCategory(currentCategory)}
               </span>
               <div className="progress-bar">
                 <div 
@@ -1042,7 +1169,7 @@ const AutobidTrainer = () => {
               <div className="request-section">
                 <div className="section-header">
                   <FaLightbulb className="section-icon" />
-                  <h2>Sample {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} Request</h2>
+                  <h2>Sample {capitalizeCategory(currentCategory)} Request</h2>
                 </div>
                 
                 {currentBid && formatRequestData(currentBid.request)}
@@ -1137,27 +1264,27 @@ const AutobidTrainer = () => {
         <div className="header-content">
           <div className="header-title">
             <FaRobot className="header-icon" />
-            <h1>AI Bid Trainer - {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</h1>
+            <h1>AI Bid Trainer - {capitalizeCategory(currentCategory)}</h1>
           </div>
           <p className="header-description">
-            Help train our AI by providing pricing for these {currentCategory} sample requests. This will help us generate more accurate bids for your {currentCategory} services.
+            Help train our AI by providing pricing for these {capitalizeCategory(currentCategory)} sample requests. This will help us generate more accurate bids for your {capitalizeCategory(currentCategory)} services.
           </p>
         </div>
 
         <div className="progress-section">
           <div className="category-progress">
             <span className="category-label">
-              Training {currentCategoryIndex + 1} of {businessCategories.length}: {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}
+              Training {currentCategoryIndex + 1} of {businessCategories.length}: {capitalizeCategory(currentCategory)}
             </span>
-            <div className="progress-bar">
-              <div 
-                className="progress-fill"
-                style={{ width: `${(completedSteps / TOTAL_STEPS) * 100}%` }}
-              />
-            </div>
-            <span className="progress-text">
-              Step {currentStep + 1} of {TOTAL_STEPS}
-            </span>
+          <div className="progress-bar">
+            <div 
+              className="progress-fill"
+              style={{ width: `${(completedSteps / TOTAL_STEPS) * 100}%` }}
+            />
+          </div>
+          <span className="progress-text">
+            Step {currentStep + 1} of {TOTAL_STEPS}
+          </span>
           </div>
         </div>
       </div>
@@ -1175,7 +1302,7 @@ const AutobidTrainer = () => {
             <div className="request-section">
               <div className="section-header">
                 <FaLightbulb className="section-icon" />
-                <h2>Sample {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} Request #{currentStep + 1}</h2>
+                <h2>Sample {capitalizeCategory(currentCategory)} Request #{currentStep + 1}</h2>
               </div>
               
               {currentRequest && formatRequestData(currentRequest.request_data)}
