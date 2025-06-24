@@ -925,9 +925,9 @@ const AutobidTrainer = () => {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 1.1, duration: 0.6 }}
                   className="btn-primary"
-                  onClick={() => navigate('/business-settings')}
+                  onClick={() => navigate('/business-dashboard')}
                 >
-                  Return to Settings
+                  Return to Dashboard
                 </motion.button>
               </div>
             </motion.div>
@@ -984,9 +984,9 @@ const AutobidTrainer = () => {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 1.1, duration: 0.6 }}
                     className="btn-primary"
-                    onClick={() => navigate('/business-settings')}
+                    onClick={() => navigate('/business-dashboard')}
                   >
-                    Return to Settings
+                    Return to Dashboard
                   </motion.button>
                 </div>
               </motion.div>
@@ -1095,9 +1095,9 @@ const AutobidTrainer = () => {
           <div className="trainer-header">
             <button 
               className="back-button"
-              onClick={() => navigate('/business-settings')}
+              onClick={() => navigate('/business-dashboard')}
             >
-              ← Back to Settings
+              ← Back to Dashboard
             </button>
             
             <div className="header-content">
@@ -1123,9 +1123,9 @@ const AutobidTrainer = () => {
         <div className="trainer-header">
           <button 
             className="back-button"
-            onClick={() => navigate('/business-settings')}
+            onClick={() => navigate('/business-dashboard')}
           >
-            ← Back to Settings
+            ← Back to Dashboard
           </button>
           
           <div className="header-content">
@@ -1256,9 +1256,9 @@ const AutobidTrainer = () => {
       <div className="trainer-header">
         <button 
           className="back-button"
-          onClick={() => navigate('/business-settings')}
+          onClick={() => navigate('/business-dashboard')}
         >
-          ← Back to Settings
+          ← Back to Dashboard
         </button>
         
         <div className="header-content">

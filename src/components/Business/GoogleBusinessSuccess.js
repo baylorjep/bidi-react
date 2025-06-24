@@ -99,7 +99,7 @@ const GoogleBusinessSuccess = () => {
         <h2 style={{ color: '#28a745', marginBottom: '20px' }}>Successfully Connected!</h2>
         <p style={{ marginBottom: '20px' }}>Your business profile has been successfully connected to Google Business Profile.</p>
         <button
-          onClick={() => window.location.href = '/business-settings'}
+          onClick={() => window.location.href = '/business-dashboard'}
           style={{
             backgroundColor: '#9633eb',
             color: 'white',
@@ -109,7 +109,7 @@ const GoogleBusinessSuccess = () => {
             cursor: 'pointer'
           }}
         >
-          Return to Settings
+          Return to Dashboard
         </button>
       </div>
     </div>
