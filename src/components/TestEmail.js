@@ -94,6 +94,47 @@ function TestEmail() {
         }
     };
 
+    const testRealBusinessSampleBid = async () => {
+        try {
+            setTrainingResults('Testing sample bid generation with real business data...\n');
+            
+            // Use a test business ID - you can replace this with your actual business ID
+            const testBusinessId = 'test-business-123';
+            
+            const response = await fetch('https://bidi-express.vercel.app/api/autobid/generate-sample-bid', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    business_id: testBusinessId,
+                    category: 'photography',
+                    request_data: {
+                        date: "2024-08-15",
+                        duration: "8 hours",
+                        location: "Salt Lake City, UT",
+                        event_type: "wedding",
+                        guest_count: 150,
+                        requirements: ["Full day coverage", "Online gallery", "Print release"]
+                    }
+                }),
+            });
+
+            setTrainingResults(prev => prev + `API Response Status: ${response.status}\n`);
+            setTrainingResults(prev => prev + `API Response OK: ${response.ok}\n`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                setTrainingResults(prev => prev + `❌ API Error Response: ${errorText}\n`);
+                return;
+            }
+
+            const data = await response.json();
+            setTrainingResults(prev => prev + `✅ Real business sample bid generated!\n`);
+            setTrainingResults(prev => prev + `💰 Generated Bid: ${JSON.stringify(data, null, 2)}\n`);
+        } catch (error) {
+            setTrainingResults(prev => prev + `❌ Error: ${error.message}\n`);
+        }
+    };
+
     const testTrainingStatus = async () => {
         try {
             setTrainingResults('Testing training status...\n');
@@ -238,6 +279,13 @@ function TestEmail() {
                                     onClick={testSampleBidGeneration}
                                 >
                                     Test Sample Bid Generation
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="btn btn-primary w-100 mb-2"
+                                    onClick={testRealBusinessSampleBid}
+                                >
+                                    Test Real Business Sample Bid
                                 </button>
                             </div>
                             <div className="col-md-6">
