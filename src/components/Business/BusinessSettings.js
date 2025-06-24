@@ -1357,16 +1357,49 @@ useEffect(() => {
     
     try {
       setTrainingLoading(true);
-      const { data, error } = await supabase
-        .from('autobid_training_responses')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1);
+      
+      // Get business categories first
+      const { data: businessProfile } = await supabase
+        .from('business_profiles')
+        .select('business_category')
+        .eq('id', user.id)
+        .single();
 
-      if (error) throw error;
-      setTrainingCompleted(data && data.length > 0);
+      let userCategories = [];
+      if (businessProfile?.business_category) {
+        if (Array.isArray(businessProfile.business_category)) {
+          userCategories = businessProfile.business_category.filter(cat => cat !== 'other');
+        } else {
+          userCategories = [businessProfile.business_category];
+        }
+      }
+
+      if (userCategories.length === 0) {
+        console.log('No categories found, using photography as default');
+        userCategories = ['photography'];
+      }
+
+      // Check training progress for all categories
+      const { data: progressData, error } = await supabase
+        .from('autobid_training_progress')
+        .select('category, training_completed, consecutive_approvals')
+        .eq('business_id', user.id)
+        .in('category', userCategories);
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+      
+      // Training is completed if ALL categories have completed training
+      const allCategoriesComplete = userCategories.every(category => {
+        const categoryProgress = progressData?.find(p => p.category === category);
+        return categoryProgress && (categoryProgress.training_completed || categoryProgress.consecutive_approvals >= 2);
+      });
+      
+      setTrainingCompleted(allCategoriesComplete);
     } catch (error) {
       console.error('Error checking training completion:', error);
+      setTrainingCompleted(false);
     } finally {
       setTrainingLoading(false);
     }

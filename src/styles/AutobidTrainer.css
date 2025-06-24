@@ -1,8 +1,8 @@
 .autobid-trainer-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
   padding: 20px;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .loading-container {
@@ -10,38 +10,52 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 400px;
   gap: 20px;
 }
 
 .loading-container p {
-  color: #666;
   font-size: 18px;
+  color: #666;
+  margin: 0;
 }
 
 .trainer-header {
-  max-width: 1200px;
-  margin: 0 auto 40px;
   background: white;
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 30px;
+  margin-bottom: 30px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.trainer-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #9633eb, #a855f7, #c084fc);
 }
 
 .back-button {
   background: none;
   border: none;
-  color: #9633eb;
+  color: #666;
   font-size: 16px;
-  font-weight: 500;
   cursor: pointer;
   padding: 8px 0;
   margin-bottom: 20px;
   transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .back-button:hover {
-  color: #7a2bc7;
+  color: #9633eb;
 }
 
 .header-content {
@@ -72,9 +86,9 @@
 .header-description {
   font-size: 18px;
   color: #666;
+  line-height: 1.6;
   max-width: 600px;
   margin: 0 auto;
-  line-height: 1.6;
 }
 
 .progress-section {
@@ -84,6 +98,22 @@
   gap: 15px;
 }
 
+.category-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.category-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
 .progress-bar {
   width: 100%;
   max-width: 400px;
@@ -91,6 +121,7 @@
   background: #e0e0e0;
   border-radius: 4px;
   overflow: hidden;
+  position: relative;
 }
 
 .progress-fill {
@@ -101,9 +132,9 @@
 }
 
 .progress-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
 }
 
 .trainer-content {
@@ -235,6 +266,17 @@
   font-weight: 600;
   color: #333;
   margin-bottom: 12px;
+}
+
+.additional-comments {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  margin: 0;
 }
 
 .requirements-list {
@@ -572,6 +614,10 @@
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .action-buttons .btn-success {
@@ -600,19 +646,60 @@
   transform: none;
 }
 
-.feedback-message {
+/* Feedback Section Styles */
+.feedback-section {
+  margin-top: 25px;
+  padding-top: 25px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.feedback-section h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 15px;
-  padding: 20px;
-  border-radius: 12px;
+  gap: 8px;
+}
+
+.feedback-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s ease;
+}
+
+.feedback-textarea:focus {
+  outline: none;
+  border-color: #9633eb;
+  box-shadow: 0 0 0 3px rgba(150, 51, 235, 0.1);
+}
+
+.feedback-textarea::placeholder {
+  color: #999;
+}
+
+/* Feedback Message Styles */
+.feedback-message {
   background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .feedback-icon {
   font-size: 24px;
+  flex-shrink: 0;
 }
 
 .feedback-icon.success {
@@ -627,25 +714,314 @@
   margin: 0;
   font-size: 16px;
   color: #333;
-  font-weight: 500;
+  line-height: 1.5;
 }
 
+.feedback-message .mt-2 {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Enhanced button styles */
+.btn-success,
+.btn-danger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 140px;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+}
+
+/* Icon spacing utility */
+.me-2 {
+  margin-right: 8px;
+}
+
+/* Responsive improvements for mobile */
 @media (max-width: 480px) {
   .action-buttons {
     flex-direction: column;
-    align-items: center;
+    gap: 10px;
   }
   
   .action-buttons button {
     width: 100%;
-    max-width: 200px;
+    min-width: auto;
+  }
+  
+  .feedback-message {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  
+  .sample-bid-step {
+    gap: 15px;
+  }
+  
+  .ai-bid-card {
+    padding: 20px;
   }
   
   .bid-amount .amount {
     font-size: 36px;
   }
+}
+
+.category-summary {
+  margin-top: 30px;
+  padding: 20px;
+  background: rgba(150, 51, 235, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(150, 51, 235, 0.1);
+}
+
+.category-summary h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 15px 0;
+  text-align: center;
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.category-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.category-status {
+  font-size: 14px;
+  font-weight: 600;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ai-bid-display {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 25px;
+  border-left: 4px solid #9633eb;
+  margin-bottom: 25px;
+}
+
+.bid-amount {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.amount-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.amount-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #9633eb;
+}
+
+.bid-description,
+.bid-breakdown,
+.bid-reasoning {
+  margin-bottom: 20px;
+}
+
+.bid-description h4,
+.bid-breakdown h4,
+.bid-reasoning h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.bid-description p,
+.bid-reasoning p {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.bid-breakdown pre {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.feedback-section {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  border: 1px solid #e0e0e0;
+}
+
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.feedback-textarea {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feedback-textarea label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.feedback-textarea textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.feedback-textarea textarea:focus {
+  outline: none;
+  border-color: #9633eb;
+  box-shadow: 0 0 0 3px rgba(150, 51, 235, 0.1);
+}
+
+.feedback-textarea textarea::placeholder {
+  color: #999;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.feedback-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  color: #666;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feedback-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.feedback-btn.approve {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.feedback-btn.approve:hover {
+  background: #10b981;
+  color: white;
+}
+
+.feedback-btn.approve.active {
+  background: #10b981;
+  color: white;
+}
+
+.feedback-btn.reject {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.feedback-btn.reject:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.feedback-btn.reject.active {
+  background: #ef4444;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .feedback-actions {
+    flex-direction: column;
+  }
   
-  .ai-bid-card {
-    padding: 20px;
+  .category-item {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+  
+  .category-progress {
+    max-width: 100%;
   }
 } 

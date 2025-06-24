@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaCheckCircle, FaLightbulb, FaRobot, FaGraduationCap } from 'react-icons/fa';
+import { FaCheckCircle, FaLightbulb, FaRobot, FaGraduationCap, FaThumbsUp, FaThumbsDown, FaComments } from 'react-icons/fa';
 import '../../styles/AutobidTrainer.css';
 
 const AutobidTrainer = () => {
@@ -17,38 +17,400 @@ const AutobidTrainer = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState(null);
-  const [businessCategory, setBusinessCategory] = useState('');
+  const [businessCategories, setBusinessCategories] = useState([]);
+  const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
+  const [currentCategory, setCurrentCategory] = useState('');
   const [showCompletion, setShowCompletion] = useState(false);
   const [showSampleBid, setShowSampleBid] = useState(false);
   const [completedSteps, setCompletedSteps] = useState(0);
   const [sampleBidApproved, setSampleBidApproved] = useState(null);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [consecutiveApprovals, setConsecutiveApprovals] = useState(0);
+  const [currentSampleBidIndex, setCurrentSampleBidIndex] = useState(0);
+  const [trainingProgress, setTrainingProgress] = useState({});
+  const [currentSampleBidData, setCurrentSampleBidData] = useState([]);
+  const [categoryProgress, setCategoryProgress] = useState({});
   const navigate = useNavigate();
 
   const TOTAL_STEPS = 5;
 
-  // Hardcoded sample bid data
-  const sampleBidData = {
-    request: {
-      date: "2024-08-15",
-      duration: "8 hours",
-      location: "San Francisco, CA",
-      event_type: "wedding",
-      guest_count: 150,
-      requirements: [
-        "Full day coverage",
-        "Engagement shoot",
-        "Online gallery",
-        "Print release",
-        "Drone footage"
+  // Dynamic sample bid data based on business category
+  const getSampleBidData = (category) => {
+    const sampleBids = {
+      photography: [
+        {
+          request: {
+            date: "2024-08-15",
+            duration: "8 hours",
+            location: "San Francisco, CA",
+            event_type: "wedding",
+            guest_count: 150,
+            requirements: [
+              "Full day coverage",
+              "Engagement shoot",
+              "Online gallery",
+              "Print release",
+              "Drone footage"
+            ]
+          },
+          generatedBid: {
+            amount: 2800,
+            description: "Complete wedding photography package including full day coverage, engagement session, online gallery with 400+ edited photos, print release, and drone footage. Professional equipment and backup gear included.",
+            breakdown: "Full day coverage (8 hours): $1,600\nEngagement shoot: $400\nOnline gallery & editing: $500\nDrone footage: $200\nPrint release: $100",
+            reasoning: "Based on your training data, this pricing reflects your premium service quality and comprehensive coverage. The amount accounts for your experience level and the high-end equipment you use."
+          }
+        },
+        {
+          request: {
+            date: "2024-09-20",
+            duration: "2 hours",
+            location: "Provo, UT",
+            event_type: "engagement",
+            guest_count: 2,
+            requirements: [
+              "Engagement session",
+              "Outdoor locations",
+              "Digital files",
+              "Print release"
+            ]
+          },
+          generatedBid: {
+            amount: 450,
+            description: "Beautiful engagement session at scenic outdoor locations. Includes 2 hours of shooting, 50+ edited photos, and print release for personal use.",
+            breakdown: "2 hours shooting: $300\nEditing & retouching: $100\nPrint release: $50",
+            reasoning: "This pricing is competitive for engagement sessions while reflecting your professional quality and experience."
+          }
+        }
+      ],
+      videography: [
+        {
+          request: {
+            date: "2024-09-20",
+            duration: "4 hours",
+            location: "Salt Lake City, UT",
+            event_type: "wedding",
+            guest_count: 80,
+            requirements: [
+              "Ceremony coverage",
+              "Reception highlights",
+              "Highlight reel",
+              "Digital files"
+            ]
+          },
+          generatedBid: {
+            amount: 1800,
+            description: "Wedding videography package covering ceremony and reception highlights. Includes professional editing, highlight reel, and digital file delivery. Perfect for capturing your special moments.",
+            breakdown: "Ceremony coverage: $800\nReception highlights: $600\nHighlight reel: $300\nDigital files: $100",
+            reasoning: "This pricing is based on your previous responses showing competitive rates for mid-sized weddings. The package provides comprehensive coverage while remaining accessible."
+          }
+        },
+        {
+          request: {
+            date: "2024-10-15",
+            duration: "6 hours",
+            location: "Park City, UT",
+            event_type: "wedding",
+            guest_count: 120,
+            requirements: [
+              "Full day coverage",
+              "Cinematic style",
+              "Highlight reel",
+              "Feature film"
+            ]
+          },
+          generatedBid: {
+            amount: 2400,
+            description: "Cinematic wedding videography with full day coverage. Includes highlight reel, feature film, and all raw footage. Professional cinematic equipment and editing.",
+            breakdown: "Full day coverage: $1,200\nCinematic editing: $800\nHighlight reel: $300\nFeature film: $100",
+            reasoning: "Premium pricing reflects cinematic quality and full day coverage requirements."
+          }
+        }
+      ],
+      florist: [
+        {
+          request: {
+            date: "2024-07-15",
+            duration: "Setup only",
+            location: "Park City, UT",
+            event_type: "wedding",
+            guest_count: 100,
+            requirements: [
+              "Bridal bouquet",
+              "8 boutonnieres",
+              "12 centerpieces",
+              "Delivery and setup"
+            ]
+          },
+          generatedBid: {
+            amount: 950,
+            description: "Complete wedding floral package featuring a stunning bridal bouquet, boutonnieres for the wedding party, elegant centerpieces, and professional delivery and setup services.",
+            breakdown: "Bridal bouquet: $200\n8 boutonnieres: $160\n12 centerpieces: $480\nDelivery & setup: $110",
+            reasoning: "Based on your training responses, this pricing reflects your quality materials and professional service while staying within typical market ranges for this scope of work."
+          }
+        },
+        {
+          request: {
+            date: "2024-08-10",
+            duration: "Setup only",
+            location: "Salt Lake City, UT",
+            event_type: "wedding",
+            guest_count: 150,
+            requirements: [
+              "Bridal bouquet",
+              "10 boutonnieres",
+              "15 centerpieces",
+              "Aisle decorations",
+              "Ceremony arch"
+            ]
+          },
+          generatedBid: {
+            amount: 1400,
+            description: "Luxury wedding floral package with premium flowers and extensive decorations. Includes ceremony arch, aisle decorations, and elegant centerpieces.",
+            breakdown: "Bridal bouquet: $250\n10 boutonnieres: $200\n15 centerpieces: $600\nAisle decorations: $200\nCeremony arch: $150",
+            reasoning: "Premium pricing for luxury package with extensive floral work and premium materials."
+          }
+        }
+      ],
+      beauty: [
+        {
+          request: {
+            date: "2024-06-10",
+            duration: "3 hours",
+            location: "Orem, UT",
+            event_type: "wedding",
+            guest_count: 4,
+            requirements: [
+              "Bridal hair and makeup",
+              "3 bridesmaids hair and makeup",
+              "On-site service",
+              "Trial session included"
+            ]
+          },
+          generatedBid: {
+            amount: 450,
+            description: "Complete bridal party beauty package including bridal hair and makeup, three bridesmaids services, on-site application, and a trial session for the bride.",
+            breakdown: "Bridal hair & makeup: $150\n3 bridesmaids: $225\nOn-site service: $50\nTrial session: $25",
+            reasoning: "This pricing structure shows competitive rates while accounting for the convenience of on-site service and the value of the trial session."
+          }
+        },
+        {
+          request: {
+            date: "2024-07-20",
+            duration: "4 hours",
+            location: "Salt Lake City, UT",
+            event_type: "wedding",
+            guest_count: 6,
+            requirements: [
+              "Bridal hair and makeup",
+              "5 bridesmaids hair and makeup",
+              "Mother of bride hair and makeup",
+              "On-site service",
+              "Trial session included"
+            ]
+          },
+          generatedBid: {
+            amount: 650,
+            description: "Complete bridal party beauty package with extended services. Includes bridal hair and makeup, five bridesmaids, mother of bride services, on-site application, and trial session.",
+            breakdown: "Bridal hair & makeup: $150\n5 bridesmaids: $375\nMother of bride: $75\nOn-site service: $50\nTrial session: $0",
+            reasoning: "Comprehensive package pricing that reflects the full scope of services and on-site convenience."
+          }
+        }
+      ],
+      dj: [
+        {
+          request: {
+            date: "2024-08-15",
+            duration: "5 hours",
+            location: "Salt Lake City, UT",
+            event_type: "wedding",
+            guest_count: 120,
+            requirements: [
+              "Ceremony music",
+              "Reception DJ",
+              "Professional sound system",
+              "Playlist consultation",
+              "MC services"
+            ]
+          },
+          generatedBid: {
+            amount: 800,
+            description: "Complete wedding DJ package including ceremony music, reception entertainment, professional sound system, playlist consultation, and MC services for your special day.",
+            breakdown: "Ceremony music: $150\nReception DJ (5 hours): $500\nProfessional sound system: $100\nPlaylist consultation: $50",
+            reasoning: "This pricing reflects your professional equipment and experience while remaining competitive in the market."
+          }
+        },
+        {
+          request: {
+            date: "2024-09-10",
+            duration: "6 hours",
+            location: "Park City, UT",
+            event_type: "wedding",
+            guest_count: 80,
+            requirements: [
+              "Ceremony music",
+              "Reception DJ",
+              "Professional sound system",
+              "Playlist consultation",
+              "MC services",
+              "Lighting effects"
+            ]
+          },
+          generatedBid: {
+            amount: 950,
+            description: "Premium wedding DJ package with lighting effects. Includes ceremony music, reception entertainment, professional sound system, playlist consultation, MC services, and atmospheric lighting.",
+            breakdown: "Ceremony music: $150\nReception DJ (6 hours): $600\nProfessional sound system: $100\nLighting effects: $100",
+            reasoning: "Premium package pricing that includes additional lighting effects for enhanced atmosphere."
+          }
+        }
+      ],
+      "wedding planning": [
+        {
+          request: {
+            date: "2024-09-15",
+            duration: "Full planning",
+            location: "Salt Lake City, UT",
+            event_type: "wedding",
+            guest_count: 150,
+            requirements: [
+              "Full wedding planning",
+              "Vendor coordination",
+              "Timeline management",
+              "Budget management",
+              "Day-of coordination"
+            ]
+          },
+          generatedBid: {
+            amount: 2500,
+            description: "Complete wedding planning package including full planning services, vendor coordination, timeline management, budget oversight, and day-of coordination to ensure your perfect day.",
+            breakdown: "Full planning services: $1,500\nVendor coordination: $400\nTimeline management: $300\nBudget management: $200\nDay-of coordination: $100",
+            reasoning: "This pricing reflects the comprehensive nature of full wedding planning services and your professional expertise."
+          }
+        },
+        {
+          request: {
+            date: "2024-10-20",
+            duration: "Partial planning",
+            location: "Park City, UT",
+            event_type: "wedding",
+            guest_count: 80,
+            requirements: [
+              "Partial planning",
+              "Vendor recommendations",
+              "Timeline assistance",
+              "Day-of coordination"
+            ]
+          },
+          generatedBid: {
+            amount: 1200,
+            description: "Partial wedding planning package including vendor recommendations, timeline assistance, and day-of coordination for couples who have started planning but need professional guidance.",
+            breakdown: "Partial planning: $600\nVendor recommendations: $200\nTimeline assistance: $200\nDay-of coordination: $200",
+            reasoning: "Partial planning pricing that provides essential services while allowing couples to maintain control over their planning process."
+          }
+        }
+      ],
+      catering: [
+        {
+          request: {
+            date: "2024-08-15",
+            duration: "Dinner service",
+            location: "Salt Lake City, UT",
+            event_type: "wedding",
+            guest_count: 120,
+            requirements: [
+              "Plated dinner service",
+              "Appetizers",
+              "Main course",
+              "Dessert",
+              "Staffing",
+              "Setup and cleanup"
+            ]
+          },
+          generatedBid: {
+            amount: 4800,
+            description: "Complete wedding catering package with plated dinner service for 120 guests. Includes appetizers, main course, dessert, professional staffing, and full setup and cleanup services.",
+            breakdown: "Plated dinner (120 guests): $3,600\nAppetizers: $600\nDessert: $300\nStaffing: $200\nSetup & cleanup: $100",
+            reasoning: "This pricing reflects the quality of plated service and comprehensive catering package for a mid-sized wedding."
+          }
+        },
+        {
+          request: {
+            date: "2024-09-20",
+            duration: "Buffet service",
+            location: "Provo, UT",
+            event_type: "wedding",
+            guest_count: 80,
+            requirements: [
+              "Buffet dinner service",
+              "Appetizers",
+              "Main course",
+              "Dessert",
+              "Staffing",
+              "Setup and cleanup"
+            ]
+          },
+          generatedBid: {
+            amount: 2800,
+            description: "Wedding buffet catering package for 80 guests. Includes appetizers, main course, dessert, professional staffing, and complete setup and cleanup services.",
+            breakdown: "Buffet dinner (80 guests): $2,000\nAppetizers: $400\nDessert: $200\nStaffing: $150\nSetup & cleanup: $50",
+            reasoning: "Buffet service pricing that provides excellent value while maintaining quality and professional service."
+          }
+        }
+      ],
+      cake: [
+        {
+          request: {
+            date: "2024-08-15",
+            duration: "Delivery only",
+            location: "Salt Lake City, UT",
+            event_type: "wedding",
+            guest_count: 120,
+            requirements: [
+              "3-tier wedding cake",
+              "Custom design",
+              "Delivery and setup",
+              "Cake cutting service"
+            ]
+          },
+          generatedBid: {
+            amount: 450,
+            description: "Beautiful 3-tier custom wedding cake designed to match your wedding theme. Includes delivery, setup, and cake cutting service for your special day.",
+            breakdown: "3-tier cake: $300\nCustom design: $100\nDelivery & setup: $30\nCake cutting service: $20",
+            reasoning: "This pricing reflects the custom design work and comprehensive service package for a wedding cake."
+          }
+        },
+        {
+          request: {
+            date: "2024-09-10",
+            duration: "Delivery only",
+            location: "Park City, UT",
+            event_type: "wedding",
+            guest_count: 80,
+            requirements: [
+              "2-tier wedding cake",
+              "Custom design",
+              "Cupcakes for guests",
+              "Delivery and setup"
+            ]
+          },
+          generatedBid: {
+            amount: 380,
+            description: "Elegant 2-tier wedding cake with custom design and cupcakes for all guests. Includes delivery and setup services.",
+            breakdown: "2-tier cake: $200\nCustom design: $80\nCupcakes (80): $80\nDelivery & setup: $20",
+            reasoning: "Combination cake and cupcake pricing that provides variety while maintaining quality and custom design elements."
+          }
+        }
       ]
-    },
-    generatedBid: {
-      amount: 2800,
-      description: "Complete wedding photography package including full day coverage, engagement session, online gallery with 400+ edited photos, print release, and drone footage. Professional equipment and backup gear included.",
-      breakdown: "Full day coverage (8 hours): $1,600\nEngagement shoot: $400\nOnline gallery & editing: $500\nDrone footage: $200\nPrint release: $100",
-      reasoning: "Based on your training data, this pricing reflects your premium service quality and comprehensive coverage. The amount accounts for your experience level and the high-end equipment you use."
-    }
+    };
+
+    return sampleBids[category] || sampleBids.photography;
   };
+
+  // Update sample bid data when business category changes
+  useEffect(() => {
+    const sampleData = getSampleBidData(currentCategory);
+    setCurrentSampleBidData(sampleData);
+    console.log(`Updated sample bid data for category: ${currentCategory}`, sampleData.length, 'samples available');
+  }, [currentCategory]);
 
   useEffect(() => {
     const fetchUserAndRequests = async () => {
@@ -61,54 +423,77 @@ const AutobidTrainer = () => {
         }
         setUser(currentUser);
 
-        // Get business category
+        // Get business categories
         const { data: businessProfile } = await supabase
           .from('business_profiles')
           .select('business_category')
           .eq('id', currentUser.id)
           .single();
 
-        let userCategory = '';
+        let userCategories = [];
+        
         if (businessProfile?.business_category) {
-          userCategory = Array.isArray(businessProfile.business_category) 
-            ? businessProfile.business_category[0] 
-            : businessProfile.business_category;
-          setBusinessCategory(userCategory);
-        }
-
-        // Fetch training requests
-        const { data: requests, error } = await supabase
-          .from('autobid_training_requests')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        // Filter by business category if available
-        let filteredRequests = requests;
-        if (userCategory && userCategory !== 'other') {
-          // First, get category-specific requests
-          const categoryRequests = requests.filter(req => req.category === userCategory);
-          
-          // If we have enough category-specific requests, use them
-          if (categoryRequests.length >= TOTAL_STEPS) {
-            filteredRequests = categoryRequests.slice(0, TOTAL_STEPS);
+          if (Array.isArray(businessProfile.business_category)) {
+            userCategories = businessProfile.business_category.filter(cat => cat !== 'other');
           } else {
-            // Mix category-specific and general requests
-            const generalRequests = requests.filter(req => req.category !== userCategory);
-            filteredRequests = [
-              ...categoryRequests,
-              ...generalRequests.slice(0, TOTAL_STEPS - categoryRequests.length)
-            ];
+            userCategories = [businessProfile.business_category];
           }
-        } else {
-          // If no specific category or 'other', use general requests
-          filteredRequests = requests.slice(0, TOTAL_STEPS);
         }
 
-        setTrainingRequests(filteredRequests);
-        setCurrentRequest(filteredRequests[0]);
+        if (userCategories.length === 0) {
+          console.log('No categories found, using photography as default');
+          userCategories = ['photography'];
+        }
+
+        setBusinessCategories(userCategories);
+        setCurrentCategory(userCategories[0]);
+        console.log('User categories:', userCategories);
+
+        // Fetch category-specific training progress
+        const { data: progressData, error: progressError } = await supabase
+          .from('autobid_training_progress')
+          .select('*')
+          .eq('business_id', currentUser.id);
+
+        if (progressError && progressError.code !== 'PGRST116') {
+          throw progressError;
+        }
+
+        // Organize progress by category
+        const progressByCategory = {};
+        if (progressData) {
+          progressData.forEach(progress => {
+            progressByCategory[progress.category] = progress;
+          });
+        }
+
+        // Create progress records for missing categories
+        for (const category of userCategories) {
+          if (!progressByCategory[category]) {
+            const { data: newProgress, error: createError } = await supabase
+              .from('autobid_training_progress')
+              .insert({
+                business_id: currentUser.id,
+                category: category,
+                total_scenarios_completed: 0,
+                scenarios_approved: 0,
+                consecutive_approvals: 0,
+                training_completed: false
+              })
+              .select()
+              .single();
+
+            if (createError) throw createError;
+            progressByCategory[category] = newProgress;
+          }
+        }
+
+        setTrainingProgress(progressByCategory);
+        setCategoryProgress(progressByCategory);
+
+        // Load requests for current category
+        await loadCategoryRequests(userCategories[0]);
+
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching training data:', error);
@@ -118,6 +503,62 @@ const AutobidTrainer = () => {
 
     fetchUserAndRequests();
   }, [navigate]);
+
+  const loadCategoryRequests = async (category) => {
+    try {
+      // Fetch training requests for specific category
+      const { data: requests, error } = await supabase
+        .from('autobid_training_requests')
+        .select('*')
+        .eq('is_active', true)
+        .eq('category', category)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      console.log(`Found ${requests.length} requests for category: ${category}`);
+
+      // If we don't have enough category-specific requests, use general requests
+      if (requests.length < TOTAL_STEPS) {
+        const { data: generalRequests, error: generalError } = await supabase
+          .from('autobid_training_requests')
+          .select('*')
+          .eq('is_active', true)
+          .neq('category', category)
+          .order('created_at', { ascending: false });
+
+        if (generalError) throw generalError;
+
+        const combinedRequests = [
+          ...requests,
+          ...generalRequests.slice(0, TOTAL_STEPS - requests.length)
+        ];
+
+        setTrainingRequests(combinedRequests);
+        setCurrentRequest(combinedRequests[0]);
+      } else {
+        setTrainingRequests(requests.slice(0, TOTAL_STEPS));
+        setCurrentRequest(requests[0]);
+      }
+
+      // Reset training state for new category
+      setCurrentStep(0);
+      setCompletedSteps(0);
+      setConsecutiveApprovals(categoryProgress[category]?.consecutive_approvals || 0);
+      setShowSampleBid(false);
+      setShowCompletion(false);
+      setSampleBidApproved(null);
+      setFeedbackText('');
+      setCurrentSampleBidIndex(0);
+      setBidAmount('');
+      setBidDescription('');
+      setPricingBreakdown('');
+      setPricingReasoning('');
+
+    } catch (error) {
+      console.error('Error loading category requests:', error);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!bidAmount || !bidDescription) {
@@ -136,18 +577,32 @@ const AutobidTrainer = () => {
           bid_description: bidDescription,
           pricing_breakdown: pricingBreakdown,
           pricing_reasoning: pricingReasoning,
-          is_training: true
+          is_training: true,
+          is_ai_generated: false,
+          category: currentCategory
         });
 
       if (error) throw error;
 
-      // Move to next step
-      const nextStep = currentStep + 1;
-      setCompletedSteps(nextStep);
+      // Update training progress for current category
+      const newCompletedSteps = completedSteps + 1;
+      setCompletedSteps(newCompletedSteps);
 
-      if (nextStep < TOTAL_STEPS) {
-        setCurrentStep(nextStep);
-        setCurrentRequest(trainingRequests[nextStep]);
+      const currentProgress = categoryProgress[currentCategory];
+      const { error: progressError } = await supabase
+        .from('autobid_training_progress')
+        .update({
+          total_scenarios_completed: newCompletedSteps,
+          last_training_date: new Date().toISOString()
+        })
+        .eq('business_id', user.id)
+        .eq('category', currentCategory);
+
+      if (progressError) throw progressError;
+
+      if (newCompletedSteps < TOTAL_STEPS) {
+        setCurrentStep(newCompletedSteps);
+        setCurrentRequest(trainingRequests[newCompletedSteps]);
         setBidAmount('');
         setBidDescription('');
         setPricingBreakdown('');
@@ -167,31 +622,116 @@ const AutobidTrainer = () => {
   const handleSampleBidResponse = async (approved) => {
     setSampleBidApproved(approved);
     
-    // Save the sample bid response to the database
     try {
-      const { error } = await supabase
+      // Save AI-generated bid to training responses
+      const currentBid = currentSampleBidData[currentSampleBidIndex];
+      const { data: aiResponse, error: aiError } = await supabase
         .from('autobid_training_responses')
         .insert({
           business_id: user.id,
-          request_id: 'sample-bid-test',
-          bid_amount: sampleBidData.generatedBid.amount,
-          bid_description: sampleBidData.generatedBid.description,
-          pricing_breakdown: sampleBidData.generatedBid.breakdown,
-          pricing_reasoning: sampleBidData.generatedBid.reasoning,
+          request_id: currentRequest?.id || 'sample-request',
+          bid_amount: currentBid.generatedBid.amount,
+          bid_description: currentBid.generatedBid.description,
+          pricing_breakdown: currentBid.generatedBid.breakdown,
+          pricing_reasoning: currentBid.generatedBid.reasoning,
           is_training: true,
-          is_sample_bid: true,
-          sample_bid_approved: approved
-        });
+          is_ai_generated: true,
+          feedback: feedbackText,
+          feedback_type: approved ? 'approved' : 'rejected',
+          category: currentCategory
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (aiError) throw aiError;
+
+      // Save detailed feedback if provided
+      if (feedbackText.trim()) {
+        const { error: feedbackError } = await supabase
+          .from('autobid_training_feedback')
+          .insert({
+            business_id: user.id,
+            training_response_id: aiResponse.id,
+            feedback_type: approved ? 'approved' : 'rejected',
+            feedback_text: feedbackText,
+            specific_issues: approved ? null : { general: 'needs_adjustment' },
+            suggested_improvements: approved ? null : feedbackText
+          });
+
+        if (feedbackError) throw feedbackError;
+      }
+
+      // Update consecutive approvals for current category
+      const newConsecutiveApprovals = approved ? consecutiveApprovals + 1 : 0;
+      setConsecutiveApprovals(newConsecutiveApprovals);
+
+      const currentProgress = categoryProgress[currentCategory];
+      const { error: progressError } = await supabase
+        .from('autobid_training_progress')
+        .update({
+          scenarios_approved: (currentProgress?.scenarios_approved || 0) + (approved ? 1 : 0),
+          consecutive_approvals: newConsecutiveApprovals,
+          training_completed: newConsecutiveApprovals >= 2,
+          training_completed_at: newConsecutiveApprovals >= 2 ? new Date().toISOString() : null
+        })
+        .eq('business_id', user.id)
+        .eq('category', currentCategory);
+
+      if (progressError) throw progressError;
+
+      // Update local progress state
+      const updatedProgress = {
+        ...categoryProgress,
+        [currentCategory]: {
+          ...currentProgress,
+          scenarios_approved: (currentProgress?.scenarios_approved || 0) + (approved ? 1 : 0),
+          consecutive_approvals: newConsecutiveApprovals,
+          training_completed: newConsecutiveApprovals >= 2
+        }
+      };
+      setCategoryProgress(updatedProgress);
+
+      // Check if current category training is complete
+      if (newConsecutiveApprovals >= 2) {
+        // Check if all categories are complete
+        const allCategoriesComplete = businessCategories.every(cat => 
+          updatedProgress[cat]?.training_completed
+        );
+
+        if (allCategoriesComplete) {
+          // All categories complete - show final completion
+          setShowSampleBid(false);
+          setShowCompletion(true);
+        } else {
+          // Move to next category
+          const nextCategoryIndex = currentCategoryIndex + 1;
+          if (nextCategoryIndex < businessCategories.length) {
+            setCurrentCategoryIndex(nextCategoryIndex);
+            const nextCategory = businessCategories[nextCategoryIndex];
+            setCurrentCategory(nextCategory);
+            await loadCategoryRequests(nextCategory);
+          } else {
+            // All categories complete
+            setShowSampleBid(false);
+            setShowCompletion(true);
+          }
+        }
+      } else {
+        // Show next sample bid or continue coaching
+        if (currentSampleBidIndex < currentSampleBidData.length - 1) {
+          setCurrentSampleBidIndex(currentSampleBidIndex + 1);
+          setSampleBidApproved(null);
+          setFeedbackText('');
+        } else {
+          // All sample bids shown, show completion for this category
+          setShowSampleBid(false);
+          setShowCompletion(true);
+        }
+      }
     } catch (error) {
-      console.error('Error saving sample bid response:', error);
+      console.error('Error handling sample bid response:', error);
+      alert('Error saving your feedback. Please try again.');
     }
-
-    // Show completion screen after a brief delay
-    setTimeout(() => {
-      setShowCompletion(true);
-    }, 1000);
   };
 
   const formatRequestData = (requestData) => {
@@ -201,13 +741,13 @@ const AutobidTrainer = () => {
       <div className="request-display">
         <div className="request-header">
           <h3>{data.event_type ? data.event_type.charAt(0).toUpperCase() + data.event_type.slice(1) : 'Event'} Request</h3>
-          <span className="request-date">{data.date}</span>
+          <span className="request-date">{data.start_date || data.date}</span>
         </div>
         
         <div className="request-details">
           <div className="detail-row">
             <span className="detail-label">Date:</span>
-            <span className="detail-value">{data.date}</span>
+            <span className="detail-value">{data.start_date || data.date}</span>
           </div>
           <div className="detail-row">
             <span className="detail-label">Duration:</span>
@@ -221,13 +761,26 @@ const AutobidTrainer = () => {
             <span className="detail-label">Event Type:</span>
             <span className="detail-value">{data.event_type}</span>
           </div>
-          {data.guest_count && (
+          {(data.num_people || data.guest_count) && (
             <div className="detail-row">
               <span className="detail-label">Guest Count:</span>
-              <span className="detail-value">{data.guest_count}</span>
+              <span className="detail-value">{data.num_people || data.guest_count}</span>
+            </div>
+          )}
+          {data.price_range && (
+            <div className="detail-row">
+              <span className="detail-label">Budget Range:</span>
+              <span className="detail-value">{data.price_range}</span>
             </div>
           )}
         </div>
+
+        {data.additional_comments && (
+          <div className="requirements-section">
+            <h4>Additional Comments:</h4>
+            <p className="additional-comments">{data.additional_comments}</p>
+          </div>
+        )}
 
         {data.requirements && data.requirements.length > 0 && (
           <div className="requirements-section">
@@ -254,7 +807,190 @@ const AutobidTrainer = () => {
     );
   }
 
+  if (showCompletion) {
+    // Check if this is final completion or category completion
+    const allCategoriesComplete = businessCategories.every(cat => 
+      categoryProgress[cat]?.training_completed
+    );
+
+    if (allCategoriesComplete) {
+      // Final completion - all categories trained
+      return (
+        <div className="autobid-trainer-container">
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="completion-screen"
+            >
+              <div className="completion-content">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
+                  className="completion-icon"
+                >
+                  <FaGraduationCap />
+                </motion.div>
+                
+                <motion.h1
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
+                  className="completion-title"
+                >
+                  AI Training Complete!
+                </motion.h1>
+                
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.7, duration: 0.6 }}
+                  className="completion-description"
+                >
+                  Congratulations! You've completed AI training for all your business categories. Your pricing insights will help us generate more accurate and personalized bids for your business.
+                </motion.p>
+                
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.9, duration: 0.6 }}
+                  className="completion-stats"
+                >
+                  <div className="stat-item">
+                    <span className="stat-number">{businessCategories.length}</span>
+                    <span className="stat-label">Categories Trained</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-number">{TOTAL_STEPS * businessCategories.length}</span>
+                    <span className="stat-label">Total Scenarios</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-number">✓</span>
+                    <span className="stat-label">AI Ready</span>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 1.0, duration: 0.6 }}
+                  className="category-summary"
+                >
+                  <h3>Trained Categories:</h3>
+                  <div className="category-list">
+                    {businessCategories.map((category, index) => (
+                      <div key={category} className="category-item">
+                        <span className="category-name">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                        <span className="category-status">✓ Complete</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+                
+                <motion.button
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 1.1, duration: 0.6 }}
+                  className="btn-primary"
+                  onClick={() => navigate('/business-settings')}
+                >
+                  Return to Settings
+                </motion.button>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      );
+    } else {
+      // Category completion - show next category prompt
+      const nextCategoryIndex = currentCategoryIndex + 1;
+      const nextCategory = businessCategories[nextCategoryIndex];
+      
+      return (
+        <div className="autobid-trainer-container">
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="completion-screen"
+            >
+              <div className="completion-content">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
+                  className="completion-icon"
+                >
+                  <FaCheckCircle />
+                </motion.div>
+                
+                <motion.h1
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
+                  className="completion-title"
+                >
+                  {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} Training Complete!
+                </motion.h1>
+                
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.7, duration: 0.6 }}
+                  className="completion-description"
+                >
+                  Great job! You've completed AI training for {currentCategory}. Now let's train the AI for your {nextCategory} services.
+                </motion.p>
+                
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.9, duration: 0.6 }}
+                  className="completion-stats"
+                >
+                  <div className="stat-item">
+                    <span className="stat-number">{currentCategoryIndex + 1}</span>
+                    <span className="stat-label">of {businessCategories.length} Categories</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-number">{TOTAL_STEPS}</span>
+                    <span className="stat-label">Scenarios Completed</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-number">✓</span>
+                    <span className="stat-label">{currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} Trained</span>
+                  </div>
+                </motion.div>
+                
+                <motion.button
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 1.1, duration: 0.6 }}
+                  className="btn-primary"
+                  onClick={async () => {
+                    setCurrentCategoryIndex(nextCategoryIndex);
+                    setCurrentCategory(nextCategory);
+                    await loadCategoryRequests(nextCategory);
+                  }}
+                >
+                  Continue to {nextCategory.charAt(0).toUpperCase() + nextCategory.slice(1)} Training
+                </motion.button>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      );
+    }
+  }
+
   if (showSampleBid) {
+    const currentBid = currentSampleBidData[currentSampleBidIndex];
+    
     return (
       <div className="autobid-trainer-container">
         <div className="trainer-header">
@@ -268,184 +1004,122 @@ const AutobidTrainer = () => {
           <div className="header-content">
             <div className="header-title">
               <FaRobot className="header-icon" />
-              <h1>AI Sample Bid Test</h1>
+              <h1>AI Sample Bid Test - {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</h1>
             </div>
             <p className="header-description">
-              Based on your training, here's a sample bid our AI generated. Let us know if this looks accurate!
+              Based on your {currentCategory} training, here's a sample bid our AI generated. Let us know if this looks accurate!
             </p>
           </div>
 
           <div className="progress-section">
-            <div className="progress-bar">
-              <div 
-                className="progress-fill"
-                style={{ width: '100%' }}
-              />
+            <div className="category-progress">
+              <span className="category-label">
+                Training {currentCategoryIndex + 1} of {businessCategories.length}: {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}
+              </span>
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill"
+                  style={{ width: `${(consecutiveApprovals / 2) * 100}%` }}
+                />
+              </div>
+              <span className="progress-text">
+                {consecutiveApprovals} of 2 consecutive approvals needed
+              </span>
             </div>
-            <span className="progress-text">
-              Final Step: AI Sample Bid
-            </span>
           </div>
         </div>
 
         <div className="trainer-content">
           <AnimatePresence mode="wait">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              key={`sample-${currentSampleBidIndex}`}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
               className="sample-bid-step"
             >
               <div className="request-section">
                 <div className="section-header">
                   <FaLightbulb className="section-icon" />
-                  <h2>Sample Request</h2>
+                  <h2>Sample {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} Request</h2>
                 </div>
                 
-                {formatRequestData(sampleBidData.request)}
+                {currentBid && formatRequestData(currentBid.request)}
               </div>
 
               <div className="ai-bid-section">
                 <div className="section-header">
-                  <FaRobot className="section-icon" style={{ color: '#9633eb' }} />
-                  <h2>AI Generated Bid</h2>
+                  <FaRobot className="section-icon" />
+                  <h2>AI-Generated Bid</h2>
                 </div>
 
-                <div className="ai-bid-card">
+                <div className="ai-bid-display">
                   <div className="bid-amount">
-                    <span className="currency">$</span>
-                    <span className="amount">{sampleBidData.generatedBid.amount.toLocaleString()}</span>
+                    <span className="amount-label">Bid Amount:</span>
+                    <span className="amount-value">${currentBid.generatedBid.amount.toLocaleString()}</span>
                   </div>
-                  
+
                   <div className="bid-description">
-                    <h4>Bid Description:</h4>
-                    <p>{sampleBidData.generatedBid.description}</p>
+                    <h4>Description:</h4>
+                    <p>{currentBid.generatedBid.description}</p>
                   </div>
 
-                  <div className="bid-breakdown">
-                    <h4>Pricing Breakdown:</h4>
-                    <pre>{sampleBidData.generatedBid.breakdown}</pre>
-                  </div>
+                  {currentBid.generatedBid.breakdown && (
+                    <div className="bid-breakdown">
+                      <h4>Pricing Breakdown:</h4>
+                      <pre>{currentBid.generatedBid.breakdown}</pre>
+                    </div>
+                  )}
 
-                  <div className="bid-reasoning">
-                    <h4>AI Reasoning:</h4>
-                    <p>{sampleBidData.generatedBid.reasoning}</p>
-                  </div>
+                  {currentBid.generatedBid.reasoning && (
+                    <div className="bid-reasoning">
+                      <h4>Pricing Reasoning:</h4>
+                      <p>{currentBid.generatedBid.reasoning}</p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="sample-bid-actions">
-                  <h3>How accurate is this bid?</h3>
-                  <div className="action-buttons">
-                    <button
-                      className="btn-success"
-                      onClick={() => handleSampleBidResponse(true)}
-                      disabled={sampleBidApproved !== null}
-                    >
-                      <i className="fas fa-thumbs-up me-2"></i>
-                      Looks Good!
-                    </button>
-                    <button
-                      className="btn-danger"
-                      onClick={() => handleSampleBidResponse(false)}
-                      disabled={sampleBidApproved !== null}
-                    >
-                      <i className="fas fa-thumbs-down me-2"></i>
-                      Needs Adjustment
-                    </button>
+                <div className="feedback-section">
+                  <div className="section-header">
+                    <FaComments className="section-icon" />
+                    <h2>Your Feedback</h2>
                   </div>
-                  
-                  {sampleBidApproved !== null && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="feedback-message"
-                    >
-                      <div className={`feedback-icon ${sampleBidApproved ? 'success' : 'warning'}`}>
-                        <i className={`fas fa-${sampleBidApproved ? 'check-circle' : 'exclamation-triangle'}`}></i>
-                      </div>
-                      <p>
-                        {sampleBidApproved 
-                          ? "Great! Your feedback will help improve our AI's accuracy."
-                          : "Thank you for the feedback! We'll use this to improve our AI's pricing accuracy."
-                        }
-                      </p>
-                    </motion.div>
-                  )}
+
+                  <div className="feedback-form">
+                    <div className="feedback-textarea">
+                      <label htmlFor="feedbackText">Additional Feedback (Optional)</label>
+                      <textarea
+                        id="feedbackText"
+                        value={feedbackText}
+                        onChange={(e) => setFeedbackText(e.target.value)}
+                        placeholder="Tell us what you think about this bid. What would you change? What's good about it?"
+                        rows="4"
+                      />
+                    </div>
+
+                    <div className="feedback-actions">
+                      <button
+                        className={`feedback-btn reject ${sampleBidApproved === false ? 'active' : ''}`}
+                        onClick={() => handleSampleBidResponse(false)}
+                      >
+                        <FaThumbsDown />
+                        Needs Adjustment
+                      </button>
+                      <button
+                        className={`feedback-btn approve ${sampleBidApproved === true ? 'active' : ''}`}
+                        onClick={() => handleSampleBidResponse(true)}
+                      >
+                        <FaThumbsUp />
+                        Looks Good!
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
           </AnimatePresence>
         </div>
-      </div>
-    );
-  }
-
-  if (showCompletion) {
-    return (
-      <div className="autobid-trainer-container">
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="completion-screen"
-          >
-            <div className="completion-content">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
-                className="completion-icon"
-              >
-                <FaGraduationCap />
-              </motion.div>
-              
-              <motion.h1
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-                className="completion-title"
-              >
-                AI Training Complete!
-              </motion.h1>
-              
-              <motion.p
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.7, duration: 0.6 }}
-                className="completion-description"
-              >
-                Thank you for training our AI! Your pricing insights will help us generate more accurate and personalized bids for your business.
-              </motion.p>
-              
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.9, duration: 0.6 }}
-                className="completion-stats"
-              >
-                <div className="stat-item">
-                  <span className="stat-number">{TOTAL_STEPS}</span>
-                  <span className="stat-label">Scenarios Completed</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-number">✓</span>
-                  <span className="stat-label">AI Trained</span>
-                </div>
-              </motion.div>
-              
-              <motion.button
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 1.1, duration: 0.6 }}
-                className="btn-primary"
-                onClick={() => navigate('/business-settings')}
-              >
-                Return to Settings
-              </motion.button>
-            </div>
-          </motion.div>
-        </AnimatePresence>
       </div>
     );
   }
@@ -463,23 +1137,28 @@ const AutobidTrainer = () => {
         <div className="header-content">
           <div className="header-title">
             <FaRobot className="header-icon" />
-            <h1>AI Bid Trainer</h1>
+            <h1>AI Bid Trainer - {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</h1>
           </div>
           <p className="header-description">
-            Help train our AI by providing pricing for these sample requests. This will help us generate more accurate bids for your business.
+            Help train our AI by providing pricing for these {currentCategory} sample requests. This will help us generate more accurate bids for your {currentCategory} services.
           </p>
         </div>
 
         <div className="progress-section">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill"
-              style={{ width: `${(completedSteps / TOTAL_STEPS) * 100}%` }}
-            />
+          <div className="category-progress">
+            <span className="category-label">
+              Training {currentCategoryIndex + 1} of {businessCategories.length}: {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}
+            </span>
+            <div className="progress-bar">
+              <div 
+                className="progress-fill"
+                style={{ width: `${(completedSteps / TOTAL_STEPS) * 100}%` }}
+              />
+            </div>
+            <span className="progress-text">
+              Step {currentStep + 1} of {TOTAL_STEPS}
+            </span>
           </div>
-          <span className="progress-text">
-            Step {currentStep + 1} of {TOTAL_STEPS}
-          </span>
         </div>
       </div>
 
@@ -496,7 +1175,7 @@ const AutobidTrainer = () => {
             <div className="request-section">
               <div className="section-header">
                 <FaLightbulb className="section-icon" />
-                <h2>Sample Request #{currentStep + 1}</h2>
+                <h2>Sample {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} Request #{currentStep + 1}</h2>
               </div>
               
               {currentRequest && formatRequestData(currentRequest.request_data)}
