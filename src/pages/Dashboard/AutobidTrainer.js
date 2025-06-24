@@ -721,8 +721,8 @@ const AutobidTrainer = () => {
 
         if (allCategoriesComplete) {
           // All categories complete - show final completion
-          setShowSampleBid(false);
-          setShowCompletion(true);
+    setShowSampleBid(false);
+    setShowCompletion(true);
         } else {
           // Move to next category
           const nextCategoryIndex = currentCategoryIndex + 1;
@@ -929,10 +929,10 @@ const AutobidTrainer = () => {
                 >
                   Return to Dashboard
                 </motion.button>
-              </div>
+                  </div>
             </motion.div>
           </AnimatePresence>
-      </div>
+                  </div>
     );
     } else {
       // Category completion - show next category prompt
@@ -988,12 +988,12 @@ const AutobidTrainer = () => {
                   >
                     Return to Dashboard
                   </motion.button>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        );
-      }
+              </div>
+            </motion.div>
+          </AnimatePresence>
+      </div>
+    );
+  }
 
     return (
       <div className="autobid-trainer-container">
@@ -1090,22 +1090,22 @@ const AutobidTrainer = () => {
     
     // If no current bid, show error or fallback
     if (!currentBid) {
-      return (
-        <div className="autobid-trainer-container">
-          <div className="trainer-header">
-            <button 
-              className="back-button"
+  return (
+    <div className="autobid-trainer-container">
+      <div className="trainer-header">
+        <button 
+          className="back-button"
               onClick={() => navigate('/business-dashboard')}
-            >
+        >
               ← Back to Dashboard
-            </button>
-            
-            <div className="header-content">
-              <div className="header-title">
-                <FaRobot className="header-icon" />
+        </button>
+        
+        <div className="header-content">
+          <div className="header-title">
+            <FaRobot className="header-icon" />
                 <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
-              </div>
-              <p className="header-description">
+          </div>
+          <p className="header-description">
                 Loading sample bid data...
               </p>
             </div>
@@ -1135,10 +1135,10 @@ const AutobidTrainer = () => {
             </div>
             <p className="header-description">
               Based on your {capitalizeCategory(currentCategory)} training, here's a sample bid our AI generated. Let us know if this looks accurate!
-            </p>
-          </div>
+          </p>
+        </div>
 
-          <div className="progress-section">
+        <div className="progress-section">
             <div className="category-progress">
               <span className="category-label">
                 Training {currentCategoryIndex + 1} of {businessCategories.length}: {capitalizeCategory(currentCategory)}
