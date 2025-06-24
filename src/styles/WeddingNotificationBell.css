@@ -1,0 +1,248 @@
+.wedding-notification-bell {
+  position: relative;
+  display: inline-block;
+}
+
+.wedding-notification-bell-button {
+  background: white;
+  border: none;
+  color: #333;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 8px;
+  position: relative;
+  transition: color 0.2s;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid #f3f4f6;
+}
+
+.wedding-notification-bell-button:hover {
+  color: #9633eb;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.wedding-notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ff4444;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.wedding-notification-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 350px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  margin-top: 8px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.wedding-notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.wedding-notification-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.clear-all-notifications {
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.clear-all-notifications:hover {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+.wedding-notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.wedding-notification-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.wedding-notification-item:hover {
+  background-color: #f8fafc;
+}
+
+.wedding-notification-item:last-child {
+  border-bottom: none;
+}
+
+.wedding-notification-item i {
+  font-size: 1.3rem;
+  margin-right: 12px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.wedding-notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.wedding-notification-content h4 {
+  margin: 0 0 6px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.3;
+}
+
+.wedding-notification-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.wedding-notification-dismiss {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.wedding-notification-dismiss:hover {
+  color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.no-wedding-notifications {
+  padding: 40px 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* Wedding notification type styles */
+.wedding-notification-celebration {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-left: 4px solid #f59e0b;
+}
+
+.wedding-notification-warning {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-left: 4px solid #ef4444;
+}
+
+.wedding-notification-info {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-left: 4px solid #3b82f6;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .wedding-notification-dropdown {
+    position: fixed;
+    top: 80px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .wedding-notification-list {
+    max-height: 60vh;
+  }
+
+  .wedding-notification-bell-button {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .wedding-notification-dropdown {
+    top: 70px;
+    right: 5px;
+    left: 5px;
+  }
+
+  .wedding-notification-header {
+    padding: 12px 16px;
+  }
+
+  .wedding-notification-header h3 {
+    font-size: 1rem;
+  }
+
+  .wedding-notification-item {
+    padding: 12px 16px;
+  }
+
+  .wedding-notification-content h4 {
+    font-size: 0.9rem;
+  }
+
+  .wedding-notification-content p {
+    font-size: 0.8rem;
+  }
+} 

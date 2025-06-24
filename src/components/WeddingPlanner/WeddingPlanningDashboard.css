@@ -11,84 +11,71 @@
 }
 
 .dashboard-header {
-  text-align: center;
-  margin-bottom: 40px;
-  padding: 40px 20px;
-  background: white;
-  border-radius: 20px;
+  background: linear-gradient(135deg, #d84888 0%, #764ba2 100%);
   color: white;
+  padding: 40px 30px;
+  margin-bottom: 30px;
+  border-radius: 20px;
+  text-align: center;
   position: relative;
-  box-shadow: 0 10px 30px rgba(236, 72, 153, 0.3);
-  }
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 120px;
+}
 
-.dashboard-header::before {
-  content: '';
+.header-content {
+  flex: 1;
+  text-align: center;
+}
+
+.header-notification-bell {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.3;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
 }
 
 .dashboard-header h1 {
+  margin: 0 0 10px 0;
   font-size: 2.5rem;
   font-weight: 700;
-  margin: 0 0 16px 0;
-  letter-spacing: -0.5px;
-  position: relative;
-  z-index: 1;
-  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .cute-title {
-  display: block;
-  font-size: 2.8rem;
-  font-weight: 700;
-  font-family: "Outfit", cursive;
-  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #ec4899 100%);
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 2px 4px rgba(236, 72, 153, 0.3);
-  margin-bottom: 8px;
-  letter-spacing: 1px;
+  font-family: 'Dancing Script', cursive;
+  font-size: 2.8rem;
 }
 
 .cute-subtitle {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #ec4899;
+  font-size: 1.1rem;
+  opacity: 0.9;
+  font-weight: 300;
+  margin-top: 5px;
   font-style: italic;
-  margin-top: 8px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .wedding-info {
+  margin-top: 15px;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
-  position: relative;
-  z-index: 1;
-}
-
-.wedding-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 12px 20px;
-  border-radius: 25px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .wedding-date {
-  font-size: 1rem;
-  opacity: 0.9;
-  font-weight: 500;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .dashboard-tabs {
@@ -354,202 +341,6 @@
   font-weight: 500;
 }
 
-/* Notifications Panel */
-.notifications-panel {
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.notification {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  animation: slideInDown 0.3s ease-out;
-  border-left: 4px solid;
-}
-
-.notification-celebration {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-left-color: #f59e0b;
-  color: #92400e;
-}
-
-.notification-warning {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  border-left-color: #ef4444;
-  color: #991b1b;
-}
-
-.notification-info {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  border-left-color: #3b82f6;
-  color: #1e40af;
-}
-
-.notification-high {
-  transform: scale(1.02);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-}
-
-.notification-medium {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.notification-low {
-  opacity: 0.9;
-}
-
-.notification-content {
-  flex: 1;
-}
-
-.notification-content h4 {
-  margin: 0 0 8px 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.notification-content p {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.4;
-}
-
-.notification-dismiss {
-  background: none;
-  border: none;
-  color: inherit;
-  padding: 4px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-left: 12px;
-  opacity: 0.7;
-}
-
-.notification-dismiss:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Responsive notifications */
-@media (max-width: 768px) {
-  .notifications-panel {
-    margin: 10px;
-    gap: 8px;
-  }
-  
-  .notification {
-    padding: 12px 16px;
-  }
-  
-  .notification-content h4 {
-    font-size: 1rem;
-  }
-  
-  .notification-content p {
-    font-size: 0.9rem;
-  }
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .wedding-planning-dashboard {
-    padding: 15px;
-  }
-
-  .dashboard-header {
-    padding: 30px 20px;
-    margin-bottom: 30px;
-    border-radius: 15px;
-  }
-
-  .dashboard-header h1 {
-    font-size: 2rem;
-  }
-
-  .wedding-info {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .dashboard-tabs {
-    gap: 8px;
-  }
-
-  .tab {
-    padding: 12px 18px;
-    font-size: 0.9rem;
-  }
-
-  .dashboard-content {
-    padding: 30px 20px;
-    border-radius: 15px;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .overview-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .overview-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-  }
-
-  .overview-card {
-    padding: 24px;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard-header h1 {
-    font-size: 1.8rem;
-  }
-
-  .tab {
-    padding: 10px 14px;
-    font-size: 0.85rem;
-  }
-
-  .tab i {
-    display: none;
-  }
-
-  .overview-card {
-    padding: 20px;
-  }
-
-  .wedding-setup-container {
-    padding: 60px 20px;
-  }
-
-  .wedding-setup-container h2 {
-    font-size: 1.8rem;
-  }
-}
-
 /* Countdown Timer */
 .countdown-timer {
   text-align: center;
@@ -610,5 +401,114 @@
     font-size: 1rem;
     padding: 10px 16px;
     margin: 8px 10px;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wedding-planning-dashboard {
+    padding: 15px;
+  }
+
+  .dashboard-header {
+    padding: 30px 20px;
+    margin-bottom: 30px;
+    border-radius: 15px;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .header-content {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .header-notification-bell {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 2rem;
+  }
+
+  .cute-title {
+    font-size: 2.2rem;
+  }
+
+  .wedding-info {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .dashboard-tabs {
+    gap: 8px;
+  }
+
+  .tab {
+    padding: 12px 18px;
+    font-size: 0.9rem;
+  }
+
+  .dashboard-content {
+    padding: 30px 20px;
+    border-radius: 15px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .overview-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .overview-card {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .cute-title {
+    font-size: 1.9rem;
+  }
+
+  .header-notification-bell {
+    top: 10px;
+    right: 10px;
+  }
+
+  .tab {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
+
+  .tab i {
+    display: none;
+  }
+
+  .overview-card {
+    padding: 20px;
+  }
+
+  .wedding-setup-container {
+    padding: 60px 20px;
+  }
+
+  .wedding-setup-container h2 {
+    font-size: 1.8rem;
   }
 } 

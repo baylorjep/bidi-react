@@ -8,6 +8,8 @@ import VendorManager from './VendorManager';
 import GuestListManager from './GuestListManager';
 import EventDetails from './EventDetails';
 import WeddingChecklist from './WeddingChecklist';
+import WeddingNotificationBell from './WeddingNotificationBell';
+import WeddingOverview from './WeddingOverview';
 import './WeddingPlanningDashboard.css';
 
 function WeddingPlanningDashboard() {
@@ -250,32 +252,6 @@ function WeddingPlanningDashboard() {
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
   };
 
-  const renderNotifications = () => {
-    if (notifications.length === 0) return null;
-
-    return (
-      <div className="notifications-panel">
-        {notifications.map(notification => (
-          <div 
-            key={notification.id} 
-            className={`notification notification-${notification.type} notification-${notification.priority}`}
-          >
-            <div className="notification-content">
-              <h4>{notification.title}</h4>
-              <p>{notification.message}</p>
-            </div>
-            <button 
-              className="notification-dismiss"
-              onClick={() => dismissNotification(notification.id)}
-            >
-              <i className="fas fa-times"></i>
-            </button>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   const renderTabContent = () => {
     console.log('renderTabContent called, activeTab:', activeTab, 'weddingData:', weddingData);
     
@@ -315,38 +291,7 @@ function WeddingPlanningDashboard() {
     console.log('Wedding data exists, rendering tab content for:', activeTab);
     switch (activeTab) {
       case 'overview':
-        return (
-          <div className="overview-container">
-            <div className="overview-header">
-              <h2>Wedding Overview</h2>
-              <div className="wedding-date-badge">
-                {new Date(weddingData.wedding_date).toLocaleDateString()}
-              </div>
-            </div>
-            
-            <div className="overview-grid">
-              <div className="overview-card">
-                <h3>Timeline Progress</h3>
-                <WeddingTimeline weddingData={weddingData} compact={true} />
-              </div>
-              
-              <div className="overview-card">
-                <h3>Budget Summary</h3>
-                <BudgetTracker weddingData={weddingData} compact={true} />
-              </div>
-              
-              <div className="overview-card">
-                <h3>Vendor Status</h3>
-                <VendorManager weddingData={weddingData} compact={true} />
-              </div>
-              
-              <div className="overview-card">
-                <h3>Guest List</h3>
-                <GuestListManager weddingData={weddingData} compact={true} />
-              </div>
-            </div>
-          </div>
-        );
+        return <WeddingOverview weddingData={weddingData} />;
       
       case 'timeline':
         return <WeddingTimeline weddingData={weddingData} onUpdate={updateWeddingData} />;
@@ -424,25 +369,35 @@ function WeddingPlanningDashboard() {
   return (
     <div className="wedding-planning-dashboard">
       <div className="dashboard-header">
-        {weddingData ? (
-          <h1>
-            <span className="cute-title">✨ {weddingData.wedding_title} ✨</span>
-            <div className="cute-subtitle">Your Perfect Day Awaits</div>
-          </h1>
-        ) : (
-          <h1>
-            <span className="cute-title">💕 Let's Plan Your Dream Wedding 💕</span>
-            <div className="cute-subtitle">Every love story deserves a beautiful beginning</div>
-          </h1>
-        )}
-        {weddingData && (
-          <div className="wedding-info" style={{marginTop: '10px',display: 'flex', justifyContent: 'center', width: '100%'}}>
-            <span className="wedding-date" style={{fontSize: '1.2rem', fontWeight: 'bold', fontFamily: 'cursive'}}>
-              {new Date(weddingData.wedding_date).toLocaleDateString()}
-            </span>
-          </div>
-        )}
-        {renderCountdown()}
+        <div className="header-content">
+          {weddingData ? (
+            <h1>
+              <span className="cute-title">✨ {weddingData.wedding_title} ✨</span>
+              <div className="cute-subtitle">Your Perfect Day Awaits</div>
+            </h1>
+          ) : (
+            <h1>
+              <span className="cute-title">💕 Let's Plan Your Dream Wedding 💕</span>
+              <div className="cute-subtitle">Every love story deserves a beautiful beginning</div>
+            </h1>
+          )}
+          {weddingData && (
+            <div className="wedding-info" style={{marginTop: '10px',display: 'flex', justifyContent: 'center', width: '100%'}}>
+              <span className="wedding-date" style={{fontSize: '1.2rem', fontWeight: 'bold', fontFamily: 'cursive'}}>
+                {new Date(weddingData.wedding_date).toLocaleDateString()}
+              </span>
+            </div>
+          )}
+          {renderCountdown()}
+        </div>
+        
+        {/* Notification Bell */}
+        <div className="header-notification-bell">
+          <WeddingNotificationBell 
+            notifications={notifications}
+            onDismissNotification={dismissNotification}
+          />
+        </div>
       </div>
 
       <div className="dashboard-tabs">
@@ -505,20 +460,11 @@ function WeddingPlanningDashboard() {
               <i className="fas fa-info-circle"></i>
               Details
             </button>
-            
-            <button 
-              className={`tab ${activeTab === 'checklist' ? 'active' : ''}`}
-              onClick={() => setActiveTab('checklist')}
-            >
-              <i className="fas fa-tasks"></i>
-              Checklist
-            </button>
           </>
         )}
       </div>
 
       <div className="dashboard-content">
-        {renderNotifications()}
         {renderTabContent()}
       </div>
     </div>
