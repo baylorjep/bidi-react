@@ -32,6 +32,7 @@ const WeddingOverview = ({ weddingData }) => {
   const [budgetItems, setBudgetItems] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [guests, setGuests] = useState([]);
+  const [timelineItems, setTimelineItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPlannedBudget, setShowPlannedBudget] = useState(false);
 
@@ -87,6 +88,17 @@ const WeddingOverview = ({ weddingData }) => {
 
       if (guestError) throw guestError;
       setGuests(guestData || []);
+
+      // Load timeline items
+      const { data: timelineData, error: timelineError } = await supabase
+        .from('wedding_timeline_items')
+        .select('*')
+        .eq('wedding_id', weddingData.id)
+        .eq('category', 'preparation')
+        .order('due_date', { ascending: true });
+
+      if (timelineError) throw timelineError;
+      setTimelineItems(timelineData || []);
 
       setLoading(false);
     } catch (error) {
@@ -163,12 +175,60 @@ const WeddingOverview = ({ weddingData }) => {
     return categoryTotals;
   };
 
+  const getImportantTasks = () => {
+    const today = new Date();
+    const weddingDate = new Date(weddingData.wedding_date);
+    
+    // Filter tasks that are upcoming (not completed and due date is in the future or today)
+    const upcomingTasks = timelineItems.filter(item => {
+      if (item.completed) return false;
+      
+      const dueDate = new Date(item.due_date);
+      return dueDate >= today;
+    });
+
+    // Sort by due date (closest first)
+    upcomingTasks.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+
+    // Return the next 5 most important tasks
+    return upcomingTasks.slice(0, 5);
+  };
+
+  const formatTaskDate = (dueDate) => {
+    const date = new Date(dueDate);
+    const today = new Date();
+    const diffTime = date.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Tomorrow';
+    if (diffDays < 0) return 'Overdue';
+    if (diffDays <= 7) return `${diffDays} days`;
+    if (diffDays <= 30) return `${Math.ceil(diffDays / 7)} weeks`;
+    
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getTaskPriority = (dueDate) => {
+    const date = new Date(dueDate);
+    const today = new Date();
+    const diffTime = date.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'overdue';
+    if (diffDays <= 3) return 'urgent';
+    if (diffDays <= 7) return 'soon';
+    if (diffDays <= 30) return 'upcoming';
+    return 'future';
+  };
+
   const daysUntil = calculateDaysUntilWedding();
   const weddingPhase = getWeddingPhase(daysUntil);
   const budgetProgress = calculateBudgetProgress();
   const vendorStatus = getVendorStatus();
   const guestStats = getGuestStats();
   const categoryTotals = getCategoryTotals();
+  const importantTasks = getImportantTasks();
 
   if (loading) {
     return (
@@ -363,6 +423,57 @@ const WeddingOverview = ({ weddingData }) => {
             <div className={styles.guestTotal}>
               <span className={styles.totalLabel}>Total Guests</span>
               <span className={styles.totalNumber}>{guestStats.total}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className={`${styles.metricCard} ${styles.timelineMetric}`}>
+          <div className={styles.metricHeader}>
+            <i className="fas fa-tasks"></i>
+            <h3>Important Tasks</h3>
+          </div>
+          <div className={styles.metricContent}>
+            {importantTasks.length > 0 ? (
+              <div className={styles.taskList}>
+                {importantTasks.map((task, index) => {
+                  const priority = getTaskPriority(task.due_date);
+                  return (
+                    <div key={task.id} className={`${styles.taskItem} ${styles[priority]}`}>
+                      <div className={styles.taskContent}>
+                        <div className={styles.taskTitle}>{task.title}</div>
+                        {task.description && (
+                          <div className={styles.taskDescription}>{task.description}</div>
+                        )}
+                      </div>
+                      <div className={styles.taskMeta}>
+                        <span className={`${styles.taskDate} ${styles[priority]}`}>
+                          {formatTaskDate(task.due_date)}
+                        </span>
+                        {task.responsible && (
+                          <span className={styles.taskResponsible}>
+                            <i className="fas fa-user"></i>
+                            {task.responsible}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className={styles.noTasks}>
+                <i className="fas fa-check-circle"></i>
+                <p>No upcoming tasks</p>
+                <span>All preparation tasks are completed!</span>
+              </div>
+            )}
+            <div className={styles.taskStats}>
+              <span className={styles.taskCount}>
+                {timelineItems.filter(item => !item.completed).length} tasks remaining
+              </span>
+              <span className={styles.taskCompleted}>
+                {timelineItems.filter(item => item.completed).length} completed
+              </span>
             </div>
           </div>
         </div>
