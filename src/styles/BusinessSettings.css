@@ -1205,73 +1205,61 @@
 
 /* Custom warning button styling */
 .btn-warning {
-  background: linear-gradient(135deg, #ff8a00 0%, #e65100 100%);
-  border: none;
-  border-radius: 30px;
-  color: white;
-  font-family: 'Outfit', sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  padding: 12px 24px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(255, 138, 0, 0.3);
-  min-height: 48px;
-  width: 100%;
+  width: 100% !important;
+  height: 48px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  margin-bottom: 0.5rem !important;
+  background: linear-gradient(135deg, #ff8a00 0%, #e65100 100%) !important;
+  color: white !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
 }
 
 .btn-warning:hover {
-  background: linear-gradient(135deg, #ff9500 0%, #f57c00 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(255, 138, 0, 0.4);
-  color: white;
-  text-decoration: none;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(255, 138, 0, 0.3) !important;
+  background: linear-gradient(135deg, #ff9500 0%, #f57c00 100%) !important;
+  color: white !important;
 }
 
 .btn-warning:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(255, 138, 0, 0.3);
+  transform: translateY(0) !important;
 }
 
 .btn-warning:focus {
-  outline: none;
-  box-shadow: 0 0 0 0.25rem rgba(255, 138, 0, 0.25);
+  outline: none !important;
+  box-shadow: 0 0 0 0.25rem rgba(255, 138, 0, 0.25) !important;
 }
 
 .btn-warning:disabled {
-  background: #ccc;
-  color: #666;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  background: #ccc !important;
+  color: #666 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .btn-warning.pulse {
-  animation: pulse 2s infinite;
+  animation: pulse 2s infinite !important;
 }
 
 @keyframes pulse {
-  0% {
-    box-shadow: 0 4px 12px rgba(255, 138, 0, 0.3);
-  }
-  50% {
-    box-shadow: 0 4px 20px rgba(255, 138, 0, 0.6);
-  }
-  100% {
-    box-shadow: 0 4px 12px rgba(255, 138, 0, 0.3);
-  }
+  0% { box-shadow: 0 0 0 0 rgba(255, 138, 0, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 138, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 138, 0, 0); }
 }
 
 @media (hover: none) {
   .btn-warning:hover {
-    background: linear-gradient(135deg, #ff8a00 0%, #e65100 100%);
-    transform: none;
-    box-shadow: 0 4px 12px rgba(255, 138, 0, 0.3);
+    background: linear-gradient(135deg, #ff8a00 0%, #e65100 100%) !important;
+    transform: none !important;
+    box-shadow: none !important;
   }
 }
