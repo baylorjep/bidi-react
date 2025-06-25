@@ -676,7 +676,7 @@ const AutobidTrainer = () => {
       if (newConsecutiveApprovals >= 2) {
         // Check if all categories are complete
         const allCategoriesComplete = businessCategories.every(cat => 
-          updatedProgress[cat]?.training_completed
+          categoryProgress[cat]?.training_completed
         );
 
         if (allCategoriesComplete) {
