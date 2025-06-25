@@ -157,9 +157,13 @@ const AutobidTrainer = () => {
       let selectedRequest = null;
       
       if (availableAIRequests.length > 0) {
-        // Use the first available request
+        // Use the first available request and remove it from the list
         selectedRequest = availableAIRequests[0];
         console.log('Using available request:', selectedRequest.id);
+        
+        // Remove this request from available list and add to used set
+        setAvailableAIRequests(prev => prev.slice(1));
+        setUsedAIRequestIds(prev => new Set([...prev, selectedRequest.id]));
       } else {
         // All requests have been used, reset the used set and start over
         console.log('All requests used, resetting for recycling');
@@ -178,6 +182,12 @@ const AutobidTrainer = () => {
         setAvailableAIRequests(allRequests || []);
         selectedRequest = allRequests?.[0];
         console.log('Reset available requests, using:', selectedRequest?.id);
+        
+        // Remove the first request from available list
+        if (selectedRequest) {
+          setAvailableAIRequests(prev => prev.slice(1));
+          setUsedAIRequestIds(prev => new Set([...prev, selectedRequest.id]));
+        }
       }
 
       if (!selectedRequest) {
@@ -827,13 +837,6 @@ const AutobidTrainer = () => {
 
       if (aiError) throw aiError;
 
-      // Track this request as used for AI testing
-      if (currentBid.requestId) {
-        setUsedAIRequestIds(prev => new Set([...prev, currentBid.requestId]));
-        setAvailableAIRequests(prev => prev.filter(req => req.id !== currentBid.requestId));
-        console.log('Marked request', currentBid.requestId, 'as used for AI testing');
-      }
-
       // Call the real training feedback API
       try {
         const feedbackResponse = await fetch('https://bidi-express.vercel.app/api/autobid/training-feedback', {
@@ -915,30 +918,15 @@ const AutobidTrainer = () => {
 
         if (allCategoriesComplete) {
           // All categories complete - show final completion
-    setShowSampleBid(false);
-    setShowCompletion(true);
+          setShowSampleBid(false);
+          setShowCompletion(true);
         } else {
-          // Move to next category
-          const nextCategoryIndex = currentCategoryIndex + 1;
-          if (nextCategoryIndex < businessCategories.length) {
-            const nextCategory = businessCategories[nextCategoryIndex];
-            console.log('Moving to next category:', nextCategory, 'at index:', nextCategoryIndex);
-            
-            if (nextCategory) {
-              setCurrentCategoryIndex(nextCategoryIndex);
-              setCurrentCategory(nextCategory);
-              await loadCategoryRequests(nextCategory);
-            } else {
-              console.error('Next category is undefined at index:', nextCategoryIndex);
-              setShowSampleBid(false);
-              setShowCompletion(true);
-            }
-          } else {
-            // All categories complete
-            console.log('All categories completed');
-            setShowSampleBid(false);
-            setShowCompletion(true);
-          }
+          // Show category completion animation before moving to next category
+          setShowSampleBid(false);
+          setShowCompletion(true);
+          
+          // The completion screen will handle the transition to next category
+          // when the user clicks the "Continue to Next Category" button
         }
       } else {
         // Generate a new sample bid for continuous training
@@ -1000,6 +988,31 @@ const AutobidTrainer = () => {
       console.error('Error generating fresh AI sample bid data:', error);
     } finally {
       setIsLoadingSampleBid(false);
+    }
+  };
+
+  const handleContinueToNextCategory = async () => {
+    const nextCategoryIndex = currentCategoryIndex + 1;
+    if (nextCategoryIndex < businessCategories.length) {
+      const nextCategory = businessCategories[nextCategoryIndex];
+      console.log('Moving to next category:', nextCategory, 'at index:', nextCategoryIndex);
+      
+      if (nextCategory) {
+        setCurrentCategoryIndex(nextCategoryIndex);
+        setCurrentCategory(nextCategory);
+        setShowCompletion(false);
+        setShowTransitionStep(true);
+        await loadCategoryRequests(nextCategory);
+      } else {
+        console.error('Next category is undefined at index:', nextCategoryIndex);
+        setShowCompletion(false);
+        setShowSampleBid(true);
+      }
+    } else {
+      // All categories complete
+      console.log('All categories completed');
+      setShowCompletion(false);
+      setShowSampleBid(true);
     }
   };
 
@@ -1297,17 +1310,7 @@ const AutobidTrainer = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 1.1, duration: 0.6 }}
                 className="btn-primary"
-                  onClick={async () => {
-                    console.log('Button clicked - moving to next category');
-                    console.log('Current category index:', currentCategoryIndex);
-                    console.log('Next category index:', nextCategoryIndex);
-                    console.log('Business categories:', businessCategories);
-                    console.log('Next category:', nextCategory);
-                    console.log('Moving to next category:', nextCategory);
-                    setCurrentCategoryIndex(nextCategoryIndex);
-                    setCurrentCategory(nextCategory);
-                    await loadCategoryRequests(nextCategory);
-                  }}
+                  onClick={handleContinueToNextCategory}
                 >
                   Continue to {nextCategory && capitalizeCategory(nextCategory)} Training
               </motion.button>
