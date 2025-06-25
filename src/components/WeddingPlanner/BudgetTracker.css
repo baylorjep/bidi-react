@@ -1140,7 +1140,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.toggle-btn {
+.toggle-btn-budget-tracker {
   background: transparent;
   border: none;
   padding: 12px 20px;
@@ -1157,13 +1157,13 @@
   overflow: hidden;
 }
 
-.toggle-btn:hover {
+.toggle-btn-budget-tracker:hover {
   background: rgba(102, 126, 234, 0.1);
   color: #374151;
   transform: translateY(-1px);
 }
 
-.toggle-btn.active {
+.toggle-btn-budget-tracker.active {
   background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
@@ -1172,6 +1172,7 @@
 .toggle-btn i {
   font-size: 1rem;
 }
+
 
 .pie-chart-wrapper {
   height: 450px;

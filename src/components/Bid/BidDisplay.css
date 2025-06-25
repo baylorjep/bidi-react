@@ -354,9 +354,7 @@
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 16px;
-  background-color: rgba(163, 40, 244, 0.1);
   transition: background-color 0.2s ease;
-  min-width: 80px;
 }
 
 .bidi-verified-compact:hover {
@@ -683,7 +681,7 @@
 }
 
 .description-collapsed {
-  max-height: 100px;
+  max-height: 60px;
   overflow: hidden;
   position: relative;
 }
@@ -691,22 +689,25 @@
 .description-collapsed::after {
   content: '';
   position: absolute;
-  bottom: 0;
   left: 0;
-  width: 100%;
-  height: 40px;
-  background: linear-gradient(transparent, #f9f9f9);
+  right: 0;
+  bottom: 0;
+  height: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 90%);
+  pointer-events: none;
 }
 
 .read-more-btn {
   background: none;
   border: none;
-  color: #A328F4;
-  font-size: 14px;
+  color: #9633eb;
+  font-weight: 600;
   cursor: pointer;
-  padding: 4px 8px;
-  margin-top: 8px;
-  font-weight: 500;
+  margin-top: 4px;
+  font-size: 0.98em;
+  padding: 0;
+  display: block;
+  text-align: left;
 }
 
 .read-more-btn:hover {
@@ -1014,4 +1015,402 @@
 }
 */
 
-/* Keep your original .bid-display and .request-display styles as they were. */ 
+/* Keep your original .bid-display and .request-display styles as they were. */
+
+/* --- New Bid Card Screenshot Style --- */
+.bid-card-screenshot-style {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(163, 40, 244, 0.08), 0 1.5px 6px rgba(0,0,0,0.04);
+  padding: 24px 20px 20px 20px;
+  max-width: 350px;
+  margin: 0 auto;
+  position: relative;
+  font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+.bid-card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.bid-card-top-icons {
+  display: flex;
+  gap: 12px;
+}
+
+.bid-card-icon-btn {
+  background: none;
+  border: none;
+  color: #A328F4;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bid-card-icon-btn:hover {
+  background: #f3e8ff;
+}
+
+.bid-card-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 10px;
+}
+
+.bid-card-profile-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #f3e8ff;
+}
+
+.bid-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bid-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.bid-card-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.bid-card-rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 1rem;
+  color: #A328F4;
+  font-weight: 500;
+}
+
+.bid-card-price {
+  font-size: 1.1rem;
+  color: #222;
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+.bid-card-description {
+  margin: 10px 0 18px 0;
+}
+
+.bid-card-desc-label {
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: #444;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.bid-card-desc-text {
+  color: #666;
+  font-size: 0.97rem;
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+.bid-card-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  justify-content: flex-start;
+}
+
+/* --- Messaging Modal --- */
+.bid-card-messaging-modal-overlay {
+  position: fixed;
+  z-index: 2000;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30, 0, 60, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bid-card-messaging-modal {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 32px rgba(163, 40, 244, 0.13), 0 2px 8px rgba(0,0,0,0.08);
+  padding: 0;
+  min-width: 340px;
+  max-width: 98vw;
+  max-height: 90vh;
+  overflow: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.bid-card-messaging-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  background: none;
+  border: none;
+  color: #A328F4;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.15s;
+}
+.bid-card-messaging-modal-close:hover {
+  background: #f3e8ff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 500px) {
+  .bid-card-screenshot-style {
+    padding: 14px 6px 12px 6px;
+    max-width: 98vw;
+  }
+  .bid-card-profile-row {
+    gap: 10px;
+  }
+  .bid-card-actions {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .bid-card-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .bid-card-messaging-modal {
+    min-width: 0;
+    width: 98vw;
+    max-width: 98vw;
+    padding: 0;
+  }
+}
+
+.bid-card-modern {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 24px 20px 20px 20px;
+  margin: 24px auto;
+  position: relative;
+}
+
+.bid-card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bid-card-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f3f3f3;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.bid-card-close-btn:hover {
+  background: #e0e0e0;
+}
+
+.bid-card-top-icons {
+  display: flex;
+  gap: 12px;
+}
+
+.bid-card-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  color: #9633eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.bid-card-icon-btn:hover {
+  background: #f3eaff;
+  border-color: #7a25c9;
+}
+
+.bid-card-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.bid-card-profile-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  cursor: pointer;
+}
+
+.bid-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.bid-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.bid-card-name {
+  font-weight: 700;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bid-card-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #f7b500;
+  font-weight: 600;
+  font-size: 1em;
+}
+
+.bid-card-star {
+  width: 18px;
+  height: 18px;
+}
+
+.bid-card-price {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin-top: 2px;
+  color: #222;
+}
+
+.bid-card-description-section {
+  margin: 12px 0 0 0;
+}
+
+.bid-card-description-label {
+  font-weight: 600;
+  color: #222;
+  font-size: 1em;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.bid-card-description-text {
+  color: #888;
+  font-size: 0.98em;
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+.bid-card-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.bid-card-btn {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 24px;
+  font-weight: 700;
+  font-size: 1em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bid-card-btn-filled {
+  background: #9633eb;
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(150,51,235,0.08);
+}
+.bid-card-btn-filled:hover {
+  background: #7a25c9;
+}
+
+.bid-card-btn-outline {
+  background: #fff;
+  color: #9633eb;
+  border: 2px solid #9633eb;
+}
+.bid-card-btn-outline:hover {
+  background: #f3eaff;
+}
+
+.verified-tooltip {
+  display: none;
+  position: absolute;
+  min-width: 220px;
+  background: #fff;
+  border: 1.5px solid #a328f4;
+  box-shadow: 0 4px 16px rgba(150,51,235,0.10);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #222;
+  font-size: 0.98em;
+  z-index: 100;
+  top: 28px;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+.verified-tooltip.show {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+.verified-tooltip-title {
+  font-weight: 700;
+  color: #a328f4;
+  margin-bottom: 4px;
+  font-size: 1.05em;
+}
+.verified-tooltip-subtitle {
+  color: #555;
+  font-size: 0.97em;
+  margin: 0;
+}
+
+.bid-card-description-content {
+  transition: max-height 0.25s;
+  position: relative;
+} 

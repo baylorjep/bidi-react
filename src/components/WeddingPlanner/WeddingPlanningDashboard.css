@@ -78,6 +78,195 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+/* Overview Hero Styles */
+.overview-hero {
+  background: linear-gradient(135deg, #d84888 0%, #764ba2 100%);
+  color: white;
+  padding: 40px 30px;
+  margin-bottom: 30px;
+  border-radius: 20px;
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+}
+
+.overview-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="hearts" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M10 6.5c-1.5-1.5-3.5-1.5-5 0s-1.5 3.5 0 5l5 5 5-5c1.5-1.5 1.5-3.5 0-5s-3.5-1.5-5 0z" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23hearts)"/></svg>');
+  opacity: 0.3;
+  z-index: 1;
+}
+
+.hero-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  z-index: 3;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.wedding-title-section {
+  flex: 1;
+  text-align: left;
+}
+
+.wedding-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  font-family: Outfit;
+  color: white !important;
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-align: left;
+  padding: 0;
+  position: relative;
+  z-index: 3;
+}
+
+.wedding-date-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.wedding-date-display i {
+  color: #ffd700;
+  font-size: 1.2rem;
+}
+
+.wedding-location {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.countdown-section {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.countdown-card {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 15px;
+  padding: 20px;
+  text-align: center;
+  min-width: 200px;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 3;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.countdown-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.countdown-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.countdown-content h3 {
+  margin: 0 0 5px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: white !important;  
+}
+
+.countdown-days {
+  margin: 0;
+  font-size: 1rem;
+  opacity: 0.9;
+  font-weight: 700;
+  color: white !important;
+}
+
+/* Slideshow indicator */
+.slideshow-indicator {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+
+.slideshow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.slideshow-dot.active {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.2);
+}
+
+/* Wedding phase specific styles */
+.countdown-card.weddingmemories {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(168, 85, 247, 0.8));
+}
+
+.countdown-card.weddingday {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.8), rgba(251, 191, 36, 0.8));
+  animation: celebration 2s ease-in-out infinite;
+}
+
+.countdown-card.finalweek {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.8), rgba(248, 113, 113, 0.8));
+  animation: urgent 1.5s ease-in-out infinite;
+}
+
+.countdown-card.lastmonth {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.8), rgba(251, 191, 36, 0.8));
+}
+
+.countdown-card.planningphase {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(168, 85, 247, 0.8));
+}
+
+.countdown-card.earlyplanning {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.8), rgba(52, 211, 153, 0.8));
+}
+
+/* Animation keyframes */
+@keyframes celebration {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes urgent {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
 .dashboard-tabs {
   display: flex;
   justify-content: center;
@@ -112,14 +301,15 @@
 }
 
 .tab.active {
-  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
-  border-color: #ec4899;
-  color: white;
+  background: #f1f5f9;
+border-color: #ec4899;
+  color: #ec4899;
   box-shadow: 0 8px 25px rgba(236, 72, 153, 0.3);
 }
 
 .tab i {
   font-size: 1.1rem;
+  color: #ec4899;
 }
 
 .dashboard-content {
@@ -235,8 +425,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 20px;
+  transition: all 0.3s ease;  
   box-shadow: 0 8px 25px rgba(236, 72, 153, 0.3);
 }
 
@@ -380,16 +569,6 @@
   animation: none;
 }
 
-@keyframes celebration {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes urgent {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-}
-
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.8; }
@@ -408,6 +587,7 @@
 @media (max-width: 768px) {
   .wedding-planning-dashboard {
     padding: 15px;
+    margin-top: 0px;
   }
 
   .dashboard-header {
@@ -443,6 +623,61 @@
     gap: 12px;
   }
 
+  /* Overview Hero Responsive */
+  .overview-hero {
+    padding: 30px 20px;
+    min-height: 150px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .hero-content {
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .wedding-title-section {
+    text-align: center;
+  }
+
+  .wedding-title {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color:white;
+  }
+
+  .wedding-date-display {
+    justify-content: center;
+    font-size: 1rem;
+  }
+
+  .wedding-location {
+    justify-content: center;
+    font-size: 0.9rem;
+  }
+
+  .countdown-section {
+    justify-content: center;
+  }
+
+  .countdown-card {
+    min-width: 180px;
+    padding: 15px;
+  }
+
+  .countdown-icon {
+    font-size: 2rem;
+  }
+
+  .countdown-content h3 {
+    font-size: 1.1rem;
+  }
+
+  .countdown-days {
+    font-size: 0.9rem;
+  }
+
   .dashboard-tabs {
     gap: 8px;
   }
@@ -454,11 +689,10 @@
 
   .dashboard-content {
     padding: 30px 20px;
-    border-radius: 15px;
   }
 
   .form-row {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .overview-grid {
@@ -468,12 +702,50 @@
 
   .overview-header {
     flex-direction: column;
-    gap: 16px;
+    gap: 15px;
     align-items: flex-start;
   }
 
   .overview-card {
-    padding: 24px;
+    padding: 25px;
+  }
+
+  /* Mobile Mood Board Styles */
+  .hero-mood-board {
+    position: relative;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin-top: 20px;
+    padding: 15px;
+  }
+
+  .mood-board-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .image-count {
+    font-size: 0.8rem;
+  }
+
+  .mood-board-item {
+    width: 70px;
+    height: 70px;
+  }
+
+  .mood-board-more {
+    width: 70px;
+    height: 70px;
+    font-size: 0.7rem;
+  }
+  
+  .slideshow-indicator {
+    bottom: 10px;
+  }
+  
+  .slideshow-dot {
+    width: 6px;
+    height: 6px;
   }
 }
 
@@ -483,7 +755,7 @@
   }
 
   .cute-title {
-    font-size: 1.9rem;
+    font-size: 2rem;
   }
 
   .header-notification-bell {
@@ -491,13 +763,48 @@
     right: 10px;
   }
 
+  /* Overview Hero Mobile */
+  .overview-hero {
+    padding: 25px 15px;
+    min-height: 120px;
+  }
+
+  .wedding-title {
+    font-size: 1.8rem;
+  }
+
+  .wedding-date-display {
+    font-size: 0.9rem;
+  }
+
+  .wedding-location {
+    font-size: 0.8rem;
+  }
+
+  .countdown-card {
+    min-width: 150px;
+    padding: 12px;
+  }
+
+  .countdown-icon {
+    font-size: 1.8rem;
+  }
+
+  .countdown-content h3 {
+    font-size: 1rem;
+  }
+
+  .countdown-days {
+    font-size: 0.8rem;
+  }
+
   .tab {
-    padding: 10px 14px;
+    padding: 10px 15px;
     font-size: 0.85rem;
   }
 
   .tab i {
-    display: none;
+    font-size: 1rem;
   }
 
   .overview-card {
@@ -505,10 +812,292 @@
   }
 
   .wedding-setup-container {
-    padding: 60px 20px;
+    padding: 40px 15px;
   }
 
   .wedding-setup-container h2 {
     font-size: 1.8rem;
+  }
+}
+
+/* Mobile Bottom Navigation */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding: 8px 0;
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 60px;
+}
+
+.mobile-nav-item i {
+  font-size: 1.2rem;
+  margin-bottom: 4px;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-item span {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.mobile-nav-item.active {
+  color: #ec4899;
+}
+
+.mobile-nav-item.active i {
+  transform: scale(1.1);
+}
+
+.mobile-nav-item:hover {
+  color: #ec4899;
+  background-color: #fdf2f8;
+}
+
+/* Vendors Sub-menu */
+.mobile-vendors-submenu {
+  position: fixed;
+  bottom: 76px;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 12px 0;
+  z-index: 999;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.mobile-submenu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  min-width: 100px;
+}
+
+.mobile-submenu-item i {
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
+
+.mobile-submenu-item span {
+  font-size: 0.75rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.mobile-submenu-item.active {
+  color: #ec4899;
+  background-color: #fdf2f8;
+}
+
+.mobile-submenu-item.active i {
+  transform: scale(1.1);
+}
+
+.mobile-submenu-item:hover {
+  color: #ec4899;
+  background-color: #fdf2f8;
+}
+
+/* Hide desktop tabs on mobile */
+@media (max-width: 768px) {
+  .desktop-tabs {
+    display: none;
+  }
+  
+  .mobile-bottom-nav {
+    display: flex;
+  }
+  
+  .wedding-planning-dashboard {
+    padding-bottom: 80px; /* Add space for bottom navigation */
+  }
+  
+  .dashboard-content {
+    margin-bottom: 20px; /* Extra space before bottom nav */
+  }
+}
+
+/* Mood Board Gallery Styles */
+.hero-mood-board {
+  position: absolute;
+  bottom: -60px;
+  left: 30px;
+  right: 30px;
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  z-index: 3;
+}
+
+.mood-board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.mood-board-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.image-count {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.mood-board-gallery {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.mood-board-gallery::-webkit-scrollbar {
+  height: 4px;
+}
+
+.mood-board-gallery::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.mood-board-gallery::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 2px;
+}
+
+.mood-board-gallery::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.mood-board-item {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.mood-board-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.mood-board-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.mood-board-more {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mood-board-more:hover {
+  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+  transform: scale(1.05);
+}
+
+.countdown-days {
+  font-size: 0.9rem;
+}
+
+.slideshow-indicator {
+  bottom: 10px;
+}
+
+.slideshow-dot {
+  width: 6px;
+  height: 6px;
+}
+
+.frosted-hero-glass {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  z-index: 2;
+}
+
+.hero-content-wrapper {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+}
+
+@media (max-width: 768px) {
+  .frosted-hero-glass {
+    border-radius: 14px;
+  }
+  .hero-content-wrapper {
+    padding: 0 0 0 0;
   }
 } 

@@ -10,6 +10,9 @@ import EventDetails from './EventDetails';
 import WeddingChecklist from './WeddingChecklist';
 import WeddingNotificationBell from './WeddingNotificationBell';
 import WeddingOverview from './WeddingOverview';
+import MobileChatList from '../Messaging/MobileChatList';
+import ChatInterface from '../Messaging/ChatInterface';
+import DashboardMessaging from '../Messaging/DashboardMessaging';
 import './WeddingPlanningDashboard.css';
 
 function WeddingPlanningDashboard() {
@@ -19,10 +22,27 @@ function WeddingPlanningDashboard() {
   const [loading, setLoading] = useState(true);
   const [isCreatingWedding, setIsCreatingWedding] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [selectedChatId, setSelectedChatId] = useState(null);
+  const [showVendorsSubmenu, setShowVendorsSubmenu] = useState(false);
+  const [moodBoardImages, setMoodBoardImages] = useState([]);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [backgroundImageIndex, setBackgroundImageIndex] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
     checkUserAndLoadWedding();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -55,11 +75,45 @@ function WeddingPlanningDashboard() {
       console.log('Existing wedding data:', existingWedding);
       if (existingWedding) {
         setWeddingData(existingWedding);
+        // Load mood board images
+        loadMoodBoardImages(existingWedding.id);
       }
       setLoading(false);
     } catch (error) {
       console.error('Error loading wedding data:', error);
       setLoading(false);
+    }
+  };
+
+  const loadMoodBoardImages = async (weddingPlanId) => {
+    if (!weddingPlanId) return;
+
+    try {
+      const { data: moodBoardData, error: dbError } = await supabase
+        .from('wedding_mood_board')
+        .select('*')
+        .eq('wedding_plan_id', weddingPlanId)
+        .order('uploaded_at', { ascending: false });
+
+      if (dbError) {
+        console.error('Error loading mood board from database:', dbError);
+        return;
+      }
+
+      if (moodBoardData && moodBoardData.length > 0) {
+        const loadedImages = moodBoardData.map(item => ({
+          url: item.image_url,
+          name: item.image_name,
+          uploaded_at: item.uploaded_at,
+          id: item.id
+        }));
+
+        setMoodBoardImages(loadedImages);
+      } else {
+        setMoodBoardImages([]);
+      }
+    } catch (error) {
+      console.error('Error loading mood board images:', error);
     }
   };
 
@@ -94,6 +148,8 @@ function WeddingPlanningDashboard() {
 
       console.log('Wedding created successfully:', data);
       setWeddingData(data);
+      // Load mood board images for new wedding
+      loadMoodBoardImages(data.id);
       setIsCreatingWedding(false);
       toast.success('Wedding plan created successfully!');
     } catch (error) {
@@ -111,6 +167,18 @@ function WeddingPlanningDashboard() {
 
   const updateWeddingData = async (updates) => {
     try {
+      // Check if this is a tab switch request from VendorManager
+      if (updates && updates.type === 'switchTab') {
+        console.log('Dashboard received switchTab request:', updates);
+        setActiveTab(updates.tab);
+        if (updates.chatData && updates.tab === 'messaging') {
+          // chatData is now directly the business ID
+          console.log('Setting selectedChatId to:', updates.chatData, 'type:', typeof updates.chatData);
+          setSelectedChatId(updates.chatData);
+        }
+        return;
+      }
+
       // Validate updates parameter
       if (!updates || typeof updates !== 'object') {
         console.error('Invalid updates parameter:', updates);
@@ -252,6 +320,36 @@ function WeddingPlanningDashboard() {
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
   };
 
+  // Background slideshow effect
+  useEffect(() => {
+    if (moodBoardImages.length === 0) return;
+
+    const interval = setInterval(() => {
+      setBackgroundImageIndex(prevIndex => 
+        (prevIndex + 1) % moodBoardImages.length
+      );
+    }, 5000); // Change image every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [moodBoardImages.length]);
+
+  // Hero section helper functions
+  const calculateDaysUntilWedding = () => {
+    if (!weddingData?.wedding_date) return 0;
+    const weddingDate = new Date(weddingData.wedding_date);
+    const today = new Date();
+    return Math.ceil((weddingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const getWeddingPhase = (daysUntil) => {
+    if (daysUntil < 0) return { phase: 'Wedding Memories', icon: '💕', color: '#8b5cf6' };
+    if (daysUntil === 0) return { phase: 'Wedding Day!', icon: '🎉', color: '#f59e0b' };
+    if (daysUntil <= 7) return { phase: 'Final Week', icon: '⏰', color: '#ef4444' };
+    if (daysUntil <= 30) return { phase: 'Last Month', icon: '📅', color: '#f59e0b' };
+    if (daysUntil <= 90) return { phase: 'Planning Phase', icon: '📋', color: '#3b82f6' };
+    return { phase: 'Early Planning', icon: '🌱', color: '#10b981' };
+  };
+
   const renderTabContent = () => {
     console.log('renderTabContent called, activeTab:', activeTab, 'weddingData:', weddingData);
     
@@ -291,7 +389,7 @@ function WeddingPlanningDashboard() {
     console.log('Wedding data exists, rendering tab content for:', activeTab);
     switch (activeTab) {
       case 'overview':
-        return <WeddingOverview weddingData={weddingData} />;
+        return <WeddingOverview weddingData={weddingData} onNavigate={setActiveTab} />;
       
       case 'timeline':
         return <WeddingTimeline weddingData={weddingData} onUpdate={updateWeddingData} />;
@@ -308,6 +406,18 @@ function WeddingPlanningDashboard() {
       case 'details':
         return <EventDetails weddingData={weddingData} onUpdate={updateWeddingData} />;
       
+      case 'messaging':
+        console.log('Rendering messaging tab with selectedChatId:', selectedChatId);
+        return (
+          <DashboardMessaging 
+            currentUserId={user?.id} 
+            userType="individual"
+            selectedChatId={selectedChatId}
+            onChatSelect={setSelectedChatId}
+            onBack={() => setSelectedChatId(null)}
+          />
+        );
+      
       case 'checklist':
         return <WeddingChecklist weddingData={weddingData} onUpdate={updateWeddingData} />;
       
@@ -317,44 +427,14 @@ function WeddingPlanningDashboard() {
     }
   };
 
-  const renderCountdown = () => {
-    if (!weddingData?.wedding_date) return null;
+  const handleImageClick = (index) => {
+    setSelectedImageIndex(index);
+    setShowImageModal(true);
+  };
 
-    const weddingDate = new Date(weddingData.wedding_date);
-    const today = new Date();
-    const daysUntilWedding = Math.ceil((weddingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (daysUntilWedding < 0) {
-      return (
-        <div className="countdown-timer countdown-past">
-          <span>💕 Wedding Memories</span>
-        </div>
-      );
-    } else if (daysUntilWedding === 0) {
-      return (
-        <div className="countdown-timer countdown-today">
-          <span>🎉 It's Your Wedding Day! 🎉</span>
-        </div>
-      );
-    } else if (daysUntilWedding <= 7) {
-      return (
-        <div className="countdown-timer countdown-urgent">
-          <span>⏰ {daysUntilWedding} {daysUntilWedding === 1 ? 'Day' : 'Days'} Until Your Wedding!</span>
-        </div>
-      );
-    } else if (daysUntilWedding <= 30) {
-      return (
-        <div className="countdown-timer countdown-warning">
-          <span>📅 {daysUntilWedding} Days Until Your Wedding</span>
-        </div>
-      );
-    } else {
-      return (
-        <div className="countdown-timer countdown-normal">
-          <span>📅 {daysUntilWedding} Days Until Your Wedding</span>
-        </div>
-      );
-    }
+  const handleCloseImageModal = () => {
+    setShowImageModal(false);
+    setSelectedImageIndex(0);
   };
 
   if (loading) {
@@ -366,41 +446,99 @@ function WeddingPlanningDashboard() {
     );
   }
 
+  // Hero section data
+  const daysUntil = calculateDaysUntilWedding();
+  const weddingPhase = getWeddingPhase(daysUntil);
+
   return (
     <div className="wedding-planning-dashboard">
-      <div className="dashboard-header">
-        <div className="header-content">
-          {weddingData ? (
-            <h1>
-              <span className="cute-title">✨ {weddingData.wedding_title} ✨</span>
-              <div className="cute-subtitle">Your Perfect Day Awaits</div>
-            </h1>
-          ) : (
+      {/* Overview Hero Section */}
+      {weddingData ? (
+        <div 
+          className="overview-hero"
+          style={{
+            backgroundImage: moodBoardImages.length > 0 
+              ? `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${moodBoardImages[backgroundImageIndex]?.url})`
+              : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            transition: 'background-image 1s ease-in-out',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          <div className="frosted-hero-glass" />
+          <div className="hero-content-wrapper">
+            <div className="hero-content">
+              <div className="wedding-title-section">
+                <h1 className="wedding-title">{weddingData.wedding_title}</h1>
+                <div className="wedding-date-display">
+                  <i className="fas fa-calendar-heart"></i>
+                  <span>{new Date(weddingData.wedding_date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}</span>
+                </div>
+                <div className="wedding-location">
+                  <i className="fas fa-map-marker-alt"></i>
+                  <span>{weddingData.wedding_location || 'Location TBD'}</span>
+                </div>
+              </div>
+              
+              <div className="countdown-section">
+                <div className={`countdown-card ${weddingPhase.phase.toLowerCase().replace(/\s+/g, '')}`}>
+                  <div className="countdown-icon">{weddingPhase.icon}</div>
+                  <div className="countdown-content">
+                    <h3>{weddingPhase.phase}</h3>
+                    <p className="countdown-days">
+                      {daysUntil < 0 ? 'Wedding has passed' : 
+                       daysUntil === 0 ? 'Today is your wedding day!' :
+                       `${daysUntil} ${daysUntil === 1 ? 'day' : 'days'} to go`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+        
+            
+            {/* Notification Bell */}
+            <div className="header-notification-bell">
+              <WeddingNotificationBell 
+                notifications={notifications}
+                onDismissNotification={dismissNotification}
+              />
+            </div>
+            
+            {/* Slideshow Indicator */}
+            {moodBoardImages.length > 1 && (
+              <div className="slideshow-indicator">
+                {moodBoardImages.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`slideshow-dot ${index === backgroundImageIndex ? 'active' : ''}`}
+                    onClick={() => setBackgroundImageIndex(index)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="dashboard-header">
+          <div className="header-content">
             <h1>
               <span className="cute-title">💕 Let's Plan Your Dream Wedding 💕</span>
               <div className="cute-subtitle">Every love story deserves a beautiful beginning</div>
             </h1>
-          )}
-          {weddingData && (
-            <div className="wedding-info" style={{marginTop: '10px',display: 'flex', justifyContent: 'center', width: '100%'}}>
-              <span className="wedding-date" style={{fontSize: '1.2rem', fontWeight: 'bold', fontFamily: 'cursive'}}>
-                {new Date(weddingData.wedding_date).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-          {renderCountdown()}
+          </div>
         </div>
-        
-        {/* Notification Bell */}
-        <div className="header-notification-bell">
-          <WeddingNotificationBell 
-            notifications={notifications}
-            onDismissNotification={dismissNotification}
-          />
-        </div>
-      </div>
+      )}
 
-      <div className="dashboard-tabs">
+      {/* Desktop Tabs - Hidden on Mobile */}
+      <div className="dashboard-tabs desktop-tabs">
         <button 
           className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
@@ -467,6 +605,178 @@ function WeddingPlanningDashboard() {
       <div className="dashboard-content">
         {renderTabContent()}
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="mobile-bottom-nav">
+        {!weddingData ? (
+          // Show setup tab when no wedding data
+          <>
+            <button 
+              className={`mobile-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
+              onClick={() => setActiveTab('overview')}
+            >
+              <i className="fas fa-home"></i>
+              <span>Overview</span>
+            </button>
+            
+            <button 
+              className={`mobile-nav-item ${activeTab === 'setup' ? 'active' : ''}`}
+              onClick={() => setActiveTab('setup')}
+            >
+              <i className="fas fa-plus-circle"></i>
+              <span>Setup</span>
+            </button>
+          </>
+        ) : (
+          // Show all tabs when wedding data exists
+          <>
+            <button 
+              className={`mobile-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab('overview');
+                setShowVendorsSubmenu(false);
+              }}
+            >
+              <i className="fas fa-home"></i>
+              <span>Overview</span>
+            </button>
+            
+            <button 
+              className={`mobile-nav-item ${activeTab === 'timeline' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab('timeline');
+                setShowVendorsSubmenu(false);
+              }}
+            >
+              <i className="fas fa-calendar-alt"></i>
+              <span>Timeline</span>
+            </button>
+            
+            <button 
+              className={`mobile-nav-item ${activeTab === 'budget' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab('budget');
+                setShowVendorsSubmenu(false);
+              }}
+            >
+              <i className="fas fa-dollar-sign"></i>
+              <span>Budget</span>
+            </button>
+            
+            <button 
+              className={`mobile-nav-item ${(activeTab === 'vendors' || activeTab === 'messaging') ? 'active' : ''}`}
+              onClick={() => {
+                if (activeTab === 'vendors' || activeTab === 'messaging') {
+                  setShowVendorsSubmenu(!showVendorsSubmenu);
+                } else {
+                  setActiveTab('vendors');
+                  setShowVendorsSubmenu(false);
+                }
+              }}
+            >
+              <i className="fas fa-users"></i>
+              <span>Vendors</span>
+              {showVendorsSubmenu && <i className="fas fa-chevron-up" style={{ fontSize: '0.8rem', marginLeft: '4px' }}></i>}
+            </button>
+            
+            <button 
+              className={`mobile-nav-item ${activeTab === 'guests' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab('guests');
+                setShowVendorsSubmenu(false);
+              }}
+            >
+              <i className="fas fa-user-friends"></i>
+              <span>Guests</span>
+            </button>
+            
+            <button 
+              className={`mobile-nav-item ${activeTab === 'details' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab('details');
+                setShowVendorsSubmenu(false);
+              }}
+            >
+              <i className="fas fa-info-circle"></i>
+              <span>Details</span>
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Vendors Sub-menu */}
+      {showVendorsSubmenu && weddingData && (
+        <div className="mobile-vendors-submenu">
+          <button 
+            className={`mobile-submenu-item ${activeTab === 'vendors' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('vendors');
+              setShowVendorsSubmenu(false);
+            }}
+          >
+            <i className="fas fa-list"></i>
+            <span>Manage Vendors</span>
+          </button>
+          
+          <button 
+            className={`mobile-submenu-item ${activeTab === 'messaging' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('messaging');
+              setShowVendorsSubmenu(false);
+            }}
+          >
+            <i className="fas fa-comments"></i>
+            <span>Messages</span>
+          </button>
+        </div>
+      )}
+
+      {/* Image Modal */}
+      {showImageModal && moodBoardImages.length > 0 && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            zIndex: 9999,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexDirection: 'column'
+          }}
+        >
+          <button 
+            onClick={handleCloseImageModal}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              fontSize: '20px',
+              cursor: 'pointer',
+              zIndex: 10000
+            }}
+          >
+            ×
+          </button>
+          <img 
+            src={moodBoardImages[selectedImageIndex].url}
+            alt={moodBoardImages[selectedImageIndex].name}
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              objectFit: 'contain'
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

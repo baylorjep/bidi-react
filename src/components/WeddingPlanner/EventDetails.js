@@ -37,6 +37,8 @@ function EventDetails({ weddingData, onUpdate }) {
   const [activeTab, setActiveTab] = useState('basic');
   const [moodBoardImages, setMoodBoardImages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Load existing wedding data
   useEffect(() => {
@@ -84,34 +86,30 @@ function EventDetails({ weddingData, onUpdate }) {
       
       if (!user) return;
 
-      const { data: files, error } = await supabase.storage
-        .from('wedding-assets')
-        .list(`${user.id}/${weddingData.id}/mood-board`, {
-          limit: 100,
-          offset: 0,
-          sortBy: { column: 'created_at', order: 'desc' }
-        });
+      // Load images from the database table
+      const { data: moodBoardData, error: dbError } = await supabase
+        .from('wedding_mood_board')
+        .select('*')
+        .eq('wedding_plan_id', weddingData.id)
+        .order('uploaded_at', { ascending: false });
 
-      if (error) {
-        console.error('Error loading mood board images:', error);
+      if (dbError) {
+        console.error('Error loading mood board from database:', dbError);
         return;
       }
 
-      if (files && files.length > 0) {
-        const imageFiles = files.filter(file => 
-          file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)
-        );
-
-        const loadedImages = imageFiles.map(file => ({
-          url: supabase.storage
-            .from('wedding-assets')
-            .getPublicUrl(`${user.id}/${weddingData.id}/mood-board/${file.name}`).data.publicUrl,
-          name: file.name,
-          path: `${user.id}/${weddingData.id}/mood-board/${file.name}`,
-          uploaded_at: file.created_at || new Date().toISOString()
+      if (moodBoardData && moodBoardData.length > 0) {
+        const loadedImages = moodBoardData.map(item => ({
+          url: item.image_url,
+          name: item.image_name,
+          path: item.image_url, // Keep path for compatibility
+          uploaded_at: item.uploaded_at,
+          id: item.id // Add database ID for deletion
         }));
 
         setMoodBoardImages(loadedImages);
+      } else {
+        setMoodBoardImages([]);
       }
     } catch (error) {
       console.error('Error loading mood board images:', error);
@@ -285,8 +283,9 @@ function EventDetails({ weddingData, onUpdate }) {
         const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
         const filePath = `${user.id}/${weddingData.id}/mood-board/${fileName}`;
 
+        // Upload to storage
         const { error: uploadError } = await supabase.storage
-          .from('wedding-assets')
+          .from('wedding_planning_photos')
           .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false
@@ -297,15 +296,38 @@ function EventDetails({ weddingData, onUpdate }) {
           throw new Error(`Failed to upload ${file.name}: ${uploadError.message}`);
         }
 
+        // Get public URL
         const { data: { publicUrl } } = supabase.storage
-          .from('wedding-assets')
+          .from('wedding_planning_photos')
           .getPublicUrl(filePath);
+
+        // Save to database
+        const { data: dbData, error: dbError } = await supabase
+          .from('wedding_mood_board')
+          .insert([{
+            wedding_plan_id: weddingData.id,
+            image_url: publicUrl,
+            image_name: file.name,
+            uploaded_at: new Date().toISOString()
+          }])
+          .select()
+          .single();
+
+        if (dbError) {
+          console.error('Database insert error:', dbError);
+          // Clean up the uploaded file if database insert fails
+          await supabase.storage
+            .from('wedding_planning_photos')
+            .remove([filePath]);
+          throw new Error(`Failed to save image metadata: ${dbError.message}`);
+        }
 
         uploadedImages.push({
           url: publicUrl,
           name: file.name,
           path: filePath,
-          uploaded_at: new Date().toISOString()
+          uploaded_at: new Date().toISOString(),
+          id: dbData.id
         });
       }
 
@@ -326,13 +348,28 @@ function EventDetails({ weddingData, onUpdate }) {
     const imageToRemove = moodBoardImages[index];
     
     try {
+      // Delete from database first
+      if (imageToRemove.id) {
+        const { error: dbError } = await supabase
+          .from('wedding_mood_board')
+          .delete()
+          .eq('id', imageToRemove.id);
+
+        if (dbError) {
+          console.error('Database deletion error:', dbError);
+          throw new Error('Failed to delete image from database');
+        }
+      }
+
+      // Delete from storage
       if (imageToRemove.path) {
-        const { error: deleteError } = await supabase.storage
-          .from('wedding-assets')
+        const { error: storageError } = await supabase.storage
+          .from('wedding_planning_photos')
           .remove([imageToRemove.path]);
 
-        if (deleteError) {
-          console.error('Error deleting from storage:', deleteError);
+        if (storageError) {
+          console.error('Storage deletion error:', storageError);
+          // Don't throw error here as the database record is already deleted
         }
       }
 
@@ -353,6 +390,16 @@ function EventDetails({ weddingData, onUpdate }) {
 
   const resetToOriginal = () => {
     setFormData(originalData);
+  };
+
+  const handleImageClick = (index) => {
+    setSelectedImageIndex(index);
+    setShowImageModal(true);
+  };
+
+  const handleCloseImageModal = () => {
+    setShowImageModal(false);
+    setSelectedImageIndex(0);
   };
 
   const daysUntilWedding = getDaysUntilWedding();
@@ -640,7 +687,12 @@ function EventDetails({ weddingData, onUpdate }) {
       <div className="mood-board-grid-wedding-details">
         {moodBoardImages.map((image, index) => (
           <div key={index} className="mood-board-item-wedding-details">
-            <img src={image.url} alt={image.name} />
+            <img 
+              src={image.url} 
+              alt={image.name} 
+              onClick={() => handleImageClick(index)}
+              style={{ cursor: 'pointer' }}
+            />
             <button 
               className="remove-image-wedding-details"
               onClick={() => removeImage(index)}
@@ -658,6 +710,53 @@ function EventDetails({ weddingData, onUpdate }) {
           </div>
         )}
       </div>
+
+      {/* Image Modal */}
+      {showImageModal && moodBoardImages.length > 0 && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            zIndex: 9999,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexDirection: 'column'
+          }}
+        >
+          <button 
+            onClick={handleCloseImageModal}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              fontSize: '20px',
+              cursor: 'pointer',
+              zIndex: 10000
+            }}
+          >
+            ×
+          </button>
+          <img 
+            src={moodBoardImages[selectedImageIndex].url}
+            alt={moodBoardImages[selectedImageIndex].name}
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              objectFit: 'contain'
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 

@@ -198,9 +198,18 @@ function AppContent() {
     const dashboardRoutes = [
       '/individual-dashboard',
       '/business-dashboard',
-      '/wedding-planner-dashboard'
+      '/wedding-planner-dashboard',
+      '/messages',
+      '/messages/'
     ];
-    return dashboardRoutes.some(route => location.pathname === route);
+    
+    // Check exact matches first
+    if (dashboardRoutes.some(route => location.pathname === route)) {
+      return true;
+    }
+    
+    // Check if path starts with any dashboard route (for dynamic routes like /messages/:businessId)
+    return dashboardRoutes.some(route => location.pathname.startsWith(route));
   };
 
   return (

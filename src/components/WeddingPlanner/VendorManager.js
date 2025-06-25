@@ -709,9 +709,25 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const handleMessage = (chatData) => {
-    // Handle messaging - this will be passed to the parent component
-    if (onUpdate) {
-      onUpdate({ type: 'message', data: chatData });
+    console.log('VendorManager handleMessage called with chatData:', chatData);
+    
+    // For mobile, switch to the messaging tab in the dashboard
+    if (window.innerWidth <= 768) {
+      // Transform the chatData to the format expected by DashboardMessaging
+      // BidDisplay passes: { id, name, profileImage }
+      // DashboardMessaging expects: business_id (just the ID)
+      const businessId = chatData.id;
+      console.log('Extracted businessId:', businessId);
+      
+      // Switch to messaging tab instead of navigating
+      if (onUpdate) {
+        onUpdate({ type: 'switchTab', tab: 'messaging', chatData: businessId });
+      }
+    } else {
+      // For desktop, handle messaging - this will be passed to the parent component
+      if (onUpdate) {
+        onUpdate({ type: 'message', data: chatData });
+      }
     }
   };
 
@@ -872,9 +888,9 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                     {categoryBids.length > 0 && ` • ${categoryBids.length} bids • ${approvedBidsCount} approved`}
                   </p>
                 </div>
-                <div className="category-actions">
+                <div className="category-actions-vendor-manager">
                   <button 
-                    className="request-bids-btn"
+                    className="request-bids-btn-vendor-manager"
                     onClick={(e) => {
                       e.stopPropagation();
                       requestBidsFromVendors(category);
@@ -1092,7 +1108,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                     <div className="no-vendors">
                       <p>No vendors or bids yet for this category.</p>
                       <button 
-                        className="request-bids-btn"
+                        className="request-bids-btn-vendor-manager"
                         onClick={() => requestBidsFromVendors(category)}
                       >
                         Request Bids from Vendors

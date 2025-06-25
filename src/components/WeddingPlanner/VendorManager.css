@@ -119,7 +119,7 @@
   font-weight: 500;
 }
 
-.category-actions {
+.category-actions-vendor-manager {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -127,7 +127,7 @@
   min-width: 0;
 }
 
-.request-bids-btn {
+.request-bids-btn-vendor-manager {
   background: #f1f5f9;
   color: #374151;
   border: 1px solid #d1d5db;
@@ -141,20 +141,20 @@
   flex-shrink: 0;
 }
 
-.request-bids-btn:hover {
+.request-bids-btn-vendor-manager:hover {
   background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
   color: white !important;
   border-color: #ec4899;
   transform: translateY(-1px);
 }
 
-.category-actions i {
+.category-actions-vendor-manager i {
   color: #9ca3af;
   transition: transform 0.3s ease;
   font-size: 1.1rem;
 }
 
-.vendor-category.active .category-actions i {
+.vendor-category.active .category-actions-vendor-manager i {
   transform: rotate(180deg);
 }
 
@@ -650,7 +650,7 @@
     margin-right: 12px;
   }
 
-  .category-actions {
+  .category-actions-vendor-manager {
     width: auto;
     justify-content: flex-end;
     flex-shrink: 0;
@@ -671,7 +671,7 @@
     font-size: 0.8rem;
   }
 
-  .request-bids-btn {
+  .request-bids-btn-vendor-manager {
     padding: 8px 16px;
     font-size: 0.85rem;
   }
@@ -853,7 +853,7 @@
     margin-right: 0;
   }
 
-  .category-actions {
+  .category-actions-vendor-manager {
     width: 100%;
     justify-content: space-between;
     margin-left: 0;
@@ -1693,7 +1693,7 @@
   margin-bottom: 20px;
 }
 
-.no-vendors .request-bids-btn {
+.no-vendors .request-bids-btn-vendor-manager {
   background: #9633eb;
   color: white;
   border: none;
@@ -1704,7 +1704,7 @@
   transition: all 0.2s ease;
 }
 
-.no-vendors .request-bids-btn:hover {
+.no-vendors .request-bids-btn-vendor-manager:hover {
   background: #7c2d9e;
   transform: translateY(-1px);
 }
@@ -2178,7 +2178,7 @@
     line-height: 1.4;
   }
   
-  .category-actions {
+  .category-actions-vendor-manager {
     width: 100%;
     justify-content: space-between;
     margin-left: 0;
@@ -2186,7 +2186,7 @@
     gap: 8px;
   }
   
-  .request-bids-btn {
+  .request-bids-btn-vendor-manager {
     padding: 10px 16px;
     font-size: 0.9rem;
     flex: 1;
@@ -2392,7 +2392,7 @@
     margin-bottom: 24px;
   }
   
-  .no-vendors .request-bids-btn {
+  .no-vendors .request-bids-btn-vendor-manager {
     padding: 16px 24px;
     font-size: 1.1rem;
     width: 100%;
@@ -2417,11 +2417,11 @@
     font-size: 0.9rem;
   }
   
-  .category-actions {
+  .category-actions-vendor-manager {
     gap: 6px;
   }
   
-  .request-bids-btn {
+  .request-bids-btn-vendor-manager{
     padding: 8px 12px;
     font-size: 0.85rem;
     min-width: 100px;

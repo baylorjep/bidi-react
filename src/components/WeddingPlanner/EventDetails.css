@@ -11,10 +11,10 @@
   align-items: center;
   margin-bottom: 30px;
   padding: 20px;
-  background: linear-gradient(135deg, #8b5cf6 0%, #6b21f7 100%);
   border-radius: 15px;
-  color: white;
+  color: black;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
 }
 
 .header-content-wedding-details h2 {
@@ -100,9 +100,9 @@
 }
 
 .tab-button-wedding-details.active {
-  color: #667eea;
+  color: #ec4899;
   background: white;
-  border-bottom-color: #667eea;
+  border-bottom-color: #ec4899;
 }
 
 .tab-button-wedding-details i {
@@ -358,6 +358,13 @@
   height: 200px;
   object-fit: cover;
   display: block;
+  cursor: pointer;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.mood-board-item-wedding-details img:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
 }
 
 .remove-image-wedding-details {

@@ -683,6 +683,7 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
           budgetItems={budgetItems} 
           budgetCategories={budgetCategories}
           onUpdate={loadBudgetItems}
+          setShowCategoryManager={setShowCategoryManager}
         />
       )}
 
@@ -959,14 +960,14 @@ function BudgetPieChart({ budgetItems, budgetCategories, onAddExpense }) {
           <h3>Spending Breakdown</h3>
           <div className="budget-toggle">
             <button 
-              className={`toggle-btn ${!showPlanned ? 'active' : ''}`}
+              className={`toggle-btn-budget-tracker ${!showPlanned ? 'active' : ''}`}
               onClick={() => setShowPlanned(false)}
             >
               <i className="fas fa-dollar-sign"></i>
               Actual
             </button>
             <button 
-              className={`toggle-btn ${showPlanned ? 'active' : ''}`}
+              className={`toggle-btn-budget-tracker ${showPlanned ? 'active' : ''}`}
               onClick={() => setShowPlanned(true)}
             >
               <i className="fas fa-calendar-alt"></i>
@@ -990,14 +991,14 @@ function BudgetPieChart({ budgetItems, budgetCategories, onAddExpense }) {
           <h3>Spending Breakdown</h3>
           <div className="budget-toggle">
             <button 
-              className={`toggle-btn ${!showPlanned ? 'active' : ''}`}
+              className={`toggle-btn-budget-tracker ${!showPlanned ? 'active' : ''}`}
               onClick={() => setShowPlanned(false)}
             >
               <i className="fas fa-dollar-sign"></i>
               Actual
             </button>
             <button 
-              className={`toggle-btn ${showPlanned ? 'active' : ''}`}
+              className={`toggle-btn-budget-tracker ${showPlanned ? 'active' : ''}`}
               onClick={() => setShowPlanned(true)}
             >
               <i className="fas fa-calendar-alt"></i>
@@ -1028,14 +1029,14 @@ function BudgetPieChart({ budgetItems, budgetCategories, onAddExpense }) {
           <h3>Spending Breakdown</h3>
           <div className="budget-toggle">
             <button 
-              className={`toggle-btn ${!showPlanned ? 'active' : ''}`}
+              className={`toggle-btn-budget-tracker ${!showPlanned ? 'active' : ''}`}
               onClick={() => setShowPlanned(false)}
             >
               <i className="fas fa-dollar-sign"></i>
               Actual
             </button>
             <button 
-              className={`toggle-btn ${showPlanned ? 'active' : ''}`}
+              className={`toggle-btn-budget-tracker ${showPlanned ? 'active' : ''}`}
               onClick={() => setShowPlanned(true)}
             >
               <i className="fas fa-calendar-alt"></i>
@@ -1183,14 +1184,14 @@ function BudgetPieChart({ budgetItems, budgetCategories, onAddExpense }) {
         <h3>Spending Breakdown</h3>
         <div className="budget-toggle">
           <button 
-            className={`toggle-btn ${!showPlanned ? 'active' : ''}`}
+            className={`toggle-btn-budget-tracker ${!showPlanned ? 'active' : ''}`}
             onClick={() => setShowPlanned(false)}
           >
             <i className="fas fa-dollar-sign"></i>
             Actual
           </button>
           <button 
-            className={`toggle-btn ${showPlanned ? 'active' : ''}`}
+            className={`toggle-btn-budget-tracker ${showPlanned ? 'active' : ''}`}
             onClick={() => setShowPlanned(true)}
           >
             <i className="fas fa-calendar-alt"></i>
@@ -1218,17 +1219,13 @@ function BudgetPieChart({ budgetItems, budgetCategories, onAddExpense }) {
             ${Math.round(Math.abs(totalDifference)).toLocaleString()} {totalDifference >= 0 ? 'Over' : 'Under'}
           </span>
         </div>
-        <div className="summary-item">
-          <span className="label">Categories:</span>
-          <span className="count">{categoriesWithData.length}</span>
-        </div>
       </div>
     </div>
   );
 }
 
 // Budget Planning Component
-function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate }) {
+function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, setShowCategoryManager }) {
   const [focusAreas, setFocusAreas] = useState([]);
   const [plannedBudget, setPlannedBudget] = useState({});
   const [totalBudget, setTotalBudget] = useState(parseFloat(weddingData.budget) || 0);
@@ -1470,6 +1467,7 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate })
       <div className="planner-header">
         <h2>Budget Planning Tool</h2>
         <p>Choose your focus areas and set your budget allocations</p>
+
       </div>
 
       <div className="budget-input-section">
@@ -1643,8 +1641,17 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate })
 
       <div className="focus-areas-section">
         <h3>Choose Your Focus Areas</h3>
+
+        <div className="planner-actions-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
         <p>Select up to 3 categories that matter most to you. We'll allocate more budget to these areas.</p>
-        
+          <button 
+            className="manage-categories-btn"
+            onClick={() => setShowCategoryManager(true)}
+          >
+            <i className="fas fa-tags"></i>
+            Manage Categories
+          </button>
+        </div>
         <div className="focus-areas-grid">
           {budgetCategories.map(category => (
             <div key={category.id} className="focus-area-item">
@@ -1829,7 +1836,7 @@ function CategoryManager({ categories, onAdd, onRemove, onUnhide, onCancel }) {
           </div>
 
           <div className="form-actions">
-            <button type="button" onClick={onCancel} className="cancel-btn">
+            <button type="button" onClick={onCancel} className="cancel-btn-checklist">
               Cancel
             </button>
             <button type="submit" className="submit-btn">

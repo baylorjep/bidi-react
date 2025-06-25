@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
+import { toast } from 'react-toastify';
 import './WeddingTimeline.css';
 
 function WeddingTimeline({ weddingData, onUpdate, compact }) {
   const [timelineItems, setTimelineItems] = useState({ dayOf: [], preparation: [] });
+  const [checklistItems, setChecklistItems] = useState([]);
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [isAddingChecklistItem, setIsAddingChecklistItem] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [editingChecklistItem, setEditingChecklistItem] = useState(null);
   const [activeCard, setActiveCard] = useState(null);
   const [activeTimeline, setActiveTimeline] = useState('dayOf'); // 'dayOf' or 'preparation'
+  const [activePreparationView, setActivePreparationView] = useState('timeline'); // 'timeline' or 'checklist'
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
@@ -26,6 +31,34 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
     completed: false,
     dateType: 'relative',
     specificDate: ''
+  });
+  const [newChecklistItem, setNewChecklistItem] = useState({
+    title: '',
+    description: '',
+    category: 'planning',
+    priority: 'medium',
+    due_date: '',
+    completed: false
+  });
+  const [checklistFilters, setChecklistFilters] = useState({
+    selectedCategory: 'all',
+    selectedPriority: 'all',
+    searchTerm: '',
+    sortBy: 'due_date',
+    sortOrder: 'asc',
+    showCompleted: true
+  });
+  const [expandedTimelineItems, setExpandedTimelineItems] = useState(new Set());
+  const [isAddingSubChecklistItem, setIsAddingSubChecklistItem] = useState(false);
+  const [editingSubChecklistItem, setEditingSubChecklistItem] = useState(null);
+  const [selectedTimelineItemId, setSelectedTimelineItemId] = useState(null);
+  const [newSubChecklistItem, setNewSubChecklistItem] = useState({
+    title: '',
+    description: '',
+    category: 'planning',
+    priority: 'medium',
+    due_date: '',
+    completed: false
   });
 
   // Timeline phases for day-of
@@ -46,6 +79,27 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
     { id: 'meetings', name: 'Meetings', color: '#10b981', icon: 'fas fa-handshake' },
     { id: 'rehearsal', name: 'Rehearsal', color: '#f59e0b', icon: 'fas fa-theater-masks' },
     { id: 'final', name: 'Final Prep', color: '#ef4444', icon: 'fas fa-magic' }
+  ];
+
+  // Checklist categories
+  const checklistCategories = [
+    { id: 'planning', name: 'Planning & Coordination', icon: 'fas fa-calendar-check', color: '#667eea' },
+    { id: 'venue', name: 'Venue & Location', icon: 'fas fa-building', color: '#764ba2' },
+    { id: 'vendors', name: 'Vendors & Services', icon: 'fas fa-handshake', color: '#f093fb' },
+    { id: 'attire', name: 'Attire & Beauty', icon: 'fas fa-tshirt', color: '#4facfe' },
+    { id: 'ceremony', name: 'Ceremony', icon: 'fas fa-church', color: '#43e97b' },
+    { id: 'reception', name: 'Reception', icon: 'fas fa-glass-cheers', color: '#fa709a' },
+    { id: 'guests', name: 'Guests & RSVPs', icon: 'fas fa-user-friends', color: '#a8edea' },
+    { id: 'travel', name: 'Travel & Accommodation', icon: 'fas fa-plane', color: '#ffecd2' },
+    { id: 'legal', name: 'Legal & Documentation', icon: 'fas fa-file-contract', color: '#fc466b' },
+    { id: 'decor', name: 'Decor & Details', icon: 'fas fa-palette', color: '#ff9a9e' },
+    { id: 'other', name: 'Other', icon: 'fas fa-ellipsis-h', color: '#ff6b6b' }
+  ];
+
+  const priorityOptions = [
+    { id: 'high', name: 'High Priority', color: '#ef4444', icon: 'fas fa-exclamation-triangle' },
+    { id: 'medium', name: 'Medium Priority', color: '#f59e0b', icon: 'fas fa-exclamation-circle' },
+    { id: 'low', name: 'Low Priority', color: '#10b981', icon: 'fas fa-info-circle' }
   ];
 
   // Load timeline items from database
@@ -142,6 +196,217 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
 
     loadTimelineItems();
   }, [weddingData?.id]);
+
+  // Load checklist items
+  useEffect(() => {
+    if (weddingData?.id) {
+      loadChecklistItems();
+    }
+  }, [weddingData?.id]);
+
+  const loadChecklistItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('wedding_checklist_items')
+        .select('*')
+        .eq('wedding_id', weddingData.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setChecklistItems(data || []);
+    } catch (error) {
+      console.error('Error loading checklist items:', error);
+      toast.error('Failed to load checklist items');
+    }
+  };
+
+  // Checklist helper functions
+  const addChecklistItem = async (itemData) => {
+    try {
+      if (!itemData.title || !itemData.category) {
+        toast.error('Title and category are required');
+        return;
+      }
+
+      const newItem = {
+        wedding_id: weddingData.id,
+        title: itemData.title,
+        description: itemData.description || '',
+        due_date: itemData.due_date || null,
+        category: itemData.category,
+        priority: itemData.priority || 'medium',
+        completed: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('wedding_checklist_items')
+        .insert([newItem])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setChecklistItems([data, ...checklistItems]);
+      setIsAddingChecklistItem(false);
+      toast.success('Checklist item added successfully!');
+    } catch (error) {
+      console.error('Error adding checklist item:', error);
+      toast.error('Failed to add checklist item');
+    }
+  };
+
+  const updateChecklistItem = async (itemId, updates) => {
+    try {
+      // Only validate title and category if they are being updated
+      if (updates.hasOwnProperty('title') && !updates.title) {
+        toast.error('Title is required');
+        return;
+      }
+      if (updates.hasOwnProperty('category') && !updates.category) {
+        toast.error('Category is required');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('wedding_checklist_items')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', itemId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setChecklistItems(checklistItems.map(item => 
+        item.id === itemId ? data : item
+      ));
+      
+      toast.success('Checklist item updated successfully!');
+    } catch (error) {
+      console.error('Error updating checklist item:', error);
+      toast.error('Failed to update checklist item');
+    }
+  };
+
+  const deleteChecklistItem = async (itemId) => {
+    try {
+      const { error } = await supabase
+        .from('wedding_checklist_items')
+        .delete()
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      setChecklistItems(checklistItems.filter(item => item.id !== itemId));
+      toast.success('Checklist item deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting checklist item:', error);
+      toast.error('Failed to delete checklist item');
+    }
+  };
+
+  const toggleChecklistItemCompletion = async (itemId, completed) => {
+    await updateChecklistItem(itemId, { completed });
+  };
+
+  const getFilteredAndSortedChecklistItems = () => {
+    let filtered = checklistItems;
+
+    // Filter by category
+    if (checklistFilters.selectedCategory !== 'all') {
+      filtered = filtered.filter(item => item.category === checklistFilters.selectedCategory);
+    }
+
+    // Filter by priority
+    if (checklistFilters.selectedPriority !== 'all') {
+      filtered = filtered.filter(item => item.priority === checklistFilters.selectedPriority);
+    }
+
+    // Filter by search term
+    if (checklistFilters.searchTerm) {
+      filtered = filtered.filter(item => 
+        item.title.toLowerCase().includes(checklistFilters.searchTerm.toLowerCase()) ||
+        item.description.toLowerCase().includes(checklistFilters.searchTerm.toLowerCase())
+      );
+    }
+
+    // Filter by completion status
+    if (!checklistFilters.showCompleted) {
+      filtered = filtered.filter(item => !item.completed);
+    }
+
+    // Sort items
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+
+      switch (checklistFilters.sortBy) {
+        case 'due_date':
+          aValue = a.due_date ? new Date(a.due_date) : new Date('9999-12-31');
+          bValue = b.due_date ? new Date(b.due_date) : new Date('9999-12-31');
+          break;
+        case 'priority':
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          aValue = priorityOrder[a.priority] || 0;
+          bValue = priorityOrder[b.priority] || 0;
+          break;
+        case 'title':
+          aValue = a.title.toLowerCase();
+          bValue = b.title.toLowerCase();
+          break;
+        case 'created_at':
+          aValue = new Date(a.created_at);
+          bValue = new Date(b.created_at);
+          break;
+        default:
+          aValue = a[checklistFilters.sortBy];
+          bValue = b[checklistFilters.sortBy];
+      }
+
+      if (checklistFilters.sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    return filtered;
+  };
+
+  const getDaysUntilDue = (dueDate) => {
+    if (!dueDate) return null;
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const getDueDateStatus = (dueDate) => {
+    if (!dueDate) return 'no-due-date';
+    const daysUntil = getDaysUntilDue(dueDate);
+    if (daysUntil < 0) return 'overdue';
+    if (daysUntil === 0) return 'due-today';
+    if (daysUntil <= 3) return 'due-soon';
+    return 'due-later';
+  };
+
+  const getChecklistProgressStats = () => {
+    const total = checklistItems.length;
+    const completed = checklistItems.filter(item => item.completed).length;
+    const overdue = checklistItems.filter(item => 
+      item.due_date && !item.completed && getDaysUntilDue(item.due_date) < 0
+    ).length;
+    const urgent = checklistItems.filter(item => 
+      item.due_date && !item.completed && getDaysUntilDue(item.due_date) <= 7 && getDaysUntilDue(item.due_date) >= 0
+    ).length;
+
+    return { total, completed, overdue, urgent };
+  };
 
   // Helper function to format date for display
   const formatDateForDisplay = (dateString) => {
@@ -819,6 +1084,178 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
     return { completed, total, percentage };
   };
 
+  // Sub-checklist functions for timeline items
+  const loadSubChecklistItems = async (timelineItemId) => {
+    try {
+      const { data, error } = await supabase
+        .from('wedding_checklist_items')
+        .select('*')
+        .eq('wedding_id', weddingData.id)
+        .eq('parent_timeline_item_id', timelineItemId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (error) {
+      console.error('Error loading sub-checklist items:', error);
+      toast.error('Failed to load sub-checklist items');
+      return [];
+    }
+  };
+
+  const addSubChecklistItem = async (timelineItemId, itemData) => {
+    try {
+      if (!itemData.title || !itemData.category) {
+        toast.error('Title and category are required');
+        return;
+      }
+
+      const newItem = {
+        wedding_id: weddingData.id,
+        parent_timeline_item_id: timelineItemId,
+        title: itemData.title,
+        description: itemData.description || '',
+        due_date: itemData.due_date || null,
+        category: itemData.category,
+        priority: itemData.priority || 'medium',
+        completed: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('wedding_checklist_items')
+        .insert([newItem])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update the timeline items to include the new sub-checklist item
+      const updatedTimelineItems = { ...timelineItems };
+      const timelineItem = updatedTimelineItems.preparation.find(item => item.id === timelineItemId);
+      if (timelineItem) {
+        if (!timelineItem.subChecklistItems) {
+          timelineItem.subChecklistItems = [];
+        }
+        timelineItem.subChecklistItems.unshift(data);
+        setTimelineItems(updatedTimelineItems);
+      }
+
+      setIsAddingSubChecklistItem(false);
+      setSelectedTimelineItemId(null);
+      toast.success('Sub-checklist item added successfully!');
+    } catch (error) {
+      console.error('Error adding sub-checklist item:', error);
+      toast.error('Failed to add sub-checklist item');
+    }
+  };
+
+  const updateSubChecklistItem = async (timelineItemId, subItemId, updates) => {
+    try {
+      // Only validate title and category if they are being updated
+      if (updates.hasOwnProperty('title') && !updates.title) {
+        toast.error('Title is required');
+        return;
+      }
+      if (updates.hasOwnProperty('category') && !updates.category) {
+        toast.error('Category is required');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('wedding_checklist_items')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', subItemId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update the timeline items
+      const updatedTimelineItems = { ...timelineItems };
+      const timelineItem = updatedTimelineItems.preparation.find(item => item.id === timelineItemId);
+      if (timelineItem && timelineItem.subChecklistItems) {
+        timelineItem.subChecklistItems = timelineItem.subChecklistItems.map(item => 
+          item.id === subItemId ? data : item
+        );
+        setTimelineItems(updatedTimelineItems);
+      }
+
+      toast.success('Sub-checklist item updated successfully!');
+    } catch (error) {
+      console.error('Error updating sub-checklist item:', error);
+      toast.error('Failed to update sub-checklist item');
+    }
+  };
+
+  const deleteSubChecklistItem = async (timelineItemId, subItemId) => {
+    try {
+      const { error } = await supabase
+        .from('wedding_checklist_items')
+        .delete()
+        .eq('id', subItemId);
+
+      if (error) throw error;
+
+      // Update the timeline items
+      const updatedTimelineItems = { ...timelineItems };
+      const timelineItem = updatedTimelineItems.preparation.find(item => item.id === timelineItemId);
+      if (timelineItem && timelineItem.subChecklistItems) {
+        timelineItem.subChecklistItems = timelineItem.subChecklistItems.filter(item => item.id !== subItemId);
+        setTimelineItems(updatedTimelineItems);
+      }
+
+      toast.success('Sub-checklist item deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting sub-checklist item:', error);
+      toast.error('Failed to delete sub-checklist item');
+    }
+  };
+
+  const toggleSubChecklistItemCompletion = async (timelineItemId, subItemId, completed) => {
+    await updateSubChecklistItem(timelineItemId, subItemId, { completed });
+  };
+
+  const toggleTimelineItemExpansion = async (timelineItemId) => {
+    const newExpanded = new Set(expandedTimelineItems);
+    
+    if (newExpanded.has(timelineItemId)) {
+      newExpanded.delete(timelineItemId);
+    } else {
+      newExpanded.add(timelineItemId);
+      // Load sub-checklist items if not already loaded
+      const timelineItem = timelineItems.preparation.find(item => item.id === timelineItemId);
+      if (timelineItem && !timelineItem.subChecklistItems) {
+        const subItems = await loadSubChecklistItems(timelineItemId);
+        const updatedTimelineItems = { ...timelineItems };
+        const item = updatedTimelineItems.preparation.find(item => item.id === timelineItemId);
+        if (item) {
+          item.subChecklistItems = subItems;
+          setTimelineItems(updatedTimelineItems);
+        }
+      }
+    }
+    
+    setExpandedTimelineItems(newExpanded);
+  };
+
+  const getTimelineItemProgress = (timelineItem) => {
+    if (!timelineItem.subChecklistItems || timelineItem.subChecklistItems.length === 0) {
+      return { total: 0, completed: 0, percentage: 0 };
+    }
+    
+    const total = timelineItem.subChecklistItems.length;
+    const completed = timelineItem.subChecklistItems.filter(item => item.completed).length;
+    const percentage = Math.round((completed / total) * 100);
+    
+    return { total, completed, percentage };
+  };
+
   if (compact) {
     const currentItems = timelineItems[activeTimeline] || [];
     return (
@@ -986,29 +1423,96 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
         <div className="preparation-progress">
           <div className="progress-header">
             <h3>Preparation Timeline</h3>
-            {completionStats.total > 0 ? (
-              <span className="progress-percentage">{completionStats.percentage}% Complete</span>
-            ) : (
-              <span className="progress-percentage">No tasks yet</span>
-            )}
+            <div className="preparation-view-tabs">
+              <button 
+                className={`view-tab ${activePreparationView === 'timeline' ? 'active' : ''}`}
+                onClick={() => setActivePreparationView('timeline')}
+              >
+                <i className="fas fa-calendar-alt"></i>
+                Timeline
+              </button>
+              <button 
+                className={`view-tab ${activePreparationView === 'checklist' ? 'active' : ''}`}
+                onClick={() => setActivePreparationView('checklist')}
+              >
+                <i className="fas fa-tasks"></i>
+                Checklist
+              </button>
+            </div>
           </div>
-          {completionStats.total > 0 && (
+          
+          {activePreparationView === 'timeline' && (
             <>
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill"
-                  style={{ width: `${completionStats.percentage}%` }}
-                ></div>
-              </div>
-              <p className="progress-stats">
-                {completionStats.completed} of {completionStats.total} tasks completed
-              </p>
+              {completionStats.total > 0 ? (
+                <span className="progress-percentage">{completionStats.percentage}% Complete</span>
+              ) : (
+                <span className="progress-percentage">No tasks yet</span>
+              )}
+              {completionStats.total > 0 && (
+                <>
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill"
+                      style={{ width: `${completionStats.percentage}%` }}
+                    ></div>
+                  </div>
+                  <p className="progress-stats">
+                    {completionStats.completed} of {completionStats.total} tasks completed
+                  </p>
+                </>
+              )}
+              {completionStats.total === 0 && (
+                <p className="progress-stats">
+                  Start adding preparation tasks to track your wedding planning progress
+                </p>
+              )}
             </>
           )}
-          {completionStats.total === 0 && (
-            <p className="progress-stats">
-              Start adding preparation tasks to track your wedding planning progress
-            </p>
+          
+          {activePreparationView === 'checklist' && (
+            <>
+              {(() => {
+                const checklistStats = getChecklistProgressStats();
+                const checklistPercentage = checklistStats.total > 0 ? Math.round((checklistStats.completed / checklistStats.total) * 100) : 0;
+                return (
+                  <>
+                    {checklistStats.total > 0 ? (
+                      <span className="progress-percentage">{checklistPercentage}% Complete</span>
+                    ) : (
+                      <span className="progress-percentage">No checklist items yet</span>
+                    )}
+                    {checklistStats.total > 0 && (
+                      <>
+                        <div className="progress-bar">
+                          <div 
+                            className="progress-fill"
+                            style={{ width: `${checklistPercentage}%` }}
+                          ></div>
+                        </div>
+                        <p className="progress-stats">
+                          {checklistStats.completed} of {checklistStats.total} items completed
+                        </p>
+                        <div className="checklist-summary-stats">
+                          <span className="stat-item">
+                            <i className="fas fa-exclamation-triangle" style={{ color: '#ef4444' }}></i>
+                            {checklistStats.urgent} Due Soon
+                          </span>
+                          <span className="stat-item">
+                            <i className="fas fa-calendar-times" style={{ color: '#dc2626' }}></i>
+                            {checklistStats.overdue} Overdue
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {checklistStats.total === 0 && (
+                      <p className="progress-stats">
+                        Start adding checklist items to organize your wedding planning tasks
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
+            </>
           )}
         </div>
       )}
@@ -1139,7 +1643,7 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
 
             <div className="form-actions">
               <button 
-                className="cancel-btn"
+                className="cancel-btn-checklist"
                 onClick={() => {
                   setIsAddingItem(false);
                   setEditingItem(null);
@@ -1171,108 +1675,731 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
         </div>
       )}
 
-      <div className="timeline-container">
-        <div className={`timeline-container-header ${isHeaderVisible ? 'visible' : ''}`}>
-          <button 
-            className="add-timeline-btn"
-            onClick={() => setIsAddingItem(true)}
-            title={`Add ${activeTimeline === 'dayOf' ? 'Day-of' : 'Preparation'} Timeline Item`}
-          >
-            Add 
-            <i className="fas fa-plus"></i>
-          </button>
-        </div>
-        
-        {currentItems.length === 0 ? (
-          <div className="timeline-empty">
-            <i className="fas fa-clock"></i>
-            <h3>No {activeTimeline === 'dayOf' ? 'day-of' : 'preparation'} timeline items yet</h3>
-            <p>Start building your perfect wedding {activeTimeline === 'dayOf' ? 'day schedule' : 'preparation timeline'}</p>
-            <button 
-              className="create-timeline-btn"
-              onClick={async () => await setDefaultTimelines()}
-            >
-              Use Default Timeline
-            </button>
-          </div>
-        ) : (
-          <div className="timeline-list">
-            {currentItems.map((item, index) => (
-              <div key={item.id} className="timeline-item">
-                <div className="timeline-marker" style={{ backgroundColor: getPhaseColor(item.phase) }}>
-                  <i className={`timeline-icon ${getPhaseIcon(item.phase)}`}></i>
+      {/* Checklist Form Modal */}
+      {isAddingChecklistItem && (
+        <div className="timeline-form-overlay">
+          <div className="timeline-form checklist-form">
+            <h3>{editingChecklistItem ? 'Edit Checklist Item' : 'Add Checklist Item'}</h3>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!newChecklistItem.title.trim()) {
+                toast.error('Please enter a title for the checklist item');
+                return;
+              }
+              if (editingChecklistItem) {
+                updateChecklistItem(editingChecklistItem.id, newChecklistItem);
+                setEditingChecklistItem(null);
+              } else {
+                addChecklistItem(newChecklistItem);
+              }
+              setIsAddingChecklistItem(false);
+              setNewChecklistItem({
+                title: '',
+                description: '',
+                category: 'planning',
+                priority: 'medium',
+                due_date: '',
+                completed: false
+              });
+            }}>
+              <div className="form-group">
+                <label htmlFor="title">Title *</label>
+                <input
+                  type="text"
+                  id="title"
+                  value={newChecklistItem.title}
+                  onChange={(e) => setNewChecklistItem({...newChecklistItem, title: e.target.value})}
+                  placeholder="Enter checklist item title"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="description">Description</label>
+                <textarea
+                  id="description"
+                  value={newChecklistItem.description}
+                  onChange={(e) => setNewChecklistItem({...newChecklistItem, description: e.target.value})}
+                  placeholder="Add any additional details or notes"
+                  rows="3"
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="category">Category</label>
+                  <select
+                    id="category"
+                    value={newChecklistItem.category}
+                    onChange={(e) => setNewChecklistItem({...newChecklistItem, category: e.target.value})}
+                  >
+                    {checklistCategories.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                
-                <div 
-                  className={`timeline-content ${activeCard === item.id ? 'active' : ''} ${item.completed ? 'completed' : ''}`}
-                  onClick={() => handleCardClick(item.id)}
-                >
-                  <div className="timeline-header">
-                    <div className="timeline-time">
-                      <span className="time">
-                        {activeTimeline === 'dayOf' ? formatTime(item.time) : (item.date || 'No date set')}
-                      </span>
-                      {activeTimeline === 'dayOf' && item.duration > 0 && (
-                        <span className="duration">({item.duration} min)</span>
-                      )}
-                    </div>
-                    <div className="timeline-actions">
-                      {activeTimeline === 'preparation' && (
-                        <button 
-                          className={`completion-btn ${item.completed ? 'completed' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleCompletion(item.id);
-                          }}
-                        >
-                          <i className={`fas ${item.completed ? 'fa-check-circle' : 'fa-circle'}`}></i>
-                        </button>
-                      )}
-                      <button 
-                        className="edit-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditItem(item);
-                        }}
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button 
-                        className="delete-btn-timeline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteItem(item.id);
-                        }}
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <h3 className="timeline-activity">{item.activity}</h3>
-                  
-                  {item.description && (
-                    <p className="timeline-description">{item.description}</p>
-                  )}
-                  
-                  <div className="timeline-details">
-                    {item.location && (
-                      <div className="timeline-detail">
-                        <i className="fas fa-map-marker-alt"></i>
-                        <span>{item.location}</span>
-                      </div>
-                    )}
-                    {item.responsible && (
-                      <div className="timeline-detail">
-                        <i className="fas fa-user"></i>
-                        <span>{item.responsible}</span>
-                      </div>
-                    )}
-                  </div>
+
+                <div className="form-group">
+                  <label htmlFor="priority">Priority</label>
+                  <select
+                    id="priority"
+                    value={newChecklistItem.priority}
+                    onChange={(e) => setNewChecklistItem({...newChecklistItem, priority: e.target.value})}
+                  >
+                    {priorityOptions.map(priority => (
+                      <option key={priority.id} value={priority.id}>
+                        {priority.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
-            ))}
+
+              <div className="form-group">
+                <label htmlFor="due_date">Due Date</label>
+                <input
+                  type="date"
+                  id="due_date"
+                  value={newChecklistItem.due_date}
+                  onChange={(e) => setNewChecklistItem({...newChecklistItem, due_date: e.target.value})}
+                />
+              </div>
+
+              <div className="form-actions">
+                <button 
+                  type="button" 
+                  className="cancel-btn-checklist" 
+                  onClick={() => {
+                    setIsAddingChecklistItem(false);
+                    setEditingChecklistItem(null);
+                    setNewChecklistItem({
+                      title: '',
+                      description: '',
+                      category: 'planning',
+                      priority: 'medium',
+                      due_date: '',
+                      completed: false
+                    });
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn">
+                  {editingChecklistItem ? 'Update Item' : 'Add Item'}
+                </button>
+              </div>
+            </form>
           </div>
+        </div>
+      )}
+
+      {/* Sub-Checklist Form Modal */}
+      {isAddingSubChecklistItem && (
+        <div className="timeline-form-overlay">
+          <div className="timeline-form checklist-form">
+            <h3>{editingSubChecklistItem ? 'Edit Sub-Task' : 'Add Sub-Task'}</h3>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!newSubChecklistItem.title.trim()) {
+                toast.error('Please enter a title for the sub-task');
+                return;
+              }
+              if (editingSubChecklistItem) {
+                updateSubChecklistItem(selectedTimelineItemId, editingSubChecklistItem.id, newSubChecklistItem);
+                setEditingSubChecklistItem(null);
+              } else {
+                addSubChecklistItem(selectedTimelineItemId, newSubChecklistItem);
+              }
+              setIsAddingSubChecklistItem(false);
+              setSelectedTimelineItemId(null);
+              setNewSubChecklistItem({
+                title: '',
+                description: '',
+                category: 'planning',
+                priority: 'medium',
+                due_date: '',
+                completed: false
+              });
+            }}>
+              <div className="form-group">
+                <label htmlFor="sub-title">Title *</label>
+                <input
+                  type="text"
+                  id="sub-title"
+                  value={newSubChecklistItem.title}
+                  onChange={(e) => setNewSubChecklistItem({...newSubChecklistItem, title: e.target.value})}
+                  placeholder="Enter sub-task title"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="sub-description">Description</label>
+                <textarea
+                  id="sub-description"
+                  value={newSubChecklistItem.description}
+                  onChange={(e) => setNewSubChecklistItem({...newSubChecklistItem, description: e.target.value})}
+                  placeholder="Add any additional details or notes"
+                  rows="3"
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="sub-category">Category</label>
+                  <select
+                    id="sub-category"
+                    value={newSubChecklistItem.category}
+                    onChange={(e) => setNewSubChecklistItem({...newSubChecklistItem, category: e.target.value})}
+                  >
+                    {checklistCategories.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="sub-priority">Priority</label>
+                  <select
+                    id="sub-priority"
+                    value={newSubChecklistItem.priority}
+                    onChange={(e) => setNewSubChecklistItem({...newSubChecklistItem, priority: e.target.value})}
+                  >
+                    {priorityOptions.map(priority => (
+                      <option key={priority.id} value={priority.id}>
+                        {priority.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="sub-due-date">Due Date</label>
+                <input
+                  type="date"
+                  id="sub-due-date"
+                  value={newSubChecklistItem.due_date}
+                  onChange={(e) => setNewSubChecklistItem({...newSubChecklistItem, due_date: e.target.value})}
+                />
+              </div>
+
+              <div className="form-actions">
+                <button 
+                  type="button" 
+                  className="cancel-btn-checklist" 
+                  onClick={() => {
+                    setIsAddingSubChecklistItem(false);
+                    setEditingSubChecklistItem(null);
+                    setSelectedTimelineItemId(null);
+                    setNewSubChecklistItem({
+                      title: '',
+                      description: '',
+                      category: 'planning',
+                      priority: 'medium',
+                      due_date: '',
+                      completed: false
+                    });
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn">
+                  {editingSubChecklistItem ? 'Update Sub-Task' : 'Add Sub-Task'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div className="timeline-container">
+        <div className={`timeline-container-header ${isHeaderVisible ? 'visible' : ''}`}>
+          {activeTimeline === 'preparation' && activePreparationView === 'checklist' ? (
+            <button 
+              className="add-timeline-btn"
+              onClick={() => setIsAddingChecklistItem(true)}
+              title="Add Checklist Item"
+            >
+              Add Checklist Item
+              <i className="fas fa-plus"></i>
+            </button>
+          ) : (
+            <button 
+              className="add-timeline-btn"
+              onClick={() => setIsAddingItem(true)}
+              title={`Add ${activeTimeline === 'dayOf' ? 'Day-of' : 'Preparation'} Timeline Item`}
+            >
+              Add 
+              <i className="fas fa-plus"></i>
+            </button>
+          )}
+        </div>
+        
+        {/* Checklist Filters */}
+        {activeTimeline === 'preparation' && activePreparationView === 'checklist' && (
+          <div className="checklist-filters">
+            <div className="filter-group">
+              <input
+                type="text"
+                placeholder="Search items..."
+                value={checklistFilters.searchTerm}
+                onChange={(e) => setChecklistFilters({...checklistFilters, searchTerm: e.target.value})}
+                className="search-input"
+              />
+            </div>
+
+            <div className="filter-group">
+              <select 
+                value={checklistFilters.selectedCategory} 
+                onChange={(e) => setChecklistFilters({...checklistFilters, selectedCategory: e.target.value})}
+                className="filter-select"
+              >
+                <option value="all">All Categories</option>
+                {checklistCategories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <select 
+                value={checklistFilters.selectedPriority} 
+                onChange={(e) => setChecklistFilters({...checklistFilters, selectedPriority: e.target.value})}
+                className="filter-select"
+              >
+                <option value="all">All Priorities</option>
+                {priorityOptions.map(priority => (
+                  <option key={priority.id} value={priority.id}>
+                    {priority.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <select 
+                value={checklistFilters.sortBy} 
+                onChange={(e) => setChecklistFilters({...checklistFilters, sortBy: e.target.value})}
+                className="filter-select"
+              >
+                <option value="due_date">Sort by Due Date</option>
+                <option value="priority">Sort by Priority</option>
+                <option value="title">Sort by Title</option>
+                <option value="created_at">Sort by Created Date</option>
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <button 
+                className={`sort-order-btn ${checklistFilters.sortOrder === 'asc' ? 'active' : ''}`}
+                onClick={() => setChecklistFilters({...checklistFilters, sortOrder: checklistFilters.sortOrder === 'asc' ? 'desc' : 'asc'})}
+              >
+                <i className={`fas fa-sort-${checklistFilters.sortOrder === 'asc' ? 'up' : 'down'}`}></i>
+              </button>
+            </div>
+
+            <div className="filter-group">
+              <label className="show-completed-label">
+                <input
+                  type="checkbox"
+                  checked={checklistFilters.showCompleted}
+                  onChange={(e) => setChecklistFilters({...checklistFilters, showCompleted: e.target.checked})}
+                />
+                Show Completed
+              </label>
+            </div>
+          </div>
+        )}
+        
+        {/* Timeline Items */}
+        {activeTimeline === 'dayOf' || (activeTimeline === 'preparation' && activePreparationView === 'timeline') ? (
+          currentItems.length === 0 ? (
+            <div className="timeline-empty">
+              <i className="fas fa-clock"></i>
+              <h3>No {activeTimeline === 'dayOf' ? 'day-of' : 'preparation'} timeline items yet</h3>
+              <p>Start building your perfect wedding {activeTimeline === 'dayOf' ? 'day schedule' : 'preparation timeline'}</p>
+              <button 
+                className="create-timeline-btn"
+                onClick={async () => await setDefaultTimelines()}
+              >
+                Use Default Timeline
+              </button>
+            </div>
+          ) : (
+            <div className="timeline-list">
+              {currentItems.map((item, index) => {
+                const isExpanded = expandedTimelineItems.has(item.id);
+                const progress = getTimelineItemProgress(item);
+                const hasSubItems = item.subChecklistItems && item.subChecklistItems.length > 0;
+                
+                return (
+                  <div key={item.id} className="timeline-item">
+                    <div className="timeline-marker" style={{ backgroundColor: getPhaseColor(item.phase) }}>
+                      <i className={`timeline-icon ${getPhaseIcon(item.phase)}`}></i>
+                    </div>
+                    
+                    <div 
+                      className={`timeline-content ${activeCard === item.id ? 'active' : ''} ${item.completed ? 'completed' : ''}`}
+                      onClick={() => handleCardClick(item.id)}
+                    >
+                      <div className="timeline-header">
+                        <div className="timeline-time">
+                          <span className="time">
+                            {activeTimeline === 'dayOf' ? formatTime(item.time) : (item.date || 'No date set')}
+                          </span>
+                          {activeTimeline === 'dayOf' && item.duration > 0 && (
+                            <span className="duration">({item.duration} min)</span>
+                          )}
+                        </div>
+                        <div className="timeline-actions">
+                          {activeTimeline === 'preparation' && (
+                            <button 
+                              className={`completion-btn ${item.completed ? 'completed' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleCompletion(item.id);
+                              }}
+                            >
+                              <i className={`fas ${item.completed ? 'fa-check-circle' : 'fa-circle'}`}></i>
+                            </button>
+                          )}
+                          {activeTimeline === 'preparation' && (
+                            <button 
+                              className="expand-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleTimelineItemExpansion(item.id);
+                              }}
+                              title={isExpanded ? "Collapse sub-tasks" : "Expand sub-tasks"}
+                            >
+                              <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'}`}></i>
+                            </button>
+                          )}
+                          <button 
+                            className="edit-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditItem(item);
+                            }}
+                          >
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button 
+                            className="delete-btn-timeline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteItem(item.id);
+                            }}
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <h3 className="timeline-activity">{item.activity}</h3>
+                      
+                      {item.description && (
+                        <p className="timeline-description">{item.description}</p>
+                      )}
+                      
+                      <div className="timeline-details">
+                        {item.location && (
+                          <div className="timeline-detail">
+                            <i className="fas fa-map-marker-alt"></i>
+                            <span>{item.location}</span>
+                          </div>
+                        )}
+                        {item.responsible && (
+                          <div className="timeline-detail">
+                            <i className="fas fa-user"></i>
+                            <span>{item.responsible}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Sub-checklist Progress Bar */}
+                      {activeTimeline === 'preparation' && hasSubItems && (
+                        <div className="sub-checklist-progress">
+                          <div className="progress-header">
+                            <span className="progress-label">Sub-tasks Progress</span>
+                            <span className="progress-count">{progress.completed}/{progress.total}</span>
+                          </div>
+                          <div className="progress-bar">
+                            <div 
+                              className="progress-fill"
+                              style={{ width: `${progress.percentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Sub-checklist Items */}
+                      {activeTimeline === 'preparation' && isExpanded && (
+                        <div className="sub-checklist-section">
+                          <div className="sub-checklist-header">
+                            <h4>Sub-tasks</h4>
+                            <button 
+                              className="add-sub-task-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTimelineItemId(item.id);
+                                setIsAddingSubChecklistItem(true);
+                              }}
+                            >
+                              <i className="fas fa-plus"></i>
+                              Add Sub-task
+                            </button>
+                          </div>
+                          
+                          {hasSubItems ? (
+                            <div className="sub-checklist-items">
+                              {item.subChecklistItems.map(subItem => {
+                                const category = checklistCategories.find(cat => cat.id === subItem.category);
+                                const priority = priorityOptions.find(pri => pri.id === subItem.priority);
+                                const daysUntil = getDaysUntilDue(subItem.due_date);
+                                const dueStatus = getDueDateStatus(subItem.due_date);
+
+                                const getDueDateText = () => {
+                                  if (!subItem.due_date) return 'No due date';
+                                  if (daysUntil < 0) return `Overdue by ${Math.abs(daysUntil)} days`;
+                                  if (daysUntil === 0) return 'Due today';
+                                  if (daysUntil === 1) return 'Due tomorrow';
+                                  if (daysUntil <= 7) return `Due in ${daysUntil} days`;
+                                  return `Due in ${daysUntil} days`;
+                                };
+
+                                return (
+                                  <div key={subItem.id} className={`sub-checklist-item ${subItem.completed ? 'completed' : ''} ${dueStatus}`}>
+                                    <div className="item-checkbox">
+                                      <input
+                                        type="checkbox"
+                                        id={`sub-checklist-${subItem.id}`}
+                                        checked={subItem.completed}
+                                        onChange={(e) => toggleSubChecklistItemCompletion(item.id, subItem.id, e.target.checked)}
+                                        className="custom-checkbox"
+                                      />
+                                      <label htmlFor={`sub-checklist-${subItem.id}`} className="checkbox-label-checklist"></label>
+                                    </div>
+
+                                    <div className="item-content">
+                                      <div className="item-header">
+                                        <h5 className={`item-title ${subItem.completed ? 'completed' : ''}`}>
+                                          {subItem.title}
+                                        </h5>
+                                        <div className="item-meta">
+                                          {category && (
+                                            <span className="item-category" style={{ backgroundColor: category.color }}>
+                                              <i className={category.icon}></i>
+                                              {category.name}
+                                            </span>
+                                          )}
+                                          {priority && (
+                                            <span className="item-priority" style={{ color: priority.color }}>
+                                              <i className={priority.icon}></i>
+                                              {priority.name}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {subItem.description && (
+                                        <p className="item-description">{subItem.description}</p>
+                                      )}
+
+                                      <div className="item-footer">
+                                        {subItem.due_date && (
+                                          <span className={`item-due-date ${dueStatus}`}>
+                                            <i className="fas fa-calendar-day"></i>
+                                            {getDueDateText()}
+                                          </span>
+                                        )}
+                                        
+                                        <div className="item-actions">
+                                          <button 
+                                            className="action-btn edit-btn"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setEditingSubChecklistItem(subItem);
+                                              setSelectedTimelineItemId(item.id);
+                                              setNewSubChecklistItem({
+                                                title: subItem.title,
+                                                description: subItem.description || '',
+                                                category: subItem.category,
+                                                priority: subItem.priority,
+                                                due_date: subItem.due_date || '',
+                                                completed: subItem.completed || false
+                                              });
+                                              setIsAddingSubChecklistItem(true);
+                                            }}
+                                            title="Edit sub-task"
+                                          >
+                                            <i className="fas fa-edit"></i>
+                                          </button>
+                                          <button 
+                                            className="action-btn delete-btn-checklist"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              deleteSubChecklistItem(item.id, subItem.id);
+                                            }}
+                                            title="Delete sub-task"
+                                          >
+                                            <i className="fas fa-trash"></i>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="sub-checklist-empty">
+                              <p>No sub-tasks yet. Add your first sub-task to break down this timeline item.</p>
+                              <button 
+                                className="add-first-sub-task-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedTimelineItemId(item.id);
+                                  setIsAddingSubChecklistItem(true);
+                                }}
+                              >
+                                Add Your First Sub-task
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        ) : null}
+        
+        {/* Checklist Items */}
+        {activeTimeline === 'preparation' && activePreparationView === 'checklist' && (
+          (() => {
+            const filteredChecklistItems = getFilteredAndSortedChecklistItems();
+            return filteredChecklistItems.length === 0 ? (
+              <div className="checklist-empty">
+                <i className="fas fa-clipboard-list"></i>
+                <h3>No checklist items found</h3>
+                <p>Add your first checklist item to get started!</p>
+                <button 
+                  className="add-first-item-btn"
+                  onClick={() => setIsAddingChecklistItem(true)}
+                >
+                  Add Your First Item
+                </button>
+              </div>
+            ) : (
+              <div className="checklist-items">
+                {filteredChecklistItems.map(item => {
+                  const category = checklistCategories.find(cat => cat.id === item.category);
+                  const priority = priorityOptions.find(pri => pri.id === item.priority);
+                  const daysUntil = getDaysUntilDue(item.due_date);
+                  const dueStatus = getDueDateStatus(item.due_date);
+
+                  const getDueDateText = () => {
+                    if (!item.due_date) return 'No due date';
+                    if (daysUntil < 0) return `Overdue by ${Math.abs(daysUntil)} days`;
+                    if (daysUntil === 0) return 'Due today';
+                    if (daysUntil === 1) return 'Due tomorrow';
+                    if (daysUntil <= 7) return `Due in ${daysUntil} days`;
+                    return `Due in ${daysUntil} days`;
+                  };
+
+                  return (
+                    <div key={item.id} className={`checklist-item ${item.completed ? 'completed' : ''} ${dueStatus}`}>
+                      <div className="item-checkbox">
+                        <input
+                          type="checkbox"
+                          id={`checklist-${item.id}`}
+                          checked={item.completed}
+                          onChange={(e) => toggleChecklistItemCompletion(item.id, e.target.checked)}
+                          className="custom-checkbox"
+                        />
+                        <label htmlFor={`checklist-${item.id}`} className="checkbox-label-checklist"></label>
+                      </div>
+
+                      <div className="item-content">
+                        <div className="item-header">
+                          <h3 className={`item-title ${item.completed ? 'completed' : ''}`}>
+                            {item.title}
+                          </h3>
+                          <div className="item-meta">
+                            {category && (
+                              <span className="item-category" style={{ backgroundColor: category.color }}>
+                                <i className={category.icon}></i>
+                                {category.name}
+                              </span>
+                            )}
+                            {priority && (
+                              <span className="item-priority" style={{ color: priority.color }}>
+                                <i className={priority.icon}></i>
+                                {priority.name}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {item.description && (
+                          <p className="item-description">{item.description}</p>
+                        )}
+
+                        <div className="item-footer">
+                          {item.due_date && (
+                            <span className={`item-due-date ${dueStatus}`}>
+                              <i className="fas fa-calendar-day"></i>
+                              {getDueDateText()}
+                            </span>
+                          )}
+                          
+                          <div className="item-actions">
+                            <button 
+                              className="action-btn edit-btn"
+                              onClick={() => {
+                                setEditingChecklistItem(item);
+                                setNewChecklistItem({
+                                  title: item.title,
+                                  description: item.description || '',
+                                  category: item.category,
+                                  priority: item.priority,
+                                  due_date: item.due_date || '',
+                                  completed: item.completed || false
+                                });
+                                setIsAddingChecklistItem(true);
+                              }}
+                              title="Edit item"
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
+                            <button 
+                              className="action-btn delete-btn-checklist"
+                              onClick={() => deleteChecklistItem(item.id)}
+                              title="Delete item"
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()
         )}
       </div>
     </div>

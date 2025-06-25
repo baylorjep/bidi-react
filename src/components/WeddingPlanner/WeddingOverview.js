@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 import styles from './WeddingOverview.module.css';
+import { toast } from 'react-hot-toast';
 
 // Register Chart.js components
 ChartJS.register(
@@ -28,7 +29,7 @@ ChartJS.register(
   Filler
 );
 
-const WeddingOverview = ({ weddingData }) => {
+const WeddingOverview = ({ weddingData, onNavigate }) => {
   const [budgetItems, setBudgetItems] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [guests, setGuests] = useState([]);
@@ -147,11 +148,12 @@ const WeddingOverview = ({ weddingData }) => {
   };
 
   const getGuestStats = () => {
-    const confirmed = guests.filter(g => g.status === 'confirmed').length;
-    const pending = guests.filter(g => g.status === 'pending').length;
-    const declined = guests.filter(g => g.status === 'declined').length;
+    const confirmed = guests.filter(g => g.rsvp_status === 'attending').length;
+    const pending = guests.filter(g => g.rsvp_status === 'pending').length;
+    const declined = guests.filter(g => g.rsvp_status === 'declined').length;
+    const not_sure = guests.filter(g => g.rsvp_status === 'not_sure').length;
     const total = guests.length || 0;
-    return { confirmed, pending, declined, total };
+    return { confirmed, pending, declined, not_sure, total };
   };
 
   const getCategoryTotals = () => {
@@ -222,6 +224,34 @@ const WeddingOverview = ({ weddingData }) => {
     return 'future';
   };
 
+  const handleTaskToggle = async (taskId) => {
+    try {
+      // Find the task in timelineItems
+      const task = timelineItems.find(item => item.id === taskId);
+      if (!task) return;
+
+      const newCompletedStatus = !task.completed;
+
+      // Update in database
+      const { error } = await supabase
+        .from('wedding_timeline_items')
+        .update({ completed: newCompletedStatus })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      // Update local state
+      setTimelineItems(timelineItems.map(item => 
+        item.id === taskId ? { ...item, completed: newCompletedStatus } : item
+      ));
+
+      toast.success(newCompletedStatus ? 'Task completed!' : 'Task marked as incomplete');
+    } catch (error) {
+      console.error('Error updating task completion:', error);
+      toast.error('Failed to update task status');
+    }
+  };
+
   const daysUntil = calculateDaysUntilWedding();
   const weddingPhase = getWeddingPhase(daysUntil);
   const budgetProgress = calculateBudgetProgress();
@@ -241,39 +271,38 @@ const WeddingOverview = ({ weddingData }) => {
 
   return (
     <div className={styles.weddingOverview}>
-      {/* Hero Section */}
-      <div className={styles.overviewHero}>
-        <div className={styles.heroContent}>
-          <div className={styles.weddingTitleSection}>
-            <h1 className={styles.weddingTitle}>{weddingData.wedding_title}</h1>
-            <div className={styles.weddingDateDisplay}>
-              <i className="fas fa-calendar-heart"></i>
-              <span>{new Date(weddingData.wedding_date).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}</span>
-            </div>
-            <div className={styles.weddingLocation}>
-              <i className="fas fa-map-marker-alt"></i>
-              <span>{weddingData.wedding_location || 'Location TBD'}</span>
-            </div>
-          </div>
-          
-          <div className={styles.countdownSection}>
-            <div className={`${styles.countdownCard} ${styles[weddingPhase.phase.toLowerCase().replace(/\s+/g, '')]}`}>
-              <div className={styles.countdownIcon}>{weddingPhase.icon}</div>
-              <div className={styles.countdownContent}>
-                <h3>{weddingPhase.phase}</h3>
-                <p className={styles.countdownDays}>
-                  {daysUntil < 0 ? 'Wedding has passed' : 
-                   daysUntil === 0 ? 'Today is your wedding day!' :
-                   `${daysUntil} ${daysUntil === 1 ? 'day' : 'days'} to go`}
-                </p>
-              </div>
-            </div>
-          </div>
+      {/* Quick Actions */}
+      <div className={styles.quickActions}>
+        <h3>Quick Actions</h3>
+        <div className={styles.actionButtons}>
+          <button 
+            className={`${styles.actionBtn} ${styles.primary}`}
+            onClick={() => onNavigate && onNavigate('vendors')}
+          >
+            <i className="fas fa-plus"></i>
+            <span>Add Vendor</span>
+          </button>
+          <button 
+            className={`${styles.actionBtn} ${styles.secondary}`}
+            onClick={() => onNavigate && onNavigate('guests')}
+          >
+            <i className="fas fa-user-plus"></i>
+            <span>Add Guest</span>
+          </button>
+          <button 
+            className={`${styles.actionBtn} ${styles.secondary}`}
+            onClick={() => onNavigate && onNavigate('details')}
+          >
+            <i className="fas fa-edit"></i>
+            <span>Edit Details</span>
+          </button>
+          <button 
+            className={`${styles.actionBtn} ${styles.secondary}`}
+            onClick={() => onNavigate && onNavigate('timeline')}
+          >
+            <i className="fas fa-tasks"></i>
+            <span>View Checklist</span>
+          </button>
         </div>
       </div>
 
@@ -366,6 +395,42 @@ const WeddingOverview = ({ weddingData }) => {
               </div>
             </div>
           </div>
+          
+          <div style={{
+            marginTop: '20px',
+            paddingTop: '15px',
+            borderTop: '1px solid #e5e7eb',
+            textAlign: 'center'
+          }}>
+            <button 
+              onClick={() => onNavigate && onNavigate('budget')}
+              style={{
+                background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                color: 'white',
+                border: 'none',
+                padding: window.innerWidth <= 768 ? '12px 16px' : '10px 20px',
+                borderRadius: '8px',
+                fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(236, 72, 153, 0.3)',
+                width: window.innerWidth <= 768 ? '100%' : 'auto',
+                minHeight: window.innerWidth <= 768 ? '44px' : 'auto'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(236, 72, 153, 0.3)';
+              }}
+            >
+              <i className="fas fa-chart-line" style={{ marginRight: '8px' }}></i>
+              Manage Budget
+            </button>
+          </div>
         </div>
 
         <div className={`${styles.metricCard} ${styles.vendorMetric}`}>
@@ -398,6 +463,42 @@ const WeddingOverview = ({ weddingData }) => {
               <span className={styles.progressText}>{vendorStatus.percentage.toFixed(1)}% complete</span>
             </div>
           </div>
+          
+          <div style={{
+            marginTop: '20px',
+            paddingTop: '15px',
+            borderTop: '1px solid #e5e7eb',
+            textAlign: 'center'
+          }}>
+            <button 
+              onClick={() => onNavigate && onNavigate('vendors')}
+              style={{
+                background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                color: 'white',
+                border: 'none',
+                padding: window.innerWidth <= 768 ? '12px 16px' : '10px 20px',
+                borderRadius: '8px',
+                fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(236, 72, 153, 0.3)',
+                width: window.innerWidth <= 768 ? '100%' : 'auto',
+                minHeight: window.innerWidth <= 768 ? '44px' : 'auto'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(236, 72, 153, 0.3)';
+              }}
+            >
+              <i className="fas fa-users" style={{ marginRight: '8px' }}></i>
+              Manage Vendors
+            </button>
+          </div>
         </div>
 
         <div className={`${styles.metricCard} ${styles.guestMetric}`}>
@@ -425,6 +526,42 @@ const WeddingOverview = ({ weddingData }) => {
               <span className={styles.totalNumber}>{guestStats.total}</span>
             </div>
           </div>
+          
+          <div style={{
+            marginTop: '20px',
+            paddingTop: '15px',
+            borderTop: '1px solid #e5e7eb',
+            textAlign: 'center'
+          }}>
+            <button 
+              onClick={() => onNavigate && onNavigate('guests')}
+              style={{
+                background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                color: 'white',
+                border: 'none',
+                padding: window.innerWidth <= 768 ? '12px 16px' : '10px 20px',
+                borderRadius: '8px',
+                fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(236, 72, 153, 0.3)',
+                width: window.innerWidth <= 768 ? '100%' : 'auto',
+                minHeight: window.innerWidth <= 768 ? '44px' : 'auto'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(236, 72, 153, 0.3)';
+              }}
+            >
+              <i className="fas fa-user-friends" style={{ marginRight: '8px' }}></i>
+              Manage Guests
+            </button>
+          </div>
         </div>
 
         <div className={`${styles.metricCard} ${styles.timelineMetric}`}>
@@ -435,46 +572,200 @@ const WeddingOverview = ({ weddingData }) => {
           <div className={styles.metricContent}>
             {importantTasks.length > 0 ? (
               <div className={styles.taskList}>
-                {importantTasks.map((task, index) => {
+                {importantTasks.slice(0, 3).map((task, index) => {
                   const priority = getTaskPriority(task.due_date);
+                  const cleanTitle = task.title ? task.title.replace(/[^\w\s\-.,!?]/g, '').trim() : 'Untitled Task';
+                  const cleanDescription = task.description ? task.description.replace(/[^\w\s\-.,!?]/g, '').trim() : '';
+                  
                   return (
-                    <div key={task.id} className={`${styles.taskItem} ${styles[priority]}`}>
-                      <div className={styles.taskContent}>
-                        <div className={styles.taskTitle}>{task.title}</div>
-                        {task.description && (
-                          <div className={styles.taskDescription}>{task.description}</div>
-                        )}
+                    <div key={task.id} className={`${styles.taskCard} ${styles[priority]}`} style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      padding: window.innerWidth <= 768 ? '10px' : '12px',
+                      marginBottom: '8px',
+                      borderRadius: '8px',
+                      border: '1px solid #e5e7eb',
+                      backgroundColor: priority === 'urgent' ? '#fef2f2' : priority === 'soon' ? '#fffbeb' : '#f0f9ff',
+                      borderLeft: `4px solid ${
+                        priority === 'urgent' ? '#ef4444' : 
+                        priority === 'soon' ? '#f59e0b' : 
+                        priority === 'upcoming' ? '#3b82f6' : '#10b981'
+                      }`
+                    }}>
+                      <div style={{ marginRight: window.innerWidth <= 768 ? '8px' : '12px', marginTop: '2px' }}>
+                        <input
+                          type="checkbox"
+                          checked={task.completed}
+                          onChange={() => handleTaskToggle(task.id)}
+                          style={{
+                            width: window.innerWidth <= 768 ? '18px' : '16px',
+                            height: window.innerWidth <= 768 ? '18px' : '16px',
+                            accentColor: priority === 'urgent' ? '#ef4444' : '#3b82f6'
+                          }}
+                        />
                       </div>
-                      <div className={styles.taskMeta}>
-                        <span className={`${styles.taskDate} ${styles[priority]}`}>
-                          {formatTaskDate(task.due_date)}
-                        </span>
-                        {task.responsible && (
-                          <span className={styles.taskResponsible}>
-                            <i className="fas fa-user"></i>
-                            {task.responsible}
-                          </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontWeight: '600',
+                          fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.875rem',
+                          color: '#1f2937',
+                          marginBottom: '4px',
+                          textDecoration: task.completed ? 'line-through' : 'none',
+                          opacity: task.completed ? 0.6 : 1
+                        }}>
+                          {cleanTitle}
+                        </div>
+                        {cleanDescription && (
+                          <div style={{
+                            fontSize: window.innerWidth <= 768 ? '0.7rem' : '0.75rem',
+                            color: '#6b7280',
+                            marginBottom: '6px',
+                            lineHeight: '1.3'
+                          }}>
+                            {cleanDescription.length > (window.innerWidth <= 768 ? 40 : 60) ? `${cleanDescription.substring(0, window.innerWidth <= 768 ? 40 : 60)}...` : cleanDescription}
+                          </div>
                         )}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: window.innerWidth <= 768 ? '8px' : '12px',
+                          fontSize: window.innerWidth <= 768 ? '0.7rem' : '0.75rem',
+                          marginBottom: '8px',
+                          flexWrap: window.innerWidth <= 768 ? 'wrap' : 'nowrap'
+                        }}>
+                          <span style={{
+                            color: priority === 'urgent' ? '#dc2626' : 
+                                   priority === 'soon' ? '#d97706' : '#2563eb',
+                            fontWeight: '500'
+                          }}>
+                            <i className="fas fa-calendar-day" style={{ marginRight: '4px' }}></i>
+                            {formatTaskDate(task.due_date)}
+                          </span>
+                          {task.responsible && task.responsible.trim() && (
+                            <span style={{ color: '#6b7280' }}>
+                              <i className="fas fa-user" style={{ marginRight: '4px' }}></i>
+                              {task.responsible.trim()}
+                            </span>
+                          )}
+                        </div>
+                        <button 
+                          onClick={() => onNavigate && onNavigate('timeline')}
+                          style={{
+                            background: 'none',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '4px',
+                            padding: window.innerWidth <= 768 ? '6px 10px' : '4px 8px',
+                            fontSize: window.innerWidth <= 768 ? '0.7rem' : '0.75rem',
+                            color: '#6b7280',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            width: window.innerWidth <= 768 ? '100%' : 'auto',
+                            marginTop: window.innerWidth <= 768 ? '4px' : '0'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#f3f4f6';
+                            e.target.style.borderColor = '#9ca3af';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = 'transparent';
+                            e.target.style.borderColor = '#d1d5db';
+                          }}
+                        >
+                          View Details →
+                        </button>
                       </div>
                     </div>
                   );
                 })}
+                {importantTasks.length > 3 && (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '12px',
+                    marginTop: '8px'
+                  }}>
+                    <button 
+                      onClick={() => onNavigate && onNavigate('timeline')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#3b82f6',
+                        fontSize: '0.875rem',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      View {importantTasks.length - 3} more tasks →
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className={styles.noTasks}>
                 <i className="fas fa-check-circle"></i>
-                <p>No upcoming tasks</p>
-                <span>All preparation tasks are completed!</span>
+                <p>{timelineItems.length === 0 ? 'No preparation tasks yet' : 'No upcoming tasks'}</p>
+                <span>{timelineItems.length === 0 ? 'Add preparation tasks to get started' : 'All preparation tasks are completed!'}</span>
               </div>
             )}
-            <div className={styles.taskStats}>
-              <span className={styles.taskCount}>
-                {timelineItems.filter(item => !item.completed).length} tasks remaining
-              </span>
-              <span className={styles.taskCompleted}>
-                {timelineItems.filter(item => item.completed).length} completed
-              </span>
+            <div className={styles.taskStats} style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginTop: '15px',
+              padding: '10px 0',
+              borderTop: '1px solid #e5e7eb',
+              fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.875rem',
+              color: '#6b7280',
+              flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
+              gap: window.innerWidth <= 768 ? '8px' : '0'
+            }}>
+              <div className={styles.taskStatItem}>
+                <span className={styles.taskCount} style={{ fontWeight: '500' }}>
+                  {timelineItems.filter(item => !item.completed).length} preparation tasks remaining
+                </span>
+              </div>
+              <div className={styles.taskStatItem}>
+                <span className={styles.taskCompleted} style={{ fontWeight: '500', color: '#10b981' }}>
+                  {timelineItems.filter(item => item.completed).length} completed
+                </span>
+              </div>
             </div>
+          </div>
+          
+          <div style={{
+            marginTop: '20px',
+            paddingTop: '15px',
+            borderTop: '1px solid #e5e7eb',
+            textAlign: 'center'
+          }}>
+            <button 
+              onClick={() => onNavigate && onNavigate('timeline')}
+              style={{
+                background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                color: 'white',
+                border: 'none',
+                padding: window.innerWidth <= 768 ? '12px 16px' : '10px 20px',
+                borderRadius: '8px',
+                fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(236, 72, 153, 0.3)',
+                width: window.innerWidth <= 768 ? '100%' : 'auto',
+                minHeight: window.innerWidth <= 768 ? '44px' : 'auto'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(236, 72, 153, 0.3)';
+              }}
+            >
+              <i className="fas fa-tasks" style={{ marginRight: '8px' }}></i>
+              View Timeline
+            </button>
           </div>
         </div>
 
@@ -508,29 +799,42 @@ const WeddingOverview = ({ weddingData }) => {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className={styles.quickActions}>
-        <h3>Quick Actions</h3>
-        <div className={styles.actionButtons}>
-          <button className={`${styles.actionBtn} ${styles.primary}`}>
-            <i className="fas fa-plus"></i>
-            <span>Add Vendor</span>
-          </button>
-          <button className={`${styles.actionBtn} ${styles.secondary}`}>
-            <i className="fas fa-user-plus"></i>
-            <span>Add Guest</span>
-          </button>
-          <button className={`${styles.actionBtn} ${styles.secondary}`}>
-            <i className="fas fa-edit"></i>
-            <span>Edit Details</span>
-          </button>
-          <button className={`${styles.actionBtn} ${styles.secondary}`}>
-            <i className="fas fa-tasks"></i>
-            <span>View Checklist</span>
-          </button>
+          
+          <div style={{
+            marginTop: '20px',
+            paddingTop: '15px',
+            borderTop: '1px solid #e5e7eb',
+            textAlign: 'center'
+          }}>
+            <button 
+              onClick={() => onNavigate && onNavigate('details')}
+              style={{
+                background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                color: 'white',
+                border: 'none',
+                padding: window.innerWidth <= 768 ? '12px 16px' : '10px 20px',
+                borderRadius: '8px',
+                fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(236, 72, 153, 0.3)',
+                width: window.innerWidth <= 768 ? '100%' : 'auto',
+                minHeight: window.innerWidth <= 768 ? '44px' : 'auto'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(236, 72, 153, 0.3)';
+              }}
+            >
+              <i className="fas fa-edit" style={{ marginRight: '8px' }}></i>
+              Edit Details
+            </button>
+          </div>
         </div>
       </div>
     </div>
