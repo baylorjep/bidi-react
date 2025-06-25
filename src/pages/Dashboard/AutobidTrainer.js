@@ -525,8 +525,76 @@ const AutobidTrainer = () => {
         setTrainingProgress(progressByCategory);
         setCategoryProgress(progressByCategory);
 
-        // Load requests for current category
-        await loadCategoryRequests(userCategories[0]);
+        // Check if user needs to resume training
+        const currentCategoryProgress = progressByCategory[userCategories[0]];
+        console.log('Current category progress:', currentCategoryProgress);
+
+        if (currentCategoryProgress) {
+          const completedSteps = currentCategoryProgress.total_scenarios_completed || 0;
+          const consecutiveApprovals = currentCategoryProgress.consecutive_approvals || 0;
+          const trainingCompleted = currentCategoryProgress.training_completed || false;
+
+          console.log(`Resume check - Completed: ${completedSteps}/${TOTAL_STEPS}, Consecutive: ${consecutiveApprovals}/2, Training completed: ${trainingCompleted}`);
+
+          // Load requests for current category
+          await loadCategoryRequests(userCategories[0]);
+
+          // Resume logic
+          if (trainingCompleted) {
+            // Training is complete for this category, check if all categories are done
+            const allCategoriesComplete = userCategories.every(cat => 
+              progressByCategory[cat]?.training_completed
+            );
+
+            if (allCategoriesComplete) {
+              // All categories complete - show final completion
+              setShowCompletion(true);
+              setIsLoading(false);
+              return;
+            } else {
+              // Move to next incomplete category
+              const nextIncompleteCategory = userCategories.find(cat => 
+                !progressByCategory[cat]?.training_completed
+              );
+              if (nextIncompleteCategory) {
+                setCurrentCategory(nextIncompleteCategory);
+                await loadCategoryRequests(nextIncompleteCategory);
+              }
+            }
+          } else if (completedSteps >= TOTAL_STEPS) {
+            // Completed all scenarios but not enough consecutive approvals
+            // Resume in AI sample bid phase
+            console.log('Resuming in AI sample bid phase');
+            setCompletedSteps(completedSteps);
+            setConsecutiveApprovals(consecutiveApprovals);
+            setShowSampleBid(true);
+            
+            // Load sample bid data
+            setIsLoadingSampleBid(true);
+            try {
+              const sampleData = await getSampleBidData(userCategories[0]);
+              setCurrentSampleBidData(sampleData);
+              console.log('Resumed sample bid data loaded');
+            } catch (error) {
+              console.error('Error loading resumed sample bid data:', error);
+            } finally {
+              setIsLoadingSampleBid(false);
+            }
+          } else if (completedSteps > 0) {
+            // Resume in middle of training scenarios
+            console.log(`Resuming at step ${completedSteps + 1} of ${TOTAL_STEPS}`);
+            setCompletedSteps(completedSteps);
+            setCurrentStep(completedSteps);
+            
+            // Set the current request to the next one
+            if (trainingRequests.length > completedSteps) {
+              setCurrentRequest(trainingRequests[completedSteps]);
+            }
+          }
+        } else {
+          // No progress found, start fresh
+          await loadCategoryRequests(userCategories[0]);
+        }
 
         setIsLoading(false);
       } catch (error) {

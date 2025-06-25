@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { supabase } from '../supabaseClient';
 
 function TestEmail() {
     const [formData, setFormData] = useState({
@@ -55,6 +56,65 @@ function TestEmail() {
             const data = await response.json();
             setTrainingResults(prev => prev + `✅ Training data retrieved successfully!\n`);
             setTrainingResults(prev => prev + `📊 Data: ${JSON.stringify(data, null, 2)}\n`);
+        } catch (error) {
+            setTrainingResults(prev => prev + `❌ Error: ${error.message}\n`);
+        }
+    };
+
+    const checkTrainingDataInDatabase = async () => {
+        try {
+            setTrainingResults('Checking training data in database...\n');
+            
+            // Check autobid_training_responses table
+            const { data: responses, error: responsesError } = await supabase
+                .from('autobid_training_responses')
+                .select('*')
+                .eq('business_id', formData.business_id)
+                .eq('category', formData.category)
+                .eq('is_training', true);
+
+            if (responsesError) {
+                setTrainingResults(prev => prev + `❌ Error querying responses: ${responsesError.message}\n`);
+                return;
+            }
+
+            setTrainingResults(prev => prev + `📊 Found ${responses.length} training responses\n`);
+            
+            if (responses.length > 0) {
+                setTrainingResults(prev => prev + `📋 Sample response: ${JSON.stringify(responses[0], null, 2)}\n`);
+            }
+
+            // Check autobid_training_feedback table
+            const { data: feedback, error: feedbackError } = await supabase
+                .from('autobid_training_feedback')
+                .select('*')
+                .eq('business_id', formData.business_id);
+
+            if (feedbackError) {
+                setTrainingResults(prev => prev + `❌ Error querying feedback: ${feedbackError.message}\n`);
+                return;
+            }
+
+            setTrainingResults(prev => prev + `📊 Found ${feedback.length} feedback entries\n`);
+
+            // Check autobid_training_progress table
+            const { data: progress, error: progressError } = await supabase
+                .from('autobid_training_progress')
+                .select('*')
+                .eq('business_id', formData.business_id)
+                .eq('category', formData.category);
+
+            if (progressError) {
+                setTrainingResults(prev => prev + `❌ Error querying progress: ${progressError.message}\n`);
+                return;
+            }
+
+            setTrainingResults(prev => prev + `📊 Found ${progress.length} progress records\n`);
+            
+            if (progress.length > 0) {
+                setTrainingResults(prev => prev + `📋 Progress data: ${JSON.stringify(progress[0], null, 2)}\n`);
+            }
+
         } catch (error) {
             setTrainingResults(prev => prev + `❌ Error: ${error.message}\n`);
         }
@@ -286,6 +346,13 @@ function TestEmail() {
                                     onClick={testRealBusinessSampleBid}
                                 >
                                     Test Real Business Sample Bid
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="btn btn-dark w-100 mb-2"
+                                    onClick={checkTrainingDataInDatabase}
+                                >
+                                    Check Training Data in DB
                                 </button>
                             </div>
                             <div className="col-md-6">
