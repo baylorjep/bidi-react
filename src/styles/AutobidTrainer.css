@@ -1024,4 +1024,123 @@
   .category-progress {
     max-width: 100%;
   }
+}
+
+/* Transition step styles */
+.transition-step {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 2rem;
+}
+
+.transition-content {
+  text-align: center;
+  max-width: 600px;
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.transition-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #9633eb 0%, #7a29bc 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 2rem;
+  color: white;
+  font-size: 2rem;
+  box-shadow: 0 8px 20px rgba(150, 51, 235, 0.3);
+}
+
+.transition-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 1rem;
+  font-family: 'Outfit', sans-serif;
+}
+
+.transition-description {
+  font-size: 1.1rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.transition-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.transition-stats .stat-item {
+  text-align: center;
+  flex: 1;
+}
+
+.transition-stats .stat-number {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #9633eb;
+  margin-bottom: 0.5rem;
+}
+
+.transition-stats .stat-label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.transition-content .btn-primary {
+  background: linear-gradient(135deg, #9633eb 0%, #7a29bc 100%);
+  border: none;
+  border-radius: 30px;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 1rem 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(150, 51, 235, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.transition-content .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(150, 51, 235, 0.4);
+}
+
+@media (max-width: 768px) {
+  .transition-content {
+    padding: 2rem 1.5rem;
+    margin: 1rem;
+  }
+  
+  .transition-title {
+    font-size: 1.5rem;
+  }
+  
+  .transition-description {
+    font-size: 1rem;
+  }
+  
+  .transition-stats {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .transition-stats .stat-item {
+    flex: none;
+  }
 } 

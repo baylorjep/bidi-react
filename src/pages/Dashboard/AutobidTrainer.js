@@ -22,6 +22,7 @@ const AutobidTrainer = () => {
   const [currentCategory, setCurrentCategory] = useState('');
   const [showCompletion, setShowCompletion] = useState(false);
   const [showSampleBid, setShowSampleBid] = useState(false);
+  const [showTransitionStep, setShowTransitionStep] = useState(false);
   const [completedSteps, setCompletedSteps] = useState(0);
   const [sampleBidApproved, setSampleBidApproved] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
@@ -545,18 +546,38 @@ const AutobidTrainer = () => {
             console.log('Resuming in AI sample bid phase - all scenarios completed');
             setCompletedSteps(completedSteps);
             setConsecutiveApprovals(consecutiveApprovals);
-            setShowSampleBid(true);
             
-            // Load sample bid data
-            setIsLoadingSampleBid(true);
-            try {
-              const sampleData = await getSampleBidData(userCategories[0]);
-              setCurrentSampleBidData(sampleData);
-              console.log('Resumed sample bid data loaded');
-            } catch (error) {
-              console.error('Error loading resumed sample bid data:', error);
-            } finally {
-              setIsLoadingSampleBid(false);
+            // Check if we have any AI training responses for this category
+            const { data: aiResponses, error: aiError } = await supabase
+              .from('autobid_training_responses')
+              .select('*')
+              .eq('business_id', currentUser.id)
+              .eq('category', userCategories[0])
+              .eq('is_ai_generated', true)
+              .order('created_at', { ascending: false });
+
+            if (aiError && aiError.code !== 'PGRST116') {
+              console.error('Error checking AI responses:', aiError);
+            }
+
+            if (aiResponses && aiResponses.length > 0) {
+              // We have AI responses, go directly to AI testing
+              setShowSampleBid(true);
+              
+              // Load sample bid data
+              setIsLoadingSampleBid(true);
+              try {
+                const sampleData = await getSampleBidData(userCategories[0]);
+                setCurrentSampleBidData(sampleData);
+                console.log('Resumed sample bid data loaded');
+              } catch (error) {
+                console.error('Error loading resumed sample bid data:', error);
+              } finally {
+                setIsLoadingSampleBid(false);
+              }
+            } else {
+              // No AI responses yet, show transition step
+              setShowTransitionStep(true);
             }
           } else if (trainingCompleted) {
             // Training is complete for this category, check if all categories are done
@@ -566,9 +587,9 @@ const AutobidTrainer = () => {
 
             if (allCategoriesComplete) {
               // All categories complete - show final completion
-              setShowCompletion(true);
-              setIsLoading(false);
-              return;
+            setShowCompletion(true);
+            setIsLoading(false);
+            return;
           } else {
               // Move to next incomplete category
               const nextIncompleteCategory = userCategories.find(cat => 
@@ -720,8 +741,8 @@ const AutobidTrainer = () => {
         setPricingBreakdown('');
         setPricingReasoning('');
       } else {
-        // Show sample bid step instead of completion
-        setShowSampleBid(true);
+        // Show transition step instead of going directly to AI testing
+        setShowTransitionStep(true);
       }
     } catch (error) {
       console.error('Error submitting training response:', error);
@@ -888,6 +909,23 @@ const AutobidTrainer = () => {
     } catch (error) {
       console.error('Error handling sample bid response:', error);
       alert('Error saving your feedback. Please try again.');
+    }
+  };
+
+  const handleStartAITesting = async () => {
+    setShowTransitionStep(false);
+    setShowSampleBid(true);
+    
+    // Generate fresh AI sample bid data
+    setIsLoadingSampleBid(true);
+    try {
+      const sampleData = await getSampleBidData(currentCategory);
+      setCurrentSampleBidData(sampleData);
+      console.log('Fresh AI sample bid data generated');
+    } catch (error) {
+      console.error('Error generating fresh AI sample bid data:', error);
+    } finally {
+      setIsLoadingSampleBid(false);
     }
   };
 
@@ -1207,6 +1245,121 @@ const AutobidTrainer = () => {
     }
   }
 
+  if (showTransitionStep) {
+    return (
+      <div className="autobid-trainer-container">
+        <div className="trainer-header">
+          <button 
+            className="back-button"
+            onClick={() => navigate('/business-dashboard')}
+          >
+            ← Back to Dashboard
+          </button>
+          
+          <div className="header-content">
+            <div className="header-title">
+              <FaCheckCircle className="header-icon" />
+              <h1>Manual Training Complete - {capitalizeCategory(currentCategory)}</h1>
+            </div>
+            <p className="header-description">
+              Great job! You've completed the manual training scenarios. Now let's test our AI with your pricing data.
+            </p>
+          </div>
+
+          <div className="progress-section">
+            <div className="category-progress">
+              <span className="category-label">
+                Training {currentCategoryIndex + 1} of {businessCategories.length}: {capitalizeCategory(currentCategory)}
+              </span>
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill"
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <span className="progress-text">
+                Manual training complete ✓
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="trainer-content">
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="transition-step"
+            >
+              <div className="transition-content">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
+                  className="transition-icon"
+                >
+                  <FaRobot />
+                </motion.div>
+                
+                <motion.h2
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
+                  className="transition-title"
+                >
+                  Ready to Test AI Generated Bids!
+                </motion.h2>
+                
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.7, duration: 0.6 }}
+                  className="transition-description"
+                >
+                  Based on your {TOTAL_STEPS} training scenarios, our AI will now generate sample bids for you to review. 
+                  This helps us fine-tune the AI to match your pricing strategy perfectly.
+                </motion.p>
+                
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.9, duration: 0.6 }}
+                  className="transition-stats"
+                >
+                  <div className="stat-item">
+                    <span className="stat-number">{TOTAL_STEPS}</span>
+                    <span className="stat-label">Scenarios Trained</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-number">AI</span>
+                    <span className="stat-label">Ready to Test</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-number">2</span>
+                    <span className="stat-label">Approvals Needed</span>
+                  </div>
+                </motion.div>
+                
+                <motion.button
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 1.1, duration: 0.6 }}
+                  className="btn-primary"
+                  onClick={handleStartAITesting}
+                >
+                  <FaRobot className="me-2" />
+                  Start AI Testing
+                </motion.button>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    );
+  }
+
   if (showSampleBid) {
     const currentBid = currentSampleBidData[currentSampleBidIndex];
     
@@ -1231,20 +1384,20 @@ const AutobidTrainer = () => {
         <div className="header-content">
           <div className="header-title">
             <FaRobot className="header-icon" />
-                <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
+            <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
           </div>
           <p className="header-description">
-                Generating personalized AI bid based on your training data...
-              </p>
-            </div>
-          </div>
-          <div className="loading-container">
-            <LoadingSpinner color="#9633eb" size={50} />
-            <p>Generating AI sample bid...</p>
-          </div>
+            Generating personalized AI bid based on your training data...
+          </p>
         </div>
-      );
-    }
+      </div>
+      <div className="loading-container">
+        <LoadingSpinner color="#9633eb" size={50} />
+        <p>Generating AI sample bid...</p>
+      </div>
+    </div>
+  );
+}
     
     // If no current bid, show error or fallback
     if (!currentBid) {
@@ -1298,10 +1451,10 @@ const AutobidTrainer = () => {
             </div>
             <p className="header-description">
               Based on your {capitalizeCategory(currentCategory)} training, here's a sample bid our AI generated. Let us know if this looks accurate!
-          </p>
-        </div>
+            </p>
+          </div>
 
-        <div className="progress-section">
+          <div className="progress-section">
             <div className="category-progress">
               <span className="category-label">
                 Training {currentCategoryIndex + 1} of {businessCategories.length}: {capitalizeCategory(currentCategory)}
