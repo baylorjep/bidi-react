@@ -156,38 +156,49 @@ const AutobidTrainer = () => {
       // Get a request that hasn't been used for AI testing yet
       let selectedRequest = null;
       
-      if (availableAIRequests.length > 0) {
-        // Use the first available request and remove it from the list
-        selectedRequest = availableAIRequests[0];
-        console.log('Using available request:', selectedRequest.id);
+      // Fetch all requests for this category
+      const { data: allRequests, error } = await supabase
+        .from('autobid_training_requests')
+        .select('*')
+        .eq('is_active', true)
+        .eq('category', category)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      if (!allRequests || allRequests.length === 0) {
+        throw new Error('No training requests available for AI testing');
+      }
+
+      // Get the current used request IDs from state
+      const currentUsedIds = Array.from(usedAIRequestIds);
+      console.log('Current used request IDs:', currentUsedIds);
+      console.log('All available requests:', allRequests.map(req => ({ id: req.id, date: req.request_data?.date || 'unknown' })));
+      
+      // Find the first request that hasn't been used yet
+      const availableRequest = allRequests.find(req => !currentUsedIds.includes(req.id));
+      
+      if (availableRequest) {
+        // Use an available request
+        selectedRequest = availableRequest;
+        console.log('Using available request:', selectedRequest.id, 'with date:', selectedRequest.request_data?.date || 'unknown');
         
-        // Remove this request from available list and add to used set
-        setAvailableAIRequests(prev => prev.slice(1));
+        // Update state to mark this request as used
         setUsedAIRequestIds(prev => new Set([...prev, selectedRequest.id]));
+        setAvailableAIRequests(prev => prev.filter(req => req.id !== selectedRequest.id));
       } else {
-        // All requests have been used, reset the used set and start over
+        // All requests have been used, reset and start over
         console.log('All requests used, resetting for recycling');
         setUsedAIRequestIds(new Set());
+        setAvailableAIRequests(allRequests);
         
-        // Fetch all requests for this category again
-        const { data: allRequests, error } = await supabase
-          .from('autobid_training_requests')
-          .select('*')
-          .eq('is_active', true)
-          .eq('category', category)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
+        // Use the first request
+        selectedRequest = allRequests[0];
+        console.log('Reset available requests, using:', selectedRequest.id, 'with date:', selectedRequest.request_data?.date || 'unknown');
         
-        setAvailableAIRequests(allRequests || []);
-        selectedRequest = allRequests?.[0];
-        console.log('Reset available requests, using:', selectedRequest?.id);
-        
-        // Remove the first request from available list
-        if (selectedRequest) {
-          setAvailableAIRequests(prev => prev.slice(1));
-          setUsedAIRequestIds(prev => new Set([...prev, selectedRequest.id]));
-        }
+        // Mark this request as used
+        setUsedAIRequestIds(prev => new Set([selectedRequest.id]));
+        setAvailableAIRequests(prev => prev.slice(1));
       }
 
       if (!selectedRequest) {
@@ -202,7 +213,8 @@ const AutobidTrainer = () => {
       console.log('Sending request to API with data:', {
         business_id: user.id,
         category: category,
-        request_data: parsedRequestData
+        request_data: parsedRequestData,
+        request_id: selectedRequest.id
       });
       
       // Call the backend API to generate sample bids using real request data
@@ -212,7 +224,8 @@ const AutobidTrainer = () => {
         body: JSON.stringify({
           business_id: user.id,
           category: category,
-          request_data: parsedRequestData
+          request_data: parsedRequestData,
+          request_id: selectedRequest.id // Send the specific request ID
         }),
       });
 
