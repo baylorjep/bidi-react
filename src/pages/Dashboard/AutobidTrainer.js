@@ -540,7 +540,25 @@ const AutobidTrainer = () => {
           await loadCategoryRequests(userCategories[0]);
 
           // Resume logic
-          if (trainingCompleted) {
+          if (completedSteps >= TOTAL_STEPS) {
+            // Completed all scenarios - should be in AI sample bid phase
+            console.log('Resuming in AI sample bid phase - all scenarios completed');
+            setCompletedSteps(completedSteps);
+            setConsecutiveApprovals(consecutiveApprovals);
+            setShowSampleBid(true);
+            
+            // Load sample bid data
+            setIsLoadingSampleBid(true);
+            try {
+              const sampleData = await getSampleBidData(userCategories[0]);
+              setCurrentSampleBidData(sampleData);
+              console.log('Resumed sample bid data loaded');
+            } catch (error) {
+              console.error('Error loading resumed sample bid data:', error);
+            } finally {
+              setIsLoadingSampleBid(false);
+            }
+          } else if (trainingCompleted) {
             // Training is complete for this category, check if all categories are done
             const allCategoriesComplete = userCategories.every(cat => 
               progressByCategory[cat]?.training_completed
@@ -560,25 +578,6 @@ const AutobidTrainer = () => {
                 setCurrentCategory(nextIncompleteCategory);
                 await loadCategoryRequests(nextIncompleteCategory);
               }
-            }
-          } else if (completedSteps >= TOTAL_STEPS) {
-            // Completed all scenarios but not enough consecutive approvals
-            // Resume in AI sample bid phase
-            console.log('Resuming in AI sample bid phase');
-            setCompletedSteps(completedSteps);
-            setConsecutiveApprovals(consecutiveApprovals);
-            setShowSampleBid(true);
-            
-            // Load sample bid data
-            setIsLoadingSampleBid(true);
-            try {
-              const sampleData = await getSampleBidData(userCategories[0]);
-              setCurrentSampleBidData(sampleData);
-              console.log('Resumed sample bid data loaded');
-            } catch (error) {
-              console.error('Error loading resumed sample bid data:', error);
-            } finally {
-              setIsLoadingSampleBid(false);
             }
           } else if (completedSteps > 0) {
             // Resume in middle of training scenarios
