@@ -554,7 +554,7 @@ const AutobidTrainer = () => {
               .eq('business_id', currentUser.id)
               .eq('category', userCategories[0])
               .eq('is_ai_generated', true)
-              .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false });
 
             if (aiError && aiError.code !== 'PGRST116') {
               console.error('Error checking AI responses:', aiError);
@@ -575,7 +575,7 @@ const AutobidTrainer = () => {
               } finally {
                 setIsLoadingSampleBid(false);
               }
-            } else {
+          } else {
               // No AI responses yet, show transition step
               setShowTransitionStep(true);
             }
@@ -590,7 +590,7 @@ const AutobidTrainer = () => {
             setShowCompletion(true);
             setIsLoading(false);
             return;
-          } else {
+        } else {
               // Move to next incomplete category
               const nextIncompleteCategory = userCategories.find(cat => 
                 !progressByCategory[cat]?.training_completed
@@ -1246,11 +1246,11 @@ const AutobidTrainer = () => {
   }
 
   if (showTransitionStep) {
-    return (
-      <div className="autobid-trainer-container">
-        <div className="trainer-header">
-          <button 
-            className="back-button"
+  return (
+    <div className="autobid-trainer-container">
+      <div className="trainer-header">
+        <button 
+          className="back-button"
             onClick={() => navigate('/business-dashboard')}
           >
             ← Back to Dashboard
@@ -1451,10 +1451,10 @@ const AutobidTrainer = () => {
             </div>
             <p className="header-description">
               Based on your {capitalizeCategory(currentCategory)} training, here's a sample bid our AI generated. Let us know if this looks accurate!
-            </p>
-          </div>
+          </p>
+        </div>
 
-          <div className="progress-section">
+        <div className="progress-section">
             <div className="category-progress">
               <span className="category-label">
                 Training {currentCategoryIndex + 1} of {businessCategories.length}: {capitalizeCategory(currentCategory)}
