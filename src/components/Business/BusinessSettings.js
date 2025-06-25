@@ -116,6 +116,7 @@ const [timezone, setTimezone] = useState("America/Denver");
 // Add training completion state
 const [trainingCompleted, setTrainingCompleted] = useState(false);
 const [trainingLoading, setTrainingLoading] = useState(true);
+const [trainingInProgress, setTrainingInProgress] = useState(false);
 
 // Day conversion utilities
 const dayNameToNumber = {
@@ -1382,13 +1383,18 @@ useEffect(() => {
       // Check training progress for all categories
       const { data: progressData, error } = await supabase
         .from('autobid_training_progress')
-        .select('category, training_completed, consecutive_approvals')
+        .select('category, training_completed, consecutive_approvals, total_scenarios_completed')
         .eq('business_id', user.id)
         .in('category', userCategories);
 
       if (error && error.code !== 'PGRST116') {
         throw error;
       }
+      
+      // Check if any training has been started but not completed
+      const hasStartedTraining = progressData?.some(progress => 
+        progress.total_scenarios_completed > 0 || progress.consecutive_approvals > 0
+      );
       
       // Training is completed if ALL categories have completed training
       const allCategoriesComplete = userCategories.every(category => {
@@ -1397,9 +1403,11 @@ useEffect(() => {
       });
       
       setTrainingCompleted(allCategoriesComplete);
+      setTrainingInProgress(hasStartedTraining && !allCategoriesComplete);
     } catch (error) {
       console.error('Error checking training completion:', error);
       setTrainingCompleted(false);
+      setTrainingInProgress(false);
     } finally {
       setTrainingLoading(false);
     }
@@ -2122,8 +2130,13 @@ useEffect(() => {
                         <i className="fas fa-check-circle me-1"></i>
                         Completed
                       </span>
+                    ) : trainingInProgress ? (
+                      <span className="text-warning">
+                        <i className="fas fa-clock me-1"></i>
+                        In Progress
+                      </span>
                     ) : (
-                      <span className="text-muted">Not Trained</span>
+                      <span className="text-muted">Not Started</span>
                     )}
                   </span>
                 </div>
@@ -2149,18 +2162,28 @@ useEffect(() => {
                       <i className="fas fa-redo"></i>
                     </button>
                   </div>
+                ) : trainingInProgress ? (
+                  <button
+                    className="btn-warning flex-fill pulse"
+                    onClick={() => navigate('/autobid-trainer')}
+                  >
+                    <i className="fas fa-play me-2"></i>
+                    Resume Training
+                  </button>
                 ) : (
                   <button
                     className="btn-primary flex-fill pulse"
                     onClick={() => navigate('/autobid-trainer')}
                   >
                     <i className="fas fa-graduation-cap me-2"></i>
-                    Train AI Bidder
+                    Start Training
                   </button>
                 )}
                 <small className="text-muted d-block mt-2">
                   {trainingCompleted 
                     ? "Your AI has been trained! Use the refresh button to retrain with new scenarios."
+                    : trainingInProgress
+                    ? "Continue where you left off to complete your AI training."
                     : "Help our AI learn your pricing strategy by providing sample bids for training scenarios."
                   }
                 </small>
