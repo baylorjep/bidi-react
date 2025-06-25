@@ -6,6 +6,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaCheckCircle, FaLightbulb, FaRobot, FaGraduationCap, FaThumbsUp, FaThumbsDown, FaComments } from 'react-icons/fa';
 import '../../styles/AutobidTrainer.css';
 
+/**
+ * AutobidTrainer Component
+ * 
+ * BUG FIX (June 25, 2025): Fixed critical issues with AI bid generation and feedback submission:
+ * 1. Removed problematic useEffect that was automatically calling getSampleBidData when currentCategory/user changed
+ *    - This was causing multiple API calls and UI updates with different bids
+ *    - Users would see one bid initially, then it would swap to another bid when the second API call completed
+ * 2. Fixed data structure mismatch where component expected currentBid.request but API returned currentBid.requestData
+ * 3. Added comprehensive error handling to prevent blank screens when AI bid generation fails
+ * 4. Added safety checks to ensure valid sample bid data before showing AI testing screens
+ * 5. Improved duplicate submission prevention with better state management
+ * 
+ * The root cause was the automatic useEffect triggering multiple API calls, causing race conditions
+ * and duplicate feedback submissions. Now getSampleBidData is only called explicitly when needed.
+ */
+
 const AutobidTrainer = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [trainingRequests, setTrainingRequests] = useState([]);
@@ -256,29 +272,6 @@ const AutobidTrainer = () => {
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
-  // Update sample bid data when business category changes
-  useEffect(() => {
-    const loadSampleBidData = async () => {
-      if (!user || !currentCategory) return;
-      
-      setIsLoadingSampleBid(true);
-      try {
-        const sampleData = await getSampleBidData(currentCategory);
-        console.log(`Loading sample bid data for category: ${currentCategory}`, sampleData);
-        setCurrentSampleBidData(sampleData);
-        console.log(`Updated sample bid data for category: ${currentCategory}`, sampleData.length, 'samples available');
-      } catch (error) {
-        console.error('Error loading sample bid data:', error);
-        // Set empty array as fallback
-        setCurrentSampleBidData([]);
-      } finally {
-        setIsLoadingSampleBid(false);
-      }
-    };
-
-    loadSampleBidData();
-  }, [currentCategory, user]);
-
   useEffect(() => {
     const fetchUserAndRequests = async () => {
       try {
@@ -425,10 +418,19 @@ const AutobidTrainer = () => {
               setIsLoadingSampleBid(true);
               try {
                 const sampleData = await getSampleBidData(userCategories[0]);
-                setCurrentSampleBidData(sampleData);
-                console.log('Resumed sample bid data loaded');
+                if (sampleData && sampleData.length > 0) {
+                  setCurrentSampleBidData(sampleData);
+                  console.log('Resumed sample bid data loaded:', sampleData.length, 'samples');
+                } else {
+                  // No sample data generated, show error
+                  console.error('No sample bid data generated when resuming');
+                  setShowSampleBid(false);
+                  alert('Unable to resume AI testing. Please try again or contact support.');
+                }
               } catch (error) {
                 console.error('Error loading resumed sample bid data:', error);
+                setShowSampleBid(false);
+                alert('Error resuming AI testing. Please try again or contact support.');
               } finally {
                 setIsLoadingSampleBid(false);
               }
@@ -698,12 +700,22 @@ const AutobidTrainer = () => {
           setIsLoadingSampleBid(true);
           try {
             const newSampleData = await getSampleBidData(currentCategory);
-            if (newSampleData) {
+            if (newSampleData && newSampleData.length > 0) {
               setCurrentSampleBidData(newSampleData);
               setCurrentSampleBidIndex(0);
+              console.log('Generated new AI sample bid data:', newSampleData.length, 'samples');
+            } else {
+              // No new sample data generated, show error
+              console.error('No new sample bid data generated');
+              setShowSampleBid(false);
+              // Show error or fallback screen
+              alert('Unable to generate more AI sample bids. Please try again or contact support.');
             }
           } catch (error) {
             console.error('Error generating new sample bid data:', error);
+            setShowSampleBid(false);
+            // Show error or fallback screen
+            alert('Error generating AI sample bid. Please try again or contact support.');
           } finally {
             setIsLoadingSampleBid(false);
           }
@@ -748,13 +760,20 @@ const AutobidTrainer = () => {
     setIsLoadingSampleBid(true);
     try {
       const sampleData = await getSampleBidData(currentCategory);
-      if (sampleData) {
+      if (sampleData && sampleData.length > 0) {
         setCurrentSampleBidData(sampleData);
         setCurrentSampleBidIndex(0);
-        console.log('Fresh AI sample bid data generated');
+        console.log('Fresh AI sample bid data generated:', sampleData.length, 'samples');
+      } else {
+        // No sample data generated, don't show AI testing screen
+        console.error('No sample bid data generated for AI testing');
+        setShowSampleBid(false);
+        alert('Unable to generate AI sample bid. Please try again or contact support.');
       }
     } catch (error) {
       console.error('Error generating fresh AI sample bid data:', error);
+      setShowSampleBid(false);
+      alert('Error generating AI sample bid. Please try again or contact support.');
     } finally {
       setIsLoadingSampleBid(false);
     }
@@ -1224,36 +1243,36 @@ const AutobidTrainer = () => {
     
     // Show loading state while fetching sample bid data
     if (isLoadingSampleBid) {
-  return (
-    <div className="autobid-trainer-container">
-      <div className="trainer-header">
-        <button 
-          className="back-button"
+      return (
+        <div className="autobid-trainer-container">
+          <div className="trainer-header">
+            <button 
+              className="back-button"
               onClick={() => navigate('/business-dashboard')}
-        >
+            >
               ← Back to Dashboard
-        </button>
-        
-        <div className="header-content">
-          <div className="header-title">
-            <FaRobot className="header-icon" />
-            <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
+            </button>
+            
+            <div className="header-content">
+              <div className="header-title">
+                <FaRobot className="header-icon" />
+                <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
+              </div>
+              <p className="header-description">
+                Generating personalized AI bid based on your training data...
+              </p>
+            </div>
           </div>
-          <p className="header-description">
-            Generating personalized AI bid based on your training data...
-          </p>
+          <div className="loading-container">
+            <LoadingSpinner color="#9633eb" size={50} />
+            <p>Generating AI sample bid...</p>
+          </div>
         </div>
-      </div>
-      <div className="loading-container">
-        <LoadingSpinner color="#9633eb" size={50} />
-        <p>Generating AI sample bid...</p>
-      </div>
-    </div>
-  );
-}
+      );
+    }
     
     // If no current bid, show error or fallback
-    if (!currentBid) {
+    if (!currentBid || !currentBid.generatedBid) {
       return (
         <div className="autobid-trainer-container">
           <div className="trainer-header">
@@ -1278,9 +1297,17 @@ const AutobidTrainer = () => {
             <p>Error: Could not generate sample bid for {capitalizeCategory(currentCategory)}</p>
             <button 
               className="btn-primary"
-              onClick={() => window.location.reload()}
+              onClick={handleStartAITesting}
+              disabled={isGeneratingBid || isLoadingSampleBid}
             >
-              Retry
+              {isGeneratingBid || isLoadingSampleBid ? (
+                <>
+                  <LoadingSpinner color="white" size={16} />
+                  Generating...
+                </>
+              ) : (
+                'Retry Generation'
+              )}
             </button>
           </div>
         </div>
@@ -1304,10 +1331,10 @@ const AutobidTrainer = () => {
             </div>
             <p className="header-description">
               Based on your {capitalizeCategory(currentCategory)} training, here's a sample bid our AI generated. Let us know if this looks accurate!
-          </p>
-        </div>
+            </p>
+          </div>
 
-        <div className="progress-section">
+          <div className="progress-section">
             <div className="category-progress">
               <span className="category-label">
                 Training {currentCategoryIndex + 1} of {businessCategories.length}: {capitalizeCategory(currentCategory)}
@@ -1344,7 +1371,7 @@ const AutobidTrainer = () => {
                   <h2>Sample {capitalizeCategory(currentCategory)} Request</h2>
                 </div>
                 
-                {currentBid && formatRequestData(currentBid.request)}
+                {currentBid && formatRequestData(currentBid.requestData)}
               </div>
 
               <div className="ai-bid-section">
