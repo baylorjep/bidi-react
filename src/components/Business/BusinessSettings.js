@@ -118,6 +118,9 @@ const [trainingCompleted, setTrainingCompleted] = useState(false);
 const [trainingLoading, setTrainingLoading] = useState(true);
 const [trainingInProgress, setTrainingInProgress] = useState(false);
 
+// Add autobid enabled state
+const [autobidEnabled, setAutobidEnabled] = useState(false);
+
 // Day conversion utilities
 const dayNameToNumber = {
   'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
@@ -248,6 +251,9 @@ useEffect(() => {
 
         setIsAdmin(!!profile.is_admin);
         setDefaultExpirationDays(profile.default_expiration_days || "");
+        
+        // Set autobid enabled status
+        setAutobidEnabled(!!profile.autobid_enabled);
         
         // Set selected categories from profile
         if (profile.business_category) {
@@ -2111,7 +2117,7 @@ useEffect(() => {
           </div>
         </div>
         {/* AI Bid Trainer Section */}
-        {user && user.id === 'd9be2955-b609-43c0-9eaf-5d7f10634d96' && (
+        {user && autobidEnabled && (
           <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
             <div className="card mb-4 h-100">
               <div className="card-header d-flex align-items-center">
