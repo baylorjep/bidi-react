@@ -32,6 +32,8 @@ const AutobidTrainer = () => {
   const [currentSampleBidData, setCurrentSampleBidData] = useState([]);
   const [categoryProgress, setCategoryProgress] = useState({});
   const [isLoadingSampleBid, setIsLoadingSampleBid] = useState(false);
+  const [usedAIRequestIds, setUsedAIRequestIds] = useState(new Set());
+  const [availableAIRequests, setAvailableAIRequests] = useState([]);
   const navigate = useNavigate();
 
   const TOTAL_STEPS = 5;
@@ -151,19 +153,41 @@ const AutobidTrainer = () => {
       console.log('Fetching sample bid data from API for category:', category);
       console.log('Current user ID:', user?.id);
       
-      // Get the current training request to use its data, or generate category-specific data
-      let requestData = currentRequest?.request_data;
+      // Get a request that hasn't been used for AI testing yet
+      let selectedRequest = null;
       
-      if (!requestData) {
-        // Generate category-specific request data if no current request
-        requestData = generateCategorySpecificRequest(category);
-        console.log('Generated category-specific request data:', requestData);
+      if (availableAIRequests.length > 0) {
+        // Use the first available request
+        selectedRequest = availableAIRequests[0];
+        console.log('Using available request:', selectedRequest.id);
+      } else {
+        // All requests have been used, reset the used set and start over
+        console.log('All requests used, resetting for recycling');
+        setUsedAIRequestIds(new Set());
+        
+        // Fetch all requests for this category again
+        const { data: allRequests, error } = await supabase
+          .from('autobid_training_requests')
+          .select('*')
+          .eq('is_active', true)
+          .eq('category', category)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        
+        setAvailableAIRequests(allRequests || []);
+        selectedRequest = allRequests?.[0];
+        console.log('Reset available requests, using:', selectedRequest?.id);
+      }
+
+      if (!selectedRequest) {
+        throw new Error('No training requests available for AI testing');
       }
 
       // Parse request data if it's a string
-      const parsedRequestData = typeof requestData === 'string' 
-        ? JSON.parse(requestData) 
-        : requestData;
+      const parsedRequestData = typeof selectedRequest.request_data === 'string' 
+        ? JSON.parse(selectedRequest.request_data) 
+        : selectedRequest.request_data;
       
       console.log('Sending request to API with data:', {
         business_id: user.id,
@@ -207,7 +231,8 @@ const AutobidTrainer = () => {
           description: data.description || 'AI-generated bid description',
           breakdown: data.breakdown || 'Pricing breakdown',
           reasoning: data.reasoning || 'AI reasoning for pricing'
-        }
+        },
+        requestId: selectedRequest.id // Store the request ID for tracking
       };
 
       console.log('Created sample bid from API:', sampleBid);
@@ -564,6 +589,30 @@ const AutobidTrainer = () => {
               // We have AI responses, go directly to AI testing
               setShowSampleBid(true);
               
+              // Initialize available requests for AI testing (excluding already used ones)
+              try {
+                const { data: allRequests, error } = await supabase
+                  .from('autobid_training_requests')
+                  .select('*')
+                  .eq('is_active', true)
+                  .eq('category', userCategories[0])
+                  .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                
+                // Get the IDs of requests that have already been used for AI testing
+                const usedRequestIds = new Set(aiResponses.map(response => response.request_id));
+                
+                // Filter out already used requests
+                const availableRequests = allRequests?.filter(req => !usedRequestIds.has(req.id)) || [];
+                
+                setAvailableAIRequests(availableRequests);
+                setUsedAIRequestIds(usedRequestIds);
+                console.log('Resumed AI testing with', availableRequests.length, 'available requests (', usedRequestIds.size, 'already used)');
+              } catch (error) {
+                console.error('Error initializing resumed AI requests:', error);
+              }
+              
               // Load sample bid data
               setIsLoadingSampleBid(true);
               try {
@@ -575,7 +624,7 @@ const AutobidTrainer = () => {
               } finally {
                 setIsLoadingSampleBid(false);
               }
-          } else {
+            } else {
               // No AI responses yet, show transition step
               setShowTransitionStep(true);
             }
@@ -762,7 +811,7 @@ const AutobidTrainer = () => {
         .from('autobid_training_responses')
         .insert({
           business_id: user.id,
-          request_id: currentRequest?.id || 'sample-request',
+          request_id: currentBid.requestId || currentRequest?.id || 'sample-request',
           bid_amount: currentBid.generatedBid.amount,
           bid_description: currentBid.generatedBid.description,
           pricing_breakdown: currentBid.generatedBid.breakdown,
@@ -777,6 +826,13 @@ const AutobidTrainer = () => {
         .single();
 
       if (aiError) throw aiError;
+
+      // Track this request as used for AI testing
+      if (currentBid.requestId) {
+        setUsedAIRequestIds(prev => new Set([...prev, currentBid.requestId]));
+        setAvailableAIRequests(prev => prev.filter(req => req.id !== currentBid.requestId));
+        console.log('Marked request', currentBid.requestId, 'as used for AI testing');
+      }
 
       // Call the real training feedback API
       try {
@@ -915,6 +971,24 @@ const AutobidTrainer = () => {
   const handleStartAITesting = async () => {
     setShowTransitionStep(false);
     setShowSampleBid(true);
+    
+    // Initialize available requests for AI testing
+    try {
+      const { data: allRequests, error } = await supabase
+        .from('autobid_training_requests')
+        .select('*')
+        .eq('is_active', true)
+        .eq('category', currentCategory)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      setAvailableAIRequests(allRequests || []);
+      setUsedAIRequestIds(new Set());
+      console.log('Initialized AI testing with', allRequests?.length, 'available requests');
+    } catch (error) {
+      console.error('Error initializing AI requests:', error);
+    }
     
     // Generate fresh AI sample bid data
     setIsLoadingSampleBid(true);
