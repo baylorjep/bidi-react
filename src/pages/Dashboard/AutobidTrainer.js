@@ -34,6 +34,8 @@ const AutobidTrainer = () => {
   const [isLoadingSampleBid, setIsLoadingSampleBid] = useState(false);
   const [usedAIRequestIds, setUsedAIRequestIds] = useState(new Set());
   const [availableAIRequests, setAvailableAIRequests] = useState([]);
+  const [isGeneratingBid, setIsGeneratingBid] = useState(false);
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const navigate = useNavigate();
 
   const TOTAL_STEPS = 5;
@@ -149,7 +151,14 @@ const AutobidTrainer = () => {
 
   // Dynamic sample bid data based on business category - now using real API
   const getSampleBidData = async (category) => {
+    // Prevent duplicate calls
+    if (isGeneratingBid) {
+      console.log('Already generating bid, skipping duplicate call');
+      return null;
+    }
+
     try {
+      setIsGeneratingBid(true);
       console.log('Fetching sample bid data from API for category:', category);
       console.log('Current user ID:', user?.id);
       
@@ -167,7 +176,7 @@ const AutobidTrainer = () => {
       if (error) throw error;
       
       if (!allRequests || allRequests.length === 0) {
-        throw new Error('No training requests available for AI testing');
+        throw new Error('No training requests found for category: ' + category);
       }
 
       // Get the current used request IDs from state
@@ -185,281 +194,57 @@ const AutobidTrainer = () => {
         
         // Update state to mark this request as used
         setUsedAIRequestIds(prev => new Set([...prev, selectedRequest.id]));
-        setAvailableAIRequests(prev => prev.filter(req => req.id !== selectedRequest.id));
       } else {
         // All requests have been used, reset and start over
         console.log('All requests used, resetting for recycling');
-        setUsedAIRequestIds(new Set());
-        setAvailableAIRequests(allRequests);
-        
-        // Use the first request
         selectedRequest = allRequests[0];
-        console.log('Reset available requests, using:', selectedRequest.id, 'with date:', selectedRequest.request_data?.date || 'unknown');
-        
-        // Mark this request as used
-        setUsedAIRequestIds(prev => new Set([selectedRequest.id]));
-        setAvailableAIRequests(prev => prev.slice(1));
+        setUsedAIRequestIds(new Set([selectedRequest.id]));
+        console.log('Recycling to request:', selectedRequest.id);
       }
 
-      if (!selectedRequest) {
-        throw new Error('No training requests available for AI testing');
-      }
-
-      // Parse request data if it's a string
-      const parsedRequestData = typeof selectedRequest.request_data === 'string' 
-        ? JSON.parse(selectedRequest.request_data) 
-        : selectedRequest.request_data;
-      
-      console.log('Sending request to API with data:', {
-        business_id: user.id,
-        category: category,
-        request_data: parsedRequestData,
-        request_id: selectedRequest.id
-      });
-      
-      // Call the backend API to generate sample bids using real request data
-      const response = await fetch('https://bidi-express.vercel.app/api/autobid/generate-sample-bid', {
+      // Call the real API to generate AI sample bid
+      const response = await fetch('/api/autobid/generate-sample-bid', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           business_id: user.id,
           category: category,
-          request_data: parsedRequestData,
-          request_id: selectedRequest.id // Send the specific request ID
+          request_data: selectedRequest.request_data,
+          request_id: selectedRequest.id
         }),
       });
 
-      console.log('API response status:', response.status);
-      console.log('API response ok:', response.ok);
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API error response:', errorText);
-        throw new Error(`API failed with status ${response.status}: ${errorText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('API returned sample bid data:', data);
-      
-      // Validate API response
-      if (!data || typeof data !== 'object') {
-        throw new Error('Invalid API response format');
+      console.log('API response:', data);
+
+      if (data.success && data.sample_bid) {
+        const sampleBidData = [{
+          requestId: selectedRequest.id,
+          requestData: selectedRequest.request_data,
+          generatedBid: {
+            amount: data.sample_bid.amount,
+            description: data.sample_bid.description,
+            breakdown: data.sample_bid.breakdown,
+            reasoning: data.sample_bid.reasoning
+          }
+        }];
+        
+        console.log('Generated sample bid data:', sampleBidData);
+        return sampleBidData;
+      } else {
+        throw new Error('Failed to generate sample bid: ' + (data.error || 'Unknown error'));
       }
-      
-      // Convert API response to the expected format using real request data
-      const sampleBid = {
-        request: parsedRequestData,
-        generatedBid: {
-          amount: data.amount || 0,
-          description: data.description || 'AI-generated bid description',
-          breakdown: data.breakdown || 'Pricing breakdown',
-          reasoning: data.reasoning || 'AI reasoning for pricing'
-        },
-        requestId: selectedRequest.id // Store the request ID for tracking
-      };
-
-      console.log('Created sample bid from API:', sampleBid);
-      return [sampleBid]; // Return as array to match existing structure
     } catch (error) {
-      console.error('Error fetching sample bid from API:', error);
-      console.error('Error details:', error.message);
-      
-      // Only fall back to hardcoded data if API completely fails
-      console.log('Falling back to hardcoded data due to API failure');
-      
-      const fallbackBids = {
-        photography: [
-          {
-    request: {
-      date: "2024-08-15",
-      duration: "8 hours",
-      location: "San Francisco, CA",
-      event_type: "wedding",
-      guest_count: 150,
-      requirements: [
-        "Full day coverage",
-        "Engagement shoot",
-        "Online gallery",
-        "Print release",
-        "Drone footage"
-      ]
-    },
-    generatedBid: {
-      amount: 2800,
-      description: "Complete wedding photography package including full day coverage, engagement session, online gallery with 400+ edited photos, print release, and drone footage. Professional equipment and backup gear included.",
-      breakdown: "Full day coverage (8 hours): $1,600\nEngagement shoot: $400\nOnline gallery & editing: $500\nDrone footage: $200\nPrint release: $100",
-      reasoning: "Based on your training data, this pricing reflects your premium service quality and comprehensive coverage. The amount accounts for your experience level and the high-end equipment you use."
-    }
-          }
-        ],
-        videography: [
-          {
-            request: {
-              date: "2024-09-20",
-              duration: "4 hours",
-              location: "Salt Lake City, UT",
-              event_type: "wedding",
-              guest_count: 80,
-              requirements: [
-                "Ceremony coverage",
-                "Reception highlights",
-                "Highlight reel",
-                "Digital files"
-              ]
-            },
-            generatedBid: {
-              amount: 1800,
-              description: "Wedding videography package covering ceremony and reception highlights. Includes professional editing, highlight reel, and digital file delivery. Perfect for capturing your special moments.",
-              breakdown: "Ceremony coverage: $800\nReception highlights: $600\nHighlight reel: $300\nDigital files: $100",
-              reasoning: "This pricing is based on your previous responses showing competitive rates for mid-sized weddings. The package provides comprehensive coverage while remaining accessible."
-            }
-          }
-        ],
-        florist: [
-          {
-            request: {
-              date: "2024-07-15",
-              duration: "Setup only",
-              location: "Park City, UT",
-              event_type: "wedding",
-              guest_count: 100,
-              requirements: [
-                "Bridal bouquet",
-                "8 boutonnieres",
-                "12 centerpieces",
-                "Delivery and setup"
-              ]
-            },
-            generatedBid: {
-              amount: 950,
-              description: "Complete wedding floral package featuring a stunning bridal bouquet, boutonnieres for the wedding party, elegant centerpieces, and professional delivery and setup services.",
-              breakdown: "Bridal bouquet: $200\n8 boutonnieres: $160\n12 centerpieces: $480\nDelivery & setup: $110",
-              reasoning: "Based on your training responses, this pricing reflects your quality materials and professional service while staying within typical market ranges for this scope of work."
-            }
-          }
-        ],
-        beauty: [
-          {
-            request: {
-              date: "2024-06-10",
-              duration: "3 hours",
-              location: "Orem, UT",
-              event_type: "wedding",
-              guest_count: 4,
-              requirements: [
-                "Bridal hair and makeup",
-                "3 bridesmaids hair and makeup",
-                "On-site service",
-                "Trial session included"
-              ]
-            },
-            generatedBid: {
-              amount: 450,
-              description: "Complete bridal party beauty package including bridal hair and makeup, three bridesmaids services, on-site application, and a trial session for the bride.",
-              breakdown: "Bridal hair & makeup: $150\n3 bridesmaids: $225\nOn-site service: $50\nTrial session: $25",
-              reasoning: "This pricing structure shows competitive rates while accounting for the convenience of on-site service and the value of the trial session."
-            }
-          }
-        ],
-        dj: [
-          {
-            request: {
-              date: "2024-08-15",
-              duration: "5 hours",
-              location: "Salt Lake City, UT",
-              event_type: "wedding",
-              guest_count: 120,
-              requirements: [
-                "Ceremony music",
-                "Reception DJ",
-                "Professional sound system",
-                "Playlist consultation",
-                "MC services"
-              ]
-            },
-            generatedBid: {
-              amount: 800,
-              description: "Complete wedding DJ package including ceremony music, reception entertainment, professional sound system, playlist consultation, and MC services for your special day.",
-              breakdown: "Ceremony music: $150\nReception DJ (5 hours): $500\nProfessional sound system: $100\nPlaylist consultation: $50",
-              reasoning: "This pricing reflects your professional equipment and experience while remaining competitive in the market."
-            }
-          }
-        ],
-        "wedding planning": [
-          {
-            request: {
-              date: "2024-09-15",
-              duration: "Full planning",
-              location: "Salt Lake City, UT",
-              event_type: "wedding",
-              guest_count: 150,
-              requirements: [
-                "Full wedding planning",
-                "Vendor coordination",
-                "Timeline management",
-                "Budget management",
-                "Day-of coordination"
-              ]
-            },
-            generatedBid: {
-              amount: 2500,
-              description: "Complete wedding planning package including full planning services, vendor coordination, timeline management, budget oversight, and day-of coordination to ensure your perfect day.",
-              breakdown: "Full planning services: $1,500\nVendor coordination: $400\nTimeline management: $300\nBudget management: $200\nDay-of coordination: $100",
-              reasoning: "This pricing reflects the comprehensive nature of full wedding planning services and your professional expertise."
-            }
-          }
-        ],
-        catering: [
-          {
-            request: {
-              date: "2024-08-15",
-              duration: "Dinner service",
-              location: "Salt Lake City, UT",
-              event_type: "wedding",
-              guest_count: 120,
-              requirements: [
-                "Plated dinner service",
-                "Appetizers",
-                "Main course",
-                "Dessert",
-                "Staffing",
-                "Setup and cleanup"
-              ]
-            },
-            generatedBid: {
-              amount: 4800,
-              description: "Complete wedding catering package with plated dinner service for 120 guests. Includes appetizers, main course, dessert, professional staffing, and full setup and cleanup services.",
-              breakdown: "Plated dinner (120 guests): $3,600\nAppetizers: $600\nDessert: $300\nStaffing: $200\nSetup & cleanup: $100",
-              reasoning: "This pricing reflects the quality of plated service and comprehensive catering package for a mid-sized wedding."
-            }
-          }
-        ],
-        cake: [
-          {
-            request: {
-              date: "2024-08-15",
-              duration: "Delivery only",
-              location: "Salt Lake City, UT",
-              event_type: "wedding",
-              guest_count: 120,
-              requirements: [
-                "3-tier wedding cake",
-                "Custom design",
-                "Delivery and setup",
-                "Cake cutting service"
-              ]
-            },
-            generatedBid: {
-              amount: 450,
-              description: "Beautiful 3-tier custom wedding cake designed to match your wedding theme. Includes delivery, setup, and cake cutting service for your special day.",
-              breakdown: "3-tier cake: $300\nCustom design: $100\nDelivery & setup: $30\nCake cutting service: $20",
-              reasoning: "This pricing reflects the custom design work and comprehensive service package for a wedding cake."
-            }
-          }
-        ]
-      };
-
-      return fallbackBids[category] || fallbackBids.photography;
+      console.error('Error generating sample bid data:', error);
+      throw error;
+    } finally {
+      setIsGeneratingBid(false);
     }
   };
 
@@ -825,9 +610,17 @@ const AutobidTrainer = () => {
   };
 
   const handleSampleBidResponse = async (approved) => {
+    // Prevent duplicate submissions
+    if (isSubmittingFeedback) {
+      console.log('Already submitting feedback, skipping duplicate call');
+      return;
+    }
+
     setSampleBidApproved(approved);
     
     try {
+      setIsSubmittingFeedback(true);
+      
       // Save AI-generated bid to training responses
       const currentBid = currentSampleBidData[currentSampleBidIndex];
       const { data: aiResponse, error: aiError } = await supabase
@@ -841,86 +634,41 @@ const AutobidTrainer = () => {
           pricing_reasoning: currentBid.generatedBid.reasoning,
           is_training: true,
           is_ai_generated: true,
-          feedback: feedbackText,
-          feedback_type: approved ? 'approved' : 'rejected',
           category: currentCategory
-        })
-        .select()
-        .single();
+        });
 
       if (aiError) throw aiError;
 
       // Call the real training feedback API
       try {
-        const feedbackResponse = await fetch('https://bidi-express.vercel.app/api/autobid/training-feedback', {
+        const feedbackResponse = await fetch('/api/autobid/training-feedback', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             business_id: user.id,
             category: currentCategory,
-            sample_bid_id: aiResponse.id,
+            sample_bid_id: aiResponse[0].id,
             approved: approved,
-            feedback: feedbackText || (approved ? 'Approved' : 'Needs adjustment'),
-            suggested_changes: approved ? null : feedbackText
+            feedback: approved ? 'Approved' : 'Rejected',
+            suggested_changes: null
           }),
         });
 
-        if (feedbackResponse.ok) {
-          const feedbackData = await feedbackResponse.json();
-          console.log('Training feedback submitted to API:', feedbackData);
+        if (!feedbackResponse.ok) {
+          console.error('Feedback API error:', feedbackResponse.status);
         } else {
-          console.warn('Failed to submit feedback to API, but continuing with local storage');
+          const feedbackData = await feedbackResponse.json();
+          console.log('Feedback submitted successfully:', feedbackData);
         }
-      } catch (apiError) {
-        console.warn('Error submitting feedback to API:', apiError);
-        // Continue with local storage even if API fails
+      } catch (feedbackError) {
+        console.error('Error submitting feedback:', feedbackError);
       }
 
-      // Save detailed feedback if provided
-      if (feedbackText.trim()) {
-        const { error: feedbackError } = await supabase
-          .from('autobid_training_feedback')
-          .insert({
-            business_id: user.id,
-            training_response_id: aiResponse.id,
-            feedback_type: approved ? 'approved' : 'rejected',
-            feedback_text: feedbackText,
-            specific_issues: approved ? null : { general: 'needs_adjustment' },
-            suggested_improvements: approved ? null : feedbackText
-          });
-
-        if (feedbackError) throw feedbackError;
-      }
-
-      // Update consecutive approvals for current category
+      // Update consecutive approvals
       const newConsecutiveApprovals = approved ? consecutiveApprovals + 1 : 0;
       setConsecutiveApprovals(newConsecutiveApprovals);
-
-      const currentProgress = categoryProgress[currentCategory];
-      const { error: progressError } = await supabase
-        .from('autobid_training_progress')
-        .update({
-          scenarios_approved: (currentProgress?.scenarios_approved || 0) + (approved ? 1 : 0),
-          consecutive_approvals: newConsecutiveApprovals,
-          training_completed: newConsecutiveApprovals >= 2,
-          training_completed_at: newConsecutiveApprovals >= 2 ? new Date().toISOString() : null
-        })
-        .eq('business_id', user.id)
-        .eq('category', currentCategory);
-
-      if (progressError) throw progressError;
-
-      // Update local progress state
-      const updatedProgress = {
-        ...categoryProgress,
-        [currentCategory]: {
-          ...currentProgress,
-          scenarios_approved: (currentProgress?.scenarios_approved || 0) + (approved ? 1 : 0),
-          consecutive_approvals: newConsecutiveApprovals,
-          training_completed: newConsecutiveApprovals >= 2
-        }
-      };
-      setCategoryProgress(updatedProgress);
 
       // Check if current category training is complete (2 consecutive approvals)
       if (newConsecutiveApprovals >= 2) {
@@ -939,37 +687,42 @@ const AutobidTrainer = () => {
           setShowCompletion(true);
           
           // The completion screen will handle the transition to next category
-          // when the user clicks the "Continue to Next Category" button
         }
       } else {
-        // Generate a new sample bid for continuous training
-        console.log('Generating new sample bid for continuous training...');
-        setIsLoadingSampleBid(true);
-        
-        try {
-          // Generate new sample bid data from API
-          const newSampleData = await getSampleBidData(currentCategory);
-          setCurrentSampleBidData(newSampleData);
-          setCurrentSampleBidIndex(0); // Reset to first sample bid
-          setSampleBidApproved(null);
-          setFeedbackText('');
-          console.log('New sample bid generated for continuous training');
-        } catch (error) {
-          console.error('Error generating new sample bid:', error);
-          // If API fails, show completion for this category
-          setShowSampleBid(false);
-          setShowCompletion(true);
-        } finally {
-          setIsLoadingSampleBid(false);
+        // Continue with next AI sample bid
+        const nextIndex = currentSampleBidIndex + 1;
+        if (nextIndex < currentSampleBidData.length) {
+          setCurrentSampleBidIndex(nextIndex);
+        } else {
+          // Generate new AI sample bid data
+          setIsLoadingSampleBid(true);
+          try {
+            const newSampleData = await getSampleBidData(currentCategory);
+            if (newSampleData) {
+              setCurrentSampleBidData(newSampleData);
+              setCurrentSampleBidIndex(0);
+            }
+          } catch (error) {
+            console.error('Error generating new sample bid data:', error);
+          } finally {
+            setIsLoadingSampleBid(false);
+          }
         }
       }
     } catch (error) {
       console.error('Error handling sample bid response:', error);
-      alert('Error saving your feedback. Please try again.');
+    } finally {
+      setIsSubmittingFeedback(false);
     }
   };
 
   const handleStartAITesting = async () => {
+    // Prevent duplicate calls
+    if (isGeneratingBid || isLoadingSampleBid) {
+      console.log('Already starting AI testing, skipping duplicate call');
+      return;
+    }
+
     setShowTransitionStep(false);
     setShowSampleBid(true);
     
@@ -995,8 +748,11 @@ const AutobidTrainer = () => {
     setIsLoadingSampleBid(true);
     try {
       const sampleData = await getSampleBidData(currentCategory);
-      setCurrentSampleBidData(sampleData);
-      console.log('Fresh AI sample bid data generated');
+      if (sampleData) {
+        setCurrentSampleBidData(sampleData);
+        setCurrentSampleBidIndex(0);
+        console.log('Fresh AI sample bid data generated');
+      }
     } catch (error) {
       console.error('Error generating fresh AI sample bid data:', error);
     } finally {
@@ -1432,16 +1188,23 @@ const AutobidTrainer = () => {
                   </div>
                 </motion.div>
                 
-                <motion.button
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 1.1, duration: 0.6 }}
-                  className="btn-primary"
+                <button
+                  className="transition-btn"
                   onClick={handleStartAITesting}
+                  disabled={isGeneratingBid || isLoadingSampleBid}
                 >
-                  <FaRobot className="me-2" />
-                  Start AI Testing
-                </motion.button>
+                  {isGeneratingBid || isLoadingSampleBid ? (
+                    <>
+                      <LoadingSpinner color="white" size={16} />
+                      Starting AI Testing...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-robot"></i>
+                      Start AI Testing
+                    </>
+                  )}
+                </button>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -1634,20 +1397,40 @@ const AutobidTrainer = () => {
                       />
                     </div>
 
-                    <div className="feedback-actions">
+                    <div className="feedback-buttons">
                       <button
-                        className={`feedback-btn reject ${sampleBidApproved === false ? 'active' : ''}`}
-                        onClick={() => handleSampleBidResponse(false)}
+                        className={`feedback-btn approve-btn ${sampleBidApproved === true ? 'selected' : ''}`}
+                        onClick={() => handleSampleBidResponse(true)}
+                        disabled={isSubmittingFeedback}
                       >
-                        <FaThumbsDown />
-                        Needs Adjustment
+                        {isSubmittingFeedback ? (
+                          <>
+                            <LoadingSpinner color="white" size={16} />
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-check"></i>
+                            Approve
+                          </>
+                        )}
                       </button>
                       <button
-                        className={`feedback-btn approve ${sampleBidApproved === true ? 'active' : ''}`}
-                        onClick={() => handleSampleBidResponse(true)}
+                        className={`feedback-btn reject-btn ${sampleBidApproved === false ? 'selected' : ''}`}
+                        onClick={() => handleSampleBidResponse(false)}
+                        disabled={isSubmittingFeedback}
                       >
-                        <FaThumbsUp />
-                        Looks Good!
+                        {isSubmittingFeedback ? (
+                          <>
+                            <LoadingSpinner color="white" size={16} />
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-times"></i>
+                            Reject
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
