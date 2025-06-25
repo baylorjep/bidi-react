@@ -569,7 +569,7 @@ const AutobidTrainer = () => {
               setShowCompletion(true);
               setIsLoading(false);
               return;
-            } else {
+          } else {
               // Move to next incomplete category
               const nextIncompleteCategory = userCategories.find(cat => 
                 !progressByCategory[cat]?.training_completed
