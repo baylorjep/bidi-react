@@ -1215,7 +1215,7 @@
   padding: 12px 24px;
   text-align: center;
   text-decoration: none;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
