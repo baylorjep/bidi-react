@@ -532,8 +532,7 @@ function OpenRequests({ onMessageClick }) {
       const { data: updateData, error: updateError } = await supabase
         .from(tableName)
         .update({ hidden_by_vendor: hidden })
-        .eq('id', requestId)
-        .select();
+        .eq('id', requestId);
       
       console.log('Update result:', { updateData, updateError });
       
@@ -542,11 +541,7 @@ function OpenRequests({ onMessageClick }) {
         return false;
       }
 
-      if (!updateData || updateData.length === 0) {
-        console.error('No data returned after update');
-        return false;
-      }
-
+      // If no error occurred, assume the update was successful
       console.log('Successfully updated hidden_by_vendor');
       return true;
     } catch (error) {
@@ -569,28 +564,44 @@ function OpenRequests({ onMessageClick }) {
       console.log('Database update result:', { success });
       
       if (success) {
-        // Only update UI after successful DB update
-        if (["photography", "videography"].includes(businessCategories?.some(c => c.toLowerCase()) || '')) {
+        // Check which state array contains this request
+        const requestInPhotoArray = openPhotoRequests.some(req => req.id === requestId);
+        const requestInMainArray = openRequests.some(req => req.id === requestId);
+        
+        console.log('Request location check:', { requestInPhotoArray, requestInMainArray, requestId });
+        
+        // Update the request's hidden_by_vendor property in the correct state array
+        if (requestInPhotoArray) {
           console.log('Updating openPhotoRequests');
           setOpenPhotoRequests(prev => {
-            const filtered = prev.filter(req => req.id !== requestId);
-            console.log('Previous photo requests count:', prev.length);
-            console.log('New photo requests count:', filtered.length);
-            return filtered;
+            return prev.map(req => {
+              if (req.id === requestId) {
+                const currentHidden = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
+                return {
+                  ...req,
+                  hidden_by_vendor: [...currentHidden, businessId]
+                };
+              }
+              return req;
+            });
           });
-        } else {
+        } else if (requestInMainArray) {
           console.log('Updating openRequests');
           setOpenRequests(prev => {
-            const filtered = prev.filter(req => req.id !== requestId);
-            console.log('Previous requests count:', prev.length);
-            console.log('New requests count:', filtered.length);
-            return filtered;
+            return prev.map(req => {
+              if (req.id === requestId) {
+                const currentHidden = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
+                return {
+                  ...req,
+                  hidden_by_vendor: [...currentHidden, businessId]
+                };
+              }
+              return req;
+            });
           });
+        } else {
+          console.error('Request not found in either state array:', requestId);
         }
-
-        // Force a re-render
-        setShowHidden(prev => !prev);
-        setTimeout(() => setShowHidden(prev => !prev), 0);
       } else {
         console.error('Failed to update hidden_by_vendor in database');
       }
@@ -603,30 +614,41 @@ function OpenRequests({ onMessageClick }) {
     if (!businessId) return;
     const success = await updateHiddenByVendor(requestId, tableName, businessId, false);
     if (success) {
-      // Fetch the updated request from Supabase and update local state
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
-        .eq('id', requestId)
-        .single();
-      if (!error && data) {
-        if (["photography", "videography"].includes(businessCategories?.some(c => c.toLowerCase()) || '')) {
-          setOpenPhotoRequests(prev => {
-            // If not already present, add it
-            if (!prev.some(r => r.id === requestId)) {
-              return [...prev, data];
+      // Check which state array contains this request
+      const requestInPhotoArray = openPhotoRequests.some(req => req.id === requestId);
+      const requestInMainArray = openRequests.some(req => req.id === requestId);
+      
+      console.log('Request location check (show):', { requestInPhotoArray, requestInMainArray, requestId });
+      
+      // Update the request's hidden_by_vendor property in the correct state array
+      if (requestInPhotoArray) {
+        setOpenPhotoRequests(prev => {
+          return prev.map(req => {
+            if (req.id === requestId) {
+              const currentHidden = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
+              return {
+                ...req,
+                hidden_by_vendor: currentHidden.filter(id => id !== businessId)
+              };
             }
-            // Otherwise, update it
-            return prev.map(r => r.id === requestId ? data : r);
+            return req;
           });
-        } else {
-          setOpenRequests(prev => {
-            if (!prev.some(r => r.id === requestId)) {
-              return [...prev, data];
+        });
+      } else if (requestInMainArray) {
+        setOpenRequests(prev => {
+          return prev.map(req => {
+            if (req.id === requestId) {
+              const currentHidden = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
+              return {
+                ...req,
+                hidden_by_vendor: currentHidden.filter(id => id !== businessId)
+              };
             }
-            return prev.map(r => r.id === requestId ? data : r);
+            return req;
           });
-        }
+        });
+      } else {
+        console.error('Request not found in either state array (show):', requestId);
       }
     }
   };
@@ -641,8 +663,14 @@ function OpenRequests({ onMessageClick }) {
     });
     
     const filtered = showHidden
-      ? requests.filter(req => req.hidden_by_vendor?.includes(businessId))
-      : requests.filter(req => !req.hidden_by_vendor?.includes(businessId));
+      ? requests.filter(req => {
+          const hiddenArray = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
+          return hiddenArray.includes(businessId);
+        })
+      : requests.filter(req => {
+          const hiddenArray = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
+          return !hiddenArray.includes(businessId);
+        });
     
     console.log('Filtered requests:', {
       count: filtered.length,
@@ -663,8 +691,8 @@ function OpenRequests({ onMessageClick }) {
       console.log('Using table_name from request:', request.table_name, request);
       return request.table_name;
     }
-    const cat = (request.service_category || '').toLowerCase();
-    console.log('Service category (lowercase):', cat);
+    const cat = normalizeCategory(request.service_category || '');
+    console.log('Service category (normalized):', cat);
     
     let table;
     switch (cat) {
@@ -674,7 +702,8 @@ function OpenRequests({ onMessageClick }) {
       case "dj": table = "dj_requests"; break;
       case "beauty": table = "beauty_requests"; break;
       case "florist": table = "florist_requests"; break;
-      case "Wedding Planning": table = "wedding_planning_requests"; break;
+      case "wedding planning": table = "wedding_planning_requests"; break;
+      case "wedding planner": table = "wedding_planning_requests"; break;
       default: table = "requests";
     }
     console.log('Determined table for request:', table, request);
@@ -799,12 +828,16 @@ function OpenRequests({ onMessageClick }) {
         <div className="request-grid">
           {error && <p>Error: {error}</p>}
           {filterRequestsByCategory(
-            (businessCategories.some(cat => 
-              ["photography", "videography"].includes(normalizeCategory(cat))
-            )
-              ? filterRequestsByHidden(openPhotoRequests)
-              : filterRequestsByHidden(openRequests)
-            )
+            (() => {
+              // Check if user has photo/video categories
+              const hasPhotoVideoCategory = businessCategories.some(cat => 
+                ["photography", "videography"].includes(normalizeCategory(cat))
+              );
+              
+              return hasPhotoVideoCategory
+                ? filterRequestsByHidden(openPhotoRequests)
+                : filterRequestsByHidden(openRequests);
+            })()
               .filter((request) => !userBids.has(request.id))
               .filter(meetsMinimumPrice)
               .filter(request => !isDatePassed(request))
@@ -818,8 +851,8 @@ function OpenRequests({ onMessageClick }) {
               isPhotoRequest={request.service_category === "photography"}
               onHide={() => hideRequest(request.id, getTableName(request))}
               onShow={() => showRequest(request.id, getTableName(request))}
-              isHidden={request.hidden_by_vendor?.includes(businessId)}
-              currentVendorId={businessId}  // Add this line
+              isHidden={Array.isArray(request.hidden_by_vendor) ? request.hidden_by_vendor.includes(businessId) : false}
+              currentVendorId={businessId}
               onMessageClick={onMessageClick}
             />
           ))}
