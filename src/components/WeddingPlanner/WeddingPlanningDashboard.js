@@ -51,9 +51,28 @@ function WeddingPlanningDashboard() {
 
   useEffect(() => {
     if (weddingData?.wedding_date) {
-      generateNotifications();
+      loadNotifications();
+      generateAndSaveNotifications();
     }
   }, [weddingData]);
+
+  // Close vendors submenu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showVendorsSubmenu) {
+        const submenu = document.querySelector('.mobile-vendors-submenu');
+        const vendorsButton = document.querySelector('.mobile-nav-item[data-tab="vendors"]');
+        
+        if (submenu && !submenu.contains(event.target) && 
+            vendorsButton && !vendorsButton.contains(event.target)) {
+          setShowVendorsSubmenu(false);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showVendorsSubmenu]);
 
   const checkUserAndLoadWedding = async () => {
     try {
@@ -217,107 +236,320 @@ function WeddingPlanningDashboard() {
     }
   };
 
-  const generateNotifications = () => {
-    if (!weddingData?.wedding_date) return;
+  // Load notifications from database
+  const loadNotifications = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data: dbNotifications, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('read', false)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading notifications:', error);
+        return;
+      }
+
+      // Transform database notifications to match component format
+      const transformedNotifications = dbNotifications.map(notification => {
+        try {
+          const messageData = JSON.parse(notification.message);
+          return {
+            id: notification.id,
+            type: notification.type,
+            title: messageData.title,
+            message: messageData.message,
+            priority: messageData.priority,
+            created_at: notification.created_at,
+            read: notification.read
+          };
+        } catch (parseError) {
+          console.error('Error parsing notification message:', parseError);
+          // Fallback for malformed notifications
+          return {
+            id: notification.id,
+            type: notification.type,
+            title: 'Notification',
+            message: notification.message || 'Unable to load notification',
+            priority: 'medium',
+            created_at: notification.created_at,
+            read: notification.read
+          };
+        }
+      });
+
+      setNotifications(transformedNotifications);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  };
+
+  // Periodic notification check
+  useEffect(() => {
+    if (!user?.id || !weddingData?.wedding_date) return;
+
+    const checkNotifications = () => {
+      loadNotifications();
+      generateAndSaveNotifications();
+    };
+
+    // Check every 5 minutes
+    const interval = setInterval(checkNotifications, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [user?.id, weddingData?.wedding_date]);
+
+  // Generate and save notifications to database
+  const generateAndSaveNotifications = async () => {
+    if (!weddingData?.wedding_date || !user?.id) return;
 
     const weddingDate = new Date(weddingData.wedding_date);
     const today = new Date();
     const daysUntilWedding = Math.ceil((weddingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     
-    const newNotifications = [];
+    const notificationsToCreate = [];
 
     // Wedding day notifications
     if (daysUntilWedding === 0) {
-      newNotifications.push({
-        id: 'wedding-day',
-        type: 'celebration',
+      const message = JSON.stringify({
         title: '🎉 It\'s Your Wedding Day! 🎉',
         message: 'Congratulations! Today is your special day. Enjoy every moment!',
         priority: 'high'
       });
+      const exists = await checkNotificationExists('celebration', message);
+      if (!exists) {
+        notificationsToCreate.push({
+          type: 'celebration',
+          message: message
+        });
+      }
     } else if (daysUntilWedding === 1) {
-      newNotifications.push({
-        id: 'wedding-tomorrow',
-        type: 'warning',
+      const message = JSON.stringify({
         title: '💍 Wedding Tomorrow!',
         message: 'Your wedding is tomorrow! Make sure everything is ready and get some rest.',
         priority: 'high'
       });
+      const exists = await checkNotificationExists('warning', message);
+      if (!exists) {
+        notificationsToCreate.push({
+          type: 'warning',
+          message: message
+        });
+      }
     } else if (daysUntilWedding <= 7) {
-      newNotifications.push({
-        id: 'wedding-week',
-        type: 'info',
+      const message = JSON.stringify({
         title: '⏰ Final Week!',
         message: `Only ${daysUntilWedding} days until your wedding! Final preparations time.`,
         priority: 'medium'
       });
+      const exists = await checkNotificationExists('info', message);
+      if (!exists) {
+        notificationsToCreate.push({
+          type: 'info',
+          message: message
+        });
+      }
     }
 
     // Milestone notifications
     if (daysUntilWedding === 30) {
-      newNotifications.push({
-        id: 'one-month',
-        type: 'info',
+      const message = JSON.stringify({
         title: '📅 One Month to Go!',
         message: 'Your wedding is in exactly one month! Time for final vendor meetings and rehearsals.',
         priority: 'medium'
       });
+      const exists = await checkNotificationExists('info', message);
+      if (!exists) {
+        notificationsToCreate.push({
+          type: 'info',
+          message: message
+        });
+      }
     } else if (daysUntilWedding === 60) {
-      newNotifications.push({
-        id: 'two-months',
-        type: 'info',
+      const message = JSON.stringify({
         title: '📋 Two Months to Go!',
         message: 'Two months until your wedding! Finalize vendor contracts and start dress fittings.',
         priority: 'medium'
       });
+      const exists = await checkNotificationExists('info', message);
+      if (!exists) {
+        notificationsToCreate.push({
+          type: 'info',
+          message: message
+        });
+      }
     } else if (daysUntilWedding === 90) {
-      newNotifications.push({
-        id: 'three-months',
-        type: 'info',
+      const message = JSON.stringify({
         title: '🎯 Three Months to Go!',
         message: 'Three months until your wedding! Book remaining vendors and plan honeymoon.',
         priority: 'medium'
       });
+      const exists = await checkNotificationExists('info', message);
+      if (!exists) {
+        notificationsToCreate.push({
+          type: 'info',
+          message: message
+        });
+      }
     }
 
     // Past due notifications
     if (daysUntilWedding < 0) {
-      newNotifications.push({
-        id: 'wedding-passed',
-        type: 'info',
+      const message = JSON.stringify({
         title: '💕 Wedding Memories',
         message: 'Your wedding has passed! We hope it was everything you dreamed of.',
         priority: 'low'
       });
+      const exists = await checkNotificationExists('info', message);
+      if (!exists) {
+        notificationsToCreate.push({
+          type: 'info',
+          message: message
+        });
+      }
     }
 
     // Budget reminders
     if (weddingData.budget && daysUntilWedding <= 30) {
-      newNotifications.push({
-        id: 'budget-final',
-        type: 'warning',
+      const message = JSON.stringify({
         title: '💰 Final Budget Check',
         message: 'Review your budget before the big day to avoid any surprises.',
         priority: 'medium'
       });
+      const exists = await checkNotificationExists('warning', message);
+      if (!exists) {
+        notificationsToCreate.push({
+          type: 'warning',
+          message: message
+        });
+      }
     }
 
     // Guest list reminders
     if (weddingData.guest_count && daysUntilWedding <= 14) {
-      newNotifications.push({
-        id: 'guest-final',
-        type: 'warning',
+      const message = JSON.stringify({
         title: '👥 Final Guest Count',
         message: 'Provide final guest count to your venue and caterer.',
         priority: 'medium'
       });
+      const exists = await checkNotificationExists('warning', message);
+      if (!exists) {
+        notificationsToCreate.push({
+          type: 'warning',
+          message: message
+        });
+      }
     }
 
-    setNotifications(newNotifications);
+    // Save notifications to database
+    if (notificationsToCreate.length > 0) {
+      try {
+        const notificationsWithUser = notificationsToCreate.map(notification => ({
+          ...notification,
+          user_id: user.id,
+          read: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+
+        const { error } = await supabase
+          .from('notifications')
+          .insert(notificationsWithUser);
+
+        if (error) {
+          console.error('Error saving notifications:', error);
+        } else {
+          // Reload notifications after creating new ones
+          loadNotifications();
+        }
+      } catch (error) {
+        console.error('Error creating notifications:', error);
+      }
+    }
   };
 
-  const dismissNotification = (notificationId) => {
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+  // Legacy function - keeping for backward compatibility
+  const generateNotifications = () => {
+    // This function is now deprecated in favor of generateAndSaveNotifications
+    console.log('generateNotifications is deprecated, use generateAndSaveNotifications instead');
+  };
+
+  const dismissNotification = async (notificationId) => {
+    try {
+      // Mark notification as read in database
+      const { error } = await supabase
+        .from('notifications')
+        .update({ 
+          read: true, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', notificationId);
+
+      if (error) {
+        console.error('Error marking notification as read:', error);
+        return;
+      }
+
+      // Remove from local state
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    } catch (error) {
+      console.error('Error dismissing notification:', error);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    if (!user?.id || notifications.length === 0) return;
+
+    try {
+      // Mark all user's unread notifications as read
+      const { error } = await supabase
+        .from('notifications')
+        .update({ 
+          read: true, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('user_id', user.id)
+        .eq('read', false);
+
+      if (error) {
+        console.error('Error clearing all notifications:', error);
+        return;
+      }
+
+      // Clear local state
+      setNotifications([]);
+    } catch (error) {
+      console.error('Error clearing all notifications:', error);
+    }
+  };
+
+  // Check if notification already exists to prevent duplicates
+  const checkNotificationExists = async (type, message) => {
+    if (!user?.id) return false;
+
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('type', type)
+        .eq('message', message)
+        .eq('read', false)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking notification existence:', error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Error checking notification existence:', error);
+      return false;
+    }
   };
 
   // Background slideshow effect
@@ -509,6 +741,7 @@ function WeddingPlanningDashboard() {
               <WeddingNotificationBell 
                 notifications={notifications}
                 onDismissNotification={dismissNotification}
+                onClearAllNotifications={clearAllNotifications}
               />
             </div>
             
@@ -664,19 +897,19 @@ function WeddingPlanningDashboard() {
             </button>
             
             <button 
-              className={`mobile-nav-item ${(activeTab === 'vendors' || activeTab === 'messaging') ? 'active' : ''}`}
+              className={`mobile-nav-item ${activeTab === 'vendors' ? 'active' : ''}`}
+              data-tab="vendors"
               onClick={() => {
-                if (activeTab === 'vendors' || activeTab === 'messaging') {
-                  setShowVendorsSubmenu(!showVendorsSubmenu);
+                if (showVendorsSubmenu) {
+                  setShowVendorsSubmenu(false);
                 } else {
                   setActiveTab('vendors');
-                  setShowVendorsSubmenu(false);
+                  setShowVendorsSubmenu(true);
                 }
               }}
             >
               <i className="fas fa-users"></i>
               <span>Vendors</span>
-              {showVendorsSubmenu && <i className="fas fa-chevron-up" style={{ fontSize: '0.8rem', marginLeft: '4px' }}></i>}
             </button>
             
             <button 
@@ -704,8 +937,8 @@ function WeddingPlanningDashboard() {
         )}
       </div>
 
-      {/* Vendors Sub-menu */}
-      {showVendorsSubmenu && weddingData && (
+      {/* Mobile Vendors Submenu */}
+      {showVendorsSubmenu && (
         <div className="mobile-vendors-submenu">
           <button 
             className={`mobile-submenu-item ${activeTab === 'vendors' ? 'active' : ''}`}
@@ -714,10 +947,9 @@ function WeddingPlanningDashboard() {
               setShowVendorsSubmenu(false);
             }}
           >
-            <i className="fas fa-list"></i>
-            <span>Manage Vendors</span>
+            <i className="fas fa-cog"></i>
+            <span>Manage</span>
           </button>
-          
           <button 
             className={`mobile-submenu-item ${activeTab === 'messaging' ? 'active' : ''}`}
             onClick={() => {
@@ -728,53 +960,6 @@ function WeddingPlanningDashboard() {
             <i className="fas fa-comments"></i>
             <span>Messages</span>
           </button>
-        </div>
-      )}
-
-      {/* Image Modal */}
-      {showImageModal && moodBoardImages.length > 0 && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-            zIndex: 9999,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexDirection: 'column'
-          }}
-        >
-          <button 
-            onClick={handleCloseImageModal}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              background: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              fontSize: '20px',
-              cursor: 'pointer',
-              zIndex: 10000
-            }}
-          >
-            ×
-          </button>
-          <img 
-            src={moodBoardImages[selectedImageIndex].url}
-            alt={moodBoardImages[selectedImageIndex].name}
-            style={{
-              maxWidth: '90vw',
-              maxHeight: '80vh',
-              objectFit: 'contain'
-            }}
-          />
         </div>
       )}
     </div>
@@ -917,4 +1102,4 @@ function WeddingSetupForm({ onSubmit, loading }) {
   );
 }
 
-export default WeddingPlanningDashboard; 
+export default WeddingPlanningDashboard;

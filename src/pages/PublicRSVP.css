@@ -1,12 +1,51 @@
 /* Public RSVP Page Styles */
 .public-rsvp {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f247d1 0%, #764ba2 100%);
+  background: 
+    linear-gradient(135deg, #f247d1 0%, #764ba2 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 60px,
+      rgba(255, 255, 255, 0.05) 60px,
+      rgba(255, 255, 255, 0.05) 120px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 60px,
+      rgba(255, 255, 255, 0.05) 60px,
+      rgba(255, 255, 255, 0.05) 120px
+    );
   padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Remove the pseudo-element heart patterns */
+.public-rsvp::before,
+.public-rsvp::after {
+  display: none;
+}
+
+/* Remove the floating hearts styles */
+.public-rsvp .floating-heart-1,
+.public-rsvp .floating-heart-2,
+.public-rsvp .floating-heart-3,
+.public-rsvp .floating-heart-4,
+.public-rsvp .floating-heart-5 {
+  display: none;
+}
+
+/* Ensure content stays above the decorative elements */
+.rsvp-header,
+.rsvp-content {
+  position: relative;
+  z-index: 2;
 }
 
 .rsvp-header {
@@ -465,7 +504,7 @@
   gap: 20px;
 }
 
-.checkbox-label {
+.checkbox-label-public-rsvp {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -478,7 +517,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.checkbox-label:hover {
+.checkbox-label-public-rsvp:hover {
   border-color: #cbd5e1;
   background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -823,6 +862,34 @@
     font-size: 0.95rem;
     width: 100%;
   }
+
+  /* Couple Photos Gallery responsive styles for small screens */
+  .couple-photos-gallery {
+    margin-top: 15px;
+    padding: 12px;
+  }
+
+  .slideshow-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .slideshow-header h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+    min-width: auto;
+  }
+
+  .auto-play-indicator {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+  }
+
+  .slideshow-container {
+    max-width: 300px;
+    height: 225px;
+  }
 }
 
 @media (max-width: 360px) {
@@ -844,6 +911,42 @@
 
   .form-section h3 {
     font-size: 1.1rem;
+  }
+
+  /* Couple Photos Gallery responsive styles for very small screens */
+  .couple-photos-gallery {
+    margin-top: 12px;
+    padding: 10px;
+  }
+
+  .slideshow-header h3 {
+    font-size: 1rem;
+    margin-bottom: 0;
+  }
+
+  .auto-play-indicator {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+
+  .slideshow-container {
+    max-width: 250px;
+    height: 188px;
+  }
+
+  .slide-nav {
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+  }
+
+  .slide-dots {
+    bottom: 8px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
   }
 }
 
@@ -1015,4 +1118,175 @@
 
 .ql-editor li {
   margin-bottom: 4px;
+}
+
+/* Couple Photos Gallery */
+.couple-photos-gallery {
+  margin-top: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.couple-photos-gallery h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+/* Slideshow Container */
+.slideshow-container {
+  position: relative;
+  max-width: 500px;
+  height: 500px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Slide */
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.slide.active {
+  opacity: 1;
+}
+
+.slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Navigation Arrows */
+.slide-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.slide-nav:hover {
+  background: white;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.slide-nav.prev {
+  left: 10px;
+}
+
+.slide-nav.next {
+  right: 10px;
+}
+
+/* Dots Indicator */
+.slide-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
+}
+
+.dot.active {
+  background: white;
+  transform: scale(1.2);
+}
+
+/* Handle image loading errors */
+.slide img:not([src]), 
+.slide img[src=""],
+.slide img[src*="error"] {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Slideshow Header */
+.slideshow-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.slideshow-header h3 {
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+.auto-play-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: white;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.auto-play-indicator i {
+  font-size: 0.7rem;
+}
+
+.auto-play-indicator:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
 } 

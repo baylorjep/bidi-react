@@ -11,6 +11,12 @@ function PublicRSVP() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [weddingData, setWeddingData] = useState(null);
+  const [couplePhotos, setCouplePhotos] = useState([]);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [lastUserActivity, setLastUserActivity] = useState(Date.now());
   const [rsvpForm, setRsvpForm] = useState({
     name: '',
     email: '',
@@ -44,6 +50,48 @@ function PublicRSVP() {
     loadWeddingData();
   }, [linkId]);
 
+  // Auto-advance slideshow
+  useEffect(() => {
+    if (couplePhotos.length <= 1) return;
+
+    const interval = setInterval(() => {
+      if (isAutoPlaying) {
+        setCurrentPhotoIndex(prev => 
+          prev === couplePhotos.length - 1 ? 0 : prev + 1
+        );
+      }
+    }, 4000); // Change photo every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [couplePhotos.length, isAutoPlaying]);
+
+  // Resume auto-play after inactivity
+  useEffect(() => {
+    if (couplePhotos.length <= 1) return;
+
+    const timeout = setTimeout(() => {
+      setIsAutoPlaying(true);
+    }, 5000); // Resume auto-play after 5 seconds of inactivity
+
+    return () => clearTimeout(timeout);
+  }, [lastUserActivity, couplePhotos.length]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (couplePhotos.length <= 1) return;
+      
+      if (e.key === 'ArrowLeft') {
+        prevPhoto();
+      } else if (e.key === 'ArrowRight') {
+        nextPhoto();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [couplePhotos.length]);
+
   const loadWeddingData = async () => {
     try {
       setLoading(true);
@@ -76,11 +124,118 @@ function PublicRSVP() {
       }
 
       setWeddingData(wedding);
+      
+      // Load couple photos from mood board
+      await loadCouplePhotos(wedding.id);
     } catch (error) {
       console.error('Error loading wedding data:', error);
       toast.error('Failed to load wedding information');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCouplePhotos = async (weddingId) => {
+    try {
+      // First, try to find a "Couple" or "Couple Photos" category
+      const { data: categories, error: categoriesError } = await supabase
+        .from('wedding_photo_categories')
+        .select('*')
+        .or(`is_default.eq.true,wedding_plan_id.eq.${weddingId}`)
+        .ilike('name', '%couple%');
+
+      if (categoriesError) {
+        console.error('Error loading categories:', categoriesError);
+        // Continue without categories - we'll load all photos
+      }
+
+      let coupleCategoryId = null;
+      
+      // If we found a couple category, use it
+      if (categories && categories.length > 0) {
+        coupleCategoryId = categories[0].id;
+      }
+
+      // Load photos from the couple category, or all photos if no couple category exists
+      let query = supabase
+        .from('wedding_mood_board')
+        .select('*')
+        .eq('wedding_plan_id', weddingId)
+        .order('uploaded_at', { ascending: false });
+
+      if (coupleCategoryId) {
+        query = query.eq('category_id', coupleCategoryId);
+      }
+
+      const { data: photos, error: photosError } = await query;
+
+      if (photosError) {
+        console.error('Error loading couple photos:', photosError);
+        setCouplePhotos([]);
+        return;
+      }
+
+      if (photos && photos.length > 0) {
+        // Filter out any photos with invalid URLs and limit to first 6 photos
+        const validPhotos = photos
+          .filter(photo => photo.image_url && photo.image_url.trim() !== '')
+          .slice(0, 6);
+        setCouplePhotos(validPhotos);
+      } else {
+        setCouplePhotos([]);
+      }
+    } catch (error) {
+      console.error('Error loading couple photos:', error);
+      setCouplePhotos([]);
+    }
+  };
+
+  const nextPhoto = () => {
+    handleUserActivity();
+    setCurrentPhotoIndex(prev => 
+      prev === couplePhotos.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevPhoto = () => {
+    handleUserActivity();
+    setCurrentPhotoIndex(prev => 
+      prev === 0 ? couplePhotos.length - 1 : prev - 1
+    );
+  };
+
+  const goToPhoto = (index) => {
+    handleUserActivity();
+    setCurrentPhotoIndex(index);
+  };
+
+  // Handle user activity - pause auto-play and update activity timestamp
+  const handleUserActivity = () => {
+    setIsAutoPlaying(false);
+    setLastUserActivity(Date.now());
+  };
+
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      nextPhoto();
+    } else if (isRightSwipe) {
+      prevPhoto();
     }
   };
 
@@ -226,6 +381,89 @@ function PublicRSVP() {
             )}
           </div>
         </div>
+        
+        {/* Couple Photos Gallery */}
+        {couplePhotos.length > 0 && (
+          <div className="couple-photos-gallery">
+            <div className="slideshow-header">
+              <h3>Meet the Happy Couple</h3>
+              {couplePhotos.length > 1 && (
+                <div className="auto-play-indicator">
+                  <i className={`fas ${isAutoPlaying ? 'fa-pause' : 'fa-play'}`}></i>
+                  <span>{isAutoPlaying ? 'Auto-playing' : 'Paused'}</span>
+                </div>
+              )}
+            </div>
+            <div className="slideshow-container"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {couplePhotos.map((photo, index) => (
+                <div 
+                  key={photo.id || index} 
+                  className={`slide ${index === currentPhotoIndex ? 'active' : ''}`}
+                >
+                  <img 
+                    src={photo.image_url} 
+                    alt={photo.image_name || `Couple photo ${index + 1}`}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      if (e.target.nextSibling) {
+                        e.target.nextSibling.style.display = 'flex';
+                      }
+                    }}
+                  />
+                  <div 
+                    className="photo-placeholder"
+                    style={{ 
+                      display: 'none',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#9ca3af',
+                      fontSize: '0.8rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    Photo
+                  </div>
+                </div>
+              ))}
+              
+              {/* Navigation Arrows */}
+              {couplePhotos.length > 1 && (
+                <>
+                  <button className="slide-nav prev" onClick={prevPhoto}>
+                    <i className="fas fa-chevron-left"></i>
+                  </button>
+                  <button className="slide-nav next" onClick={nextPhoto}>
+                    <i className="fas fa-chevron-right"></i>
+                  </button>
+                </>
+              )}
+              
+              {/* Dots Indicator */}
+              {couplePhotos.length > 1 && (
+                <div className="slide-dots">
+                  {couplePhotos.map((_, index) => (
+                    <button
+                      key={index}
+                      className={`dot ${index === currentPhotoIndex ? 'active' : ''}`}
+                      onClick={() => goToPhoto(index)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="rsvp-content">
@@ -327,6 +565,20 @@ function PublicRSVP() {
                     <span>No, I cannot attend</span>
                   </span>
                 </label>
+
+                <label className="rsvp-option">
+                  <input
+                    type="radio"
+                    name="rsvp_status"
+                    value="invitation_only"
+                    checked={rsvpForm.rsvp_status === 'invitation_only'}
+                    onChange={(e) => setRsvpForm({...rsvpForm, rsvp_status: e.target.value})}
+                  />
+                  <span className="option-content">
+                    <i className="fas fa-envelope"></i>
+                    <span>No, but I want an invitation</span>
+                  </span>
+                </label>
               </div>
             </div>
 
@@ -347,7 +599,7 @@ function PublicRSVP() {
                 <div className="form-section">
                   <h3>Plus One Information</h3>
                   <div className="plus-one-section">
-                    <label className="checkbox-label">
+                    <label className="checkbox-label-public-rsvp">
                       <input
                         type="checkbox"
                         checked={rsvpForm.plus_one_attending}

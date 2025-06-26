@@ -637,6 +637,21 @@ border-color: #ec4899;
     align-items: center;
   }
 
+  .hero-content-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  /* Move notification bell down on mobile */
+  .overview-hero .header-notification-bell {
+    position: relative;
+    top: auto;
+    right: auto;
+    align-self: flex-end;
+    margin-top: 15px;
+    margin-bottom: 10px;
+  }
+
   .wedding-title-section {
     text-align: center;
   }
@@ -664,6 +679,8 @@ border-color: #ec4899;
   .countdown-card {
     min-width: 180px;
     padding: 15px;
+    display: flex;
+
   }
 
   .countdown-icon {
@@ -767,6 +784,16 @@ border-color: #ec4899;
   .overview-hero {
     padding: 25px 15px;
     min-height: 120px;
+  }
+
+  /* Move notification bell down on smaller mobile */
+  .overview-hero .header-notification-bell {
+    position: relative;
+    top: auto;
+    right: auto;
+    align-self: flex-end;
+    margin-top: 12px;
+    margin-bottom: 8px;
   }
 
   .wedding-title {
@@ -1060,7 +1087,7 @@ border-color: #ec4899;
 }
 
 .slideshow-indicator {
-  bottom: 10px;
+  bottom: -20px;
 }
 
 .slideshow-dot {

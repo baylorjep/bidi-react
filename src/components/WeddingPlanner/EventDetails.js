@@ -37,8 +37,10 @@ function EventDetails({ weddingData, onUpdate }) {
   const [activeTab, setActiveTab] = useState('basic');
   const [moodBoardImages, setMoodBoardImages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState([]);
 
   // Load existing wedding data
   useEffect(() => {
@@ -74,6 +76,7 @@ function EventDetails({ weddingData, onUpdate }) {
       setFormData(initialData);
       setOriginalData(initialData);
       loadMoodBoardImages();
+      loadCategories();
     }
   }, [weddingData]);
 
@@ -104,7 +107,8 @@ function EventDetails({ weddingData, onUpdate }) {
           name: item.image_name,
           path: item.image_url, // Keep path for compatibility
           uploaded_at: item.uploaded_at,
-          id: item.id // Add database ID for deletion
+          id: item.id, // Add database ID for deletion
+          category_id: item.category_id
         }));
 
         setMoodBoardImages(loadedImages);
@@ -113,6 +117,28 @@ function EventDetails({ weddingData, onUpdate }) {
       }
     } catch (error) {
       console.error('Error loading mood board images:', error);
+    }
+  };
+
+  const loadCategories = async () => {
+    if (!weddingData?.id) return;
+
+    try {
+      const { data: categoriesData, error } = await supabase
+        .from('wedding_photo_categories')
+        .select('*')
+        .or(`is_default.eq.true,wedding_plan_id.eq.${weddingData.id}`)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setCategories(categoriesData || []);
+      
+      // Set first category as default
+      if (categoriesData && categoriesData.length > 0) {
+        setSelectedCategory(categoriesData[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
     }
   };
 
@@ -308,6 +334,7 @@ function EventDetails({ weddingData, onUpdate }) {
             wedding_plan_id: weddingData.id,
             image_url: publicUrl,
             image_name: file.name,
+            category_id: selectedCategory,
             uploaded_at: new Date().toISOString()
           }])
           .select()
@@ -327,7 +354,8 @@ function EventDetails({ weddingData, onUpdate }) {
           name: file.name,
           path: filePath,
           uploaded_at: new Date().toISOString(),
-          id: dbData.id
+          id: dbData.id,
+          category_id: selectedCategory
         });
       }
 
@@ -392,14 +420,89 @@ function EventDetails({ weddingData, onUpdate }) {
     setFormData(originalData);
   };
 
-  const handleImageClick = (index) => {
-    setSelectedImageIndex(index);
-    setShowImageModal(true);
+  const handleImageClick = (photoId) => {
+    setSelectedPhotos(prev => {
+      if (prev.includes(photoId)) {
+        // Remove from selection
+        return prev.filter(id => id !== photoId);
+      } else {
+        // Add to selection
+        return [...prev, photoId];
+      }
+    });
   };
 
-  const handleCloseImageModal = () => {
-    setShowImageModal(false);
-    setSelectedImageIndex(0);
+  // Category management functions
+  const createCategory = async (name) => {
+    if (!weddingData?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('wedding_photo_categories')
+        .insert({
+          name,
+          wedding_plan_id: weddingData.id,
+          color: '#' + Math.floor(Math.random()*16777215).toString(16), // Random color
+          sort_order: categories.length + 1
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setCategories(prev => [...prev, data]);
+      setSelectedCategory(data.id);
+    } catch (error) {
+      console.error('Error creating category:', error);
+      alert('Failed to create category');
+    }
+  };
+
+  const updateCategory = async (categoryId, newName) => {
+    try {
+      const { error } = await supabase
+        .from('wedding_photo_categories')
+        .update({ name: newName })
+        .eq('id', categoryId);
+
+      if (error) throw error;
+      
+      setCategories(prev => 
+        prev.map(cat => 
+          cat.id === categoryId ? { ...cat, name: newName } : cat
+        )
+      );
+    } catch (error) {
+      console.error('Error updating category:', error);
+      alert('Failed to update category');
+    }
+  };
+
+  const deleteCategory = async (categoryId) => {
+    try {
+      // Move photos to uncategorized (null category_id)
+      const { error: updateError } = await supabase
+        .from('wedding_mood_board')
+        .update({ category_id: null })
+        .eq('category_id', categoryId);
+
+      if (updateError) throw updateError;
+
+      // Delete the category
+      const { error: deleteError } = await supabase
+        .from('wedding_photo_categories')
+        .delete()
+        .eq('id', categoryId);
+
+      if (deleteError) throw deleteError;
+      
+      setCategories(prev => prev.filter(cat => cat.id !== categoryId));
+      setSelectedCategory(categories.find(cat => cat.id !== categoryId)?.id || null);
+      loadMoodBoardImages(); // Refresh images to update category_id
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      alert('Failed to delete category');
+    }
   };
 
   const daysUntilWedding = getDaysUntilWedding();
@@ -649,114 +752,173 @@ function EventDetails({ weddingData, onUpdate }) {
 
   const renderMoodBoard = () => (
     <div className="details-section-wedding-details">
-      <h3>Mood Board</h3>
-      <p className="section-description-wedding-details">
-        Upload inspiration images to create your wedding mood board. 
-        <span className="upload-hint-wedding-details">
-          <i className="fas fa-lightbulb"></i>
-          Tip: You can drag and drop multiple images at once!
-        </span>
-      </p>
-      
-      <div className="upload-section-wedding-details">
-        <label className="upload-area-wedding-details">
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleImageUpload}
-            disabled={isUploading}
-          />
-          <div className="upload-content-wedding-details">
-            {isUploading ? (
-              <>
-                <i className="fas fa-spinner fa-spin"></i>
-                <span>Uploading...</span>
-              </>
-            ) : (
-              <>
-                <i className="fas fa-cloud-upload-alt"></i>
-                <span>Click to upload or drag images here</span>
-                <small>Supports JPG, PNG, GIF up to 10MB each</small>
-              </>
-            )}
-          </div>
-        </label>
+      <div className="mood-board-header-wedding-details">
+        <h3>Mood Board</h3>
+        <p className="section-description-wedding-details">
+          Upload and organize inspiration images to create your wedding mood board. 
+          <span className="upload-hint-wedding-details">
+            <i className="fas fa-lightbulb"></i>
+            Tip: You can drag and drop multiple images at once!
+          </span>
+        </p>
       </div>
       
-      <div className="mood-board-grid-wedding-details">
-        {moodBoardImages.map((image, index) => (
-          <div key={index} className="mood-board-item-wedding-details">
-            <img 
-              src={image.url} 
-              alt={image.name} 
-              onClick={() => handleImageClick(index)}
-              style={{ cursor: 'pointer' }}
-            />
-            <button 
-              className="remove-image-wedding-details"
-              onClick={() => removeImage(index)}
-            >
-              <i className="fas fa-times"></i>
-            </button>
+      {/* Integrated Photo Category Manager */}
+      <div className="integrated-photo-manager">
+        <div className="photo-manager-layout">
+          {/* Categories Sidebar */}
+          <div className="categories-sidebar-integrated">
+            <div className="categories-header-integrated">
+              <h4>Categories</h4>
+              <button 
+                className="add-category-btn-integrated"
+                onClick={() => {
+                  const categoryName = prompt('Enter category name:');
+                  if (categoryName && categoryName.trim()) {
+                    createCategory(categoryName.trim());
+                  }
+                }}
+              >
+                <i className="fas fa-plus"></i>
+              </button>
+            </div>
+            
+            <div className="categories-list-integrated">
+              {categories.map(category => (
+                <div 
+                  key={category.id}
+                  className={`category-item-integrated ${selectedCategory === category.id ? 'active' : ''}`}
+                  onClick={() => {
+                    setSelectedCategory(category.id);
+                    setSelectedPhotos([]); // Clear selections when switching categories
+                  }}
+                >
+                  <div className="category-color-integrated" style={{ backgroundColor: category.color || '#6366f1' }}></div>
+                  <div className="category-info-integrated">
+                    <span className="category-name-integrated">{category.name}</span>
+                    <span className="category-count-integrated">
+                      {moodBoardImages.filter(img => img.category_id === category.id).length}
+                    </span>
+                  </div>
+                  {!category.is_default && (
+                    <div className="category-actions-integrated">
+                      <button 
+                        className="edit-btn-integrated"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newName = prompt('Enter new category name:', category.name);
+                          if (newName && newName.trim()) {
+                            updateCategory(category.id, newName.trim());
+                          }
+                        }}
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      <button 
+                        className="delete-btn-integrated"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Delete category "${category.name}"? Photos will be moved to "Uncategorized".`)) {
+                            deleteCategory(category.id);
+                          }
+                        }}
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-        
-        {moodBoardImages.length === 0 && (
-          <div className="empty-mood-board-wedding-details">
-            <i className="fas fa-images"></i>
-            <p>No inspiration images yet</p>
-            <small>Upload images to create your mood board</small>
-          </div>
-        )}
-      </div>
 
-      {/* Image Modal */}
-      {showImageModal && moodBoardImages.length > 0 && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-            zIndex: 9999,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexDirection: 'column'
-          }}
-        >
-          <button 
-            onClick={handleCloseImageModal}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              background: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              fontSize: '20px',
-              cursor: 'pointer',
-              zIndex: 10000
-            }}
-          >
-            ×
-          </button>
-          <img 
-            src={moodBoardImages[selectedImageIndex].url}
-            alt={moodBoardImages[selectedImageIndex].name}
-            style={{
-              maxWidth: '90vw',
-              maxHeight: '80vh',
-              objectFit: 'contain'
-            }}
-          />
+          {/* Photos Section */}
+          <div className="photos-section-integrated">
+            <div className="photos-header-integrated">
+              <div className="photos-header-left">
+                <h4>
+                  {categories.find(c => c.id === selectedCategory)?.name || 'All Photos'}
+                </h4>
+                {selectedPhotos.length > 0 && (
+                  <span className="selection-count">
+                    {selectedPhotos.length} selected
+                  </span>
+                )}
+              </div>
+              
+              <div className="photos-header-right">
+                {selectedPhotos.length > 0 && (
+                  <button 
+                    className="clear-selection-btn-integrated"
+                    onClick={() => setSelectedPhotos([])}
+                  >
+                    Clear Selection
+                  </button>
+                )}
+                <button 
+                  className="upload-photos-btn-integrated"
+                  onClick={() => setShowUploadModal(true)}
+                >
+                  <i className="fas fa-cloud-upload-alt"></i>
+                  Upload Photos
+                </button>
+              </div>
+            </div>
+
+            {/* Photos Grid */}
+            <div className="photos-grid-integrated">
+              {moodBoardImages
+                .filter(img => !selectedCategory || img.category_id === selectedCategory)
+                .map((image, index) => (
+                  <div 
+                    key={index} 
+                    className={`photo-item-integrated ${selectedPhotos.includes(image.id) ? 'selected' : ''}`}
+                    onClick={(e) => {
+                      // Don't trigger if clicking on checkbox or delete button
+                      if (!e.target.closest('.photo-overlay-integrated') && !e.target.closest('.remove-image-integrated')) {
+                        handleImageClick(image.id);
+                      }
+                    }}
+                  >
+                    <img 
+                      src={image.url} 
+                      alt={image.name} 
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <div className="photo-overlay-integrated">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedPhotos.includes(image.id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleImageClick(image.id);
+                        }}
+                        title="Select this photo"
+                      />
+                    </div>
+                    <button 
+                      className="remove-image-integrated"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeImage(index);
+                      }}
+                    >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
+                ))}
+              
+              {moodBoardImages.filter(img => !selectedCategory || img.category_id === selectedCategory).length === 0 && (
+                <div className="no-photos-message-integrated">
+                  <i className="fas fa-images"></i>
+                  <p>No photos in this category</p>
+                  <small>Click "Upload Photos" to get started</small>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 
@@ -1001,6 +1163,66 @@ function EventDetails({ weddingData, onUpdate }) {
           )}
         </div>
       </div>
+
+      {/* Photo Upload Modal */}
+      {showUploadModal && (
+        <div className="upload-modal-overlay" onClick={() => setShowUploadModal(false)}>
+          <div className="upload-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="upload-modal-header">
+              <h3>Upload Photos</h3>
+              <button 
+                className="upload-modal-close"
+                onClick={() => setShowUploadModal(false)}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div className="upload-modal-body">
+              <div className="upload-category-selector">
+                <label>Upload to category:</label>
+                <select 
+                  value={selectedCategory || ''} 
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                >
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <label className="upload-modal-area">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => {
+                    handleImageUpload(e);
+                    setShowUploadModal(false);
+                  }}
+                  disabled={isUploading}
+                />
+                <div className="upload-modal-content-area">
+                  {isUploading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i>
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-cloud-upload-alt"></i>
+                      <span>Click to upload or drag images here</span>
+                      <small>Supports JPG, PNG, GIF up to 10MB each</small>
+                    </>
+                  )}
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

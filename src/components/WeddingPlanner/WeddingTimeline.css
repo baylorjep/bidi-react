@@ -2626,8 +2626,121 @@
   }
   
   .sub-checklist-item .action-btn {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     font-size: 0.7rem;
+  }
+}
+
+/* Print Options Modal Styles */
+.print-options-modal {
+  max-width: 600px;
+  width: 90%;
+}
+
+.print-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.print-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.print-option:hover {
+  border-color: #ec4899;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(236, 72, 153, 0.15);
+}
+
+.print-option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  color: white;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.print-option-content {
+  flex: 1;
+}
+
+.print-option-content h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.print-option-content p {
+  margin: 0 0 8px 0;
+  font-size: 0.95rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.print-option-details {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Responsive styles for print options */
+@media (max-width: 768px) {
+  .print-options-modal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .print-option {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .print-option-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .print-option-content h4 {
+    font-size: 1rem;
+  }
+  
+  .print-option-content p {
+    font-size: 0.9rem;
+  }
+  
+  .print-option-details {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .print-option {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .print-option-icon {
+    align-self: center;
   }
 } 
