@@ -157,6 +157,10 @@
 
 /* Mobile styles */
 @media (max-width: 768px) {
+  .notification-bell {
+    display: none;
+  }
+
   .notification-dropdown {
     position: fixed;
     top: 60px;
