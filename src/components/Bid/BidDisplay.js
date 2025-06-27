@@ -41,6 +41,7 @@ function BidDisplay({
   showNotInterested = false,
   showPending = false,
   showApproved = false,
+  showExpired = false,
   downPayment = null,
   onDownPayment = null,
   onMessage = null,
@@ -50,6 +51,7 @@ function BidDisplay({
   onPayNow = null,
   onMoveToPending = null,
   onProfileClick = null,
+  isNew = false,
   ...props
 }) {
   const [isBidiVerified, setIsBidiVerified] = useState(false);
@@ -115,6 +117,53 @@ function BidDisplay({
   const [showViewContractButton, setShowViewContractButton] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
 
+  // Determine bid status based on props and heart state
+  const getBidStatus = () => {
+    console.log('getBidStatus called with:', {
+      showExpired,
+      showApproved,
+      bidStatus: bid.status,
+      showPaymentOptions,
+      showInterested,
+      showPending
+    });
+    
+    if (showExpired) return 'expired';
+    if (showApproved || bid.status === 'approved' || bid.status === 'accepted') return 'approved';
+    if (showPaymentOptions) return 'payment';
+    if (showInterested) return 'interested';
+    if (showPending) return 'pending';
+    return 'default';
+  };
+
+  const bidStatus = getBidStatus();
+
+  // Handle heart click to toggle interested state
+  const handleHeartClick = () => {
+    console.log('handleHeartClick called');
+    console.log('handleInterested function:', handleInterested);
+    console.log('bid.id:', bid.id);
+    if (handleInterested) {
+      console.log('Calling handleInterested with bid.id:', bid.id);
+      handleInterested(bid.id);
+    } else {
+      console.error('handleInterested is not a function or is undefined');
+    }
+  };
+
+  // Handle X button click to deny bid
+  const handleDenyClick = () => {
+    console.log('handleDenyClick called');
+    console.log('handleDeny function:', handleDeny);
+    console.log('bid.id:', bid.id);
+    if (handleDeny) {
+      console.log('Calling handleDeny with bid.id:', bid.id);
+      handleDeny(bid.id);
+    } else {
+      console.error('handleDeny is not a function or is undefined');
+    }
+  };
+
   const getExpirationStatus = (expirationDate) => {
     if (!expirationDate) return null;
     
@@ -173,6 +222,125 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
 
   const profileImage =
     bid.business_profiles.profile_image || "/images/default.jpg"; // Default image if none
+
+  // Status-based rendering functions
+  const renderStatusBadge = () => {
+    const statusConfig = {
+      approved: { text: 'Approved', className: 'status-badge-approved', icon: <CheckCircleIcon /> },
+      pending: { text: 'Pending', className: 'status-badge-pending', icon: <AccessTimeIcon /> },
+      interested: { text: 'Interested', className: 'status-badge-interested', icon: <FavoriteIcon /> },
+      payment: { text: 'Payment Required', className: 'status-badge-payment', icon: <ThumbUpIcon /> },
+      expired: { text: 'Expired', className: 'status-badge-expired', icon: <AccessTimeIcon /> }
+    };
+
+    const config = statusConfig[bidStatus];
+    if (!config) return null;
+
+    return (
+      <div className={`bid-status-badge ${config.className}`}>
+        {config.icon}
+        <span>{config.text}</span>
+      </div>
+    );
+  };
+
+  const renderStatusActions = () => {
+    console.log('renderStatusActions called with bidStatus:', bidStatus);
+    console.log('onPayNow function:', onPayNow);
+    
+    switch (bidStatus) {
+      case 'expired':
+        return (
+          <div className="bid-status-actions">
+            <button className="bid-card-btn bid-card-btn-secondary" onClick={handleProfileClick}>
+              View Profile
+            </button>
+          </div>
+        );
+      
+      case 'approved':
+        console.log('Rendering approved status actions');
+        return (
+          <div className="bid-status-actions">
+            <button className="bid-card-btn bid-card-btn-primary" onClick={() => onPayNow && onPayNow('full')}>
+              Pay in Full
+            </button>
+            <button className="bid-card-btn bid-card-btn-secondary" onClick={() => onPayNow && onPayNow('downpayment')}>
+              Pay Down Payment
+            </button>
+          </div>
+        );
+      
+      case 'interested':
+        return (
+          <div className="bid-status-actions">
+            <button className="bid-card-btn bid-card-btn-primary" onClick={() => handleAction(handleApprove, bid.id)}>
+              Approve Bid
+            </button>
+            <button className="bid-card-btn bid-card-btn-secondary" onClick={handleProfileClick}>
+              View Profile
+            </button>
+          </div>
+        );
+      
+      case 'pending':
+        return (
+          <div className="bid-status-actions">
+            <button className="bid-card-btn bid-card-btn-secondary" onClick={handleProfileClick}>
+              View Profile
+            </button>
+          </div>
+        );
+      
+      case 'payment':
+        return (
+          <div className="bid-status-actions">
+            <button className="bid-card-btn bid-card-btn-primary" onClick={onPayNow}>
+              Complete Payment
+            </button>
+            <button className="bid-card-btn bid-card-btn-secondary" onClick={handleProfileClick}>
+              View Profile
+            </button>
+          </div>
+        );
+      
+      default:
+        return (
+          <div className="bid-status-actions">
+            <button className="bid-card-btn bid-card-btn-filled" onClick={handleProfileClick}>
+              View Profile
+            </button>
+          </div>
+        );
+    }
+  };
+
+  const renderExpirationInfo = () => {
+    if (!expirationStatus) return null;
+
+    const statusClass = `expiration-status-${expirationStatus.status}`;
+    return (
+      <div className={`bid-expiration-info ${statusClass}`}>
+        <AccessTimeIcon />
+        <span>{expirationStatus.text}</span>
+      </div>
+    );
+  };
+
+  const renderDiscountInfo = () => {
+    if (!discountedPrice || !daysLeft || daysLeft <= 0) return null;
+
+    return (
+      <div className="bid-discount-info">
+        <div className="discount-badge">
+          <span className="discount-label">Limited Time Offer!</span>
+          <span className="discount-price">${discountedPrice}</span>
+          <span className="discount-original">${bid.bid_amount}</span>
+          <span className="discount-timer">{daysLeft} days left</span>
+        </div>
+      </div>
+    );
+  };
 
 useEffect(() => {
   let timer;
@@ -250,11 +418,15 @@ useEffect(() => {
   }, [bid.business_profiles.id]);
 
   const handleAction = (action, id) => {
+    console.log('handleAction called with:', { action, id, actionType: typeof action });
     if (typeof action === 'function') {
+      console.log('Action is a function, calling it with id:', id);
       setIsAnimating(true);
       setTimeout(() => {
         action(id);
       }, 300); // Match this with the CSS animation duration
+    } else {
+      console.error('Action is not a function:', action);
     }
   };
 
@@ -335,8 +507,6 @@ useEffect(() => {
       alignItems: 'center'
     };
 
-
-
     // For approved tab, only show X and chat icons
     if (showApproved) {
       return (
@@ -345,57 +515,11 @@ useEffect(() => {
             <button
               className="btn-icon"
               style={buttonStyle}
-              onClick={() => handleAction(handleDeny, bid.id)}
-            >
-              <CancelIcon style={iconStyle} />
-            </button>
-          </div>
-          <div style={rightButtonsContainer}>
-            <button
-              className="btn-icon"
-              style={buttonStyle}
-              onClick={handleMessageClick}
-            >
-              <ChatIcon style={iconStyle} />
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    // For payment options, show X and chat icons
-    if (showPaymentOptions) {
-      return (
-        <div className="business-actions" style={actionButtonsContainer}>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleDeny, bid.id)}
-          >
-            <CancelIcon style={iconStyle} />
-          </button>
-          <div style={rightButtonsContainer}>
-            <button
-              className="btn-icon"
-              style={buttonStyle}
-              onClick={handleMessageClick}
-            >
-              <ChatIcon style={iconStyle} />
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    // For not interested tab, show clock icon
-    if (showNotInterested) {
-      return (
-        <div className="business-actions-bid-display" style={actionButtonsContainer}>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              className="btn-icon"
-              style={buttonStyle}
-              onClick={() => handlePending(bid)}
+              onClick={() => {
+                console.log('Move to Pending button clicked for approved bid:', bid.id);
+                if (typeof handlePending === 'function') handlePending(bid);
+              }}
+              title="Move to Pending"
             >
               <AccessTimeIcon style={iconStyle} />
             </button>
@@ -411,7 +535,91 @@ useEffect(() => {
             <button
               className="btn-icon"
               style={buttonStyle}
-              onClick={() => handleAction(handleInterested, bid.id)}
+              onClick={() => {
+                console.log('Check mark clicked for approved bid:', bid.id);
+                // For approved bids, clicking the check mark could move to pending
+                if (typeof handlePending === 'function') handlePending(bid);
+              }}
+              title="Bid Approved"
+            >
+              <CheckCircleIcon style={{ ...iconStyle, color: '#10b981' }} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // For payment options, show X and chat icons
+    if (showPaymentOptions) {
+      return (
+        <div className="business-actions" style={actionButtonsContainer}>
+          <button
+            className="btn-icon"
+            style={buttonStyle}
+            onClick={() => {
+              console.log('Move to Pending button clicked for payment bid:', bid.id);
+              if (typeof handlePending === 'function') handlePending(bid);
+            }}
+            title="Move to Pending"
+          >
+            <AccessTimeIcon style={iconStyle} />
+          </button>
+          <div style={rightButtonsContainer}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={handleMessageClick}
+            >
+              <ChatIcon style={iconStyle} />
+            </button>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => {
+                console.log('Check mark clicked for payment bid:', bid.id);
+                // For approved bids, clicking the check mark could move to pending
+                if (typeof handlePending === 'function') handlePending(bid);
+              }}
+              title="Bid Approved"
+            >
+              <CheckCircleIcon style={{ ...iconStyle, color: '#10b981' }} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // For not interested tab, show clock icon and heart/x buttons
+    if (showNotInterested) {
+      return (
+        <div className="business-actions-bid-display" style={actionButtonsContainer}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => {
+                console.log('Clock button clicked for bid:', bid.id);
+                handlePending(bid);
+              }}
+            >
+              <AccessTimeIcon style={iconStyle} />
+            </button>
+          </div>
+          <div style={rightButtonsContainer}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={handleMessageClick}
+            >
+              <ChatIcon style={iconStyle} />
+            </button>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => {
+                console.log('Heart button clicked for bid:', bid.id);
+                handleAction(handleInterested, bid.id);
+              }}
             >
               <FavoriteBorderIcon style={iconStyle} />
             </button>
@@ -420,19 +628,77 @@ useEffect(() => {
       );
     }
 
-    
+    // For pending tab, show heart and x buttons (same as default state)
+    if (showPending) {
+      return (
+        <div className="business-actions-bid-display" style={actionButtonsContainer}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => {
+                console.log('X button clicked for bid:', bid.id);
+                handleAction(handleDeny, bid.id);
+              }}
+            >
+              <CancelIcon style={iconStyle} />
+            </button>
+          </div>
+          <div style={rightButtonsContainer}>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={handleMessageClick}
+            >
+              <ChatIcon style={iconStyle} />
+            </button>
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => {
+                console.log('Heart button clicked for bid:', bid.id);
+                handleAction(handleInterested, bid.id);
+              }}
+            >
+              {showInterested ? (
+                <FavoriteIcon style={iconStyle} />
+              ) : (
+                <FavoriteBorderIcon style={iconStyle} />
+              )}
+            </button>
+          </div>
+        </div>
+      );
+    }
 
-    // For all other states, show X icon
+    // For all other states, show X icon and heart button
     return (
       <div className="business-actions-bid-display" style={actionButtonsContainer}>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            className="btn-icon"
-            style={buttonStyle}
-            onClick={() => handleAction(handleDeny, bid.id)}
-          >
-            <CancelIcon style={iconStyle} />
-          </button>
+          {bid.status === 'approved' || bid.status === 'accepted' ? (
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => {
+                console.log('Move to Pending button clicked for bid:', bid.id);
+                if (typeof handlePending === 'function') handlePending(bid);
+              }}
+              title="Move to Pending"
+            >
+              <AccessTimeIcon style={iconStyle} />
+            </button>
+          ) : (
+            <button
+              className="btn-icon"
+              style={buttonStyle}
+              onClick={() => {
+                console.log('X button clicked for bid:', bid.id);
+                handleAction(handleDeny, bid.id);
+              }}
+            >
+              <CancelIcon style={iconStyle} />
+            </button>
+          )}
         </div>
         <div style={rightButtonsContainer}>
           <button
@@ -445,9 +711,20 @@ useEffect(() => {
           <button
             className="btn-icon"
             style={buttonStyle}
-            onClick={() => handleAction(handleInterested, bid.id)}
+            onClick={() => {
+              if (bid.status === 'approved' || bid.status === 'accepted') {
+                console.log('Check mark clicked for bid:', bid.id);
+                if (typeof handlePending === 'function') handlePending(bid);
+              } else {
+                console.log('Heart button clicked for bid:', bid.id);
+                handleAction(handleInterested, bid.id);
+              }
+            }}
+            title={bid.status === 'approved' || bid.status === 'accepted' ? "Bid Approved" : (showInterested ? "Remove from Favorites" : "Add to Favorites")}
           >
-            {showInterested ? (
+            {bid.status === 'approved' || bid.status === 'accepted' ? (
+              <CheckCircleIcon style={{ ...iconStyle, color: '#10b981' }} />
+            ) : showInterested ? (
               <FavoriteIcon style={iconStyle} />
             ) : (
               <FavoriteBorderIcon style={iconStyle} />
@@ -944,9 +1221,50 @@ useEffect(() => {
 
   return (
     <div className="bid-card-modern">
+      {console.log('BidDisplay rendering with bid:', bid.id, 'isNew:', isNew, 'bid.viewed:', bid.viewed, 'showInterested:', showInterested, 'handleInterested:', handleInterested, 'handleDeny:', handleDeny)}
+      
+      {/* New Tag */}
+      {isNew && (
+        <div className="bid-new-tag">
+          <span>New</span>
+        </div>
+      )}
+      
       {/* Top Row: Close, Message, Heart */}
       <div className="bid-card-top-row">
-        <button className="bid-card-close-btn" onClick={onMessage}><span>&#10005;</span></button>
+        {bid.status === 'denied' ? (
+          <button 
+            className="bid-card-move-to-pending-btn" 
+            style={{ padding: '0 12px', height: 32, borderRadius: 16, background: '#f3f3f3', border: 'none', cursor: 'pointer', fontWeight: 500 }}
+            onClick={() => {
+              console.log('Move to Pending button clicked');
+              if (typeof handlePending === 'function') handlePending(bid);
+            }}
+          >
+            Move to Pending
+          </button>
+        ) : bid.status === 'approved' || bid.status === 'accepted' ? (
+          <button 
+            className="bid-card-move-to-pending-btn" 
+            style={{ padding: '0 12px', height: 32, borderRadius: 16, background: '#f3f3f3', border: 'none', cursor: 'pointer', fontWeight: 500 }}
+            onClick={() => {
+              console.log('Move to Pending button clicked for approved bid');
+              if (typeof handlePending === 'function') handlePending(bid);
+            }}
+          >
+            Move to Pending
+          </button>
+        ) : (
+          <button 
+            className="bid-card-close-btn" 
+            onClick={() => {
+              console.log('Close button clicked');
+              handleDenyClick();
+            }}
+          >
+            <span>&#10005;</span>
+          </button>
+        )}
         <div className="bid-card-top-icons">
           {isCalendarConnected && (
             <button className="bid-card-icon-btn" onClick={() => setShowConsultationModal(true)} title="Schedule Consultation" aria-label="Schedule Consultation">
@@ -958,11 +1276,21 @@ useEffect(() => {
           </button>
           <button
             className="bid-card-icon-btn"
-            title={showInterested ? "Remove from Favorites" : "Add to Favorites"}
-            aria-label={showInterested ? "Remove from Favorites" : "Add to Favorites"}
-            onClick={() => handleInterested && handleInterested(bid.id)}
+            title={bid.status === 'approved' || bid.status === 'accepted' ? "Bid Approved" : (showInterested ? "Remove from Favorites" : "Add to Favorites")}
+            aria-label={bid.status === 'approved' || bid.status === 'accepted' ? "Bid Approved" : (showInterested ? "Remove from Favorites" : "Add to Favorites")}
+            onClick={() => {
+              console.log('Heart/Check button clicked in JSX');
+              if (bid.status === 'approved' || bid.status === 'accepted') {
+                // For approved bids, clicking the check mark could move to pending
+                if (typeof handlePending === 'function') handlePending(bid);
+              } else {
+                handleHeartClick();
+              }
+            }}
           >
-            {showInterested ? (
+            {bid.status === 'approved' || bid.status === 'accepted' ? (
+              <CheckCircleIcon style={{ color: '#10b981' }} />
+            ) : showInterested ? (
               <FavoriteIcon style={{ color: '#9633eb' }} />
             ) : (
               <FavoriteBorderIcon style={{ color: '#9633eb' }} />
@@ -970,59 +1298,100 @@ useEffect(() => {
           </button>
         </div>
       </div>
+
       {/* Profile and Info */}
       <div className="bid-card-profile-row">
-                  <img
-                    src={profileImage}
-                    alt={`${bid.business_profiles.business_name} profile`}
+        <img
+          src={profileImage}
+          alt={`${bid.business_profiles.business_name} profile`}
           className="bid-card-profile-img"
-                    onClick={handleProfileClick}
-                  />
+          onClick={handleProfileClick}
+        />
         <div className="bid-card-info">
           <div className="bid-card-name-row">
             <span className="bid-card-name">{bid.business_profiles.business_name}</span>
-                      {isBidiVerified && (
-                        <div 
-                          className="bidi-verified-compact"
-                          onMouseEnter={() => setShowVerifiedTooltip(true)}
-                          onMouseLeave={() => setShowVerifiedTooltip(false)}
-                          onClick={() => setShowVerifiedTooltip(!showVerifiedTooltip)}
+            {isBidiVerified && (
+              <div 
+                className="bidi-verified-compact"
+                onMouseEnter={() => setShowVerifiedTooltip(true)}
+                onMouseLeave={() => setShowVerifiedTooltip(false)}
+                onClick={() => setShowVerifiedTooltip(!showVerifiedTooltip)}
                 style={{ position: 'relative', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-                        >
-                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path fillRule="evenodd" clipRule="evenodd" d="M5.68638 8.5104C6.06546 8.13132 6.68203 8.13329 7.06354 8.5148L7.79373 9.24498L9.93117 7.10754C10.3102 6.72847 10.9268 6.73044 11.3083 7.11195C11.6898 7.49345 11.6918 8.11003 11.3127 8.48911L8.48891 11.3129C8.10983 11.692 7.49326 11.69 7.11175 11.3085L5.69078 9.88756C5.30927 9.50605 5.3073 8.88947 5.68638 8.5104Z" fill="#A328F4"/>
                   <path fillRule="evenodd" clipRule="evenodd" d="M6.3585 1.15414C7.77571 -0.384714 10.2243 -0.384714 11.6415 1.15414C11.904 1.43921 12.2814 1.59377 12.6709 1.57577C14.7734 1.4786 16.5048 3.19075 16.4065 5.26985C16.3883 5.655 16.5446 6.02814 16.8329 6.28775C18.389 7.68919 18.389 10.1105 16.8329 11.512C16.5446 11.7716 16.3883 12.1447 16.4065 12.5299C16.5048 14.609 14.7734 16.3211 12.6709 16.2239C12.2814 16.2059 11.904 16.3605 11.6415 16.6456C10.2243 18.1844 7.77571 18.1844 6.3585 16.6456C6.09596 16.3605 5.71863 16.2059 5.32915 16.2239C3.22665 16.3211 1.49524 14.609 1.5935 12.5299C1.6117 12.1447 1.4554 11.7716 1.16713 11.512C-0.389043 10.1105 -0.389043 7.68919 1.16713 6.28775C1.4554 6.02814 1.6117 5.655 1.5935 5.26985C1.49524 3.19075 3.22665 1.4786 5.32915 1.57577C5.71863 1.59377 6.09596 1.43921 6.3585 1.15414ZM9.96822 2.66105C9.44875 2.097 8.55125 2.097 8.03178 2.66105C7.31553 3.43878 6.28608 3.86045 5.22349 3.81134C4.45284 3.77572 3.81821 4.40329 3.85422 5.16537C3.90388 6.21614 3.47747 7.23413 2.69099 7.94241C2.12059 8.4561 2.12059 9.34362 2.69099 9.8573C3.47747 10.5656 3.90388 11.5836 3.85422 12.6343C3.81821 13.3964 4.45284 14.024 5.22349 13.9884C6.28608 13.9393 7.31553 14.3609 8.03178 15.1387C8.55125 15.7027 9.44875 15.7027 9.96822 15.1387C10.6845 14.3609 11.7139 13.9393 12.7765 13.9884C13.5472 14.024 14.1818 13.3964 14.1458 12.6343C14.0961 11.5836 14.5225 10.5656 15.309 9.8573C15.8794 9.34362 15.8794 8.4561 15.309 7.94241C14.5225 7.23414 14.0961 6.21614 14.1458 5.16537C14.1818 4.40329 13.5472 3.77572 12.7765 3.81134C11.7139 3.86045 10.6845 3.43878 9.96822 2.66105Z" fill="#A328F4"/>
-                          </svg>
+                </svg>
                 <div className={`verified-tooltip ${showVerifiedTooltip ? 'show' : ''}`} style={{ position: 'absolute', top: 28, left: 0, zIndex: 10 }}>
-                            <p className="verified-tooltip-title">Bidi Verified</p>
-                            <p className="verified-tooltip-subtitle">100% Money-Back Guarantee When You Pay Through Bidi</p>
-                          </div>
-                        </div>
-                      )}
-            <span className="bid-card-rating"><img src={StarIcon} alt="Star" className="bid-card-star" />{averageRating || '—'}</span>
-                    </div>
+                  <p className="verified-tooltip-title">Bidi Verified</p>
+                  <p className="verified-tooltip-subtitle">100% Money-Back Guarantee When You Pay Through Bidi</p>
+                  <button className="verified-tooltip-btn" onClick={() => navigate('/no-ghosting-guarantee')}>Learn More</button>
+                </div>
+              </div>
+            )}
+            {averageRating && (
+              <span className="bid-card-rating">
+                <img src={StarIcon} alt="Star" className="bid-card-star" />
+                {averageRating}
+              </span>
+            )}
+          </div>
           <div className="bid-card-price">${bid.bid_amount}</div>
-                  </div>
-                          </div>
-      {/* Description */}
-      <div className="bid-card-description-section">
-        <span className="bid-card-description-label">Description</span>
-        <div 
-          className={`bid-card-description-content${!isDescriptionExpanded ? ' description-collapsed' : ''}`}
-                  dangerouslySetInnerHTML={{ __html: bid.bid_description?.replace(/\n/g, '<br>') }}
-                />
-                <button 
-                  className="read-more-btn"
-                  onClick={handleDescriptionToggle}
-                >
-                  {isDescriptionExpanded ? 'Show Less' : 'Read More'}
-                  </button>
-                </div>
-      {/* Action Buttons */}
-      <div className="bid-card-actions">
-        <button className="bid-card-btn bid-card-btn-filled" onClick={handleProfileClick}>View Profile</button>
-                </div>
-      {/* Consultation Modal (unchanged) */}
+        </div>
+      </div>
+
+      {/* Discount Info */}
+      {renderDiscountInfo()}
+
+      {/* Expiration Info */}
+      {renderExpirationInfo()}
+
+      {/* Description - Only show for certain statuses */}
+      {(bidStatus === 'pending' || bidStatus === 'interested' || bidStatus === 'default') && (
+        <div className="bid-card-description-section">
+          <span className="bid-card-description-label">Description</span>
+          <div 
+            className={`bid-card-description-content${!isDescriptionExpanded ? ' description-collapsed' : ''}`}
+            dangerouslySetInnerHTML={{ __html: bid.bid_description?.replace(/\n/g, '<br>') }}
+          />
+          <button 
+            className="read-more-btn"
+            onClick={handleDescriptionToggle}
+          >
+            {isDescriptionExpanded ? 'Show Less' : 'Read More'}
+          </button>
+        </div>
+      )}
+
+      {/* Status-specific content */}
+      {bidStatus === 'approved' && (
+        <div className="bid-approved-content">
+          <div className="approved-message">
+            <CheckCircleIcon className="approved-icon" />
+            <p>This vendor is ready to work with you! Complete payment to secure your booking.</p>
+          </div>
+          {downPayment && (
+            <div className="down-payment-info">
+              <h4>Down Payment Required</h4>
+              <p>{downPayment.display || `$${downPayment.amount}`} to secure this vendor</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {bidStatus === 'payment' && (
+        <div className="bid-payment-content">
+          <div className="payment-message">
+            <ThumbUpIcon className="payment-icon" />
+            <p>Payment is required to secure this vendor. Choose your payment option below.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Status Actions */}
+      {renderStatusActions()}
+
+      {/* Consultation Modal */}
       <ConsultationModal
         isOpen={showConsultationModal}
         onClose={() => setShowConsultationModal(false)}
@@ -1040,6 +1409,7 @@ useEffect(() => {
         onFetchTimeSlots={fetchTimeSlots}
         businessTimezone={bid.business_profiles.consultation_hours?.timezone || null}
       />
+
       {/* Chat Modal for Desktop */}
       {showChatModal && ReactDOM.createPortal(
         <div className="bid-card-messaging-modal-overlay" onClick={() => setShowChatModal(false)}>

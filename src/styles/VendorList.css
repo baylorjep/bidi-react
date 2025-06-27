@@ -450,27 +450,6 @@
   cursor: pointer;
 }
 
-.verified-tooltip {
-  visibility: hidden;
-  width: 220px;
-  border: #ff008a 1px solid;
-  background-color: white;
-  color: black;
-  font-family: Outfit;
-  font-weight: 600;
-
-  text-align: center;
-  border-radius: 6px;
-  padding: 5px;
-  position: absolute;
-  z-index: 1;
-  bottom: 125%; /* Position the tooltip above the text */
-  left: 50%;
-  margin-left: -110px;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
 .verified-tooltip::after {
   content: "";
   position: absolute;

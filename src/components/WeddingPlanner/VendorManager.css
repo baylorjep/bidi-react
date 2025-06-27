@@ -23,24 +23,24 @@
 }
 
 .add-vendor-btn {
-  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
   border: none;
-  padding: 14px 28px;
-  border-radius: 15px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 .add-vendor-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 
 /* Vendor Categories */
@@ -71,27 +71,28 @@
 }
 
 .vendor-category:hover {
-  border-color: #ec4899;
+  border-color: #8b5cf6;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .vendor-category.active {
-  border-color: #ec4899;
+  border-color: #8b5cf6;
   background: #f8fafc;
   box-shadow: 0 8px 25px rgba(236, 72, 153, 0.15);
 }
 
 .category-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 15px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 20px;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: white;
+  font-size: 18px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 .category-icon i {
@@ -125,27 +126,26 @@
   gap: 16px;
   flex-shrink: 0;
   min-width: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .request-bids-btn-vendor-manager {
-  background: #f1f5f9;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  padding: 10px 20px;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
   cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
   transition: all 0.3s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);
 }
 
 .request-bids-btn-vendor-manager:hover {
-  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
-  color: white !important;
-  border-color: #ec4899;
   transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
 }
 
 .category-actions-vendor-manager i {
@@ -154,7 +154,7 @@
   font-size: 1.1rem;
 }
 
-.vendor-category.active .category-actions-vendor-manager i {
+.vendor-category.active .category-actions-vendor-manager i.fa-chevron-down {
   transform: rotate(180deg);
 }
 
@@ -409,12 +409,12 @@
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   transition: width 0.3s ease;
 }
 
 .add-vendor-btn-compact {
-  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
   border: none;
   padding: 12px 20px;
@@ -427,13 +427,13 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
 }
 
 .add-vendor-btn-compact:hover {
-  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
   color: white;
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
   transform: translateY(-1px);
 }
 
@@ -563,21 +563,21 @@
 
 .add-vendor-form .submit-btn {
   flex: 1;
-  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
   border: none;
-  padding: 14px 24px;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 20px;
   cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 .add-vendor-form .submit-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
 }
 
 /* Loading Styles */
@@ -594,7 +594,7 @@
   width: 50px;
   height: 50px;
   border: 4px solid #e1e5e9;
-  border-top: 4px solid #ec4899;
+  border-top: 4px solid #8b5cf6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 24px;
@@ -651,16 +651,31 @@
   }
 
   .category-actions-vendor-manager {
-    width: auto;
-    justify-content: flex-end;
-    flex-shrink: 0;
-    margin-left: auto;
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+    position: relative;
+    z-index: 2;
   }
-
+  
+  .request-bids-btn-vendor-manager {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-width: 100px;
+  }
+  
+  .toggle-request-btn {
+    position: relative;
+    z-index: 1;
+    margin-right: 0;
+  }
+  
   .remove-category-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 6px;
+    right: 6px;
     width: 28px;
     height: 28px;
     opacity: 1;
@@ -669,11 +684,6 @@
 
   .remove-category-btn i {
     font-size: 0.8rem;
-  }
-
-  .request-bids-btn-vendor-manager {
-    padding: 8px 16px;
-    font-size: 0.85rem;
   }
 
   .vendors-grid {
@@ -808,6 +818,10 @@
     flex: none;
   }
 
+  .contact-value-input {
+    flex: 1;
+  }
+
   .remove-contact-btn {
     align-self: flex-end;
     width: 32px;
@@ -839,7 +853,7 @@
   .vendor-manager {
     padding: 12px;
   }
-
+  
   .vendor-category {
     padding: 14px 16px;
     flex-direction: column;
@@ -847,18 +861,18 @@
     gap: 12px;
     position: relative;
   }
-
+  
   .category-info {
     width: 100%;
     margin-right: 0;
   }
-
+  
   .category-actions-vendor-manager {
     width: 100%;
     justify-content: space-between;
     margin-left: 0;
   }
-
+  
   .remove-category-btn {
     position: absolute;
     top: 6px;
@@ -1025,11 +1039,11 @@
 }
 
 .star-btn:hover {
-  color: #fbbf24;
+  color: #8b5cf6;
 }
 
 .star-btn.filled {
-  color: #fbbf24;
+  color: #8b5cf6;
 }
 
 .rating-text {
@@ -1090,10 +1104,9 @@
 }
 
 .interest-label {
-  font-size: 0.85rem;
-  color: #64748b;
-  font-weight: 500;
-  margin-right: 4px;
+  color: #8b5cf6;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .vendor-rating .fas.fa-star {
@@ -1101,7 +1114,7 @@
 }
 
 .vendor-rating .fas.fa-star.filled {
-  color: #fbbf24;
+  color: #8b5cf6;
 }
 
 .vendor-rating .fas.fa-star.empty {
@@ -1414,8 +1427,8 @@
 }
 
 .color-option.selected {
-  border-color: #1e293b;
-  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.2);
+  border: 3px solid #8b5cf6;
+  transform: scale(1.1);
 }
 
 .color-option.selected::after {
@@ -1749,9 +1762,9 @@
 }
 
 .interest-label {
-  font-size: 0.9rem;
+  color: #8b5cf6;
   font-weight: 600;
-  color: #495057;
+  font-size: 14px;
 }
 
 .star-rating {
@@ -1773,7 +1786,7 @@
 }
 
 .star-btn.filled {
-  color: #ffc107;
+  color: #8b5cf6;
 }
 
 .star-btn:hover {
@@ -1787,22 +1800,23 @@
 }
 
 .bid-notes-btn {
-  background: #9633eb;
+  background: #8b5cf6;
   color: white;
   border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.8rem;
+  padding: 6px 12px;
+  border-radius: 15px;
   cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
   display: flex;
+  gap: 4px;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
 }
 
 .bid-notes-btn:hover {
-  background: #f1f5f9;
-  transform: translateY(-1px);
+  background: #7c3aed;
 }
 
 .bid-notes-btn i {
@@ -1921,7 +1935,7 @@
 }
 
 .star-btn-large.filled {
-  color: #ffc107;
+  color: #8b5cf6;
 }
 
 .star-btn-large:hover {
@@ -1973,19 +1987,19 @@
 }
 
 .btn-primary {
-  background: #9633eb;
+  background: #8b5cf6;
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 600;
+  border-radius: 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-  background: #7c2d9e;
-  transform: translateY(-1px);
+  background: #7c3aed;
 }
 
 .btn-secondary {
@@ -2184,21 +2198,28 @@
     margin-left: 0;
     flex-wrap: wrap;
     gap: 8px;
+    position: relative;
+    z-index: 2;
   }
   
   .request-bids-btn-vendor-manager {
-    padding: 10px 16px;
-    font-size: 0.9rem;
-    flex: 1;
-    min-width: 120px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-width: 100px;
+  }
+  
+  .toggle-request-btn {
+    position: relative;
+    z-index: 1;
+    margin-right: 0;
   }
   
   .remove-category-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 32px;
-    height: 32px;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
     opacity: 1;
     z-index: 10;
   }
@@ -2522,4 +2543,627 @@
   .delete-vendor-btn i {
     font-size: 1.1rem;
   }
-} 
+}
+
+.manage-requests-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.manage-requests-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Vendor Manager Tabs */
+.vendor-manager-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+.vendor-manager-tabs .tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: none;
+  color: #6b7280;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.vendor-manager-tabs .tab:hover {
+  color: #8b5cf6;
+  background-color: #f3f4f6;
+}
+
+.vendor-manager-tabs .tab.active {
+  color: #8b5cf6;
+  background-color: #f3f4f6;
+}
+
+.vendor-manager-tabs .tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  border-radius: 1px;
+}
+
+.vendor-manager-tabs .tab i {
+  font-size: 1rem;
+}
+
+/* Requests Container */
+.requests-container {
+  display: flex;
+  gap: 2rem;
+  height: calc(100vh - 300px);
+  min-height: 500px;
+}
+
+.requests-list {
+  flex: 0 0 400px;
+  overflow-y: auto;
+  border-right: 1px solid #e5e7eb;
+  padding-right: 1rem;
+}
+
+.request-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.request-card:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+}
+
+.request-card.active {
+  border-color: #8b5cf6;
+  background: linear-gradient(135deg, #faf5ff, #f3f4f6);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+}
+
+.request-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.request-category {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.category-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+}
+
+.category-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-left: 10px;
+}
+
+.category-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.request-status-container {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.request-status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.request-status.new {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.request-status.open {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.request-status.closed {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.request-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.request-actions button {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: white;
+  color: #374151;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.request-actions button:hover {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+}
+
+.request-actions .btn-view-bids {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  border-color: #8b5cf6;
+}
+
+.request-actions .btn-view-bids:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: white;
+}
+
+.request-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.detail-item i {
+  width: 1rem;
+  color: #8b5cf6;
+}
+
+.detail-label {
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.detail-value {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.view-category {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* Bids Section */
+.bids-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.bids-section h3 {
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.bids-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+.bids-tabs .tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+}
+
+.bids-tabs .tab:hover {
+  color: #8b5cf6;
+  background-color: #f3f4f6;
+}
+
+.bids-tabs .tab.active {
+  color: #8b5cf6;
+  background-color: #f3f4f6;
+}
+
+.bids-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+/* No Requests State */
+.no-requests {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: white;
+  border-radius: 0.75rem;
+  border: 2px dashed #d1d5db;
+}
+
+.no-requests h3 {
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.no-requests p {
+  color: #6b7280;
+  margin-bottom: 2rem;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.create-first-request-btn {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.create-first-request-btn:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* No Bids Message */
+.no-bids-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: white;
+  border-radius: 0.75rem;
+  border: 2px dashed #d1d5db;
+  margin-top: 1rem;
+}
+
+.no-bids-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.no-bids-content i {
+  font-size: 3rem;
+  color: #d1d5db;
+  margin-bottom: 1rem;
+}
+
+.no-bids-content h3 {
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.no-bids-content p {
+  color: #6b7280;
+  margin-bottom: 2rem;
+}
+
+.request-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #8b5cf6;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .requests-container {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .requests-list {
+    flex: none;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    padding-right: 0;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .bids-container {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .vendor-manager-tabs {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .vendor-manager-tabs .tab {
+    justify-content: center;
+  }
+  
+  .request-actions {
+    flex-wrap: wrap;
+  }
+  
+  .request-actions button {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .request-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+/* Category Stats and Request Info */
+.category-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.category-stats p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.request-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #faf5ff, #f3f4f6);
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  max-width:280px;
+}
+
+.request-status-badge {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.request-status-badge .status {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.request-status-badge .status.open {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.request-status-badge .status.closed {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.request-status-badge .status.new {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.request-metrics {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.request-metrics .metric {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.request-metrics .metric i {
+  color: #8b5cf6;
+}
+
+/* Toggle Request Button */
+.toggle-request-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: white;
+  color: #374151;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  margin-right: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.toggle-request-btn:hover {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  background-color: #faf5ff;
+}
+
+.toggle-request-btn i {
+  font-size: 0.875rem;
+  transition: none;
+}
+
+/* Request Details Section */
+.request-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 12px;
+}
+
+.info-item-vendor-manager {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.info-item-vendor-manager:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+  transform: translateY(-1px);
+}
+
+.info-item-vendor-manager i {
+  width: 1.25rem;
+  color: #8b5cf6;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.info-item-vendor-manager .label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.info-item-vendor-manager .value {
+  color: #1f2937;
+  font-weight: 500;
+  font-size: 0.875rem;
+  flex: 1;
+}
+
+.interest-level-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-direction: row;
+}
+
+.interest-level-item .label {
+  margin-top: 2px;
+}
+
+.value-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.interest-level {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.interest-description {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 400;
+  margin-top: 0;
+}

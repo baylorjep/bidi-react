@@ -8,6 +8,7 @@ import './VendorManager.css';
 function VendorManager({ weddingData, onUpdate, compact = false }) {
   const [vendors, setVendors] = useState([]);
   const [bids, setBids] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showAddVendor, setShowAddVendor] = useState(false);
@@ -20,7 +21,14 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   const [selectedBid, setSelectedBid] = useState(null);
   const [bidNotes, setBidNotes] = useState('');
   const [bidInterestRating, setBidInterestRating] = useState(0);
+  const [activeTab, setActiveTab] = useState('vendors'); // 'vendors' or 'requests'
+  const [currentRequestIndex, setCurrentRequestIndex] = useState(0);
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [selectedBidForAccept, setSelectedBidForAccept] = useState(null);
   const navigate = useNavigate();
+
+  // Accordion state for bid status sections per category
+  const [openBidSections, setOpenBidSections] = useState({});
 
   const defaultVendorCategories = [
     { id: 'photography', name: 'Photography', icon: 'fas fa-camera', color: '#667eea', isDefault: true },
@@ -55,9 +63,16 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
       loadVendors();
       loadCustomCategories();
       loadBids();
+      loadRequests();
       getCurrentUser();
     }
   }, [weddingData]);
+
+  useEffect(() => {
+    if (currentUserId && requests.length > 0) {
+      loadBids();
+    }
+  }, [activeTab, currentUserId, currentRequestIndex, requests]);
 
   const getCurrentUser = async () => {
     try {
@@ -176,34 +191,345 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
     }
   };
 
-  // Helper function to map event types and tables to categories
+  const loadRequests = async () => {
+    try {
+      // Get all requests from different tables
+      const [
+        { data: regularRequests, error: regularError },
+        { data: photoRequests, error: photoError },
+        { data: djRequests, error: djError },
+        { data: cateringRequests, error: cateringError },
+        { data: beautyRequests, error: beautyError },
+        { data: videoRequests, error: videoError },
+        { data: floristRequests, error: floristError },
+        { data: weddingPlanningRequests, error: weddingPlanningError }
+      ] = await Promise.all([
+        supabase.from('requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('photography_requests').select('*').eq('profile_id', weddingData.user_id),
+        supabase.from('dj_requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('catering_requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('beauty_requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('videography_requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('florist_requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('wedding_planning_requests').select('*').eq('user_id', weddingData.user_id)
+      ]);
+
+      // Map of request types to their corresponding business categories
+      const categoryMap = {
+        'photography': 'photography',
+        'videography': 'videography',
+        'dj': 'dj',
+        'catering': 'catering',
+        'beauty': 'beauty',
+        'florist': 'florist',
+        'wedding_planning': 'wedding_planning'
+      };
+
+      // Get total business counts for each category
+      const totalBusinessCounts = {};
+      for (const [type, category] of Object.entries(categoryMap)) {
+        const { count, error } = await supabase
+          .from('business_profiles')
+          .select('*', { count: 'exact' })
+          .filter('business_category', 'ov', `{${category}}`);
+
+        if (error) {
+          console.error(`Error fetching total ${category} businesses:`, error);
+          totalBusinessCounts[type] = 0;
+      } else {
+          totalBusinessCounts[type] = count || 0;
+        }
+      }
+
+      // Combine all requests with their types
+      const allRequests = [
+        ...(regularRequests || []).map(r => ({ ...r, type: 'other' })),
+        ...(photoRequests || []).map(r => ({ ...r, type: 'photography' })),
+        ...(djRequests || []).map(r => ({ ...r, type: 'dj' })),
+        ...(cateringRequests || []).map(r => ({ ...r, type: 'catering' })),
+        ...(beautyRequests || []).map(r => ({ ...r, type: 'beauty' })),
+        ...(videoRequests || []).map(r => ({ ...r, type: 'videography' })),
+        ...(floristRequests || []).map(r => ({ ...r, type: 'florist' })),
+        ...(weddingPlanningRequests || []).map(r => ({ ...r, type: 'wedding_planning' }))
+      ];
+
+      // Get view counts for all requests
+      const viewCounts = await Promise.all(
+        allRequests.map(async (request) => {
+          // Get views
+          const { data: views, error: viewError } = await supabase
+            .from('request_views')
+            .select('business_id')
+            .eq('request_id', request.id)
+            .eq('request_type', `${request.type}_requests`);
+
+          if (viewError) {
+            console.error('Error fetching views:', viewError);
+            return { requestId: request.id, count: 0 };
+          }
+
+          // Get bids
+          const { data: bids, error: bidError } = await supabase
+            .from('bids')
+            .select('user_id')
+            .eq('request_id', request.id);
+
+          if (bidError) {
+            console.error('Error fetching bids:', bidError);
+            return { requestId: request.id, count: 0 };
+          }
+
+          // Get hidden status
+          const hiddenByVendor = request.hidden_by_vendor || [];
+          const hiddenBusinessIds = Array.isArray(hiddenByVendor) ? hiddenByVendor : [];
+
+          // Get total businesses in this category
+          const totalBusinesses = totalBusinessCounts[request.type] || 0;
+
+          // Get unique business IDs that have viewed or bid
+          const activeBusinessIds = new Set([
+            ...(views?.map(v => v.business_id) || []),
+            ...(bids?.map(b => b.user_id) || [])
+          ]);
+
+          return { 
+            requestId: request.id, 
+            count: activeBusinessIds.size,
+            total: totalBusinesses
+          };
+        })
+      );
+
+      // Add view counts and total business counts to requests
+      const requestsWithViews = allRequests.map(request => ({
+        ...request,
+        viewCount: viewCounts.find(v => v.requestId === request.id)?.count || 0,
+        totalBusinessCount: viewCounts.find(v => v.requestId === request.id)?.total || 0,
+        isNew: isNew(request.created_at),
+        isOpen: request.status === "open" || request.status === "pending" || request.open
+      }));
+
+      // Sort requests: new and open first, then by creation date
+      const sortedRequests = requestsWithViews.sort((a, b) => {
+        // First sort by new status
+        if (a.isNew && !b.isNew) return -1;
+        if (!a.isNew && b.isNew) return 1;
+        
+        // Then sort by open status
+        if (a.isOpen && !b.isOpen) return -1;
+        if (!a.isOpen && b.isOpen) return 1;
+        
+        // Finally sort by creation date (newest first)
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+
+      setRequests(sortedRequests);
+    } catch (error) {
+      console.error('Error loading requests:', error);
+    }
+  };
+
   const getCategoryFromEventType = (eventType, table) => {
-    // Map table names to categories
-    const tableCategoryMap = {
-      'photography_requests': 'photography',
-      'videography_requests': 'videography',
-      'catering_requests': 'catering',
-      'dj_requests': 'dj',
-      'florist_requests': 'florist',
-      'beauty_requests': 'beauty',
-      'wedding_planning_requests': 'planning'
-    };
-
-    // If we can map by table, use that
-    if (tableCategoryMap[table]) {
-      return tableCategoryMap[table];
-    }
-
-    // Otherwise, try to map by event type
-    const eventTypeLower = eventType?.toLowerCase() || '';
+    if (table === 'photography_requests') return 'photography';
+    if (table === 'videography_requests') return 'videography';
+    if (table === 'dj_requests') return 'dj';
+    if (table === 'catering_requests') return 'catering';
+    if (table === 'beauty_requests') return 'beauty';
+    if (table === 'florist_requests') return 'florist';
+    if (table === 'wedding_planning_requests') return 'wedding_planning';
     
-    if (eventTypeLower.includes('wedding')) {
-      // For wedding events, we need to determine the specific category
-      // This might need to be refined based on your specific needs
-      return 'photography'; // Default fallback
-    }
+    // For regular requests table, try to map event_type
+    const eventTypeMap = {
+      'wedding': 'wedding_planning',
+      'photography': 'photography',
+      'videography': 'videography',
+      'dj': 'dj',
+      'catering': 'catering',
+      'beauty': 'beauty',
+      'florist': 'florist'
+    };
+    
+    return eventTypeMap[eventType] || 'other';
+  };
 
-    return 'unknown';
+  const getCategoryIcon = (type) => {
+    const iconMap = {
+      'photography': 'fas fa-camera',
+      'videography': 'fas fa-video',
+      'dj': 'fas fa-music',
+      'catering': 'fas fa-utensils',
+      'beauty': 'fas fa-spa',
+      'florist': 'fas fa-seedling',
+      'wedding_planning': 'fas fa-calendar-check',
+      'other': 'fas fa-clipboard-list'
+    };
+    return iconMap[type] || 'fas fa-clipboard-list';
+  };
+
+  const formatCategoryType = (type) => {
+    const formatMap = {
+      'photography': 'Photography',
+      'videography': 'Videography',
+      'dj': 'DJ',
+      'catering': 'Catering',
+      'beauty': 'Beauty',
+      'florist': 'Florist',
+      'wedding_planning': 'Wedding Planning',
+      'other': 'Other'
+    };
+    return formatMap[type] || 'Other';
+  };
+
+  const getRequestDate = (request) => {
+    if (request.event_date) {
+      return new Date(request.event_date).toLocaleDateString();
+    }
+    if (request.date) {
+      return new Date(request.date).toLocaleDateString();
+    }
+    return 'Not specified';
+  };
+
+  const getViewCountText = (request) => {
+    const count = request.viewCount;
+    const total = request.totalBusinessCount;
+    
+    if (count === 0) {
+      return { category: 'No views yet', color: '#6b7280' };
+    } else if (count <= 3) {
+      return { category: 'Low interest', color: '#ef4444' };
+    } else if (count <= 7) {
+      return { category: 'Medium interest', color: '#f59e0b' };
+    } else if (count <= 15) {
+      return { category: 'High interest', color: '#10b981' };
+    } else {
+      return { category: 'Very high interest', color: '#059669' };
+    }
+  };
+
+  const handleEditRequest = (request) => {
+    // Navigate to the edit request page using the correct route pattern
+    // The route should be /edit-request/:type/:id as defined in App.js
+    const requestType = request.type || 'other';
+    navigate(`/edit-request/${requestType}/${request.id}`, { 
+      state: { 
+        editMode: true, 
+        requestId: request.id,
+        request: request 
+      } 
+    });
+  };
+
+  const toggleRequestStatus = async (request) => {
+    try {
+      const newStatus = request.isOpen ? 'closed' : 'open';
+      const tableName = `${request.type}_requests`;
+      
+      const { error } = await supabase
+        .from(tableName)
+        .update({ 
+          status: newStatus
+        })
+        .eq('id', request.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setRequests(prev => prev.map(req => 
+        req.id === request.id 
+          ? { ...req, isOpen: !req.isOpen, status: newStatus } : req
+      ));
+
+      toast.success(`Request ${newStatus === 'open' ? 'reopened' : 'closed'} successfully`);
+    } catch (error) {
+      console.error('Error toggling request status:', error);
+      toast.error('Failed to update request status');
+    }
+  };
+
+  const renderBidCard = (bid) => {
+    return (
+      <div key={bid.id} className="bid-display-wrapper">
+        <div className="bid-client-controls">
+          <div className="bid-interest-rating">
+            <span className="interest-label">Your Interest:</span>
+            <div className="star-rating">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  className={`star-btn ${star <= (bid.interest_rating || 0) ? 'filled' : 'empty'}`}
+                  onClick={() => handleBidRating(bid.id, star)}
+                  title={getInterestLevelText(star)}
+                >
+                  <i className="fas fa-star"></i>
+                </button>
+              ))}
+            </div>
+            <span className="rating-text">
+              {getInterestLevelText(bid.interest_rating || 0)}
+            </span>
+          </div>
+          <button
+            className="bid-notes-btn"
+            onClick={() => openBidNotes(bid)}
+            title={bid.client_notes ? "View and edit notes" : "Add notes"}
+          >
+            <i className="fas fa-sticky-note"></i>
+            {bid.client_notes ? 'Show Notes' : 'Add Notes'}
+          </button>
+        </div>
+        
+        <BidDisplay
+          bid={bid}
+          handleApprove={handleApprove}
+          handleDeny={handleDeny}
+          handleInterested={handleInterested}
+          handlePending={handlePending}
+          showActions={true}
+          showPaymentOptions={bid.status === 'approved'}
+          showReopen={false}
+          showInterested={bid.status === 'interested'}
+          showNotInterested={bid.status === 'denied'}
+          showPending={bid.status === 'pending'}
+          showApproved={bid.status === 'approved'}
+          onMessage={handleMessage}
+          onPayNow={handlePayNow}
+          onScheduleConsultation={handleScheduleConsultation}
+          currentUserId={currentUserId}
+          isNew={!bid.viewed}
+        />
+      </div>
+    );
+  };
+
+  const renderNoBidsMessage = () => {
+    const currentRequest = requests[currentRequestIndex];
+    if (!currentRequest) return null;
+
+    const filteredBids = bids.filter(bid => bid.request_id === currentRequest.id);
+    
+    if (filteredBids.length === 0) {
+      return (
+        <div className="no-bids-message">
+          <div className="no-bids-content">
+            <i className="fas fa-inbox"></i>
+            <h3>No bids received yet</h3>
+            <p>Your request is active and visible to vendors. Bids will appear here once vendors respond.</p>
+            <div className="request-stats">
+              <div className="stat-item">
+                <span className="stat-number">{currentRequest.viewCount}</span>
+                <span className="stat-label">Vendors viewed</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">{currentRequest.totalBusinessCount}</span>
+                <span className="stat-label">Total vendors</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   const loadCustomCategories = async () => {
@@ -522,34 +848,12 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const requestBidsFromVendors = (category) => {
-    // Navigate to the existing request form system
-    const categoryMap = {
-      'photography': '/photography-request',
-      'videography': '/videography-request',
-      'catering': '/catering-request',
-      'dj': '/dj-request',
-      'florist': '/florist-request',
-      'beauty': '/hair-and-makeup-request',
-      'planning': '/wedding-planning-request'
-    };
-
-    const requestPath = categoryMap[category.id];
-    if (requestPath) {
-      navigate(requestPath, {
-        state: {
-          weddingData: weddingData,
-          category: category
-        }
-      });
-    } else {
-      // For categories without specific request forms, use the master request flow
-      navigate('/master-request-flow', {
-        state: {
-          weddingData: weddingData,
-          selectedCategory: category
-        }
-      });
-    }
+    navigate('/request-categories', {
+      state: {
+        weddingData: weddingData,
+        category: category
+      }
+    });
   };
 
   const getVendorsByCategory = (categoryId) => {
@@ -600,7 +904,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
     try {
       return contactInfo.split(', ').map(contact => {
         const parts = contact.split(': ');
-        return {
+      return { 
           type: parts[0] || 'other',
           value: parts[1] || ''
         };
@@ -646,6 +950,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const handleDeny = async (bidId) => {
+    console.log('VendorManager handleDeny called with bidId:', bidId);
     try {
       const { error } = await supabase
         .from('bids')
@@ -665,6 +970,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const handleInterested = async (bidId) => {
+    console.log('VendorManager handleInterested called with bidId:', bidId);
     try {
       // Find the current bid to check its status
       const currentBid = bids.find(bid => bid.id === bidId);
@@ -690,6 +996,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const handlePending = async (bid) => {
+    console.log('VendorManager handlePending called with bid:', bid);
     try {
       const { error } = await supabase
         .from('bids')
@@ -801,6 +1108,137 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
     setSelectedBid(null);
   };
 
+  const isNew = (createdAt) => {
+    if (!createdAt) return false;
+    const now = new Date();
+    const created = new Date(createdAt);
+    const diffInDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+    return diffInDays < 7;
+  };
+
+  // Helper: Group bids by status for a category
+  const getBidsByStatus = (categoryId) => {
+    const categoryBids = getBidsByCategory(categoryId);
+    
+    // Sort bids by interest rating first (highest to lowest), then by creation date (newest first)
+    const sortBids = (bids) => {
+      return bids.sort((a, b) => {
+        // First sort by viewed status (new bids first)
+        if (!a.viewed && b.viewed) return -1;
+        if (a.viewed && !b.viewed) return 1;
+        
+        // If both have same viewed status, sort by interest rating (highest first)
+        const ratingA = a.interest_rating || 0;
+        const ratingB = b.interest_rating || 0;
+        if (ratingA !== ratingB) {
+          return ratingB - ratingA;
+        }
+        
+        // If ratings are equal, sort by creation date (newest first)
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+    };
+    
+    return {
+      approved: sortBids(categoryBids.filter(bid => bid.status === 'approved')),
+      interested: sortBids(categoryBids.filter(bid => bid.status === 'interested')),
+      pending: sortBids(categoryBids.filter(bid => bid.status === 'pending')),
+      denied: sortBids(categoryBids.filter(bid => bid.status === 'denied')),
+    };
+  };
+
+  // Helper: Toggle accordion section
+  const toggleBidSection = (categoryId, statusKey) => {
+    setOpenBidSections(prev => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        [statusKey]: !prev[categoryId]?.[statusKey]
+      }
+    }));
+  };
+
+  // Helper: Toggle manual vendors accordion section
+  const toggleManualVendorsSection = (categoryId) => {
+    setOpenBidSections(prev => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        manualVendors: !prev[categoryId]?.manualVendors
+      }
+    }));
+  };
+
+  // Helper: Get count of new bids for a category
+  const getNewBidsCount = (categoryId) => {
+    const categoryBids = getBidsByCategory(categoryId);
+    return categoryBids.filter(bid => !bid.viewed).length;
+  };
+
+  // Helper: Get total count of new bids across all categories
+  const getTotalNewBidsCount = () => {
+    return bids.filter(bid => !bid.viewed).length;
+  };
+
+  // Helper: Mark a single bid as viewed
+  const markBidAsViewed = async (bidId) => {
+    try {
+      const { error } = await supabase
+        .from('bids')
+        .update({ 
+          viewed: true,
+          viewed_at: new Date().toISOString()
+        })
+        .eq('id', bidId);
+
+      if (error) {
+        console.error('Error marking bid as viewed:', error);
+        return;
+      }
+
+      // Update local state
+      setBids(bids.map(bid => 
+        bid.id === bidId 
+          ? { ...bid, viewed: true, viewed_at: new Date().toISOString() }
+          : bid
+      ));
+    } catch (error) {
+      console.error('Error marking bid as viewed:', error);
+    }
+  };
+
+  // Helper: Mark all bids in a category as viewed
+  const markBidsAsViewed = async (categoryId) => {
+    const categoryBids = getBidsByCategory(categoryId);
+    const unviewedBids = categoryBids.filter(bid => !bid.viewed);
+    
+    if (unviewedBids.length > 0) {
+      try {
+        const { error } = await supabase
+          .from('bids')
+          .update({ 
+            viewed: true,
+            viewed_at: new Date().toISOString()
+          })
+          .in('id', unviewedBids.map(bid => bid.id));
+
+        if (error) {
+          console.error('Error marking bids as viewed:', error);
+          return;
+        }
+
+        // Update local state
+        setBids(bids.map(bid => 
+          unviewedBids.some(unviewedBid => unviewedBid.id === bid.id) 
+            ? { ...bid, viewed: true, viewed_at: new Date().toISOString() }
+            : bid
+        ));
+      } catch (error) {
+        console.error('Error marking bids as viewed:', error);
+      }
+    }
+  };
+
   if (compact) {
     const confirmedVendors = vendors.filter(v => v.status === 'confirmed').length;
     const totalVendors = vendors.length;
@@ -846,7 +1284,24 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   return (
     <div className="vendor-manager">
       <div className="vendor-manager-header">
-        <h2>Vendor Management</h2>
+        <h2>
+          Vendor Management
+          {getTotalNewBidsCount() > 0 && (
+            <span 
+              style={{ 
+                marginLeft: 8, 
+                background: '#ec4899', 
+                color: 'white', 
+                borderRadius: '50%', 
+                padding: '4px 8px', 
+                fontSize: '24px',
+                fontWeight: 'bold'
+              }}
+            >
+              {getTotalNewBidsCount()}
+            </span>
+          )}
+        </h2>
         <div className="vendor-manager-actions">
           <button 
             className="manage-categories-btn"
@@ -872,23 +1327,90 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
           const confirmedCount = categoryVendors.filter(v => v.status === 'confirmed').length;
           const approvedBidsCount = categoryBids.filter(b => b.status === 'approved').length;
           
+          // Find the corresponding request for this category
+          const categoryRequest = requests.find(req => {
+            const reqCategory = getCategoryFromEventType(req.event_type, req.type === 'other' ? 'requests' : `${req.type}_requests`);
+            return reqCategory === category.id;
+          });
+          
           return (
             <div key={category.id}>
               <div 
                 className={`vendor-category ${selectedCategory === category.id ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(selectedCategory === category.id ? null : category.id)}
+                onClick={() => {
+                  setSelectedCategory(selectedCategory === category.id ? null : category.id);
+                  // Remove automatic marking of bids as viewed when category is expanded
+                }}
               >
                 <div className="category-icon" style={{ backgroundColor: category.color }}>
                   <i className={category.icon}></i>
                 </div>
                 <div className="category-info">
-                  <h3>{category.name}</h3>
-                  <p>
-                    {categoryVendors.length} vendors • {confirmedCount} confirmed
-                    {categoryBids.length > 0 && ` • ${categoryBids.length} bids • ${approvedBidsCount} approved`}
-                  </p>
+                  <h3>
+                    {category.name}
+                    {getNewBidsCount(category.id) > 0 && (
+                      <span 
+                        style={{ 
+                          marginLeft: 8, 
+                          background: '#ec4899', 
+                          color: 'white', 
+                          borderRadius: '50%', 
+                          padding: '2px 6px', 
+                          fontSize: '14px',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {getNewBidsCount(category.id)}
+                      </span>
+                    )}
+                  </h3>
+                  <div className="category-stats">
+                    <p>
+                      {categoryVendors.length} vendors • {confirmedCount} confirmed
+                      {categoryBids.length > 0 && ` • ${categoryBids.length} bids • ${approvedBidsCount} approved`}
+                    </p>
+                    {categoryRequest && (
+                      <div className="request-info">
+                        <div className="request-status-badge">
+                          <span className={`status ${categoryRequest.isOpen ? 'open' : 'closed'}`}>
+                            <i className={`fas ${categoryRequest.isOpen ? 'fa-unlock' : 'fa-lock'}`}></i>
+                            {categoryRequest.isOpen ? 'Request Open' : 'Request Closed'}
+                          </span>
+                          {categoryRequest.isNew && (
+                            <span className="status new">
+                              <i className="fas fa-star"></i>
+                              New
+                            </span>
+                          )}
+                        </div>
+                        <div className="request-metrics">
+                          <span className="metric">
+                            <i className="fas fa-eye"></i>
+                            {categoryRequest.viewCount} views
+                          </span>
+                          <span className="metric">
+                            <i className="fas fa-calendar"></i>
+                            {getRequestDate(categoryRequest)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="category-actions-vendor-manager">
+                  {categoryRequest && (
+                    <button 
+                      className="toggle-request-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleRequestStatus(categoryRequest);
+                      }}
+                      title={categoryRequest.isOpen ? "Close request" : "Reopen request"}
+                    >
+                      <i className={`fas ${categoryRequest.isOpen ? 'fa-lock' : 'fa-unlock'}`}></i>
+                      {categoryRequest.isOpen ? 'Close Request' : 'Reopen Request'}
+                    </button>
+                  )}
                   <button 
                     className="request-bids-btn-vendor-manager"
                     onClick={(e) => {
@@ -916,190 +1438,233 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                 <div className="vendor-list-vendor-manager">
                   <h3>{category.name} Vendors & Bids</h3>
                   
-                  {/* Show bids first */}
-                  {categoryBids.length > 0 && (
-                    <div className="bids-section">
-                      <h4>Received Bids ({categoryBids.length})</h4>
-                      <div className="bids-grid">
-                        {categoryBids.map(bid => (
-                          <div key={bid.id} className="bid-display-wrapper">
-                            {/* Bid Interest Rating and Notes */}
-                            <div className="bid-client-controls">
-                              <div className="bid-interest-rating">
-                                <span className="interest-label">Your Interest:</span>
-                                <div className="star-rating">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <button
-                                      key={star}
-                                      className={`star-btn ${star <= (bid.interest_rating || 0) ? 'filled' : 'empty'}`}
-                                      onClick={() => handleBidRating(bid.id, star)}
-                                      title={getInterestLevelText(star)}
-                                    >
-                                      <i className="fas fa-star"></i>
-                                    </button>
-                                  ))}
-                                </div>
-                                <span className="rating-text">
-                                  {getInterestLevelText(bid.interest_rating || 0)}
-                                </span>
-                              </div>
-                              <button
-                                className="bid-notes-btn"
-                                onClick={() => openBidNotes(bid)}
-                                title={bid.client_notes ? "View and edit notes" : "Add notes"}
-                              >
-                                <i className="fas fa-sticky-note"></i>
-                                {bid.client_notes ? 'Show Notes' : 'Add Notes'}
-                              </button>
-                            </div>
-                          
-                            
-                            <BidDisplay
-                              bid={bid}
-                              handleApprove={handleApprove}
-                              handleDeny={handleDeny}
-                              handleInterested={handleInterested}
-                              handlePending={handlePending}
-                              showActions={true}
-                              showPaymentOptions={bid.status === 'approved'}
-                              showReopen={false}
-                              showInterested={bid.status === 'interested'}
-                              showNotInterested={bid.status === 'denied'}
-                              showPending={bid.status === 'pending'}
-                              showApproved={bid.status === 'approved'}
-                              onMessage={handleMessage}
-                              onPayNow={handlePayNow}
-                              onScheduleConsultation={handleScheduleConsultation}
-                              currentUserId={currentUserId}
-                            />
+                  {/* Show request details if available */}
+                  {categoryRequest && (
+                    <div className="request-details-section">
+                      <div className="request-header">
+                        <h4>Active Request</h4>
+                        <div className="request-actions">
+                          <button
+                            className="btn-edit"
+                            onClick={() => handleEditRequest(categoryRequest)}
+                          >
+                            <i className="fas fa-edit"></i>
+                            Edit Request
+                          </button>
+                          <button
+                            className="btn-toggle"
+                            onClick={() => toggleRequestStatus(categoryRequest)}
+                          >
+                            <i className={`fas ${categoryRequest.isOpen ? 'fa-lock' : 'fa-unlock'}`}></i>
+                            {categoryRequest.isOpen ? "Close" : "Reopen"}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="request-summary">
+                        <div className="request-info-grid">
+                          <div className="info-item-vendor-manager">
+                            <i className="fas fa-calendar"></i>
+                            <span className="label">Event Date:</span>
+                            <span className="value">{getRequestDate(categoryRequest)}</span>
                           </div>
-                        ))}
+                          <div className="info-item-vendor-manager">
+                            <i className="fas fa-dollar-sign"></i>
+                            <span className="label">Budget:</span>
+                            <span className="value">${categoryRequest.price_range}</span>
+                          </div>
+                          <div className="info-item-vendor-manager">
+                            <i className="fas fa-eye"></i>
+                            <span className="label">Vendor Views:</span>
+                            <span className="value">{categoryRequest.viewCount}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
+                  
+                  {/* Show bids grouped by status as accordions */}
+                  {(() => {
+                    const bidsByStatus = getBidsByStatus(category.id);
+                    const statusOrder = [
+                      { key: 'approved', label: 'Approved' },
+                      { key: 'interested', label: 'Interested' },
+                      { key: 'pending', label: 'Pending' },
+                      { key: 'denied', label: 'Not Interested' }
+                    ];
+                    return statusOrder.map(({ key, label }) => {
+                      if (!bidsByStatus[key] || bidsByStatus[key].length === 0) return null;
+                      const isOpen = openBidSections[category.id]?.[key] || false;
+                      const newBidsInSection = bidsByStatus[key].filter(bid => !bid.viewed).length;
+                      return (
+                        <div key={key} className={`bids-section bids-section-${key}`} style={{ marginBottom: 24 }}>
+                          <div
+                            className="bids-section-header"
+                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                            onClick={() => toggleBidSection(category.id, key)}
+                          >
+                            <span style={{ marginRight: 8 }}>
+                              {isOpen ? '▼' : '▶'}
+                            </span>
+                            <h4 style={{ margin: 0 }}>
+                              {label} Bids ({bidsByStatus[key].length})
+                              {newBidsInSection > 0 && (
+                                <span 
+                                  style={{ 
+                                    marginLeft: 8, 
+                                    background: '#ec4899', 
+                                    color: 'white', 
+                                    borderRadius: '50%', 
+                                    padding: '2px 6px', 
+                                    fontSize: '12px',
+                                    fontWeight: 'bold'
+                                  }}
+                                >
+                                  {newBidsInSection}
+                                </span>
+                              )}
+                            </h4>
+                          </div>
+                          {isOpen && (
+                            <div className="bids-grid">
+                              {bidsByStatus[key].map(bid => renderBidCard(bid))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
 
-                  {/* Show manual vendors */}
+                  {/* Show manual vendors as an accordion */}
                   {categoryVendors.length > 0 && (
                     <div className="vendors-section">
-                      <h4>Manual Vendors ({categoryVendors.length})</h4>
-                      <div className="vendors-grid">
-                        {categoryVendors.map(vendor => (
-                          <div key={vendor.id} className="vendor-card-vendor-manager">
-                            <div className="vendor-header">
-                              <div className="vendor-info">
-                                <h4>{vendor.name}</h4>
-                                <div className="vendor-contact-info">
-                                  {parseContactInfo(vendor.contact_info).map((contact, index) => (
-                                    <div key={index} className="contact-item">
-                                      <i className={getContactIcon(contact.type)}></i>
-                                      <span>{contact.value}</span>
-                                    </div>
-                                  ))}
+                      <div
+                        className="vendors-section-header"
+                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                        onClick={() => toggleManualVendorsSection(category.id)}
+                      >
+                        <span style={{ marginRight: 8 }}>
+                          {openBidSections[category.id]?.manualVendors ? '▼' : '▶'}
+                        </span>
+                        <h4 style={{ margin: 0 }}>
+                          Manual Vendors ({categoryVendors.length})
+                          {/* Note: Manual vendors are typically added by user, so new count will usually be 0 */}
+                        </h4>
+                      </div>
+                      {openBidSections[category.id]?.manualVendors && (
+                        <div className="vendors-grid">
+                          {categoryVendors.map(vendor => (
+                            <div key={vendor.id} className="vendor-card-vendor-manager">
+                              <div className="vendor-header">
+                                <div className="vendor-info">
+                                  <h4>{vendor.name}</h4>
+                                  <div className="vendor-contact-info">
+                                    {parseContactInfo(vendor.contact_info).map((contact, index) => (
+                                      <div key={index} className="contact-item">
+                                        <i className={getContactIcon(contact.type)}></i>
+                                        <span>{contact.value}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="vendor-status">
+                                  <span 
+                                    className="status-badge"
+                                    style={{ backgroundColor: getStatusColor(vendor.status) }}
+                                  >
+                                    <i className={getStatusIcon(vendor.status)}></i>
+                                    {vendor.status}
+                                  </span>
                                 </div>
                               </div>
-                              <div className="vendor-status">
-                                <span 
-                                  className="status-badge"
-                                  style={{ backgroundColor: getStatusColor(vendor.status) }}
+                              {/* Pricing and Rating Row */}
+                              {(vendor.pricing || vendor.rating || vendor.is_booked) && (
+                                <div className="vendor-details">
+                                  {vendor.pricing && (
+                                    <div className="vendor-pricing">
+                                      <i className="fas fa-dollar-sign"></i>
+                                      <span>{vendor.pricing}</span>
+                                    </div>
+                                  )}
+                                  {vendor.rating && vendor.rating > 0 && (
+                                    <div className="vendor-rating">
+                                      <span className="interest-label">Interest:</span>
+                                      {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                          key={star}
+                                          className={`star-btn ${star <= vendor.rating ? 'filled' : 'empty'}`}
+                                          onClick={() => updateVendorRating(vendor.id, star)}
+                                          title={getInterestLevelText(star)}
+                                        >
+                                          <i className="fas fa-star"></i>
+                                        </button>
+                                      ))}
+                                      <span className="rating-number">({vendor.rating}/5 - {getInterestLevelText(vendor.rating)})</span>
+                                    </div>
+                                  )}
+                                  {(!vendor.rating || vendor.rating === 0) && (
+                                    <div className="vendor-rating">
+                                      <span className="interest-label">Interest:</span>
+                                      {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                          key={star}
+                                          className="star-btn empty"
+                                          onClick={() => updateVendorRating(vendor.id, star)}
+                                          title={getInterestLevelText(star)}
+                                        >
+                                          <i className="fas fa-star"></i>
+                                        </button>
+                                      ))}
+                                      <span className="rating-number">(No rating)</span>
+                                    </div>
+                                  )}
+                                  {vendor.is_booked && (
+                                    <div className="vendor-booked">
+                                      <i className="fas fa-check-circle"></i>
+                                      <span>Booked</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {vendor.notes && (
+                                <div className="vendor-notes">
+                                  <p>{vendor.notes}</p>
+                                </div>
+                              )}
+                              <div className="vendor-actions">
+                                <select 
+                                  value={vendor.status}
+                                  onChange={(e) => updateVendorStatus(vendor.id, e.target.value)}
+                                  className="status-select"
                                 >
-                                  <i className={getStatusIcon(vendor.status)}></i>
-                                  {vendor.status}
-                                </span>
+                                  <option value="pending">Pending</option>
+                                  <option value="contacted">Contacted</option>
+                                  <option value="confirmed">Confirmed</option>
+                                  <option value="declined">Declined</option>
+                                </select>
+                                <div className="vendor-action-buttons">
+                                  <button 
+                                    className="edit-vendor-btn"
+                                    onClick={() => {
+                                      setEditingVendor(vendor);
+                                      setShowEditVendor(true);
+                                    }}
+                                    title="Edit vendor"
+                                  >
+                                    <i className="fas fa-edit"></i>
+                                  </button>
+                                  <button 
+                                    className="delete-vendor-btn"
+                                    onClick={() => deleteVendor(vendor.id)}
+                                    title="Delete vendor"
+                                  >
+                                    <i className="fas fa-trash"></i>
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                            
-                            {/* Pricing and Rating Row */}
-                            {(vendor.pricing || vendor.rating || vendor.is_booked) && (
-                              <div className="vendor-details">
-                                {vendor.pricing && (
-                                  <div className="vendor-pricing">
-                                    <i className="fas fa-dollar-sign"></i>
-                                    <span>{vendor.pricing}</span>
-                                  </div>
-                                )}
-                                {vendor.rating && vendor.rating > 0 && (
-                                  <div className="vendor-rating">
-                                    <span className="interest-label">Interest:</span>
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <button
-                                        key={star}
-                                        className={`star-btn ${star <= vendor.rating ? 'filled' : 'empty'}`}
-                                        onClick={() => updateVendorRating(vendor.id, star)}
-                                        title={getInterestLevelText(star)}
-                                      >
-                                        <i className="fas fa-star"></i>
-                                      </button>
-                                    ))}
-                                    <span className="rating-number">({vendor.rating}/5 - {getInterestLevelText(vendor.rating)})</span>
-                                  </div>
-                                )}
-                                {(!vendor.rating || vendor.rating === 0) && (
-                                  <div className="vendor-rating">
-                                    <span className="interest-label">Interest:</span>
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <button
-                                        key={star}
-                                        className="star-btn empty"
-                                        onClick={() => updateVendorRating(vendor.id, star)}
-                                        title={getInterestLevelText(star)}
-                                      >
-                                        <i className="fas fa-star"></i>
-                                      </button>
-                                    ))}
-                                    <span className="rating-number">(No rating)</span>
-                                  </div>
-                                )}
-                                {vendor.is_booked && (
-                                  <div className="vendor-booked">
-                                    <i className="fas fa-check-circle"></i>
-                                    <span>Booked</span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            
-                            {vendor.notes && (
-                              <div className="vendor-notes">
-                                <p>{vendor.notes}</p>
-                              </div>
-                            )}
-                            
-                            <div className="vendor-actions">
-                              <select 
-                                value={vendor.status}
-                                onChange={(e) => updateVendorStatus(vendor.id, e.target.value)}
-                                className="status-select"
-                              >
-                                <option value="pending">Pending</option>
-                                <option value="contacted">Contacted</option>
-                                <option value="confirmed">Confirmed</option>
-                                <option value="declined">Declined</option>
-                              </select>
-                              
-                              <div className="vendor-action-buttons">
-                                <button 
-                                  className="edit-vendor-btn"
-                                  onClick={() => {
-                                    setEditingVendor(vendor);
-                                    setShowEditVendor(true);
-                                  }}
-                                  title="Edit vendor"
-                                >
-                                  <i className="fas fa-edit"></i>
-                                </button>
-                                
-                                <button 
-                                  className="delete-vendor-btn"
-                                  onClick={() => deleteVendor(vendor.id)}
-                                  title="Delete vendor"
-                                >
-                                  <i className="fas fa-trash"></i>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1220,7 +1785,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                   className="btn-primary"
                   onClick={saveBidNotes}
                 >
-                  Save Notes & Rating
+                  Save
                 </button>
               </div>
             </div>
@@ -1508,7 +2073,7 @@ function EditVendorForm({ vendor, onSubmit, onCancel, categories }) {
     try {
       return contactInfo.split(', ').map(contact => {
         const parts = contact.split(': ');
-        return {
+      return { 
           type: parts[0] || 'email',
           value: parts[1] || ''
         };

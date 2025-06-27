@@ -444,6 +444,12 @@ function WeddingPlanningDashboard() {
       }
     }
 
+    // Check for new bids
+    await checkForNewBids(notificationsToCreate);
+
+    // Check for new messages
+    await checkForNewMessages(notificationsToCreate);
+
     // Save notifications to database
     if (notificationsToCreate.length > 0) {
       try {
@@ -468,6 +474,143 @@ function WeddingPlanningDashboard() {
       } catch (error) {
         console.error('Error creating notifications:', error);
       }
+    }
+  };
+
+  // Check for new bids on requests
+  const checkForNewBids = async (notificationsToCreate) => {
+    try {
+      // Get all request IDs for this user from all request tables
+      const requestTables = [
+        'photography_requests',
+        'videography_requests', 
+        'catering_requests',
+        'dj_requests',
+        'florist_requests',
+        'beauty_requests',
+        'wedding_planning_requests'
+      ];
+
+      let allRequestIds = [];
+      
+      for (const table of requestTables) {
+        let query = supabase.from(table).select('id, event_type, title');
+        
+        if (table === 'photography_requests') {
+          query = query.eq('profile_id', user.id);
+        } else {
+          query = query.eq('user_id', user.id);
+        }
+
+        const { data: requests, error } = await query;
+        if (!error && requests) {
+          allRequestIds.push(...requests);
+        }
+      }
+
+      if (allRequestIds.length === 0) return;
+
+      // Get all bids for these requests
+      const { data: bids, error } = await supabase
+        .from('bids')
+        .select('id, request_id, created_at, viewed')
+        .in('request_id', allRequestIds.map(req => req.id))
+        .eq('viewed', false)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error checking for new bids:', error);
+        return;
+      }
+
+      // Group bids by request and create notifications
+      const bidsByRequest = {};
+      bids?.forEach(bid => {
+        if (!bidsByRequest[bid.request_id]) {
+          bidsByRequest[bid.request_id] = [];
+        }
+        bidsByRequest[bid.request_id].push(bid);
+      });
+
+      for (const [requestId, requestBids] of Object.entries(bidsByRequest)) {
+        const request = allRequestIds.find(req => req.id === requestId);
+        if (!request) continue;
+
+        const requestTitle = request.title || request.event_type || 'Your request';
+        const bidCount = requestBids.length;
+        
+        const message = JSON.stringify({
+          title: `💰 New Bid${bidCount > 1 ? 's' : ''} Received!`,
+          message: `You have ${bidCount} new bid${bidCount > 1 ? 's' : ''} on your ${requestTitle} request.`,
+          priority: 'medium'
+        });
+
+        const exists = await checkNotificationExists('bid', message);
+        if (!exists) {
+          notificationsToCreate.push({
+            type: 'bid',
+            message: message
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking for new bids:', error);
+    }
+  };
+
+  // Check for new messages
+  const checkForNewMessages = async (notificationsToCreate) => {
+    try {
+      // Get unread messages for this user
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select(`
+          id,
+          created_at,
+          sender_id,
+          business_profiles!messages_sender_id_fkey(business_name)
+        `)
+        .eq('recipient_id', user.id)
+        .eq('read', false)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error checking for new messages:', error);
+        return;
+      }
+
+      if (messages && messages.length > 0) {
+        // Group messages by sender
+        const messagesBySender = {};
+        messages.forEach(message => {
+          const senderId = message.sender_id;
+          if (!messagesBySender[senderId]) {
+            messagesBySender[senderId] = [];
+          }
+          messagesBySender[senderId].push(message);
+        });
+
+        for (const [senderId, senderMessages] of Object.entries(messagesBySender)) {
+          const businessName = senderMessages[0]?.business_profiles?.business_name || 'A vendor';
+          const messageCount = senderMessages.length;
+          
+          const message = JSON.stringify({
+            title: `💬 New Message${messageCount > 1 ? 's' : ''} from ${businessName}`,
+            message: `You have ${messageCount} unread message${messageCount > 1 ? 's' : ''} from ${businessName}.`,
+            priority: 'medium'
+          });
+
+          const exists = await checkNotificationExists('message', message);
+          if (!exists) {
+            notificationsToCreate.push({
+              type: 'message',
+              message: message
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking for new messages:', error);
     }
   };
 
@@ -691,7 +834,7 @@ function WeddingPlanningDashboard() {
           style={{
             backgroundImage: moodBoardImages.length > 0 
               ? `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${moodBoardImages[backgroundImageIndex]?.url})`
-              : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
