@@ -22,7 +22,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-y: auto;
+  overflow-y: scroll;
+  overflow-x: visible;
 }
 
 .sidebar.hidden {

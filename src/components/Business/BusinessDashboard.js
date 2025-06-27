@@ -456,6 +456,9 @@ const BusinessDashSidebar = () => {
   return (
     <div className="business-dashboard text-left">
       <div className="dashboard-container">
+        {/* Notification Bell - moved outside sidebar */}
+        <NotificationBell />
+        
         <aside 
           className={`sidebar ${isSidebarVisible ? 'visible' : 'hidden'}`}
           ref={sidebarRef}
@@ -483,7 +486,6 @@ const BusinessDashSidebar = () => {
             <div className="profile-header">
               <img src={profileImage} alt="Vendor" className="profile-pic" />
               {BidiPlus && <div className="verified-badge">Verified</div>}
-              <NotificationBell />
             </div>
             <h4 className="profile-name">
               <span className="business-name-under-picture">
