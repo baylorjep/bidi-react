@@ -14,10 +14,6 @@ function EventDetails({ weddingData, onUpdate }) {
     weddingStyle: '',
     colorScheme: '',
     status: 'planning',
-    primaryColor: '#ec4899',
-    secondaryColor: '#8b5cf6',
-    accentColor: '#f59e0b',
-    neutralColor: '#6b7280',
     inspirationNotes: '',
     dressStyle: '',
     flowerPreferences: '',
@@ -41,6 +37,13 @@ function EventDetails({ weddingData, onUpdate }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState([]);
+  const [customColors, setCustomColors] = useState([]);
+  const [allColors, setAllColors] = useState([
+    { id: 'primary', name: 'Primary', value: '#ec4899', isDefault: true },
+    { id: 'secondary', name: 'Secondary', value: '#8b5cf6', isDefault: true },
+    { id: 'accent', name: 'Accent', value: '#f59e0b', isDefault: true },
+    { id: 'neutral', name: 'Neutral', value: '#6b7280', isDefault: true }
+  ]);
 
   // Load existing wedding data
   useEffect(() => {
@@ -56,10 +59,6 @@ function EventDetails({ weddingData, onUpdate }) {
         weddingStyle: weddingData.wedding_style || '',
         colorScheme: weddingData.color_scheme || '',
         status: weddingData.status || 'planning',
-        primaryColor: weddingData.primary_color || '#ec4899',
-        secondaryColor: weddingData.secondary_color || '#8b5cf6',
-        accentColor: weddingData.accent_color || '#f59e0b',
-        neutralColor: weddingData.neutral_color || '#6b7280',
         inspirationNotes: weddingData.inspiration_notes || '',
         dressStyle: weddingData.dress_style || '',
         flowerPreferences: weddingData.flower_preferences || '',
@@ -75,6 +74,22 @@ function EventDetails({ weddingData, onUpdate }) {
       
       setFormData(initialData);
       setOriginalData(initialData);
+      
+      // Load colors from database or use defaults
+      const savedColors = weddingData.colors || [];
+      if (savedColors.length > 0) {
+        setAllColors(savedColors);
+      } else {
+        // Use default colors if none saved, or load from old format
+        const defaultColors = [
+          { id: 'primary', name: 'Primary', value: weddingData.primary_color || '#ec4899', isDefault: true },
+          { id: 'secondary', name: 'Secondary', value: weddingData.secondary_color || '#8b5cf6', isDefault: true },
+          { id: 'accent', name: 'Accent', value: weddingData.accent_color || '#f59e0b', isDefault: true },
+          { id: 'neutral', name: 'Neutral', value: weddingData.neutral_color || '#6b7280', isDefault: true }
+        ];
+        setAllColors(defaultColors);
+      }
+      
       loadMoodBoardImages();
       loadCategories();
     }
@@ -150,11 +165,34 @@ function EventDetails({ weddingData, onUpdate }) {
     }));
   };
 
-  const handleColorChange = (colorType, color) => {
-    setFormData(prev => ({
-      ...prev,
-      [colorType]: color
-    }));
+  const handleColorChange = (colorId, color) => {
+    setAllColors(prev => 
+      prev.map(c => 
+        c.id === colorId ? { ...c, value: color } : c
+      )
+    );
+  };
+
+  const addCustomColor = () => {
+    const newColor = {
+      id: `custom_${Date.now()}`,
+      name: `Custom Color ${allColors.filter(c => c.id.startsWith('custom_')).length + 1}`,
+      value: '#3b82f6',
+      isDefault: false
+    };
+    setAllColors(prev => [...prev, newColor]);
+  };
+
+  const removeColor = (colorId) => {
+    setAllColors(prev => prev.filter(color => color.id !== colorId));
+  };
+
+  const updateColorName = (colorId, newName) => {
+    setAllColors(prev => 
+      prev.map(color => 
+        color.id === colorId ? { ...color, name: newName } : color
+      )
+    );
   };
 
   const handleSave = async () => {
@@ -180,10 +218,7 @@ function EventDetails({ weddingData, onUpdate }) {
           wedding_style: formData.weddingStyle,
           color_scheme: formData.colorScheme,
           status: formData.status,
-          primary_color: formData.primaryColor,
-          secondary_color: formData.secondaryColor,
-          accent_color: formData.accentColor,
-          neutral_color: formData.neutralColor,
+          colors: allColors,
           inspiration_notes: formData.inspirationNotes,
           dress_style: formData.dressStyle,
           flower_preferences: formData.flowerPreferences,
@@ -216,10 +251,7 @@ function EventDetails({ weddingData, onUpdate }) {
           wedding_style: formData.weddingStyle,
           color_scheme: formData.colorScheme,
           status: formData.status,
-          primary_color: formData.primaryColor,
-          secondary_color: formData.secondaryColor,
-          accent_color: formData.accentColor,
-          neutral_color: formData.neutralColor,
+          colors: allColors,
           inspiration_notes: formData.inspirationNotes,
           dress_style: formData.dressStyle,
           flower_preferences: formData.flowerPreferences,
@@ -654,97 +686,92 @@ function EventDetails({ weddingData, onUpdate }) {
   const renderColorPalette = () => (
     <div className="details-section-wedding-details">
       <h3>Color Palette</h3>
+      <p className="section-description-wedding-details">
+        Click on any color swatch below to choose your wedding colors. You can add custom colors and remove any color from your palette.
+      </p>
+      
       <div className="color-palette-grid-wedding-details">
-        <div className="color-item-wedding-details">
-          <label>Primary Color</label>
-          <div className="color-picker-container-wedding-details">
-            <input
-              type="color"
-              value={formData.primaryColor}
-              onChange={(e) => handleColorChange('primaryColor', e.target.value)}
-              className="color-picker-wedding-details"
-            />
-            <input
-              type="text"
-              value={formData.primaryColor}
-              onChange={(e) => handleColorChange('primaryColor', e.target.value)}
-              className="color-hex-wedding-details"
-              placeholder="#ec4899"
-            />
+        {allColors.map((color) => (
+          <div key={color.id} className="color-item-wedding-details">
+            <label>{color.name}</label>
+            <div 
+              className="color-picker-container-wedding-details"
+              onClick={() => {
+                // Trigger the hidden color input
+                const colorInput = document.getElementById(`color-input-${color.id}`);
+                if (colorInput) {
+                  colorInput.click();
+                }
+              }}
+            >
+              <input
+                id={`color-input-${color.id}`}
+                type="color"
+                value={color.value}
+                onChange={(e) => handleColorChange(color.id, e.target.value)}
+                className="color-picker-wedding-details"
+                title="Click to choose color"
+                style={{ display: 'none' }}
+              />
+              <div 
+                className="color-display-wedding-details"
+                style={{ backgroundColor: color.value }}
+              ></div>
+              <div className="color-info-wedding-details">
+                <input
+                  type="text"
+                  value={color.name}
+                  onChange={(e) => updateColorName(color.id, e.target.value)}
+                  className="custom-color-name-wedding-details"
+                  placeholder="Color name"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <span className="color-hint-wedding-details">Click anywhere to change color</span>
+              </div>
+              <button
+                className="remove-color-btn-wedding-details"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeColor(color.id);
+                }}
+                title="Remove this color"
+                type="button"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
           </div>
-        </div>
-        
-        <div className="color-item-wedding-details">
-          <label>Secondary Color</label>
-          <div className="color-picker-container-wedding-details">
-            <input
-              type="color"
-              value={formData.secondaryColor}
-              onChange={(e) => handleColorChange('secondaryColor', e.target.value)}
-              className="color-picker-wedding-details"
-            />
-            <input
-              type="text"
-              value={formData.secondaryColor}
-              onChange={(e) => handleColorChange('secondaryColor', e.target.value)}
-              className="color-hex-wedding-details"
-              placeholder="#8b5cf6"
-            />
-          </div>
-        </div>
-        
-        <div className="color-item-wedding-details">
-          <label>Accent Color</label>
-          <div className="color-picker-container-wedding-details">
-            <input
-              type="color"
-              value={formData.accentColor}
-              onChange={(e) => handleColorChange('accentColor', e.target.value)}
-              className="color-picker-wedding-details"
-            />
-            <input
-              type="text"
-              value={formData.accentColor}
-              onChange={(e) => handleColorChange('accentColor', e.target.value)}
-              className="color-hex-wedding-details"
-              placeholder="#f59e0b"
-            />
-          </div>
-        </div>
-        
-        <div className="color-item-wedding-details">
-          <label>Neutral Color</label>
-          <div className="color-picker-container-wedding-details">
-            <input
-              type="color"
-              value={formData.neutralColor}
-              onChange={(e) => handleColorChange('neutralColor', e.target.value)}
-              className="color-picker-wedding-details"
-            />
-            <input
-              type="text"
-              value={formData.neutralColor}
-              onChange={(e) => handleColorChange('neutralColor', e.target.value)}
-              className="color-hex-wedding-details"
-              placeholder="#6b7280"
-            />
-          </div>
-        </div>
+        ))}
       </div>
+
+      {/* Add Color Button */}
+      <div className="add-color-section-wedding-details">
+        <button 
+          className="add-color-btn-wedding-details"
+          onClick={addCustomColor}
+          type="button"
+        >
+          <i className="fas fa-plus"></i>
+          Add New Color
+        </button>
+      </div>
+      
+      {allColors.length === 0 && (
+        <div className="no-colors-message-wedding-details">
+          <i className="fas fa-palette"></i>
+          <p>No colors in your palette yet</p>
+          <small>Click "Add New Color" to start building your wedding color scheme</small>
+        </div>
+      )}
       
       <div className="color-preview-wedding-details">
         <h4>Color Preview</h4>
-        <div className="color-swatch-wedding-details" style={{ backgroundColor: formData.primaryColor }}>
-          <span>Primary</span>
-        </div>
-        <div className="color-swatch-wedding-details" style={{ backgroundColor: formData.secondaryColor }}>
-          <span>Secondary</span>
-        </div>
-        <div className="color-swatch-wedding-details" style={{ backgroundColor: formData.accentColor }}>
-          <span>Accent</span>
-        </div>
-        <div className="color-swatch-wedding-details" style={{ backgroundColor: formData.neutralColor }}>
-          <span>Neutral</span>
+        <div className="color-swatches-container-wedding-details">
+          {allColors.map((color) => (
+            <div key={color.id} className="color-swatch-wedding-details" style={{ backgroundColor: color.value }}>
+              <span>{color.name}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -753,13 +780,9 @@ function EventDetails({ weddingData, onUpdate }) {
   const renderMoodBoard = () => (
     <div className="details-section-wedding-details">
       <div className="mood-board-header-wedding-details">
-        <h3>Mood Board</h3>
+        <h3 style={{marginBottom: '0px', fontFamily:'Outfit', fontSize:'2rem'}}>Mood Board</h3>
         <p className="section-description-wedding-details">
           Upload and organize inspiration images to create your wedding mood board. 
-          <span className="upload-hint-wedding-details">
-            <i className="fas fa-lightbulb"></i>
-            Tip: You can drag and drop multiple images at once!
-          </span>
         </p>
       </div>
       

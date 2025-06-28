@@ -30,10 +30,10 @@
 }
 
 .header-notification-bell {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 10;
+  position: fixed;
+  top: 100px;
+  right: 50px;
+  z-index: 1000;
 }
 
 .dashboard-header h1 {

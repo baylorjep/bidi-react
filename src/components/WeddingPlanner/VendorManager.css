@@ -652,7 +652,7 @@
 
   .category-actions-vendor-manager {
     width: 100%;
-    justify-content: space-between;
+    justify-content:left;
     margin-left: 0;
     flex-wrap: wrap;
     gap: 8px;
@@ -869,7 +869,7 @@
   
   .category-actions-vendor-manager {
     width: 100%;
-    justify-content: space-between;
+    justify-content:left;
     margin-left: 0;
   }
   
@@ -1610,11 +1610,7 @@
   height: 32px !important;
 }
 
-/* Bid Display Integration Styles */
-.bids-section {
-  margin-bottom: 32px;
-}
-
+/* Bid Display Integration Styles */a
 .bids-section h4 {
   font-size: 1.2rem;
   font-weight: 600;
@@ -1642,10 +1638,6 @@
 .bid-display-wrapper:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
-}
-
-.vendors-section {
-  margin-top: 32px;
 }
 
 .vendors-section h4 {
@@ -2194,7 +2186,7 @@
   
   .category-actions-vendor-manager {
     width: 100%;
-    justify-content: space-between;
+    justify-content: left;
     margin-left: 0;
     flex-wrap: wrap;
     gap: 8px;
@@ -3007,17 +2999,25 @@
   background: linear-gradient(135deg, #faf5ff, #f3f4f6);
   border-radius: 0.5rem;
   border: 1px solid #e5e7eb;
-  max-width:280px;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 300px;
 }
 
-.request-status-badge {
+@media (max-width: 768px) {
+  .request-info {
+    max-width: 80%;
+  }
+}
+
+.request-status-badge-vendor-manager {
   display: flex;
   gap: 0.5rem;
   align-items: center;
   flex-wrap: wrap;
 }
 
-.request-status-badge .status {
+.request-status-badge-vendor-manager .status {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -3029,17 +3029,17 @@
   letter-spacing: 0.05em;
 }
 
-.request-status-badge .status.open {
+.request-status-badge-vendor-manager .status.open {
   background-color: #d1fae5;
   color: #065f46;
 }
 
-.request-status-badge .status.closed {
+.request-status-badge-vendor-manager .status.closed {
   background-color: #fee2e2;
   color: #991b1b;
 }
 
-.request-status-badge .status.new {
+.request-status-badge-vendor-manager .status.new {
   background-color: #fef3c7;
   color: #92400e;
 }
@@ -3166,4 +3166,148 @@
   color: #6b7280;
   font-weight: 400;
   margin-top: 0;
+}
+
+/* Bid Section Header - Modern Box Design */
+.bids-section-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.bids-section-header:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+  transform: translateY(-1px);
+}
+
+.bids-section-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding:0px;
+  margin-left: 8px;
+}
+
+.bids-section-header span:first-child {
+  color: #8b5cf6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: transform 0.2s ease;
+}
+
+/* Vendor Section Header - Matching Style */
+.vendors-section-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.vendors-section-header:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+  transform: translateY(-1px);
+}
+
+.vendors-section-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vendors-section-header span:first-child {
+  color: #f59e0b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: transform 0.2s ease;
+}
+
+/* Status-specific colors for bid sections */
+.bids-section-approved .bids-section-header {
+  border-color: #10b981;
+}
+
+.bids-section-approved .bids-section-header:hover {
+  border-color: #059669;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+}
+
+.bids-section-approved .bids-section-header span:first-child {
+  color: #10b981;
+}
+
+.bids-section-interested .bids-section-header {
+  border-color: #f59e0b;
+}
+
+.bids-section-interested .bids-section-header:hover {
+  border-color: #d97706;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+}
+
+.bids-section-interested .bids-section-header span:first-child {
+  color: #f59e0b;
+}
+
+.bids-section-pending .bids-section-header {
+  border-color: #3b82f6;
+}
+
+.bids-section-pending .bids-section-header:hover {
+  border-color: #2563eb;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.bids-section-pending .bids-section-header span:first-child {
+  color: #3b82f6;
+}
+
+.bids-section-denied .bids-section-header {
+  border-color: #ef4444;
+}
+
+.bids-section-denied .bids-section-header:hover {
+  border-color: #dc2626;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+}
+
+.bids-section-denied .bids-section-header span:first-child {
+  color: #ef4444;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .bids-section-header,
+  .vendors-section-header {
+    padding: 10px 12px;
+  }
+  
+  .bids-section-header h4,
+  .vendors-section-header h4 {
+    font-size: 0.9rem;
+  }
 }

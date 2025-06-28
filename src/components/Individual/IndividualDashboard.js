@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../../supabaseClient";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import "../../App.css";
 import "../../styles/IndividualDashboard.css";
 import "../../styles/Sidebar.css";
@@ -45,17 +45,32 @@ const IndividualDashboard = () => {
   });
   const [selectedChat, setSelectedChat] = useState(null);
   const navigate = useNavigate();
+  const params = useParams();
+  const location = useLocation();
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isPinned, setIsPinned] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   const sidebarRef = React.useRef(null);
-  const location = useLocation();
   const [showShareSection, setShowShareSection] = useState(() => {
     const savedState = localStorage.getItem('bidiShareNotificationDismissed');
     return savedState !== 'true';
   });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef(null);
+
+  // Initialize activeSection from URL parameter
+  useEffect(() => {
+    if (params.activeSection) {
+      setActiveSection(params.activeSection);
+    }
+  }, [params.activeSection]);
+
+  // Function to update section and URL
+  const handleSectionChange = (newSection) => {
+    setActiveSection(newSection);
+    // Update URL to reflect the active section
+    navigate(`/individual-dashboard/${newSection}`, { replace: true });
+  };
 
   useEffect(() => {
     if (location.state?.activeSection) {
@@ -138,7 +153,7 @@ const IndividualDashboard = () => {
   }, [activeSection]);
 
   const handleMessagesClick = () => {
-    setActiveSection("messages");
+    handleSectionChange("messages");
     setSelectedChat(null);
   };
 
@@ -483,7 +498,7 @@ const IndividualDashboard = () => {
           {/* Sidebar Links */}
           <ul className="sidebar-links">
             <li 
-              onClick={() => setActiveSection("bids")}
+              onClick={() => handleSectionChange("bids")}
               className={activeSection === "bids" ? "active" : ""}
             >
               <img src={bidsIcon} alt="Bids" />
@@ -497,21 +512,21 @@ const IndividualDashboard = () => {
               <span>Messages</span>
             </li>
             <li 
-              onClick={() => setActiveSection("request")}
+              onClick={() => handleSectionChange("request")}
               className={activeSection === "request" ? "active" : ""}
             >
               <img src={bidsIcon} alt="Request Bid" />
               <span>Request Bid</span>
             </li>
             <li 
-              onClick={() => setActiveSection("vendors")}
+              onClick={() => handleSectionChange("vendors")}
               className={activeSection === "vendors" ? "active" : ""}
             >
               <img src={profileIcon} alt="Vendors" />
               <span>Find Vendors</span>
             </li>
             <li 
-              onClick={() => setActiveSection("profile")}
+              onClick={() => handleSectionChange("profile")}
               className={activeSection === "profile" ? "active" : ""}
             >
               <img src={settingsIcon} alt="Profile" />
@@ -730,7 +745,7 @@ const IndividualDashboard = () => {
         {isMobile && (
           <nav className="bottom-nav">
             <button 
-              onClick={() => setActiveSection("bids")}
+              onClick={() => handleSectionChange("bids")}
               className={activeSection === "bids" ? "active" : ""}
             >
               <div className="nav-item">
@@ -748,7 +763,7 @@ const IndividualDashboard = () => {
               </div>
             </button>
             <button 
-              onClick={() => setActiveSection("request")}
+              onClick={() => handleSectionChange("request")}
               className={activeSection === "request" ? "active" : ""}
             >
               <div className="nav-item">
@@ -757,7 +772,7 @@ const IndividualDashboard = () => {
               </div>
             </button>
             <button 
-              onClick={() => setActiveSection("vendors")}
+              onClick={() => handleSectionChange("vendors")}
               className={activeSection === "vendors" ? "active" : ""}
             >
               <div className="nav-item">
@@ -782,7 +797,7 @@ const IndividualDashboard = () => {
           <div className="profile-menu" ref={profileMenuRef}>
             <button 
               onClick={() => {
-                setActiveSection("profile");
+                handleSectionChange("profile");
                 setShowProfileMenu(false);
               }}
               className="profile-menu-item"

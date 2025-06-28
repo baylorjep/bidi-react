@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { toast } from 'react-toastify';
 import WeddingTimeline from './WeddingTimeline';
@@ -30,6 +30,22 @@ function WeddingPlanningDashboard() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [backgroundImageIndex, setBackgroundImageIndex] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams();
+
+  // Initialize activeTab from URL parameter
+  useEffect(() => {
+    if (params.activeTab) {
+      setActiveTab(params.activeTab);
+    }
+  }, [params.activeTab]);
+
+  // Function to update tab and URL
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    // Update URL to reflect the active tab
+    navigate(`/wedding-planner/${newTab}`, { replace: true });
+  };
 
   useEffect(() => {
     checkUserAndLoadWedding();
@@ -189,7 +205,7 @@ function WeddingPlanningDashboard() {
       // Check if this is a tab switch request from VendorManager
       if (updates && updates.type === 'switchTab') {
         console.log('Dashboard received switchTab request:', updates);
-        setActiveTab(updates.tab);
+        handleTabChange(updates.tab);
         if (updates.chatData && updates.tab === 'messaging') {
           // chatData is now directly the business ID
           console.log('Setting selectedChatId to:', updates.chatData, 'type:', typeof updates.chatData);
@@ -751,7 +767,7 @@ function WeddingPlanningDashboard() {
               alert('Button clicked!');
               console.log('Create wedding button clicked');
               console.log('Current activeTab before:', activeTab);
-              setActiveTab('setup');
+              handleTabChange('setup');
               console.log('ActiveTab set to setup');
             }}
           >
@@ -764,7 +780,7 @@ function WeddingPlanningDashboard() {
     console.log('Wedding data exists, rendering tab content for:', activeTab);
     switch (activeTab) {
       case 'overview':
-        return <WeddingOverview weddingData={weddingData} onNavigate={setActiveTab} />;
+        return <WeddingOverview weddingData={weddingData} onNavigate={handleTabChange} />;
       
       case 'timeline':
         return <WeddingTimeline weddingData={weddingData} onUpdate={updateWeddingData} />;
@@ -827,6 +843,15 @@ function WeddingPlanningDashboard() {
 
   return (
     <div className="wedding-planning-dashboard">
+      {/* Notification Bell - moved to top level */}
+      <div className="header-notification-bell">
+        <WeddingNotificationBell 
+          notifications={notifications}
+          onDismissNotification={dismissNotification}
+          onClearAllNotifications={clearAllNotifications}
+        />
+      </div>
+      
       {/* Overview Hero Section */}
       {weddingData ? (
         <div 
@@ -844,6 +869,7 @@ function WeddingPlanningDashboard() {
           }}
         >
           <div className="frosted-hero-glass" />
+          
           <div className="hero-content-wrapper">
             <div className="hero-content">
               <div className="wedding-title-section">
@@ -877,16 +903,6 @@ function WeddingPlanningDashboard() {
                 </div>
               </div>
             </div>
-        
-            
-            {/* Notification Bell */}
-            <div className="header-notification-bell">
-              <WeddingNotificationBell 
-                notifications={notifications}
-                onDismissNotification={dismissNotification}
-                onClearAllNotifications={clearAllNotifications}
-              />
-            </div>
             
             {/* Slideshow Indicator */}
             {moodBoardImages.length > 1 && (
@@ -917,7 +933,7 @@ function WeddingPlanningDashboard() {
       <div className="dashboard-tabs desktop-tabs">
         <button 
           className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
+          onClick={() => handleTabChange('overview')}
         >
           <i className="fas fa-home"></i>
           Overview
@@ -926,7 +942,7 @@ function WeddingPlanningDashboard() {
         {!weddingData && (
           <button 
             className={`tab ${activeTab === 'setup' ? 'active' : ''}`}
-            onClick={() => setActiveTab('setup')}
+            onClick={() => handleTabChange('setup')}
           >
             <i className="fas fa-plus-circle"></i>
             Setup
@@ -937,7 +953,7 @@ function WeddingPlanningDashboard() {
           <>
             <button 
               className={`tab ${activeTab === 'timeline' ? 'active' : ''}`}
-              onClick={() => setActiveTab('timeline')}
+              onClick={() => handleTabChange('timeline')}
             >
               <i className="fas fa-calendar-alt"></i>
               Timeline
@@ -945,7 +961,7 @@ function WeddingPlanningDashboard() {
             
             <button 
               className={`tab ${activeTab === 'budget' ? 'active' : ''}`}
-              onClick={() => setActiveTab('budget')}
+              onClick={() => handleTabChange('budget')}
             >
               <i className="fas fa-dollar-sign"></i>
               Budget
@@ -953,7 +969,7 @@ function WeddingPlanningDashboard() {
             
             <button 
               className={`tab ${activeTab === 'vendors' ? 'active' : ''}`}
-              onClick={() => setActiveTab('vendors')}
+              onClick={() => handleTabChange('vendors')}
             >
               <i className="fas fa-users"></i>
               Vendors
@@ -961,7 +977,7 @@ function WeddingPlanningDashboard() {
             
             <button 
               className={`tab ${activeTab === 'guests' ? 'active' : ''}`}
-              onClick={() => setActiveTab('guests')}
+              onClick={() => handleTabChange('guests')}
             >
               <i className="fas fa-user-friends"></i>
               Guests
@@ -969,7 +985,7 @@ function WeddingPlanningDashboard() {
             
             <button 
               className={`tab ${activeTab === 'details' ? 'active' : ''}`}
-              onClick={() => setActiveTab('details')}
+              onClick={() => handleTabChange('details')}
             >
               <i className="fas fa-info-circle"></i>
               Details
@@ -989,7 +1005,7 @@ function WeddingPlanningDashboard() {
           <>
             <button 
               className={`mobile-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('overview')}
+              onClick={() => handleTabChange('overview')}
             >
               <i className="fas fa-home"></i>
               <span>Overview</span>
@@ -997,7 +1013,7 @@ function WeddingPlanningDashboard() {
             
             <button 
               className={`mobile-nav-item ${activeTab === 'setup' ? 'active' : ''}`}
-              onClick={() => setActiveTab('setup')}
+              onClick={() => handleTabChange('setup')}
             >
               <i className="fas fa-plus-circle"></i>
               <span>Setup</span>
@@ -1009,7 +1025,7 @@ function WeddingPlanningDashboard() {
             <button 
               className={`mobile-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab('overview');
+                handleTabChange('overview');
                 setShowVendorsSubmenu(false);
               }}
             >
@@ -1020,7 +1036,7 @@ function WeddingPlanningDashboard() {
             <button 
               className={`mobile-nav-item ${activeTab === 'timeline' ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab('timeline');
+                handleTabChange('timeline');
                 setShowVendorsSubmenu(false);
               }}
             >
@@ -1031,7 +1047,7 @@ function WeddingPlanningDashboard() {
             <button 
               className={`mobile-nav-item ${activeTab === 'budget' ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab('budget');
+                handleTabChange('budget');
                 setShowVendorsSubmenu(false);
               }}
             >
@@ -1046,7 +1062,7 @@ function WeddingPlanningDashboard() {
                 if (showVendorsSubmenu) {
                   setShowVendorsSubmenu(false);
                 } else {
-                  setActiveTab('vendors');
+                  handleTabChange('vendors');
                   setShowVendorsSubmenu(true);
                 }
               }}
@@ -1058,7 +1074,7 @@ function WeddingPlanningDashboard() {
             <button 
               className={`mobile-nav-item ${activeTab === 'guests' ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab('guests');
+                handleTabChange('guests');
                 setShowVendorsSubmenu(false);
               }}
             >
@@ -1069,7 +1085,7 @@ function WeddingPlanningDashboard() {
             <button 
               className={`mobile-nav-item ${activeTab === 'details' ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab('details');
+                handleTabChange('details');
                 setShowVendorsSubmenu(false);
               }}
             >
@@ -1086,7 +1102,7 @@ function WeddingPlanningDashboard() {
           <button 
             className={`mobile-submenu-item ${activeTab === 'vendors' ? 'active' : ''}`}
             onClick={() => {
-              setActiveTab('vendors');
+              handleTabChange('vendors');
               setShowVendorsSubmenu(false);
             }}
           >
@@ -1096,7 +1112,7 @@ function WeddingPlanningDashboard() {
           <button 
             className={`mobile-submenu-item ${activeTab === 'messaging' ? 'active' : ''}`}
             onClick={() => {
-              setActiveTab('messaging');
+              handleTabChange('messaging');
               setShowVendorsSubmenu(false);
             }}
           >

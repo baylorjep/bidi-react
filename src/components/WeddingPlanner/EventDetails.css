@@ -206,7 +206,7 @@
 /* Color Palette Styles */
 .color-palette-grid-wedding-details {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
 }
@@ -214,78 +214,225 @@
 .color-item-wedding-details {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+}
+
+.color-item-wedding-details label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+  margin-bottom: 0;
 }
 
 .color-picker-container-wedding-details {
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 15px;
+  padding: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.color-picker-container-wedding-details:hover {
+  border-color: #6366f1;
+  background: #f8fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
 }
 
 .color-picker-wedding-details {
+  display: none;
+}
+
+.color-display-wedding-details {
   width: 50px;
   height: 50px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  background: none;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
-.color-picker-wedding-details:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
+.color-picker-container-wedding-details:hover .color-display-wedding-details {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-.color-hex-wedding-details {
+.color-info-wedding-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   flex: 1;
-  padding: 12px 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-family: monospace;
-  font-size: 14px;
+  min-width: 0;
 }
 
-.color-hex-wedding-details:focus {
+.custom-color-name-wedding-details {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  color: #374151;
+}
+
+.custom-color-name-wedding-details:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
-.color-hex-wedding-details:disabled {
-  background: #f9fafb;
+.color-hint-wedding-details {
+  font-size: 0.75rem;
   color: #6b7280;
-  cursor: not-allowed;
-  opacity: 0.6;
+  font-style: italic;
+}
+
+.remove-color-btn-wedding-details {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.remove-color-btn-wedding-details:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+/* Add Color Section */
+.add-color-section-wedding-details {
+  margin: 30px 0;
+  text-align: center;
+}
+
+.add-color-btn-wedding-details {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.add-color-btn-wedding-details:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+}
+
+.add-color-btn-wedding-details:active {
+  transform: translateY(0);
+}
+
+.add-color-btn-wedding-details i {
+  font-size: 0.85rem;
+}
+
+.no-colors-message-wedding-details {
+  text-align: center;
+  padding: 50px 30px;
+  color: #6b7280;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  border: 2px dashed #d1d5db;
+  margin: 30px 0;
+}
+
+.no-colors-message-wedding-details i {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  opacity: 0.4;
+  color: #6366f1;
+}
+
+.no-colors-message-wedding-details p {
+  margin: 15px 0 8px 0;
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: #374151;
+}
+
+.no-colors-message-wedding-details small {
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .color-preview-wedding-details {
-  background: #f8fafc;
-  padding: 20px;
-  border-radius: 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 25px;
+  border-radius: 16px;
   border: 1px solid #e2e8f0;
+  margin-top: 30px;
 }
 
 .color-preview-wedding-details h4 {
-  margin: 0 0 15px 0;
+  margin: 0 0 20px 0;
   color: #1e293b;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.color-swatches-container-wedding-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
 }
 
 .color-swatch-wedding-details {
-  display: inline-block;
-  width: 80px;
-  height: 40px;
-  margin: 5px;
-  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 90px;
+  height: 45px;
+  border-radius: 10px;
   color: white;
   font-weight: 600;
   font-size: 0.8rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.color-swatch-wedding-details:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.color-swatch-wedding-details span {
+  text-align: center;
+  line-height: 1.2;
 }
 
 /* Mood Board Styles */

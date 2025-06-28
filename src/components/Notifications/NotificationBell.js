@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../../supabaseClient';
 import '../../styles/Notifications.css';
 
@@ -279,84 +280,87 @@ const NotificationBell = () => {
       </button>
 
       {showDropdown && (
-        <div className="notification-dropdown">
-          <div className="notification-header">
-            <h3>Notifications</h3>
-            <div className="notification-actions">
-              {(unreadCount > 0 || unviewedBids.length > 0) && (
-                <button className="mark-all-read" onClick={() => {
-                  markAllAsRead();
-                  markAllBidsAsViewed();
-                }}>
-                  Mark all as read
-                </button>
+        createPortal(
+          <div className="notification-dropdown">
+            <div className="notification-header">
+              <h3>Notifications</h3>
+              <div className="notification-actions">
+                {(unreadCount > 0 || unviewedBids.length > 0) && (
+                  <button className="mark-all-read" onClick={() => {
+                    markAllAsRead();
+                    markAllBidsAsViewed();
+                  }}>
+                    Mark all as read
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button className="clear-all-notifications" onClick={clearAllNotifications}>
+                    Clear all
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="notification-list">
+              {/* Unviewed Bids */}
+              {unviewedBids.length > 0 && (
+                <>
+                  <div className="notification-section-header">
+                    <h4>New Bids ({unviewedBids.length})</h4>
+                  </div>
+                  {unviewedBids.map(bid => (
+                    <div
+                      key={`bid-${bid.id}`}
+                      className="notification-item unread bid-notification"
+                      onClick={() => markBidAsViewed(bid.id)}
+                    >
+                      <i className="fas fa-gavel"></i>
+                      <div className="notification-content">
+                        <p>New bid from {bid.business_profiles?.business_name} - ${bid.bid_amount}</p>
+                        <small>
+                          {new Date(bid.created_at).toLocaleDateString()}
+                        </small>
+                      </div>
+                    </div>
+                  ))}
+                </>
               )}
+
+              {/* Regular Notifications */}
               {notifications.length > 0 && (
-                <button className="clear-all-notifications" onClick={clearAllNotifications}>
-                  Clear all
-                </button>
+                <>
+                  {unviewedBids.length > 0 && (
+                    <div className="notification-section-header">
+                      <h4>Other Notifications</h4>
+                    </div>
+                  )}
+                  {notifications.map(notification => (
+                    <div
+                      key={notification.id}
+                      className={`notification-item ${!notification.read ? 'unread' : ''}`}
+                      onClick={() => markAsRead(notification.id)}
+                    >
+                      <i className={`fas ${getNotificationIcon(notification.type)}`}></i>
+                      <div className="notification-content">
+                        <p>{notification.message}</p>
+                        <small>
+                          {new Date(notification.created_at).toLocaleDateString()}
+                        </small>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* No notifications */}
+              {notifications.length === 0 && unviewedBids.length === 0 && (
+                <div className="no-notifications">
+                  No notifications yet
+                </div>
               )}
             </div>
-          </div>
-          <div className="notification-list">
-            {/* Unviewed Bids */}
-            {unviewedBids.length > 0 && (
-              <>
-                <div className="notification-section-header">
-                  <h4>New Bids ({unviewedBids.length})</h4>
-                </div>
-                {unviewedBids.map(bid => (
-                  <div
-                    key={`bid-${bid.id}`}
-                    className="notification-item unread bid-notification"
-                    onClick={() => markBidAsViewed(bid.id)}
-                  >
-                    <i className="fas fa-gavel"></i>
-                    <div className="notification-content">
-                      <p>New bid from {bid.business_profiles?.business_name} - ${bid.bid_amount}</p>
-                      <small>
-                        {new Date(bid.created_at).toLocaleDateString()}
-                      </small>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {/* Regular Notifications */}
-            {notifications.length > 0 && (
-              <>
-                {unviewedBids.length > 0 && (
-                  <div className="notification-section-header">
-                    <h4>Other Notifications</h4>
-                  </div>
-                )}
-                {notifications.map(notification => (
-                  <div
-                    key={notification.id}
-                    className={`notification-item ${!notification.read ? 'unread' : ''}`}
-                    onClick={() => markAsRead(notification.id)}
-                  >
-                    <i className={`fas ${getNotificationIcon(notification.type)}`}></i>
-                    <div className="notification-content">
-                      <p>{notification.message}</p>
-                      <small>
-                        {new Date(notification.created_at).toLocaleDateString()}
-                      </small>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {/* No notifications */}
-            {notifications.length === 0 && unviewedBids.length === 0 && (
-              <div className="no-notifications">
-                No notifications yet
-              </div>
-            )}
-          </div>
-        </div>
+          </div>,
+          document.body
+        )
       )}
     </div>
   );

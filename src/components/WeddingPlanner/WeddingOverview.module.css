@@ -191,10 +191,11 @@
 
 .budgetItem {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: 8px 0;
   border-bottom: 1px solid #f3f4f6;
+  gap: 24px;
 }
 
 .budgetItem:last-child {

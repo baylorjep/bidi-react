@@ -1371,7 +1371,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                     </p>
                     {categoryRequest && (
                       <div className="request-info">
-                        <div className="request-status-badge">
+                        <div className="request-status-badge-vendor-manager">
                           <span className={`status ${categoryRequest.isOpen ? 'open' : 'closed'}`}>
                             <i className={`fas ${categoryRequest.isOpen ? 'fa-unlock' : 'fa-lock'}`}></i>
                             {categoryRequest.isOpen ? 'Request Open' : 'Request Closed'}
@@ -1408,7 +1408,9 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                       title={categoryRequest.isOpen ? "Close request" : "Reopen request"}
                     >
                       <i className={`fas ${categoryRequest.isOpen ? 'fa-lock' : 'fa-unlock'}`}></i>
-                      {categoryRequest.isOpen ? 'Close Request' : 'Reopen Request'}
+                      <span className="button-text">
+                        {categoryRequest.isOpen ? 'Close' : 'Reopen'}
+                      </span>
                     </button>
                   )}
                   <button 
@@ -1496,16 +1498,15 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                       const isOpen = openBidSections[category.id]?.[key] || false;
                       const newBidsInSection = bidsByStatus[key].filter(bid => !bid.viewed).length;
                       return (
-                        <div key={key} className={`bids-section bids-section-${key}`} style={{ marginBottom: 24 }}>
+                        <div key={key} className={`bids-section bids-section-${key}`}>
                           <div
                             className="bids-section-header"
-                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
                             onClick={() => toggleBidSection(category.id, key)}
                           >
-                            <span style={{ marginRight: 8 }}>
+                            <span>
                               {isOpen ? '▼' : '▶'}
                             </span>
-                            <h4 style={{ margin: 0 }}>
+                            <h4>
                               {label} Bids ({bidsByStatus[key].length})
                               {newBidsInSection > 0 && (
                                 <span 
@@ -1539,13 +1540,12 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                     <div className="vendors-section">
                       <div
                         className="vendors-section-header"
-                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
                         onClick={() => toggleManualVendorsSection(category.id)}
                       >
-                        <span style={{ marginRight: 8 }}>
+                        <span>
                           {openBidSections[category.id]?.manualVendors ? '▼' : '▶'}
                         </span>
-                        <h4 style={{ margin: 0 }}>
+                        <h4>
                           Manual Vendors ({categoryVendors.length})
                           {/* Note: Manual vendors are typically added by user, so new count will usually be 0 */}
                         </h4>

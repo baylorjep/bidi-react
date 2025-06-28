@@ -306,12 +306,27 @@ function AppContent() {
               <IndividualDashboard />
             </PrivateRoute>
           } />
+          <Route path="/individual-dashboard/:activeSection" element={
+            <PrivateRoute>
+              <IndividualDashboard />
+            </PrivateRoute>
+          } />
           <Route path="/business-dashboard" element={
             <PrivateRoute>
               <BusinessDashboard />
             </PrivateRoute>
           } />
+          <Route path="/business-dashboard/:activeSection" element={
+            <PrivateRoute>
+              <BusinessDashboard />
+            </PrivateRoute>
+          } />
           <Route path="/wedding-planner-dashboard" element={
+            <PrivateRoute>
+              <WeddingPlannerDashboard />
+            </PrivateRoute>
+          } />
+          <Route path="/wedding-planner-dashboard/:activeSection" element={
             <PrivateRoute>
               <WeddingPlannerDashboard />
             </PrivateRoute>
@@ -393,6 +408,7 @@ function AppContent() {
 
           {/* Wedding Planner Routes */}
           <Route path="/wedding-planner" element={<WeddingPlanningDashboard />} />
+          <Route path="/wedding-planner/:activeTab" element={<WeddingPlanningDashboard />} />
           <Route path="/shared-timeline/:shareId" element={<SharedTimelineView />} />
 
           {/* Public RSVP Route */}

@@ -65,7 +65,9 @@ function EditRequest() {
 
                 if (!data || data.length === 0) {
                     setError('Request not found');
-                    navigate('/my-requests'); // Redirect to requests list
+                    navigate(-1
+                
+                    ); // Redirect to requests list
                     return;
                 }
 
@@ -122,7 +124,7 @@ function EditRequest() {
             } catch (error) {
                 console.error('Error fetching request:', error);
                 setError('Failed to fetch request. Please try again later.');
-                navigate('/my-requests'); // Redirect to requests list
+                navigate(-1); // Redirect to requests list
             }
         };
 
@@ -257,7 +259,7 @@ function EditRequest() {
             setError('Failed to update request');
             console.error(error);
         } else {
-            navigate('/bids');
+            navigate(-1);
         }
     };
 
@@ -1307,7 +1309,7 @@ function EditRequest() {
                     <button type="submit" className="btn-edit">
                         Save Changes
                     </button>
-                    <button type="button" className="btn-toggle" onClick={() => navigate('/bids')}>
+                    <button type="button" className="btn-toggle" onClick={() => navigate(-1)}>
                         Cancel
                     </button>
                 </div>

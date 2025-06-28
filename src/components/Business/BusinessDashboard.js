@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 // import StripeDashboardButton from "../Stripe/StripeDashboardButton";
 import { supabase } from "../../supabaseClient";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import "../../App.css";
 import "../../styles/BusinessDashboard.css";
 import "../../styles/Sidebar.css";
@@ -44,6 +44,8 @@ const BusinessDashSidebar = () => {
   const [profile, setProfile] = useState(null);
   const [bids, setBids] = useState([]);
   const navigate = useNavigate();
+  const params = useParams();
+  const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [unviewedBidCount, setUnviewedBidCount] = useState(0);
@@ -72,6 +74,20 @@ const BusinessDashSidebar = () => {
   const [hasSeenNewFeatures, setHasSeenNewFeatures] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef(null);
+
+  // Initialize activeSection from URL parameter
+  useEffect(() => {
+    if (params.activeSection) {
+      setActiveSection(params.activeSection);
+    }
+  }, [params.activeSection]);
+
+  // Function to update section and URL
+  const handleSectionChange = (newSection) => {
+    setActiveSection(newSection);
+    // Update URL to reflect the active section
+    navigate(`/business-dashboard/${newSection}`, { replace: true });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -181,10 +197,10 @@ const BusinessDashSidebar = () => {
 
   const handleMessagesClick = () => {
     if (isMobile) {
-      setActiveSection("messages");
+      handleSectionChange("messages");
       setSelectedChat(null);
     } else {
-      setActiveSection("messages");
+      handleSectionChange("messages");
     }
   };
 
@@ -461,14 +477,14 @@ const BusinessDashSidebar = () => {
           {/* Sidebar Links */}
           <ul className="sidebar-links">
             <li 
-              onClick={() => setActiveSection("dashboard")}
+              onClick={() => handleSectionChange("dashboard")}
               className={activeSection === "dashboard" ? "active" : ""}
             >
               <img src={dashboardIcon} alt="Requests" />
               <span>Requests</span>
             </li>
             <li 
-              onClick={() => setActiveSection("bids")}
+              onClick={() => handleSectionChange("bids")}
               className={activeSection === "bids" ? "active" : ""}
             >
               <img src={bidsIcon} alt="Bids" />
@@ -491,14 +507,14 @@ const BusinessDashSidebar = () => {
               <span>Portfolio</span>
             </li>
             <li 
-              onClick={() => setActiveSection("training")}
+              onClick={() => handleSectionChange("training")}
               className={activeSection === "training" ? "active" : ""}
             >
               <i className="fas fa-play-circle" style={{ width: '24px', height: '24px', marginRight: '12px', fontSize: '20px', color: '#9633eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}></i>
               <span>Training</span>
             </li>
             <li 
-              onClick={() => setActiveSection("settings")}
+              onClick={() => handleSectionChange("settings")}
               className={activeSection === "settings" ? "active" : ""}
             >
               <img src={settingsIcon} alt="Settings" />
@@ -506,7 +522,7 @@ const BusinessDashSidebar = () => {
             </li>
             {isAdmin && (
               <li 
-                onClick={() => setActiveSection("admin")}
+                onClick={() => handleSectionChange("admin")}
                 className={activeSection === "admin" ? "active" : ""}
               >
                 <i className="fas fa-shield-alt" style={{ width: '24px', height: '24px', marginRight: '12px', fontSize: '20px', color: '#9633eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}></i>
@@ -610,7 +626,7 @@ const BusinessDashSidebar = () => {
           <>
             <nav className="bottom-nav">
               <button 
-                onClick={() => setActiveSection("dashboard")}
+                onClick={() => handleSectionChange("dashboard")}
                 className={activeSection === "dashboard" ? "active" : ""}
               >
                 <div className="nav-item">
@@ -619,7 +635,7 @@ const BusinessDashSidebar = () => {
                 </div>
               </button>
               <button 
-                onClick={() => setActiveSection("bids")}
+                onClick={() => handleSectionChange("bids")}
                 className={activeSection === "bids" ? "active" : ""}
               >
                 <div className="nav-item">
@@ -661,7 +677,7 @@ const BusinessDashSidebar = () => {
               <div className="profile-menu" ref={profileMenuRef}>
                 <button 
                   onClick={() => {
-                    setActiveSection("training");
+                    handleSectionChange("training");
                     setShowProfileMenu(false);
                   }}
                   className="profile-menu-item"
@@ -671,7 +687,7 @@ const BusinessDashSidebar = () => {
                 </button>
                 <button 
                   onClick={() => {
-                    setActiveSection("settings");
+                    handleSectionChange("settings");
                     setShowProfileMenu(false);
                   }}
                   className="profile-menu-item"
@@ -682,7 +698,7 @@ const BusinessDashSidebar = () => {
                 {isAdmin && (
                   <button 
                     onClick={() => {
-                      setActiveSection("admin");
+                      handleSectionChange("admin");
                       setShowProfileMenu(false);
                     }}
                     className="profile-menu-item"
