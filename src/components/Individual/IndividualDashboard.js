@@ -18,6 +18,7 @@ import MessagingView from "../Messaging/MessagingView.js";
 import RequestCategories from "../Request/RequestCategories.js";
 import VendorListWithFilters from "../VendorListWithFilters/VendorListWithFilters.js";
 import MasterRequestFlow from "../Request/MasterRequestFlow.js";
+import Settings from "../Settings/Settings.js";
 
 const IndividualDashboard = () => {
   const [user, setUser] = useState(null);
@@ -612,130 +613,7 @@ const IndividualDashboard = () => {
           ) : activeSection === "vendors" ? (
             <VendorListWithFilters />
           ) : activeSection === "profile" ? (
-            <div className="profile-content">
-              <h2>My Profile</h2>
-              {showShareSection && (
-                <div style={{ 
-                  textAlign: 'center', 
-                  padding: '20px', 
-                  backgroundColor: '#f8f9fa', 
-                  borderRadius: '8px',
-                  color: '#FF008A',
-                  fontWeight: 'bold',
-                  marginBottom: '20px',
-                  fontSize: '14px',
-                  position: 'relative',
-                  border: '1px solid #FF008A',
-                  boxShadow: '0 2px 8px rgba(255,0,138,0.1)'
-                }}>
-                  <button 
-                    onClick={handleDismissShareNotification}
-                    style={{
-                      position: 'absolute',
-                      right: '8px',
-                      top: '8px',
-                      background: 'none',
-                      border: 'none',
-                      color: '#666',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      fontSize: '16px',
-                      zIndex: 1
-                    }}
-                  >
-                    ×
-                  </button>
-                  <h3 style={{ marginBottom: '15px', color: '#333' }}>
-                    Share Bidi & Earn
-                  </h3>
-                  <p style={{ marginBottom: '20px', color: '#666' }}>
-                    Share Bidi with your friends! They get $50 off their vendor, and you get $50 when they book!
-                  </p>
-                  <div style={{display: 'flex', justifyContent: 'center'}}>
-                    <button
-                      className="btn-primary"
-                      onClick={() => {
-                        // Add your share functionality here
-                        console.log('Share clicked');
-                      }}
-                      style={{
-                        padding: '12px 24px',
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                        background: '#9633eb',
-                        color:'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '40px',
-                        border: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <i className="fas fa-share-alt" style={{ marginRight: '8px' }}></i>
-                      Get Your Referral Code
-                    </button>
-                  </div>
-                </div>
-              )}
-              <div className="profile-form">
-                {editMode ? (
-                  <form onSubmit={handleProfileUpdate}>
-                    <div className="form-group">
-                      <label>First Name</label>
-                      <input
-                        type="text"
-                        value={formData.first_name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Last Name</label>
-                      <input
-                        type="text"
-                        value={formData.last_name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Phone Number</label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="form-actions">
-                      <button type="submit" className="btn-primary">Save Changes</button>
-                      <button type="button" className="btn-secondary" onClick={() => setEditMode(false)}>
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="profile-info">
-                    <div className="info-group">
-                      <label>First Name</label>
-                      <p>{profile?.first_name || "Not set"}</p>
-                    </div>
-                    <div className="info-group">
-                      <label>Last Name</label>
-                      <p>{profile?.last_name || "Not set"}</p>
-                    </div>
-                    <div className="info-group">
-                      <label>Phone Number</label>
-                      <p>{profile?.phone || "Not set"}</p>
-                    </div>
-                    <button className="btn-primary" onClick={() => setEditMode(true)}>
-                      Edit Profile
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            <Settings currentDashboard="individual" />
           ) : (
             <div>An error occurred</div>
           )}

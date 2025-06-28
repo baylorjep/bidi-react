@@ -4,6 +4,7 @@ import { supabase } from '../../supabaseClient';
 import { toast } from 'react-toastify';
 import BidDisplay from '../Bid/BidDisplay';
 import './VendorManager.css';
+import LoadingSpinner from '../LoadingSpinner';
 
 function VendorManager({ weddingData, onUpdate, compact = false }) {
   const [vendors, setVendors] = useState([]);
@@ -1274,9 +1275,13 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
 
   if (loading) {
     return (
-      <div className="vendor-manager-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading vendors...</p>
+      <div className="vendor-manager">
+        <LoadingSpinner 
+          variant="ring" 
+          color="#ff008a" 
+          text="Loading vendors..." 
+          fullScreen={true}
+        />
       </div>
     );
   }

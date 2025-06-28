@@ -300,13 +300,9 @@ function AppContent() {
           <Route path="/reset-password" element={<UpdatePassword />} />
           <Route path="/createaccount" element={<CreateAccount />} />
           <Route path="/profile" element={<ProfilePage />} />
-          {/* Individual Routes */}
-          <Route path="/individual-dashboard" element={
-            <PrivateRoute>
-              <IndividualDashboard />
-            </PrivateRoute>
-          } />
-          <Route path="/individual-dashboard/:activeSection" element={
+          
+          {/* Dashboard Routes */}
+          <Route path="/individual-dashboard/*" element={
             <PrivateRoute>
               <IndividualDashboard />
             </PrivateRoute>
@@ -316,21 +312,13 @@ function AppContent() {
               <BusinessDashboard />
             </PrivateRoute>
           } />
-          <Route path="/business-dashboard/:activeSection" element={
+          <Route path="/wedding-planner/*" element={
             <PrivateRoute>
-              <BusinessDashboard />
+              <WeddingPlanningDashboard />
             </PrivateRoute>
           } />
-          <Route path="/wedding-planner-dashboard" element={
-            <PrivateRoute>
-              <WeddingPlannerDashboard />
-            </PrivateRoute>
-          } />
-          <Route path="/wedding-planner-dashboard/:activeSection" element={
-            <PrivateRoute>
-              <WeddingPlannerDashboard />
-            </PrivateRoute>
-          } />
+          
+          {/* Individual Routes */}
           <Route path="/my-requests" element={<MyRequests />} />
           <Route path="/edit-request/:type/:id" element={<EditRequest />} />
           {/* Test API Routes */}

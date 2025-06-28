@@ -30,10 +30,40 @@
 }
 
 .header-notification-bell {
-  position: fixed;
-  top: 100px;
-  right: 50px;
-  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+}
+
+.header-notification-bell .dashboard-switcher {
+  margin-left: auto;
+}
+
+.header-notification-bell .switcher-button {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #1e293b;
+  font-weight: 600;
+  padding: 10px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.header-notification-bell .switcher-button:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.header-notification-bell .switcher-dropdown {
+  right: 0;
+  left: auto;
+  min-width: 280px;
+  margin-top: 8px;
 }
 
 .dashboard-header h1 {
@@ -606,8 +636,22 @@ border-color: #ec4899;
 
   .header-notification-bell {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 16px;
+    right: 16px;
+    gap: 12px;
+  }
+
+  .header-notification-bell .switcher-button {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .header-notification-bell .switcher-button span {
+    display: none;
+  }
+  
+  .header-notification-bell .switcher-dropdown {
+    min-width: 250px;
   }
 
   .dashboard-header h1 {

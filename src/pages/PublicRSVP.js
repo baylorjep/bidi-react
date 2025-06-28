@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import './PublicRSVP.css';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function PublicRSVP() {
   const { linkId } = useParams();
@@ -343,9 +344,13 @@ function PublicRSVP() {
 
   if (loading) {
     return (
-      <div className="public-rsvp-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading wedding information...</p>
+      <div className="public-rsvp">
+        <LoadingSpinner 
+          variant="ring" 
+          color="white" 
+          text="Loading wedding information..." 
+          fullScreen={true}
+        />
       </div>
     );
   }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
+import Settings from '../Settings/Settings';
 import './EventDetails.css';
+import LoadingSpinner from '../LoadingSpinner';
 
 function EventDetails({ weddingData, onUpdate }) {
   const [formData, setFormData] = useState({
@@ -1086,6 +1088,12 @@ function EventDetails({ weddingData, onUpdate }) {
     </div>
   );
 
+  const renderSettings = () => (
+    <div className="settings-tab-content">
+      <Settings currentDashboard="wedding-planner" />
+    </div>
+  );
+
   return (
     <div className="event-details-wedding-details">
       <div className="event-details-header-wedding-details">
@@ -1146,6 +1154,13 @@ function EventDetails({ weddingData, onUpdate }) {
             <i className="fas fa-star"></i>
             Style Details
           </button>
+          <button 
+            className={`tab-button-wedding-details ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            <i className="fas fa-cog"></i>
+            Settings
+          </button>
         </div>
 
         <div className="tab-content-wedding-details">
@@ -1154,6 +1169,7 @@ function EventDetails({ weddingData, onUpdate }) {
           {activeTab === 'colors' && renderColorPalette()}
           {activeTab === 'moodboard' && renderMoodBoard()}
           {activeTab === 'style' && renderStyleDetails()}
+          {activeTab === 'settings' && renderSettings()}
         </div>
 
         <div className="form-actions-wedding-details">
@@ -1171,10 +1187,10 @@ function EventDetails({ weddingData, onUpdate }) {
                 disabled={isSaving}
               >
                 {isSaving ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin"></i>
-                    Saving...
-                  </>
+                  <div className="d-flex align-items-center">
+                    <LoadingSpinner variant="clip" color="white" size={16} />
+                    <span className="ms-2">Saving...</span>
+                  </div>
                 ) : (
                   <>
                     <i className="fas fa-save"></i>
@@ -1229,10 +1245,10 @@ function EventDetails({ weddingData, onUpdate }) {
                 />
                 <div className="upload-modal-content-area">
                   {isUploading ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin"></i>
-                      <span>Uploading...</span>
-                    </>
+                    <div className="d-flex align-items-center">
+                        <LoadingSpinner variant="clip" color="white" size={16} />
+                        <span className="ms-2">Uploading...</span>
+                    </div>
                   ) : (
                     <>
                       <i className="fas fa-cloud-upload-alt"></i>

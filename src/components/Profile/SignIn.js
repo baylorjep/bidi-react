@@ -14,80 +14,93 @@ const SignIn = ({ onSuccess }) => {
     const [currentProfile, setCurrentProfile] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const redirectTo = location.state?.from || '/';
 
+    // Helper function to check if user has a wedding plan
+    const checkForWeddingPlan = async (userId) => {
+        try {
+            const { data: weddingPlan } = await supabase
+                .from('wedding_plans')
+                .select('id')
+                .eq('user_id', userId)
+                .single();
+            return !!weddingPlan;
+        } catch (error) {
+            return false;
+        }
+    };
+
+    // Helper function to check if user has individual requests
+    const checkForIndividualRequests = async (userId) => {
+        try {
+            const requestTables = [
+                'photography_requests',
+                'videography_requests', 
+                'catering_requests',
+                'dj_requests',
+                'florist_requests',
+                'beauty_requests',
+                'wedding_planning_requests'
+            ];
+
+            for (const table of requestTables) {
+                let query = supabase.from(table).select('id');
+                
+                if (table === 'photography_requests') {
+                    query = query.eq('profile_id', userId);
+                } else {
+                    query = query.eq('user_id', userId);
+                }
+
+                const { data: requests } = await query;
+                if (requests && requests.length > 0) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    };
+
     const handleSignIn = async (e) => {
         e.preventDefault();
-
-        const requestSource = localStorage.getItem('requestSource');
-        const requestFormData = JSON.parse(localStorage.getItem('requestFormData') || '{}');
+        setLoading(true);
+        setError('');
 
         try {
-            const { data: { user }, error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             });
 
-            if (error) {
-                setErrorMessage(`Sign in error: ${error.message}`);
-                console.log(`Sign in error: ${error.message}`);
-                return;
-            }
+            if (error) throw error;
 
-            if (!user) {
-                setErrorMessage('No user data received');
-                return;
-            }
+            if (data.user) {
+                // Check if user has a profile
+                const { data: profile } = await supabase
+                    .from('individual_profiles')
+                    .select('*')
+                    .eq('id', data.user.id)
+                    .single();
 
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('role, has_seen_source_modal')
-                .eq('id', user.id)
-                .single();
-
-            if (profileError) {
-                console.error('Fetch profile error:', profileError.message);
-                setErrorMessage('Error loading profile data');
-                return;
-            }
-
-            if (!profile) {
-                setErrorMessage('Profile data not found');
-                return;
-            }
-
-            setCurrentProfile(profile);
-
-            if (!profile.has_seen_source_modal) {
-                setCurrentUserId(user.id);
-                setShowSourceModal(true);
-                return;
-            }
-
-            // Ensure we have the profile data before navigating
-            if (profile.role === 'individual') {
-                if (onSuccess) {
-                    onSuccess();
+                if (profile) {
+                    // User has a profile, redirect to individual dashboard
+                    // The DashboardSwitcher will handle first-time experience
+                    navigate('/individual-dashboard');
                 } else {
-                    navigate('/individual-dashboard', {
-                        state: { 
-                            source: requestSource || requestFormData.source || 'general',
-                            from: 'signin',
-                            activeSection: 'bids'
-                        }
-                    });
+                    // New user, redirect to individual dashboard
+                    navigate('/individual-dashboard');
                 }
-            } else if (profile.role === 'business') {
-                navigate('/business-dashboard');
-            } else if (profile.role === 'both') {
-                navigate('/wedding-planner-dashboard');
-            } else {
-                setErrorMessage('Invalid user role');
             }
-        } catch (err) {
-            console.error('Sign in error:', err);
-            setErrorMessage('An unexpected error occurred during sign in');
+        } catch (error) {
+            console.error('Sign in error:', error);
+            setError(error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -238,21 +251,31 @@ const SignIn = ({ onSuccess }) => {
 
             <HearAboutUsModal 
                 isOpen={showSourceModal}
-                onClose={() => {
+                onClose={async () => {
                     setShowSourceModal(false);
                     if (currentProfile?.role === 'individual') {
                         if (onSuccess) {
                             onSuccess();
                         } else {
-                            navigate('/individual-dashboard', {
-                                state: { 
-                                    source: localStorage.getItem('requestSource') || 
-                                           JSON.parse(localStorage.getItem('requestFormData') || '{}').source || 
-                                           'general',
-                                    from: 'signin',
-                                    activeSection: 'bids'
-                                }
-                            });
+                            // Check if user has existing data to determine best dashboard
+                            const hasWeddingPlan = await checkForWeddingPlan(currentUserId);
+                            const hasIndividualRequests = await checkForIndividualRequests(currentUserId);
+                            
+                            if (hasWeddingPlan || hasIndividualRequests) {
+                                // User has existing data, go to dashboard selector
+                                navigate('/dashboard-selector');
+                            } else {
+                                // New user, go to individual dashboard
+                                navigate('/individual-dashboard', {
+                                    state: { 
+                                        source: localStorage.getItem('requestSource') || 
+                                               JSON.parse(localStorage.getItem('requestFormData') || '{}').source || 
+                                               'general',
+                                        from: 'signin',
+                                        activeSection: 'bids'
+                                    }
+                                });
+                            }
                         }
                     } else if (currentProfile?.role === 'business') {
                         navigate('/business-dashboard');

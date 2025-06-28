@@ -4,6 +4,7 @@ import { supabase } from '../../supabaseClient';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { FaTrash } from 'react-icons/fa';
+import LoadingSpinner from '../LoadingSpinner';
 
 function EditRequest() {
     const location = useLocation();
@@ -341,7 +342,11 @@ function EditRequest() {
         }
     };
 
-    if (!formData) return <div className="container mt-5">Loading...</div>;
+    if (!formData) return (
+        <div className="container mt-5">
+            <LoadingSpinner variant="ring" color="#ff008a" text="Loading request details..." />
+        </div>
+    );
 
     return (
         <div className="bids-page" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
@@ -1283,7 +1288,12 @@ function EditRequest() {
                             onChange={handlePhotoUpload}
                             disabled={uploading}
                         />
-                        {uploading && <div>Uploading...</div>}
+                        {uploading && (
+                            <div className="d-flex align-items-center">
+                                <LoadingSpinner variant="clip" color="white" size={16} />
+                                <span className="ms-2">Uploading...</span>
+                            </div>
+                        )}
                         <div className="photo-preview-grid">
                             {photos && photos.length > 0 && photos.map(photo => (
                                 <div key={photo.id || photo.file_path} className="photo-preview-item">

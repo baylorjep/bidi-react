@@ -13,6 +13,8 @@ import WeddingOverview from './WeddingOverview';
 import MobileChatList from '../Messaging/MobileChatList';
 import ChatInterface from '../Messaging/ChatInterface';
 import DashboardMessaging from '../Messaging/DashboardMessaging';
+import DashboardSwitcher from '../DashboardSwitcher';
+import LoadingSpinner from '../LoadingSpinner';
 import './WeddingPlanningDashboard.css';
 
 function WeddingPlanningDashboard() {
@@ -830,9 +832,13 @@ function WeddingPlanningDashboard() {
 
   if (loading) {
     return (
-      <div className="wedding-planning-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading your wedding plan...</p>
+      <div className="wedding-planning-dashboard">
+        <LoadingSpinner 
+          variant="ring" 
+          color="#ff008a" 
+          text="Loading your wedding plan..." 
+          fullScreen={true}
+        />
       </div>
     );
   }
