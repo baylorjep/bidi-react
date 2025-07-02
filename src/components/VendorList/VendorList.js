@@ -652,11 +652,8 @@ const VendorList = ({
     if (loading) {
         return (
             <div className="loading-container">
-                <LoadingSpinner 
-                    variant="ring" 
-                    color="#ff008a" 
-                    text="Loading vendors and photos..." 
-                />
+                <div className="loading-spinner">
+                </div>
             </div>
         );
     }
@@ -1146,7 +1143,7 @@ const VendorList = ({
                         )}
                     </div>
                     <div className="vendor-info">
-                        <div className="vendor-header">
+                        <div className="vendor-header" style={{display:'flex', flexDirection:'row', justifyContent:'left', alignItems:'center', marginLeft:'12px', gap:'4px'}}>
                             <img 
                                 src={vendor.profile_photo_url} 
                                 alt={vendor.business_name} 

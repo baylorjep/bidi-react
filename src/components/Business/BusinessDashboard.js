@@ -84,6 +84,7 @@ const BusinessDashSidebar = () => {
 
   // Function to update section and URL
   const handleSectionChange = (newSection) => {
+    console.log('handleSectionChange called with:', newSection);
     setActiveSection(newSection);
     // Update URL to reflect the active section
     navigate(`/business-dashboard/${newSection}`, { replace: true });
@@ -607,6 +608,7 @@ const BusinessDashSidebar = () => {
 
         {/* Main Dashboard */}
         <main className="dashboard-main">
+          {console.log('Current activeSection:', activeSection)}
           {activeSection === "dashboard" && (
             <OpenRequests 
               onMessageClick={handleMessageFromRequest}

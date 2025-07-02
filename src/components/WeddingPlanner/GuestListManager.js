@@ -754,7 +754,7 @@ function GuestListManager({ weddingData, onUpdate, compact = false }) {
               </button>
             </div>
             
-            <form onSubmit={editingGuest ? updateGuest : addGuest} style={{marginTop: '200px'}}>
+            <form onSubmit={editingGuest ? updateGuest : addGuest} style={{marginTop: '800px'}}>
               <div className="form-group">
                 <label>Full Name *</label>
                 <input
@@ -830,12 +830,13 @@ function GuestListManager({ weddingData, onUpdate, compact = false }) {
                 />
               </div>
               
-              <div className="form-group">
-                <label className="checkbox-label">
+              <div className="form-group" style={{textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '40px'}}>
+                <label className="checkbox-label" style={{whiteSpace: 'nowrap', display: 'flex', alignItems: 'center'}}>
                   <input
                     type="checkbox"
                     checked={guestForm.plus_one}
                     onChange={(e) => setGuestForm({...guestForm, plus_one: e.target.checked})}
+                    style={{marginRight: '10px'}}
                   />
                   Plus One
                 </label>

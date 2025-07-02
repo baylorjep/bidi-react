@@ -80,18 +80,43 @@ const SignIn = ({ onSuccess }) => {
             if (error) throw error;
 
             if (data.user) {
-                // Check if user has a profile
-                const { data: profile } = await supabase
+                // Check if user has an individual profile
+                const { data: individualProfile, error: individualError } = await supabase
                     .from('individual_profiles')
                     .select('*')
                     .eq('id', data.user.id)
                     .single();
 
-                if (profile) {
-                    // User has a profile, redirect to individual dashboard
-                    // The DashboardSwitcher will handle first-time experience
-                    navigate('/individual-dashboard');
-                } else {
+                // Check if user has a business profile
+                const { data: businessProfile, error: businessError } = await supabase
+                    .from('business_profiles')
+                    .select('*')
+                    .eq('id', data.user.id)
+                    .single();
+
+                // Handle individual user
+                if (individualProfile && !businessProfile) {
+                    // Check user's preferred dashboard
+                    const preferredDashboard = individualProfile.preferred_dashboard;
+                    
+                    if (preferredDashboard === 'wedding-planner') {
+                        // User prefers wedding planner dashboard
+                        navigate('/wedding-planner');
+                    } else {
+                        // User prefers individual dashboard or no preference set
+                        navigate('/individual-dashboard');
+                    }
+                }
+                // Handle business user
+                else if (businessProfile && !individualProfile) {
+                    navigate('/business-dashboard');
+                }
+                // Handle user with both profiles (wedding planner)
+                else if (businessProfile && individualProfile) {
+                    navigate('/wedding-planner-dashboard');
+                }
+                // Handle new user with no profiles
+                else {
                     // New user, redirect to individual dashboard
                     navigate('/individual-dashboard');
                 }
@@ -113,6 +138,8 @@ const SignIn = ({ onSuccess }) => {
             setErrorMessage(`Google sign-in error: ${error.message}`);
             console.error('Google sign-in error:', error);
         }
+        // Note: Google OAuth redirects to the app, so the dashboard selection
+        // will be handled by the auth state listener in the main app
     };
 
     return (
