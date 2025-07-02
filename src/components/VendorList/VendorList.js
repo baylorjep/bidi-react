@@ -652,7 +652,6 @@ const VendorList = ({
         return (
             <div className="loading-container">
                 <div className="loading-spinner">
-                    Loading vendors and photos...
                 </div>
             </div>
         );
@@ -1136,7 +1135,7 @@ const VendorList = ({
                         )}
                     </div>
                     <div className="vendor-info">
-                        <div className="vendor-header">
+                        <div className="vendor-header" style={{display:'flex', flexDirection:'row', justifyContent:'left', alignItems:'center', marginLeft:'12px', gap:'4px'}}>
                             <img 
                                 src={vendor.profile_photo_url} 
                                 alt={vendor.business_name} 
