@@ -11,6 +11,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   const [bids, setBids] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [requestsLoading, setRequestsLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showAddVendor, setShowAddVendor] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
@@ -194,6 +195,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
 
   const loadRequests = async () => {
     try {
+      setRequestsLoading(true);
       // Get all requests from different tables
       const [
         { data: regularRequests, error: regularError },
@@ -327,6 +329,8 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
       setRequests(sortedRequests);
     } catch (error) {
       console.error('Error loading requests:', error);
+    } finally {
+      setRequestsLoading(false);
     }
   };
 
@@ -365,6 +369,20 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
       'other': 'fas fa-clipboard-list'
     };
     return iconMap[type] || 'fas fa-clipboard-list';
+  };
+
+  // Check if a category supports bid requests
+  const isCategorySupported = (categoryId) => {
+    const supportedCategories = [
+      'photography',
+      'videography', 
+      'catering',
+      'dj',
+      'florist',
+      'beauty',
+      'wedding_planning'
+    ];
+    return supportedCategories.includes(categoryId);
   };
 
   const formatCategoryType = (type) => {
@@ -1325,6 +1343,107 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
         </div>
       </div>
 
+      {/* New Bids Summary Card */}
+      {getTotalNewBidsCount() > 0 && (
+        <div className="new-bids-summary-card">
+          <div className="new-bids-header">
+            <div className="new-bids-title">
+              <i className="fas fa-bell"></i>
+              <h3>New Bids Received</h3>
+              <span className="new-bids-count">{getTotalNewBidsCount()}</span>
+            </div>
+            <button 
+              className="mark-all-viewed-btn"
+              onClick={() => {
+                // Mark all new bids as viewed
+                const unviewedBids = bids.filter(bid => !bid.viewed);
+                unviewedBids.forEach(bid => markBidAsViewed(bid.id));
+                toast.success('All bids marked as viewed');
+              }}
+            >
+              <i className="fas fa-check-double"></i>
+              Mark All Viewed
+            </button>
+          </div>
+          
+          <div className="new-bids-categories">
+            {vendorCategories.map(category => {
+              const newBidsInCategory = getNewBidsCount(category.id);
+              if (newBidsInCategory === 0) return null;
+              
+              return (
+                <div key={category.id} className="new-bids-category-item">
+                  <div className="category-info">
+                    <div className="category-icon" style={{ backgroundColor: category.color }}>
+                      <i className={category.icon}></i>
+                    </div>
+                    <div className="category-details">
+                      <span className="category-name">{category.name}</span>
+                      <span className="bids-count">{newBidsInCategory} new bid{newBidsInCategory > 1 ? 's' : ''}</span>
+                    </div>
+                  </div>
+                  <button 
+                    className="view-bids-btn"
+                    onClick={() => {
+                      setSelectedCategory(category.id);
+                      // Mark bids in this category as viewed
+                      markBidsAsViewed(category.id);
+                    }}
+                  >
+                    <i className="fas fa-eye"></i>
+                    View
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="new-bids-footer">
+            <div className="bids-summary">
+              <span className="summary-text">
+                {getTotalNewBidsCount()} new bid{getTotalNewBidsCount() > 1 ? 's' : ''} across {vendorCategories.filter(cat => getNewBidsCount(cat.id) > 0).length} categor{getTotalNewBidsCount() > 1 ? 'ies' : 'y'}
+              </span>
+            </div>
+            <div className="bids-actions">
+              <button 
+                className="view-all-bids-btn"
+                onClick={() => {
+                  // Expand all categories with new bids
+                  const categoriesWithNewBids = vendorCategories.filter(cat => getNewBidsCount(cat.id) > 0);
+                  const newOpenSections = {};
+                  categoriesWithNewBids.forEach(cat => {
+                    newOpenSections[cat.id] = {
+                      approved: true,
+                      interested: true,
+                      pending: true,
+                      denied: true
+                    };
+                  });
+                  setOpenBidSections(newOpenSections);
+                  // Mark all bids as viewed
+                  const unviewedBids = bids.filter(bid => !bid.viewed);
+                  unviewedBids.forEach(bid => markBidAsViewed(bid.id));
+                }}
+              >
+                <i className="fas fa-expand-alt"></i>
+                View All Bids
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {requestsLoading && (
+        <div className="requests-loading-container">
+          <LoadingSpinner 
+            variant="ring" 
+            color="#ff008a" 
+            text="Loading requests..." 
+            fullScreen={false}
+          />
+        </div>
+      )}
+
       <div className="vendor-categories-vendor-manager">
         {vendorCategories.map(category => {
           const categoryVendors = getVendorsByCategory(category.id);
@@ -1412,20 +1531,36 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                       }}
                       title={categoryRequest.isOpen ? "Close request" : "Reopen request"}
                     >
-                      <i className={`fas ${categoryRequest.isOpen ? 'fa-lock' : 'fa-unlock'}`}></i>
+                      <i 
+                      style={{ color: '#8b5cf6' }}
+                      className={`fas ${categoryRequest.isOpen ? 'fa-lock' : 'fa-unlock'}`}></i>
                       <span className="button-text">
                         {categoryRequest.isOpen ? 'Close' : 'Reopen'}
                       </span>
                     </button>
                   )}
+                  {isCategorySupported(category.id) && (
+                    <button 
+                      className="request-bids-btn-vendor-manager"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        requestBidsFromVendors(category);
+                      }}
+                    >
+                      Request Bids
+                    </button>
+                  )}
                   <button 
-                    className="request-bids-btn-vendor-manager"
+                    className="add-manual-vendor-btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      requestBidsFromVendors(category);
+                      setSelectedCategory(category.id);
+                      setShowAddVendor(true);
                     }}
+                    title="Add manual vendor"
                   >
-                    Request Bids
+                    <i className="fas fa-plus"></i>
+                    Add Vendor
                   </button>
                   <button 
                     className="remove-category-btn"
@@ -1677,12 +1812,18 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                   {categoryVendors.length === 0 && categoryBids.length === 0 && (
                     <div className="no-vendors">
                       <p>No vendors or bids yet for this category.</p>
-                      <button 
-                        className="request-bids-btn-vendor-manager"
-                        onClick={() => requestBidsFromVendors(category)}
-                      >
-                        Request Bids from Vendors
-                      </button>
+                      {isCategorySupported(category.id) ? (
+                        <button 
+                          className="request-bids-btn-vendor-manager"
+                          onClick={() => requestBidsFromVendors(category)}
+                        >
+                          Request Bids from Vendors
+                        </button>
+                      ) : (
+                        <p style={{ color: '#6b7280', fontSize: '0.9rem', marginTop: '8px' }}>
+                          Bid requests for this category are coming soon!
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1700,6 +1841,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
               onSubmit={addVendor}
               onCancel={() => setShowAddVendor(false)}
               categories={vendorCategories}
+              selectedCategory={selectedCategory}
             />
           </div>
         </div>
@@ -1725,7 +1867,6 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
       {showCategoryManager && (
         <div className="modal-overlay" onClick={() => setShowCategoryManager(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Manage Categories</h3>
             <CategoryManager 
               onSubmit={addCustomCategory}
               onCancel={() => setShowCategoryManager(false)}
@@ -1802,10 +1943,10 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
 }
 
 // Add Vendor Form Component
-function AddVendorForm({ onSubmit, onCancel, categories }) {
+function AddVendorForm({ onSubmit, onCancel, categories, selectedCategory = null }) {
   const [formData, setFormData] = useState({
     name: '',
-    category: '',
+    category: selectedCategory || '',
     contact_info: [],
     notes: '',
     pricing: '',
@@ -2021,7 +2162,6 @@ function AddVendorForm({ onSubmit, onCancel, categories }) {
       </div>
 
       <div className="form-group checkbox-group">
-        <label className="checkbox-label">
           <input
             type="checkbox"
             name="is_booked"
@@ -2030,7 +2170,6 @@ function AddVendorForm({ onSubmit, onCancel, categories }) {
           />
           <span className="checkmark"></span>
           Already booked this vendor
-        </label>
       </div>
 
       <div className="form-group">

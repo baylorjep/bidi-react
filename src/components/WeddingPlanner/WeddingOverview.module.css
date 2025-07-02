@@ -143,16 +143,6 @@
   overflow: hidden;
 }
 
-.metricCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #d84888, #764ba2);
-}
-
 .metricCard:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
@@ -168,7 +158,7 @@
 .metricHeader i {
   font-size: 1.5rem;
   color: #d84888;
-  background: linear-gradient(135deg, #d84888, #764ba2);
+  background: #d84888;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -325,7 +315,7 @@
 .guestTotal {
   text-align: center;
   padding: 15px;
-  background: linear-gradient(135deg, #d84888, #764ba2);
+  background: #d84888;
   border-radius: 12px;
   color: white;
 }
@@ -400,6 +390,7 @@
   padding: 30px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid #f1f5f9;
+  margin-bottom: 20px;
 }
 
 .quickActions h3 {
@@ -434,7 +425,7 @@
 }
 
 .actionBtn.primary {
-  background: linear-gradient(135deg, #d84888, #764ba2);
+  background: #d84888;
   color: white;
 }
 
@@ -818,8 +809,8 @@
 
   .heroContent {
     flex-direction: column;
-    gap: 20px;
     text-align: center;
+    gap: 20px;
   }
 
   .weddingTitle {
@@ -827,14 +818,13 @@
   }
 
   .countdownCard {
-    min-width: 180px;
     padding: 20px;
+    min-width: 180px;
   }
 
   .metricsGrid {
     grid-template-columns: 1fr;
     gap: 20px;
-    margin-bottom: 20px;
   }
 
   .metricCard {
@@ -843,108 +833,125 @@
 
   .vendorStats,
   .guestStats {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    flex-direction: column;
+    gap: 15px;
   }
 
   .statItem {
-    padding: 10px;
+    text-align: center;
   }
 
   .statNumber {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
   }
 
   .actionButtons {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .quickActions {
-    padding: 20px;
+    margin-bottom: 20px;
   }
 
   .comprehensiveBudget .metricHeader {
     flex-direction: column;
     align-items: flex-start;
-    gap: 15px;
+    gap: 10px;
   }
 
   .comprehensiveBudget .budgetToggle {
     width: 100%;
-    justify-content: center;
   }
 
   .comprehensiveBudget .toggleBtn {
     flex: 1;
-    justify-content: center;
-    padding: 10px 12px;
-    font-size: 0.85rem;
+    padding: 8px 12px;
+    font-size: 0.8rem;
   }
 
   .budgetContent {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    flex-direction: column;
   }
 
   .budgetChartSection .pieChartWrapper {
-    max-width: none;
+    height: 200px;
   }
 
   .budgetChartSection .pieChartWrapper canvas {
-    max-height: 200px;
+    max-height: 180px;
   }
 
   .budgetChartSection .chartSummary {
-    grid-template-columns: repeat(2, 1fr);
+    flex-direction: column;
     gap: 10px;
   }
 
   .budgetChartSection .summaryItem {
-    flex-direction: column;
-    text-align: center;
-    padding: 10px;
+    flex-direction: row;
+    justify-content: space-between;
   }
 
   .budgetChartSection .summaryItem .label {
-    margin-bottom: 4px;
     font-size: 0.8rem;
   }
 
   .budgetChartSection .summaryItem .amount {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .comprehensiveBudget .categoryBreakdown {
-    padding: 15px;
+    margin-top: 20px;
   }
 
   .comprehensiveBudget .categoryList {
-    max-height: 250px;
+    gap: 12px;
   }
 
   .comprehensiveBudget .categoryItem {
-    padding: 8px 10px;
+    padding: 12px;
   }
 
   .comprehensiveBudget .categoryInfo {
-    gap: 8px;
+    gap: 10px;
   }
 
   .comprehensiveBudget .categoryIcon {
-    width: 24px;
-    height: 24px;
-    font-size: 0.7rem;
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
   }
 
   .comprehensiveBudget .categoryName {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
 
   .comprehensiveBudget .categoryCount {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
 
   .comprehensiveBudget .categoryAmounts .amount {
+    font-size: 0.8rem;
+  }
+
+  /* Mood Board Responsive */
+  .moodBoardGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .noMoodBoard {
+    padding: 30px 15px;
+  }
+
+  .noMoodBoard i {
+    font-size: 2.5rem;
+  }
+
+  .noMoodBoard p {
+    font-size: 1rem;
+  }
+
+  .noMoodBoard span {
     font-size: 0.8rem;
   }
 }
@@ -964,6 +971,7 @@
 
   .countdownCard {
     padding: 15px;
+    min-width: 150px;
   }
 
   .countdownIcon {
@@ -984,8 +992,7 @@
 
   .vendorStats,
   .guestStats {
-    grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 10px;
   }
 
   .statItem {
@@ -993,16 +1000,16 @@
   }
 
   .statNumber {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
   }
 
   .detailItem {
-    padding: 10px;
+    padding: 8px;
   }
 
   .actionBtn {
-    padding: 12px 16px;
-    font-size: 0.9rem;
+    padding: 10px 12px;
+    font-size: 0.8rem;
   }
 
   .comprehensiveBudget .metricHeader h3 {
@@ -1010,20 +1017,19 @@
   }
 
   .comprehensiveBudget .toggleBtn {
-    padding: 8px 10px;
-    font-size: 0.8rem;
+    padding: 6px 8px;
+    font-size: 0.75rem;
   }
 
   .comprehensiveBudget .toggleBtn i {
-    display: none;
+    font-size: 0.7rem;
   }
 
   .budgetChartSection .pieChartWrapper canvas {
-    max-height: 180px;
+    max-height: 150px;
   }
 
   .budgetChartSection .chartSummary {
-    grid-template-columns: 1fr;
     gap: 8px;
   }
 
@@ -1032,26 +1038,25 @@
   }
 
   .budgetChartSection .summaryItem .amount {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
   }
 
   .comprehensiveBudget .categoryBreakdown {
-    padding: 12px;
+    margin-top: 15px;
   }
 
   .comprehensiveBudget .categoryBreakdown h4 {
     font-size: 1rem;
-    margin-bottom: 12px;
   }
 
   .comprehensiveBudget .categoryItem {
-    padding: 6px 8px;
+    padding: 10px;
   }
 
   .comprehensiveBudget .categoryIcon {
-    width: 20px;
-    height: 20px;
-    font-size: 0.6rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
   }
 
   .comprehensiveBudget .categoryName {
@@ -1059,10 +1064,627 @@
   }
 
   .comprehensiveBudget .categoryCount {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
   }
 
   .comprehensiveBudget .categoryAmounts .amount {
     font-size: 0.75rem;
+  }
+
+  /* Mood Board Responsive for Small Screens */
+  .moodBoardGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+
+  .noMoodBoard {
+    padding: 25px 10px;
+  }
+
+  .noMoodBoard i {
+    font-size: 2rem;
+  }
+
+  .noMoodBoard p {
+    font-size: 0.9rem;
+  }
+
+  .noMoodBoard span {
+    font-size: 0.75rem;
+  }
+}
+
+/* Mood Board Gallery Styles */
+.moodBoardGallery {
+  width: 100%;
+}
+
+.moodBoardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.moodBoardItem {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.moodBoardItem:hover {
+  transform: scale(1.05);
+}
+
+.moodBoardImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.moodBoardMore {
+  text-align: center;
+  padding: 8px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.noMoodBoard {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.noMoodBoard i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  color: #d1d5db;
+}
+
+.noMoodBoard p {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.noMoodBoard span {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* New Bids Summary Card */
+.newBidsSummaryCard {
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(236, 72, 153, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.newBidsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.newBidsTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.newBidsTitle i {
+  font-size: 1.5rem;
+  color: #fbbf24;
+}
+
+.newBidsTitle h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+}
+
+.newBidsCount {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  padding: 8px 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  min-width: 32px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.markAllViewedBtn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.markAllViewedBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.newBidsCategories {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.newBidsCategoryItem {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.newBidsCategoryItem:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.categoryInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.categoryInfo .categoryIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.categoryDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.categoryName {
+  font-weight: 600;
+  font-size: 1rem;
+  color: white;
+}
+
+.bidsCount {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.viewBidsBtn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.viewBidsBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.newBidsFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.bidsSummary {
+  flex: 1;
+}
+
+.summaryText {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.bidsActions {
+  display: flex;
+  gap: 12px;
+}
+
+.viewAllBidsBtn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.viewAllBidsBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Responsive styles for new bids card */
+@media (max-width: 768px) {
+  .newBidsSummaryCard {
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .newBidsHeader {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .newBidsTitle {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .markAllViewedBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .newBidsCategories {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .newBidsCategoryItem {
+    padding: 14px;
+  }
+
+  .categoryInfo .categoryIcon {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  .categoryName {
+    font-size: 0.95rem;
+  }
+
+  .bidsCount {
+    font-size: 0.85rem;
+  }
+
+  .newBidsFooter {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .bidsActions {
+    justify-content: center;
+  }
+
+  .viewAllBidsBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .newBidsSummaryCard {
+    padding: 16px;
+  }
+
+  .newBidsTitle h3 {
+    font-size: 1.2rem;
+  }
+
+  .newBidsCount {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
+
+  .newBidsCategoryItem {
+    padding: 12px;
+  }
+
+  .categoryInfo {
+    gap: 10px;
+  }
+
+  .categoryInfo .categoryIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+
+  .categoryName {
+    font-size: 0.9rem;
+  }
+
+  .bidsCount {
+    font-size: 0.8rem;
+  }
+
+  .viewBidsBtn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+
+  .summaryText {
+    font-size: 0.85rem;
+  }
+
+  .viewAllBidsBtn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* New Bids Message Styles */
+.noBidsMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  color: #6b7280;
+}
+
+.noBidsMessage i {
+  font-size: 2.5rem;
+  color: #d1d5db;
+  margin-bottom: 12px;
+}
+
+.noBidsMessage p {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #374151;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+.noBidsMessage span {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+/* New Bids Metric Card */
+.newBidsMetric {
+  background: linear-gradient(135deg, #fef3f2 0%, #fdf4ff 100%);
+  border: 1px solid #fecaca;
+}
+
+.newBidsMetric .metricHeader i {
+  color: #ec4899;
+}
+
+.newBidsMetric .newBidsCount {
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.newBidsCategories {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.newBidsCategoryItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.newBidsCategoryItem:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.categoryInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.categoryIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.categoryDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.categoryName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.bidsCount {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.viewBidsBtn {
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.viewBidsBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+/* Responsive styles for new bids */
+@media (max-width: 768px) {
+  .noBidsMessage {
+    padding: 15px;
+  }
+  
+  .noBidsMessage i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+  
+  .noBidsMessage p {
+    font-size: 0.9rem;
+  }
+  
+  .noBidsMessage span {
+    font-size: 0.8rem;
+  }
+  
+  .newBidsCategories {
+    gap: 10px;
+  }
+  
+  .newBidsCategoryItem {
+    padding: 10px;
+  }
+  
+  .categoryInfo .categoryIcon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+  
+  .categoryName {
+    font-size: 0.85rem;
+  }
+  
+  .bidsCount {
+    font-size: 0.75rem;
+  }
+  
+  .viewBidsBtn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .noBidsMessage {
+    padding: 12px;
+  }
+  
+  .noBidsMessage i {
+    font-size: 1.8rem;
+  }
+  
+  .noBidsMessage p {
+    font-size: 0.85rem;
+  }
+  
+  .noBidsMessage span {
+    font-size: 0.75rem;
+  }
+  
+  .newBidsCategoryItem {
+    padding: 8px;
+  }
+  
+  .categoryInfo {
+    gap: 8px;
+  }
+  
+  .categoryInfo .categoryIcon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+  
+  .categoryName {
+    font-size: 0.8rem;
+  }
+  
+  .bidsCount {
+    font-size: 0.7rem;
+  }
+  
+  .viewBidsBtn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
   }
 } 

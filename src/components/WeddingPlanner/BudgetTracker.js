@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../supabaseClient';
 import { toast } from 'react-toastify';
 import {
@@ -39,6 +39,27 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [totalBudget, setTotalBudget] = useState(parseFloat(weddingData.budget) || 0);
   const [itemFilter, setItemFilter] = useState('all'); // 'all', 'planned', 'actual'
+  const [focusAreas, setFocusAreas] = useState([]);
+  const [plannedBudget, setPlannedBudget] = useState({});
+  const [excludedCategories, setExcludedCategories] = useState([]);
+  const [categoryRanking, setCategoryRanking] = useState([]);
+  const [hasCalculatedBudget, setHasCalculatedBudget] = useState(false);
+
+  // Default budget recommendations based on industry averages (updated for vendor categories)
+  const defaultRecommendations = {
+    venue: { percentage: 35, description: "Venue typically takes the largest portion of your budget" },
+    catering: { percentage: 25, description: "Food and beverage costs for your guests" },
+    photography: { percentage: 12, description: "Professional photography preserves your memories" },
+    videography: { percentage: 8, description: "Video captures your special moments" },
+    dj: { percentage: 5, description: "Music and entertainment for your reception" },
+    florist: { percentage: 8, description: "Beautiful flowers and decorations" },
+    beauty: { percentage: 3, description: "Hair and makeup for the wedding party" },
+    venue: { percentage: 35, description: "Venue typically takes the largest portion of your budget" },
+    transportation: { percentage: 3, description: "Transportation for wedding party and guests" },
+    officiant: { percentage: 1, description: "Wedding officiant services" },
+    decor: { percentage: 8, description: "Decorations and rentals" },
+    planning: { percentage: 10, description: "Professional wedding planning services" }
+  };
 
   // Default vendor categories (matching VendorManager)
   const defaultVendorCategories = [
@@ -56,7 +77,7 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
   ];
 
   // Combine default and custom categories, filtering out hidden ones
-  const budgetCategories = [
+  const budgetCategories = useMemo(() => [
     ...defaultVendorCategories.filter(cat => !customCategories.find(hidden => 
       (hidden.category_id === cat.id || hidden.id === cat.id) && hidden.is_hidden
     )),
@@ -67,7 +88,7 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
       color: cat.category_color,
       isDefault: false
     }))
-  ];
+  ], [customCategories]);
 
   // Load budget items and categories on component mount
   useEffect(() => {
@@ -355,6 +376,305 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
     });
     
     return categoryTotals;
+  };
+
+  // Get available categories (excluding removed ones)
+  const getAvailableCategories = () => {
+    return budgetCategories.filter(category => !excludedCategories.includes(category.id));
+  };
+
+  // Load saved ranking on mount
+  useEffect(() => {
+    loadSavedRanking();
+  }, []);
+
+  // Update ranking when categories change (e.g., after removing/restoring)
+  useEffect(() => {
+    // Ensure ranking only includes available categories
+    const availableCategories = getAvailableCategories();
+    setCategoryRanking(prev => {
+      const validRanking = prev.filter(id => availableCategories.some(cat => cat.id === id));
+      const missingCategories = availableCategories.filter(cat => !validRanking.includes(cat.id));
+      return [...validRanking, ...missingCategories.map(cat => cat.id)];
+    });
+  }, [excludedCategories, budgetCategories]);
+
+  // Removed automatic calculation - will be triggered by button click instead
+
+  const loadSavedRanking = async () => {
+    try {
+      // Load budget items with planner data
+      const { data: budgetItemsWithPlanner, error } = await supabase
+        .from('wedding_budget_items')
+        .select('*')
+        .eq('wedding_id', weddingData.id)
+        .order('ranking', { ascending: true });
+
+      if (error) {
+        console.error('Error loading budget planner data:', error);
+        setCategoryRanking(getAvailableCategories().map(cat => cat.id));
+        return;
+      }
+
+      // Extract planner data from budget items
+      const plannerData = budgetItemsWithPlanner || [];
+      
+      // Build category ranking from items with ranking
+      const rankedCategories = plannerData
+        .filter(item => item.ranking !== null && item.ranking !== undefined)
+        .sort((a, b) => a.ranking - b.ranking)
+        .map(item => item.category);
+
+      // Add any missing categories to the ranking
+      const availableCategories = getAvailableCategories();
+      const missingCategories = availableCategories
+        .filter(cat => !rankedCategories.includes(cat.id))
+        .map(cat => cat.id);
+
+      setCategoryRanking([...rankedCategories, ...missingCategories]);
+
+      // Build planned budget from items with planned_cost
+      const newPlannedBudget = {};
+      plannerData.forEach(item => {
+        if (item.planned_cost && item.planned_cost > 0) {
+          newPlannedBudget[item.category] = {
+            amount: item.planned_cost,
+            percentage: totalBudget > 0 ? (item.planned_cost / totalBudget) * 100 : 0
+          };
+        }
+      });
+      setPlannedBudget(newPlannedBudget);
+
+      // Build excluded categories from items marked as excluded
+      const excludedCats = plannerData
+        .filter(item => item.excluded === true)
+        .map(item => item.category);
+      setExcludedCategories(excludedCats);
+
+      // Check if we have calculated budget
+      setHasCalculatedBudget(Object.keys(newPlannedBudget).length > 0);
+
+    } catch (error) {
+      console.error('Error loading saved ranking:', error);
+      setCategoryRanking(getAvailableCategories().map(cat => cat.id));
+    }
+  };
+
+  // Drag-and-drop handlers
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (dragIndex === dropIndex) return;
+    const newRanking = [...categoryRanking];
+    const [removed] = newRanking.splice(dragIndex, 1);
+    newRanking.splice(dropIndex, 0, removed);
+    setCategoryRanking(newRanking);
+  };
+
+  // Mobile-friendly reordering handlers
+  const moveCategoryUp = (categoryId) => {
+    const currentIndex = categoryRanking.indexOf(categoryId);
+    if (currentIndex > 0) {
+      const newRanking = [...categoryRanking];
+      [newRanking[currentIndex], newRanking[currentIndex - 1]] = [newRanking[currentIndex - 1], newRanking[currentIndex]];
+      setCategoryRanking(newRanking);
+    }
+  };
+
+  const moveCategoryDown = (categoryId) => {
+    const currentIndex = categoryRanking.indexOf(categoryId);
+    if (currentIndex < categoryRanking.length - 1) {
+      const newRanking = [...categoryRanking];
+      [newRanking[currentIndex], newRanking[currentIndex + 1]] = [newRanking[currentIndex + 1], newRanking[currentIndex]];
+      setCategoryRanking(newRanking);
+    }
+  };
+
+  // Budget allocation based on ranking
+  const calculateRecommendedBudget = () => {
+    const newPlannedBudget = {};
+    const availableCategories = getAvailableCategories();
+    // Use ranking order for weights
+    const weights = [1.5, 1.3, 1.1]; // Top 3 get more, rest get 1
+    const ranking = categoryRanking.length ? categoryRanking : availableCategories.map(cat => cat.id);
+    const weightedCategories = availableCategories.map((cat, i) => {
+      const rank = ranking.indexOf(cat.id);
+      return { ...cat, weight: weights[rank] || 1 };
+    });
+    // Calculate total weight
+    const totalWeight = weightedCategories.reduce((sum, cat) => sum + (defaultRecommendations[cat.id]?.percentage || 10) * cat.weight, 0);
+    // Distribute budget
+    weightedCategories.forEach(cat => {
+      const basePercent = defaultRecommendations[cat.id]?.percentage || 10;
+      const weightedPercent = (basePercent * cat.weight) / totalWeight;
+      const amount = totalBudget * weightedPercent;
+      newPlannedBudget[cat.id] = {
+        amount: Math.round(amount),
+        percentage: totalBudget > 0 ? (amount / totalBudget) * 100 : 0
+      };
+    });
+    setPlannedBudget(newPlannedBudget);
+    setHasCalculatedBudget(true);
+  };
+
+  const handleBudgetAdjustment = (categoryId, amount) => {
+    const numAmount = Math.round(parseFloat(amount) || 0);
+    const newPlannedBudget = { ...plannedBudget };
+    
+    if (numAmount > 0) {
+      newPlannedBudget[categoryId] = {
+        amount: numAmount,
+        percentage: totalBudget > 0 ? (numAmount / totalBudget) * 100 : 0
+      };
+    } else {
+      delete newPlannedBudget[categoryId];
+    }
+    
+    setPlannedBudget(newPlannedBudget);
+  };
+
+  const handleRemoveCategory = (categoryId) => {
+    // Remove from focus areas if it's there
+    setFocusAreas(prev => prev.filter(id => id !== categoryId));
+    
+    // Remove from planned budget
+    const newPlannedBudget = { ...plannedBudget };
+    delete newPlannedBudget[categoryId];
+    setPlannedBudget(newPlannedBudget);
+    
+    // Add to excluded categories
+    setExcludedCategories(prev => [...prev, categoryId]);
+  };
+
+  const handleRestoreCategory = (categoryId) => {
+    // Remove from excluded categories
+    setExcludedCategories(prev => prev.filter(id => id !== categoryId));
+  };
+
+  const savePlannedBudget = async () => {
+    try {
+      const now = new Date().toISOString();
+      
+      // First, delete any existing planner rows for this wedding
+      const { error: deleteError } = await supabase
+        .from('wedding_budget_items')
+        .delete()
+        .eq('wedding_id', weddingData.id)
+        .not('ranking', 'is', null); // Only delete rows that have ranking (planner rows)
+
+      if (deleteError) {
+        console.error('Error deleting existing planner data:', deleteError);
+        toast.error('Failed to clear existing budget plan');
+        return;
+      }
+
+      // Get all available categories (including excluded ones)
+      const allCategories = getAvailableCategories();
+      const excludedCategoriesSet = new Set(excludedCategories);
+      
+      // Prepare new planner rows for ALL categories
+      const newRows = [];
+      
+      // First, add ranked categories
+      categoryRanking.forEach((categoryId, idx) => {
+        const planned = plannedBudget[categoryId]?.amount || 0;
+        const excluded = excludedCategoriesSet.has(categoryId);
+        const category = budgetCategories.find(cat => cat.id === categoryId);
+        newRows.push({
+          wedding_id: weddingData.id,
+          category: categoryId,
+          name: category ? `${category.name} Budget` : 'Budget',
+          planned_cost: planned,
+          ranking: idx,
+          excluded,
+          created_at: now,
+          updated_at: now,
+        });
+      });
+      
+      // Then, add excluded categories that aren't in the ranking
+      excludedCategories.forEach(categoryId => {
+        if (!categoryRanking.includes(categoryId)) {
+          const category = budgetCategories.find(cat => cat.id === categoryId);
+          newRows.push({
+            wedding_id: weddingData.id,
+            category: categoryId,
+            name: category ? `${category.name} Budget` : 'Budget',
+            planned_cost: 0,
+            ranking: null, // No ranking for excluded categories
+            excluded: true,
+            created_at: now,
+            updated_at: now,
+          });
+        }
+      });
+
+      // Insert all new planner rows
+      const { error: insertError } = await supabase
+        .from('wedding_budget_items')
+        .insert(newRows);
+
+      if (insertError) {
+        console.error('Error saving budget planner data:', insertError);
+        toast.error('Failed to save budget plan');
+        return;
+      }
+
+      // Try to update wedding budget (total) - but don't fail if wedding doesn't exist
+      try {
+        // First check if the wedding exists
+        const { data: wedding, error: checkError } = await supabase
+          .from('weddings')
+          .select('id')
+          .eq('id', weddingData.id)
+          .single();
+
+        if (checkError) {
+          console.warn('Wedding not found, skipping budget update:', checkError);
+          // Continue without updating wedding budget
+        } else if (wedding) {
+          // Wedding exists, update the budget
+          const { error: updateWeddingError } = await supabase
+            .from('weddings')
+            .update({ budget: totalBudget })
+            .eq('id', weddingData.id);
+          
+          if (updateWeddingError) {
+            console.error('Error updating wedding budget:', updateWeddingError);
+            // Don't fail the whole operation, just log the error
+          }
+        }
+      } catch (weddingError) {
+        console.warn('Error checking/updating wedding:', weddingError);
+        // Continue without updating wedding budget
+      }
+
+      toast.success('Budget plan saved successfully!');
+      if (onUpdate) {
+        onUpdate({ budget: totalBudget });
+      }
+    } catch (error) {
+      console.error('Error saving budget plan:', error);
+      toast.error(`Failed to save budget plan: ${error.message}`);
+    }
+  };
+
+  const getTotalPlanned = () => {
+    return Math.round(Object.values(plannedBudget).reduce((sum, item) => sum + (item.amount || 0), 0));
+  };
+
+  const getRemainingBudget = () => {
+    return Math.round(totalBudget - getTotalPlanned());
   };
 
   if (compact) {
@@ -1074,8 +1394,8 @@ function BudgetPieChart({ budgetItems, budgetCategories, onAddExpense }) {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: {
-      duration: 2500,
+                      animation: {
+                    duration: 800,
       easing: 'easeOutQuart',
       animateRotate: true,
       animateScale: true,
@@ -1229,8 +1549,18 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
   const [focusAreas, setFocusAreas] = useState([]);
   const [plannedBudget, setPlannedBudget] = useState({});
   const [totalBudget, setTotalBudget] = useState(parseFloat(weddingData.budget) || 0);
+  const [excludedCategories, setExcludedCategories] = useState([]);
+  const [categoryRanking, setCategoryRanking] = useState([]);
+  const [hasCalculatedBudget, setHasCalculatedBudget] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Default budget recommendations based on industry averages (updated for vendor categories)
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Default budget recommendations based on industry averages
   const defaultRecommendations = {
     venue: { percentage: 35, description: "Venue typically takes the largest portion of your budget" },
     catering: { percentage: 25, description: "Food and beverage costs for your guests" },
@@ -1239,107 +1569,159 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
     dj: { percentage: 5, description: "Music and entertainment for your reception" },
     florist: { percentage: 8, description: "Beautiful flowers and decorations" },
     beauty: { percentage: 3, description: "Hair and makeup for the wedding party" },
-    venue: { percentage: 35, description: "Venue typically takes the largest portion of your budget" },
     transportation: { percentage: 3, description: "Transportation for wedding party and guests" },
     officiant: { percentage: 1, description: "Wedding officiant services" },
     decor: { percentage: 8, description: "Decorations and rentals" },
     planning: { percentage: 10, description: "Professional wedding planning services" }
   };
 
-  // Load saved focus areas on component mount
+  // Get available categories (excluding removed ones)
+  const getAvailableCategories = () => {
+    return budgetCategories.filter(category => !excludedCategories.includes(category.id));
+  };
+
+  // Load saved ranking on mount
   useEffect(() => {
-    loadSavedFocusAreas();
+    loadSavedRanking();
   }, []);
 
-  // Calculate initial recommended budget when component mounts or budget changes
+  // Update ranking when categories change (e.g., after removing/restoring)
   useEffect(() => {
-    if (totalBudget > 0) {
-      calculateRecommendedBudget();
-    }
-  }, [totalBudget, focusAreas]);
+    // Ensure ranking only includes available categories
+    const availableCategories = getAvailableCategories();
+    setCategoryRanking(prev => {
+      const validRanking = prev.filter(id => availableCategories.some(cat => cat.id === id));
+      const missingCategories = availableCategories.filter(cat => !validRanking.includes(cat.id));
+      return [...validRanking, ...missingCategories.map(cat => cat.id)];
+    });
+  }, [excludedCategories, budgetCategories]);
 
-  const loadSavedFocusAreas = async () => {
+  // Removed automatic calculation - will be triggered by button click instead
+
+  const loadSavedRanking = async () => {
     try {
-      const { data: preferences } = await supabase
-        .from('user_preferences')
+      // Load budget items with planner data
+      const { data: budgetItemsWithPlanner, error } = await supabase
+        .from('wedding_budget_items')
         .select('*')
-        .eq('user_id', weddingData.user_id)
-        .eq('preference_type', 'budget_priorities')
-        .single();
+        .eq('wedding_id', weddingData.id)
+        .order('ranking', { ascending: true });
 
-      if (preferences && preferences.preference_data) {
-        const savedData = preferences.preference_data;
-        setFocusAreas(savedData.focus_areas || []);
-        setPlannedBudget(savedData.planned_budget || {});
-        if (savedData.total_budget) {
-          setTotalBudget(savedData.total_budget);
-        }
+      if (error) {
+        console.error('Error loading budget planner data:', error);
+        setCategoryRanking(getAvailableCategories().map(cat => cat.id));
+        return;
       }
+
+      // Extract planner data from budget items
+      const plannerData = budgetItemsWithPlanner || [];
+      
+      // Build category ranking from items with ranking
+      const rankedCategories = plannerData
+        .filter(item => item.ranking !== null && item.ranking !== undefined)
+        .sort((a, b) => a.ranking - b.ranking)
+        .map(item => item.category);
+
+      // Add any missing categories to the ranking
+      const availableCategories = getAvailableCategories();
+      const missingCategories = availableCategories
+        .filter(cat => !rankedCategories.includes(cat.id))
+        .map(cat => cat.id);
+
+      setCategoryRanking([...rankedCategories, ...missingCategories]);
+
+      // Build planned budget from items with planned_cost
+      const newPlannedBudget = {};
+      plannerData.forEach(item => {
+        if (item.planned_cost && item.planned_cost > 0) {
+          newPlannedBudget[item.category] = {
+            amount: item.planned_cost,
+            percentage: totalBudget > 0 ? (item.planned_cost / totalBudget) * 100 : 0
+          };
+        }
+      });
+      setPlannedBudget(newPlannedBudget);
+
+      // Build excluded categories from items marked as excluded
+      const excludedCats = plannerData
+        .filter(item => item.excluded === true)
+        .map(item => item.category);
+      setExcludedCategories(excludedCats);
+
+      // Check if we have calculated budget
+      setHasCalculatedBudget(Object.keys(newPlannedBudget).length > 0);
+
     } catch (error) {
-      console.error('Error loading saved focus areas:', error);
+      console.error('Error loading saved ranking:', error);
+      setCategoryRanking(getAvailableCategories().map(cat => cat.id));
     }
   };
 
+  // Drag-and-drop handlers
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (dragIndex === dropIndex) return;
+    const newRanking = [...categoryRanking];
+    const [removed] = newRanking.splice(dragIndex, 1);
+    newRanking.splice(dropIndex, 0, removed);
+    setCategoryRanking(newRanking);
+  };
+
+  // Mobile-friendly reordering handlers
+  const moveCategoryUp = (categoryId) => {
+    const currentIndex = categoryRanking.indexOf(categoryId);
+    if (currentIndex > 0) {
+      const newRanking = [...categoryRanking];
+      [newRanking[currentIndex], newRanking[currentIndex - 1]] = [newRanking[currentIndex - 1], newRanking[currentIndex]];
+      setCategoryRanking(newRanking);
+    }
+  };
+
+  const moveCategoryDown = (categoryId) => {
+    const currentIndex = categoryRanking.indexOf(categoryId);
+    if (currentIndex < categoryRanking.length - 1) {
+      const newRanking = [...categoryRanking];
+      [newRanking[currentIndex], newRanking[currentIndex + 1]] = [newRanking[currentIndex + 1], newRanking[currentIndex]];
+      setCategoryRanking(newRanking);
+    }
+  };
+
+  // Budget allocation based on ranking
   const calculateRecommendedBudget = () => {
     const newPlannedBudget = {};
-    
-    // Calculate focus area multipliers
-    const focusMultipliers = {};
-    budgetCategories.forEach(category => {
-      const isFocusArea = focusAreas.includes(category.id);
-      focusMultipliers[category.id] = isFocusArea ? 1.5 : 0.8; // Focus areas get 50% more, others get 20% less
+    const availableCategories = getAvailableCategories();
+    // Use ranking order for weights
+    const weights = [1.5, 1.3, 1.1]; // Top 3 get more, rest get 1
+    const ranking = categoryRanking.length ? categoryRanking : availableCategories.map(cat => cat.id);
+    const weightedCategories = availableCategories.map((cat, i) => {
+      const rank = ranking.indexOf(cat.id);
+      return { ...cat, weight: weights[rank] || 1 };
     });
-    
-    // Distribute budget based on focus areas and default percentages
-    budgetCategories.forEach(category => {
-      const defaultPercent = defaultRecommendations[category.id]?.percentage || 10;
-      const multiplier = focusMultipliers[category.id] || 1;
-      
-      // Calculate weighted allocation
-      const weightedAmount = totalBudget * (defaultPercent / 100) * multiplier;
-      
-      newPlannedBudget[category.id] = {
-        amount: Math.round(weightedAmount),
-        percentage: totalBudget > 0 ? (weightedAmount / totalBudget) * 100 : 0
+    // Calculate total weight
+    const totalWeight = weightedCategories.reduce((sum, cat) => sum + (defaultRecommendations[cat.id]?.percentage || 10) * cat.weight, 0);
+    // Distribute budget
+    weightedCategories.forEach(cat => {
+      const basePercent = defaultRecommendations[cat.id]?.percentage || 10;
+      const weightedPercent = (basePercent * cat.weight) / totalWeight;
+      const amount = totalBudget * weightedPercent;
+      newPlannedBudget[cat.id] = {
+        amount: Math.round(amount),
+        percentage: totalBudget > 0 ? (amount / totalBudget) * 100 : 0
       };
     });
-    
-    // Normalize to ensure we use the full budget
-    const totalAllocated = Object.values(newPlannedBudget).reduce((sum, item) => sum + item.amount, 0);
-    
-    if (totalAllocated > 0 && Math.abs(totalAllocated - totalBudget) > 1) {
-      const normalizationFactor = totalBudget / totalAllocated;
-      
-      Object.keys(newPlannedBudget).forEach(categoryId => {
-        const currentAmount = newPlannedBudget[categoryId].amount;
-        const normalizedAmount = Math.round(currentAmount * normalizationFactor);
-        
-        newPlannedBudget[categoryId] = {
-          amount: normalizedAmount,
-          percentage: totalBudget > 0 ? (normalizedAmount / totalBudget) * 100 : 0
-        };
-      });
-    }
-    
     setPlannedBudget(newPlannedBudget);
-  };
-
-  const handleFocusAreaToggle = (categoryId) => {
-    setFocusAreas(prev => {
-      const isSelected = prev.includes(categoryId);
-      if (isSelected) {
-        // Remove from focus areas
-        return prev.filter(id => id !== categoryId);
-      } else {
-        // Add to focus areas (max 3)
-        if (prev.length < 3) {
-          return [...prev, categoryId];
-        } else {
-          // Replace the oldest focus area
-          return [...prev.slice(1), categoryId];
-        }
-      }
-    });
+    setHasCalculatedBudget(true);
   };
 
   const handleBudgetAdjustment = (categoryId, amount) => {
@@ -1358,100 +1740,130 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
     setPlannedBudget(newPlannedBudget);
   };
 
+  const handleRemoveCategory = (categoryId) => {
+    // Remove from focus areas if it's there
+    setFocusAreas(prev => prev.filter(id => id !== categoryId));
+    
+    // Remove from planned budget
+    const newPlannedBudget = { ...plannedBudget };
+    delete newPlannedBudget[categoryId];
+    setPlannedBudget(newPlannedBudget);
+    
+    // Add to excluded categories
+    setExcludedCategories(prev => [...prev, categoryId]);
+  };
+
+  const handleRestoreCategory = (categoryId) => {
+    // Remove from excluded categories
+    setExcludedCategories(prev => prev.filter(id => id !== categoryId));
+  };
+
   const savePlannedBudget = async () => {
     try {
-      // Update existing budget items with planned costs
-      const updates = [];
-      budgetItems.forEach(item => {
-        const plannedAmount = plannedBudget[item.category]?.amount || 0;
-        if (plannedAmount > 0) {
-          updates.push(
-            supabase
-              .from('wedding_budget_items')
-              .update({ planned_cost: plannedAmount })
-              .eq('id', item.id)
-          );
-        }
-      });
-
-      // Create new budget items for categories without existing items
-      const existingCategories = new Set(budgetItems.map(item => item.category));
-      const newItems = [];
+      const now = new Date().toISOString();
       
-      budgetCategories.forEach(category => {
-        if (!existingCategories.has(category.id) && plannedBudget[category.id]?.amount > 0) {
-          newItems.push({
+      // First, delete any existing planner rows for this wedding
+      const { error: deleteError } = await supabase
+        .from('wedding_budget_items')
+        .delete()
+        .eq('wedding_id', weddingData.id)
+        .not('ranking', 'is', null); // Only delete rows that have ranking (planner rows)
+
+      if (deleteError) {
+        console.error('Error deleting existing planner data:', deleteError);
+        toast.error('Failed to clear existing budget plan');
+        return;
+      }
+
+      // Get all available categories (including excluded ones)
+      const allCategories = getAvailableCategories();
+      const excludedCategoriesSet = new Set(excludedCategories);
+      
+      // Prepare new planner rows for ALL categories
+      const newRows = [];
+      
+      // First, add ranked categories
+      categoryRanking.forEach((categoryId, idx) => {
+        const planned = plannedBudget[categoryId]?.amount || 0;
+        const excluded = excludedCategoriesSet.has(categoryId);
+        const category = budgetCategories.find(cat => cat.id === categoryId);
+        newRows.push({
+          wedding_id: weddingData.id,
+          category: categoryId,
+          name: category ? `${category.name} Budget` : 'Budget',
+          planned_cost: planned,
+          ranking: idx,
+          excluded,
+          created_at: now,
+          updated_at: now,
+        });
+      });
+      
+      // Then, add excluded categories that aren't in the ranking
+      excludedCategories.forEach(categoryId => {
+        if (!categoryRanking.includes(categoryId)) {
+          const category = budgetCategories.find(cat => cat.id === categoryId);
+          newRows.push({
             wedding_id: weddingData.id,
-            name: `${category.name} Budget`,
-            category: category.id,
-            planned_cost: plannedBudget[category.id].amount,
-            actual_cost: 0,
-            type: 'planned', // Mark as planned budget item
-            notes: `Planned budget for ${category.name.toLowerCase()}`
+            category: categoryId,
+            name: category ? `${category.name} Budget` : 'Budget',
+            planned_cost: 0,
+            ranking: null, // No ranking for excluded categories
+            excluded: true,
+            created_at: now,
+            updated_at: now,
           });
         }
       });
 
-      if (newItems.length > 0) {
-        await supabase
-          .from('wedding_budget_items')
-          .insert(newItems);
+      // Insert all new planner rows
+      const { error: insertError } = await supabase
+        .from('wedding_budget_items')
+        .insert(newRows);
+
+      if (insertError) {
+        console.error('Error saving budget planner data:', insertError);
+        toast.error('Failed to save budget plan');
+        return;
       }
 
-      // Save focus areas to database
-      const focusAreaData = {
-        user_id: weddingData.user_id,
-        preference_type: 'budget_priorities',
-        preference_data: {
-          focus_areas: focusAreas,
-          total_budget: totalBudget,
-          planned_budget: plannedBudget,
-          last_updated: new Date().toISOString()
+      // Try to update wedding budget (total) - but don't fail if wedding doesn't exist
+      try {
+        // First check if the wedding exists
+        const { data: wedding, error: checkError } = await supabase
+          .from('weddings')
+          .select('id')
+          .eq('id', weddingData.id)
+          .single();
+
+        if (checkError) {
+          console.warn('Wedding not found, skipping budget update:', checkError);
+          // Continue without updating wedding budget
+        } else if (wedding) {
+          // Wedding exists, update the budget
+          const { error: updateWeddingError } = await supabase
+            .from('weddings')
+            .update({ budget: totalBudget })
+            .eq('id', weddingData.id);
+          
+          if (updateWeddingError) {
+            console.error('Error updating wedding budget:', updateWeddingError);
+            // Don't fail the whole operation, just log the error
+          }
         }
-      };
-
-      // Check if focus areas already exist for this user
-      const { data: existingFocusAreas } = await supabase
-        .from('user_preferences')
-        .select('id')
-        .eq('user_id', weddingData.user_id)
-        .eq('preference_type', 'budget_priorities')
-        .single();
-
-      if (existingFocusAreas) {
-        // Update existing focus areas
-        await supabase
-          .from('user_preferences')
-          .update(focusAreaData)
-          .eq('user_id', weddingData.user_id)
-          .eq('preference_type', 'budget_priorities');
-      } else {
-        // Create new focus areas
-        await supabase
-          .from('user_preferences')
-          .insert(focusAreaData);
+      } catch (weddingError) {
+        console.warn('Error checking/updating wedding:', weddingError);
+        // Continue without updating wedding budget
       }
 
-      // Update wedding budget
-      await supabase
-        .from('weddings')
-        .update({ budget: totalBudget })
-        .eq('id', weddingData.id);
-
-      toast.success('Budget plan and focus areas saved successfully!');
-      
-      // Update the wedding plan data if onUpdate is provided
+      toast.success('Budget plan saved successfully!');
       if (onUpdate) {
         onUpdate({ budget: totalBudget });
       }
     } catch (error) {
       console.error('Error saving budget plan:', error);
-      toast.error('Failed to save budget plan');
+      toast.error(`Failed to save budget plan: ${error.message}`);
     }
-  };
-
-  const getFocusAreaIcon = (categoryId) => {
-    return focusAreas.includes(categoryId) ? 'fas fa-star' : 'far fa-star';
   };
 
   const getTotalPlanned = () => {
@@ -1466,8 +1878,7 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
     <div className="budget-planner-tab">
       <div className="planner-header">
         <h2>Budget Planning Tool</h2>
-        <p>Choose your focus areas and set your budget allocations</p>
-
+        <p>Rank your categories by importance. Drag to reorder. The top categories will get more budget weight.</p>
       </div>
 
       <div className="budget-input-section">
@@ -1481,10 +1892,7 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
             onChange={(e) => {
               const newBudget = parseFloat(e.target.value) || 0;
               setTotalBudget(newBudget);
-              // Recalculate recommendations when budget changes
-              setTimeout(() => {
-                calculateRecommendedBudget();
-              }, 0);
+              // Removed automatic calculation - will be triggered by button click instead
             }}
             placeholder="Enter your total budget"
             min="0"
@@ -1501,14 +1909,14 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
             {getTotalPlanned() > 0 ? (
               <Pie
                 data={{
-                  labels: budgetCategories
+                  labels: getAvailableCategories()
                     .filter(category => plannedBudget[category.id]?.amount > 0)
                     .map(category => category.name),
                   datasets: [{
-                    data: budgetCategories
+                    data: getAvailableCategories()
                       .filter(category => plannedBudget[category.id]?.amount > 0)
                       .map(category => plannedBudget[category.id].amount),
-                    backgroundColor: budgetCategories
+                    backgroundColor: getAvailableCategories()
                       .filter(category => plannedBudget[category.id]?.amount > 0)
                       .map(category => category.color),
                     borderWidth: 2,
@@ -1521,7 +1929,7 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
                   responsive: true,
                   maintainAspectRatio: false,
                   animation: {
-                    duration: 2000,
+                    duration: 800,
                     easing: 'easeOutQuart',
                     animateRotate: true,
                     animateScale: true
@@ -1632,7 +2040,7 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
             <div className="summary-item">
               <span className="label">Categories Used:</span>
               <span className="count">
-                {budgetCategories.filter(category => plannedBudget[category.id]?.amount > 0).length}
+                {getAvailableCategories().filter(category => plannedBudget[category.id]?.amount > 0).length}
               </span>
             </div>
           </div>
@@ -1640,59 +2048,138 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
       </div>
 
       <div className="focus-areas-section">
-        <h3>Choose Your Focus Areas</h3>
-
-        <div className="planner-actions-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
-        <p>Select up to 3 categories that matter most to you. We'll allocate more budget to these areas.</p>
-          <button 
-            className="manage-categories-btn"
-            onClick={() => setShowCategoryManager(true)}
-          >
-            <i className="fas fa-tags"></i>
-            Manage Categories
-          </button>
-        </div>
+        <h3>Rank Your Categories</h3>
         <div className="focus-areas-grid">
-          {budgetCategories.map(category => (
-            <div key={category.id} className="focus-area-item">
-              <div className="category-header">
-                <div className="category-icon" style={{ backgroundColor: category.color }}>
-                  <i className={category.icon}></i>
-                </div>
-                <div className="category-info">
-                  <h4>{category.name}</h4>
-                  <p>{defaultRecommendations[category.id]?.description}</p>
-                </div>
-                <button
-                  className={`focus-area-btn ${focusAreas.includes(category.id) ? 'active' : ''}`}
-                  onClick={() => handleFocusAreaToggle(category.id)}
-                  disabled={!focusAreas.includes(category.id) && focusAreas.length >= 3}
-                  title={focusAreas.includes(category.id) ? 'Remove from focus areas' : 'Add to focus areas'}
+          {categoryRanking
+            .map(categoryId => getAvailableCategories().find(cat => cat.id === categoryId))
+            .filter(category => category) // Filter out any undefined categories
+            .map(category => {
+              const index = categoryRanking.indexOf(category.id);
+              return (
+                <div
+                  key={category.id}
+                  className="focus-area-item"
+                  {...(!isMobile ? {
+                    draggable: true,
+                    onDragStart: e => handleDragStart(e, index),
+                    onDragOver: handleDragOver,
+                    onDrop: e => handleDrop(e, index),
+                    style: { opacity: 1, cursor: 'move' }
+                  } : { style: { opacity: 1 } })}
                 >
-                  <i className={getFocusAreaIcon(category.id)}></i>
-                </button>
-              </div>
-              
-              <div className="budget-allocation">
-                <label>Planned Amount:</label>
-                <div className="amount-input-wrapper">
-                  <span className="currency-symbol">$</span>
-                  <input
-                    type="number"
-                    value={plannedBudget[category.id]?.amount?.toFixed(0) || ''}
-                    onChange={(e) => handleBudgetAdjustment(category.id, e.target.value)}
-                    placeholder="0"
-                    min="0"
-                    step="100"
-                  />
+                  <div className="category-header">
+                    <div className="category-icon" style={{ backgroundColor: category.color }}>
+                      <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#fff', marginRight: 8 }}>{index + 1}</span>
+                      <i className={category.icon}></i>
+                    </div>
+                    <div className="category-info">
+                      <h4>{category.name}</h4>
+                      <p>{defaultRecommendations[category.id]?.description}</p>
+                    </div>
+                    <div className="category-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                      {isMobile && (
+                        <>
+                          <button
+                            className="move-up-btn"
+                            onClick={() => moveCategoryUp(category.id)}
+                            disabled={index === 0}
+                            title="Move up"
+                            style={{ background: 'none', border: 'none', cursor: index === 0 ? 'not-allowed' : 'pointer', color: '#64748b', fontSize: '1rem', padding: 0 }}
+                          >
+                            <i className="fas fa-arrow-up"></i>
+                          </button>
+                          <button
+                            className="move-down-btn"
+                            onClick={() => moveCategoryDown(category.id)}
+                            disabled={index === categoryRanking.length - 1}
+                            title="Move down"
+                            style={{ background: 'none', border: 'none', cursor: index === categoryRanking.length - 1 ? 'not-allowed' : 'pointer', color: '#64748b', fontSize: '1rem', padding: 0 }}
+                          >
+                            <i className="fas fa-arrow-down"></i>
+                          </button>
+                        </>
+                      )}
+                      <button
+                        className="remove-category-btn"
+                        onClick={() => handleRemoveCategory(category.id)}
+                        title="Remove from budget planning"
+                      >
+                        <i className="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="budget-allocation">
+                    <label>Planned Amount:</label>
+                    <div className="amount-input-wrapper">
+                      <span className="currency-symbol">$</span>
+                      <input
+                        type="number"
+                        value={plannedBudget[category.id]?.amount?.toFixed(0) || ''}
+                        onChange={e => handleBudgetAdjustment(category.id, e.target.value)}
+                        placeholder="0"
+                        min="0"
+                        step="100"
+                      />
+                    </div>
+                    <span className="percentage">
+                      {plannedBudget[category.id]?.percentage?.toFixed(1) || '0'}%
+                    </span>
+                  </div>
                 </div>
-                <span className="percentage">
-                  {plannedBudget[category.id]?.percentage?.toFixed(1) || '0'}%
-                </span>
-              </div>
-            </div>
-          ))}
+              );
+            })}
         </div>
+
+        {/* Calculate Budget Button */}
+        <div className="calculate-budget-section">
+          <button 
+            className={`calculate-budget-btn ${totalBudget > 0 && categoryRanking.length > 0 ? 'enabled' : 'disabled'}`}
+            onClick={calculateRecommendedBudget}
+            disabled={totalBudget <= 0 || categoryRanking.length === 0}
+          >
+            <i className="fas fa-calculator"></i>
+            {hasCalculatedBudget ? 'Recalculate Budget' : 'Calculate Budget'}
+          </button>
+          {totalBudget <= 0 && (
+            <p className="calculation-hint">Enter a total budget to calculate recommendations</p>
+          )}
+          {totalBudget > 0 && categoryRanking.length === 0 && (
+            <p className="calculation-hint">Rank your categories to calculate recommendations</p>
+          )}
+        </div>
+
+        {/* Removed Categories Section */}
+        {excludedCategories.length > 0 && (
+          <div className="removed-categories-section">
+            <h4>Removed Categories</h4>
+            <p>These categories have been removed from your budget planning. You can restore them if needed.</p>
+            <div className="removed-categories-grid">
+              {excludedCategories.map(categoryId => {
+                const category = budgetCategories.find(cat => cat.id === categoryId);
+                if (!category) return null;
+                
+                return (
+                  <div key={categoryId} className="removed-category-item">
+                    <div className="category-preview">
+                      <div className="category-icon" style={{ backgroundColor: category.color }}>
+                        <i className={category.icon}></i>
+                      </div>
+                      <span className="category-name">{category.name}</span>
+                    </div>
+                    <button
+                      className="restore-category-btn"
+                      onClick={() => handleRestoreCategory(categoryId)}
+                      title="Restore category"
+                    >
+                      <i className="fas fa-plus"></i>
+                      Restore
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="budget-summary-section">
@@ -1787,7 +2274,6 @@ function CategoryManager({ categories, onAdd, onRemove, onUnhide, onCancel }) {
   return (
     <div className="category-manager">
       <div className="add-category-section">
-        <h4>Add New Category</h4>
         <form onSubmit={handleSubmit} className="add-category-form">
           <div className="form-group">
             <label htmlFor="name">Category Name</label>

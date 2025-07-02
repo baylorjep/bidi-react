@@ -29,43 +29,6 @@
   text-align: center;
 }
 
-.header-notification-bell {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 100;
-}
-
-.header-notification-bell .dashboard-switcher {
-  margin-left: auto;
-}
-
-.header-notification-bell .switcher-button {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #1e293b;
-  font-weight: 600;
-  padding: 10px 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.header-notification-bell .switcher-button:hover {
-  background: rgba(255, 255, 255, 1);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-}
-
-.header-notification-bell .switcher-dropdown {
-  right: 0;
-  left: auto;
-  min-width: 280px;
-  margin-top: 8px;
-}
-
 .dashboard-header h1 {
   margin: 0 0 10px 0;
   font-size: 2.5rem;
@@ -74,11 +37,11 @@
 }
 
 .cute-title {
-  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  background: white;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-family: 'Dancing Script', cursive;
+  font-family: 'Outfit';
   font-size: 2.8rem;
 }
 
@@ -634,26 +597,6 @@ border-color: #ec4899;
     margin-bottom: 20px;
   }
 
-  .header-notification-bell {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    gap: 12px;
-  }
-
-  .header-notification-bell .switcher-button {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-  }
-  
-  .header-notification-bell .switcher-button span {
-    display: none;
-  }
-  
-  .header-notification-bell .switcher-dropdown {
-    min-width: 250px;
-  }
-
   .dashboard-header h1 {
     font-size: 2rem;
   }
@@ -686,16 +629,6 @@ border-color: #ec4899;
     width: 100%;
   }
 
-  /* Move notification bell down on mobile */
-  .overview-hero .header-notification-bell {
-    position: relative;
-    top: auto;
-    right: auto;
-    align-self: flex-end;
-    margin-top: 15px;
-    margin-bottom: 10px;
-  }
-
   .wedding-title-section {
     text-align: center;
   }
@@ -724,7 +657,6 @@ border-color: #ec4899;
     min-width: 180px;
     padding: 15px;
     display: flex;
-
   }
 
   .countdown-icon {
@@ -819,25 +751,10 @@ border-color: #ec4899;
     font-size: 2rem;
   }
 
-  .header-notification-bell {
-    top: 10px;
-    right: 10px;
-  }
-
   /* Overview Hero Mobile */
   .overview-hero {
     padding: 25px 15px;
     min-height: 120px;
-  }
-
-  /* Move notification bell down on smaller mobile */
-  .overview-hero .header-notification-bell {
-    position: relative;
-    top: auto;
-    right: auto;
-    align-self: flex-end;
-    margin-top: 12px;
-    margin-bottom: 8px;
   }
 
   .wedding-title {
@@ -1170,5 +1087,528 @@ border-color: #ec4899;
   }
   .hero-content-wrapper {
     padding: 0 0 0 0;
+  }
+}
+
+/* Color Picker Styles for Wedding Setup Form */
+.color-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.color-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: #f9fafb;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.color-item:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.color-picker-container {
+  cursor: pointer;
+  position: relative;
+}
+
+.color-display {
+  width: 100%;
+  height: 40px;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  border: 2px solid #e5e7eb;
+  transition: border-color 0.2s ease;
+}
+
+.color-display:hover {
+  border-color: #9ca3af;
+}
+
+.custom-color-name {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.custom-color-name:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.color-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.remove-color-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.remove-color-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.add-color-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.add-color-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.add-color-btn:active {
+  transform: translateY(0);
+}
+
+.no-colors-message {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 2px dashed #d1d5db;
+}
+
+.no-colors-message i {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #9ca3af;
+}
+
+.color-preview {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.color-preview h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.color-swatches-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.color-swatch {
+  background-color: var(--color-value);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  min-width: 80px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.color-swatch:hover {
+  transform: scale(1.05);
+}
+
+.section-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.color-warning {
+  text-align: center;
+  padding: 0.5rem;
+  color: #f59e0b;
+  background-color: #fef3c7;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  border: 1px solid #fde68a;
+}
+
+.color-warning i {
+  margin-right: 0.5rem;
+}
+
+/* Mobile responsive styles for color picker */
+@media (max-width: 768px) {
+  .color-palette-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .color-item {
+    padding: 0.75rem;
+  }
+  
+  .color-display {
+    height: 35px;
+  }
+  
+  .color-swatches-container {
+    gap: 0.25rem;
+  }
+  
+  .color-swatch {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    min-width: 70px;
+  }
+  
+  .add-color-btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .color-palette-grid {
+    gap: 0.5rem;
+  }
+  
+  .color-item {
+    padding: 0.5rem;
+  }
+  
+  .color-display {
+    height: 30px;
+  }
+  
+  .custom-color-name {
+    padding: 0.4rem;
+    font-size: 0.8rem;
+  }
+  
+  .color-swatch {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    min-width: 60px;
+  }
+}
+
+/* Desktop Vendors Dropdown */
+.desktop-vendors-tab-container {
+  position: relative;
+  display: inline-block;
+}
+
+.desktop-vendors-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.desktop-vendors-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 200px;
+  margin-top: 8px;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item-wedding-planning-dashboard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: white;
+  border: none;
+  color: #374151;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: #f8fafc;
+  color: #8b5cf6;
+}
+
+.dropdown-item.active {
+  background: #f3f4f6;
+  color: #8b5cf6;
+  font-weight: 600;
+}
+
+.dropdown-item i {
+  width: 16px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.dropdown-item:not(:last-child) {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Responsive adjustments for desktop dropdown */
+@media (max-width: 768px) {
+  .desktop-vendors-tab-container {
+    display: none;
+  }
+}
+
+/* Overview Hero Container */
+.overview-hero-container {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+/* Hero Notification Bell */
+.hero-notification-bell {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: none;
+  backdrop-filter: blur(10px);
+  border-radius: 50px;
+}
+
+.hero-notification-bell .notification-bell {
+  background: transparent;
+  border: none;
+  color: #1e293b;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.hero-notification-bell .notification-bell:hover {
+  background: rgba(139, 92, 246, 0.1);
+  transform: scale(1.05);
+}
+
+.hero-notification-bell .notification-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  min-width: 320px;
+  max-width: 400px;
+  z-index: 1001;
+}
+
+/* Responsive adjustments for hero notification bell */
+@media (max-width: 768px) {
+  .hero-notification-bell {
+    top: 15px;
+    right: 15px;
+    padding: 0px;
+    background: none;
+    border-radius: 40px;
+  }
+  
+  .hero-notification-bell .notification-bell {
+    padding: 10px;
+    font-size: 1.1rem;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .hero-notification-bell .notification-bell:hover {
+    background: rgba(139, 92, 246, 0.15);
+    transform: scale(1.1);
+  }
+  
+  .hero-notification-bell .notification-dropdown {
+    min-width: 280px;
+    max-width: 320px;
+    right: -10px;
+    margin-top: 10px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  }
+  
+  /* Mobile notification dropdown - flip to left side */
+  .hero-notification-bell .notification-dropdown {
+    right: auto;
+    left: -10px;
+    transform-origin: top-right;
+  }
+  
+  /* Ensure notification bell is always visible on mobile */
+  .hero-notification-bell {
+    position: fixed;
+    z-index: 1001;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-notification-bell {
+    top: 10px;
+    right: 10px;
+    padding: 4px;
+    background: none;
+    border-radius: 35px;
+  }
+  
+  .hero-notification-bell .notification-bell {
+    padding: 8px;
+    font-size: 1rem;
+    min-width: 40px;
+    min-height: 40px;
+  }
+  
+  .hero-notification-bell .notification-dropdown {
+    min-width: 260px;
+    max-width: 300px;
+    right: -15px;
+    margin-top: 8px;
+    border-radius: 12px;
+  }
+  
+  /* Smaller screens - also flip to left */
+  .hero-notification-bell .notification-dropdown {
+    right: auto;
+    left: -15px;
+  }
+  
+  /* Add touch-friendly spacing */
+  .hero-notification-bell .notification-bell:active {
+    transform: scale(0.95);
+    background: rgba(139, 92, 246, 0.2);
+  }
+}
+
+/* Mobile-specific notification bell improvements */
+@media (max-width: 768px) {
+  /* Ensure notification bell doesn't interfere with mobile navigation */
+  .hero-notification-bell {
+    bottom: auto;
+    left: auto;
+  }
+  
+  /* Better touch targets for mobile */
+  .hero-notification-bell .notification-bell {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Enhanced notification badge for mobile */
+  .hero-notification-bell .notification-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    min-width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Mobile notification dropdown improvements */
+  .hero-notification-bell .notification-dropdown {
+    max-height: 60vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+  
+  /* Ensure dropdown doesn't go off-screen on small devices */
+  @media (max-width: 360px) {
+    .hero-notification-bell .notification-dropdown {
+      right: -20px;
+      min-width: 240px;
+      max-width: 280px;
+    }
+  }
+  
+  /* Ultra-small screens - flip to left */
+  @media (max-width: 360px) {
+    .hero-notification-bell .notification-dropdown {
+      right: auto;
+      left: -20px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  /* Smaller devices get even more compact styling */
+  .hero-notification-bell .notification-badge {
+    min-width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+  }
+  
+  /* Prevent notification bell from being too close to screen edges */
+  .hero-notification-bell {
+    top: max(10px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
   }
 } 

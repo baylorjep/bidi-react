@@ -30,6 +30,7 @@ function EventDetails({ weddingData, onUpdate }) {
   });
 
   const [originalData, setOriginalData] = useState({});
+  const [originalColors, setOriginalColors] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [activeTab, setActiveTab] = useState('basic');
@@ -76,11 +77,13 @@ function EventDetails({ weddingData, onUpdate }) {
       
       setFormData(initialData);
       setOriginalData(initialData);
+      setOriginalColors(weddingData.colors || []);
       
       // Load colors from database or use defaults
       const savedColors = weddingData.colors || [];
       if (savedColors.length > 0) {
         setAllColors(savedColors);
+        setOriginalColors(savedColors);
       } else {
         // Use default colors if none saved, or load from old format
         const defaultColors = [
@@ -90,6 +93,7 @@ function EventDetails({ weddingData, onUpdate }) {
           { id: 'neutral', name: 'Neutral', value: weddingData.neutral_color || '#6b7280', isDefault: true }
         ];
         setAllColors(defaultColors);
+        setOriginalColors(defaultColors);
       }
       
       loadMoodBoardImages();
@@ -239,6 +243,7 @@ function EventDetails({ weddingData, onUpdate }) {
       if (error) throw error;
 
       setOriginalData(formData);
+      setOriginalColors(allColors);
       setSaveMessage('Event details saved successfully!');
       
       if (onUpdate) {
@@ -447,11 +452,12 @@ function EventDetails({ weddingData, onUpdate }) {
   };
 
   const hasUnsavedChanges = () => {
-    return JSON.stringify(formData) !== JSON.stringify(originalData);
+    return JSON.stringify(formData) !== JSON.stringify(originalData) || JSON.stringify(allColors) !== JSON.stringify(originalColors);
   };
 
   const resetToOriginal = () => {
     setFormData(originalData);
+    setAllColors(originalColors);
   };
 
   const handleImageClick = (photoId) => {
@@ -782,9 +788,9 @@ function EventDetails({ weddingData, onUpdate }) {
   const renderMoodBoard = () => (
     <div className="details-section-wedding-details">
       <div className="mood-board-header-wedding-details">
-        <h3 style={{marginBottom: '0px', fontFamily:'Outfit', fontSize:'2rem'}}>Mood Board</h3>
+        <h3 style={{marginBottom: '0px', fontFamily:'Outfit', fontSize:'2rem'}}>Inspo Board</h3>
         <p className="section-description-wedding-details">
-          Upload and organize inspiration images to create your wedding mood board. 
+          Upload and organize inspiration images to create your wedding inspiration board. 
         </p>
       </div>
       
@@ -1145,7 +1151,7 @@ function EventDetails({ weddingData, onUpdate }) {
             onClick={() => setActiveTab('moodboard')}
           >
             <i className="fas fa-images"></i>
-            Mood Board
+            Inspiration Board
           </button>
           <button 
             className={`tab-button-wedding-details ${activeTab === 'style' ? 'active' : ''}`}
