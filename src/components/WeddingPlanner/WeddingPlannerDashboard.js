@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../../supabaseClient";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import "../../App.css";
 import "../../styles/WeddingPlannerDashboard.css";
 import "../../styles/Sidebar.css";
@@ -36,11 +36,12 @@ const WeddingPlannerDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedChat, setSelectedChat] = useState(null);
   const navigate = useNavigate();
+  const params = useParams();
+  const location = useLocation();
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isPinned, setIsPinned] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   const sidebarRef = React.useRef(null);
-  const location = useLocation();
   const [businessName, setBusinessName] = useState("");
   const [BidiPlus, setBidiPlus] = useState(false);
   const [bids, setBids] = useState([]);
@@ -51,14 +52,13 @@ const WeddingPlannerDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    if (location.state?.activeSection) {
-      setActiveSection(location.state.activeSection);
-      localStorage.setItem("activeSection", location.state.activeSection);
+    if (params.activeSection) {
+      setActiveSection(params.activeSection);
     }
     if (location.state?.selectedChat) {
       setSelectedChat(location.state.selectedChat);
     }
-  }, [location.state]);
+  }, [params.activeSection, location.state]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -147,11 +147,10 @@ const WeddingPlannerDashboard = () => {
     localStorage.setItem("activeSection", activeSection);
   }, [activeSection]);
 
-  const handleSectionChange = (section) => {
-    setActiveSection(section);
-    if (window.innerWidth <= 768) {
-      setIsSidebarVisible(false);
-    }
+  const handleSectionChange = (newSection) => {
+    setActiveSection(newSection);
+    // Update URL to reflect the active section
+    navigate(`/wedding-planner-dashboard/${newSection}`, { replace: true });
   };
 
   const toggleSidebar = () => {
@@ -231,10 +230,10 @@ const WeddingPlannerDashboard = () => {
 
   const handleMessagesClick = () => {
     if (isMobile) {
-      setActiveSection("messages");
+      handleSectionChange("messages");
       setSelectedChat(null);
     } else {
-      setActiveSection("messages");
+      handleSectionChange("messages");
     }
   };
 
@@ -581,7 +580,7 @@ const WeddingPlannerDashboard = () => {
               <div className="profile-menu" ref={profileMenuRef}>
                 <button 
                   onClick={() => {
-                    setActiveSection("training");
+                    handleSectionChange("training");
                     setShowProfileMenu(false);
                   }}
                   className="profile-menu-item"
@@ -591,7 +590,7 @@ const WeddingPlannerDashboard = () => {
                 </button>
                 <button 
                   onClick={() => {
-                    setActiveSection("settings");
+                    handleSectionChange("settings");
                     setShowProfileMenu(false);
                   }}
                   className="profile-menu-item"
@@ -602,7 +601,7 @@ const WeddingPlannerDashboard = () => {
                 {isAdmin && (
                   <button 
                     onClick={() => {
-                      setActiveSection("admin");
+                      handleSectionChange("admin");
                       setShowProfileMenu(false);
                     }}
                     className="profile-menu-item"

@@ -236,4 +236,38 @@
     display: none;
   }
 
+}
+
+/* Dashboard Switcher in Sidebar */
+.sidebar-dashboard-switcher {
+  padding: 0 20px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.sidebar-dashboard-switcher .dashboard-switcher {
+  width: 100%;
+}
+
+.sidebar-dashboard-switcher .switcher-button {
+  width: 100%;
+  justify-content: center;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #374151;
+  font-size: 0.85rem;
+  padding: 12px 16px;
+}
+
+.sidebar-dashboard-switcher .switcher-button:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.sidebar-dashboard-switcher .switcher-dropdown {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  min-width: auto;
+  margin-top: 4px;
 } 

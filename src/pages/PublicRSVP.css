@@ -76,11 +76,13 @@
   gap: 8px;
   font-size: 1.1rem;
   font-weight: 500;
+  color: white;
 }
 
 .detail-item i {
   font-size: 1.2rem;
   opacity: 0.9;
+  color: white;
 }
 
 .rsvp-content {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { toast } from 'react-toastify';
 import WeddingTimeline from './WeddingTimeline';
@@ -13,6 +13,8 @@ import WeddingOverview from './WeddingOverview';
 import MobileChatList from '../Messaging/MobileChatList';
 import ChatInterface from '../Messaging/ChatInterface';
 import DashboardMessaging from '../Messaging/DashboardMessaging';
+import DashboardSwitcher from '../DashboardSwitcher';
+import LoadingSpinner from '../LoadingSpinner';
 import './WeddingPlanningDashboard.css';
 
 function WeddingPlanningDashboard() {
@@ -25,11 +27,28 @@ function WeddingPlanningDashboard() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [showVendorsSubmenu, setShowVendorsSubmenu] = useState(false);
+  const [showDesktopVendorsDropdown, setShowDesktopVendorsDropdown] = useState(false);
   const [moodBoardImages, setMoodBoardImages] = useState([]);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [backgroundImageIndex, setBackgroundImageIndex] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams();
+
+  // Initialize activeTab from URL parameter
+  useEffect(() => {
+    if (params.activeTab) {
+      setActiveTab(params.activeTab);
+    }
+  }, [params.activeTab]);
+
+  // Function to update tab and URL
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    // Update URL to reflect the active tab
+    navigate(`/wedding-planner/${newTab}`, { replace: true });
+  };
 
   useEffect(() => {
     checkUserAndLoadWedding();
@@ -68,11 +87,22 @@ function WeddingPlanningDashboard() {
           setShowVendorsSubmenu(false);
         }
       }
+      
+      // Close desktop vendors dropdown when clicking outside
+      if (showDesktopVendorsDropdown) {
+        const dropdown = document.querySelector('.desktop-vendors-dropdown');
+        const vendorsButton = document.querySelector('.desktop-vendors-tab');
+        
+        if (dropdown && !dropdown.contains(event.target) && 
+            vendorsButton && !vendorsButton.contains(event.target)) {
+          setShowDesktopVendorsDropdown(false);
+        }
+      }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [showVendorsSubmenu]);
+  }, [showVendorsSubmenu, showDesktopVendorsDropdown]);
 
   const checkUserAndLoadWedding = async () => {
     try {
@@ -171,6 +201,11 @@ function WeddingPlanningDashboard() {
       loadMoodBoardImages(data.id);
       setIsCreatingWedding(false);
       toast.success('Wedding plan created successfully!');
+      
+      // Navigate to homepage after successful creation
+      setTimeout(() => {
+        navigate('/wedding-planner/overview');
+      }, 1500); // Small delay to let user see the success message
     } catch (error) {
       console.error('Error creating wedding plan:', error);
       setIsCreatingWedding(false);
@@ -189,7 +224,7 @@ function WeddingPlanningDashboard() {
       // Check if this is a tab switch request from VendorManager
       if (updates && updates.type === 'switchTab') {
         console.log('Dashboard received switchTab request:', updates);
-        setActiveTab(updates.tab);
+        handleTabChange(updates.tab);
         if (updates.chatData && updates.tab === 'messaging') {
           // chatData is now directly the business ID
           console.log('Setting selectedChatId to:', updates.chatData, 'type:', typeof updates.chatData);
@@ -748,10 +783,7 @@ function WeddingPlanningDashboard() {
           <button 
             className="create-wedding-btn"
             onClick={() => {
-              alert('Button clicked!');
-              console.log('Create wedding button clicked');
-              console.log('Current activeTab before:', activeTab);
-              setActiveTab('setup');
+              handleTabChange('setup');
               console.log('ActiveTab set to setup');
             }}
           >
@@ -764,7 +796,7 @@ function WeddingPlanningDashboard() {
     console.log('Wedding data exists, rendering tab content for:', activeTab);
     switch (activeTab) {
       case 'overview':
-        return <WeddingOverview weddingData={weddingData} onNavigate={setActiveTab} />;
+        return <WeddingOverview weddingData={weddingData} onNavigate={handleTabChange} />;
       
       case 'timeline':
         return <WeddingTimeline weddingData={weddingData} onUpdate={updateWeddingData} />;
@@ -814,9 +846,13 @@ function WeddingPlanningDashboard() {
 
   if (loading) {
     return (
-      <div className="wedding-planning-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading your wedding plan...</p>
+      <div className="wedding-planning-dashboard">
+        <LoadingSpinner 
+          variant="ring" 
+          color="#ff008a" 
+          text="Loading your wedding plan..." 
+          fullScreen={true}
+        />
       </div>
     );
   }
@@ -829,77 +865,79 @@ function WeddingPlanningDashboard() {
     <div className="wedding-planning-dashboard">
       {/* Overview Hero Section */}
       {weddingData ? (
-        <div 
-          className="overview-hero"
-          style={{
-            backgroundImage: moodBoardImages.length > 0 
-              ? `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${moodBoardImages[backgroundImageIndex]?.url})`
-              : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            transition: 'background-image 1s ease-in-out',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-        >
-          <div className="frosted-hero-glass" />
-          <div className="hero-content-wrapper">
-            <div className="hero-content">
-              <div className="wedding-title-section">
-                <h1 className="wedding-title">{weddingData.wedding_title}</h1>
-                <div className="wedding-date-display">
-                  <i className="fas fa-calendar-heart"></i>
-                  <span>{new Date(weddingData.wedding_date).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}</span>
+        <div className="overview-hero-container">
+          {/* Notification Bell - positioned outside hero but in corner */}
+          <div className="hero-notification-bell">
+            <WeddingNotificationBell 
+              notifications={notifications}
+              onDismissNotification={dismissNotification}
+              onClearAllNotifications={clearAllNotifications}
+            />
+          </div>
+          
+          <div 
+            className="overview-hero"
+            style={{
+              backgroundImage: moodBoardImages.length > 0 
+                ? `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${moodBoardImages[backgroundImageIndex]?.url})`
+                : 'linear-gradient(135deg, #d84888 0%, #764ba2 100%);',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              transition: 'background-image 1s ease-in-out',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <div className="frosted-hero-glass" />
+            
+            <div className="hero-content-wrapper">
+              <div className="hero-content">
+                <div className="wedding-title-section">
+                  <h1 className="wedding-title">{weddingData.wedding_title}</h1>
+                  <div className="wedding-date-display">
+                    <i className="fas fa-calendar-heart"></i>
+                    <span>{new Date(weddingData.wedding_date).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}</span>
+                  </div>
+                  <div className="wedding-location">
+                    <i className="fas fa-map-marker-alt"></i>
+                    <span>{weddingData.wedding_location || 'Location TBD'}</span>
+                  </div>
                 </div>
-                <div className="wedding-location">
-                  <i className="fas fa-map-marker-alt"></i>
-                  <span>{weddingData.wedding_location || 'Location TBD'}</span>
-                </div>
-              </div>
-              
-              <div className="countdown-section">
-                <div className={`countdown-card ${weddingPhase.phase.toLowerCase().replace(/\s+/g, '')}`}>
-                  <div className="countdown-icon">{weddingPhase.icon}</div>
-                  <div className="countdown-content">
-                    <h3>{weddingPhase.phase}</h3>
-                    <p className="countdown-days">
-                      {daysUntil < 0 ? 'Wedding has passed' : 
-                       daysUntil === 0 ? 'Today is your wedding day!' :
-                       `${daysUntil} ${daysUntil === 1 ? 'day' : 'days'} to go`}
-                    </p>
+                
+                <div className="countdown-section">
+                  <div className={`countdown-card ${weddingPhase.phase.toLowerCase().replace(/\s+/g, '')}`}>
+                    <div className="countdown-icon">{weddingPhase.icon}</div>
+                    <div className="countdown-content">
+                      <h3>{weddingPhase.phase}</h3>
+                      <p className="countdown-days">
+                        {daysUntil < 0 ? 'Wedding has passed' : 
+                         daysUntil === 0 ? 'Today is your wedding day!' :
+                         `${daysUntil} ${daysUntil === 1 ? 'day' : 'days'} to go`}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
+              
+              {/* Slideshow Indicator */}
+              {moodBoardImages.length > 1 && (
+                <div className="slideshow-indicator">
+                  {moodBoardImages.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`slideshow-dot ${index === backgroundImageIndex ? 'active' : ''}`}
+                      onClick={() => setBackgroundImageIndex(index)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-        
-            
-            {/* Notification Bell */}
-            <div className="header-notification-bell">
-              <WeddingNotificationBell 
-                notifications={notifications}
-                onDismissNotification={dismissNotification}
-                onClearAllNotifications={clearAllNotifications}
-              />
-            </div>
-            
-            {/* Slideshow Indicator */}
-            {moodBoardImages.length > 1 && (
-              <div className="slideshow-indicator">
-                {moodBoardImages.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`slideshow-dot ${index === backgroundImageIndex ? 'active' : ''}`}
-                    onClick={() => setBackgroundImageIndex(index)}
-                  />
-                ))}
-              </div>
-            )}
           </div>
         </div>
       ) : (
@@ -917,7 +955,7 @@ function WeddingPlanningDashboard() {
       <div className="dashboard-tabs desktop-tabs">
         <button 
           className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
+          onClick={() => handleTabChange('overview')}
         >
           <i className="fas fa-home"></i>
           Overview
@@ -926,7 +964,7 @@ function WeddingPlanningDashboard() {
         {!weddingData && (
           <button 
             className={`tab ${activeTab === 'setup' ? 'active' : ''}`}
-            onClick={() => setActiveTab('setup')}
+            onClick={() => handleTabChange('setup')}
           >
             <i className="fas fa-plus-circle"></i>
             Setup
@@ -937,7 +975,7 @@ function WeddingPlanningDashboard() {
           <>
             <button 
               className={`tab ${activeTab === 'timeline' ? 'active' : ''}`}
-              onClick={() => setActiveTab('timeline')}
+              onClick={() => handleTabChange('timeline')}
             >
               <i className="fas fa-calendar-alt"></i>
               Timeline
@@ -945,23 +983,53 @@ function WeddingPlanningDashboard() {
             
             <button 
               className={`tab ${activeTab === 'budget' ? 'active' : ''}`}
-              onClick={() => setActiveTab('budget')}
+              onClick={() => handleTabChange('budget')}
             >
               <i className="fas fa-dollar-sign"></i>
               Budget
             </button>
             
-            <button 
-              className={`tab ${activeTab === 'vendors' ? 'active' : ''}`}
-              onClick={() => setActiveTab('vendors')}
-            >
-              <i className="fas fa-users"></i>
-              Vendors
-            </button>
+
+            
+            <div className="desktop-vendors-tab-container">
+              <button 
+                className={`tab desktop-vendors-tab ${activeTab === 'vendors' || activeTab === 'messaging' ? 'active' : ''}`}
+                onClick={() => setShowDesktopVendorsDropdown(!showDesktopVendorsDropdown)}
+              >
+                <i className="fas fa-users"></i>
+                Vendors
+                <i className="fas fa-chevron-down" style={{ marginLeft: '8px', fontSize: '0.8rem' }}></i>
+              </button>
+              
+              {showDesktopVendorsDropdown && (
+                <div className="desktop-vendors-dropdown">
+                  <button 
+                    className={`dropdown-item-wedding-planning-dashboard ${activeTab === 'vendors' ? 'active' : ''}`}
+                    onClick={() => {
+                      handleTabChange('vendors');
+                      setShowDesktopVendorsDropdown(false);
+                    }}
+                  >
+                    <i className="fas fa-handshake"></i>
+                    View Bids
+                  </button>
+                  <button 
+                    className={`dropdown-item ${activeTab === 'messaging' ? 'active' : ''}`}
+                    onClick={() => {
+                      handleTabChange('messaging');
+                      setShowDesktopVendorsDropdown(false);
+                    }}
+                  >
+                    <i className="fas fa-comments" style={{ color: 'black' }}></i>
+                    Messages
+                  </button>
+                </div>
+              )}
+            </div>
             
             <button 
               className={`tab ${activeTab === 'guests' ? 'active' : ''}`}
-              onClick={() => setActiveTab('guests')}
+              onClick={() => handleTabChange('guests')}
             >
               <i className="fas fa-user-friends"></i>
               Guests
@@ -969,7 +1037,7 @@ function WeddingPlanningDashboard() {
             
             <button 
               className={`tab ${activeTab === 'details' ? 'active' : ''}`}
-              onClick={() => setActiveTab('details')}
+              onClick={() => handleTabChange('details')}
             >
               <i className="fas fa-info-circle"></i>
               Details
@@ -989,7 +1057,7 @@ function WeddingPlanningDashboard() {
           <>
             <button 
               className={`mobile-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('overview')}
+              onClick={() => handleTabChange('overview')}
             >
               <i className="fas fa-home"></i>
               <span>Overview</span>
@@ -997,7 +1065,7 @@ function WeddingPlanningDashboard() {
             
             <button 
               className={`mobile-nav-item ${activeTab === 'setup' ? 'active' : ''}`}
-              onClick={() => setActiveTab('setup')}
+              onClick={() => handleTabChange('setup')}
             >
               <i className="fas fa-plus-circle"></i>
               <span>Setup</span>
@@ -1009,7 +1077,7 @@ function WeddingPlanningDashboard() {
             <button 
               className={`mobile-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab('overview');
+                handleTabChange('overview');
                 setShowVendorsSubmenu(false);
               }}
             >
@@ -1020,7 +1088,7 @@ function WeddingPlanningDashboard() {
             <button 
               className={`mobile-nav-item ${activeTab === 'timeline' ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab('timeline');
+                handleTabChange('timeline');
                 setShowVendorsSubmenu(false);
               }}
             >
@@ -1031,7 +1099,7 @@ function WeddingPlanningDashboard() {
             <button 
               className={`mobile-nav-item ${activeTab === 'budget' ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab('budget');
+                handleTabChange('budget');
                 setShowVendorsSubmenu(false);
               }}
             >
@@ -1046,7 +1114,7 @@ function WeddingPlanningDashboard() {
                 if (showVendorsSubmenu) {
                   setShowVendorsSubmenu(false);
                 } else {
-                  setActiveTab('vendors');
+                  handleTabChange('vendors');
                   setShowVendorsSubmenu(true);
                 }
               }}
@@ -1058,7 +1126,7 @@ function WeddingPlanningDashboard() {
             <button 
               className={`mobile-nav-item ${activeTab === 'guests' ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab('guests');
+                handleTabChange('guests');
                 setShowVendorsSubmenu(false);
               }}
             >
@@ -1069,7 +1137,7 @@ function WeddingPlanningDashboard() {
             <button 
               className={`mobile-nav-item ${activeTab === 'details' ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab('details');
+                handleTabChange('details');
                 setShowVendorsSubmenu(false);
               }}
             >
@@ -1086,17 +1154,17 @@ function WeddingPlanningDashboard() {
           <button 
             className={`mobile-submenu-item ${activeTab === 'vendors' ? 'active' : ''}`}
             onClick={() => {
-              setActiveTab('vendors');
+              handleTabChange('vendors');
               setShowVendorsSubmenu(false);
             }}
           >
-            <i className="fas fa-cog"></i>
-            <span>Manage</span>
+            <i className="fas fa-handshake"></i>
+            <span>View Bids</span>
           </button>
           <button 
             className={`mobile-submenu-item ${activeTab === 'messaging' ? 'active' : ''}`}
             onClick={() => {
-              setActiveTab('messaging');
+              handleTabChange('messaging');
               setShowVendorsSubmenu(false);
             }}
           >
@@ -1123,11 +1191,30 @@ function WeddingSetupForm({ onSubmit, loading }) {
     color_scheme: ''
   });
 
+  // Add color picker state
+  const [allColors, setAllColors] = useState([
+    { id: 'primary', name: 'Primary', value: '#ec4899', isDefault: true },
+    { id: 'secondary', name: 'Secondary', value: '#8b5cf6', isDefault: true },
+    { id: 'accent', name: 'Accent', value: '#f59e0b', isDefault: true },
+    { id: 'neutral', name: 'Neutral', value: '#6b7280', isDefault: true }
+  ]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Form submitted with data:', formData);
-    console.log('Calling onSubmit function...');
-    onSubmit(formData);
+    console.log('Colors:', allColors);
+    
+    // Create color scheme string from colors
+    const colorSchemeString = allColors.map(color => color.name).join(' & ');
+    
+    const submissionData = {
+      ...formData,
+      color_scheme: colorSchemeString,
+      colors: allColors // Include the full colors array
+    };
+    
+    console.log('Calling onSubmit function with:', submissionData);
+    onSubmit(submissionData);
   };
 
   const handleChange = (e) => {
@@ -1136,6 +1223,41 @@ function WeddingSetupForm({ onSubmit, loading }) {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  // Color picker functions
+  const handleColorChange = (colorId, color) => {
+    setAllColors(prev => 
+      prev.map(c => 
+        c.id === colorId ? { ...c, value: color } : c
+      )
+    );
+  };
+
+  const addCustomColor = () => {
+    const newColor = {
+      id: `custom_${Date.now()}`,
+      name: `Custom Color ${allColors.filter(c => c.id.startsWith('custom_')).length + 1}`,
+      value: '#3b82f6',
+      isDefault: false
+    };
+    setAllColors(prev => [...prev, newColor]);
+  };
+
+  const removeColor = (colorId) => {
+    // Don't allow removing the last color
+    if (allColors.length <= 1) {
+      return;
+    }
+    setAllColors(prev => prev.filter(color => color.id !== colorId));
+  };
+
+  const updateColorName = (colorId, newName) => {
+    setAllColors(prev => 
+      prev.map(color => 
+        color.id === colorId ? { ...color, name: newName } : color
+      )
+    );
   };
 
   console.log('WeddingSetupForm about to render form with data:', formData);
@@ -1205,36 +1327,130 @@ function WeddingSetupForm({ onSubmit, loading }) {
         </div>
       </div>
 
-      <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="wedding_style">Wedding Style</label>
-          <select
-            id="wedding_style"
-            name="wedding_style"
-            value={formData.wedding_style}
-            onChange={handleChange}
-          >
-            <option value="">Select Style</option>
-            <option value="traditional">Traditional</option>
-            <option value="modern">Modern</option>
-            <option value="rustic">Rustic</option>
-            <option value="elegant">Elegant</option>
-            <option value="bohemian">Bohemian</option>
-            <option value="vintage">Vintage</option>
-            <option value="destination">Destination</option>
-          </select>
+      <div className="form-group">
+        <label htmlFor="wedding_style">Wedding Style</label>
+        <select
+          id="wedding_style"
+          name="wedding_style"
+          value={formData.wedding_style}
+          onChange={handleChange}
+        >
+          <option value="">Select Style</option>
+          <option value="traditional">Traditional</option>
+          <option value="modern">Modern</option>
+          <option value="rustic">Rustic</option>
+          <option value="elegant">Elegant</option>
+          <option value="bohemian">Bohemian</option>
+          <option value="vintage">Vintage</option>
+          <option value="destination">Destination</option>
+        </select>
+      </div>
+
+      {/* Color Palette Section */}
+      <div className="form-group">
+        <label>Color Palette</label>
+        <p className="section-description">
+          Click on any color swatch below to choose your wedding colors. You can add custom colors and remove any color from your palette (you must keep at least one color).
+        </p>
+        
+        <div className="color-palette-grid">
+          {allColors.map((color) => (
+            <div key={color.id} className="color-item">
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>{color.name}</label>
+              <div 
+                className="color-picker-container"
+                onClick={() => {
+                  // Trigger the hidden color input
+                  const colorInput = document.getElementById(`color-input-${color.id}`);
+                  if (colorInput) {
+                    colorInput.click();
+                  }
+                }}
+              >
+                <input
+                  id={`color-input-${color.id}`}
+                  type="color"
+                  value={color.value}
+                  onChange={(e) => handleColorChange(color.id, e.target.value)}
+                  className="color-picker"
+                  title="Click to choose color"
+                  style={{ display: 'none' }}
+                />
+                <div 
+                  className="color-display"
+                  style={{ backgroundColor: color.value }}
+                ></div>
+                <div className="color-info">
+                  <input
+                    type="text"
+                    value={color.name}
+                    onChange={(e) => updateColorName(color.id, e.target.value)}
+                    className="custom-color-name"
+                    placeholder="Color name"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <span className="color-hint">
+                    Click color to change
+                  </span>
+                </div>
+                {allColors.length > 1 && (
+                  <button
+                    className="remove-color-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeColor(color.id);
+                    }}
+                    title="Remove this color"
+                    type="button"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="color_scheme">Color Scheme</label>
-          <input
-            type="text"
-            id="color_scheme"
-            name="color_scheme"
-            value={formData.color_scheme}
-            onChange={handleChange}
-            placeholder="e.g., Navy & Gold"
-          />
+        {/* Add Color Button */}
+        <div className="add-color-section">
+          <button 
+            className="add-color-btn"
+            onClick={addCustomColor}
+            type="button"
+          >
+            <i className="fas fa-plus"></i>
+            Add New Color
+          </button>
+        </div>
+        
+        {allColors.length === 1 && (
+          <div className="color-warning">
+            <i className="fas fa-info-circle"></i>
+            <span>Keep at least one color in your palette</span>
+          </div>
+        )}
+        
+        {allColors.length === 0 && (
+          <div className="no-colors-message">
+            <i className="fas fa-palette"></i>
+            <p>No colors in your palette yet</p>
+            <small>Click "Add New Color" to start building your wedding color scheme</small>
+          </div>
+        )}
+        
+        <div className="color-preview">
+          <h4>Color Preview</h4>
+          <div className="color-swatches-container">
+            {allColors.map((color) => (
+              <div 
+                key={color.id} 
+                className="color-swatch" 
+                style={{ backgroundColor: color.value }}
+              >
+                {color.name}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

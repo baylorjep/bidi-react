@@ -8,6 +8,7 @@ import { Modal, Button } from 'react-bootstrap'; // Make sure to install react-b
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import BidDisplay from '../Bid/BidDisplay';
+import LoadingSpinner from '../LoadingSpinner';
 
 
 const sendEmailNotification = async (recipientEmail, subject, htmlContent) => {
@@ -738,14 +739,14 @@ useEffect(() => {
                                     }
                                 }}
                             >
-                                {isLoading && (
-                                    <span 
-                                        className="spinner-border spinner-border-sm text-light" 
-                                        role="status" 
-                                        aria-hidden="true"
-                                    ></span>
+                                {isLoading ? (
+                                    <div className="d-flex align-items-center">
+                                        <LoadingSpinner variant="clip" color="white" size={16} />
+                                        <span className="ms-2">Submitting...</span>
+                                    </div>
+                                ) : (
+                                    'Submit Bid'
                                 )}
-                                {isLoading ? 'Submitting...' : 'Submit Bid'}
                             </button>
                         </div>
                     </div>

@@ -261,18 +261,65 @@
   gap: 20px;
 }
 
+/* Guest Cards with Color Coding */
 .guest-card {
   background: white;
   border: 1px solid #e1e5e9;
   border-radius: 16px;
-  padding: 20px;
+  padding: 16px;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Color coding based on RSVP status */
+.guest-card-attending {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+}
+
+.guest-card-declined {
+  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+}
+
+.guest-card-not_sure {
+  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+}
+
+.guest-card-pending {
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+}
+
+.guest-card-pending::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6b7280 0%, #4b5563 100%);
 }
 
 .guest-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced hover effects for different statuses */
+.guest-card-attending:hover {
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
+}
+
+.guest-card-declined:hover {
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.15);
+}
+
+.guest-card-not_sure:hover {
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.15);
+}
+
+.guest-card-pending:hover {
+  box-shadow: 0 8px 25px rgba(107, 114, 128, 0.15);
 }
 
 .guest-header {
@@ -356,20 +403,31 @@
 
 .guest-info {
   margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
 .info-item {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 4px;
   margin-bottom: 8px;
   font-size: 0.85rem;
   color: #64748b;
+  line-height: 1.4;
 }
 
-.info-item i {
-  width: 16px;
-  color: #94a3b8;
+.info-label {
+  min-width: auto;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.info-item span:not(.info-label) {
+  color: #64748b;
+  word-break: break-word;
 }
 
 .info-item:last-child {
@@ -746,8 +804,8 @@
 /* Form Styles */
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .form-group {
@@ -1136,6 +1194,27 @@
     width: 100%;
     justify-content: center;
     padding: 10px 16px;
+  }
+
+  .guest-card {
+    padding: 16px;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .info-label {
+    min-width: auto;
+    font-size: 0.8rem;
+  }
+
+  .guest-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }
 

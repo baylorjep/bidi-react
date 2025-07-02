@@ -632,7 +632,7 @@ function GuestListManager({ weddingData, onUpdate, compact = false }) {
         ) : (
           <div className="guests-grid">
             {filteredGuests.map(guest => (
-              <div key={guest.id} className="guest-card">
+              <div key={guest.id} className={`guest-card guest-card-${guest.rsvp_status}`}>
                 <div className="guest-header">
                   <div className="guest-name">
                     <h4>
@@ -664,37 +664,37 @@ function GuestListManager({ weddingData, onUpdate, compact = false }) {
                 <div className="guest-info">
                   {guest.email && (
                     <div className="info-item">
-                      <i className="fas fa-envelope"></i>
+                      <span className="info-label">Email:</span>
                       <span>{guest.email}</span>
                     </div>
                   )}
                   {guest.phone && (
                     <div className="info-item">
-                      <i className="fas fa-phone"></i>
+                      <span className="info-label">Phone:</span>
                       <span>{guest.phone}</span>
                     </div>
                   )}
                   {guest.address && (
                     <div className="info-item">
-                      <i className="fas fa-map-marker-alt"></i>
+                      <span className="info-label">Address:</span>
                       <span>{guest.address}</span>
                     </div>
                   )}
                   {guest.dietary_restrictions && (
                     <div className="info-item">
-                      <i className="fas fa-utensils"></i>
+                      <span className="info-label">Dietary:</span>
                       <span>{stripHtmlTags(guest.dietary_restrictions)}</span>
                     </div>
                   )}
                   {guest.plus_one && guest.plus_one_dietary && (
                     <div className="info-item">
-                      <i className="fas fa-user-plus"></i>
-                      <span>Plus One: {stripHtmlTags(guest.plus_one_dietary)}</span>
+                      <span className="info-label">Plus One Dietary:</span>
+                      <span>{stripHtmlTags(guest.plus_one_dietary)}</span>
                     </div>
                   )}
                   {guest.notes && (
                     <div className="info-item">
-                      <i className="fas fa-comment"></i>
+                      <span className="info-label">Notes:</span>
                       <span>{stripHtmlTags(guest.notes)}</span>
                     </div>
                   )}

@@ -300,8 +300,9 @@ function AppContent() {
           <Route path="/reset-password" element={<UpdatePassword />} />
           <Route path="/createaccount" element={<CreateAccount />} />
           <Route path="/profile" element={<ProfilePage />} />
-          {/* Individual Routes */}
-          <Route path="/individual-dashboard" element={
+          
+          {/* Dashboard Routes */}
+          <Route path="/individual-dashboard/*" element={
             <PrivateRoute>
               <IndividualDashboard />
             </PrivateRoute>
@@ -311,11 +312,13 @@ function AppContent() {
               <BusinessDashboard />
             </PrivateRoute>
           } />
-          <Route path="/wedding-planner-dashboard" element={
+          <Route path="/wedding-planner/*" element={
             <PrivateRoute>
-              <WeddingPlannerDashboard />
+              <WeddingPlanningDashboard />
             </PrivateRoute>
           } />
+          
+          {/* Individual Routes */}
           <Route path="/my-requests" element={<MyRequests />} />
           <Route path="/edit-request/:type/:id" element={<EditRequest />} />
           {/* Test API Routes */}
@@ -393,6 +396,7 @@ function AppContent() {
 
           {/* Wedding Planner Routes */}
           <Route path="/wedding-planner" element={<WeddingPlanningDashboard />} />
+          <Route path="/wedding-planner/:activeTab" element={<WeddingPlanningDashboard />} />
           <Route path="/shared-timeline/:shareId" element={<SharedTimelineView />} />
 
           {/* Public RSVP Route */}

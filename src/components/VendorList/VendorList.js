@@ -9,6 +9,7 @@ import Verified from '../../assets/Frame 1162.svg';
 import StarIcon from '../../assets/star-duotone.svg'; // Assuming you have a star icon
 import { convertHeicToJpeg, convertToWebP, convertImagesToWebP, clearImageCache, registerServiceWorker } from "../../utils/imageUtils";
 import LoadingPlaceholder from '../Common/LoadingPlaceholder';
+import LoadingSpinner from '../LoadingSpinner';
 import ImageErrorBoundary from '../Common/ImageErrorBoundary';
 import ImageModal from '../Business/Portfolio/ImageModal';
 
@@ -1112,7 +1113,14 @@ const VendorList = ({
                                              alignItems: 'center',
                                              justifyContent: 'center'
                                          }}>
-                                        {loadingVendors[vendor.id] ? 'Loading more photos...' : ''}
+                                        {loadingVendors[vendor.id] && (
+                                            <LoadingSpinner 
+                                                variant="dots" 
+                                                color="#ff008a" 
+                                                size={30}
+                                                text="Loading more photos..." 
+                                            />
+                                        )}
                                     </div>
                                 )}
                             </Slider>
