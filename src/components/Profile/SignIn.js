@@ -88,9 +88,16 @@ const SignIn = ({ onSuccess }) => {
                     .single();
 
                 if (profile) {
-                    // User has a profile, redirect to individual dashboard
-                    // The DashboardSwitcher will handle first-time experience
-                    navigate('/individual-dashboard');
+                    // Check user's preferred dashboard
+                    const preferredDashboard = profile.preferred_dashboard;
+                    
+                    if (preferredDashboard === 'wedding-planner') {
+                        // User prefers wedding planner dashboard
+                        navigate('/wedding-planner');
+                    } else {
+                        // User prefers individual dashboard or no preference set
+                        navigate('/individual-dashboard');
+                    }
                 } else {
                     // New user, redirect to individual dashboard
                     navigate('/individual-dashboard');
@@ -113,6 +120,8 @@ const SignIn = ({ onSuccess }) => {
             setErrorMessage(`Google sign-in error: ${error.message}`);
             console.error('Google sign-in error:', error);
         }
+        // Note: Google OAuth redirects to the app, so the dashboard selection
+        // will be handled by the auth state listener in the main app
     };
 
     return (
