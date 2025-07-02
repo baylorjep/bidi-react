@@ -307,7 +307,7 @@ function AppContent() {
               <IndividualDashboard />
             </PrivateRoute>
           } />
-          <Route path="/business-dashboard" element={
+          <Route path="/business-dashboard/*" element={
             <PrivateRoute>
               <BusinessDashboard />
             </PrivateRoute>

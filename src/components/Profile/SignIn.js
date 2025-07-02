@@ -80,16 +80,24 @@ const SignIn = ({ onSuccess }) => {
             if (error) throw error;
 
             if (data.user) {
-                // Check if user has a profile
-                const { data: profile } = await supabase
+                // Check if user has an individual profile
+                const { data: individualProfile, error: individualError } = await supabase
                     .from('individual_profiles')
                     .select('*')
                     .eq('id', data.user.id)
                     .single();
 
-                if (profile) {
+                // Check if user has a business profile
+                const { data: businessProfile, error: businessError } = await supabase
+                    .from('business_profiles')
+                    .select('*')
+                    .eq('id', data.user.id)
+                    .single();
+
+                // Handle individual user
+                if (individualProfile && !businessProfile) {
                     // Check user's preferred dashboard
-                    const preferredDashboard = profile.preferred_dashboard;
+                    const preferredDashboard = individualProfile.preferred_dashboard;
                     
                     if (preferredDashboard === 'wedding-planner') {
                         // User prefers wedding planner dashboard
@@ -98,7 +106,17 @@ const SignIn = ({ onSuccess }) => {
                         // User prefers individual dashboard or no preference set
                         navigate('/individual-dashboard');
                     }
-                } else {
+                }
+                // Handle business user
+                else if (businessProfile && !individualProfile) {
+                    navigate('/business-dashboard');
+                }
+                // Handle user with both profiles (wedding planner)
+                else if (businessProfile && individualProfile) {
+                    navigate('/wedding-planner-dashboard');
+                }
+                // Handle new user with no profiles
+                else {
                     // New user, redirect to individual dashboard
                     navigate('/individual-dashboard');
                 }
