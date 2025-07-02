@@ -1,0 +1,1690 @@
+/* Wedding Overview Component - CSS Modules */
+.weddingOverview {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Hero Section */
+.overviewHero {
+  background: linear-gradient(135deg, #d84888 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 40px;
+  margin-bottom: 30px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.overviewHero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  opacity: 0.3;
+}
+
+.heroContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.weddingTitleSection {
+  flex: 1;
+}
+
+.weddingTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+  font-family: 'Dancing Script', cursive;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.weddingDateDisplay {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.weddingDateDisplay i {
+  color: #ffd700;
+  font-size: 1.3rem;
+}
+
+.weddingLocation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.weddingLocation i {
+  color: #ffd700;
+}
+
+.countdownSection {
+  text-align: center;
+}
+
+.countdownCard {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 200px;
+  transition: transform 0.3s ease;
+}
+
+.countdownCard:hover {
+  transform: translateY(-5px);
+}
+
+.countdownCard.urgent {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
+  animation: weddingOverviewPulse 2s infinite;
+}
+
+.countdownCard.warning {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.countdownCard.past {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.countdownIcon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.countdownContent h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.countdownDays {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+/* Metrics Grid */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.metricCard {
+  background: white;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.metricCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.metricHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.metricHeader i {
+  font-size: 1.5rem;
+  color: #d84888;
+  background: #d84888;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.metricHeader h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Budget Metric */
+.budgetAmounts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.budgetItem {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+  gap: 24px;
+}
+
+.budgetItem:last-child {
+  border-bottom: none;
+}
+
+.budgetLabel {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.budgetValue {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.budgetValue.spent {
+  color: #d84888;
+}
+
+.budgetValue.remaining {
+  color: #10b981;
+}
+
+.budgetProgress {
+  margin-top: 15px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #d84888, #764ba2);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* Vendor Stats */
+.vendorStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.statItem {
+  text-align: center;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.statItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.statNumber {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #d84888;
+  margin-bottom: 5px;
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.vendorProgress {
+  margin-top: 15px;
+}
+
+/* Guest Stats */
+.guestStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.guestStats .statItem.confirmed {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.guestStats .statItem.pending {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.guestStats .statItem.declined {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.guestStats .statItem.confirmed .statNumber {
+  color: #10b981;
+}
+
+.guestStats .statItem.pending .statNumber {
+  color: #f59e0b;
+}
+
+.guestStats .statItem.declined .statNumber {
+  color: #ef4444;
+}
+
+.guestTotal {
+  text-align: center;
+  padding: 15px;
+  background: #d84888;
+  border-radius: 12px;
+  color: white;
+}
+
+.totalLabel {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.totalNumber {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Detail Items */
+.detailItems {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.detailItem:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.detailItem i {
+  font-size: 1.2rem;
+  color: #d84888;
+  background: linear-gradient(135deg, #d84888, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.detailContent {
+  flex: 1;
+}
+
+.detailLabel {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.detailValue {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+/* Quick Actions */
+.quickActions {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
+  margin-bottom: 20px;
+}
+
+.quickActions h3 {
+  margin: 0 0 25px 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #1f2937;
+  position: relative;
+  padding-left: 20px;
+}
+
+.actionButtons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.actionBtn.primary {
+  background: #d84888;
+  color: white;
+}
+
+.actionBtn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(216, 72, 136, 0.3);
+}
+
+.actionBtn.secondary {
+  background: #f8fafc;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+}
+
+.actionBtn.secondary:hover {
+  background: #f1f5f9;
+  border-color: #d84888;
+  color: #d84888;
+  transform: translateY(-2px);
+}
+
+.actionBtn i {
+  font-size: 1.1rem;
+}
+
+@keyframes weddingOverviewPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Comprehensive Budget Card */
+.comprehensiveBudget {
+  grid-column: 1 / -1;
+  max-width: none;
+}
+
+.comprehensiveBudget .metricHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.comprehensiveBudget .budgetToggle {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.comprehensiveBudget .toggleBtn {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comprehensiveBudget .toggleBtn.active {
+  background: white;
+  color: #d84888;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.comprehensiveBudget .toggleBtn:hover:not(.active) {
+  color: #374151;
+}
+
+.budgetContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 25px;
+  align-items: start;
+}
+
+.budgetOverviewSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.budgetChartSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.budgetChartSection .pieChartWrapper {
+  width: 100%;
+  max-width: 300px;
+}
+
+.budgetChartSection .pieChartWrapper canvas {
+  max-height: 250px;
+}
+
+.budgetChartSection .chartSummary {
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 15px;
+  padding-top: 15px;
+}
+
+.budgetChartSection .summaryItem {
+  padding: 8px;
+  flex-direction: row;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.budgetChartSection .summaryItem .label {
+  margin-bottom: 0;
+  font-size: 0.75rem;
+}
+
+.budgetChartSection .summaryItem .amount {
+  font-size: 0.9rem;
+}
+
+.comprehensiveBudget .categoryBreakdown {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  height: fit-content;
+}
+
+.comprehensiveBudget .categoryBreakdown h4 {
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.comprehensiveBudget .categoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.comprehensiveBudget .categoryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.comprehensiveBudget .categoryItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.comprehensiveBudget .categoryInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.comprehensiveBudget .categoryIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.8rem;
+}
+
+.comprehensiveBudget .categoryDetails {
+  display: flex;
+  flex-direction: column;
+}
+
+.comprehensiveBudget .categoryName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.comprehensiveBudget .categoryCount {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.comprehensiveBudget .categoryAmounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.comprehensiveBudget .categoryAmounts .amount {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.comprehensiveBudget .categoryAmounts .amount.spent {
+  color: #d84888;
+}
+
+.comprehensiveBudget .categoryAmounts .amount.planned {
+  color: #3b82f6;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* Pie Chart Component */
+.pieChartWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.pieChartWrapper canvas {
+  max-height: 300px;
+}
+
+.noDataMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+  height: 100%;
+  min-height: 300px;
+}
+
+.noDataMessage i {
+  font-size: 3rem;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.noDataMessage p {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.noDataMessage span {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.chartSummary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #f3f4f6;
+}
+
+.summaryItem .label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.summaryItem .amount {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.summaryItem .amount.planned {
+  color: #3b82f6;
+}
+
+.summaryItem .amount.actual {
+  color: #d84888;
+}
+
+.summaryItem .amount.difference.over {
+  color: #ef4444;
+}
+
+.summaryItem .amount.difference.under {
+  color: #10b981;
+}
+
+.summaryItem .count {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #d84888;
+}
+
+/* Loading State */
+.weddingOverviewLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #d84888;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.weddingOverviewLoading p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Responsive Design for Comprehensive Budget */
+@media (max-width: 1200px) {
+  .budgetContent {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  
+  .budgetChartSection {
+    grid-column: 1 / -1;
+    order: 2;
+  }
+  
+  .budgetOverviewSection {
+    order: 1;
+  }
+  
+  .comprehensiveBudget .categoryBreakdown {
+    order: 3;
+  }
+}
+
+@media (max-width: 768px) {
+  .weddingOverview {
+    padding: 15px;
+  }
+
+  .overviewHero {
+    padding: 30px 20px;
+    margin-bottom: 20px;
+  }
+
+  .heroContent {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .weddingTitle {
+    font-size: 2rem;
+  }
+
+  .countdownCard {
+    padding: 20px;
+    min-width: 180px;
+  }
+
+  .metricsGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .metricCard {
+    padding: 20px;
+  }
+
+  .vendorStats,
+  .guestStats {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .statItem {
+    text-align: center;
+  }
+
+  .statNumber {
+    font-size: 1.8rem;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .quickActions {
+    margin-bottom: 20px;
+  }
+
+  .comprehensiveBudget .metricHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .comprehensiveBudget .budgetToggle {
+    width: 100%;
+  }
+
+  .comprehensiveBudget .toggleBtn {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+
+  .budgetContent {
+    flex-direction: column;
+  }
+
+  .budgetChartSection .pieChartWrapper {
+    height: 200px;
+  }
+
+  .budgetChartSection .pieChartWrapper canvas {
+    max-height: 180px;
+  }
+
+  .budgetChartSection .chartSummary {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .budgetChartSection .summaryItem {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .budgetChartSection .summaryItem .label {
+    font-size: 0.8rem;
+  }
+
+  .budgetChartSection .summaryItem .amount {
+    font-size: 0.9rem;
+  }
+
+  .comprehensiveBudget .categoryBreakdown {
+    margin-top: 20px;
+  }
+
+  .comprehensiveBudget .categoryList {
+    gap: 12px;
+  }
+
+  .comprehensiveBudget .categoryItem {
+    padding: 12px;
+  }
+
+  .comprehensiveBudget .categoryInfo {
+    gap: 10px;
+  }
+
+  .comprehensiveBudget .categoryIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+
+  .comprehensiveBudget .categoryName {
+    font-size: 0.9rem;
+  }
+
+  .comprehensiveBudget .categoryCount {
+    font-size: 0.75rem;
+  }
+
+  .comprehensiveBudget .categoryAmounts .amount {
+    font-size: 0.8rem;
+  }
+
+  /* Mood Board Responsive */
+  .moodBoardGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .noMoodBoard {
+    padding: 30px 15px;
+  }
+
+  .noMoodBoard i {
+    font-size: 2.5rem;
+  }
+
+  .noMoodBoard p {
+    font-size: 1rem;
+  }
+
+  .noMoodBoard span {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .overviewHero {
+    padding: 25px 15px;
+  }
+
+  .weddingTitle {
+    font-size: 1.8rem;
+  }
+
+  .weddingDateDisplay {
+    font-size: 1rem;
+  }
+
+  .countdownCard {
+    padding: 15px;
+    min-width: 150px;
+  }
+
+  .countdownIcon {
+    font-size: 2.5rem;
+  }
+
+  .countdownContent h3 {
+    font-size: 1.1rem;
+  }
+
+  .metricCard {
+    padding: 15px;
+  }
+
+  .metricHeader h3 {
+    font-size: 1.1rem;
+  }
+
+  .vendorStats,
+  .guestStats {
+    gap: 10px;
+  }
+
+  .statItem {
+    padding: 8px;
+  }
+
+  .statNumber {
+    font-size: 1.5rem;
+  }
+
+  .detailItem {
+    padding: 8px;
+  }
+
+  .actionBtn {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .comprehensiveBudget .metricHeader h3 {
+    font-size: 1.1rem;
+  }
+
+  .comprehensiveBudget .toggleBtn {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+
+  .comprehensiveBudget .toggleBtn i {
+    font-size: 0.7rem;
+  }
+
+  .budgetChartSection .pieChartWrapper canvas {
+    max-height: 150px;
+  }
+
+  .budgetChartSection .chartSummary {
+    gap: 8px;
+  }
+
+  .budgetChartSection .summaryItem {
+    padding: 8px;
+  }
+
+  .budgetChartSection .summaryItem .amount {
+    font-size: 0.8rem;
+  }
+
+  .comprehensiveBudget .categoryBreakdown {
+    margin-top: 15px;
+  }
+
+  .comprehensiveBudget .categoryBreakdown h4 {
+    font-size: 1rem;
+  }
+
+  .comprehensiveBudget .categoryItem {
+    padding: 10px;
+  }
+
+  .comprehensiveBudget .categoryIcon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+
+  .comprehensiveBudget .categoryName {
+    font-size: 0.8rem;
+  }
+
+  .comprehensiveBudget .categoryCount {
+    font-size: 0.7rem;
+  }
+
+  .comprehensiveBudget .categoryAmounts .amount {
+    font-size: 0.75rem;
+  }
+
+  /* Mood Board Responsive for Small Screens */
+  .moodBoardGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+
+  .noMoodBoard {
+    padding: 25px 10px;
+  }
+
+  .noMoodBoard i {
+    font-size: 2rem;
+  }
+
+  .noMoodBoard p {
+    font-size: 0.9rem;
+  }
+
+  .noMoodBoard span {
+    font-size: 0.75rem;
+  }
+}
+
+/* Mood Board Gallery Styles */
+.moodBoardGallery {
+  width: 100%;
+}
+
+.moodBoardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.moodBoardItem {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.moodBoardItem:hover {
+  transform: scale(1.05);
+}
+
+.moodBoardImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.moodBoardMore {
+  text-align: center;
+  padding: 8px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.noMoodBoard {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.noMoodBoard i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  color: #d1d5db;
+}
+
+.noMoodBoard p {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.noMoodBoard span {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* New Bids Summary Card */
+.newBidsSummaryCard {
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(236, 72, 153, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.newBidsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.newBidsTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.newBidsTitle i {
+  font-size: 1.5rem;
+  color: #fbbf24;
+}
+
+.newBidsTitle h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+}
+
+.newBidsCount {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  padding: 8px 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  min-width: 32px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.markAllViewedBtn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.markAllViewedBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.newBidsCategories {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.newBidsCategoryItem {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.newBidsCategoryItem:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.categoryInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.categoryInfo .categoryIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.categoryDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.categoryName {
+  font-weight: 600;
+  font-size: 1rem;
+  color: white;
+}
+
+.bidsCount {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.viewBidsBtn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.viewBidsBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.newBidsFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.bidsSummary {
+  flex: 1;
+}
+
+.summaryText {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.bidsActions {
+  display: flex;
+  gap: 12px;
+}
+
+.viewAllBidsBtn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.viewAllBidsBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Responsive styles for new bids card */
+@media (max-width: 768px) {
+  .newBidsSummaryCard {
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .newBidsHeader {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .newBidsTitle {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .markAllViewedBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .newBidsCategories {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .newBidsCategoryItem {
+    padding: 14px;
+  }
+
+  .categoryInfo .categoryIcon {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  .categoryName {
+    font-size: 0.95rem;
+  }
+
+  .bidsCount {
+    font-size: 0.85rem;
+  }
+
+  .newBidsFooter {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .bidsActions {
+    justify-content: center;
+  }
+
+  .viewAllBidsBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .newBidsSummaryCard {
+    padding: 16px;
+  }
+
+  .newBidsTitle h3 {
+    font-size: 1.2rem;
+  }
+
+  .newBidsCount {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
+
+  .newBidsCategoryItem {
+    padding: 12px;
+  }
+
+  .categoryInfo {
+    gap: 10px;
+  }
+
+  .categoryInfo .categoryIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+
+  .categoryName {
+    font-size: 0.9rem;
+  }
+
+  .bidsCount {
+    font-size: 0.8rem;
+  }
+
+  .viewBidsBtn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+
+  .summaryText {
+    font-size: 0.85rem;
+  }
+
+  .viewAllBidsBtn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* New Bids Message Styles */
+.noBidsMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  color: #6b7280;
+}
+
+.noBidsMessage i {
+  font-size: 2.5rem;
+  color: #d1d5db;
+  margin-bottom: 12px;
+}
+
+.noBidsMessage p {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #374151;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+.noBidsMessage span {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+/* New Bids Metric Card */
+.newBidsMetric {
+  background: linear-gradient(135deg, #fef3f2 0%, #fdf4ff 100%);
+  border: 1px solid #fecaca;
+}
+
+.newBidsMetric .metricHeader i {
+  color: #ec4899;
+}
+
+.newBidsMetric .newBidsCount {
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.newBidsCategories {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.newBidsCategoryItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.newBidsCategoryItem:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.categoryInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.categoryIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.categoryDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.categoryName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.bidsCount {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.viewBidsBtn {
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.viewBidsBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+/* Responsive styles for new bids */
+@media (max-width: 768px) {
+  .noBidsMessage {
+    padding: 15px;
+  }
+  
+  .noBidsMessage i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+  
+  .noBidsMessage p {
+    font-size: 0.9rem;
+  }
+  
+  .noBidsMessage span {
+    font-size: 0.8rem;
+  }
+  
+  .newBidsCategories {
+    gap: 10px;
+  }
+  
+  .newBidsCategoryItem {
+    padding: 10px;
+  }
+  
+  .categoryInfo .categoryIcon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+  
+  .categoryName {
+    font-size: 0.85rem;
+  }
+  
+  .bidsCount {
+    font-size: 0.75rem;
+  }
+  
+  .viewBidsBtn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .noBidsMessage {
+    padding: 12px;
+  }
+  
+  .noBidsMessage i {
+    font-size: 1.8rem;
+  }
+  
+  .noBidsMessage p {
+    font-size: 0.85rem;
+  }
+  
+  .noBidsMessage span {
+    font-size: 0.75rem;
+  }
+  
+  .newBidsCategoryItem {
+    padding: 8px;
+  }
+  
+  .categoryInfo {
+    gap: 8px;
+  }
+  
+  .categoryInfo .categoryIcon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+  
+  .categoryName {
+    font-size: 0.8rem;
+  }
+  
+  .bidsCount {
+    font-size: 0.7rem;
+  }
+  
+  .viewBidsBtn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+} 

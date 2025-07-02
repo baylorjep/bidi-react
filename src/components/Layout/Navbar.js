@@ -125,7 +125,8 @@ function Navbar() {
   const isDashboardRoute = location.pathname.includes('-dashboard');
   const isPortfolioRoute = location.pathname.includes('/portfolio/');
   const isPartnershipRoute = location.pathname.includes('/partnership/');
-  const shouldHideNavbar = isDashboardRoute || (isPortfolioRoute && user) || isPartnershipRoute;
+  const isWeddingPlannerRoute = location.pathname.includes('/wedding-planner');
+  const shouldHideNavbar = isDashboardRoute || (isPortfolioRoute && user) || isPartnershipRoute || isWeddingPlannerRoute;
 
   // If we're in a dashboard route or portfolio route with signed in user, don't render the navbar
   if (shouldHideNavbar) {

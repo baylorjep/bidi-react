@@ -13,19 +13,23 @@ import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import { Helmet } from 'react-helmet';
-import CancelIcon from '@mui/icons-material/Cancel';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { toast } from 'react-toastify';
 
 export default function BidsPage({ onOpenChat }) {
     const [requests, setRequests] = useState([]);
     const [currentRequestIndex, setCurrentRequestIndex] = useState(0);
     const [bids, setBids] = useState([]);
-    const [activeTab, setActiveTab] = useState('pending');
     const [user, setUser] = useState(null);
     const [showAcceptModal, setShowAcceptModal] = useState(false);
+    const [selectedBidForAccept, setSelectedBidForAccept] = useState(null);
+    const [showBidNotes, setShowBidNotes] = useState(false);
     const [selectedBid, setSelectedBid] = useState(null);
+    const [bidNotes, setBidNotes] = useState('');
+    const [bidInterestRating, setBidInterestRating] = useState(0);
+    
+    // Accordion state for bid status sections
+    const [openBidSections, setOpenBidSections] = useState({});
+
     const [couponCode, setCouponCode] = useState('');
     const [couponError, setError] = useState(null);
     const [couponSuccess, setCouponSuccess] = useState(false);
@@ -43,6 +47,68 @@ export default function BidsPage({ onOpenChat }) {
     const [currentUserId, setCurrentUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+
+    const getDate = (request) => {
+        const startDate = request.start_date || request.service_date;
+        if (request.date_flexibility === 'specific') {
+            return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
+        } else if (request.date_flexibility === 'range') {
+            return `${new Date(startDate).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
+        } else if (request.date_flexibility === 'flexible') {
+            return `Flexible within ${request.date_timeframe}`;
+        }
+        return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
+    };
+
+    // Helper: Group bids by status for the current request
+    const getBidsByStatus = () => {
+        const currentRequest = requests[currentRequestIndex];
+        if (!currentRequest) return {};
+        
+        const requestBids = bids.filter(bid => bid.request_id === currentRequest.id);
+        
+        // Sort bids by interest rating first (highest to lowest), then by creation date (newest first)
+        const sortBids = (bids) => {
+            return bids.sort((a, b) => {
+                // First sort by viewed status (new bids first)
+                if (!a.viewed && b.viewed) return -1;
+                if (a.viewed && !b.viewed) return 1;
+                
+                // If both have same viewed status, sort by interest rating (highest first)
+                const ratingA = a.interest_rating || 0;
+                const ratingB = b.interest_rating || 0;
+                if (ratingA !== ratingB) {
+                    return ratingB - ratingA;
+                }
+                
+                // If ratings are equal, sort by creation date (newest first)
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+        };
+        
+        return {
+            approved: sortBids(requestBids.filter(bid => (bid.status === 'approved' || bid.status === 'accepted') && !bid.isExpired)),
+            interested: sortBids(requestBids.filter(bid => bid.status === 'interested' && !bid.isExpired)),
+            pending: sortBids(requestBids.filter(bid => bid.status === 'pending' && !bid.isExpired)),
+            denied: sortBids(requestBids.filter(bid => bid.status === 'denied' && !bid.isExpired)),
+            expired: sortBids(requestBids.filter(bid => bid.isExpired)),
+        };
+    };
+
+    // Helper: Toggle accordion section
+    const toggleBidSection = (statusKey) => {
+        setOpenBidSections(prev => ({
+            ...prev,
+            [statusKey]: !prev[statusKey]
+        }));
+    };
+
+    // Helper: Get count of new bids for a status
+    const getNewBidsCount = (statusKey) => {
+        const bidsByStatus = getBidsByStatus();
+        const statusBids = bidsByStatus[statusKey] || [];
+        return statusBids.filter(bid => !bid.viewed).length;
+    };
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
@@ -94,7 +160,7 @@ export default function BidsPage({ onOpenChat }) {
         if (user && requests.length > 0) {
             loadBids();
         }
-    }, [activeTab, user, currentRequestIndex, requests]);
+    }, [user, currentRequestIndex, requests]);
 
     const loadRequests = async (userId) => {
         try {
@@ -354,12 +420,10 @@ export default function BidsPage({ onOpenChat }) {
             }
 
             if (bidsData) {
-                // Filter out expired and hidden bids
-                const now = new Date();
+                // Filter out hidden bids but keep expired ones
                 const validBids = bidsData.filter(bid => {
                     if (bid.hidden) return false; // Skip hidden bids
-                    if (!bid.expiration_date) return true; // Keep bids with no expiration
-                    return new Date(bid.expiration_date) > now; // Only keep non-expired bids
+                    return true; // Keep all non-hidden bids including expired ones
                 });
 
                 // Fetch profile pictures for each business profile
@@ -397,37 +461,43 @@ export default function BidsPage({ onOpenChat }) {
                     }
                 }
 
-                // Continue with existing bid filtering and processing
-                const filteredBids = bidsWithProfilePictures
-                    .filter(bid => {
-                        if (activeTab === 'pending') {
-                            return bid.status?.toLowerCase() === 'pending';
-                        } else if (activeTab === 'approved') {
-                            return bid.status?.toLowerCase() === 'accepted';
-                        } else if (activeTab === 'interested') {
-                            return bid.status?.toLowerCase() === 'interested';
-                        } else if (activeTab === 'not_interested') {
-                            return bid.status?.toLowerCase() === 'denied';
-                        }
-                        return false;
-                    })
-                    .map(bid => ({
-                        ...bid,
-                        id: bid.id,
-                        bid_amount: bid.bid_amount || bid.amount,
-                        message: bid.message || bid.bid_description,
-                        business_profiles: {
-                            ...bid.business_profiles,
-                            business_name: bid.business_profiles?.business_name || 'Unknown Business',
-                            down_payment_type: bid.business_profiles?.down_payment_type,
-                            amount: bid.business_profiles?.amount
-                        },
-                        viewed: bid.viewed,
-                        viewed_at: bid.viewed_at,
-                        isNew: !bid.viewed // Add isNew flag for unseen bids
-                    }));
+                // Add expiration status to bids
+                const now = new Date();
+                const bidsWithExpiration = bidsWithProfilePictures.map(bid => ({
+                    ...bid,
+                    id: bid.id,
+                    bid_amount: bid.bid_amount || bid.amount,
+                    message: bid.message || bid.bid_description,
+                    business_profiles: {
+                        ...bid.business_profiles,
+                        business_name: bid.business_profiles?.business_name || 'Unknown Business',
+                        down_payment_type: bid.business_profiles?.down_payment_type,
+                        amount: bid.business_profiles?.amount
+                    },
+                    viewed: bid.viewed,
+                    viewed_at: bid.viewed_at,
+                    isNew: !bid.viewed, // Add isNew flag for unseen bids
+                    isExpired: bid.expiration_date ? new Date(bid.expiration_date) < now : false
+                }));
 
-                setBids(filteredBids);
+                // Sort bids by interest rating first (highest to lowest), then by creation date (newest first)
+                const sortedBids = bidsWithExpiration.sort((a, b) => {
+                    // First sort by viewed status (new bids first)
+                    if (!a.viewed && b.viewed) return -1;
+                    if (a.viewed && !b.viewed) return 1;
+                    
+                    // If both have same viewed status, sort by interest rating (highest first)
+                    const ratingA = a.interest_rating || 0;
+                    const ratingB = b.interest_rating || 0;
+                    if (ratingA !== ratingB) {
+                        return ratingB - ratingA;
+                    }
+                    
+                    // If ratings are equal, sort by creation date (newest first)
+                    return new Date(b.created_at) - new Date(a.created_at);
+                });
+
+                setBids(sortedBids);
             }
         } catch (error) {
             console.error("Error loading bids:", error);
@@ -599,6 +669,79 @@ export default function BidsPage({ onOpenChat }) {
         setShowAcceptModal(true);
     };
 
+    // Bid rating and notes functions
+    const handleBidRating = async (bidId, rating) => {
+        try {
+            const { error } = await supabase
+                .from('bids')
+                .update({ 
+                    interest_rating: rating,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', bidId);
+
+            if (error) throw error;
+            
+            setBids(bids.map(bid => 
+                bid.id === bidId ? { ...bid, interest_rating: rating } : bid
+            ));
+            toast.success('Interest rating updated!');
+        } catch (error) {
+            console.error('Error updating bid rating:', error);
+            toast.error('Failed to update interest rating');
+        }
+    };
+
+    const handleBidNotes = async (bidId, notes) => {
+        try {
+            const { error } = await supabase
+                .from('bids')
+                .update({ 
+                    client_notes: notes,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', bidId);
+
+            if (error) throw error;
+            
+            setBids(bids.map(bid => 
+                bid.id === bidId ? { ...bid, client_notes: notes } : bid
+            ));
+            toast.success('Notes saved!');
+        } catch (error) {
+            console.error('Error updating bid notes:', error);
+            toast.error('Failed to save notes');
+        }
+    };
+
+    const getInterestLevelText = (rating) => {
+        switch (rating) {
+            case 1: return 'Not Interested';
+            case 2: return 'Low Interest';
+            case 3: return 'Somewhat Interested';
+            case 4: return 'Very Interested';
+            case 5: return 'Highly Interested';
+            default: return 'No Rating';
+        }
+    };
+
+    // Bid notes functions
+    const openBidNotes = (bid) => {
+        setSelectedBid(bid);
+        setBidNotes(bid.client_notes || '');
+        setBidInterestRating(bid.interest_rating || 0);
+        setShowBidNotes(true);
+    };
+
+    const saveBidNotes = async () => {
+        if (!selectedBid) return;
+        
+        await handleBidNotes(selectedBid.id, bidNotes);
+        await handleBidRating(selectedBid.id, bidInterestRating);
+        setShowBidNotes(false);
+        setSelectedBid(null);
+    };
+
     const validateCoupon = async (businessId) => {
         if (!couponCode) return false;
 
@@ -664,7 +807,6 @@ export default function BidsPage({ onOpenChat }) {
             await handleMoveToAccepted(selectedBid);
             setShowAcceptModal(false);
             setSelectedBid(null);
-            setActiveTab('approved');
         }
     };
 
@@ -949,7 +1091,7 @@ export default function BidsPage({ onOpenChat }) {
 
         const profileImage = bid.business_profiles.profile_image || '/images/default.jpg'; // Default image if none
 
-        // Common props for all states, REMOVING key from here
+        // Common props for all states
         const commonBidProps = {
             bid: {
                 ...bid,
@@ -958,139 +1100,142 @@ export default function BidsPage({ onOpenChat }) {
                     profile_image: profileImage
                 }
             },
-            showActions: true,
+            showActions: !bid.isExpired, // Hide actions for expired bids
             onViewCoupon: handleViewCoupon,
             onMessage: onOpenChat,
             currentUserId: currentUserId,
-            handleDeny: () => handleMoveToNotInterested(bid),
-            handleInterested: () => handleMoveToInterested(bid),
-            onProfileClick: () => handlePortfolioClick(bid.business_profiles.id, bid.business_profiles.business_name)
+            onProfileClick: () => handlePortfolioClick(bid.business_profiles.id, bid.business_profiles.business_name),
+            isNew: !bid.viewed // Add isNew prop for new bids
         };
 
-        // State-specific props
-        if (activeTab === 'pending') {
-            return (
+        // Determine which props to show based on bid status
+        let statusProps = {};
+        
+        if (bid.isExpired) {
+            statusProps = {
+                showExpired: true,
+                showActions: false
+            };
+        } else if (bid.status === 'approved') {
+            statusProps = {
+                handleApprove: () => handlePayNow(bid),
+                handleDeny: () => handleMoveToNotInterested(bid),
+                showPaymentOptions: true,
+                downPayment: calculateDownPayment(bid),
+                onDownPayment: () => handleDownPayNow(bid),
+                showApproved: true,
+                onPayNow: (paymentType) => {
+                    if (paymentType === 'downpayment') {
+                        handleDownPayNow(bid);
+                    } else {
+                        handlePayNow(bid);
+                    }
+                },
+                handlePending: () => handleMoveToPending(bid),
+                onMoveToPending: () => handleMoveToPending(bid),
+                showPending: false,
+                showNotInterested: false,
+                handleInterested: () => handleMoveToInterested(bid),
+                showInterested: false
+            };
+        } else if (bid.status === 'interested') {
+            statusProps = {
+                handleApprove: () => handleAcceptBidClick(bid),
+                handleDeny: () => handleMoveToNotInterested(bid),
+                handleInterested: () => handleMoveToPending(bid),
+                showInterested: true,
+                handlePending: () => handleMoveToPending(bid),
+                onMoveToPending: () => handleMoveToPending(bid)
+            };
+        } else if (bid.status === 'denied') {
+            statusProps = {
+                handleApprove: () => handleMoveToPending(bid),
+                handleDeny: () => handleAcceptBidClick(bid),
+                handlePending: () => handleMoveToPending(bid),
+                onMoveToPending: () => handleMoveToPending(bid),
+                showPending: true,
+                showNotInterested: true,
+                handleInterested: () => handleMoveToInterested(bid)
+            };
+        } else {
+            // pending status
+            statusProps = {
+                handleApprove: () => handleAcceptBidClick(bid),
+                handleDeny: () => handleMoveToNotInterested(bid),
+                handleInterested: () => handleMoveToInterested(bid),
+                handlePending: () => handleMoveToPending(bid),
+                onMoveToPending: () => handleMoveToPending(bid),
+                showPending: true
+            };
+        }
+
+        return (
+            <div key={bid.id} className="bid-display-wrapper">
+                <div className="bid-client-controls">
+                    <div className="bid-interest-rating">
+                        <span className="interest-label">Your Interest:</span>
+                        <div className="star-rating">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    className={`star-btn ${star <= (bid.interest_rating || 0) ? 'filled' : 'empty'}`}
+                                    onClick={() => handleBidRating(bid.id, star)}
+                                    title={getInterestLevelText(star)}
+                                >
+                                    <i className="fas fa-star"></i>
+                                </button>
+                            ))}
+                        </div>
+                        <span className="rating-text">
+                            {getInterestLevelText(bid.interest_rating || 0)}
+                        </span>
+                    </div>
+                    <button
+                        className="bid-notes-btn"
+                        onClick={() => openBidNotes(bid)}
+                        title={bid.client_notes ? "View and edit notes" : "Add notes"}
+                    >
+                        <i className="fas fa-sticky-note"></i>
+                        {bid.client_notes ? 'Show Notes' : 'Add Notes'}
+                    </button>
+                </div>
                 <BidDisplay
-                    key={bid.id} // Key passed directly
                     {...commonBidProps}
-                    showPending={true}
+                    {...statusProps}
                 />
-            );
-        }
-
-        if (activeTab === 'approved') {
-            return (
-                <BidDisplay
-                    key={bid.id} // Key passed directly
-                    {...commonBidProps}
-                    handleApprove={() => handlePayNow(bid)}
-                    handleDeny={() => handleMoveToNotInterested(bid)}
-                    showPaymentOptions={true}
-                    downPayment={calculateDownPayment(bid)}
-                    onDownPayment={() => handleDownPayNow(bid)}
-                    showApproved={true}
-                    onPayNow={() => handlePayNow(bid)}
-                    handlePending={undefined}
-                    onMoveToPending={undefined}
-                    showPending={false}
-                    showNotInterested={false}
-                    handleInterested={undefined}
-                    showInterested={false}
-                />
-            );
-        }
-
-        if (activeTab === 'interested') {
-            return (
-                <BidDisplay
-                    key={bid.id} // Key passed directly
-                    {...commonBidProps}
-                    handleApprove={() => handleAcceptBidClick(bid)}
-                    handleInterested={() => handleMoveToPending(bid)}
-                    showInterested={true}
-                />
-            );
-        }
-
-        if (activeTab === 'not_interested') {
-            return (
-                <BidDisplay
-                    key={bid.id} // Key passed directly
-                    {...commonBidProps}
-                    handleApprove={() => handleMoveToPending(bid)}
-                    handleDeny={() => handleAcceptBidClick(bid)}
-                    handlePending={() => handleMoveToPending(bid)}
-                    showPending={true} // Assuming if it's not interested, we might want to show pending actions to move it back
-                    showNotInterested={true}
-                />
-            );
-        }
-
-        return null;
-    };
-
-    const getDate = (request) => {
-        const startDate = request.start_date || request.service_date;
-        if (request.date_flexibility === 'specific') {
-            return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
-        } else if (request.date_flexibility === 'range') {
-            return `${new Date(startDate).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
-        } else if (request.date_flexibility === 'flexible') {
-            return `Flexible within ${request.date_timeframe}`;
-        }
-        return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
+            </div>
+        );
     };
 
     const renderNoBidsMessage = () => {
-        const currentRequestBids = bids.filter(bid => bid.request_id === requests[currentRequestIndex]?.id);
+        const bidsByStatus = getBidsByStatus();
+        const totalBids = Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0);
         
-        switch (activeTab) {
-            case 'pending':
-                return currentRequestBids.length === 0 ? (
-                    <div className="no-bids-message">
-                        <p>No pending bids yet for this request.</p>
-                        <p>Check back soon - businesses are reviewing your request!</p>
+        if (totalBids === 0) {
+            const currentRequest = requests[currentRequestIndex];
+            if (!currentRequest) return null;
+            
+            return (
+                <div className="no-bids-message">
+                    <div className="no-bids-content">
+                        <i className="fas fa-inbox"></i>
+                        <h3>No bids received yet</h3>
+                        <p>Your request is active and visible to vendors. Bids will appear here once vendors respond.</p>
+                        <div className="request-stats">
+                            <div className="stat-item">
+                                <span className="stat-number">{currentRequest.viewCount || 0}</span>
+                                <span className="stat-label">Vendors viewed</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-number">{currentRequest.totalBusinessCount || 0}</span>
+                                <span className="stat-label">Total vendors</span>
+                            </div>
+                        </div>
                     </div>
-                ) : null;
-            case 'approved':
-                return currentRequestBids.length === 0 ? (
-                    <div className="no-bids-message">
-                        <p>No approved bids for this request.</p>
-                        <button 
-                            className="btn btn-secondary"
-                            onClick={() => setActiveTab('pending')}
-                        >
-                            Check Pending Bids
-                        </button>
-                    </div>
-                ) : null;
-            case 'interested':
-                return currentRequestBids.length === 0 ? (
-                    <div className="no-bids-message">
-                        <p>No interested bids for this request.</p>
-                        <button 
-                            className="btn btn-secondary"
-                            onClick={() => setActiveTab('pending')}
-                        >
-                            View Pending Bids
-                        </button>
-                    </div>
-                ) : null;
-            case 'not_interested':
-                return currentRequestBids.length === 0 ? (
-                    <div className="no-bids-message">
-                        <p>No bids marked as not interested.</p>
-                        <button 
-                            className="btn btn-secondary"
-                            onClick={() => setActiveTab('pending')}
-                        >
-                            View Pending Bids
-                        </button>
-                    </div>
-                ) : null;
-            default:
-                return null;
+                </div>
+            );
         }
+        return null;
     };
 
     const handleOpenChat = (chat) => {
@@ -1134,162 +1279,27 @@ export default function BidsPage({ onOpenChat }) {
                 left: 0,
                 right: 0,
                 display: 'flex',
-                justifyContent: 'space-around',
+                justifyContent: 'center',
                 padding: '10px',
                 backgroundColor: 'white',
                 borderTop: '1px solid #eee',
                 zIndex: 1000
             }}>
-                <button 
-                    className={activeTab === 'not_interested' ? 'active' : ''}
-                    onClick={() => setActiveTab('not_interested')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: activeTab === 'not_interested' ? '#9633eb' : '#666',
-                        cursor: 'pointer',
-                        padding: '8px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '4px'
-                    }}
-                >
-                    <CancelIcon style={{ fontSize: 28 }} />
-                    <span style={{ fontSize: '12px', color: activeTab === 'not_interested' ? '#9633eb' : '#666' }}>
-                        Not Interested
-                        {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length > 0 && (
-                            <span style={{ 
-                                marginLeft: '4px',
-                                background: activeTab === 'not_interested' ? '#9633eb' : '#666',
-                                color: 'white',
-                                padding: '2px 6px',
-                                borderRadius: '10px',
-                                fontSize: '10px'
-                            }}>
-                                {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length}
-                            </span>
-                        )}
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '8px'
+                }}>
+                    <span style={{ fontSize: '14px', color: '#666', fontWeight: '500' }}>
+                        Bids Organized by Status
                     </span>
-                </button>
-                <button 
-                    className={activeTab === 'pending' ? 'active' : ''}
-                    onClick={() => setActiveTab('pending')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: activeTab === 'pending' ? '#9633eb' : '#666',
-                        cursor: 'pointer',
-                        padding: '8px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '4px'
-                    }}
-                >
-                    <AccessTimeIcon style={{ fontSize: 28 }} />
-                    <span style={{ fontSize: '12px', color: activeTab === 'pending' ? '#9633eb' : '#666' }}>
-                        Pending
-                        {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length > 0 && (
-                            <span style={{ 
-                                marginLeft: '4px',
-                                background: activeTab === 'pending' ? '#9633eb' : '#666',
-                                color: 'white',
-                                padding: '2px 6px',
-                                borderRadius: '10px',
-                                fontSize: '10px'
-                            }}>
-                                {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length}
-                            </span>
-                        )}
+                    <span style={{ fontSize: '12px', color: '#999' }}>
+                        Tap sections to expand/collapse
                     </span>
-                </button>
-                <button 
-                    className={activeTab === 'interested' ? 'active' : ''}
-                    onClick={() => setActiveTab('interested')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: activeTab === 'interested' ? '#9633eb' : '#666',
-                        cursor: 'pointer',
-                        padding: '8px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '4px'
-                    }}
-                >
-                    <FavoriteIcon style={{ fontSize: 28 }} />
-                    <span style={{ fontSize: '12px', color: activeTab === 'interested' ? '#9633eb' : '#666' }}>
-                        Interested
-                        {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length > 0 && (
-                            <span style={{ 
-                                marginLeft: '4px',
-                                background: activeTab === 'interested' ? '#9633eb' : '#666',
-                                color: 'white',
-                                padding: '2px 6px',
-                                borderRadius: '10px',
-                                fontSize: '10px'
-                            }}>
-                                {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length}
-                            </span>
-                        )}
-                    </span>
-                </button>
-                <button 
-                    className={activeTab === 'approved' ? 'active' : ''}
-                    onClick={() => setActiveTab('approved')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: activeTab === 'approved' ? '#9633eb' : '#666',
-                        cursor: 'pointer',
-                        padding: '8px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '4px'
-                    }}
-                >
-                    <CheckCircleIcon style={{ fontSize: 28 }} />
-                    <span style={{ fontSize: '12px', color: activeTab === 'approved' ? '#9633eb' : '#666' }}>
-                        Approved
-                        {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length > 0 && (
-                            <span style={{ 
-                                marginLeft: '4px',
-                                background: activeTab === 'approved' ? '#9633eb' : '#666',
-                                color: 'white',
-                                padding: '2px 6px',
-                                borderRadius: '10px',
-                                fontSize: '10px'
-                            }}>
-                                {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length}
-                            </span>
-                        )}
-                    </span>
-                </button>
+                </div>
             </div>
         );
-    };
-
-    const handleRequestClick = (request, index) => {
-        if (window.innerWidth <= 1024) {
-            setSelectedRequest(request);
-            setCurrentRequestIndex(index);
-            setShowMobileBids(true);
-            setActiveTab('pending');
-        } else {
-            setCurrentRequestIndex(index);
-            setActiveTab('pending');
-        }
-    };
-
-    const handleCloseMobileBids = () => {
-        setShowMobileBids(false);
-        // Add a small delay before clearing the selected request
-        setTimeout(() => {
-            setSelectedRequest(null);
-        }, 300);
     };
 
     const renderMobileBidsView = () => {
@@ -1324,141 +1334,59 @@ export default function BidsPage({ onOpenChat }) {
                         Get 5% off everything when you book through Bidi! Limited time offer.
                     </div>
                     <div className="mobile-bids-content">
-                        <div className="tabs" style={{
-                            display: 'flex',
-                            justifyContent: 'space-around',
-                            padding: '10px',
-                            borderBottom: '1px solid #eee'
-                        }}>
-                            <button 
-                                className={`tab ${activeTab === 'not_interested' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('not_interested')}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '4px',
-                                    color: activeTab === 'not_interested' ? '#9633eb' : '#666'
-                                }}
-                            >
-                                <CancelIcon style={{ fontSize: 28 }} />
-                                <span style={{ fontSize: '12px', color: activeTab === 'not_interested' ? '#9633eb' : '#666' }}>
-                                    Not Interested
-                                    {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length > 0 && (
-                                        <span style={{ 
-                                            marginLeft: '4px',
-                                            background: activeTab === 'not_interested' ? '#9633eb' : '#666',
-                                            color: 'white',
-                                            padding: '2px 6px',
-                                            borderRadius: '10px',
-                                            fontSize: '10px'
-                                        }}>
-                                            {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length}
-                                        </span>
-                                    )}
-                                </span>
-                            </button>
-                            <button 
-                                className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('pending')}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '4px',
-                                    color: activeTab === 'pending' ? '#9633eb' : '#666'
-                                }}
-                            >
-                                <AccessTimeIcon style={{ fontSize: 28 }} />
-                                <span style={{ fontSize: '12px', color: activeTab === 'pending' ? '#9633eb' : '#666' }}>
-                                    Pending
-                                    {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length > 0 && (
-                                        <span style={{ 
-                                            marginLeft: '4px',
-                                            background: activeTab === 'pending' ? '#9633eb' : '#666',
-                                            color: 'white',
-                                            padding: '2px 6px',
-                                            borderRadius: '10px',
-                                            fontSize: '10px'
-                                        }}>
-                                            {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length}
-                                        </span>
-                                    )}
-                                </span>
-                            </button>
-                            <button 
-                                className={`tab ${activeTab === 'interested' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('interested')}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '4px',
-                                    color: activeTab === 'interested' ? '#9633eb' : '#666'
-                                }}
-                            >
-                                <FavoriteIcon style={{ fontSize: 28 }} />
-                                <span style={{ fontSize: '12px', color: activeTab === 'interested' ? '#9633eb' : '#666' }}>
-                                    Interested
-                                    {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length > 0 && (
-                                        <span style={{ 
-                                            marginLeft: '4px',
-                                            background: activeTab === 'interested' ? '#9633eb' : '#666',
-                                            color: 'white',
-                                            padding: '2px 6px',
-                                            borderRadius: '10px',
-                                            fontSize: '10px'
-                                        }}>
-                                            {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length}
-                                        </span>
-                                    )}
-                                </span>
-                            </button>
-                            <button 
-                                className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('approved')}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '4px',
-                                    color: activeTab === 'approved' ? '#9633eb' : '#666'
-                                }}
-                            >
-                                <CheckCircleIcon style={{ fontSize: 28 }} />
-                                <span style={{ fontSize: '12px', color: activeTab === 'approved' ? '#9633eb' : '#666' }}>
-                                    Approved
-                                    {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length > 0 && (
-                                        <span style={{ 
-                                            marginLeft: '4px',
-                                            background: activeTab === 'approved' ? '#9633eb' : '#666',
-                                            color: 'white',
-                                            padding: '2px 6px',
-                                            borderRadius: '10px',
-                                            fontSize: '10px'
-                                        }}>
-                                            {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length}
-                                        </span>
-                                    )}
-                                </span>
-                            </button>
-                        </div>
-
                         <div className="bids-container">
-                            {bids.filter(bid => bid.request_id === requests[currentRequestIndex].id)
-                                .map(bid => renderBidCard(bid))}
+                            {/* Show bids grouped by status as accordions */}
+                            {(() => {
+                                const bidsByStatus = getBidsByStatus();
+                                const statusOrder = [
+                                    { key: 'approved', label: 'Approved' },
+                                    { key: 'interested', label: 'Interested' },
+                                    { key: 'pending', label: 'Pending' },
+                                    { key: 'denied', label: 'Not Interested' },
+                                    { key: 'expired', label: 'Expired' }
+                                ];
+                                return statusOrder.map(({ key, label }) => {
+                                    if (!bidsByStatus[key] || bidsByStatus[key].length === 0) return null;
+                                    const isOpen = openBidSections[key] || false;
+                                    const newBidsInSection = bidsByStatus[key].filter(bid => !bid.viewed).length;
+                                    return (
+                                        <div key={key} className={`bids-section bids-section-${key}`} style={{ marginBottom: 24 }}>
+                                            <div
+                                                className="bids-section-header"
+                                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                                                onClick={() => toggleBidSection(key)}
+                                            >
+                                                <span style={{ marginRight: 8 }}>
+                                                    {isOpen ? '▼' : '▶'}
+                                                </span>
+                                                <h4 style={{ margin: 0 }}>
+                                                    {label} Bids ({bidsByStatus[key].length})
+                                                    {newBidsInSection > 0 && (
+                                                        <span 
+                                                            style={{ 
+                                                                marginLeft: 8, 
+                                                                background: '#ec4899', 
+                                                                color: 'white', 
+                                                                borderRadius: '50%', 
+                                                                padding: '2px 6px', 
+                                                                fontSize: '12px',
+                                                                fontWeight: 'bold'
+                                                            }}
+                                                        >
+                                                            {newBidsInSection}
+                                                        </span>
+                                                    )}
+                                                </h4>
+                                            </div>
+                                            {isOpen && (
+                                                <div className="bids-grid">
+                                                    {bidsByStatus[key].map(bid => renderBidCard(bid))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                });
+                            })()}
                             {renderNoBidsMessage()}
                         </div>
                     </div>
@@ -1470,6 +1398,24 @@ export default function BidsPage({ onOpenChat }) {
     const handlePortfolioClick = (businessId, businessName) => {
         const formattedName = formatBusinessName(businessName);
         navigate(`/portfolio/${businessId}/${formattedName}`);
+    };
+
+    const handleRequestClick = (request, index) => {
+        if (window.innerWidth <= 1024) {
+            setSelectedRequest(request);
+            setCurrentRequestIndex(index);
+            setShowMobileBids(true);
+        } else {
+            setCurrentRequestIndex(index);
+        }
+    };
+
+    const handleCloseMobileBids = () => {
+        setShowMobileBids(false);
+        // Add a small delay before clearing the selected request
+        setTimeout(() => {
+            setSelectedRequest(null);
+        }, 300);
     };
 
     if (loading) {
@@ -1548,7 +1494,7 @@ export default function BidsPage({ onOpenChat }) {
                 
                 {requests.length > 0 ? (
                     <div className="requests-list-container">
-                        <div className="requests-list">
+                        <div className="requests-list-bids-page">
                             {requests.map((request, index) => (
                                 <div 
                                     key={request.id} 
@@ -1695,141 +1641,59 @@ export default function BidsPage({ onOpenChat }) {
                             Get 5% off everything when you book through Bidi! Limited time offer.
                         </div>
 
-                        <div className="tabs" style={{
-                            display: 'flex',
-                            justifyContent: 'space-around',
-                            padding: '10px',
-                            borderBottom: '1px solid #eee'
-                        }}>
-                            <button 
-                                className={`tab ${activeTab === 'not_interested' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('not_interested')}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '4px',
-                                    color: activeTab === 'not_interested' ? '#9633eb' : '#666'
-                                }}
-                            >
-                                <CancelIcon style={{ fontSize: 28 }} />
-                                <span style={{ fontSize: '12px', color: activeTab === 'not_interested' ? '#9633eb' : '#666' }}>
-                                    Not Interested
-                                    {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length > 0 && (
-                                        <span style={{ 
-                                            marginLeft: '4px',
-                                            background: activeTab === 'not_interested' ? '#9633eb' : '#666',
-                                            color: 'white',
-                                            padding: '2px 6px',
-                                            borderRadius: '10px',
-                                            fontSize: '10px'
-                                        }}>
-                                            {bids.filter(bid => bid.status?.toLowerCase() === 'denied').length}
-                                        </span>
-                                    )}
-                                </span>
-                            </button>
-                            <button 
-                                className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('pending')}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '4px',
-                                    color: activeTab === 'pending' ? '#9633eb' : '#666'
-                                }}
-                            >
-                                <AccessTimeIcon style={{ fontSize: 28 }} />
-                                <span style={{ fontSize: '12px', color: activeTab === 'pending' ? '#9633eb' : '#666' }}>
-                                    Pending
-                                    {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length > 0 && (
-                                        <span style={{ 
-                                            marginLeft: '4px',
-                                            background: activeTab === 'pending' ? '#9633eb' : '#666',
-                                            color: 'white',
-                                            padding: '2px 6px',
-                                            borderRadius: '10px',
-                                            fontSize: '10px'
-                                        }}>
-                                            {bids.filter(bid => bid.status?.toLowerCase() === 'pending').length}
-                                        </span>
-                                    )}
-                                </span>
-                            </button>
-                            <button 
-                                className={`tab ${activeTab === 'interested' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('interested')}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '4px',
-                                    color: activeTab === 'interested' ? '#9633eb' : '#666'
-                                }}
-                            >
-                                <FavoriteIcon style={{ fontSize: 28 }} />
-                                <span style={{ fontSize: '12px', color: activeTab === 'interested' ? '#9633eb' : '#666' }}>
-                                    Interested
-                                    {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length > 0 && (
-                                        <span style={{ 
-                                            marginLeft: '4px',
-                                            background: activeTab === 'interested' ? '#9633eb' : '#666',
-                                            color: 'white',
-                                            padding: '2px 6px',
-                                            borderRadius: '10px',
-                                            fontSize: '10px'
-                                        }}>
-                                            {bids.filter(bid => bid.status?.toLowerCase() === 'interested').length}
-                                        </span>
-                                    )}
-                                </span>
-                            </button>
-                            <button 
-                                className={`tab ${activeTab === 'approved' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('approved')}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '4px',
-                                    color: activeTab === 'approved' ? '#9633eb' : '#666'
-                                }}
-                            >
-                                <CheckCircleIcon style={{ fontSize: 28 }} />
-                                <span style={{ fontSize: '12px', color: activeTab === 'approved' ? '#9633eb' : '#666' }}>
-                                    Approved
-                                    {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length > 0 && (
-                                        <span style={{ 
-                                            marginLeft: '4px',
-                                            background: activeTab === 'approved' ? '#9633eb' : '#666',
-                                            color: 'white',
-                                            padding: '2px 6px',
-                                            borderRadius: '10px',
-                                            fontSize: '10px'
-                                        }}>
-                                            {bids.filter(bid => bid.status?.toLowerCase() === 'accepted').length}
-                                        </span>
-                                    )}
-                                </span>
-                            </button>
-                        </div>
-
                         <div className="bids-container">
-                            {bids.filter(bid => bid.request_id === requests[currentRequestIndex].id)
-                                .map(bid => renderBidCard(bid))}
+                            {/* Show bids grouped by status as accordions */}
+                            {(() => {
+                                const bidsByStatus = getBidsByStatus();
+                                const statusOrder = [
+                                    { key: 'approved', label: 'Approved' },
+                                    { key: 'interested', label: 'Interested' },
+                                    { key: 'pending', label: 'Pending' },
+                                    { key: 'denied', label: 'Not Interested' },
+                                    { key: 'expired', label: 'Expired' }
+                                ];
+                                return statusOrder.map(({ key, label }) => {
+                                    if (!bidsByStatus[key] || bidsByStatus[key].length === 0) return null;
+                                    const isOpen = openBidSections[key] || false;
+                                    const newBidsInSection = bidsByStatus[key].filter(bid => !bid.viewed).length;
+                                    return (
+                                        <div key={key} className={`bids-section bids-section-${key}`} style={{ marginBottom: 24 }}>
+                                            <div
+                                                className="bids-section-header"
+                                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                                                onClick={() => toggleBidSection(key)}
+                                            >
+                                                <span style={{ marginRight: 8 }}>
+                                                    {isOpen ? '▼' : '▶'}
+                                                </span>
+                                                <h4 style={{ margin: 0 }}>
+                                                    {label} Bids ({bidsByStatus[key].length})
+                                                    {newBidsInSection > 0 && (
+                                                        <span 
+                                                            style={{ 
+                                                                marginLeft: 8, 
+                                                                background: '#ec4899', 
+                                                                color: 'white', 
+                                                                borderRadius: '50%', 
+                                                                padding: '2px 6px', 
+                                                                fontSize: '12px',
+                                                                fontWeight: 'bold'
+                                                            }}
+                                                        >
+                                                            {newBidsInSection}
+                                                        </span>
+                                                    )}
+                                                </h4>
+                                            </div>
+                                            {isOpen && (
+                                                <div className="bids-grid">
+                                                    {bidsByStatus[key].map(bid => renderBidCard(bid))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                });
+                            })()}
                             {renderNoBidsMessage()}
                         </div>
                     </div>
@@ -2031,6 +1895,67 @@ export default function BidsPage({ onOpenChat }) {
                             >
                                 Close
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bid Notes Modal */}
+            {showBidNotes && selectedBid && (
+                <div className="modal-overlay" onClick={() => setShowBidNotes(false)}>
+                    <div className="modal-content bid-notes-modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>View & Edit Bid Notes</h3>
+                        <div className="bid-notes-content">
+                            <div className="business-info-summary">
+                                <h4>{selectedBid.business_profiles?.business_name}</h4>
+                                <p className="bid-amount">${selectedBid.bid_amount}</p>
+                            </div>
+                            
+                            <div className="interest-rating-section">
+                                <label>Your Interest Level:</label>
+                                <div className="star-rating-large">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            className={`star-btn-large ${star <= bidInterestRating ? 'filled' : 'empty'}`}
+                                            onClick={() => setBidInterestRating(star)}
+                                            title={getInterestLevelText(star)}
+                                        >
+                                            <i className="fas fa-star"></i>
+                                        </button>
+                                    ))}
+                                </div>
+                                <span className="rating-description">
+                                    {getInterestLevelText(bidInterestRating)}
+                                </span>
+                            </div>
+                            
+                            <div className="notes-section">
+                                <label htmlFor="bid-notes">Your Notes:</label>
+                                <textarea
+                                    id="bid-notes"
+                                    value={bidNotes}
+                                    onChange={(e) => setBidNotes(e.target.value)}
+                                    placeholder="Add your thoughts about this bid, questions to ask, pros/cons, etc..."
+                                    rows={6}
+                                    className="bid-notes-textarea"
+                                />
+                            </div>
+                            
+                            <div className="modal-actions">
+                                <button
+                                    className="btn-secondary"
+                                    onClick={() => setShowBidNotes(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className="btn-primary"
+                                    onClick={saveBidNotes}
+                                >
+                                    Save
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaHeart, FaTimes, FaArrowLeft, FaArrowRight, FaUndo, FaSpinner } from 'react-icons/fa';
+import { FaHeart, FaTimes, FaArrowLeft, FaArrowRight, FaUndo } from 'react-icons/fa';
 import classicWedding from '../../assets/quiz/classic/classic-wedding.webp';
 import rusticWedding from '../../assets/quiz/rustic/rustic-wedding.jpg';
 import modernWedding from '../../assets/quiz/modern/modern-wedding.jpg';
+import romanticWedding from '../../assets/quiz/romantic/romantic-wedding.jpg';
 import bohoWedding from '../../assets/quiz/boho/boho-wedding.jpg';
+import chicWedding from '../../assets/quiz/chic/chic-wedding.jpg';
+import luxeWedding from '../../assets/quiz/luxe/luxe-wedding.jpg';
+import naturalWedding from '../../assets/quiz/natural/natural-wedding.jpg';
+import artisticWedding from '../../assets/quiz/artistic/artistic-wedding.jpg';
 import classicPhoto from '../../assets/quiz/classic/classic-photo.jpg';
 import candidPhoto from '../../assets/quiz/candid/candid-photo.jpg';
 import editorialPhoto from '../../assets/quiz/editorial/editorial-photo.jpg';
@@ -29,12 +34,8 @@ import classicFlowers from '../../assets/quiz/classic/classic-flowers.jpg';
 import wildFlowers from '../../assets/quiz/wild/wild-flowers.jpg';
 import modernFlowers from '../../assets/quiz/modern/modern-flowers.jpg';
 import romanticFlowers from '../../assets/quiz/romantic/romantic-flowers.jpg';
-import luxeWedding from '../../assets/quiz/luxe/luxe-wedding.jpg';
-import romanticWedding from '../../assets/quiz/romantic/romantic-wedding.jpg';
-import chicWedding from '../../assets/quiz/chic/chic-wedding.jpg';
-import naturalWedding from '../../assets/quiz/natural/natural-wedding.jpg';
-import artisticWedding from '../../assets/quiz/artistic/artistic-wedding.jpg';
 import { Helmet } from 'react-helmet-async';
+import LoadingSpinner from '../LoadingSpinner';
 
 // At the top of the file, add this placeholder image mapping
 const placeholderImages = {
@@ -549,7 +550,7 @@ const WeddingVibeQuiz = () => {
             <div className="image-container-wedding-vibe-quiz" style={{width:'100%',height:'100%',position:'relative'}}>
               {isLoading && (
                 <div className="loading-overlay">
-                  <FaSpinner className="spinner" />
+                  <LoadingSpinner variant="pulse" color="white" size={40} />
                 </div>
               )}
               <img

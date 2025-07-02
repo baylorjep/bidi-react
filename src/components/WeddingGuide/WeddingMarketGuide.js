@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { supabase } from '../../supabaseClient';
+import LoadingSpinner from '../LoadingSpinner';
 import './WeddingMarketGuide.css';
 import GuideDownloadImage from '../../assets/images/State of the Utah Wedding Markets.png';
 
@@ -166,7 +167,14 @@ const WeddingMarketGuide = () => {
                       className="submit-button"
                       disabled={isLoading}
                     >
-                      {isLoading ? 'Processing...' : 'Get My Free Guide'}
+                      {isLoading ? (
+                        <div className="d-flex align-items-center">
+                          <LoadingSpinner variant="clip" color="white" size={16} />
+                          <span className="ms-2">Processing...</span>
+                        </div>
+                      ) : (
+                        'Get My Free Guide'
+                      )}
                     </button>
                   </form>
                   <p className="privacy-note">

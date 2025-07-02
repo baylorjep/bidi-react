@@ -44,9 +44,9 @@
 }
 
 .notification-dropdown {
-  position: absolute;
-  top: 100%;
-  right: -320px;
+  position: fixed;
+  top: 80px;
+  left: 20px;
   width: 320px;
   background: white;
   border-radius: 8px;

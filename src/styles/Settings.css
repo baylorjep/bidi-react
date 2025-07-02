@@ -5,28 +5,34 @@
 }
 
 .settings-container h2 {
-  margin-bottom: 30px;
   color: #333;
-  font-size: 24px;
+  margin-bottom: 30px;
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
 }
 
 .settings-form {
-  background-color: white;
-  padding: 30px;
+  background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .form-section {
-  margin-bottom: 40px;
+  padding: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.form-section:last-child {
+  border-bottom: none;
 }
 
 .form-section h3 {
+  color: #2d3748;
   margin-bottom: 20px;
-  color: #333;
-  font-size: 18px;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 10px;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .form-group {
@@ -36,106 +42,384 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
+  color: #374151;
   font-weight: 500;
-  color: #333;
+  font-size: 0.9rem;
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
   outline: none;
   border-color: #A328F4;
+  box-shadow: 0 0 0 3px rgba(163, 40, 244, 0.1);
+}
+
+.form-group input:disabled,
+.disabled-input {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .form-group textarea {
-  min-height: 100px;
   resize: vertical;
+  min-height: 100px;
 }
 
-.form-actions {
+.form-text {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+.form-actions-settings {
+  padding: 24px;
   display: flex;
-  gap: 15px;
-  margin-top: 30px;
+  gap: 12px;
+  justify-content: center;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  flex-wrap: wrap;
 }
 
 .btn-primary,
 .btn-secondary {
-  padding: 12px 24px;
-  border-radius: 8px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  text-align: center;
 }
 
 .btn-primary {
-  background-color: #A328F4;
+  background: #A328F4;
   color: white;
-  border: none;
 }
 
 .btn-primary:hover {
-  background-color: #8a1fd1;
+  background: #8b1fa8;
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background-color: #f0f0f0;
-  color: #333;
-  border: none;
+  background: #6b7280;
+  color: white;
 }
 
 .btn-secondary:hover {
-  background-color: #e0e0e0;
+  background: #4b5563;
+  transform: translateY(-1px);
 }
 
 .error-message {
-  background-color: #ffebee;
-  color: #c62828;
+  background: #fee;
+  color: #c53030;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 6px;
   margin-bottom: 20px;
+  border: 1px solid #feb2b2;
 }
 
 .success-message {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+  background: #f0fff4;
+  color: #2f855a;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 6px;
   margin-bottom: 20px;
+  border: 1px solid #9ae6b4;
 }
 
 .loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-  font-size: 18px;
-  color: #666;
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-size: 1.1rem;
 }
 
+/* Dashboard Preference Styles */
+.dashboard-preference-section {
+  margin-bottom: 20px;
+}
+
+.preference-description {
+  color: #4a5568;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.dashboard-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-option-settings {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  background: white;
+}
+
+.dashboard-option-settings:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-option-settings.selected {
+  border-color: #A328F4;
+  background: #f8f0ff;
+  box-shadow: 0 4px 12px rgba(163, 40, 244, 0.15);
+}
+
+.option-icon-settings {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.dashboard-option-settings:nth-child(1) .option-icon-settings {
+  background: linear-gradient(135deg, #A328F4 0%, #6d1ba4 100%);
+}
+
+.dashboard-option-settings:nth-child(2) .option-icon-settings {
+  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+}
+
+.option-content-settings {
+  flex: 1;
+  min-width: 0; /* Prevents flex item from overflowing */
+}
+
+.option-content-settings h4 {
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  word-wrap: break-word;
+}
+
+.option-content-settings p {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0 0 8px 0;
+  word-wrap: break-word;
+}
+
+.current-badge {
+  display: inline-block;
+  background: #10b981;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Mobile-First Responsive Design */
 @media (max-width: 768px) {
   .settings-container {
-    padding: 15px;
+    padding: 16px;
+    margin: 0;
   }
-
-  .settings-form {
-    padding: 20px;
+  
+  .settings-container h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
   }
-
-  .form-actions {
+  
+  .form-section {
+    padding: 20px 16px;
+  }
+  
+  .form-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+  }
+  
+  .dashboard-option-settings {
+    padding: 16px;
+    gap: 12px;
     flex-direction: column;
+    text-align: center;
   }
-
+  
+  .option-icon-settings {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    margin: 0 auto;
+  }
+  
+  .option-content-settings {
+    text-align: center;
+  }
+  
+  .option-content-settings h4 {
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+  
+  .option-content-settings p {
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .form-group label {
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+  
+  .form-actions-settings {
+    padding: 20px 16px;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
   .btn-primary,
   .btn-secondary {
     width: 100%;
+    padding: 14px 20px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+  }
+  
+  .preference-description {
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+  }
+  
+  .dashboard-options {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-container {
+    padding: 12px;
+  }
+  
+  .settings-container h2 {
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+  }
+  
+  .form-section {
+    padding: 16px 12px;
+  }
+  
+  .form-section h3 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  
+  .dashboard-option-settings {
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .option-icon-settings {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+  
+  .option-content-settings h4 {
+    font-size: 0.95rem;
+  }
+  
+  .option-content-settings p {
+    font-size: 0.8rem;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .form-actions-settings {
+    padding: 16px 12px;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+  }
+  
+  .current-badge {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+  
+  .form-text {
+    font-size: 0.75rem;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .dashboard-option-settings:hover {
+    transform: none;
+  }
+  
+  .btn-primary:hover,
+  .btn-secondary:hover {
+    transform: none;
+  }
+  
+  .dashboard-option:active {
+    transform: scale(0.98);
+  }
+  
+  .btn-primary:active,
+  .btn-secondary:active {
+    transform: scale(0.98);
   }
 } 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import VendorList from '../VendorList/VendorList';
 import Ads from '../Ads/Ads';
+import LoadingSpinner from '../LoadingSpinner';
 import '../../styles/VendorListWithFilters.css';
 import { supabase } from '../../supabaseClient';
 import { Helmet } from 'react-helmet';
@@ -28,10 +29,12 @@ const VendorListWithFilters = () => {
     const [vendorCount, setVendorCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isLoadingCount, setIsLoadingCount] = useState(true);
     const vendorsPerPage = 5;
 
     useEffect(() => {
         const fetchVendorCount = async () => {
+            setIsLoadingCount(true);
             let query = supabase
                 .from('business_profiles')
                 .select('*', { count: 'exact' })
@@ -53,6 +56,7 @@ const VendorListWithFilters = () => {
             }
 
             setVendorCount(count);
+            setIsLoadingCount(false);
         };
 
         fetchVendorCount();
@@ -101,7 +105,7 @@ const VendorListWithFilters = () => {
                             onChange={handleSearchChange}
                         />
                         <svg 
-                            className="search-icon" 
+                            className="search-icon-vendors-with-filters" 
                             width="20" 
                             height="20" 
                             viewBox="0 0 24 24" 
@@ -131,7 +135,11 @@ const VendorListWithFilters = () => {
                 </div>
                 <div className="vendor-controls">
                     <div className="vendor-count">
-                        {vendorCount} vendors
+                        {isLoadingCount ? (
+                            <LoadingSpinner variant="dots" color="#ff008a" size={16} />
+                        ) : (
+                            `${vendorCount} vendors`
+                        )}
                     </div>
                     <div className="sort-selector">
                         <label htmlFor="sortOrder">Sort by:</label>

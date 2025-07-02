@@ -146,6 +146,13 @@ import ErrorPage from "./components/ErrorPage";
 import PartnershipLanding from "./components/PartnershipLanding";
 import NoGhostingGuarantee from "./components/NoGhostingGuarantee";
 
+//wedding planner dashboard imports
+import WeddingPlanningDashboard from "./components/WeddingPlanner/WeddingPlanningDashboard";
+import SharedTimelineView from "./components/WeddingPlanner/SharedTimelineView";
+
+// Public RSVP import
+import PublicRSVP from "./pages/PublicRSVP";
+
 // Create a wrapper component to use useLocation
 function AppContent() {
   const location = useLocation();
@@ -192,9 +199,18 @@ function AppContent() {
     const dashboardRoutes = [
       '/individual-dashboard',
       '/business-dashboard',
-      '/wedding-planner-dashboard'
+      '/wedding-planner-dashboard',
+      '/messages',
+      '/messages/'
     ];
-    return dashboardRoutes.some(route => location.pathname === route);
+    
+    // Check exact matches first
+    if (dashboardRoutes.some(route => location.pathname === route)) {
+      return true;
+    }
+    
+    // Check if path starts with any dashboard route (for dynamic routes like /messages/:businessId)
+    return dashboardRoutes.some(route => location.pathname.startsWith(route));
   };
 
   return (
@@ -285,8 +301,9 @@ function AppContent() {
           <Route path="/reset-password" element={<UpdatePassword />} />
           <Route path="/createaccount" element={<CreateAccount />} />
           <Route path="/profile" element={<ProfilePage />} />
-          {/* Individual Routes */}
-          <Route path="/individual-dashboard" element={
+          
+          {/* Dashboard Routes */}
+          <Route path="/individual-dashboard/*" element={
             <PrivateRoute>
               <IndividualDashboard />
             </PrivateRoute>
@@ -296,11 +313,13 @@ function AppContent() {
               <BusinessDashboard />
             </PrivateRoute>
           } />
-          <Route path="/wedding-planner-dashboard" element={
+          <Route path="/wedding-planner/*" element={
             <PrivateRoute>
-              <WeddingPlannerDashboard />
+              <WeddingPlanningDashboard />
             </PrivateRoute>
           } />
+          
+          {/* Individual Routes */}
           <Route path="/my-requests" element={<MyRequests />} />
           <Route path="/edit-request/:type/:id" element={<EditRequest />} />
           {/* Test API Routes */}
@@ -383,6 +402,15 @@ function AppContent() {
               </PrivateRoute>
             }
           />
+
+          {/* Wedding Planner Routes */}
+          <Route path="/wedding-planner" element={<WeddingPlanningDashboard />} />
+          <Route path="/wedding-planner/:activeTab" element={<WeddingPlanningDashboard />} />
+          <Route path="/shared-timeline/:shareId" element={<SharedTimelineView />} />
+
+          {/* Public RSVP Route */}
+          <Route path="/rsvp/:linkId" element={<PublicRSVP />} />
+
           {/* Articles Route */}
           <Route path="/articles" element={<ArticleNavigation />} />
           <Route path="/articles/:articleId" element={<ArticleDetail />} />
