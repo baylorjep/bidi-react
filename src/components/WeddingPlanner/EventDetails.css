@@ -1681,4 +1681,126 @@
   .settings-tab-content .btn-secondary {
     width: 100%;
   }
+}
+
+.category-item-integrated.couple-category {
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+  border: 1px solid #fbcfe8;
+  position: relative;
+}
+
+.category-item-integrated.couple-category:hover {
+  background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+}
+
+.category-item-integrated.couple-category.active {
+  background: linear-gradient(135deg, #fce7f3 0%, #f9a8d4 100%);
+  border: 1px solid #ec4899;
+}
+
+.category-item-integrated.couple-category::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ec4899 0%, #be185d 100%);
+  border-radius: 8px 8px 0 0;
+}
+
+.category-item-integrated.couple-category .category-name-integrated {
+  color: #831843;
+  font-weight: 600;
+}
+
+.category-item-integrated.couple-category .category-count-integrated {
+  color: #be185d;
+}
+
+.photo-manager-info {
+  margin-bottom: 20px;
+}
+
+.info-card {
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+  border: 1px solid #fbcfe8;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.info-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ec4899 0%, #be185d 100%);
+}
+
+.info-card i {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.info-content h4 {
+  margin: 0 0 8px 0;
+  color: #831843;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.info-content p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .info-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .info-card i {
+    margin-top: 0;
+  }
+}
+
+.upload-category-info {
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+  border: 1px solid #fbcfe8;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.upload-category-info i {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.upload-category-info strong {
+  color: #831843;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.upload-category-info p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+  line-height: 1.4;
 } 

@@ -138,34 +138,38 @@ function PublicRSVP() {
 
   const loadCouplePhotos = async (weddingId) => {
     try {
-      // First, try to find a "Couple" or "Couple Photos" category
-      const { data: categories, error: categoriesError } = await supabase
+      // First, try to find the dedicated couple photos category
+      const { data: coupleCategory, error: categoryError } = await supabase
         .from('wedding_photo_categories')
         .select('*')
-        .or(`is_default.eq.true,wedding_plan_id.eq.${weddingId}`)
-        .ilike('name', '%couple%');
+        .eq('wedding_plan_id', weddingId)
+        .or(`name.ilike.%couple%,special_type.eq.couple_photos`)
+        .single();
 
-      if (categoriesError) {
-        console.error('Error loading categories:', categoriesError);
-        // Continue without categories - we'll load all photos
+      if (categoryError && categoryError.code !== 'PGRST116') {
+        console.error('Error loading couple category:', categoryError);
       }
 
-      let coupleCategoryId = null;
-      
-      // If we found a couple category, use it
-      if (categories && categories.length > 0) {
-        coupleCategoryId = categories[0].id;
-      }
-
-      // Load photos from the couple category, or all photos if no couple category exists
       let query = supabase
         .from('wedding_mood_board')
         .select('*')
         .eq('wedding_plan_id', weddingId)
         .order('uploaded_at', { ascending: false });
 
-      if (coupleCategoryId) {
-        query = query.eq('category_id', coupleCategoryId);
+      // If couple category exists, use photos from that category
+      if (coupleCategory) {
+        query = query.eq('category_id', coupleCategory.id);
+      } else {
+        // Fallback: try to find any category with "couple" in the name
+        const { data: categories, error: categoriesError } = await supabase
+          .from('wedding_photo_categories')
+          .select('*')
+          .eq('wedding_plan_id', weddingId)
+          .ilike('name', '%couple%');
+
+        if (!categoriesError && categories && categories.length > 0) {
+          query = query.eq('category_id', categories[0].id);
+        }
       }
 
       const { data: photos, error: photosError } = await query;
@@ -183,7 +187,22 @@ function PublicRSVP() {
           .slice(0, 6);
         setCouplePhotos(validPhotos);
       } else {
-        setCouplePhotos([]);
+        // Final fallback: get any photos from the wedding
+        const { data: fallbackPhotos, error: fallbackError } = await supabase
+          .from('wedding_mood_board')
+          .select('*')
+          .eq('wedding_plan_id', weddingId)
+          .order('uploaded_at', { ascending: false })
+          .limit(6);
+
+        if (!fallbackError && fallbackPhotos && fallbackPhotos.length > 0) {
+          const validFallbackPhotos = fallbackPhotos
+            .filter(photo => photo.image_url && photo.image_url.trim() !== '')
+            .slice(0, 6);
+          setCouplePhotos(validFallbackPhotos);
+        } else {
+          setCouplePhotos([]);
+        }
       }
     } catch (error) {
       console.error('Error loading couple photos:', error);

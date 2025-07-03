@@ -76,6 +76,12 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
     }
   }, [activeTab, currentUserId, currentRequestIndex, requests]);
 
+  // Update document title when component mounts
+  useEffect(() => {
+    const title = `${String(weddingData.wedding_title || 'My Wedding')} - Vendor Management - Bidi`;
+    document.title = title;
+  }, [weddingData.wedding_title]);
+
   const getCurrentUser = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -400,6 +406,15 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const getRequestDate = (request) => {
+    // Check for start_date first (most common field name across tables)
+    if (request.start_date) {
+      return new Date(request.start_date).toLocaleDateString();
+    }
+    // Fallback to end_date if start_date is not available
+    if (request.end_date) {
+      return new Date(request.end_date).toLocaleDateString();
+    }
+    // Legacy field names for backward compatibility
     if (request.event_date) {
       return new Date(request.event_date).toLocaleDateString();
     }
@@ -885,7 +900,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'confirmed': return '#10b981';
+      case 'booked': return '#10b981';
       case 'pending': return '#f59e0b';
       case 'declined': return '#ef4444';
       case 'contacted': return '#3b82f6';
@@ -895,7 +910,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'confirmed': return 'fas fa-check-circle';
+      case 'booked': return 'fas fa-check-circle';
       case 'pending': return 'fas fa-clock';
       case 'declined': return 'fas fa-times-circle';
       case 'contacted': return 'fas fa-phone';
@@ -1259,15 +1274,15 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   if (compact) {
-    const confirmedVendors = vendors.filter(v => v.status === 'confirmed').length;
+    const bookedVendors = vendors.filter(v => v.status === 'booked').length;
     const totalVendors = vendors.length;
     
     return (
       <div className="vendor-manager-compact">
         <div className="vendor-summary">
           <div className="vendor-count">
-            <span className="count-number">{confirmedVendors}</span>
-            <span className="count-label">Confirmed</span>
+            <span className="count-number">{bookedVendors}</span>
+            <span className="count-label">Booked</span>
           </div>
           <div className="vendor-count">
             <span className="count-number">{totalVendors}</span>
@@ -1277,7 +1292,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
         <div className="vendor-progress">
           <div 
             className="progress-bar" 
-            style={{ width: `${totalVendors > 0 ? (confirmedVendors / totalVendors) * 100 : 0}%` }}
+            style={{ width: `${totalVendors > 0 ? (bookedVendors / totalVendors) * 100 : 0}%` }}
           ></div>
         </div>
         <button 
@@ -1306,6 +1321,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
 
   return (
     <div className="vendor-manager">
+      
       <div className="vendor-manager-header">
         <h2>
           Vendor Management
@@ -1448,7 +1464,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
         {vendorCategories.map(category => {
           const categoryVendors = getVendorsByCategory(category.id);
           const categoryBids = getBidsByCategory(category.id);
-          const confirmedCount = categoryVendors.filter(v => v.status === 'confirmed').length;
+          const bookedCount = categoryVendors.filter(v => v.status === 'booked').length;
           const approvedBidsCount = categoryBids.filter(b => b.status === 'approved').length;
           
           // Find the corresponding request for this category
@@ -1490,7 +1506,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                   </h3>
                   <div className="category-stats">
                     <p>
-                      {categoryVendors.length} vendors • {confirmedCount} confirmed
+                      {categoryVendors.length} vendors • {bookedCount} booked
                       {categoryBids.length > 0 && ` • ${categoryBids.length} bids • ${approvedBidsCount} approved`}
                     </p>
                     {categoryRequest && (
@@ -1778,7 +1794,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                                 >
                                   <option value="pending">Pending</option>
                                   <option value="contacted">Contacted</option>
-                                  <option value="confirmed">Confirmed</option>
+                                  <option value="booked">Booked</option>
                                   <option value="declined">Declined</option>
                                 </select>
                                 <div className="vendor-action-buttons">

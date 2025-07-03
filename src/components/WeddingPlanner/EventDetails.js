@@ -4,6 +4,24 @@ import Settings from '../Settings/Settings';
 import './EventDetails.css';
 import LoadingSpinner from '../LoadingSpinner';
 
+/**
+ * EventDetails Component - Wedding Inspiration Hub
+ * 
+ * This component manages wedding details, color palettes, and photo organization.
+ * 
+ * Special Features:
+ * - Couple Photos Category: Automatically created and protected category for couple photos
+ *   - Used for RSVP page slideshow and wedding dashboard background
+ *   - Cannot be deleted but photos can be added/removed
+ *   - Marked with special_type: 'couple_photos' and is_default: true
+ *   - Visual indicators (heart icon, pink styling) to show it's special
+ * 
+ * Photo Categories:
+ * - Users can create custom categories for organizing their inspiration photos
+ * - Couple photos category is automatically created for new wedding plans
+ * - Protected categories (is_default: true) cannot be deleted
+ */
+
 function EventDetails({ weddingData, onUpdate }) {
   const [formData, setFormData] = useState({
     weddingTitle: '',
@@ -152,11 +170,55 @@ function EventDetails({ weddingData, onUpdate }) {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setCategories(categoriesData || []);
       
-      // Set first category as default
-      if (categoriesData && categoriesData.length > 0) {
-        setSelectedCategory(categoriesData[0].id);
+      let categories = categoriesData || [];
+      
+      // Check if couple photos category exists
+      const coupleCategory = categories.find(cat => 
+        cat.name.toLowerCase().includes('couple') || 
+        cat.name.toLowerCase().includes('couple photos') ||
+        cat.special_type === 'couple_photos'
+      );
+      
+      // If no couple category exists, create one
+      if (!coupleCategory) {
+        try {
+          const { data: newCoupleCategory, error: createError } = await supabase
+            .from('wedding_photo_categories')
+            .insert({
+              name: 'Couple Photos',
+              wedding_plan_id: weddingData.id,
+              color: '#ec4899', // Pink color for couple photos
+              sort_order: 1, // Always first
+              is_default: true, // Cannot be deleted
+              special_type: 'couple_photos', // Special identifier
+              description: 'Photos of the couple used for RSVP pages and wedding dashboard backgrounds'
+            })
+            .select()
+            .single();
+
+          if (createError) throw createError;
+          
+          // Add the new category to the beginning of the list
+          categories = [newCoupleCategory, ...categories];
+        } catch (createError) {
+          console.error('Error creating couple photos category:', createError);
+        }
+      }
+      
+      setCategories(categories);
+      
+      // Set couple photos category as default if it exists
+      const coupleCat = categories.find(cat => 
+        cat.name.toLowerCase().includes('couple') || 
+        cat.name.toLowerCase().includes('couple photos') ||
+        cat.special_type === 'couple_photos'
+      );
+      
+      if (coupleCat) {
+        setSelectedCategory(coupleCat.id);
+      } else if (categories.length > 0) {
+        setSelectedCategory(categories[0].id);
       }
     } catch (error) {
       console.error('Error loading categories:', error);
@@ -520,6 +582,20 @@ function EventDetails({ weddingData, onUpdate }) {
 
   const deleteCategory = async (categoryId) => {
     try {
+      // Find the category to check if it's the couple photos category
+      const categoryToDelete = categories.find(cat => cat.id === categoryId);
+      
+      // Prevent deletion of couple photos category
+      if (categoryToDelete && (
+        categoryToDelete.name.toLowerCase().includes('couple') || 
+        categoryToDelete.name.toLowerCase().includes('couple photos') ||
+        categoryToDelete.special_type === 'couple_photos' ||
+        categoryToDelete.is_default
+      )) {
+        alert('Cannot delete the Couple Photos category. This category is used for RSVP pages and wedding dashboard backgrounds.');
+        return;
+      }
+
       // Move photos to uncategorized (null category_id)
       const { error: updateError } = await supabase
         .from('wedding_mood_board')
@@ -794,8 +870,22 @@ function EventDetails({ weddingData, onUpdate }) {
         </p>
       </div>
       
-      {/* Integrated Photo Category Manager */}
       <div className="integrated-photo-manager">
+        <div className="photo-manager-info">
+          <div className="info-card">
+            <i className="fas fa-heart" style={{ color: '#ec4899', fontSize: '1.2rem' }}></i>
+            <div className="info-content">
+              <h4>Couple Photos Category</h4>
+              <p>
+                The "Couple Photos" category is automatically created and protected. 
+                Photos in this category are used for your RSVP page slideshow and 
+                wedding dashboard background. You cannot delete this category, but 
+                you can add, remove, or organize photos within it.
+              </p>
+            </div>
+          </div>
+        </div>
+        
         <div className="photo-manager-layout">
           {/* Categories Sidebar */}
           <div className="categories-sidebar-integrated">
@@ -815,51 +905,74 @@ function EventDetails({ weddingData, onUpdate }) {
             </div>
             
             <div className="categories-list-integrated">
-              {categories.map(category => (
-                <div 
-                  key={category.id}
-                  className={`category-item-integrated ${selectedCategory === category.id ? 'active' : ''}`}
-                  onClick={() => {
-                    setSelectedCategory(category.id);
-                    setSelectedPhotos([]); // Clear selections when switching categories
-                  }}
-                >
-                  <div className="category-color-integrated" style={{ backgroundColor: category.color || '#6366f1' }}></div>
-                  <div className="category-info-integrated">
-                    <span className="category-name-integrated">{category.name}</span>
-                    <span className="category-count-integrated">
-                      {moodBoardImages.filter(img => img.category_id === category.id).length}
-                    </span>
-                  </div>
-                  {!category.is_default && (
-                    <div className="category-actions-integrated">
-                      <button 
-                        className="edit-btn-integrated"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const newName = prompt('Enter new category name:', category.name);
-                          if (newName && newName.trim()) {
-                            updateCategory(category.id, newName.trim());
-                          }
-                        }}
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button 
-                        className="delete-btn-integrated"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm(`Delete category "${category.name}"? Photos will be moved to "Uncategorized".`)) {
-                            deleteCategory(category.id);
-                          }
-                        }}
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
+              {categories.map(category => {
+                const isCoupleCategory = category.name.toLowerCase().includes('couple') || 
+                  category.name.toLowerCase().includes('couple photos') ||
+                  category.special_type === 'couple_photos';
+                
+                return (
+                  <div 
+                    key={category.id}
+                    className={`category-item-integrated ${selectedCategory === category.id ? 'active' : ''} ${isCoupleCategory ? 'couple-category' : ''}`}
+                    onClick={() => {
+                      setSelectedCategory(category.id);
+                      setSelectedPhotos([]); // Clear selections when switching categories
+                    }}
+                  >
+                    <div className="category-color-integrated" style={{ backgroundColor: category.color || '#6366f1' }}></div>
+                    <div className="category-info-integrated">
+                      <span className="category-name-integrated">
+                        {category.name}
+                        {isCoupleCategory && (
+                          <i className="fas fa-heart" style={{ marginLeft: '8px', color: '#ec4899', fontSize: '0.8rem' }} title="Special category for RSVP pages"></i>
+                        )}
+                      </span>
+                      <span className="category-count-integrated">
+                        {moodBoardImages.filter(img => img.category_id === category.id).length}
+                        {isCoupleCategory && (
+                          <span style={{ marginLeft: '4px', fontSize: '0.7rem', color: '#6b7280' }}>
+                            (RSVP & Dashboard)
+                          </span>
+                        )}
+                      </span>
                     </div>
-                  )}
-                </div>
-              ))}
+                    {!category.is_default && !isCoupleCategory && (
+                      <div className="category-actions-integrated">
+                        <button 
+                          className="edit-btn-integrated"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const newName = prompt('Enter new category name:', category.name);
+                            if (newName && newName.trim()) {
+                              updateCategory(category.id, newName.trim());
+                            }
+                          }}
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button 
+                          className="delete-btn-integrated"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Delete category "${category.name}"? Photos will be moved to "Uncategorized".`)) {
+                              deleteCategory(category.id);
+                            }
+                          }}
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    )}
+                    {isCoupleCategory && (
+                      <div className="category-actions-integrated">
+                        <span style={{ fontSize: '0.7rem', color: '#6b7280', fontStyle: 'italic' }}>
+                          Protected
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -1237,6 +1350,17 @@ function EventDetails({ weddingData, onUpdate }) {
                   ))}
                 </select>
               </div>
+              
+              {/* Show special message for couple photos category */}
+              {selectedCategory && categories.find(c => c.id === selectedCategory)?.special_type === 'couple_photos' && (
+                <div className="upload-category-info">
+                  <i className="fas fa-heart" style={{ color: '#ec4899' }}></i>
+                  <div>
+                    <strong>Couple Photos Category</strong>
+                    <p>Photos uploaded here will be used for your RSVP page slideshow and wedding dashboard background.</p>
+                  </div>
+                </div>
+              )}
               
               <label className="upload-modal-area">
                 <input

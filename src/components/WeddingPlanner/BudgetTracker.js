@@ -96,6 +96,12 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
     loadCustomCategories();
   }, [weddingData.id]);
 
+  // Update document title when component mounts
+  useEffect(() => {
+    const title = `${String(weddingData.wedding_title || 'My Wedding')} - Budget Tracker - Bidi`;
+    document.title = title;
+  }, [weddingData.wedding_title]);
+
   const loadCustomCategories = async () => {
     try {
       // Load category preferences from Supabase (same as VendorManager)
@@ -258,13 +264,16 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
 
   const addBudgetItem = async (itemData) => {
     try {
+      // Use the type that the user explicitly selected in the form
+      const itemType = itemData.type || 'actual'; // Default to actual if no type specified
+
       const newItem = {
         wedding_id: weddingData.id,
         name: itemData.name,
         category: itemData.category,
         planned_cost: itemData.planned_cost || 0,
         actual_cost: itemData.actual_cost || 0,
-        type: 'actual', // Mark as actual expense
+        type: itemType,
         notes: itemData.notes || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -335,16 +344,25 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
     if (itemFilter === 'planned') {
       filtered = filtered.filter(item => item.type === 'planned');
     } else if (itemFilter === 'actual') {
+      // Include items marked as actual OR items without a type (for backward compatibility)
       filtered = filtered.filter(item => item.type === 'actual' || !item.type);
     }
+    // If itemFilter is 'all', don't filter by type
     
     return filtered;
   };
 
   const calculateTotals = () => {
     const totalBudget = parseFloat(weddingData.budget) || 0;
-    const totalSpent = budgetItems.reduce((sum, item) => sum + (parseFloat(item.actual_cost) || 0), 0);
+    
+    // Only count actual expenses (not planned items) toward total spent
+    const totalSpent = budgetItems
+      .filter(item => item.type === 'actual' || !item.type) // Include actual items or items without type (backward compatibility)
+      .reduce((sum, item) => sum + (parseFloat(item.actual_cost) || 0), 0);
+    
+    // Count all planned costs (both planned and actual items can have planned costs)
     const totalPlanned = budgetItems.reduce((sum, item) => sum + (parseFloat(item.planned_cost) || 0), 0);
+    
     const remaining = totalBudget - totalSpent;
     const overBudget = totalSpent > totalBudget;
 
@@ -359,22 +377,19 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
 
   const getCategoryTotals = () => {
     const categoryTotals = {};
-    
     budgetCategories.forEach(category => {
-      const categoryItems = budgetItems.filter(item => item.category === category.id);
-      const spent = categoryItems.reduce((sum, item) => sum + (parseFloat(item.actual_cost) || 0), 0);
-      const planned = categoryItems.reduce((sum, item) => sum + (parseFloat(item.planned_cost) || 0), 0);
+      const items = budgetItems.filter(item => item.category === category.id);
       
-      if (spent > 0 || planned > 0) {
-        categoryTotals[category.id] = {
-          category: category,
-          spent: Math.round(spent),
-          planned: Math.round(planned),
-          difference: Math.round(planned - spent)
-        };
-      }
+      // Only count actual expenses (not planned items) toward spent
+      const spent = Math.round(items
+        .filter(item => item.type === 'actual' || !item.type) // Include actual items or items without type (backward compatibility)
+        .reduce((sum, item) => sum + (parseFloat(item.actual_cost) || 0), 0));
+      
+      // Count all planned costs (both planned and actual items can have planned costs)
+      const planned = Math.round(items.reduce((sum, item) => sum + (parseFloat(item.planned_cost) || 0), 0));
+      
+      categoryTotals[category.id] = { spent, planned, category };
     });
-    
     return categoryTotals;
   };
 
@@ -595,6 +610,7 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
           category: categoryId,
           name: category ? `${category.name} Budget` : 'Budget',
           planned_cost: planned,
+          type: 'planned', // Set type to planned for budget planner items
           ranking: idx,
           excluded,
           created_at: now,
@@ -611,6 +627,7 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
             category: categoryId,
             name: category ? `${category.name} Budget` : 'Budget',
             planned_cost: 0,
+            type: 'planned', // Set type to planned for budget planner items
             ranking: null, // No ranking for excluded categories
             excluded: true,
             created_at: now,
@@ -764,6 +781,7 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
 
   return (
     <div className="budget-tracker">
+      
       {/* Tab Navigation */}
       <div className="budget-tabs">
         <button 
@@ -1050,6 +1068,7 @@ function BudgetItemForm({ onSubmit, onCancel, categories, initialData, weddingDa
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     category: initialData?.category || '',
+    type: initialData?.type || 'actual', // Add type field
     planned_cost: initialData?.planned_cost || '',
     actual_cost: initialData?.actual_cost || '',
     notes: initialData?.notes || ''
@@ -1110,10 +1129,12 @@ function BudgetItemForm({ onSubmit, onCancel, categories, initialData, weddingDa
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Use the planned cost from budget planner instead of form data
+    // For planned items, use the user's input. For actual items, use the budget planner amount as planned cost
     const submissionData = {
       ...formData,
-      planned_cost: getPlannedAmount().toString()
+      planned_cost: formData.type === 'planned' 
+        ? formData.planned_cost 
+        : getPlannedAmount().toString()
     };
     
     onSubmit(submissionData);
@@ -1208,18 +1229,59 @@ function BudgetItemForm({ onSubmit, onCancel, categories, initialData, weddingDa
       </div>
 
       <div className="form-group">
-        <label htmlFor="actual_cost">Actual Cost</label>
-        <input
-          type="number"
-          id="actual_cost"
-          name="actual_cost"
-          value={formData.actual_cost}
+        <label htmlFor="type">Item Type</label>
+        <select
+          id="type"
+          name="type"
+          value={formData.type}
           onChange={handleChange}
-          placeholder="0.00"
-          step="0.01"
-          min="0"
-        />
+          required
+        >
+          <option value="actual">Actual Expense</option>
+          <option value="planned">Planned Budget</option>
+        </select>
+        <small className="form-help">
+          {formData.type === 'actual' 
+            ? 'Use this for expenses you have already paid or committed to'
+            : 'Use this for budget planning and estimates'
+          }
+        </small>
       </div>
+
+      {formData.type === 'actual' && (
+        <div className="form-group">
+          <label htmlFor="actual_cost">Actual Cost</label>
+          <input
+            type="number"
+            id="actual_cost"
+            name="actual_cost"
+            value={formData.actual_cost}
+            onChange={handleChange}
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+            required
+          />
+        </div>
+      )}
+
+      {formData.type === 'planned' && (
+        <div className="form-group">
+          <label htmlFor="planned_cost">Planned Budget</label>
+          <input
+            type="number"
+            id="planned_cost"
+            name="planned_cost"
+            value={formData.planned_cost}
+            onChange={handleChange}
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+            required
+          />
+        </div>
+      )}
+
       <div className="form-group">
         <label htmlFor="notes">Notes</label>
         <textarea
@@ -1252,8 +1314,15 @@ function BudgetPieChart({ budgetItems, budgetCategories, onAddExpense }) {
     const categoryTotals = {};
     budgetCategories.forEach(category => {
       const items = budgetItems.filter(item => item.category === category.id);
-      const spent = Math.round(items.reduce((sum, item) => sum + (parseFloat(item.actual_cost) || 0), 0));
+      
+      // Only count actual expenses (not planned items) toward spent
+      const spent = Math.round(items
+        .filter(item => item.type === 'actual' || !item.type) // Include actual items or items without type (backward compatibility)
+        .reduce((sum, item) => sum + (parseFloat(item.actual_cost) || 0), 0));
+      
+      // Count all planned costs (both planned and actual items can have planned costs)
       const planned = Math.round(items.reduce((sum, item) => sum + (parseFloat(item.planned_cost) || 0), 0));
+      
       categoryTotals[category.id] = { spent, planned, category };
     });
     return categoryTotals;
@@ -1269,7 +1338,9 @@ function BudgetPieChart({ budgetItems, budgetCategories, onAddExpense }) {
     });
 
   // Check if there are any actual expenses
-  const hasActualExpenses = budgetItems.some(item => parseFloat(item.actual_cost) > 0);
+  const hasActualExpenses = budgetItems
+    .filter(item => item.type === 'actual' || !item.type) // Include actual items or items without type (backward compatibility)
+    .some(item => parseFloat(item.actual_cost) > 0);
   const hasPlannedBudget = budgetItems.some(item => parseFloat(item.planned_cost) > 0);
 
   // Show different messages based on the selected view and available data
@@ -1792,6 +1863,7 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
           category: categoryId,
           name: category ? `${category.name} Budget` : 'Budget',
           planned_cost: planned,
+          type: 'planned', // Set type to planned for budget planner items
           ranking: idx,
           excluded,
           created_at: now,
@@ -1808,6 +1880,7 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
             category: categoryId,
             name: category ? `${category.name} Budget` : 'Budget',
             planned_cost: 0,
+            type: 'planned', // Set type to planned for budget planner items
             ranking: null, // No ranking for excluded categories
             excluded: true,
             created_at: now,

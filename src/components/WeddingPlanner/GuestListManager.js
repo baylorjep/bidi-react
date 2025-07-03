@@ -434,6 +434,12 @@ function GuestListManager({ weddingData, onUpdate, compact = false }) {
     plusOnes: guests.filter(g => g.plus_one).length
   };
 
+  // Update document title when component mounts
+  useEffect(() => {
+    const title = `${String(weddingData.wedding_title || 'My Wedding')} - Guest List Manager - Bidi`;
+    document.title = title;
+  }, [weddingData.wedding_title]);
+
   // Compact mode for overview
   if (compact) {
     return (
@@ -487,6 +493,7 @@ function GuestListManager({ weddingData, onUpdate, compact = false }) {
 
   return (
     <div className="guest-list-manager">
+      
       <div className="guest-list-header">
       <h2>Guest List Manager</h2>
         <div className="guest-actions">

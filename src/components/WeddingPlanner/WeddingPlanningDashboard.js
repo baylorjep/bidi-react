@@ -17,6 +17,113 @@ import DashboardSwitcher from '../DashboardSwitcher';
 import LoadingSpinner from '../LoadingSpinner';
 import './WeddingPlanningDashboard.css';
 
+// Move these utility functions above getPageMetadata
+const calculateDaysUntilWedding = (weddingData) => {
+  if (!weddingData?.wedding_date) return 0;
+  const weddingDate = new Date(weddingData.wedding_date);
+  const today = new Date();
+  return Math.ceil((weddingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+const getWeddingPhase = (daysUntil) => {
+  if (daysUntil < 0) return { phase: 'Wedding Memories', icon: '💕', color: '#8b5cf6' };
+  if (daysUntil === 0) return { phase: 'Wedding Day!', icon: '🎉', color: '#f59e0b' };
+  if (daysUntil <= 7) return { phase: 'Final Week', icon: '⏰', color: '#ef4444' };
+  if (daysUntil <= 30) return { phase: 'Last Month', icon: '📅', color: '#f59e0b' };
+  if (daysUntil <= 90) return { phase: 'Planning Phase', icon: '📋', color: '#3b82f6' };
+  return { phase: 'Early Planning', icon: '🌱', color: '#10b981' };
+};
+
+// Place this at the very top of the file, before the component or any usage
+const getPageMetadata = (tab, weddingData) => {
+  const baseTitle = 'Bidi - Wedding Planning Dashboard';
+  const baseDescription = 'Plan your dream wedding with Bidi. Manage vendors, budget, timeline, and more all in one place.';
+  
+  if (!weddingData) {
+    return {
+      title: 'Create Wedding Plan - Bidi',
+      description: 'Start planning your dream wedding with Bidi. Create your wedding plan and begin your journey to the perfect day.',
+      keywords: 'wedding planning, create wedding plan, wedding dashboard, Bidi'
+    };
+  }
+
+  const weddingTitle = String(weddingData.wedding_title || 'My Wedding');
+  const daysUntil = calculateDaysUntilWedding(weddingData);
+  const weddingPhase = getWeddingPhase(daysUntil);
+
+  switch (tab) {
+    case 'overview':
+      return {
+        title: `${weddingTitle} - Wedding Overview - Bidi`,
+        description: `Planning ${weddingTitle}? Track your wedding progress, manage vendors, and stay organized with Bidi's wedding planning dashboard.`,
+        keywords: `wedding planning, ${weddingTitle}, wedding overview, wedding dashboard, Bidi`
+      };
+    
+    case 'timeline':
+      return {
+        title: `${weddingTitle} - Wedding Timeline - Bidi`,
+        description: `Create and manage your wedding timeline for ${weddingTitle}. Stay on track with important dates and milestones.`,
+        keywords: `wedding timeline, ${weddingTitle}, wedding planning, wedding schedule, Bidi`
+      };
+    
+    case 'budget':
+      return {
+        title: `${weddingTitle} - Budget Tracker - Bidi`,
+        description: `Track your wedding budget for ${weddingTitle}. Monitor expenses, set budgets, and stay within your financial goals.`,
+        keywords: `wedding budget, budget tracker, ${weddingTitle}, wedding planning, Bidi`
+      };
+    
+    case 'vendors':
+      return {
+        title: `${weddingTitle} - Vendor Management - Bidi`,
+        description: `Manage your wedding vendors for ${weddingTitle}. View bids, track vendor status, and organize your vendor contacts.`,
+        keywords: `wedding vendors, vendor management, ${weddingTitle}, wedding planning, Bidi`
+      };
+    
+    case 'guests':
+      return {
+        title: `${weddingTitle} - Guest List Manager - Bidi`,
+        description: `Manage your wedding guest list for ${weddingTitle}. Track RSVPs, organize guest information, and plan seating arrangements.`,
+        keywords: `wedding guest list, guest management, ${weddingTitle}, wedding planning, Bidi`
+      };
+    
+    case 'details':
+      return {
+        title: `${weddingTitle} - Wedding Details - Bidi`,
+        description: `Manage wedding details for ${weddingTitle}. Update venue information, wedding style, and important event details.`,
+        keywords: `wedding details, wedding information, ${weddingTitle}, wedding planning, Bidi`
+      };
+    
+    case 'messaging':
+      return {
+        title: `${weddingTitle} - Vendor Messages - Bidi`,
+        description: `Communicate with your wedding vendors for ${weddingTitle}. Send and receive messages, discuss details, and coordinate your big day.`,
+        keywords: `wedding vendor communication, vendor messages, ${weddingTitle}, wedding planning, Bidi`
+      };
+    
+    case 'checklist':
+      return {
+        title: `${weddingTitle} - Wedding Checklist - Bidi`,
+        description: `Stay organized with your wedding checklist for ${weddingTitle}. Track tasks, deadlines, and ensure nothing is forgotten.`,
+        keywords: `wedding checklist, wedding tasks, ${weddingTitle}, wedding planning, Bidi`
+      };
+    
+    case 'setup':
+      return {
+        title: 'Create Wedding Plan - Bidi',
+        description: 'Start your wedding planning journey with Bidi. Create your wedding plan and begin organizing your dream wedding.',
+        keywords: 'create wedding plan, wedding planning, wedding setup, Bidi'
+      };
+    
+    default:
+      return {
+        title: baseTitle,
+        description: baseDescription,
+        keywords: 'wedding planning, wedding dashboard, Bidi'
+      };
+  }
+};
+
 function WeddingPlanningDashboard() {
   const [user, setUser] = useState(null);
   const [weddingData, setWeddingData] = useState(null);
@@ -35,6 +142,9 @@ function WeddingPlanningDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
+
+  // Get page metadata FIRST
+  const pageMetadata = getPageMetadata();
 
   // Initialize activeTab from URL parameter
   useEffect(() => {
@@ -74,6 +184,13 @@ function WeddingPlanningDashboard() {
       generateAndSaveNotifications();
     }
   }, [weddingData]);
+
+  // Update document title when pageMetadata changes
+  useEffect(() => {
+    if (pageMetadata && pageMetadata.title) {
+      document.title = String(pageMetadata.title || 'Bidi - Wedding Planning Dashboard');
+    }
+  }, [pageMetadata]);
 
   // Close vendors submenu when clicking outside
   useEffect(() => {
@@ -138,11 +255,30 @@ function WeddingPlanningDashboard() {
     if (!weddingPlanId) return;
 
     try {
-      const { data: moodBoardData, error: dbError } = await supabase
+      // First, try to find the couple photos category
+      const { data: coupleCategory, error: categoryError } = await supabase
+        .from('wedding_photo_categories')
+        .select('*')
+        .eq('wedding_plan_id', weddingPlanId)
+        .or(`name.ilike.%couple%,special_type.eq.couple_photos`)
+        .single();
+
+      if (categoryError && categoryError.code !== 'PGRST116') {
+        console.error('Error loading couple category:', categoryError);
+      }
+
+      let query = supabase
         .from('wedding_mood_board')
         .select('*')
         .eq('wedding_plan_id', weddingPlanId)
         .order('uploaded_at', { ascending: false });
+
+      // If couple category exists, prioritize photos from that category
+      if (coupleCategory) {
+        query = query.eq('category_id', coupleCategory.id);
+      }
+
+      const { data: moodBoardData, error: dbError } = await query;
 
       if (dbError) {
         console.error('Error loading mood board from database:', dbError);
@@ -159,7 +295,25 @@ function WeddingPlanningDashboard() {
 
         setMoodBoardImages(loadedImages);
       } else {
-        setMoodBoardImages([]);
+        // If no couple photos found, try to get any photos as fallback
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('wedding_mood_board')
+          .select('*')
+          .eq('wedding_plan_id', weddingPlanId)
+          .order('uploaded_at', { ascending: false })
+          .limit(6);
+
+        if (!fallbackError && fallbackData && fallbackData.length > 0) {
+          const fallbackImages = fallbackData.map(item => ({
+            url: item.image_url,
+            name: item.image_name,
+            uploaded_at: item.uploaded_at,
+            id: item.id
+          }));
+          setMoodBoardImages(fallbackImages);
+        } else {
+          setMoodBoardImages([]);
+        }
       }
     } catch (error) {
       console.error('Error loading mood board images:', error);
@@ -743,23 +897,6 @@ function WeddingPlanningDashboard() {
     return () => clearInterval(interval);
   }, [moodBoardImages.length]);
 
-  // Hero section helper functions
-  const calculateDaysUntilWedding = () => {
-    if (!weddingData?.wedding_date) return 0;
-    const weddingDate = new Date(weddingData.wedding_date);
-    const today = new Date();
-    return Math.ceil((weddingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  };
-
-  const getWeddingPhase = (daysUntil) => {
-    if (daysUntil < 0) return { phase: 'Wedding Memories', icon: '💕', color: '#8b5cf6' };
-    if (daysUntil === 0) return { phase: 'Wedding Day!', icon: '🎉', color: '#f59e0b' };
-    if (daysUntil <= 7) return { phase: 'Final Week', icon: '⏰', color: '#ef4444' };
-    if (daysUntil <= 30) return { phase: 'Last Month', icon: '📅', color: '#f59e0b' };
-    if (daysUntil <= 90) return { phase: 'Planning Phase', icon: '📋', color: '#3b82f6' };
-    return { phase: 'Early Planning', icon: '🌱', color: '#10b981' };
-  };
-
   const renderTabContent = () => {
     console.log('renderTabContent called, activeTab:', activeTab, 'weddingData:', weddingData);
     
@@ -858,11 +995,13 @@ function WeddingPlanningDashboard() {
   }
 
   // Hero section data
-  const daysUntil = calculateDaysUntilWedding();
+  const daysUntil = calculateDaysUntilWedding(weddingData);
   const weddingPhase = getWeddingPhase(daysUntil);
 
   return (
     <div className="wedding-planning-dashboard">
+
+      
       {/* Overview Hero Section */}
       {weddingData ? (
         <div className="overview-hero-container">
@@ -1014,7 +1153,7 @@ function WeddingPlanningDashboard() {
                     View Bids
                   </button>
                   <button 
-                    className={`dropdown-item ${activeTab === 'messaging' ? 'active' : ''}`}
+                    className={`dropdown-item-wedding-planning-dashboard ${activeTab === 'messaging' ? 'active' : ''}`}
                     onClick={() => {
                       handleTabChange('messaging');
                       setShowDesktopVendorsDropdown(false);

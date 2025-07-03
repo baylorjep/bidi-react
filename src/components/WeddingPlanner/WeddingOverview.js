@@ -38,6 +38,7 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
   const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPlannedBudget, setShowPlannedBudget] = useState(false);
+  const [checklistItems, setChecklistItems] = useState([]);
 
   // Default vendor categories (matching BudgetTracker)
   const defaultVendorCategories = [
@@ -57,6 +58,12 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
   useEffect(() => {
     loadOverviewData();
   }, [weddingData.id]);
+
+  // Update document title when component mounts
+  useEffect(() => {
+    const title = `${String(weddingData.wedding_title || 'My Wedding')} - Wedding Overview - Bidi`;
+    document.title = title;
+  }, [weddingData.wedding_title]);
 
   const loadOverviewData = async () => {
     try {
@@ -101,7 +108,45 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
         .order('due_date', { ascending: true });
 
       if (timelineError) throw timelineError;
-      setTimelineItems(timelineData || []);
+
+      // Load sub-checklist items for timeline items
+      const timelineItemsWithSubTasks = [];
+      if (timelineData && timelineData.length > 0) {
+        for (const timelineItem of timelineData) {
+          const { data: subChecklistData, error: subChecklistError } = await supabase
+            .from('wedding_checklist_items')
+            .select('*')
+            .eq('wedding_id', weddingData.id)
+            .eq('parent_timeline_item_id', timelineItem.id)
+            .order('created_at', { ascending: false });
+
+          if (subChecklistError) {
+            console.error('Error loading sub-checklist items:', subChecklistError);
+          }
+
+          timelineItemsWithSubTasks.push({
+            ...timelineItem,
+            subChecklistItems: subChecklistData || []
+          });
+        }
+      }
+
+      setTimelineItems(timelineItemsWithSubTasks || []);
+
+      // Load standalone checklist items (not associated with timeline items)
+      const { data: checklistData, error: checklistError } = await supabase
+        .from('wedding_checklist_items')
+        .select('*')
+        .eq('wedding_id', weddingData.id)
+        .is('parent_timeline_item_id', null)
+        .order('created_at', { ascending: false });
+
+      if (checklistError) {
+        console.error('Error loading checklist items:', checklistError);
+      }
+
+      // Store checklist items in state (we'll add this state)
+      setChecklistItems(checklistData || []);
 
       // Load mood board images
       const { data: moodBoardData, error: moodBoardError } = await supabase
@@ -439,9 +484,14 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
   };
 
   const getVendorStatus = () => {
-    const booked = vendors.filter(v => v.status === 'booked').length;
+    // Consider both status field and is_booked boolean field
+    const booked = vendors.filter(v => v.status === 'booked' || v.is_booked === true).length;
     const total = vendors.length || 0;
     return { booked, total, percentage: total > 0 ? (booked / total) * 100 : 0 };
+  };
+
+  const getBookedVendors = () => {
+    return vendors.filter(v => v.status === 'booked' || v.is_booked === true);
   };
 
   const getGuestStats = () => {
@@ -477,20 +527,95 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
   const getImportantTasks = () => {
     const today = new Date();
     const weddingDate = new Date(weddingData.wedding_date);
+    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
     
-    // Filter tasks that are upcoming (not completed and due date is in the future or today)
-    const upcomingTasks = timelineItems.filter(item => {
+    // Get timeline tasks that are upcoming (not completed and due date is in the future or today)
+    const upcomingTimelineTasks = timelineItems.filter(item => {
       if (item.completed) return false;
       
       const dueDate = new Date(item.due_date);
       return dueDate >= today;
     });
 
-    // Sort by due date (closest first)
-    upcomingTasks.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+    // Get sub-tasks that are upcoming in the next week
+    const upcomingSubTasks = [];
+    timelineItems.forEach(timelineItem => {
+      if (timelineItem.subChecklistItems) {
+        timelineItem.subChecklistItems.forEach(subTask => {
+          if (!subTask.completed && subTask.due_date) {
+            const dueDate = new Date(subTask.due_date);
+            if (dueDate >= today && dueDate <= nextWeek) {
+              upcomingSubTasks.push({
+                ...subTask,
+                parentTask: timelineItem.title,
+                isSubTask: true
+              });
+            }
+          }
+        });
+      }
+    });
+
+    // Get standalone checklist items that are upcoming in the next week
+    const upcomingChecklistItems = checklistItems.filter(item => {
+      if (item.completed) return false;
+      
+      if (item.due_date) {
+        const dueDate = new Date(item.due_date);
+        return dueDate >= today && dueDate <= nextWeek;
+      }
+      return false;
+    }).map(item => ({
+      ...item,
+      isChecklistItem: true
+    }));
+
+    // Combine all tasks and sort by due date (closest first)
+    const allUpcomingTasks = [
+      ...upcomingTimelineTasks.map(item => ({ ...item, type: 'timeline' })),
+      ...upcomingSubTasks.map(item => ({ ...item, type: 'subtask' })),
+      ...upcomingChecklistItems.map(item => ({ ...item, type: 'checklist' }))
+    ].sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
 
     // Return the next 5 most important tasks
-    return upcomingTasks.slice(0, 5);
+    return allUpcomingTasks.slice(0, 5);
+  };
+
+  // Helper function to get progress for timeline items with sub-tasks
+  const getTimelineItemProgress = (timelineItem) => {
+    if (!timelineItem.subChecklistItems || timelineItem.subChecklistItems.length === 0) {
+      return { total: 0, completed: 0, percentage: 0 };
+    }
+    
+    const total = timelineItem.subChecklistItems.length;
+    const completed = timelineItem.subChecklistItems.filter(item => item.completed).length;
+    const percentage = Math.round((completed / total) * 100);
+    
+    return { total, completed, percentage };
+  };
+
+  // Helper function to get checklist progress stats
+  const getChecklistProgressStats = () => {
+    const total = checklistItems.length;
+    const completed = checklistItems.filter(item => item.completed).length;
+    const overdue = checklistItems.filter(item => 
+      item.due_date && !item.completed && getDaysUntilDue(item.due_date) < 0
+    ).length;
+    const urgent = checklistItems.filter(item => 
+      item.due_date && !item.completed && getDaysUntilDue(item.due_date) <= 7 && getDaysUntilDue(item.due_date) >= 0
+    ).length;
+
+    return { total, completed, overdue, urgent };
+  };
+
+  // Helper function to get days until due date
+  const getDaysUntilDue = (dueDate) => {
+    if (!dueDate) return null;
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   const formatTaskDate = (dueDate) => {
@@ -568,6 +693,7 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
 
   return (
     <div className={styles.weddingOverview}>
+      
       {/* Quick Actions */}
       <div className={styles.quickActions}>
         <h3>Quick Actions</h3>
@@ -829,15 +955,24 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
             <div className={styles.vendorStats}>
               <div className={styles.statItem}>
                 <span className={styles.statNumber}>{vendorStatus.booked}</span>
-                <span className={styles.statLabel}>Booked</span>
+                <span className={styles.statLabel}>
+                  <i className="fas fa-check-circle" style={{ color: '#10b981', marginRight: '4px' }}></i>
+                  Booked
+                </span>
               </div>
               <div className={styles.statItem}>
                 <span className={styles.statNumber}>{vendorStatus.total - vendorStatus.booked}</span>
-                <span className={styles.statLabel}>Pending</span>
+                <span className={styles.statLabel}>
+                  <i className="fas fa-clock" style={{ color: '#f59e0b', marginRight: '4px' }}></i>
+                  Pending
+                </span>
               </div>
               <div className={styles.statItem}>
                 <span className={styles.statNumber}>{vendorStatus.total}</span>
-                <span className={styles.statLabel}>Total</span>
+                <span className={styles.statLabel}>
+                  <i className="fas fa-users" style={{ color: '#6b7280', marginRight: '4px' }}></i>
+                  Total
+                </span>
               </div>
             </div>
             <div className={styles.vendorProgress}>
@@ -849,6 +984,99 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
               </div>
               <span className={styles.progressText}>{vendorStatus.percentage.toFixed(1)}% complete</span>
             </div>
+            
+            {/* Show booked vendors */}
+            {(() => {
+              const bookedVendors = getBookedVendors();
+              if (bookedVendors.length > 0) {
+                return (
+                  <div className={styles.bookedVendorsSection}>
+                    <h4 style={{ 
+                      fontSize: '0.875rem', 
+                      fontWeight: '600', 
+                      color: '#374151',
+                      marginBottom: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+                      <i className="fas fa-check-circle" style={{ color: '#10b981' }}></i>
+                      Booked Vendors
+                    </h4>
+                    <div className={styles.bookedVendorsList}>
+                      {bookedVendors.slice(0, 3).map((vendor, index) => (
+                        <div key={vendor.id} className={styles.bookedVendorItem} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '6px 8px',
+                          backgroundColor: '#f0fdf4',
+                          borderRadius: '6px',
+                          marginBottom: '4px',
+                          border: '1px solid #dcfce7'
+                        }}>
+                          <div className={styles.vendorIcon} style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            backgroundColor: '#10b981',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '12px'
+                          }}>
+                            <i className="fas fa-check"></i>
+                          </div>
+                          <span className={styles.vendorName} style={{
+                            fontSize: '0.8rem',
+                            fontWeight: '500',
+                            color: '#1f2937',
+                            flex: 1
+                          }}>
+                            {vendor.name}
+                          </span>
+                          <span className={styles.vendorCategory} style={{
+                            fontSize: '0.7rem',
+                            color: '#6b7280',
+                            backgroundColor: '#f3f4f6',
+                            padding: '2px 6px',
+                            borderRadius: '4px'
+                          }}>
+                            {defaultVendorCategories.find(cat => cat.id === vendor.category)?.name || vendor.category}
+                          </span>
+                        </div>
+                      ))}
+                      {bookedVendors.length > 3 && (
+                        <div style={{
+                          fontSize: '0.75rem',
+                          color: '#6b7280',
+                          textAlign: 'center',
+                          padding: '4px',
+                          fontStyle: 'italic'
+                        }}>
+                          +{bookedVendors.length - 3} more booked vendors
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div style={{
+                  fontSize: '0.8rem',
+                  color: '#6b7280',
+                  textAlign: 'center',
+                  padding: '12px',
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '6px',
+                  marginTop: '8px'
+                }}>
+                  <i className="fas fa-info-circle" style={{ marginRight: '6px' }}></i>
+                  No vendors booked yet. Start by adding vendors and marking them as confirmed.
+                </div>
+              );
+            })()}
           </div>
           
           <div style={{
@@ -964,6 +1192,24 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
                   const cleanTitle = task.title ? task.title.replace(/[^\w\s\-.,!?]/g, '').trim() : 'Untitled Task';
                   const cleanDescription = task.description ? task.description.replace(/[^\w\s\-.,!?]/g, '').trim() : '';
                   
+                  // Determine task type and styling
+                  const isSubTask = task.isSubTask;
+                  const isChecklistItem = task.isChecklistItem;
+                  const taskType = task.type || 'timeline';
+                  
+                  // Get appropriate icon and color based on task type
+                  const getTaskTypeInfo = () => {
+                    if (isSubTask) {
+                      return { icon: 'fas fa-list-ul', color: '#8b5cf6', label: 'Sub-task' };
+                    } else if (isChecklistItem) {
+                      return { icon: 'fas fa-tasks', color: '#10b981', label: 'Checklist' };
+                    } else {
+                      return { icon: 'fas fa-calendar-check', color: '#3b82f6', label: 'Timeline' };
+                    }
+                  };
+                  
+                  const taskTypeInfo = getTaskTypeInfo();
+                  
                   return (
                     <div key={task.id} className={`${styles.taskCard} ${styles[priority]}`} style={{
                       display: 'flex',
@@ -992,6 +1238,37 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
                         />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
+                        {/* Task Type Badge */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          marginBottom: '4px',
+                          gap: '6px'
+                        }}>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '2px 6px',
+                            backgroundColor: taskTypeInfo.color + '20',
+                            color: taskTypeInfo.color,
+                            borderRadius: '4px',
+                            fontSize: '0.65rem',
+                            fontWeight: '500'
+                          }}>
+                            <i className={taskTypeInfo.icon} style={{ marginRight: '3px', fontSize: '0.6rem' }}></i>
+                            {taskTypeInfo.label}
+                          </span>
+                          {isSubTask && task.parentTask && (
+                            <span style={{
+                              fontSize: '0.65rem',
+                              color: '#6b7280',
+                              fontStyle: 'italic'
+                            }}>
+                              from {task.parentTask}
+                            </span>
+                          )}
+                        </div>
+                        
                         <div style={{
                           fontWeight: '600',
                           fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.875rem',
@@ -1035,6 +1312,51 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
                             </span>
                           )}
                         </div>
+                        
+                        {/* Sub-tasks Progress Bar - Only for timeline tasks */}
+                        {taskType === 'timeline' && task.subChecklistItems && task.subChecklistItems.length > 0 && (() => {
+                          const progress = getTimelineItemProgress(task);
+                          return (
+                            <div style={{
+                              marginBottom: '8px',
+                              padding: '6px 8px',
+                              backgroundColor: '#f8fafc',
+                              borderRadius: '4px',
+                              border: '1px solid #e2e8f0'
+                            }}>
+                              <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '4px',
+                                fontSize: '0.7rem',
+                                color: '#64748b'
+                              }}>
+                                <span>
+                                  <i className="fas fa-list-ul" style={{ marginRight: '4px' }}></i>
+                                  Sub-tasks
+                                </span>
+                                <span style={{ fontWeight: '500' }}>
+                                  {progress.completed}/{progress.total}
+                                </span>
+                              </div>
+                              <div style={{
+                                width: '100%',
+                                height: '4px',
+                                backgroundColor: '#e2e8f0',
+                                borderRadius: '2px',
+                                overflow: 'hidden'
+                              }}>
+                                <div style={{
+                                  width: `${progress.percentage}%`,
+                                  height: '100%',
+                                  backgroundColor: progress.percentage === 100 ? '#10b981' : '#3b82f6',
+                                  transition: 'width 0.3s ease'
+                                }}></div>
+                              </div>
+                            </div>
+                          );
+                        })()}
                         <button 
                           onClick={() => onNavigate && onNavigate('timeline')}
                           style={{
@@ -1117,6 +1439,70 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
                 </span>
               </div>
             </div>
+            
+            {/* Sub-tasks and Checklist Summary */}
+            {(() => {
+              const checklistStats = getChecklistProgressStats();
+              const totalSubTasks = timelineItems.reduce((sum, item) => 
+                sum + (item.subChecklistItems ? item.subChecklistItems.length : 0), 0
+              );
+              const completedSubTasks = timelineItems.reduce((sum, item) => 
+                sum + (item.subChecklistItems ? item.subChecklistItems.filter(sub => sub.completed).length : 0), 0
+              );
+              
+              if (totalSubTasks > 0 || checklistStats.total > 0) {
+                return (
+                  <div style={{
+                    marginTop: '10px',
+                    padding: '8px 12px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    fontSize: '0.75rem',
+                    color: '#64748b'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '4px'
+                    }}>
+                      <span>
+                        <i className="fas fa-list-ul" style={{ marginRight: '4px' }}></i>
+                        Sub-tasks: {completedSubTasks}/{totalSubTasks}
+                      </span>
+                      {checklistStats.total > 0 && (
+                        <span>
+                          <i className="fas fa-tasks" style={{ marginRight: '4px' }}></i>
+                          Checklist: {checklistStats.completed}/{checklistStats.total}
+                        </span>
+                      )}
+                    </div>
+                    {(checklistStats.urgent > 0 || checklistStats.overdue > 0) && (
+                      <div style={{
+                        display: 'flex',
+                        gap: '12px',
+                        fontSize: '0.7rem'
+                      }}>
+                        {checklistStats.urgent > 0 && (
+                          <span style={{ color: '#f59e0b' }}>
+                            <i className="fas fa-exclamation-triangle" style={{ marginRight: '2px' }}></i>
+                            {checklistStats.urgent} due soon
+                          </span>
+                        )}
+                        {checklistStats.overdue > 0 && (
+                          <span style={{ color: '#ef4444' }}>
+                            <i className="fas fa-calendar-times" style={{ marginRight: '2px' }}></i>
+                            {checklistStats.overdue} overdue
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
           
           <div style={{
