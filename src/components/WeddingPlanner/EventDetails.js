@@ -256,6 +256,7 @@ function EventDetails({ weddingData, onUpdate }) {
         cat.special_type !== 'couple_photos'
       );
       
+      // Only create default categories if there are NO non-couple categories at all
       if (nonCoupleCategories.length === 0) {
         const defaultCategories = [
           {
@@ -316,7 +317,7 @@ function EventDetails({ weddingData, onUpdate }) {
           // Add the new default categories to the list
           categories = [...categories, ...newDefaultCategories];
           
-          console.log('Created default categories for new inspiration board');
+          console.log(`Created ${newDefaultCategories.length} default categories for new inspiration board`);
         } catch (createDefaultError) {
           console.error('Error creating default categories:', createDefaultError);
         }
