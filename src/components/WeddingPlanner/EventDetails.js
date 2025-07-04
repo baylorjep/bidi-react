@@ -62,6 +62,7 @@ function EventDetails({ weddingData, onUpdate }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showCouplePhotosInfo, setShowCouplePhotosInfo] = useState(true);
   const [showDefaultCategoriesInfo, setShowDefaultCategoriesInfo] = useState(true);
+  const [showMoveModal, setShowMoveModal] = useState(false);
   const [customColors, setCustomColors] = useState([]);
   const [allColors, setAllColors] = useState([
     { id: 'primary', name: 'Primary', value: '#ec4899', isDefault: true },
@@ -616,6 +617,9 @@ function EventDetails({ weddingData, onUpdate }) {
       setSaveMessage(`${uploadedImages.length} image${uploadedImages.length > 1 ? 's' : ''} uploaded successfully!`);
       setTimeout(() => setSaveMessage(''), 3000);
       
+      // Close the upload modal after successful upload
+      setShowUploadModal(false);
+      
     } catch (error) {
       console.error('Error uploading images:', error);
       setSaveMessage(`Error uploading images: ${error.message}`);
@@ -661,6 +665,97 @@ function EventDetails({ weddingData, onUpdate }) {
     } catch (error) {
       console.error('Error removing image:', error);
       setSaveMessage('Error removing image. Please try again.');
+      setTimeout(() => setSaveMessage(''), 5000);
+    }
+  };
+
+  // Bulk delete selected images
+  const bulkDeleteImages = async () => {
+    if (selectedPhotos.length === 0) return;
+    
+    if (!window.confirm(`Delete ${selectedPhotos.length} selected image${selectedPhotos.length > 1 ? 's' : ''}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      // Get the images to delete
+      const imagesToDelete = moodBoardImages.filter(img => selectedPhotos.includes(img.id));
+      
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('wedding_mood_board')
+        .delete()
+        .in('id', selectedPhotos);
+
+      if (dbError) {
+        console.error('Database deletion error:', dbError);
+        throw new Error('Failed to delete images from database');
+      }
+
+      // Delete from storage
+      const pathsToDelete = imagesToDelete
+        .filter(img => img.path)
+        .map(img => img.path);
+
+      if (pathsToDelete.length > 0) {
+        const { error: storageError } = await supabase.storage
+          .from('wedding_planning_photos')
+          .remove(pathsToDelete);
+
+        if (storageError) {
+          console.error('Storage deletion error:', storageError);
+          // Don't throw error here as the database records are already deleted
+        }
+      }
+
+      // Update local state
+      setMoodBoardImages(prev => prev.filter(img => !selectedPhotos.includes(img.id)));
+      setSelectedPhotos([]);
+      setSaveMessage(`${imagesToDelete.length} image${imagesToDelete.length > 1 ? 's' : ''} deleted successfully!`);
+      setTimeout(() => setSaveMessage(''), 3000);
+      
+    } catch (error) {
+      console.error('Error deleting images:', error);
+      setSaveMessage('Error deleting images. Please try again.');
+      setTimeout(() => setSaveMessage(''), 5000);
+    }
+  };
+
+  // Bulk move selected images to a different category
+  const bulkMoveImages = async (targetCategoryId) => {
+    if (selectedPhotos.length === 0) return;
+
+    try {
+      // Update database
+      const { error: dbError } = await supabase
+        .from('wedding_mood_board')
+        .update({ category_id: targetCategoryId })
+        .in('id', selectedPhotos);
+
+      if (dbError) {
+        console.error('Database update error:', dbError);
+        throw new Error('Failed to move images');
+      }
+
+      // Update local state
+      setMoodBoardImages(prev => 
+        prev.map(img => 
+          selectedPhotos.includes(img.id) 
+            ? { ...img, category_id: targetCategoryId }
+            : img
+        )
+      );
+      
+      setSelectedPhotos([]);
+      setShowMoveModal(false);
+      
+      const targetCategory = categories.find(cat => cat.id === targetCategoryId);
+      setSaveMessage(`${selectedPhotos.length} image${selectedPhotos.length > 1 ? 's' : ''} moved to ${targetCategory?.name || 'selected category'}!`);
+      setTimeout(() => setSaveMessage(''), 3000);
+      
+    } catch (error) {
+      console.error('Error moving images:', error);
+      setSaveMessage('Error moving images. Please try again.');
       setTimeout(() => setSaveMessage(''), 5000);
     }
   };
@@ -1208,21 +1303,40 @@ function EventDetails({ weddingData, onUpdate }) {
               </div>
               
               <div className="photos-header-right">
-                {selectedPhotos.length > 0 && (
+                {selectedPhotos.length > 0 ? (
+                  <div className="bulk-actions">
+                    <button 
+                      className="bulk-move-btn"
+                      onClick={() => setShowMoveModal(true)}
+                      title="Move selected images to another category"
+                    >
+                      <i className="fas fa-folder-open"></i>
+                      Move
+                    </button>
+                    <button 
+                      className="bulk-delete-btn"
+                      onClick={bulkDeleteImages}
+                      title="Delete selected images"
+                    >
+                      <i className="fas fa-trash"></i>
+                      Delete
+                    </button>
+                    <button 
+                      className="clear-selection-btn-integrated"
+                      onClick={() => setSelectedPhotos([])}
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
+                ) : (
                   <button 
-                    className="clear-selection-btn-integrated"
-                    onClick={() => setSelectedPhotos([])}
+                    className="upload-photos-btn-integrated"
+                    onClick={() => setShowUploadModal(true)}
                   >
-                    Clear Selection
+                    <i className="fas fa-cloud-upload-alt"></i>
+                    Upload Photos
                   </button>
                 )}
-                <button 
-                  className="upload-photos-btn-integrated"
-                  onClick={() => setShowUploadModal(true)}
-                >
-                  <i className="fas fa-cloud-upload-alt"></i>
-                  Upload Photos
-                </button>
               </div>
             </div>
 
@@ -1586,15 +1700,16 @@ function EventDetails({ weddingData, onUpdate }) {
                   accept="image/*"
                   onChange={(e) => {
                     handleImageUpload(e);
-                    setShowUploadModal(false);
+                    // Don't close modal immediately - let it stay open during upload
                   }}
                   disabled={isUploading}
                 />
                 <div className="upload-modal-content-area">
                   {isUploading ? (
-                    <div className="d-flex align-items-center">
-                        <LoadingSpinner variant="clip" color="white" size={16} />
-                        <span className="ms-2">Uploading...</span>
+                    <div className="upload-loading-state">
+                      <LoadingSpinner variant="ring" color="#ec4899" size={32} />
+                      <span className="upload-loading-text">Uploading images...</span>
+                      <small className="upload-loading-subtext">Please wait while your images are being processed</small>
                     </div>
                   ) : (
                     <>
@@ -1605,6 +1720,59 @@ function EventDetails({ weddingData, onUpdate }) {
                   )}
                 </div>
               </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Move Images Modal */}
+      {showMoveModal && (
+        <div className="upload-modal-overlay" onClick={() => setShowMoveModal(false)}>
+          <div className="upload-modal-content move-modal" onClick={e => e.stopPropagation()}>
+            <div className="upload-modal-header">
+              <h3>Move Images</h3>
+              <button 
+                className="upload-modal-close"
+                onClick={() => setShowMoveModal(false)}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div className="upload-modal-body">
+              <p className="move-modal-description">
+                Move {selectedPhotos.length} selected image{selectedPhotos.length > 1 ? 's' : ''} to:
+              </p>
+              
+              <div className="move-category-selector">
+                <label>Select category:</label>
+                <select 
+                  id="move-category-select"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      bulkMoveImages(e.target.value);
+                    }
+                  }}
+                >
+                  <option value="">Choose a category...</option>
+                  {categories
+                    .filter(category => category.id !== selectedCategory) // Don't show current category
+                    .map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              
+              <div className="move-modal-actions">
+                <button 
+                  className="cancel-btn"
+                  onClick={() => setShowMoveModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -1072,7 +1072,7 @@
 .photo-item-integrated {
   position: relative;
   width: 100%;
-  height: 120px;
+  height: 240px;
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
@@ -1366,36 +1366,42 @@
 }
 
 .upload-modal-content-area {
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   padding: 40px 20px;
-  text-align: center;
-  transition: all 0.2s ease;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  background: #f9fafb;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-height: 200px;
 }
 
 .upload-modal-area:hover .upload-modal-content-area {
-  border-color: #6366f1;
-  background: #f8fafc;
+  border-color: #ec4899;
+  background: #fdf2f8;
 }
 
 .upload-modal-content-area i {
-  font-size: 3rem;
+  font-size: 2.5rem;
   color: #6b7280;
-  margin-bottom: 16px;
-  display: block;
+  margin-bottom: 8px;
 }
 
 .upload-modal-content-area span {
-  display: block;
   font-size: 1rem;
-  color: #374151;
-  margin-bottom: 8px;
   font-weight: 500;
+  color: #374151;
+  margin: 0;
 }
 
 .upload-modal-content-area small {
+  font-size: 0.85rem;
   color: #6b7280;
-  font-size: 0.875rem;
+  margin: 0;
 }
 
 /* Responsive design for upload modal */
@@ -1868,4 +1874,138 @@
 
 .show-help-btn i {
   font-size: 0.9rem;
+}
+
+.upload-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.upload-loading-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.upload-loading-subtext {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.bulk-move-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bulk-move-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.bulk-delete-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bulk-delete-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.move-modal {
+  max-width: 400px;
+}
+
+.move-modal-description {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #374151;
+  font-size: 1rem;
+}
+
+.move-category-selector {
+  margin-bottom: 24px;
+}
+
+.move-category-selector label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.move-category-selector select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.move-category-selector select:focus {
+  outline: none;
+  border-color: #ec4899;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+}
+
+.move-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.move-modal-actions .cancel-btn {
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.move-modal-actions .cancel-btn:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
 }
