@@ -989,10 +989,38 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                         <InfoField 
                             label="Music Preferences" 
                             value={request.music_preferences 
-                                ? Object.entries(request.music_preferences)
-                                    .filter(([_, value]) => value)
-                                    .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
-                                    .join(', ')
+                                ? (() => {
+                                    const musicLabels = {
+                                        top40: 'Top 40',
+                                        hiphop: 'Hip Hop',
+                                        house: 'House',
+                                        latin: 'Latin',
+                                        rock: 'Rock',
+                                        classics: 'Classics',
+                                        country: 'Country',
+                                        jazz: 'Jazz',
+                                        rb: 'R&B',
+                                        edm: 'EDM',
+                                        pop: 'Pop',
+                                        international: 'International'
+                                    };
+                                    
+                                    // Parse the JSON string if it's a string
+                                    let musicPreferences;
+                                    try {
+                                        musicPreferences = typeof request.music_preferences === 'string' 
+                                            ? JSON.parse(request.music_preferences)
+                                            : request.music_preferences;
+                                    } catch (e) {
+                                        console.error('Error parsing music preferences:', e);
+                                        return 'Error parsing preferences';
+                                    }
+                                    
+                                    return Object.entries(musicPreferences)
+                                        .filter(([_, value]) => value)
+                                        .map(([key]) => musicLabels[key] || key.charAt(0).toUpperCase() + key.slice(1))
+                                        .join(', ');
+                                })()
                                 : null} 
                             gridColumn="1 / -1"
                         />
