@@ -108,6 +108,25 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
 
   // Add this style block
   const styles = `
+    .modal-dialog {
+      max-width: 100vw !important;
+      max-height: 80vh !important;
+      margin: 0 !important;
+      height: 80vh !important;
+    }
+    .modal-content {
+      height: 100vh !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+      background: #000 !important;
+    }
+    .modal-xl {
+      max-width: 100vw !important;
+      width: 100vw !important;
+    }
+    .modal-backdrop {
+      background: rgba(0, 0, 0, 0.9) !important;
+    }
     .slider-container {
       position: relative;
       min-height: 300px;
@@ -175,7 +194,7 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
     .modal-slide {
       position: relative;
       width: 100%;
-      height: 100%;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -187,22 +206,30 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
       justify-content: center;
       align-items: center;
       width: 100%;
-      height: 100%;
+      height: 100vh;
       background: transparent !important;
     }
     .modal-media {
       max-height: 100vh;
-      width: 100%;
+      max-width: 100vw;
+      width: auto;
+      height: auto;
       object-fit: contain;
     }
     .modal-media.video {
       max-height: 100vh;
-      width: 100%;
+      max-width: 100vw;
+      width: auto;
+      height: auto;
       object-fit: contain;
       background: #000;
     }
     .video-container {
+      width: 100%;
       height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background: #000;
     }
     .slick-prev, .slick-next {
@@ -495,8 +522,10 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
       }}
       style={{
         maxWidth: '100vw',
+        maxHeight: '100vh',
         margin: 0,
-        padding: 0
+        padding: 0,
+        height: '100vh'
       }}
     >
       <style>{styles}</style>
@@ -513,7 +542,7 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
             minHeight: '300px',
             padding: 0,
             height: '100vh',
-            width: '100vw',
+            width: '100%',
             margin: 0
           }}>
             <Slider {...settings} key={sliderKey}>
@@ -537,7 +566,8 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
                       justifyContent: 'center',
                       alignItems: 'center',
                       padding: 0,
-                      margin: 0
+                      margin: 0,
+                      overflow: 'hidden'
                     }}>
                       <img
                         src={convertedUrls[media.url] || media.url}
@@ -546,10 +576,11 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
                         loading="lazy"
                         style={{
                           maxWidth: '100%',
-                          maxHeight: '100vh',
+                          maxHeight: '80vh',
                           width: 'auto',
                           height: 'auto',
-                          objectFit: 'contain'
+                          objectFit: 'contain',
+                          display: 'block'
                         }}
                       />
                     </div>
