@@ -238,23 +238,31 @@ const AutobidTrainer = () => {
       const data = await response.json();
       console.log('API response:', data);
 
+      // Handle both possible response formats
+      let sampleBid;
       if (data.success && data.sample_bid) {
-        const sampleBidData = [{
-          requestId: selectedRequest.id,
-          requestData: selectedRequest.request_data,
-    generatedBid: {
-            amount: data.sample_bid.amount,
-            description: data.sample_bid.description,
-            breakdown: data.sample_bid.breakdown,
-            reasoning: data.sample_bid.reasoning
-          }
-        }];
-        
-        console.log('Generated sample bid data:', sampleBidData);
-        return sampleBidData;
+        // Wrapped format
+        sampleBid = data.sample_bid;
+      } else if (data.amount && data.description) {
+        // Direct format (what backend is actually returning)
+        sampleBid = data;
       } else {
-        throw new Error('Failed to generate sample bid: ' + (data.error || 'Unknown error'));
+        throw new Error('Failed to generate sample bid: Invalid response format');
       }
+
+      const sampleBidData = [{
+        requestId: selectedRequest.id,
+        requestData: selectedRequest.request_data,
+        generatedBid: {
+          amount: sampleBid.amount,
+          description: sampleBid.description,
+          breakdown: sampleBid.breakdown,
+          reasoning: sampleBid.reasoning
+        }
+      }];
+      
+      console.log('Generated sample bid data:', sampleBidData);
+      return sampleBidData;
     } catch (error) {
       console.error('Error generating sample bid data:', error);
       throw error;
