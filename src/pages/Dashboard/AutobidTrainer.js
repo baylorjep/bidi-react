@@ -219,20 +219,33 @@ const AutobidTrainer = () => {
       }
 
       // Call the real API to generate AI sample bid
-      const response = await fetch('https://bidi-express.vercel.app/api/autobid/generate-sample-bid', {
+      const apiUrl = 'https://bidi-express.vercel.app/api/autobid/generate-sample-bid';
+      const requestBody = {
+        business_id: user.id,
+        category: category,
+        sample_request: selectedRequest.request_data
+      };
+      
+      console.log('Calling API:', apiUrl);
+      console.log('Request body:', requestBody);
+      console.log('User ID:', user.id);
+      console.log('Category:', category);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          business_id: user.id,
-          category: category,
-          sample_request: selectedRequest.request_data
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
