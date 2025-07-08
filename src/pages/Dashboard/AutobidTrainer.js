@@ -380,22 +380,28 @@ const AutobidTrainer = () => {
             setCompletedSteps(completedSteps);
             setConsecutiveApprovals(consecutiveApprovals);
             
-            // Check if we have any AI training responses for this category
-            const { data: aiResponses, error: aiError } = await supabase
-              .from('autobid_training_responses')
-              .select('*')
-              .eq('business_id', currentUser.id)
-              .eq('category', userCategories[0])
-              .eq('is_ai_generated', true)
-          .order('created_at', { ascending: false });
+            // Check if there are more categories to train first
+            const nextCategoryIndex = 0 + 1; // currentCategoryIndex is 0 for first category
+            if (nextCategoryIndex < userCategories.length) {
+              // More categories to train - show category completion
+              setShowCompletion(true);
+            } else {
+              // All categories complete - check for AI responses
+              const { data: aiResponses, error: aiError } = await supabase
+                .from('autobid_training_responses')
+                .select('*')
+                .eq('business_id', currentUser.id)
+                .eq('category', userCategories[0])
+                .eq('is_ai_generated', true)
+                .order('created_at', { ascending: false });
 
-            if (aiError && aiError.code !== 'PGRST116') {
-              console.error('Error checking AI responses:', aiError);
-            }
+              if (aiError && aiError.code !== 'PGRST116') {
+                console.error('Error checking AI responses:', aiError);
+              }
 
-            if (aiResponses && aiResponses.length > 0) {
-              // We have AI responses, go directly to AI testing
-              setShowSampleBid(true);
+              if (aiResponses && aiResponses.length > 0) {
+                // We have AI responses, go directly to AI testing
+                setShowSampleBid(true);
               
               // Initialize available requests for AI testing (excluding already used ones)
               try {
@@ -445,6 +451,7 @@ const AutobidTrainer = () => {
               // No AI responses yet, show transition step
               setShowTransitionStep(true);
             }
+          }
           } else if (trainingCompleted) {
             // Training is complete for this category, check if all categories are done
             const allCategoriesComplete = userCategories.every(cat => 
@@ -607,8 +614,15 @@ const AutobidTrainer = () => {
         setPricingBreakdown('');
         setPricingReasoning('');
       } else {
-        // Show transition step instead of going directly to AI testing
-        setShowTransitionStep(true);
+        // Check if there are more categories to train
+        const nextCategoryIndex = currentCategoryIndex + 1;
+        if (nextCategoryIndex < businessCategories.length) {
+          // More categories to train - show category completion
+          setShowCompletion(true);
+        } else {
+          // All categories complete - show transition step for AI testing
+          setShowTransitionStep(true);
+        }
       }
     } catch (error) {
       console.error('Error submitting training response:', error);
@@ -796,7 +810,10 @@ const AutobidTrainer = () => {
         setCurrentCategoryIndex(nextCategoryIndex);
         setCurrentCategory(nextCategory);
         setShowCompletion(false);
-        setShowTransitionStep(true);
+        setShowTransitionStep(false);
+        setShowSampleBid(false);
+        setCurrentStep(0);
+        setCompletedSteps(0);
         await loadCategoryRequests(nextCategory);
       } else {
         console.error('Next category is undefined at index:', nextCategoryIndex);

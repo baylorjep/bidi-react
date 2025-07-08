@@ -960,6 +960,13 @@
   justify-content: center;
 }
 
+.feedback-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
 .feedback-btn {
   display: flex;
   align-items: center;
@@ -980,32 +987,32 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.feedback-btn.approve {
+.feedback-btn.approve-btn {
   border-color: #10b981;
   color: #10b981;
 }
 
-.feedback-btn.approve:hover {
+.feedback-btn.approve-btn:hover {
   background: #10b981;
   color: white;
 }
 
-.feedback-btn.approve.active {
+.feedback-btn.approve-btn.selected {
   background: #10b981;
   color: white;
 }
 
-.feedback-btn.reject {
+.feedback-btn.reject-btn {
   border-color: #ef4444;
   color: #ef4444;
 }
 
-.feedback-btn.reject:hover {
+.feedback-btn.reject-btn:hover {
   background: #ef4444;
   color: white;
 }
 
-.feedback-btn.reject.active {
+.feedback-btn.reject-btn.selected {
   background: #ef4444;
   color: white;
 }
