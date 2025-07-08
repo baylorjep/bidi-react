@@ -258,24 +258,24 @@ function TestEmail() {
                         <h4>Trigger Auto-Bid by Request ID</h4>
                     </div>
                     <div className="card-body">
-                        {successMessage && <p className="text-success">{successMessage}</p>}
-                        {errorMessage && <p className="text-danger">{errorMessage}</p>}
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-floating mb-3">
-                                <input
-                                    className="form-control"
-                                    id="request_id"
-                                    name="request_id"
-                                    type="text"
-                                    placeholder="Enter Request ID"
-                                    value={formData.request_id}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <label htmlFor="request_id">Enter Request ID</label>
-                            </div>
-                            <button type="submit" className="btn btn-primary w-100">Trigger Auto-Bid</button>
-                        </form>
+                {successMessage && <p className="text-success">{successMessage}</p>}
+                {errorMessage && <p className="text-danger">{errorMessage}</p>}
+                <form onSubmit={handleSubmit}>
+                    <div className="form-floating mb-3">
+                        <input
+                            className="form-control"
+                            id="request_id"
+                            name="request_id"
+                            type="text"
+                            placeholder="Enter Request ID"
+                            value={formData.request_id}
+                            onChange={handleChange}
+                            required
+                        />
+                        <label htmlFor="request_id">Enter Request ID</label>
+                    </div>
+                    <button type="submit" className="btn btn-primary w-100">Trigger Auto-Bid</button>
+                </form>
                     </div>
                 </div>
 

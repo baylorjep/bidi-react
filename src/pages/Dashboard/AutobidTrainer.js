@@ -69,14 +69,14 @@ const AutobidTrainer = () => {
         ...baseRequest,
         duration: "8 hours",
         location: "Salt Lake City, UT",
-        requirements: [
-          "Full day coverage",
-          "Engagement shoot",
-          "Online gallery",
-          "Print release",
-          "Drone footage"
-        ]
-      },
+      requirements: [
+        "Full day coverage",
+        "Engagement shoot",
+        "Online gallery",
+        "Print release",
+        "Drone footage"
+      ]
+    },
       videography: {
         ...baseRequest,
         duration: "6 hours",
@@ -219,7 +219,7 @@ const AutobidTrainer = () => {
       }
 
       // Call the real API to generate AI sample bid
-      const response = await fetch('/api/autobid/generate-sample-bid', {
+      const response = await fetch('https://bidi-express.vercel.app/api/autobid/generate-sample-bid', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -227,8 +227,7 @@ const AutobidTrainer = () => {
         body: JSON.stringify({
           business_id: user.id,
           category: category,
-          request_data: selectedRequest.request_data,
-          request_id: selectedRequest.id
+          sample_request: selectedRequest.request_data
         }),
       });
 
@@ -243,7 +242,7 @@ const AutobidTrainer = () => {
         const sampleBidData = [{
           requestId: selectedRequest.id,
           requestData: selectedRequest.request_data,
-          generatedBid: {
+    generatedBid: {
             amount: data.sample_bid.amount,
             description: data.sample_bid.description,
             breakdown: data.sample_bid.breakdown,
@@ -393,14 +392,14 @@ const AutobidTrainer = () => {
               // Initialize available requests for AI testing (excluding already used ones)
               try {
                 const { data: allRequests, error } = await supabase
-                  .from('autobid_training_requests')
-                  .select('*')
-                  .eq('is_active', true)
+          .from('autobid_training_requests')
+          .select('*')
+          .eq('is_active', true)
                   .eq('category', userCategories[0])
-                  .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false });
 
-                if (error) throw error;
-                
+        if (error) throw error;
+
                 // Get the IDs of requests that have already been used for AI testing
                 const usedRequestIds = new Set(aiResponses.map(response => response.request_id));
                 
@@ -421,7 +420,7 @@ const AutobidTrainer = () => {
                 if (sampleData && sampleData.length > 0) {
                   setCurrentSampleBidData(sampleData);
                   console.log('Resumed sample bid data loaded:', sampleData.length, 'samples');
-                } else {
+          } else {
                   // No sample data generated, show error
                   console.error('No sample bid data generated when resuming');
                   setShowSampleBid(false);
@@ -433,8 +432,8 @@ const AutobidTrainer = () => {
                 alert('Error resuming AI testing. Please try again or contact support.');
               } finally {
                 setIsLoadingSampleBid(false);
-              }
-            } else {
+          }
+        } else {
               // No AI responses yet, show transition step
               setShowTransitionStep(true);
             }
@@ -643,7 +642,7 @@ const AutobidTrainer = () => {
 
       // Call the real training feedback API
       try {
-        const feedbackResponse = await fetch('/api/autobid/training-feedback', {
+        const feedbackResponse = await fetch('https://bidi-express.vercel.app/api/autobid/training-feedback', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -681,8 +680,8 @@ const AutobidTrainer = () => {
 
         if (allCategoriesComplete) {
           // All categories complete - show final completion
-          setShowSampleBid(false);
-          setShowCompletion(true);
+    setShowSampleBid(false);
+    setShowCompletion(true);
         } else {
           // Show category completion animation before moving to next category
           setShowSampleBid(false);
@@ -1099,7 +1098,7 @@ const AutobidTrainer = () => {
                 transition={{ delay: 1.1, duration: 0.6 }}
                 className="btn-primary"
                   onClick={handleContinueToNextCategory}
-                >
+              >
                   Continue to {nextCategory && capitalizeCategory(nextCategory)} Training
               </motion.button>
             </div>
@@ -1251,14 +1250,14 @@ const AutobidTrainer = () => {
               onClick={() => navigate('/business-dashboard')}
             >
               ← Back to Dashboard
-            </button>
-            
-            <div className="header-content">
-              <div className="header-title">
-                <FaRobot className="header-icon" />
+        </button>
+        
+        <div className="header-content">
+          <div className="header-title">
+            <FaRobot className="header-icon" />
                 <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
-              </div>
-              <p className="header-description">
+          </div>
+          <p className="header-description">
                 Generating personalized AI bid based on your training data...
               </p>
             </div>
@@ -1331,10 +1330,10 @@ const AutobidTrainer = () => {
             </div>
             <p className="header-description">
               Based on your {capitalizeCategory(currentCategory)} training, here's a sample bid our AI generated. Let us know if this looks accurate!
-            </p>
-          </div>
+          </p>
+        </div>
 
-          <div className="progress-section">
+        <div className="progress-section">
             <div className="category-progress">
               <span className="category-label">
                 Training {currentCategoryIndex + 1} of {businessCategories.length}: {capitalizeCategory(currentCategory)}
