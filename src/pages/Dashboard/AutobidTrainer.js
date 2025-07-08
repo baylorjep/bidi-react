@@ -1207,7 +1207,7 @@ const AutobidTrainer = () => {
                 </motion.div>
                 
                 <button
-                  className="transition-btn"
+                  className="start-ai-testing-btn"
                   onClick={handleStartAITesting}
                   disabled={isGeneratingBid || isLoadingSampleBid}
                 >

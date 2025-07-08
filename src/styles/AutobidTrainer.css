@@ -1276,4 +1276,122 @@
   .category-completion-button {
     width: 100%;
   }
+}
+
+/* Start AI Testing Button Styling */
+.start-ai-testing-btn {
+  background: linear-gradient(135deg, #9633eb 0%, #a855f7 50%, #c084fc 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 18px 40px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(150, 51, 235, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  margin: 20px auto;
+}
+
+.start-ai-testing-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.start-ai-testing-btn:hover::before {
+  left: 100%;
+}
+
+.start-ai-testing-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(150, 51, 235, 0.4);
+  background: linear-gradient(135deg, #a855f7 0%, #c084fc 50%, #d8b4fe 100%);
+}
+
+.start-ai-testing-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 20px rgba(150, 51, 235, 0.3);
+}
+
+.start-ai-testing-btn:disabled {
+  background: linear-gradient(135deg, #ccc 0%, #ddd 50%, #eee 100%);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  opacity: 0.7;
+}
+
+.start-ai-testing-btn:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.start-ai-testing-btn i {
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+
+.start-ai-testing-btn:hover i {
+  transform: scale(1.1);
+}
+
+.start-ai-testing-btn:disabled i {
+  transform: none;
+}
+
+/* Pulse animation for the button */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 8px 25px rgba(150, 51, 235, 0.3);
+  }
+  50% {
+    box-shadow: 0 8px 25px rgba(150, 51, 235, 0.5);
+  }
+  100% {
+    box-shadow: 0 8px 25px rgba(150, 51, 235, 0.3);
+  }
+}
+
+.start-ai-testing-btn:not(:disabled) {
+  animation: pulse 2s infinite;
+}
+
+/* Mobile responsive styling */
+@media (max-width: 768px) {
+  .start-ai-testing-btn {
+    padding: 16px 32px;
+    font-size: 16px;
+    min-width: 180px;
+    margin: 15px auto;
+  }
+  
+  .start-ai-testing-btn i {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .start-ai-testing-btn {
+    padding: 14px 28px;
+    font-size: 15px;
+    min-width: 160px;
+    margin: 12px auto;
+  }
+  
+  .start-ai-testing-btn i {
+    font-size: 16px;
+  }
 } 
