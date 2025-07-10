@@ -654,61 +654,26 @@ const AutobidTrainer = () => {
     try {
       setIsSubmittingFeedback(true);
       
-      // Save AI-generated bid to training responses
+      // Get current AI-generated bid data (don't insert here - let backend handle it)
       const currentBid = currentSampleBidData[currentSampleBidIndex];
-      const { data: aiResponse, error: aiError } = await supabase
-        .from('autobid_training_responses')
-        .insert({
-          business_id: user.id,
-          request_id: currentBid.requestId || currentRequest?.id || 'sample-request',
-          bid_amount: currentBid.generatedBid.amount,
-          bid_description: currentBid.generatedBid.description,
-          pricing_breakdown: currentBid.generatedBid.breakdown,
-          pricing_reasoning: currentBid.generatedBid.reasoning,
-          is_training: true,
-          is_ai_generated: true,
-          category: currentCategory
-        });
 
-      if (aiError) throw aiError;
-
-      // Save feedback to local database
+      // Call the backend API to handle AI bid insertion and feedback
       try {
-        console.log('Attempting to save feedback to database with data:', {
+        console.log('Sending feedback to backend API with data:', {
           business_id: user.id,
           category: currentCategory,
-          sample_bid_id: aiResponse[0].id,
           approved: approved,
           feedback: approved ? 'Approved' : 'Rejected',
           suggested_changes: feedbackText || null,
-          created_at: new Date().toISOString()
+          ai_bid_data: {
+            request_id: currentBid.requestId || currentRequest?.id || 'sample-request',
+            bid_amount: currentBid.generatedBid.amount,
+            bid_description: currentBid.generatedBid.description,
+            pricing_breakdown: currentBid.generatedBid.breakdown,
+            pricing_reasoning: currentBid.generatedBid.reasoning
+          }
         });
 
-        const { data: feedbackData, error: localFeedbackError } = await supabase
-          .from('autobid_training_feedback')
-          .insert({
-            business_id: user.id,
-            category: currentCategory,
-            sample_bid_id: aiResponse[0].id,
-            approved: approved,
-            feedback: approved ? 'Approved' : 'Rejected',
-            suggested_changes: feedbackText || null,
-            created_at: new Date().toISOString()
-          })
-          .select();
-
-        if (localFeedbackError) {
-          console.error('Error saving feedback to local database:', localFeedbackError);
-          console.error('Error details:', localFeedbackError.message, localFeedbackError.details, localFeedbackError.hint);
-        } else {
-          console.log('Feedback saved to local database successfully:', feedbackData);
-        }
-      } catch (localFeedbackError) {
-        console.error('Exception saving feedback to local database:', localFeedbackError);
-      }
-
-      // Call the real training feedback API
-      try {
         const feedbackResponse = await fetch('https://bidi-express.vercel.app/api/autobid/training-feedback', {
           method: 'POST',
           headers: {
@@ -717,15 +682,23 @@ const AutobidTrainer = () => {
           body: JSON.stringify({
             business_id: user.id,
             category: currentCategory,
-            sample_bid_id: aiResponse[0].id,
             approved: approved,
             feedback: approved ? 'Approved' : 'Rejected',
-            suggested_changes: feedbackText || null
+            suggested_changes: feedbackText || null,
+            ai_bid_data: {
+              request_id: currentBid.requestId || currentRequest?.id || 'sample-request',
+              bid_amount: currentBid.generatedBid.amount,
+              bid_description: currentBid.generatedBid.description,
+              pricing_breakdown: currentBid.generatedBid.breakdown,
+              pricing_reasoning: currentBid.generatedBid.reasoning
+            }
           }),
         });
 
         if (!feedbackResponse.ok) {
           console.error('Feedback API error:', feedbackResponse.status);
+          const errorText = await feedbackResponse.text();
+          console.error('API error response:', errorText);
         } else {
           const feedbackData = await feedbackResponse.json();
           console.log('Feedback submitted to API successfully:', feedbackData);
@@ -733,6 +706,8 @@ const AutobidTrainer = () => {
       } catch (feedbackError) {
         console.error('Error submitting feedback to API:', feedbackError);
       }
+
+
 
       // Update consecutive approvals
       const newConsecutiveApprovals = approved ? consecutiveApprovals + 1 : 0;
