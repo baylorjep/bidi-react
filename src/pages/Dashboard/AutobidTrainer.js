@@ -220,7 +220,7 @@ const AutobidTrainer = () => {
         console.log('Recycling to request:', selectedRequest.id);
       }
 
-      // Call the real API to generate AI sample bid
+      // Call the API to generate AI sample bid (but don't insert into database yet)
       const response = await fetch('https://bidi-express.vercel.app/api/autobid/generate-sample-bid', {
         method: 'POST',
         headers: {
@@ -229,7 +229,8 @@ const AutobidTrainer = () => {
         body: JSON.stringify({
           business_id: user.id,
           category: category,
-          sample_request: selectedRequest.request_data
+          sample_request: selectedRequest.request_data,
+          insert_to_database: false // Tell backend not to insert yet
         }),
       });
 
@@ -360,6 +361,27 @@ const AutobidTrainer = () => {
 
         setTrainingProgress(progressByCategory);
         setCategoryProgress(progressByCategory);
+
+        // Check if pricing rules are set up for all categories
+        const { data: pricingRules, error: pricingError } = await supabase
+          .from('business_pricing_rules')
+          .select('category')
+          .eq('business_id', currentUser.id);
+
+        if (pricingError && pricingError.code !== 'PGRST116') {
+          console.error('Error checking pricing rules:', pricingError);
+        }
+
+        // Check if all categories have pricing rules
+        const categoriesWithPricing = pricingRules?.map(rule => rule.category) || [];
+        const missingPricingCategories = userCategories.filter(cat => !categoriesWithPricing.includes(cat));
+
+        if (missingPricingCategories.length > 0) {
+          console.log('Missing pricing rules for categories:', missingPricingCategories);
+          // Redirect to pricing setup
+          navigate('/pricing-setup');
+          return;
+        }
 
         // Check if user needs to resume training
         const currentCategoryProgress = progressByCategory[userCategories[0]];
@@ -765,8 +787,8 @@ const AutobidTrainer = () => {
           
           if (nextCategoryCompletedScenarios >= TOTAL_STEPS && !nextCategoryTrainingCompleted) {
             // Next category needs AI testing - show category completion to move to it
-            setShowSampleBid(false);
-            setShowCompletion(true);
+    setShowSampleBid(false);
+    setShowCompletion(true);
           } else if (nextCategoryCompletedScenarios < TOTAL_STEPS) {
             // Next category needs manual training - show category completion to move to it
             setShowSampleBid(false);

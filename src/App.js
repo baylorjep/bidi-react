@@ -84,6 +84,7 @@ import GoogleBusinessCallback from "./components/Business/GoogleBusinessCallback
 import GoogleBusinessSuccess from './components/Business/GoogleBusinessSuccess';
 import GoogleBusinessError from './components/Business/GoogleBusinessError';
 import AutobidTrainer from "./pages/Dashboard/AutobidTrainer";
+import PricingSetup from "./components/Business/PricingSetup";
 
 // Misc Imports
 import Homepage from "./components/Homepage";
@@ -347,6 +348,14 @@ function AppContent() {
             element={
               <PrivateRoute>
                 <AutobidTrainer />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/pricing-setup"
+            element={
+              <PrivateRoute>
+                <PricingSetup />
               </PrivateRoute>
             }
           />
