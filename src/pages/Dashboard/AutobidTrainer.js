@@ -693,6 +693,38 @@ const AutobidTrainer = () => {
       const newConsecutiveApprovals = approved ? consecutiveApprovals + 1 : 0;
       setConsecutiveApprovals(newConsecutiveApprovals);
 
+      // Update database with approval progress
+      const currentProgress = categoryProgress[currentCategory];
+      const newScenariosApproved = currentProgress?.scenarios_approved || 0;
+      const updatedScenariosApproved = approved ? newScenariosApproved + 1 : newScenariosApproved;
+      
+      const { error: progressError } = await supabase
+        .from('autobid_training_progress')
+        .update({
+          scenarios_approved: updatedScenariosApproved,
+          consecutive_approvals: newConsecutiveApprovals,
+          training_completed: newConsecutiveApprovals >= 2
+        })
+        .eq('business_id', user.id)
+        .eq('category', currentCategory);
+
+      if (progressError) {
+        console.error('Error updating approval progress:', progressError);
+      } else {
+        console.log(`Updated approval progress: scenarios_approved=${updatedScenariosApproved}, consecutive_approvals=${newConsecutiveApprovals}`);
+        
+        // Update local state to reflect database changes
+        setCategoryProgress(prev => ({
+          ...prev,
+          [currentCategory]: {
+            ...prev[currentCategory],
+            scenarios_approved: updatedScenariosApproved,
+            consecutive_approvals: newConsecutiveApprovals,
+            training_completed: newConsecutiveApprovals >= 2
+          }
+        }));
+      }
+
       // Check if current category training is complete (2 consecutive approvals)
       if (newConsecutiveApprovals >= 2) {
         // Check if all categories are complete
