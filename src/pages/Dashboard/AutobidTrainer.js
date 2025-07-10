@@ -208,13 +208,15 @@ const AutobidTrainer = () => {
         selectedRequest = availableRequest;
         console.log('Using available request:', selectedRequest.id, 'with date:', selectedRequest.request_data?.date || 'unknown');
         
-        // Update state to mark this request as used
-        setUsedAIRequestIds(prev => new Set([...prev, selectedRequest.id]));
+        // Update state to mark this request as used (immediate update to prevent race condition)
+        const newUsedIds = new Set([...currentUsedIds, selectedRequest.id]);
+        setUsedAIRequestIds(newUsedIds);
       } else {
         // All requests have been used, reset and start over
         console.log('All requests used, resetting for recycling');
         selectedRequest = allRequests[0];
-        setUsedAIRequestIds(new Set([selectedRequest.id]));
+        const newUsedIds = new Set([selectedRequest.id]);
+        setUsedAIRequestIds(newUsedIds);
         console.log('Recycling to request:', selectedRequest.id);
       }
 
@@ -599,12 +601,27 @@ const AutobidTrainer = () => {
         .from('autobid_training_progress')
         .update({
           total_scenarios_completed: newCompletedSteps,
-          last_training_date: new Date().toISOString()
+          last_training_date: new Date().toISOString(),
+          training_completed: newCompletedSteps >= TOTAL_STEPS
         })
         .eq('business_id', user.id)
         .eq('category', currentCategory);
 
-      if (progressError) throw progressError;
+      if (progressError) {
+        console.error('Error updating training progress:', progressError);
+        alert('Error saving your progress. Please try again.');
+        return; // Don't continue if database update failed
+      }
+
+      // Update local state to reflect database changes
+      setCategoryProgress(prev => ({
+        ...prev,
+        [currentCategory]: {
+          ...prev[currentCategory],
+          total_scenarios_completed: newCompletedSteps,
+          training_completed: newCompletedSteps >= TOTAL_STEPS
+        }
+      }));
 
       if (newCompletedSteps < TOTAL_STEPS) {
         setCurrentStep(newCompletedSteps);
@@ -731,24 +748,27 @@ const AutobidTrainer = () => {
         .eq('business_id', user.id)
         .eq('category', currentCategory);
 
-      if (progressError) {
+            if (progressError) {
         console.error('Error updating approval progress:', progressError);
+        // Show user-friendly error message
+        alert('Error saving your feedback. Please try again.');
+        return; // Don't continue if database update failed
       } else {
         console.log(`Updated approval progress: scenarios_approved=${updatedScenariosApproved}, consecutive_approvals=${newConsecutiveApprovals}`);
         
-              // Update local state to reflect database changes
-      setCategoryProgress(prev => ({
-        ...prev,
-        [currentCategory]: {
-          ...prev[currentCategory],
-          scenarios_approved: updatedScenariosApproved,
-          consecutive_approvals: newConsecutiveApprovals,
-          training_completed: newConsecutiveApprovals >= 2
-        }
-      }));
-      
-      // Clear feedback text after submission
-      setFeedbackText('');
+        // Update local state to reflect database changes
+        setCategoryProgress(prev => ({
+          ...prev,
+          [currentCategory]: {
+            ...prev[currentCategory],
+            scenarios_approved: updatedScenariosApproved,
+            consecutive_approvals: newConsecutiveApprovals,
+            training_completed: newConsecutiveApprovals >= 2
+          }
+        }));
+        
+        // Clear feedback text after submission
+        setFeedbackText('');
       }
 
       // Check if current category training is complete (2 consecutive approvals)
