@@ -253,7 +253,7 @@ const AutobidTrainer = () => {
       const sampleBidData = [{
         requestId: selectedRequest.id,
         requestData: selectedRequest.request_data,
-        generatedBid: {
+    generatedBid: {
           amount: sampleBid.amount,
           description: sampleBid.description,
           breakdown: sampleBid.breakdown,
@@ -662,6 +662,29 @@ const AutobidTrainer = () => {
 
       if (aiError) throw aiError;
 
+      // Save feedback to local database
+      try {
+        const { error: localFeedbackError } = await supabase
+          .from('autobid_training_feedback')
+          .insert({
+            business_id: user.id,
+            category: currentCategory,
+            sample_bid_id: aiResponse[0].id,
+            approved: approved,
+            feedback: approved ? 'Approved' : 'Rejected',
+            suggested_changes: feedbackText || null,
+            created_at: new Date().toISOString()
+          });
+
+        if (localFeedbackError) {
+          console.error('Error saving feedback to local database:', localFeedbackError);
+        } else {
+          console.log('Feedback saved to local database successfully');
+        }
+      } catch (localFeedbackError) {
+        console.error('Error saving feedback to local database:', localFeedbackError);
+      }
+
       // Call the real training feedback API
       try {
         const feedbackResponse = await fetch('https://bidi-express.vercel.app/api/autobid/training-feedback', {
@@ -675,7 +698,7 @@ const AutobidTrainer = () => {
             sample_bid_id: aiResponse[0].id,
             approved: approved,
             feedback: approved ? 'Approved' : 'Rejected',
-            suggested_changes: null
+            suggested_changes: feedbackText || null
           }),
         });
 
@@ -683,10 +706,10 @@ const AutobidTrainer = () => {
           console.error('Feedback API error:', feedbackResponse.status);
         } else {
           const feedbackData = await feedbackResponse.json();
-          console.log('Feedback submitted successfully:', feedbackData);
+          console.log('Feedback submitted to API successfully:', feedbackData);
         }
       } catch (feedbackError) {
-        console.error('Error submitting feedback:', feedbackError);
+        console.error('Error submitting feedback to API:', feedbackError);
       }
 
       // Update consecutive approvals
@@ -713,16 +736,19 @@ const AutobidTrainer = () => {
       } else {
         console.log(`Updated approval progress: scenarios_approved=${updatedScenariosApproved}, consecutive_approvals=${newConsecutiveApprovals}`);
         
-        // Update local state to reflect database changes
-        setCategoryProgress(prev => ({
-          ...prev,
-          [currentCategory]: {
-            ...prev[currentCategory],
-            scenarios_approved: updatedScenariosApproved,
-            consecutive_approvals: newConsecutiveApprovals,
-            training_completed: newConsecutiveApprovals >= 2
-          }
-        }));
+              // Update local state to reflect database changes
+      setCategoryProgress(prev => ({
+        ...prev,
+        [currentCategory]: {
+          ...prev[currentCategory],
+          scenarios_approved: updatedScenariosApproved,
+          consecutive_approvals: newConsecutiveApprovals,
+          training_completed: newConsecutiveApprovals >= 2
+        }
+      }));
+      
+      // Clear feedback text after submission
+      setFeedbackText('');
       }
 
       // Check if current category training is complete (2 consecutive approvals)
