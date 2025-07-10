@@ -15,8 +15,6 @@ const PricingSetup = () => {
   
   // Pricing form state
   const [pricingData, setPricingData] = useState({
-    min_price: '',
-    max_price: '',
     pricing_model: 'fixed', // fixed, hourly, per_person, custom
     hourly_rate: '',
     base_price: '',
@@ -27,6 +25,7 @@ const PricingSetup = () => {
     blocklist_keywords: [],
     default_message: '',
     additional_comments: '',
+    pricing_packages: [], // Array of package objects
     
     // Category-specific pricing
     wedding_premium: '',
@@ -43,6 +42,16 @@ const PricingSetup = () => {
     package_discounts: {},
     custom_pricing_rules: []
   });
+
+  // Package builder state
+  const [newPackage, setNewPackage] = useState({
+    name: '',
+    price: '',
+    description: '',
+    duration: '',
+    features: []
+  });
+  const [showPackageForm, setShowPackageForm] = useState(false);
 
   const navigate = useNavigate();
 
@@ -117,12 +126,70 @@ const PricingSetup = () => {
     }));
   };
 
+  // Package management functions
+  const handleAddPackage = () => {
+    if (!newPackage.name || !newPackage.price) {
+      alert('Please enter at least a package name and price');
+      return;
+    }
+
+    const packageToAdd = {
+      id: Date.now(), // Simple unique ID
+      name: newPackage.name,
+      price: parseFloat(newPackage.price),
+      description: newPackage.description,
+      duration: newPackage.duration,
+      features: newPackage.features.filter(f => f.trim() !== '')
+    };
+
+    setPricingData(prev => ({
+      ...prev,
+      pricing_packages: [...prev.pricing_packages, packageToAdd]
+    }));
+
+    // Reset form
+    setNewPackage({
+      name: '',
+      price: '',
+      description: '',
+      duration: '',
+      features: []
+    });
+    setShowPackageForm(false);
+  };
+
+  const handleRemovePackage = (packageId) => {
+    setPricingData(prev => ({
+      ...prev,
+      pricing_packages: prev.pricing_packages.filter(pkg => pkg.id !== packageId)
+    }));
+  };
+
+  const handleAddFeature = () => {
+    setNewPackage(prev => ({
+      ...prev,
+      features: [...prev.features, '']
+    }));
+  };
+
+  const handleFeatureChange = (index, value) => {
+    setNewPackage(prev => ({
+      ...prev,
+      features: prev.features.map((feature, i) => i === index ? value : feature)
+    }));
+  };
+
+  const handleRemoveFeature = (index) => {
+    setNewPackage(prev => ({
+      ...prev,
+      features: prev.features.filter((_, i) => i !== index)
+    }));
+  };
+
   const loadExistingPricingForCategory = (category) => {
     const existing = existingPricingRules[category];
     if (existing) {
       setPricingData({
-        min_price: existing.min_price?.toString() || '',
-        max_price: existing.max_price?.toString() || '',
         pricing_model: existing.pricing_model || 'fixed',
         hourly_rate: existing.hourly_rate?.toString() || '',
         base_price: existing.base_price?.toString() || '',
@@ -133,6 +200,7 @@ const PricingSetup = () => {
         blocklist_keywords: existing.blocklist_keywords || [],
         default_message: existing.default_message || '',
         additional_comments: existing.additional_comments || '',
+        pricing_packages: existing.pricing_packages || [],
         wedding_premium: existing.wedding_premium?.toString() || '',
         duration_multipliers: existing.duration_multipliers || {},
         service_addons: existing.service_addons || {},
@@ -148,8 +216,6 @@ const PricingSetup = () => {
     } else {
       // Reset to defaults for new category
       setPricingData({
-        min_price: '',
-        max_price: '',
         pricing_model: 'fixed',
         hourly_rate: '',
         base_price: '',
@@ -160,6 +226,7 @@ const PricingSetup = () => {
         blocklist_keywords: [],
         default_message: '',
         additional_comments: '',
+        pricing_packages: [],
         wedding_premium: '',
         duration_multipliers: {},
         service_addons: {},
@@ -189,8 +256,6 @@ const PricingSetup = () => {
       const pricingDataToSave = {
         business_id: user.id,
         category: currentCategory,
-        min_price: parseFloat(pricingData.min_price) || null,
-        max_price: parseFloat(pricingData.max_price) || null,
         pricing_model: pricingData.pricing_model,
         hourly_rate: parseFloat(pricingData.hourly_rate) || null,
         base_price: parseFloat(pricingData.base_price) || null,
@@ -202,6 +267,7 @@ const PricingSetup = () => {
         default_message: pricingData.default_message,
         additional_comments: pricingData.additional_comments,
         additional_notes: pricingData.additional_comments, // Also save to additional_notes field
+        pricing_packages: pricingData.pricing_packages,
         wedding_premium: parseFloat(pricingData.wedding_premium) || null,
         duration_multipliers: pricingData.duration_multipliers,
         service_addons: pricingData.service_addons,
@@ -266,29 +332,150 @@ const PricingSetup = () => {
   const renderBasicPricingStep = () => (
     <div className="pricing-step">
       <h3>Basic Pricing Information</h3>
-      <p className="step-description">Set your fundamental pricing structure for {currentCategory} services.</p>
+      <p className="step-description">Set your fundamental pricing structure for {currentCategory} services. This helps the AI understand your pricing model.</p>
       
       <div className="form-grid">
         <div className="form-group">
-          <label>Minimum Price ($)</label>
+          <label>Base Price ($)</label>
           <input
             type="number"
-            value={pricingData.min_price}
-            onChange={(e) => handleInputChange('min_price', e.target.value)}
+            value={pricingData.base_price}
+            onChange={(e) => handleInputChange('base_price', e.target.value)}
             placeholder="e.g., 500"
             min="0"
           />
+          <small>Your base price for this service (starting point for calculations)</small>
         </div>
 
-        <div className="form-group">
-          <label>Maximum Price ($)</label>
-          <input
-            type="number"
-            value={pricingData.max_price}
-            onChange={(e) => handleInputChange('max_price', e.target.value)}
-            placeholder="e.g., 5000"
-            min="0"
-          />
+        <div className="form-group full-width">
+          <label>Pricing Packages</label>
+          <div className="packages-container">
+            {pricingData.pricing_packages.length > 0 && (
+              <div className="packages-list">
+                {pricingData.pricing_packages.map((pkg, index) => (
+                  <div key={pkg.id} className="package-item">
+                    <div className="package-header">
+                      <h4>{pkg.name} - ${pkg.price}</h4>
+                      <button 
+                        type="button" 
+                        className="remove-package-btn"
+                        onClick={() => handleRemovePackage(pkg.id)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                    {pkg.description && <p className="package-description">{pkg.description}</p>}
+                    {pkg.duration && <p className="package-duration">Duration: {pkg.duration}</p>}
+                    {pkg.features.length > 0 && (
+                      <ul className="package-features">
+                        {pkg.features.map((feature, i) => (
+                          <li key={i}>{feature}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {!showPackageForm ? (
+              <button 
+                type="button" 
+                className="add-package-btn"
+                onClick={() => setShowPackageForm(true)}
+              >
+                + Add Package
+              </button>
+            ) : (
+              <div className="package-form">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Package Name</label>
+                    <input
+                      type="text"
+                      value={newPackage.name}
+                      onChange={(e) => setNewPackage(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="e.g., Basic, Premium, Deluxe"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Price ($)</label>
+                    <input
+                      type="number"
+                      value={newPackage.price}
+                      onChange={(e) => setNewPackage(prev => ({ ...prev, price: e.target.value }))}
+                      placeholder="e.g., 500"
+                      min="0"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Duration</label>
+                    <input
+                      type="text"
+                      value={newPackage.duration}
+                      onChange={(e) => setNewPackage(prev => ({ ...prev, duration: e.target.value }))}
+                      placeholder="e.g., 4 hours, Full day"
+                    />
+                  </div>
+                  <div className="form-group full-width">
+                    <label>Description</label>
+                    <textarea
+                      value={newPackage.description}
+                      onChange={(e) => setNewPackage(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Brief description of what's included"
+                      rows="2"
+                    />
+                  </div>
+                  <div className="form-group full-width">
+                    <label>Features</label>
+                    <div className="features-list">
+                      {newPackage.features.map((feature, index) => (
+                        <div key={index} className="feature-input">
+                          <input
+                            type="text"
+                            value={feature}
+                            onChange={(e) => handleFeatureChange(index, e.target.value)}
+                            placeholder="e.g., 100 edited photos"
+                          />
+                          <button 
+                            type="button" 
+                            className="remove-feature-btn"
+                            onClick={() => handleRemoveFeature(index)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      <button 
+                        type="button" 
+                        className="add-feature-btn"
+                        onClick={handleAddFeature}
+                      >
+                        + Add Feature
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="package-form-actions">
+                  <button 
+                    type="button" 
+                    className="btn-secondary"
+                    onClick={() => setShowPackageForm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn-primary"
+                    onClick={handleAddPackage}
+                  >
+                    Add Package
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          <small>Add your main pricing packages to help the AI understand your pricing structure</small>
         </div>
 
         <div className="form-group">
@@ -371,7 +558,7 @@ const PricingSetup = () => {
   const renderCategorySpecificStep = () => (
     <div className="pricing-step">
       <h3>Category-Specific Pricing</h3>
-      <p className="step-description">Set pricing rules specific to {currentCategory} services.</p>
+      <p className="step-description">Set pricing rules specific to {currentCategory} services. These help the AI adjust pricing based on event details.</p>
       
       <div className="form-grid">
         <div className="form-group">
@@ -454,7 +641,7 @@ const PricingSetup = () => {
   const renderCommunicationStep = () => (
     <div className="pricing-step">
       <h3>Communication & Preferences</h3>
-      <p className="step-description">Set your default message and communication preferences.</p>
+      <p className="step-description">Set your default message and communication preferences. This helps the AI craft personalized responses.</p>
       
       <div className="form-group full-width">
         <label>Default Message Template</label>
