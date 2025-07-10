@@ -601,8 +601,8 @@ const AutobidTrainer = () => {
         .from('autobid_training_progress')
         .update({
           total_scenarios_completed: newCompletedSteps,
-          last_training_date: new Date().toISOString(),
-          training_completed: newCompletedSteps >= TOTAL_STEPS
+          last_training_date: new Date().toISOString()
+          // Don't set training_completed here - only set it after AI testing is complete
         })
         .eq('business_id', user.id)
         .eq('category', currentCategory);
@@ -618,8 +618,8 @@ const AutobidTrainer = () => {
         ...prev,
         [currentCategory]: {
           ...prev[currentCategory],
-          total_scenarios_completed: newCompletedSteps,
-          training_completed: newCompletedSteps >= TOTAL_STEPS
+          total_scenarios_completed: newCompletedSteps
+          // Don't set training_completed here - only set it after AI testing is complete
         }
       }));
 
@@ -631,15 +631,8 @@ const AutobidTrainer = () => {
         setPricingBreakdown('');
         setPricingReasoning('');
       } else {
-        // Check if there are more categories to train
-        const nextCategoryIndex = currentCategoryIndex + 1;
-        if (nextCategoryIndex < businessCategories.length) {
-          // More categories to train - show category completion
-          setShowCompletion(true);
-        } else {
-          // All categories complete - show transition step for AI testing
-          setShowTransitionStep(true);
-        }
+        // Completed 5 scenarios - show AI testing transition
+        setShowTransitionStep(true);
       }
     } catch (error) {
       console.error('Error submitting training response:', error);
@@ -681,7 +674,17 @@ const AutobidTrainer = () => {
 
       // Save feedback to local database
       try {
-        const { error: localFeedbackError } = await supabase
+        console.log('Attempting to save feedback to database with data:', {
+          business_id: user.id,
+          category: currentCategory,
+          sample_bid_id: aiResponse[0].id,
+          approved: approved,
+          feedback: approved ? 'Approved' : 'Rejected',
+          suggested_changes: feedbackText || null,
+          created_at: new Date().toISOString()
+        });
+
+        const { data: feedbackData, error: localFeedbackError } = await supabase
           .from('autobid_training_feedback')
           .insert({
             business_id: user.id,
@@ -691,15 +694,17 @@ const AutobidTrainer = () => {
             feedback: approved ? 'Approved' : 'Rejected',
             suggested_changes: feedbackText || null,
             created_at: new Date().toISOString()
-          });
+          })
+          .select();
 
         if (localFeedbackError) {
           console.error('Error saving feedback to local database:', localFeedbackError);
+          console.error('Error details:', localFeedbackError.message, localFeedbackError.details, localFeedbackError.hint);
         } else {
-          console.log('Feedback saved to local database successfully');
+          console.log('Feedback saved to local database successfully:', feedbackData);
         }
       } catch (localFeedbackError) {
-        console.error('Error saving feedback to local database:', localFeedbackError);
+        console.error('Exception saving feedback to local database:', localFeedbackError);
       }
 
       // Call the real training feedback API
@@ -773,21 +778,33 @@ const AutobidTrainer = () => {
 
       // Check if current category training is complete (2 consecutive approvals)
       if (newConsecutiveApprovals >= 2) {
-        // Check if all categories are complete
-        const allCategoriesComplete = businessCategories.every(cat => 
-          categoryProgress[cat]?.training_completed
-        );
-
-        if (allCategoriesComplete) {
-          // All categories complete - show final completion
-    setShowSampleBid(false);
-    setShowCompletion(true);
+        // Check if there are more categories that need AI testing
+        const nextCategoryIndex = currentCategoryIndex + 1;
+        const nextCategory = businessCategories[nextCategoryIndex];
+        
+        if (nextCategory) {
+          // Check if next category has completed 5 scenarios but not AI testing
+          const nextCategoryProgress = categoryProgress[nextCategory];
+          const nextCategoryCompletedScenarios = nextCategoryProgress?.total_scenarios_completed || 0;
+          const nextCategoryTrainingCompleted = nextCategoryProgress?.training_completed || false;
+          
+          if (nextCategoryCompletedScenarios >= TOTAL_STEPS && !nextCategoryTrainingCompleted) {
+            // Next category needs AI testing - show category completion to move to it
+            setShowSampleBid(false);
+            setShowCompletion(true);
+          } else if (nextCategoryCompletedScenarios < TOTAL_STEPS) {
+            // Next category needs manual training - show category completion to move to it
+            setShowSampleBid(false);
+            setShowCompletion(true);
+          } else {
+            // All categories complete - show final completion
+            setShowSampleBid(false);
+            setShowCompletion(true);
+          }
         } else {
-          // Show category completion animation before moving to next category
+          // No more categories - show final completion
           setShowSampleBid(false);
           setShowCompletion(true);
-          
-          // The completion screen will handle the transition to next category
         }
       } else {
         // Continue with next AI sample bid
