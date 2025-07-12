@@ -170,23 +170,8 @@ function WeddingTimeline({ weddingData, onUpdate, compact }) {
             })
           });
         } else {
-          // Only create default timelines if there are no existing items
-          // Check if there are any timeline items for this wedding
-          const { data: existingData, error: existingError } = await supabase
-            .from('wedding_timeline_items')
-            .select('id')
-            .eq('wedding_id', weddingData.id)
-            .limit(1);
-
-          if (existingError) throw existingError;
-
-          // Only create defaults if there are truly no items
-          if (!existingData || existingData.length === 0) {
-            await setDefaultTimelines();
-          } else {
-            // Set empty timeline if no items found but some exist (shouldn't happen, but just in case)
-            setTimelineItems({ dayOf: [], preparation: [] });
-          }
+          // Set empty timeline if no items exist - user can manually create defaults via button
+          setTimelineItems({ dayOf: [], preparation: [] });
         }
       } catch (error) {
         console.error('Error loading timeline items:', error);

@@ -1136,7 +1136,7 @@ function WeddingPlanningDashboard() {
                 onClick={() => setShowDesktopVendorsDropdown(!showDesktopVendorsDropdown)}
               >
                 <i className="fas fa-users"></i>
-                Vendors
+                Bids
                 <i className="fas fa-chevron-down" style={{ marginLeft: '8px', fontSize: '0.8rem' }}></i>
               </button>
               
@@ -1159,7 +1159,7 @@ function WeddingPlanningDashboard() {
                       setShowDesktopVendorsDropdown(false);
                     }}
                   >
-                    <i className="fas fa-comments" style={{ color: 'black' }}></i>
+                    <i className="fas fa-comments" style={{ color: 'black', backgroundColor: 'white', borderRadius: '50%', padding: '5px' }}></i>
                     Messages
                   </button>
                 </div>
@@ -1259,7 +1259,7 @@ function WeddingPlanningDashboard() {
               }}
             >
               <i className="fas fa-users"></i>
-              <span>Vendors</span>
+              <span>Bids</span>
             </button>
             
             <button 

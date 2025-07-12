@@ -15,9 +15,11 @@ import WhyBidiPhoto3 from '../../src/assets/images/Icons/cash-coin.svg';
 import UserReviews from './UserReviews';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import '../styles/animations.css';
+import '../styles/demo.css';
 import { Helmet } from 'react-helmet';
 import rusticWedding from '../assets/quiz/rustic/rustic-wedding.jpg';
 import AnimatedNumber from './AnimatedNumber';
+import VendorManager from './WeddingPlanner/VendorManager';
 
 // Initialize PostHog for client-side tracking
 posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
@@ -26,6 +28,171 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
       if (process.env.NODE_ENV === 'development') posthog.debug();
     },
   });
+
+// Demo component with fake data
+function VendorManagerDemo() {
+  const fakeWeddingData = {
+    id: 'demo-wedding-123',
+    user_id: 'demo-user-456',
+    wedding_date: '2024-06-15',
+    budget: 25000,
+    guest_count: 150,
+    venue: 'The Grand Ballroom',
+    created_at: '2024-01-15T10:00:00Z'
+  };
+
+  const fakeVendors = [
+    {
+      id: 'vendor-1',
+      wedding_id: 'demo-wedding-123',
+      name: 'Sarah Johnson Photography',
+      category: 'photography',
+      contact_info: 'email: sarah@johnsonphoto.com, phone: (555) 123-4567, website: www.johnsonphoto.com',
+      notes: 'Beautiful portfolio, specializes in natural light photography. Very responsive to messages.',
+      pricing: '$2,500 - $3,200',
+      rating: 5,
+      is_booked: false,
+      status: 'confirmed',
+      created_at: '2024-01-20T14:30:00Z',
+      updated_at: '2024-01-25T09:15:00Z'
+    }
+  ];
+
+  const fakeBids = [
+    {
+      id: 'bid-1',
+      request_id: 'photo-request-1',
+      user_id: 'business-1',
+      bid_amount: 2800,
+      description: 'Full day coverage including engagement session, wedding day photography, and beautiful album. I specialize in natural light and candid moments.',
+      status: 'approved',
+      interest_rating: 5,
+      client_notes: 'Love her style! Great portfolio with similar venues.',
+      viewed: true,
+      created_at: '2024-01-25T10:30:00Z',
+      business_profiles: {
+        id: 'business-1',
+        business_name: 'Sarah Johnson Photography',
+        membership_tier: 'premium',
+        google_calendar_connected: true,
+        profile_image: '/images/default.jpg'
+      },
+      service_requests: {
+        category: 'photography',
+        table: 'photography_requests'
+      }
+    },
+    {
+      id: 'bid-2',
+      request_id: 'photo-request-1',
+      user_id: 'business-2',
+      bid_amount: 3200,
+      description: 'Premium wedding photography package with drone coverage, 8 hours of shooting, and luxury album. Includes engagement session.',
+      status: 'interested',
+      interest_rating: 4,
+      client_notes: 'Great quality but a bit over budget. Love the drone option.',
+      viewed: false,
+      created_at: '2024-01-26T14:20:00Z',
+      business_profiles: {
+        id: 'business-2',
+        business_name: 'Elite Photography Studio',
+        membership_tier: 'premium',
+        google_calendar_connected: true,
+        profile_image: '/images/default.jpg'
+      },
+      service_requests: {
+        category: 'photography',
+        table: 'photography_requests'
+      }
+    },
+    {
+      id: 'bid-3',
+      request_id: 'photo-request-1',
+      user_id: 'business-3',
+      bid_amount: 2400,
+      description: 'Complete wedding photography coverage with 6 hours of shooting, engagement session, and digital gallery. Perfect for your budget!',
+      status: 'pending',
+      interest_rating: 3,
+      client_notes: 'Good price point, need to see more portfolio samples.',
+      viewed: false,
+      created_at: '2024-01-27T09:15:00Z',
+      business_profiles: {
+        id: 'business-3',
+        business_name: 'Capture Moments Photography',
+        membership_tier: 'standard',
+        google_calendar_connected: false,
+        profile_image: '/images/default.jpg'
+      },
+      service_requests: {
+        category: 'photography',
+        table: 'photography_requests'
+      }
+    },
+    {
+      id: 'bid-4',
+      request_id: 'photo-request-1',
+      user_id: 'business-4',
+      bid_amount: 3800,
+      description: 'Luxury wedding photography experience with 10 hours coverage, engagement session, wedding album, and parent albums. Premium service.',
+      status: 'denied',
+      interest_rating: 2,
+      client_notes: 'Too expensive for our budget.',
+      viewed: true,
+      created_at: '2024-01-26T16:45:00Z',
+      business_profiles: {
+        id: 'business-4',
+        business_name: 'Luxury Lens Photography',
+        membership_tier: 'premium',
+        google_calendar_connected: true,
+        profile_image: '/images/default.jpg'
+      },
+      service_requests: {
+        category: 'photography',
+        table: 'photography_requests'
+      }
+    }
+  ];
+
+  const fakeRequests = [
+    {
+      id: 'photo-request-1',
+      type: 'photography',
+      event_type: 'wedding',
+      event_date: '2024-06-15',
+      price_range: '2,000-3,500',
+      status: 'open',
+      isOpen: true,
+      isNew: true,
+      viewCount: 12,
+      totalBusinessCount: 45,
+      created_at: '2024-01-20T08:00:00Z'
+    }
+  ];
+
+  // Mock the VendorManager with fake data
+  return (
+    <div className="vendor-manager-demo">
+      <div className="demo-header-bar">
+        <div className="demo-status">
+          <span className="demo-badge">DEMO</span>
+          <span className="demo-text">This is a preview of your actual dashboard</span>
+        </div>
+      </div>
+      
+      <div className="demo-vendor-manager-content">
+        <VendorManager 
+          weddingData={fakeWeddingData}
+          onUpdate={() => {}} // No-op for demo
+          compact={false}
+          demoMode={true} // Add this prop to VendorManager
+          demoVendors={fakeVendors}
+          demoBids={fakeBids}
+          demoRequests={fakeRequests}
+        />
+      </div>
+    </div>
+  );
+}
   
   function Homepage() {
     const [user, setUser] = useState(null);
@@ -308,58 +475,72 @@ posthog.init('phc_I6vGPSJc5Uj1qZwGyizwTLCqZyRqgMzAg0HIjUHULSh', {
                 </div>
             </div>
 
+            {/* Combined How It Works + Demo Section */}
             <div ref={howToRef} className={`how-to-use-section fade-in-section ${howToVisible ? 'is-visible' : ''}`}>
-    <div className='how-to-text'>
-        <div className='how-to-sub-title'>Simple and hassle-free.</div>
-        <div className='how-to-title'>How It Works</div>
-        
-        {/* Step 1 */}
-        <div className='how-to-number'>1</div>
-        <div className='step-container'>
-            <div className='step-title'>Sign Up and Create Your Profile</div>
-            <div className='step-sub-title'>
-                Connect with local service providers effortlessly, without lengthy forms.
+                <div className='how-to-text'>
+                    <div className='how-to-sub-title'>Simple and hassle-free.</div>
+                    <div className='how-to-title'>How It Works</div>
+                    <div className='how-to-description'>
+                        See how Bidi connects you with photographers who bid on your wedding needs. 
+                        Compare bids, rate your interest, and manage everything in one place!
+                    </div>
+                    
+                    {/* Step 1 */}
+                    <div className='how-to-number'>1</div>
+                    <div className='step-container'>
+                        <div className='step-title'>Sign Up and Create Your Profile</div>
+                        <div className='step-sub-title'>
+                            Connect with local service providers effortlessly, without lengthy forms.
+                        </div>
+                    </div>
+
+                    {/* Step 2 */}
+                    <div className='how-to-number'>2</div>
+                    <div className='step-container'>
+                        <div className='step-title'>Post Your Wedding Needs</div>
+                        <div className='step-sub-title'>
+                            Get tailored bids from wedding professionals that match your preferences.
+                        </div>
+                    </div>
+
+                    {/* Step 3 */}
+                    <div className='how-to-number'>3</div>
+                    <div className='step-container'>
+                        <div className='step-title'>Receive and Compare Bids</div>
+                        <div className='step-sub-title'>
+                            Relax as bids come in, and easily compare them to find the perfect match.
+                        </div>
+                    </div>
+
+                    {/* Step 4 */}
+                    <div className='how-to-number'>4</div>
+                    <div className='step-container'>
+                        <div className='step-title'>Book and Celebrate</div>
+                        <div className='step-sub-title'>
+                            Choose your perfect vendor, confirm the booking, and enjoy a stress-free wedding experience.
+                        </div>
+                    </div>
+                </div>
+
+                {/* Demo Section */}
+                <div className='demo-container'>
+                    <div className='demo-content'>
+                        <div className='demo-vendor-manager'>
+                            <VendorManagerDemo />
+                        </div>
+                    </div>
+                    
+                    <div className='demo-footer'>
+                        <div className='demo-cta'>
+                            <h3>Ready to Experience This Yourself?</h3>
+                            <p>Join thousands of couples who are already planning their perfect wedding with Bidi.</p>
+                            <Link to="/request-categories" style={{textDecoration:'none'}}>
+                                <button className='demo-cta-button'>Start Planning Now</button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        {/* Step 2 */}
-        <div className='how-to-number'>2</div>
-        <div className='step-container'>
-            <div className='step-title'>Post Your Wedding Needs</div>
-            <div className='step-sub-title'>
-                Get tailored bids from wedding professionals that match your preferences.
-            </div>
-        </div>
-
-        {/* Step 3 */}
-        <div className='how-to-number'>3</div>
-        <div className='step-container'>
-            <div className='step-title'>Receive and Compare Bids</div>
-            <div className='step-sub-title'>
-                Relax as bids come in, and easily compare them to find the perfect match.
-            </div>
-        </div>
-
-        {/* New Step 4 */}
-        <div className='how-to-number'>4</div>
-        <div className='step-container'>
-            <div className='step-title'>Book and Celebrate</div>
-            <div className='step-sub-title'>
-                Choose your perfect vendor, confirm the booking, and enjoy a stress-free wedding experience.
-            </div>
-        </div>
-
-
-        {/* Call to Action Button */}
-        <div className='landing-page-button-container'>
-            <Link to="/signin">
-                <button className="landing-page-button" style={{ width: "150px", textDecoration:'none', alignItems:'center', justifyContent:'center', marginLeft:'0' }}>
-                    Try Now
-                </button>
-            </Link>
-        </div>
-    </div>
-</div>
 
 <div ref={faqRef} className={`faq-container fade-in-section ${faqVisible ? 'is-visible' : ''}`}>
     <div className='faq-title'>Frequently Asked Questions</div>

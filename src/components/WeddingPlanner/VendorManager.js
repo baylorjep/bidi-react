@@ -6,11 +6,11 @@ import BidDisplay from '../Bid/BidDisplay';
 import './VendorManager.css';
 import LoadingSpinner from '../LoadingSpinner';
 
-function VendorManager({ weddingData, onUpdate, compact = false }) {
-  const [vendors, setVendors] = useState([]);
-  const [bids, setBids] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
+function VendorManager({ weddingData, onUpdate, compact = false, demoMode = false, demoVendors = [], demoBids = [], demoRequests = [] }) {
+  const [vendors, setVendors] = useState(demoMode ? demoVendors : []);
+  const [bids, setBids] = useState(demoMode ? demoBids : []);
+  const [requests, setRequests] = useState(demoMode ? demoRequests : []);
+  const [loading, setLoading] = useState(!demoMode);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showAddVendor, setShowAddVendor] = useState(false);
@@ -61,20 +61,22 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   ];
 
   useEffect(() => {
-    if (weddingData) {
+    if (weddingData && !demoMode) {
       loadVendors();
       loadCustomCategories();
       loadBids();
       loadRequests();
       getCurrentUser();
+    } else if (demoMode) {
+      setLoading(false);
     }
-  }, [weddingData]);
+  }, [weddingData, demoMode]);
 
   useEffect(() => {
-    if (currentUserId && requests.length > 0) {
+    if (currentUserId && requests.length > 0 && !demoMode) {
       loadBids();
     }
-  }, [activeTab, currentUserId, currentRequestIndex, requests]);
+  }, [activeTab, currentUserId, currentRequestIndex, requests, demoMode]);
 
   // Update document title when component mounts
   useEffect(() => {
@@ -442,6 +444,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const handleEditRequest = (request) => {
+    if (demoMode) {
+      toast.info('This is a demo - request editing is disabled');
+      return;
+    }
+    
     // Navigate to the edit request page using the correct route pattern
     // The route should be /edit-request/:type/:id as defined in App.js
     const requestType = request.type || 'other';
@@ -455,6 +462,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const toggleRequestStatus = async (request) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       const newStatus = request.isOpen ? 'closed' : 'open';
       const tableName = `${request.type}_requests`;
@@ -531,6 +543,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
           onScheduleConsultation={handleScheduleConsultation}
           currentUserId={currentUserId}
           isNew={!bid.viewed}
+          demoMode={demoMode}
         />
       </div>
     );
@@ -593,6 +606,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const addCustomCategory = async (categoryData) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       const newCategory = {
         wedding_id: weddingData.id,
@@ -624,6 +642,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const removeCustomCategory = async (categoryId) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       // Check if there are any vendors in this category
       const { data: vendorsInCategory, error: vendorsError } = await supabase
@@ -692,6 +715,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const unhideCategory = async (categoryId) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       // Remove the hidden preference from Supabase
       const { error } = await supabase
@@ -732,6 +760,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const addVendor = async (vendorData) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       // Validate required fields
       if (!vendorData.name || !vendorData.category) {
@@ -772,6 +805,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const updateVendorStatus = async (vendorId, status) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('wedding_vendors')
@@ -794,6 +832,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const updateVendorRating = async (vendorId, rating) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('wedding_vendors')
@@ -816,6 +859,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const deleteVendor = async (vendorId) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('wedding_vendors')
@@ -833,6 +881,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const editVendor = async (vendorData) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       // Validate required fields
       if (!vendorData.name || !vendorData.category) {
@@ -882,6 +935,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const requestBidsFromVendors = (category) => {
+    if (demoMode) {
+      toast.info('This is a demo - bid requests are disabled');
+      return;
+    }
+    
     navigate('/request-categories', {
       state: {
         weddingData: weddingData,
@@ -965,6 +1023,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
 
   // Bid action handlers
   const handleApprove = async (bidId) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('bids')
@@ -984,6 +1047,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const handleDeny = async (bidId) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     console.log('VendorManager handleDeny called with bidId:', bidId);
     try {
       const { error } = await supabase
@@ -1004,6 +1072,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const handleInterested = async (bidId) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     console.log('VendorManager handleInterested called with bidId:', bidId);
     try {
       // Find the current bid to check its status
@@ -1030,6 +1103,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const handlePending = async (bid) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     console.log('VendorManager handlePending called with bid:', bid);
     try {
       const { error } = await supabase
@@ -1050,6 +1128,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const handleMessage = (chatData) => {
+    if (demoMode) {
+      toast.info('This is a demo - messaging is disabled');
+      return;
+    }
+    
     console.log('VendorManager handleMessage called with chatData:', chatData);
     
     // For mobile, switch to the messaging tab in the dashboard
@@ -1073,16 +1156,31 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const handlePayNow = (bid) => {
+    if (demoMode) {
+      toast.info('This is a demo - payment is disabled');
+      return;
+    }
+    
     // Handle payment - navigate to payment page
     navigate('/payment', { state: { bid } });
   };
 
   const handleScheduleConsultation = (consultationData) => {
+    if (demoMode) {
+      toast.info('This is a demo - consultation scheduling is disabled');
+      return;
+    }
+    
     toast.success('Consultation scheduled successfully!');
   };
 
   // Bid rating and notes functions
   const handleBidRating = async (bidId, rating) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('bids')
@@ -1105,6 +1203,11 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
   };
 
   const handleBidNotes = async (bidId, notes) => {
+    if (demoMode) {
+      toast.info('This is a demo - actions are disabled');
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('bids')
@@ -1342,112 +1445,28 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
           )}
         </h2>
         <div className="vendor-manager-actions">
-          <button 
-            className="manage-categories-btn"
-            onClick={() => setShowCategoryManager(true)}
-          >
-            <i className="fas fa-tags"></i>
-            Manage Categories
-          </button>
-          <button 
-            className="add-vendor-btn"
-            onClick={() => setShowAddVendor(true)}
-          >
-            <i className="fas fa-plus"></i>
-            Add Vendor
-          </button>
+          {!demoMode && (
+            <button 
+              className="manage-categories-btn"
+              onClick={() => setShowCategoryManager(true)}
+            >
+              <i className="fas fa-tags"></i>
+              Manage Categories
+            </button>
+          )}
+          {!demoMode && (
+            <button 
+              className="add-vendor-btn"
+              onClick={() => setShowAddVendor(true)}
+            >
+              <i className="fas fa-plus"></i>
+              Add Vendor
+            </button>
+          )}
         </div>
       </div>
 
-      {/* New Bids Summary Card */}
-      {getTotalNewBidsCount() > 0 && (
-        <div className="new-bids-summary-card">
-          <div className="new-bids-header">
-            <div className="new-bids-title">
-              <i className="fas fa-bell"></i>
-              <h3>New Bids Received</h3>
-              <span className="new-bids-count">{getTotalNewBidsCount()}</span>
-            </div>
-            <button 
-              className="mark-all-viewed-btn"
-              onClick={() => {
-                // Mark all new bids as viewed
-                const unviewedBids = bids.filter(bid => !bid.viewed);
-                unviewedBids.forEach(bid => markBidAsViewed(bid.id));
-                toast.success('All bids marked as viewed');
-              }}
-            >
-              <i className="fas fa-check-double"></i>
-              Mark All Viewed
-            </button>
-          </div>
-          
-          <div className="new-bids-categories">
-            {vendorCategories.map(category => {
-              const newBidsInCategory = getNewBidsCount(category.id);
-              if (newBidsInCategory === 0) return null;
-              
-              return (
-                <div key={category.id} className="new-bids-category-item">
-                  <div className="category-info">
-                    <div className="category-icon" style={{ backgroundColor: category.color }}>
-                      <i className={category.icon}></i>
-                    </div>
-                    <div className="category-details">
-                      <span className="category-name">{category.name}</span>
-                      <span className="bids-count">{newBidsInCategory} new bid{newBidsInCategory > 1 ? 's' : ''}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="view-bids-btn"
-                    onClick={() => {
-                      setSelectedCategory(category.id);
-                      // Mark bids in this category as viewed
-                      markBidsAsViewed(category.id);
-                    }}
-                  >
-                    <i className="fas fa-eye"></i>
-                    View
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-          
-          <div className="new-bids-footer">
-            <div className="bids-summary">
-              <span className="summary-text">
-                {getTotalNewBidsCount()} new bid{getTotalNewBidsCount() > 1 ? 's' : ''} across {vendorCategories.filter(cat => getNewBidsCount(cat.id) > 0).length} categor{getTotalNewBidsCount() > 1 ? 'ies' : 'y'}
-              </span>
-            </div>
-            <div className="bids-actions">
-              <button 
-                className="view-all-bids-btn"
-                onClick={() => {
-                  // Expand all categories with new bids
-                  const categoriesWithNewBids = vendorCategories.filter(cat => getNewBidsCount(cat.id) > 0);
-                  const newOpenSections = {};
-                  categoriesWithNewBids.forEach(cat => {
-                    newOpenSections[cat.id] = {
-                      approved: true,
-                      interested: true,
-                      pending: true,
-                      denied: true
-                    };
-                  });
-                  setOpenBidSections(newOpenSections);
-                  // Mark all bids as viewed
-                  const unviewedBids = bids.filter(bid => !bid.viewed);
-                  unviewedBids.forEach(bid => markBidAsViewed(bid.id));
-                }}
-              >
-                <i className="fas fa-expand-alt"></i>
-                View All Bids
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {requestsLoading && (
         <div className="requests-loading-container">
@@ -1461,7 +1480,9 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
       )}
 
       <div className="vendor-categories-vendor-manager">
-        {vendorCategories.map(category => {
+        {vendorCategories
+          .filter(category => !demoMode || category.id === 'photography') // Only show photography in demo mode
+          .map(category => {
           const categoryVendors = getVendorsByCategory(category.id);
           const categoryBids = getBidsByCategory(category.id);
           const bookedCount = categoryVendors.filter(v => v.status === 'booked').length;
@@ -1538,7 +1559,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                   </div>
                 </div>
                 <div className="category-actions-vendor-manager">
-                  {categoryRequest && (
+                  {!demoMode && categoryRequest && (
                     <button 
                       className="toggle-request-btn"
                       onClick={(e) => {
@@ -1555,7 +1576,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                       </span>
                     </button>
                   )}
-                  {isCategorySupported(category.id) && (
+                  {!demoMode && isCategorySupported(category.id) && (
                     <button 
                       className="request-bids-btn-vendor-manager"
                       onClick={(e) => {
@@ -1566,28 +1587,32 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                       Request Bids
                     </button>
                   )}
-                  <button 
-                    className="add-manual-vendor-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedCategory(category.id);
-                      setShowAddVendor(true);
-                    }}
-                    title="Add manual vendor"
-                  >
-                    <i className="fas fa-plus"></i>
-                    Add Vendor
-                  </button>
-                  <button 
-                    className="remove-category-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeCustomCategory(category.id);
-                    }}
-                    title="Remove category"
-                  >
-                    <i className="fas fa-trash"></i>
-                  </button>
+                  {!demoMode && (
+                    <button 
+                      className="add-manual-vendor-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedCategory(category.id);
+                        setShowAddVendor(true);
+                      }}
+                      title="Add manual vendor"
+                    >
+                      <i className="fas fa-plus"></i>
+                      Add Vendor
+                    </button>
+                  )}
+                  {!demoMode && (
+                    <button 
+                      className="remove-category-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeCustomCategory(category.id);
+                      }}
+                      title="Remove category"
+                    >
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  )}
                   <i className="fas fa-chevron-down"></i>
                 </div>
               </div>
@@ -1601,22 +1626,24 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                     <div className="request-details-section">
                       <div className="request-header">
                         <h4>Active Request</h4>
-                        <div className="request-actions">
-                          <button
-                            className="btn-edit"
-                            onClick={() => handleEditRequest(categoryRequest)}
-                          >
-                            <i className="fas fa-edit"></i>
-                            Edit Request
-                          </button>
-                          <button
-                            className="btn-toggle"
-                            onClick={() => toggleRequestStatus(categoryRequest)}
-                          >
-                            <i className={`fas ${categoryRequest.isOpen ? 'fa-lock' : 'fa-unlock'}`}></i>
-                            {categoryRequest.isOpen ? "Close" : "Reopen"}
-                          </button>
-                        </div>
+                        {!demoMode && (
+                          <div className="request-actions">
+                            <button
+                              className="btn-edit"
+                              onClick={() => handleEditRequest(categoryRequest)}
+                            >
+                              <i className="fas fa-edit"></i>
+                              Edit Request
+                            </button>
+                            <button
+                              className="btn-toggle"
+                              onClick={() => toggleRequestStatus(categoryRequest)}
+                            >
+                              <i className={`fas ${categoryRequest.isOpen ? 'fa-lock' : 'fa-unlock'}`}></i>
+                              {categoryRequest.isOpen ? "Close" : "Reopen"}
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div className="request-summary">
                         <div className="request-info-grid">
@@ -1691,8 +1718,8 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                     });
                   })()}
 
-                  {/* Show manual vendors as an accordion */}
-                  {categoryVendors.length > 0 && (
+                  {/* Show manual vendors as an accordion - only in non-demo mode */}
+                  {!demoMode && categoryVendors.length > 0 && (
                     <div className="vendors-section">
                       <div
                         className="vendors-section-header"
@@ -1828,7 +1855,7 @@ function VendorManager({ weddingData, onUpdate, compact = false }) {
                   {categoryVendors.length === 0 && categoryBids.length === 0 && (
                     <div className="no-vendors">
                       <p>No vendors or bids yet for this category.</p>
-                      {isCategorySupported(category.id) ? (
+                      {!demoMode && isCategorySupported(category.id) ? (
                         <button 
                           className="request-bids-btn-vendor-manager"
                           onClick={() => requestBidsFromVendors(category)}

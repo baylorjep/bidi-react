@@ -1,0 +1,251 @@
+/* Demo Section Styles */
+.demo-section {
+  padding: 80px 20px;
+  background: white;
+  color: #1f2937;
+}
+
+.demo-container {
+  width: 50%;
+  max-width: 1200px;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  margin-top:80px;
+}
+
+.demo-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.demo-sub-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ff008a;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.demo-title {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  line-height: 1.2;
+  color: #1f2937;
+}
+
+.demo-description {
+  font-size: 20px;
+  line-height: 1.6;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+  color: #6b7280;
+}
+
+.demo-content {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  margin-bottom: 40px;
+}
+
+.demo-vendor-manager {
+  position: relative;
+}
+
+.vendor-manager-demo {
+  position: relative;
+}
+
+.demo-header-bar {
+  background: linear-gradient(90deg, #ff008a, #ff6b6b);
+  padding: 15px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.demo-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.demo-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.demo-text {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.demo-vendor-manager-content {
+  background: white;
+  color: #1f2937;
+}
+
+.demo-footer {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.demo-cta {
+  background: #f8fafc;
+  padding: 40px;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+}
+
+.demo-cta h3 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #1f2937;
+}
+
+.demo-cta p {
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  opacity: 0.9;
+  color: #6b7280;
+}
+
+.demo-cta-button {
+  background: linear-gradient(135deg, #ff008a, #ff6b6b);
+  color: white;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.demo-cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(255, 0, 138, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 860px) {
+  .demo-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .demo-section {
+    padding: 60px 15px;
+  }
+  
+  .demo-title {
+    font-size: 36px;
+  }
+  
+  .demo-description {
+    font-size: 18px;
+  }
+  
+  .demo-cta {
+    padding: 30px 20px;
+  }
+  
+  .demo-cta h3 {
+    font-size: 28px;
+  }
+  
+  .demo-cta p {
+    font-size: 16px;
+  }
+  
+  .demo-cta-button {
+    padding: 12px 30px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .demo-title {
+    font-size: 28px;
+  }
+  
+  .demo-description {
+    font-size: 16px;
+  }
+  
+  .demo-cta h3 {
+    font-size: 24px;
+  }
+  
+  .demo-cta p {
+    font-size: 14px;
+  }
+}
+
+/* Demo-specific vendor manager styles */
+.vendor-manager-demo .vendor-manager {
+  background: white;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.vendor-manager-demo .vendor-manager-header {
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px;
+}
+
+.vendor-manager-demo .vendor-categories-vendor-manager {
+  padding: 20px;
+}
+
+.vendor-manager-demo .vendor-category {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.vendor-manager-demo .vendor-category:hover {
+  border-color: #ff008a;
+  box-shadow: 0 4px 12px rgba(255, 0, 138, 0.1);
+}
+
+/* Disable interactions in demo mode */
+.vendor-manager-demo .vendor-category {
+  cursor: default;
+}
+
+.vendor-manager-demo .vendor-category:hover {
+  transform: none;
+}
+
+.vendor-manager-demo button {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.vendor-manager-demo .vendor-category:hover button {
+  opacity: 0.7;
+} 

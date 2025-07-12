@@ -88,6 +88,7 @@ import PricingSetup from "./components/Business/PricingSetup";
 
 // Misc Imports
 import Homepage from "./components/Homepage";
+import WeddingPlannerHomepage from "./components/WeddingPlannerHomepage";
 import ContactForm from "./components/ContactForm";
 import AboutUs from "./components/AboutUs";
 
@@ -200,7 +201,7 @@ function AppContent() {
     const dashboardRoutes = [
       '/individual-dashboard',
       '/business-dashboard',
-      '/wedding-planner-dashboard',
+      '/wedding-planner/',
       '/messages',
       '/messages/'
     ];
@@ -211,8 +212,20 @@ function AppContent() {
     }
     
     // Check if path starts with any dashboard route (for dynamic routes like /messages/:businessId)
+    // But exclude the wedding planner homepage
+    if (location.pathname === '/wedding-planner-homepage') {
+      return false;
+    }
+    
     return dashboardRoutes.some(route => location.pathname.startsWith(route));
   };
+
+  // Debug logging for App.js
+  console.log('App.js Debug:', {
+    pathname: location.pathname,
+    isDashboardRoute: isDashboardRoute(),
+    shouldShowNavbar: !isDashboardRoute()
+  });
 
   return (
     <div className="app-container">
@@ -222,6 +235,7 @@ function AppContent() {
       <div className="content-wrapper">
         <Routes>
           <Route path="/" element={<Homepage />} />
+          <Route path="/wedding-planner-homepage" element={<WeddingPlannerHomepage />} />
           <Route path="/partnership/:partnerName" element={<PartnershipLanding />} />
           <Route path="/for-vendors" element={<VendorHomepage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
