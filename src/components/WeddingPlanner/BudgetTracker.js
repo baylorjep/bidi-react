@@ -552,8 +552,13 @@ function BudgetTracker({ weddingData, onUpdate, compact = false }) {
     delete newPlannedBudget[categoryId];
     setPlannedBudget(newPlannedBudget);
     
-    // Add to excluded categories
-    setExcludedCategories(prev => [...prev, categoryId]);
+    // Add to excluded categories (only if not already there)
+    setExcludedCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev; // Already excluded
+      }
+      return [...prev, categoryId];
+    });
   };
 
   const handleRestoreCategory = (categoryId) => {
@@ -1749,8 +1754,13 @@ function BudgetPlanner({ weddingData, budgetItems, budgetCategories, onUpdate, s
     delete newPlannedBudget[categoryId];
     setPlannedBudget(newPlannedBudget);
     
-    // Add to excluded categories
-    setExcludedCategories(prev => [...prev, categoryId]);
+    // Add to excluded categories (only if not already there)
+    setExcludedCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev; // Already excluded
+      }
+      return [...prev, categoryId];
+    });
   };
 
   const handleRestoreCategory = (categoryId) => {

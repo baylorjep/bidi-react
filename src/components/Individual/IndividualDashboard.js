@@ -4,6 +4,7 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import "../../App.css";
 import "../../styles/IndividualDashboard.css";
 import "../../styles/Sidebar.css";
+import "./WeddingPlannerModal.css";
 import verifiedCheckIcon from "../../assets/images/Icons/verified-check.svg";
 import bidsIcon from "../../assets/images/Icons/bids.svg";
 import messageIcon from "../../assets/images/Icons/message.svg";
@@ -19,6 +20,7 @@ import RequestCategories from "../Request/RequestCategories.js";
 import VendorListWithFilters from "../VendorListWithFilters/VendorListWithFilters.js";
 import MasterRequestFlow from "../Request/MasterRequestFlow.js";
 import Settings from "../Settings/Settings.js";
+
 
 const IndividualDashboard = () => {
   const [user, setUser] = useState(null);
@@ -58,6 +60,7 @@ const IndividualDashboard = () => {
   });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef(null);
+  const [showWeddingPlannerModal, setShowWeddingPlannerModal] = useState(false);
 
   // Initialize activeSection from URL parameter
   useEffect(() => {
@@ -130,6 +133,11 @@ const IndividualDashboard = () => {
             phone: profile.phone || "",
           });
           setIsVerified(!!profile.is_verified);
+          
+          // Check if user has seen the wedding planner intro
+          if (!profile.has_seen_wedding_planner_intro) {
+            setShowWeddingPlannerModal(true);
+          }
         }
 
         // Set profile picture
@@ -338,6 +346,32 @@ const IndividualDashboard = () => {
   const handleDismissShareNotification = () => {
     setShowShareSection(false);
     localStorage.setItem('bidiShareNotificationDismissed', 'true');
+  };
+
+  const handleWeddingPlannerChoice = async (choice) => {
+    try {
+      // Save user's preference
+      const { error } = await supabase
+        .from('individual_profiles')
+        .update({
+          has_seen_wedding_planner_intro: true,
+          preferred_dashboard: choice
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error saving preference:', error);
+      }
+
+      setShowWeddingPlannerModal(false);
+
+      // Navigate to chosen dashboard
+      if (choice === 'wedding-planner') {
+        navigate('/wedding-planner');
+      }
+    } catch (error) {
+      console.error('Error handling wedding planner choice:', error);
+    }
   };
 
   // Add dedicated logout handler
@@ -692,6 +726,94 @@ const IndividualDashboard = () => {
             </button>
           </div>
         )}
+
+        {/* Wedding Planner Intro Modal */}
+        {showWeddingPlannerModal && (
+          <div className="wedding-planner-modal-overlay">
+            <div className="wedding-planner-modal">
+              <div className="wp-modal-header">
+                <div className="wp-new-badge">NEW</div>
+                <button 
+                  className="wp-close-btn" 
+                  onClick={() => handleWeddingPlannerChoice('individual')}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div className="wp-modal-content">
+                <div className="wp-welcome-icon">
+                  <i className="fas fa-heart"></i>
+                </div>
+                
+                <h2>Welcome to Bidi's New Wedding Planner! 🎉</h2>
+                <p className="wp-intro-text">
+                  We've created a comprehensive wedding planning dashboard that includes everything from the individual dashboard, plus powerful new features to help you plan your entire wedding from start to finish.
+                </p>
+
+                <div className="wp-feature-highlights">
+                  <div className="wp-feature-item">
+                    <i className="fas fa-search"></i>
+                    <span>All individual dashboard features</span>
+                  </div>
+                  <div className="wp-feature-item">
+                    <i className="fas fa-calendar-alt"></i>
+                    <span>Complete wedding timeline</span>
+                  </div>
+                  <div className="wp-feature-item">
+                    <i className="fas fa-dollar-sign"></i>
+                    <span>Budget tracking & management</span>
+                  </div>
+                  <div className="wp-feature-item">
+                    <i className="fas fa-user-friends"></i>
+                    <span>Guest list & RSVP management</span>
+                  </div>
+                  <div className="wp-feature-item">
+                    <i className="fas fa-users"></i>
+                    <span>Vendor coordination</span>
+                  </div>
+                  <div className="wp-feature-item">
+                    <i className="fas fa-tasks"></i>
+                    <span>Wedding checklist & tasks</span>
+                  </div>
+                </div>
+
+                <div className="wp-choice-section">
+                  <p className="wp-choice-question">Which dashboard would you like to use?</p>
+                  
+                  <div className="wp-choice-buttons">
+                    <button 
+                      className="wp-choice-btn wp-continue-current"
+                      onClick={() => handleWeddingPlannerChoice('individual')}
+                    >
+                      <div className="wp-choice-header">
+                        <i className="fas fa-search"></i>
+                        <span>Continue with Individual Dashboard</span>
+                      </div>
+                      <p>Keep using the individual dashboard for specific vendor requests and bids</p>
+                    </button>
+                    
+                    <button 
+                      className="wp-choice-btn wp-try-new"
+                      onClick={() => handleWeddingPlannerChoice('wedding-planner')}
+                    >
+                      <div className="wp-choice-header">
+                        <i className="fas fa-heart"></i>
+                        <span>Upgrade to Wedding Planner</span>
+                      </div>
+                      <p>Get everything from the individual dashboard plus comprehensive wedding planning tools</p>
+                    </button>
+                  </div>
+
+                  <p className="wp-note">
+                    You can always change your preference later in your dashboard settings.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

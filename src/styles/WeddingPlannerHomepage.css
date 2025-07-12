@@ -1,0 +1,609 @@
+/* Wedding Planner Homepage Styles */
+
+/* Masthead Section */
+.wedding-planner-masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 80px 5% 80px 5%;
+  background: white;
+  color: #2d3748;
+  position: relative;
+  overflow: hidden;
+}
+
+.wedding-planner-text-section {
+  flex: 1;
+  max-width: 600px;
+  z-index: 2;
+  position: relative;
+}
+
+.wedding-planner-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  line-height: 1.2;
+  background: linear-gradient(45deg, #FF008A, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  height: 100%;
+}
+
+.wedding-planner-subtitle {
+  font-size: 1.3rem;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  color: #718096;
+  font-weight: 400;
+}
+
+.wedding-planner-button-container {
+  margin-bottom: 40px;
+}
+
+.wedding-planner-button {
+  background: linear-gradient(45deg, #FF008A, #FF6B9D);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 0, 138, 0.3);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.wedding-planner-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 0, 138, 0.4);
+  text-decoration: none;
+  color: white;
+}
+
+.wedding-planner-video-section {
+  flex: 1;
+  max-width: 900px;
+  margin-left: 50px;
+  z-index: 2;
+  position: relative;
+}
+
+.wedding-planner-video-container {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.wedding-planner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 15px;
+}
+
+/* Features Section */
+.wedding-planner-features-section {
+  padding: 100px 5%;
+  background: #f8f9fa;
+}
+
+.wedding-planner-features-header {
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.wedding-planner-features-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 20px;
+}
+
+.wedding-planner-features-subtitle {
+  font-size: 1.2rem;
+  color: #718096;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.wedding-planner-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.wedding-planner-feature-card {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #e2e8f0;
+}
+
+.wedding-planner-feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.wedding-planner-feature-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #FF008A, #8b5cf6);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 25px;
+}
+
+.wedding-planner-feature-icon i {
+  font-size: 2rem;
+  color: white;
+}
+
+.wedding-planner-feature-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 15px;
+}
+
+.wedding-planner-feature-description {
+  color: #718096;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.wedding-planner-feature-list {
+  list-style: none;
+  padding: 0;
+}
+
+.wedding-planner-feature-list li {
+  padding: 8px 0;
+  color: #4a5568;
+  position: relative;
+  padding-left: 25px;
+}
+
+.wedding-planner-feature-list li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #48bb78;
+  font-weight: bold;
+}
+
+/* Interactive Demo Section */
+.wedding-planner-demo-section {
+  padding: 80px 0;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.wedding-planner-demo-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.wedding-planner-demo-title {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.wedding-planner-demo-subtitle {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 60px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.wedding-planning-dashboard {
+  background: #f8fafc;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  margin: 40px 0;
+}
+
+/* Demo Notice */
+.demo-notice {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 12px 20px;
+  margin: 20px;
+  text-align: center;
+}
+
+.demo-notice-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #92400e;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.demo-notice-content i {
+  color: #f59e0b;
+  font-size: 1rem;
+}
+
+/* Demo CTA */
+.demo-cta {
+  text-align: center;
+  margin-top: 40px;
+  padding: 30px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.demo-cta p {
+  font-size: 1.1rem;
+  color: #374151;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.demo-cta-button {
+  background: linear-gradient(135deg, #d84888 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(216, 72, 136, 0.3);
+}
+
+.demo-cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(216, 72, 136, 0.4);
+}
+
+/* How To Section */
+.wedding-planner-how-to-section {
+  padding: 100px 5%;
+  background: white;
+}
+
+.wedding-planner-how-to-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.wedding-planner-how-to-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 20px;
+}
+
+.wedding-planner-how-to-subtitle {
+  font-size: 1.2rem;
+  color: #718096;
+  margin-bottom: 60px;
+  line-height: 1.6;
+}
+
+.wedding-planner-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  margin-bottom: 60px;
+}
+
+.wedding-planner-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+  text-align: left;
+  padding: 30px;
+  background: #f8f9fa;
+  border-radius: 15px;
+  transition: transform 0.3s ease;
+}
+
+.wedding-planner-step:hover {
+  transform: translateX(10px);
+}
+
+.wedding-planner-step-number {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #FF008A, #FF6B9D);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.wedding-planner-step-content h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 10px;
+}
+
+.wedding-planner-step-content p {
+  color: #718096;
+  line-height: 1.6;
+}
+
+.wedding-planner-cta-section {
+  margin-top: 40px;
+}
+
+.wedding-planner-cta-button {
+  background: linear-gradient(45deg, #FF008A, #FF6B9D);
+  color: white;
+  border: none;
+  padding: 18px 40px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 0, 138, 0.3);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.wedding-planner-cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 0, 138, 0.4);
+  text-decoration: none;
+  color: white;
+}
+
+/* Final CTA Section */
+.wedding-planner-final-cta {
+  padding: 100px 5%;
+  background: #2d3748;
+  color: white;
+  text-align: center;
+}
+
+.wedding-planner-final-cta-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.wedding-planner-final-cta-content h2 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.wedding-planner-final-cta-content p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+.wedding-planner-final-cta-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.wedding-planner-final-cta-button {
+  padding: 18px 40px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  border: none;
+}
+
+.wedding-planner-final-cta-button.primary {
+  background: linear-gradient(45deg, #FF008A, #FF6B9D);
+  color: white;
+  box-shadow: 0 4px 15px rgba(255, 0, 138, 0.3);
+}
+
+.wedding-planner-final-cta-button.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 0, 138, 0.4);
+  text-decoration: none;
+  color: white;
+}
+
+.wedding-planner-final-cta-button.secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+}
+
+.wedding-planner-final-cta-button.secondary:hover {
+  background: white;
+  color: #2d3748;
+  text-decoration: none;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .wedding-planner-masthead {
+    flex-direction: column;
+    text-align: center;
+    padding: 60px 5%;
+  }
+
+  .wedding-planner-video-section {
+    margin-left: 0;
+    margin-top: 40px;
+    max-width: 500px;
+  }
+
+  .wedding-planner-title {
+    font-size: 2.5rem;
+  }
+
+  .wedding-planner-features-title,
+  .wedding-planner-how-to-title {
+    font-size: 2.5rem;
+  }
+
+  .wedding-planner-features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wedding-planner-final-cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .wedding-planner-masthead {
+    flex-direction: column-reverse;
+    padding: 40px 5%;
+  }
+
+  .wedding-planner-title {
+    font-size: 2rem;
+  }
+
+  .wedding-planner-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .wedding-planner-video-section {
+    margin-left: 0;
+    margin-bottom: 40px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .wedding-planner-video-container {
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .wedding-planner-text-section {
+    flex: 1;
+    max-width: 100%;
+    z-index: 2;
+    position: relative;
+  }
+
+  .wedding-planner-feature-card {
+    padding: 30px;
+  }
+
+  .wedding-planner-step {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .wedding-planner-features-title,
+  .wedding-planner-how-to-title {
+    font-size: 2rem;
+  }
+
+  .wedding-planner-demo-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .wedding-planner-title {
+    font-size: 1.8rem;
+  }
+
+  .wedding-planner-button,
+  .wedding-planner-cta-button,
+  .wedding-planner-final-cta-button {
+    padding: 15px 25px;
+    font-size: 1rem;
+  }
+
+  .wedding-planner-feature-card {
+    padding: 25px;
+  }
+}
+
+/* Responsive Design for Demo */
+@media (max-width: 768px) {
+  .demo-notice {
+    margin: 15px;
+    padding: 10px 15px;
+  }
+  
+  .demo-notice-content {
+    font-size: 0.8rem;
+  }
+  
+  .demo-cta {
+    padding: 20px;
+  }
+  
+  .demo-cta p {
+    font-size: 1rem;
+  }
+  
+  .demo-cta-button {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .demo-notice {
+    margin: 10px;
+    padding: 8px 12px;
+  }
+  
+  .demo-notice-content {
+    font-size: 0.75rem;
+  }
+  
+  .demo-cta {
+    padding: 15px;
+  }
+  
+  .demo-cta p {
+    font-size: 0.9rem;
+  }
+  
+  .demo-cta-button {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+  }
+} 

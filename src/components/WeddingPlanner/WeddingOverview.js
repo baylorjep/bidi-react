@@ -29,7 +29,7 @@ ChartJS.register(
   Filler
 );
 
-const WeddingOverview = ({ weddingData, onNavigate }) => {
+const WeddingOverview = ({ weddingData, onNavigate, mockData = null }) => {
   const [budgetItems, setBudgetItems] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [guests, setGuests] = useState([]);
@@ -55,8 +55,20 @@ const WeddingOverview = ({ weddingData, onNavigate }) => {
   ];
 
   useEffect(() => {
-    loadOverviewData();
-  }, [weddingData.id]);
+    if (mockData) {
+      // Use mock data for demo
+      setBudgetItems(mockData.budgetItems || []);
+      setVendors(mockData.vendors || []);
+      setGuests(mockData.guests || []);
+      setTimelineItems(mockData.timelineItems || []);
+      setMoodBoardImages(mockData.moodBoardImages || []);
+      setBids(mockData.bids || []);
+      setLoading(false);
+    } else {
+      // Load real data from database
+      loadOverviewData();
+    }
+  }, [weddingData.id, mockData]);
 
   const loadOverviewData = async () => {
     try {

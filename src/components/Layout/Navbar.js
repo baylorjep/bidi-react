@@ -11,6 +11,7 @@ function Navbar() {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [profilePhoto, setProfilePhoto] = useState(null);
+  const [weddingPlannerDropdownOpen, setWeddingPlannerDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const navbarRef = useRef(null);
   const location = useLocation();
@@ -106,6 +107,12 @@ function Navbar() {
     if (navbarCollapse) {
       navbarCollapse.classList.remove("show");
     }
+    setWeddingPlannerDropdownOpen(false);
+  };
+
+  const toggleWeddingPlannerDropdown = (e) => {
+    e.preventDefault();
+    setWeddingPlannerDropdownOpen(!weddingPlannerDropdownOpen);
   };
 
   useEffect(() => {
@@ -125,11 +132,23 @@ function Navbar() {
   const isDashboardRoute = location.pathname.includes('-dashboard');
   const isPortfolioRoute = location.pathname.includes('/portfolio/');
   const isPartnershipRoute = location.pathname.includes('/partnership/');
-  const isWeddingPlannerRoute = location.pathname.includes('/wedding-planner');
-  const shouldHideNavbar = isDashboardRoute || (isPortfolioRoute && user) || isPartnershipRoute || isWeddingPlannerRoute;
+  const isWeddingPlannerDashboardRoute = location.pathname.includes('/wedding-planner/') && !location.pathname.includes('/wedding-planner-homepage');
+  const shouldHideNavbar = isDashboardRoute || (isPortfolioRoute && user) || isPartnershipRoute || isWeddingPlannerDashboardRoute;
+
+  // Debug logging
+  console.log('Navbar Debug:', {
+    pathname: location.pathname,
+    isDashboardRoute,
+    isPortfolioRoute,
+    isPartnershipRoute,
+    isWeddingPlannerDashboardRoute,
+    shouldHideNavbar,
+    user
+  });
 
   // If we're in a dashboard route or portfolio route with signed in user, don't render the navbar
   if (shouldHideNavbar) {
+    console.log('Navbar hidden due to route conditions');
     return null;
   }
 
@@ -205,49 +224,98 @@ function Navbar() {
             <li className="nav-item d-flex align-items-center mb-2 mb-lg-0">
               <VendorSearch />
             </li>
-            
-            {userRole === "individual" && (
-              <li className="nav-item">
-                <Link className="nav-link me-lg-3" to="/individual-dashboard" onClick={closeMenu}>
-                  Dashboard
-                </Link>
-              </li>
-            )}
 
-            {userRole === "business" && (
-              <li className="nav-item">
-                <Link className="nav-link me-lg-3" to="/business-dashboard" onClick={closeMenu}>
-                  Business Dashboard
-                </Link>
-              </li>
-            )}
-
-            {userRole === "both" && (
-              <li className="nav-item">
-                <Link className="nav-link me-lg-3" to="/wedding-planner-dashboard" onClick={closeMenu}>
-                  Dashboard
-                </Link>
-              </li>
-            )}
-
-            <li className="nav-item">
-              <Link className="nav-link me-lg-3" to="/articles" onClick={closeMenu}>
-                Wedding Guides
+            {/* Wedding Planner Homepage Link with New Tag */}
+            <li className="nav-item me-lg-3">
+              <Link 
+                className="nav-link position-relative" 
+                to="/wedding-planner-homepage"
+                onClick={closeMenu}
+              >
+                Wedding Planner
+                <span className="new-tag">New</span>
               </Link>
             </li>
 
-            {(!user || (userRole !== "business" && userRole !== "individual")) && (
-              <li className="nav-item">
-                <Link className="nav-link me-lg-3" to="/for-vendors" onClick={closeMenu}>
-                  For Vendors
-                </Link>
-              </li>
-            )}
+            {/* Main Dropdown */}
+            <li className="nav-item dropdown me-lg-3">
+              <button
+                className={`nav-link custom-dropdown-toggle ${weddingPlannerDropdownOpen ? 'active' : ''}`}
+                onClick={toggleWeddingPlannerDropdown}
+                style={{ background: 'none', border: 'none', color: 'inherit' }}
+              >
+                More
+                <i className="bi bi-chevron-down ms-1"></i>
+              </button>
+              {weddingPlannerDropdownOpen && (
+                <div className="dropdown-menu show">
+                  {userRole === "individual" && (
+                    <Link 
+                      className="dropdown-item" 
+                      to="/individual-dashboard"
+                      onClick={closeMenu}
+                    >
+                      My Dashboard
+                    </Link>
+                  )}
 
-            <li className="nav-item">
-              <Link className="nav-link me-lg-3" to="/about" onClick={closeMenu}>
-                About & Contact
-              </Link>
+                  {userRole === "business" && (
+                    <Link 
+                      className="dropdown-item" 
+                      to="/business-dashboard"
+                      onClick={closeMenu}
+                    >
+                      Business Dashboard
+                    </Link>
+                  )}
+
+                  {userRole === "both" && (
+                    <Link 
+                      className="dropdown-item" 
+                      to="/wedding-planner-dashboard"
+                      onClick={closeMenu}
+                    >
+                      Wedding Dashboard
+                    </Link>
+                  )}
+
+                  {user && (userRole === "individual" || userRole === "both") && (
+                    <Link 
+                      className="dropdown-item" 
+                      to="/wedding-planner/overview"
+                      onClick={closeMenu}
+                    >
+                      Wedding Planning Tool
+                    </Link>
+                  )}
+
+                  <Link 
+                    className="dropdown-item" 
+                    to="/articles"
+                    onClick={closeMenu}
+                  >
+                    Wedding Guides
+                  </Link>
+
+                  <Link 
+                    className="dropdown-item" 
+                    to="/about"
+                    onClick={closeMenu}
+                  >
+                    About & Contact
+                  </Link>
+
+                  {(!user || (userRole !== "business" && userRole !== "individual")) && (
+                    <Link 
+                      className="dropdown-item" 
+                      to="/for-vendors"
+                      onClick={closeMenu}
+                    >
+                      For Vendors
+                    </Link>
+                  )}
+                </div>
+              )}
             </li>
 
             {user && (

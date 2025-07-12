@@ -52,6 +52,7 @@ function BidDisplay({
   onMoveToPending = null,
   onProfileClick = null,
   isNew = false,
+  demoMode = false,
   ...props
 }) {
   const [isBidiVerified, setIsBidiVerified] = useState(false);
@@ -212,6 +213,11 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
   };
 
   const handleProfileClick = () => {
+    if (demoMode) {
+      toast.info('This is a demo - profile viewing is disabled');
+      return;
+    }
+    
     if (onProfileClick) {
       onProfileClick();
     } else {
@@ -431,6 +437,11 @@ useEffect(() => {
   };
 
   const handleMessageClick = () => {
+    if (demoMode) {
+      toast.info('This is a demo - messaging is disabled');
+      return;
+    }
+    
     if (isMobile) {
       if (onMessage) {
         onMessage({
@@ -774,6 +785,11 @@ useEffect(() => {
   };
 
   const handleScheduleConsultation = async (data) => {
+    if (demoMode) {
+      toast.info('This is a demo - consultation scheduling is disabled');
+      return;
+    }
+    
     console.log('=== handleScheduleConsultation START ===');
     console.log('Function called with data:', data);
     console.log('Function called with data type:', typeof data);
@@ -1182,6 +1198,11 @@ useEffect(() => {
   }, [showEditNotification]);
 
   useEffect(() => {
+    // Skip authentication check in demo mode
+    if (demoMode) {
+      return;
+    }
+
     const checkAuth = async () => {
         try {
             const { data: { session }, error } = await supabase.auth.getSession();
@@ -1217,7 +1238,7 @@ useEffect(() => {
     };
 
     checkAuth();
-}, [navigate]);
+}, [navigate, demoMode]);
 
   return (
     <div className="bid-card-modern">
