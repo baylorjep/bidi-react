@@ -172,6 +172,26 @@ const VendorList = ({
 
     const truncateText = (text, maxLength = 150) => {
         if (!text) return "";
+        
+        // If the text contains HTML, extract plain text for length calculation
+        if (text.includes('<')) {
+            // Create a temporary div to parse HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = text;
+            
+            // Get the text content without HTML tags
+            const plainText = tempDiv.textContent || tempDiv.innerText || '';
+            
+            if (plainText.length <= maxLength) return text;
+            
+            // Find the last space before maxLength in plain text
+            const truncatedPlainText = plainText.substr(0, plainText.substr(0, maxLength).lastIndexOf(' ')) + '...';
+            
+            // Return the truncated plain text (without HTML tags)
+            return truncatedPlainText;
+        }
+        
+        // For plain text, use the original logic
         if (text.length <= maxLength) return text;
         return text.substr(0, text.substr(0, maxLength).lastIndexOf(' ')) + '...';
     };
@@ -1190,12 +1210,18 @@ const VendorList = ({
                         </div>
 
                         <div className="vendor-description" style={{textAlign:'left'}}>
-                            <p style={{textAlign:'left'}}><strong>
-                                {expandedDescriptions[vendor.id] 
-                                    ? vendor.business_description 
-                                    : truncateText(vendor.business_description)}
-                            </strong></p>
-                            {vendor.business_description && vendor.business_description.length > 150 && (
+                            <div style={{textAlign:'left'}}>
+                                <strong>
+                                    {expandedDescriptions[vendor.id] 
+                                        ? <div dangerouslySetInnerHTML={{ __html: vendor.business_description }} />
+                                        : (vendor.business_description && vendor.business_description.includes('<') 
+                                            ? <div>{truncateText(vendor.business_description)}</div>
+                                            : <div dangerouslySetInnerHTML={{ __html: truncateText(vendor.business_description) }} />
+                                          )
+                                    }
+                                </strong>
+                            </div>
+                            {vendor.business_description && (vendor.business_description.length > 150 || (vendor.business_description.includes('<') && (vendor.business_description.replace(/<[^>]*>/g, '')).length > 150)) && (
                                 <button 
                                     onClick={() => toggleDescription(vendor.id)}
                                     className="read-more-button"
@@ -1205,10 +1231,16 @@ const VendorList = ({
                             )}
                         </div>
                         <div className="vendor-story">
-                            <p className="vendor-description">
-                                {expandedStories[vendor.id] ? vendor.story : truncateText(vendor.story)}
-                            </p>
-                            {vendor.story && vendor.story.length > 150 && (
+                            <div className="vendor-description">
+                                {expandedStories[vendor.id] 
+                                    ? <div dangerouslySetInnerHTML={{ __html: vendor.story }} />
+                                    : (vendor.story && vendor.story.includes('<')
+                                        ? <div>{truncateText(vendor.story)}</div>
+                                        : <div dangerouslySetInnerHTML={{ __html: truncateText(vendor.story) }} />
+                                      )
+                                }
+                            </div>
+                            {vendor.story && (vendor.story.length > 150 || (vendor.story.includes('<') && (vendor.story.replace(/<[^>]*>/g, '')).length > 150)) && (
                                 <button 
                                     onClick={() => toggleStory(vendor.id)}
                                     className="read-more-button"
