@@ -249,7 +249,6 @@
   position: relative;
   z-index: 2;
   transition: all 0.2s ease;
-  border: 2px solid #e5e7eb;
 }
 
 .step-indicator.active .step-number {
