@@ -726,7 +726,6 @@ const PricingSetup = () => {
               style={{ width: `${overallProgress}%` }}
             ></div>
           </div>
-          <span className="progress-percentage">{Math.round(overallProgress)}%</span>
         </div>
       </div>
 
