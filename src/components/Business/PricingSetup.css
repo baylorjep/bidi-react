@@ -33,108 +33,138 @@
 }
 
 .category-progress {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 2rem;
+  background: #f8fafc;
+  border-radius: 20px;
+  padding: 2.5rem;
   margin: 2rem auto;
-  max-width: 800px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  border: 2px solid #e2e8f0;
-  text-align: center;
+  max-width: 700px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
 }
 
 .category-progress h3 {
-  margin: 0 0 1.5rem 0;
-  color: #2d3748;
-  font-size: 1.5rem;
-  font-weight: 700;
+  margin: 0 0 2rem 0;
+  color: #1e293b;
+  font-size: 1.75rem;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: -0.025em;
 }
 
 .category-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 1rem;
 }
 
 .category-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 1.25rem;
-  padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.95);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  gap: 1rem;
+  padding: 1.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.category-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #e2e8f0;
+  transition: all 0.2s ease;
 }
 
 .category-item:hover {
-  border-color: #ffd700;
-  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
-  transform: translateY(-2px);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateY(-1px);
+}
+
+.category-item:hover::before {
+  background: #3b82f6;
 }
 
 .category-item.active {
-  border-color: #ffd700;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 6px 25px rgba(255, 215, 0, 0.4);
+  border-color: #f59e0b;
+  background: #fffbeb;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+}
+
+.category-item.active::before {
+  background: #f59e0b;
 }
 
 .category-item.completed {
-  border-color: #4ade80;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 4px 20px rgba(74, 222, 128, 0.3);
+  border-color: #10b981;
+  background: #f0fdf4;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.category-item.completed::before {
+  background: #10b981;
 }
 
 .category-number {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
-  color: #4a5568;
+  background: #f1f5f9;
+  color: #64748b;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 2px solid #e2e8f0;
+  transition: all 0.2s ease;
 }
 
 .category-item.active .category-number {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  color: #1a202c;
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+  background: #f59e0b;
+  color: white;
+  border-color: #f59e0b;
 }
 
 .category-item.completed .category-number {
-  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  background: #10b981;
   color: white;
-  box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);
+  border-color: #10b981;
 }
 
 .category-info {
-  flex: 1;
-  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .category-name {
-  font-weight: 700;
-  color: #2d3748;
-  margin-bottom: 0.5rem;
-  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1rem;
   text-transform: capitalize;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  line-height: 1.4;
 }
 
 .category-status {
-  font-size: 0.9rem;
-  color: #4a5568;
+  font-size: 0.875rem;
+  color: #64748b;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.category-item.active .category-status {
+  color: #d97706;
+  font-weight: 600;
 }
 
 .category-item.completed .category-status {
@@ -144,9 +174,9 @@
 
 .category-item.completed .category-status::before {
   content: "✓";
-  color: #4ade80;
+  color: #10b981;
   font-weight: bold;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .current-category-header {
