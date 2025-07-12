@@ -240,85 +240,70 @@ const PricingSetup = () => {
         custom_pricing_rules: []
       });
     }
+    setCurrentStep(0);
   };
 
   const handleCategoryChange = (category) => {
     setCurrentCategory(category);
     loadExistingPricingForCategory(category);
-    setCurrentStep(0);
   };
 
   const handleSavePricing = async () => {
-    if (!user || !currentCategory) return;
-
     setIsSaving(true);
     try {
-      const pricingDataToSave = {
+      const pricingRule = {
         business_id: user.id,
         category: currentCategory,
-        pricing_model: pricingData.pricing_model,
-        hourly_rate: parseFloat(pricingData.hourly_rate) || null,
-        base_price: parseFloat(pricingData.base_price) || null,
-        per_person_rate: parseFloat(pricingData.per_person_rate) || null,
-        travel_fee_per_mile: parseFloat(pricingData.travel_fee_per_mile) || null,
-        bid_aggressiveness: pricingData.bid_aggressiveness,
-        accept_unknowns: pricingData.accept_unknowns,
-        blocklist_keywords: pricingData.blocklist_keywords,
-        default_message: pricingData.default_message,
-        additional_comments: pricingData.additional_comments,
-        additional_notes: pricingData.additional_comments, // Also save to additional_notes field
-        pricing_packages: pricingData.pricing_packages,
-        wedding_premium: parseFloat(pricingData.wedding_premium) || null,
-        duration_multipliers: pricingData.duration_multipliers,
-        service_addons: pricingData.service_addons,
-        seasonal_pricing: pricingData.seasonal_pricing,
-        rush_fee_percentage: parseFloat(pricingData.rush_fee_percentage) || null,
-        deposit_percentage: parseFloat(pricingData.deposit_percentage) || null,
-        minimum_guests: parseInt(pricingData.minimum_guests) || null,
-        maximum_guests: parseInt(pricingData.maximum_guests) || null,
-        group_discounts: pricingData.group_discounts,
-        package_discounts: pricingData.package_discounts,
-        custom_pricing_rules: pricingData.custom_pricing_rules
+        ...pricingData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      // Check if pricing rule already exists for this category
-      const existing = existingPricingRules[currentCategory];
-      
+      // Check if pricing rule already exists
+      const { data: existing } = await supabase
+        .from('business_pricing_rules')
+        .select('id')
+        .eq('business_id', user.id)
+        .eq('category', currentCategory)
+        .single();
+
+      let result;
       if (existing) {
         // Update existing rule
-        const { error } = await supabase
+        result = await supabase
           .from('business_pricing_rules')
-          .update(pricingDataToSave)
-          .eq('business_id', user.id)
-          .eq('category', currentCategory);
-
-        if (error) throw error;
+          .update(pricingRule)
+          .eq('id', existing.id);
       } else {
         // Insert new rule
-        const { error } = await supabase
+        result = await supabase
           .from('business_pricing_rules')
-          .insert(pricingDataToSave);
+          .insert([pricingRule]);
+      }
 
-        if (error) throw error;
+      if (result.error) {
+        throw result.error;
       }
 
       // Update local state
       setExistingPricingRules(prev => ({
         ...prev,
-        [currentCategory]: pricingDataToSave
+        [currentCategory]: pricingRule
       }));
 
-      // Move to next category or complete
-      const currentIndex = businessCategories.indexOf(currentCategory);
-      if (currentIndex < businessCategories.length - 1) {
-        const nextCategory = businessCategories[currentIndex + 1];
-        handleCategoryChange(nextCategory);
-        // Show success message for this category
-        alert(`${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} pricing saved! Moving to next category...`);
+      // Check if all categories are complete
+      const completedCategories = Object.keys(existingPricingRules).length + 1;
+      const allCategories = businessCategories.length;
+
+      if (completedCategories >= allCategories) {
+        // All categories complete, redirect to autobid trainer
+        navigate('/dashboard/autobid-trainer');
       } else {
-        // All categories complete
-        alert('All pricing rules saved! Redirecting to AI training...');
-        navigate('/autobid-trainer');
+        // Move to next incomplete category
+        const nextCategory = businessCategories.find(cat => !existingPricingRules[cat]);
+        if (nextCategory) {
+          handleCategoryChange(nextCategory);
+        }
       }
 
     } catch (error) {
@@ -331,153 +316,10 @@ const PricingSetup = () => {
 
   const renderBasicPricingStep = () => (
     <div className="pricing-step">
-      <h3>Basic Pricing Information</h3>
-      <p className="step-description">Set your fundamental pricing structure for {currentCategory} services. This helps the AI understand your pricing model.</p>
+      <h3>Basic Pricing Structure</h3>
+      <p className="step-description">Set up your fundamental pricing model and rates.</p>
       
-      <div className="form-grid">
-        <div className="form-group">
-          <label>Base Price ($)</label>
-          <input
-            type="number"
-            value={pricingData.base_price}
-            onChange={(e) => handleInputChange('base_price', e.target.value)}
-            placeholder="e.g., 500"
-            min="0"
-          />
-          <small>Your base price for this service (starting point for calculations)</small>
-        </div>
-
-        <div className="form-group full-width">
-          <label>Pricing Packages</label>
-          <div className="packages-container">
-            {pricingData.pricing_packages.length > 0 && (
-              <div className="packages-list">
-                {pricingData.pricing_packages.map((pkg, index) => (
-                  <div key={pkg.id} className="package-item">
-                    <div className="package-header">
-                      <h4>{pkg.name} - ${pkg.price}</h4>
-                      <button 
-                        type="button" 
-                        className="remove-package-btn"
-                        onClick={() => handleRemovePackage(pkg.id)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                    {pkg.description && <p className="package-description">{pkg.description}</p>}
-                    {pkg.duration && <p className="package-duration">Duration: {pkg.duration}</p>}
-                    {pkg.features.length > 0 && (
-                      <ul className="package-features">
-                        {pkg.features.map((feature, i) => (
-                          <li key={i}>{feature}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {!showPackageForm ? (
-              <button 
-                type="button" 
-                className="add-package-btn"
-                onClick={() => setShowPackageForm(true)}
-              >
-                + Add Package
-              </button>
-            ) : (
-              <div className="package-form">
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Package Name</label>
-                    <input
-                      type="text"
-                      value={newPackage.name}
-                      onChange={(e) => setNewPackage(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g., Basic, Premium, Deluxe"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Price ($)</label>
-                    <input
-                      type="number"
-                      value={newPackage.price}
-                      onChange={(e) => setNewPackage(prev => ({ ...prev, price: e.target.value }))}
-                      placeholder="e.g., 500"
-                      min="0"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Duration</label>
-                    <input
-                      type="text"
-                      value={newPackage.duration}
-                      onChange={(e) => setNewPackage(prev => ({ ...prev, duration: e.target.value }))}
-                      placeholder="e.g., 4 hours, Full day"
-                    />
-                  </div>
-                  <div className="form-group full-width">
-                    <label>Description</label>
-                    <textarea
-                      value={newPackage.description}
-                      onChange={(e) => setNewPackage(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Brief description of what's included"
-                      rows="2"
-                    />
-                  </div>
-                  <div className="form-group full-width">
-                    <label>Features</label>
-                    <div className="features-list">
-                      {newPackage.features.map((feature, index) => (
-                        <div key={index} className="feature-input">
-                          <input
-                            type="text"
-                            value={feature}
-                            onChange={(e) => handleFeatureChange(index, e.target.value)}
-                            placeholder="e.g., 100 edited photos"
-                          />
-                          <button 
-                            type="button" 
-                            className="remove-feature-btn"
-                            onClick={() => handleRemoveFeature(index)}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                      <button 
-                        type="button" 
-                        className="add-feature-btn"
-                        onClick={handleAddFeature}
-                      >
-                        + Add Feature
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="package-form-actions">
-                  <button 
-                    type="button" 
-                    className="btn-secondary"
-                    onClick={() => setShowPackageForm(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn-primary"
-                    onClick={handleAddPackage}
-                  >
-                    Add Package
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          <small>Add your main pricing packages to help the AI understand your pricing structure</small>
-        </div>
-
+      <div className="form-row">
         <div className="form-group">
           <label>Pricing Model</label>
           <select
@@ -487,57 +329,8 @@ const PricingSetup = () => {
             <option value="fixed">Fixed Price</option>
             <option value="hourly">Hourly Rate</option>
             <option value="per_person">Per Person</option>
-            <option value="custom">Custom Formula</option>
+            <option value="custom">Custom</option>
           </select>
-        </div>
-
-        {pricingData.pricing_model === 'hourly' && (
-          <div className="form-group">
-            <label>Hourly Rate ($)</label>
-            <input
-              type="number"
-              value={pricingData.hourly_rate}
-              onChange={(e) => handleInputChange('hourly_rate', e.target.value)}
-              placeholder="e.g., 150"
-              min="0"
-            />
-          </div>
-        )}
-
-        {pricingData.pricing_model === 'per_person' && (
-          <div className="form-group">
-            <label>Per Person Rate ($)</label>
-            <input
-              type="number"
-              value={pricingData.per_person_rate}
-              onChange={(e) => handleInputChange('per_person_rate', e.target.value)}
-              placeholder="e.g., 25"
-              min="0"
-            />
-          </div>
-        )}
-
-        <div className="form-group">
-          <label>Base Price ($)</label>
-          <input
-            type="number"
-            value={pricingData.base_price}
-            onChange={(e) => handleInputChange('base_price', e.target.value)}
-            placeholder="e.g., 100"
-            min="0"
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Travel Fee per Mile ($)</label>
-          <input
-            type="number"
-            value={pricingData.travel_fee_per_mile}
-            onChange={(e) => handleInputChange('travel_fee_per_mile', e.target.value)}
-            placeholder="e.g., 0.50"
-            min="0"
-            step="0.01"
-          />
         </div>
 
         <div className="form-group">
@@ -552,15 +345,205 @@ const PricingSetup = () => {
           </select>
         </div>
       </div>
+
+      <div className="form-row">
+        {pricingData.pricing_model === 'fixed' && (
+          <div className="form-group">
+            <label>Base Price ($)</label>
+            <input
+              type="number"
+              value={pricingData.base_price}
+              onChange={(e) => handleInputChange('base_price', e.target.value)}
+              placeholder="e.g., 500"
+              min="0"
+              step="0.01"
+            />
+          </div>
+        )}
+
+        {pricingData.pricing_model === 'hourly' && (
+          <div className="form-group">
+            <label>Hourly Rate ($)</label>
+            <input
+              type="number"
+              value={pricingData.hourly_rate}
+              onChange={(e) => handleInputChange('hourly_rate', e.target.value)}
+              placeholder="e.g., 75"
+              min="0"
+              step="0.01"
+            />
+          </div>
+        )}
+
+        {pricingData.pricing_model === 'per_person' && (
+          <div className="form-group">
+            <label>Per Person Rate ($)</label>
+            <input
+              type="number"
+              value={pricingData.per_person_rate}
+              onChange={(e) => handleInputChange('per_person_rate', e.target.value)}
+              placeholder="e.g., 25"
+              min="0"
+              step="0.01"
+            />
+          </div>
+        )}
+
+        <div className="form-group">
+          <label>Travel Fee per Mile ($)</label>
+          <input
+            type="number"
+            value={pricingData.travel_fee_per_mile}
+            onChange={(e) => handleInputChange('travel_fee_per_mile', e.target.value)}
+            placeholder="e.g., 2.50"
+            min="0"
+            step="0.01"
+          />
+        </div>
+      </div>
+
+      {/* Package Builder */}
+      <div className="package-builder">
+        <h4>Pricing Packages</h4>
+        <p>Create custom packages for your services</p>
+        
+        {pricingData.pricing_packages.length > 0 && (
+          <div className="packages-list">
+            {pricingData.pricing_packages.map((pkg) => (
+              <div key={pkg.id} className="package-item">
+                <div className="package-info">
+                  <h5>{pkg.name}</h5>
+                  <p className="package-price">${pkg.price}</p>
+                  {pkg.description && <p className="package-description">{pkg.description}</p>}
+                  {pkg.duration && <p className="package-duration">Duration: {pkg.duration}</p>}
+                  {pkg.features.length > 0 && (
+                    <ul className="package-features">
+                      {pkg.features.map((feature, index) => (
+                        <li key={index}>{feature}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button 
+                  className="remove-package-btn"
+                  onClick={() => handleRemovePackage(pkg.id)}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!showPackageForm ? (
+          <button 
+            className="add-package-btn"
+            onClick={() => setShowPackageForm(true)}
+          >
+            + Add Package
+          </button>
+        ) : (
+          <div className="package-form">
+            <div className="form-row">
+              <div className="form-group">
+                <label>Package Name</label>
+                <input
+                  type="text"
+                  value={newPackage.name}
+                  onChange={(e) => setNewPackage(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g., Basic Package"
+                />
+              </div>
+              <div className="form-group">
+                <label>Price ($)</label>
+                <input
+                  type="number"
+                  value={newPackage.price}
+                  onChange={(e) => setNewPackage(prev => ({ ...prev, price: e.target.value }))}
+                  placeholder="e.g., 500"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Description</label>
+                <input
+                  type="text"
+                  value={newPackage.description}
+                  onChange={(e) => setNewPackage(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Brief description of the package"
+                />
+              </div>
+              <div className="form-group">
+                <label>Duration</label>
+                <input
+                  type="text"
+                  value={newPackage.duration}
+                  onChange={(e) => setNewPackage(prev => ({ ...prev, duration: e.target.value }))}
+                  placeholder="e.g., 4 hours, Full day"
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Features</label>
+              {newPackage.features.map((feature, index) => (
+                <div key={index} className="feature-input">
+                  <input
+                    type="text"
+                    value={feature}
+                    onChange={(e) => handleFeatureChange(index, e.target.value)}
+                    placeholder={`Feature ${index + 1}`}
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => handleRemoveFeature(index)}
+                    className="remove-feature-btn"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <button 
+                type="button"
+                onClick={handleAddFeature}
+                className="add-feature-btn"
+              >
+                + Add Feature
+              </button>
+            </div>
+
+            <div className="package-form-actions">
+              <button 
+                type="button"
+                onClick={handleAddPackage}
+                className="save-package-btn"
+              >
+                Save Package
+              </button>
+              <button 
+                type="button"
+                onClick={() => setShowPackageForm(false)}
+                className="cancel-package-btn"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 
   const renderCategorySpecificStep = () => (
     <div className="pricing-step">
       <h3>Category-Specific Pricing</h3>
-      <p className="step-description">Set pricing rules specific to {currentCategory} services. These help the AI adjust pricing based on event details.</p>
+      <p className="step-description">Set pricing rules specific to {currentCategory} services.</p>
       
-      <div className="form-grid">
+      <div className="form-row">
         <div className="form-group">
           <label>Wedding Premium (%)</label>
           <input
@@ -580,13 +563,15 @@ const PricingSetup = () => {
             type="number"
             value={pricingData.rush_fee_percentage}
             onChange={(e) => handleInputChange('rush_fee_percentage', e.target.value)}
-            placeholder="e.g., 25"
+            placeholder="e.g., 15"
             min="0"
             max="100"
           />
-          <small>Additional percentage for last-minute bookings</small>
+          <small>Additional fee for last-minute bookings</small>
         </div>
+      </div>
 
+      <div className="form-row">
         <div className="form-group">
           <label>Deposit Percentage (%)</label>
           <input
@@ -610,7 +595,9 @@ const PricingSetup = () => {
             min="0"
           />
         </div>
+      </div>
 
+      <div className="form-row">
         <div className="form-group">
           <label>Maximum Guests</label>
           <input
@@ -622,7 +609,7 @@ const PricingSetup = () => {
           />
         </div>
 
-        <div className="form-group full-width">
+        <div className="form-group">
           <label>Accept Unknown Guest Counts</label>
           <div className="checkbox-group">
             <input
@@ -701,6 +688,12 @@ const PricingSetup = () => {
     }
   };
 
+  // Calculate progress
+  const completedCategories = Object.keys(existingPricingRules).length;
+  const totalCategories = businessCategories.length;
+  const overallProgress = (completedCategories / totalCategories) * 100;
+  const currentCategoryIndex = businessCategories.indexOf(currentCategory);
+
   if (isLoading) {
     return (
       <div className="pricing-setup-container">
@@ -714,70 +707,106 @@ const PricingSetup = () => {
 
   return (
     <div className="pricing-setup-container">
+      {/* Header */}
       <div className="pricing-setup-header">
         <h1>AI Pricing Setup</h1>
         <p>Configure your pricing rules to train the AI to generate accurate bids</p>
       </div>
 
-      <div className="category-progress">
-        <h3>Pricing Setup Progress</h3>
-        <div className="category-list">
-          {businessCategories.map((category, index) => (
+      {/* Overall Progress */}
+      <div className="overall-progress">
+        <div className="progress-header">
+          <h3>Overall Progress</h3>
+          <span className="progress-count">{completedCategories} of {totalCategories} categories complete</span>
+        </div>
+        <div className="progress-bar-container">
+          <div className="progress-bar">
             <div 
-              key={category} 
-              className={`category-item ${category === currentCategory ? 'active' : ''} ${existingPricingRules[category] ? 'completed' : ''}`}
+              className="progress-fill" 
+              style={{ width: `${overallProgress}%` }}
+            ></div>
+          </div>
+          <span className="progress-percentage">{Math.round(overallProgress)}%</span>
+        </div>
+      </div>
+
+      {/* Category Navigation */}
+      <div className="category-navigation">
+        <div className="category-tabs">
+          {businessCategories.map((category, index) => (
+            <button
+              key={category}
+              className={`category-tab ${category === currentCategory ? 'active' : ''} ${existingPricingRules[category] ? 'completed' : ''}`}
+              onClick={() => handleCategoryChange(category)}
             >
-              <div className="category-number">{index + 1}</div>
-              <div className="category-info">
-                <div className="category-name">{category.charAt(0).toUpperCase() + category.slice(1)}</div>
-                <div className="category-status">
-                  {existingPricingRules[category] ? '✓ Completed' : 'Pending'}
-                </div>
+              <div className="tab-icon">
+                {existingPricingRules[category] ? (
+                  <span className="check-icon">✓</span>
+                ) : (
+                  <span className="tab-number">{index + 1}</span>
+                )}
               </div>
-            </div>
+              <span className="tab-label">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+            </button>
           ))}
         </div>
       </div>
 
-      <div className="current-category-header">
-        <h2>Setting up pricing for: <span className="category-highlight">{currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</span></h2>
-        <p>Each business category needs separate pricing rules. Complete the setup for all categories to begin AI training.</p>
-      </div>
-
-      <div className="progress-indicator">
-        <div className="progress-bar">
-          <div 
-            className="progress-fill" 
-            style={{ width: `${((currentStep + 1) / 3) * 100}%` }}
-          ></div>
+      {/* Current Category Content */}
+      <div className="category-content">
+        <div className="category-header">
+          <h2>Setting up pricing for: <span className="category-highlight">{currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</span></h2>
+          {existingPricingRules[currentCategory] && (
+            <div className="category-status completed">
+              <span className="status-icon">✓</span>
+              <span>Pricing rules saved</span>
+            </div>
+          )}
         </div>
-        <span className="progress-text">Step {currentStep + 1} of 3</span>
-      </div>
 
-      <div className="pricing-content">
-        {renderSteps()}
-      </div>
+        {/* Step Progress */}
+        <div className="step-progress">
+          <div className="step-indicators">
+            {['Basic Pricing', 'Category Specific', 'Communication'].map((step, index) => (
+              <div 
+                key={step}
+                className={`step-indicator ${index <= currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
+              >
+                <div className="step-number">{index + 1}</div>
+                <span className="step-label">{step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
-      <div className="pricing-actions">
-        {currentStep > 0 && (
+        {/* Step Content */}
+        <div className="step-content">
+          {renderSteps()}
+        </div>
+
+        {/* Step Actions */}
+        <div className="step-actions">
+          {currentStep > 0 && (
+            <button 
+              className="btn-secondary" 
+              onClick={handlePrevStep}
+              disabled={isSaving}
+            >
+              Previous
+            </button>
+          )}
+          
           <button 
-            className="btn-secondary" 
-            onClick={handlePrevStep}
+            className="btn-primary" 
+            onClick={handleNextStep}
             disabled={isSaving}
           >
-            Previous
+            {isSaving ? 'Saving...' : currentStep === 2 ? 'Save & Continue' : 'Next'}
           </button>
-        )}
-        
-        <button 
-          className="btn-primary" 
-          onClick={handleNextStep}
-          disabled={isSaving}
-        >
-          {isSaving ? 'Saving...' : currentStep === 2 ? 'Save & Continue' : 'Next'}
-        </button>
+        </div>
       </div>
 
+      {/* Info Section */}
       <div className="pricing-info">
         <h4>Why is this important?</h4>
         <p>
