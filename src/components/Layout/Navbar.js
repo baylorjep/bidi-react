@@ -288,23 +288,6 @@ function Navbar() {
                       Wedding Planning Tool
                     </Link>
                   )}
-
-                  <Link 
-                    className="dropdown-item" 
-                    to="/articles"
-                    onClick={closeMenu}
-                  >
-                    Wedding Guides
-                  </Link>
-
-                  <Link 
-                    className="dropdown-item" 
-                    to="/about"
-                    onClick={closeMenu}
-                  >
-                    About & Contact
-                  </Link>
-
                   {(!user || (userRole !== "business" && userRole !== "individual")) && (
                     <Link 
                       className="dropdown-item" 
@@ -314,6 +297,34 @@ function Navbar() {
                       For Vendors
                     </Link>
                   )}
+
+                  {(!user || (userRole !== "business" && userRole !== "individual")) && (
+                    <Link 
+                      className="dropdown-item" 
+                      to="/corporate"
+                      onClick={closeMenu}
+                    >
+                      Corporate Events
+                    </Link>
+                  )}
+
+                  <Link 
+                    className="dropdown-item" 
+                    to="/articles"
+                    onClick={closeMenu}
+                  >
+                    Wedding Guides
+                  </Link>
+
+
+
+                  <Link 
+                    className="dropdown-item" 
+                    to="/about"
+                    onClick={closeMenu}
+                  >
+                    About & Contact
+                  </Link>
                 </div>
               )}
             </li>

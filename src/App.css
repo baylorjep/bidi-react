@@ -11567,6 +11567,9 @@ footer a:hover, footer a:active, footer a:focus {
   grid-template-columns: repeat(3, 1fr);
   gap: 10px; /* Adjust the gap as needed */
   padding: 0px 20px 20px 20px; /* Adjust the padding as needed */
+  -webkit-transform: translateZ(0); /* Force hardware acceleration */
+  transform: translateZ(0); /* Force hardware acceleration */
+  will-change: transform; /* Optimize for animations */
 }
 
 .pink-splotch {
@@ -11594,7 +11597,10 @@ footer a:hover, footer a:active, footer a:focus {
   height: 296px;
   border-radius: 25px;
   overflow: hidden; /* Ensure the image does not overflow the container */
-  transition: transform 0.3s ease-in-out; /* Add smooth transition */ 
+  transition: transform 0.3s ease-in-out; /* Add smooth transition */
+  -webkit-transform: translateZ(0); /* Force hardware acceleration */
+  transform: translateZ(0); /* Force hardware acceleration */
+  will-change: transform; /* Optimize for animations */
 }
 
 .photo-item img {
@@ -11602,6 +11608,24 @@ footer a:hover, footer a:active, footer a:focus {
   height: 100%;
   object-fit: cover; /* Maintain aspect ratio and cover the container */
   border-radius: 25px; /* Apply the same border-radius to the image */
+  image-rendering: -webkit-optimize-contrast; /* Improve rendering on WebKit browsers */
+  image-rendering: crisp-edges; /* Improve rendering on Firefox */
+  image-rendering: pixelated; /* Fallback for better quality */
+  -webkit-backface-visibility: hidden; /* Prevent rendering artifacts */
+  backface-visibility: hidden; /* Prevent rendering artifacts */
+  transform: translateZ(0); /* Force hardware acceleration */
+  will-change: transform; /* Optimize for animations */
+  -webkit-font-smoothing: antialiased; /* Improve text rendering */
+  -moz-osx-font-smoothing: grayscale; /* Improve text rendering on macOS */
+  filter: contrast(1.05) brightness(1.02); /* Slightly enhance contrast and brightness */
+}
+
+/* High-DPI display optimization */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .photo-item img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
 }
 .photo-item.offset {
   margin-top: 36px; /* Adjust the offset as needed */
@@ -11627,6 +11651,18 @@ footer a:hover, footer a:active, footer a:focus {
   .photo-item {
     width: 160px;
     height: 223px;
+    -webkit-transform: translateZ(0); /* Force hardware acceleration */
+    transform: translateZ(0); /* Force hardware acceleration */
+    will-change: transform; /* Optimize for animations */
+  }
+  
+  .photo-item img {
+    image-rendering: -webkit-optimize-contrast; /* Improve rendering on WebKit browsers */
+    image-rendering: crisp-edges; /* Improve rendering on Firefox */
+    image-rendering: pixelated; /* Fallback for better quality */
+    -webkit-backface-visibility: hidden; /* Prevent rendering artifacts */
+    backface-visibility: hidden; /* Prevent rendering artifacts */
+    filter: contrast(1.05) brightness(1.02); /* Slightly enhance contrast and brightness */
   }
   .photo-item.offset {
     margin-top: 0px;
@@ -16190,7 +16226,6 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 4px 8px 0px rgba(52, 
   justify-content: center;
   align-items: center;
   gap: 20px;
-  border: 1px solid var(--Border-primary, #000);
 }
 
 .try-now-box.vendor {

@@ -88,6 +88,7 @@ import PricingSetup from "./components/Business/PricingSetup";
 
 // Misc Imports
 import Homepage from "./components/Homepage";
+import CorporateHomepage from "./components/CorporateHomepage";
 import WeddingPlannerHomepage from "./components/WeddingPlannerHomepage";
 import ContactForm from "./components/ContactForm";
 import AboutUs from "./components/AboutUs";
@@ -235,6 +236,7 @@ function AppContent() {
       <div className="content-wrapper">
         <Routes>
           <Route path="/" element={<Homepage />} />
+          <Route path="/corporate" element={<CorporateHomepage />} />
           <Route path="/wedding-planner-homepage" element={<WeddingPlannerHomepage />} />
           <Route path="/partnership/:partnerName" element={<PartnershipLanding />} />
           <Route path="/for-vendors" element={<VendorHomepage />} />

@@ -68,9 +68,12 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
       loadRequests();
       getCurrentUser();
     } else if (demoMode) {
+      setVendors(demoVendors);
+      setBids(demoBids);
+      setRequests(demoRequests);
       setLoading(false);
     }
-  }, [weddingData, demoMode]);
+  }, [weddingData, demoMode, demoVendors, demoBids, demoRequests]);
 
   useEffect(() => {
     if (currentUserId && requests.length > 0 && !demoMode) {
@@ -1481,7 +1484,7 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
 
       <div className="vendor-categories-vendor-manager">
         {vendorCategories
-          .filter(category => !demoMode || category.id === 'photography') // Only show photography in demo mode
+          .filter(category => !demoMode || category.id === 'catering') // Only show catering in demo mode
           .map(category => {
           const categoryVendors = getVendorsByCategory(category.id);
           const categoryBids = getBidsByCategory(category.id);
