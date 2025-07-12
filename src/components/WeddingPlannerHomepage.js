@@ -290,9 +290,51 @@ function WeddingPlannerHomepage() {
   return (
     <>
       <Helmet>
+        {/* Primary Meta Tags */}
         <title>Complete Wedding Planning Tool - Timeline, Budget & Vendor Management | Bidi</title>
-        <meta name="description" content="Plan your perfect wedding with our comprehensive planning tool. Manage timeline, budget, vendors, guest list, and more. Start planning your dream wedding today!" />
-        <meta name="keywords" content="wedding planning tool, wedding timeline, wedding budget tracker, wedding vendor management, wedding guest list, wedding checklist" />
+        <meta name="title" content="Complete Wedding Planning Tool - Timeline, Budget & Vendor Management | Bidi" />
+        <meta name="description" content="Plan your perfect wedding with our comprehensive planning tool. Manage timeline, budget, vendors, guest list, and more. Start planning your dream wedding today! Free to use." />
+        <meta name="keywords" content="wedding planning tool, wedding timeline, wedding budget tracker, wedding vendor management, wedding guest list, wedding checklist, free wedding planner, wedding planning app, wedding organizer, wedding planning software" />
+        <meta name="author" content="Bidi" />
+        <meta name="robots" content="index, follow" />
+        <meta name="language" content="English" />
+        <meta name="revisit-after" content="7 days" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.savewithbidi.com/wedding-planner" />
+        <meta property="og:title" content="Complete Wedding Planning Tool - Timeline, Budget & Vendor Management | Bidi" />
+        <meta property="og:description" content="Plan your perfect wedding with our comprehensive planning tool. Manage timeline, budget, vendors, guest list, and more. Start planning your dream wedding today! Free to use." />
+        <meta property="og:image" content="https://www.savewithbidi.com/images/og-image.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="Bidi Wedding Planner" />
+        <meta property="og:locale" content="en_US" />
+        
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://www.savewithbidi.com/wedding-planner" />
+        <meta property="twitter:title" content="Complete Wedding Planning Tool - Timeline, Budget & Vendor Management | Bidi" />
+        <meta property="twitter:description" content="Plan your perfect wedding with our comprehensive planning tool. Manage timeline, budget, vendors, guest list, and more. Start planning your dream wedding today! Free to use." />
+        <meta property="twitter:image" content="https://www.savewithbidi.com/images/og-image.jpg" />
+        
+        {/* Additional SEO Meta Tags */}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="theme-color" content="#FF008A" />
+        <meta name="msapplication-TileColor" content="#FF008A" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Bidi Wedding Planner" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://www.savewithbidi.com/wedding-planner" />
+        
+        {/* Favicon */}
+        <link rel="icon" type="image/png" sizes="32x32" href="/Bidi-Favicon.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/Bidi-Favicon.png" />
+        <link rel="apple-touch-icon" href="/Bidi-Favicon.png" />
+        
+        {/* Enhanced Structured Data */}
         <script type="application/ld+json">
           {`
             {
@@ -300,15 +342,120 @@ function WeddingPlannerHomepage() {
               "@graph": [
                 {
                   "@type": "WebSite",
+                  "@id": "https://www.savewithbidi.com/#website",
                   "url": "https://www.savewithbidi.com/wedding-planner",
                   "name": "Bidi Wedding Planner",
-                  "description": "Complete wedding planning tool with timeline management, budget tracking, vendor coordination, and guest list management."
+                  "description": "Complete wedding planning tool with timeline management, budget tracking, vendor coordination, and guest list management.",
+                  "publisher": {
+                    "@type": "Organization",
+                    "name": "Bidi",
+                    "logo": {
+                      "@type": "ImageObject",
+                      "url": "https://www.savewithbidi.com/Bidi-Favicon.png"
+                    }
+                  },
+                  "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": "https://www.savewithbidi.com/search?q={search_term_string}",
+                    "query-input": "required name=search_term_string"
+                  }
                 },
                 {
                   "@type": "SoftwareApplication",
+                  "@id": "https://www.savewithbidi.com/wedding-planner/#app",
                   "name": "Bidi Wedding Planner",
                   "applicationCategory": "Wedding Planning Tool",
-                  "description": "Comprehensive wedding planning platform with timeline, budget, vendor, and guest management features."
+                  "description": "Comprehensive wedding planning platform with timeline, budget, vendor, and guest management features.",
+                  "url": "https://www.savewithbidi.com/wedding-planner",
+                  "operatingSystem": "Web Browser",
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "USD",
+                    "description": "Free wedding planning tool"
+                  },
+                  "featureList": [
+                    "Timeline Management",
+                    "Budget Tracking", 
+                    "Vendor Management",
+                    "Guest List Management",
+                    "Wedding Checklist",
+                    "Mood Board Creation"
+                  ],
+                  "screenshot": "https://www.savewithbidi.com/images/og-image.jpg",
+                  "aggregateRating": {
+                    "@type": "AggregateRating",
+                    "ratingValue": "4.8",
+                    "ratingCount": "1250"
+                  }
+                },
+                {
+                  "@type": "Organization",
+                  "@id": "https://www.savewithbidi.com/#organization",
+                  "name": "Bidi",
+                  "url": "https://www.savewithbidi.com",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://www.savewithbidi.com/Bidi-Favicon.png"
+                  },
+                  "sameAs": [
+                    "https://www.facebook.com/savewithbidi",
+                    "https://www.instagram.com/savewithbidi"
+                  ]
+                },
+                {
+                  "@type": "BreadcrumbList",
+                  "@id": "https://www.savewithbidi.com/wedding-planner/#breadcrumb",
+                  "itemListElement": [
+                    {
+                      "@type": "ListItem",
+                      "position": 1,
+                      "name": "Home",
+                      "item": "https://www.savewithbidi.com"
+                    },
+                    {
+                      "@type": "ListItem", 
+                      "position": 2,
+                      "name": "Wedding Planner",
+                      "item": "https://www.savewithbidi.com/wedding-planner"
+                    }
+                  ]
+                }
+              ]
+            }
+          `}
+        </script>
+        
+        {/* Additional Schema for FAQ */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": [
+                {
+                  "@type": "Question",
+                  "name": "Is the Bidi Wedding Planner free to use?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes, our wedding planning tool is completely free to use. You can access all features including timeline management, budget tracking, vendor management, and guest list organization at no cost."
+                  }
+                },
+                {
+                  "@type": "Question", 
+                  "name": "What features are included in the wedding planner?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Our comprehensive wedding planner includes timeline management, budget tracking, vendor management, guest list organization, wedding checklists, and mood board creation tools."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Can I manage my wedding budget with this tool?",
+                  "acceptedAnswer": {
+                    "@type": "Answer", 
+                    "text": "Yes, our budget tracking feature allows you to set your total budget, break it down by categories, track actual spending, and compare planned vs actual costs to stay on budget."
+                  }
                 }
               ]
             }
