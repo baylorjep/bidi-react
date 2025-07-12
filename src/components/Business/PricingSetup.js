@@ -296,7 +296,7 @@ const PricingSetup = () => {
       const allCategories = businessCategories.length;
 
       if (completedCategories >= allCategories) {
-        // All categories complete, redirect to autobid trainer
+        // All categories complete, redirect to Bidi AI trainer
         navigate('/dashboard/autobid-trainer');
       } else {
         // Move to next incomplete category
@@ -709,8 +709,8 @@ const PricingSetup = () => {
     <div className="pricing-setup-container">
       {/* Header */}
       <div className="pricing-setup-header">
-        <h1>AI Pricing Setup</h1>
-        <p>Configure your pricing rules to train the AI to generate accurate bids</p>
+        <h1>Bidi AI Pricing Setup</h1>
+        <p>Configure your pricing rules to train Bidi AI to generate accurate bids</p>
       </div>
 
       {/* Overall Progress */}
@@ -809,9 +809,9 @@ const PricingSetup = () => {
       <div className="pricing-info">
         <h4>Why is this important?</h4>
         <p>
-          The AI needs to understand your exact pricing structure to generate accurate bids. 
+          Bidi AI needs to understand your exact pricing structure to generate accurate bids. 
           This includes your base rates, multipliers, and special considerations. 
-          The more detailed your pricing rules, the more accurate the AI-generated bids will be.
+          The more detailed your pricing rules, the more accurate the Bidi AI-generated bids will be.
         </p>
       </div>
     </div>

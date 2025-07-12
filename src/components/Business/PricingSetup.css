@@ -201,8 +201,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
+  gap: 2rem;
 }
 
 .step-indicator {
@@ -212,14 +213,15 @@
   gap: 0.5rem;
   flex: 1;
   position: relative;
+  min-width: 120px;
 }
 
 .step-indicator:not(:last-child)::after {
   content: '';
   position: absolute;
   top: 20px;
-  left: 50%;
-  width: 100%;
+  left: 60%;
+  width: 80%;
   height: 2px;
   background: #e5e7eb;
   z-index: 1;
@@ -264,7 +266,8 @@
   font-weight: 500;
   color: #6b7280;
   text-align: center;
-  max-width: 80px;
+  max-width: 100px;
+  line-height: 1.2;
 }
 
 .step-indicator.active .step-label {
