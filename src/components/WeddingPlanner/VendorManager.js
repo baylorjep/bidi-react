@@ -1158,14 +1158,82 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
     }
   };
 
-  const handlePayNow = (bid) => {
+  const handlePayNow = (paymentType = 'full') => {
     if (demoMode) {
       toast.info('This is a demo - payment is disabled');
       return;
     }
     
-    // Handle payment - navigate to payment page
-    navigate('/payment', { state: { bid } });
+    // Find the bid that needs payment - look for approved bids in the current category
+    const currentRequest = requests[currentRequestIndex];
+    if (!currentRequest) {
+      toast.error('No current request found');
+      return;
+    }
+    
+    const categoryBids = bids.filter(bid => bid.request_id === currentRequest.id);
+    const bid = categoryBids.find(b => b.status === 'approved');
+    if (!bid) {
+      toast.error('No approved bid found for payment');
+      return;
+    }
+    
+    try {
+      if (!bid.business_profiles.stripe_account_id) {
+        toast.error('This business is not yet set up to receive payments. Please contact them directly.');
+        return;
+      }
+
+      let amount = bid.bid_amount;
+      let paymentTypeLabel = 'full';
+      
+      // Calculate down payment if needed
+      if (paymentType === 'downpayment') {
+        const downPayment = calculateDownPayment(bid);
+        if (!downPayment) {
+          toast.error('Down payment calculation failed');
+          return;
+        }
+        amount = downPayment.amount;
+        paymentTypeLabel = 'down_payment';
+      }
+
+      const paymentData = {
+        bid_id: bid.id,
+        amount: amount,
+        stripe_account_id: bid.business_profiles.stripe_account_id,
+        payment_type: paymentTypeLabel,
+        business_name: bid.business_profiles.business_name,
+        description: paymentTypeLabel === 'down_payment' 
+          ? `Down payment for ${bid.bid_description || 'service'}`
+          : (bid.bid_description || 'Service payment')
+      };
+      
+      navigate('/checkout', { state: { paymentData } });
+    } catch (error) {
+      console.error('Error preparing payment:', error);
+      toast.error('There was an error processing your payment. Please try again.');
+    }
+  };
+
+  const calculateDownPayment = (bid) => {
+    if (!bid.business_profiles.down_payment_type || bid.business_profiles.amount === null) {
+      return null;
+    }
+  
+    if (bid.business_profiles.down_payment_type === 'percentage') {
+      const amount = bid.bid_amount * bid.business_profiles.amount;
+      return {
+        amount,
+        display: `$${amount.toFixed(2)} (${(bid.business_profiles.amount * 100).toFixed(0)}%)`
+      };
+    } else {
+      // Flat fee
+      return {
+        amount: bid.business_profiles.amount,
+        display: `$${bid.business_profiles.amount.toFixed(2)}`
+      };
+    }
   };
 
   const handleScheduleConsultation = (consultationData) => {

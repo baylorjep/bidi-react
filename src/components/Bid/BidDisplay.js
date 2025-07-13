@@ -301,7 +301,7 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
       case 'payment':
         return (
           <div className="bid-status-actions">
-            <button className="bid-card-btn bid-card-btn-primary" onClick={onPayNow}>
+            <button className="bid-card-btn bid-card-btn-primary" onClick={() => onPayNow && onPayNow('full')}>
               Complete Payment
             </button>
             <button className="bid-card-btn bid-card-btn-secondary" onClick={handleProfileClick}>
