@@ -266,13 +266,20 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
       
       case 'approved':
         console.log('Rendering approved status actions');
+        const downPaymentText = downPayment ? `Pay Down Payment (${downPayment.display})` : 'Pay Down Payment';
         return (
           <div className="bid-status-actions">
-            <button className="bid-card-btn bid-card-btn-primary" onClick={() => onPayNow && onPayNow('full')}>
-              Pay in Full
+            <button className="bid-card-btn bid-card-btn-primary" onClick={() => {
+              console.log('Pay in Full button clicked');
+              onPayNow && onPayNow('full');
+            }}>
+              Pay in Full (${bid.bid_amount})
             </button>
-            <button className="bid-card-btn bid-card-btn-secondary" onClick={() => onPayNow && onPayNow('downpayment')}>
-              Pay Down Payment
+            <button className="bid-card-btn bid-card-btn-secondary" onClick={() => {
+              console.log('Pay Down Payment button clicked');
+              onPayNow && onPayNow('downpayment');
+            }}>
+              {downPaymentText}
             </button>
           </div>
         );
@@ -299,10 +306,11 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
         );
       
       case 'payment':
+        const paymentDownPaymentText = downPayment ? `Pay Down Payment (${downPayment.display})` : 'Pay Down Payment';
         return (
           <div className="bid-status-actions">
             <button className="bid-card-btn bid-card-btn-primary" onClick={() => onPayNow && onPayNow('full')}>
-              Complete Payment
+              Complete Payment (${bid.bid_amount})
             </button>
             <button className="bid-card-btn bid-card-btn-secondary" onClick={handleProfileClick}>
               View Profile

@@ -541,8 +541,10 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
           showNotInterested={bid.status === 'denied'}
           showPending={bid.status === 'pending'}
           showApproved={bid.status === 'approved'}
+          downPayment={bid.status === 'approved' ? calculateDownPayment(bid) : null}
+          onDownPayment={() => handlePayNow('downpayment', bid)}
           onMessage={handleMessage}
-          onPayNow={handlePayNow}
+          onPayNow={(paymentType) => handlePayNow(paymentType, bid)}
           onScheduleConsultation={handleScheduleConsultation}
           currentUserId={currentUserId}
           isNew={!bid.viewed}
@@ -1158,38 +1160,41 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
     }
   };
 
-  const handlePayNow = (paymentType = 'full') => {
+  const handlePayNow = (paymentType = 'full', bid = null) => {
     if (demoMode) {
       toast.info('This is a demo - payment is disabled');
       return;
     }
     
-    // Find the bid that needs payment - look for approved bids in the current category
-    const currentRequest = requests[currentRequestIndex];
-    if (!currentRequest) {
-      toast.error('No current request found');
-      return;
-    }
-    
-    const categoryBids = bids.filter(bid => bid.request_id === currentRequest.id);
-    const bid = categoryBids.find(b => b.status === 'approved');
-    if (!bid) {
-      toast.error('No approved bid found for payment');
-      return;
+    // If no bid is provided, try to find one from the current category
+    let targetBid = bid;
+    if (!targetBid) {
+      const currentRequest = requests[currentRequestIndex];
+      if (!currentRequest) {
+        toast.error('No current request found');
+        return;
+      }
+      
+      const categoryBids = bids.filter(b => b.request_id === currentRequest.id);
+      targetBid = categoryBids.find(b => b.status === 'approved');
+      if (!targetBid) {
+        toast.error('No approved bid found for payment');
+        return;
+      }
     }
     
     try {
-      if (!bid.business_profiles.stripe_account_id) {
+      if (!targetBid.business_profiles.stripe_account_id) {
         toast.error('This business is not yet set up to receive payments. Please contact them directly.');
         return;
       }
 
-      let amount = bid.bid_amount;
+      let amount = targetBid.bid_amount;
       let paymentTypeLabel = 'full';
       
       // Calculate down payment if needed
       if (paymentType === 'downpayment') {
-        const downPayment = calculateDownPayment(bid);
+        const downPayment = calculateDownPayment(targetBid);
         if (!downPayment) {
           toast.error('Down payment calculation failed');
           return;
@@ -1199,16 +1204,17 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
       }
 
       const paymentData = {
-        bid_id: bid.id,
+        bid_id: targetBid.id,
         amount: amount,
-        stripe_account_id: bid.business_profiles.stripe_account_id,
+        stripe_account_id: targetBid.business_profiles.stripe_account_id,
         payment_type: paymentTypeLabel,
-        business_name: bid.business_profiles.business_name,
+        business_name: targetBid.business_profiles.business_name,
         description: paymentTypeLabel === 'down_payment' 
-          ? `Down payment for ${bid.bid_description || 'service'}`
-          : (bid.bid_description || 'Service payment')
+          ? `Down payment for ${targetBid.bid_description || 'service'}`
+          : (targetBid.bid_description || 'Service payment')
       };
       
+      console.log('Navigating to checkout with payment data:', paymentData);
       navigate('/checkout', { state: { paymentData } });
     } catch (error) {
       console.error('Error preparing payment:', error);
