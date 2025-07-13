@@ -34,6 +34,7 @@
   font-size: 24px;
   font-weight: 600;
   color: #333;
+  font-family: 'Outfit', sans-serif;
 }
 
 .edit-gallery-button {
@@ -195,6 +196,44 @@
   transform: scale(1.1);
   background: white;
   color: #8c1ecc;
+}
+
+/* Category Stats */
+.category-stats {
+  margin-bottom: 20px;
+  padding: 0 20px;
+}
+
+.stats-container {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #6b7280;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.stat-item strong {
+  color: #a328f4;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .stats-container {
+    gap: 15px;
+  }
+  
+  .stat-item {
+    font-size: 13px;
+  }
 }
 
 /* Loading States */

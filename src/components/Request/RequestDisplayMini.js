@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import '../../App.css';
 import '../../styles/RequestDisplayMini.css';
 
@@ -11,7 +10,8 @@ function RequestDisplayMini({
     isHidden = false, 
     onShow,
     currentVendorId = null,
-    onMessageClick = null // Add this prop
+    onMessageClick = null, // Add this prop
+    onViewMore = null // Add this prop
 }) {
     const [timeLeft, setTimeLeft] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -236,13 +236,13 @@ function RequestDisplayMini({
                     <div className="buttons-container" style={{
                         gridTemplateColumns: currentVendorId && isVendorSelected() ? "1fr 1fr" : "minmax(auto, 400px)",
                     }}>
-                        <Link 
+                        <button 
                             className="submit-bid-button" 
-                            to={`/submit-bid/${request.id}`}
+                            onClick={() => onViewMore && onViewMore(request.id)}
                         >
                             <i className="fas fa-eye"></i>
                             <span>View More</span>
-                        </Link>
+                        </button>
                         {currentVendorId && isVendorSelected() && (
                             <button 
                                 className="message-button" 

@@ -1,0 +1,254 @@
+/* SlidingBidModal Styles - all class names prefixed with sbm- */
+
+.sbm-modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1999;
+  transition: opacity 0.3s ease;
+}
+
+.sbm-modal {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border-radius: 12px;
+  z-index: 2000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 95%;
+  max-width: 1600px;
+  height: 95vh;
+  top: 20px;
+  bottom: 20px;
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+
+@media (max-width: 600px) {
+  .sbm-modal {
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+    top: 0;
+    bottom: 0;
+    height: 100vh;
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+}
+
+.sbm-drag-handle {
+  width: 40px;
+  height: 4px;
+  background: #ddd;
+  border-radius: 2px;
+  margin: 12px auto;
+  cursor: grab;
+}
+
+.sbm-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(150,51,235,0.1);
+  border: none;
+  font-size: 24px;
+  color: #9633eb;
+  cursor: pointer;
+  z-index: 2001;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  padding-bottom: 8px;
+}
+@media (max-width: 600px) {
+  .sbm-close-btn {
+    top: 16px;
+    right: 16px;
+  }
+}
+
+.sbm-content {
+  flex: 1;
+  overflow: auto;
+  padding: 32px 24px;
+  padding-top: 32px;
+}
+@media (max-width: 600px) {
+  .sbm-content {
+    padding: 20px 16px;
+    padding-top: 60px;
+  }
+}
+
+.sbm-summary {
+  margin-bottom: 32px;
+}
+.sbm-summary-date {
+  font-size: 14px;
+  color: #222;
+  margin-bottom: 4px;
+}
+.sbm-summary-title {
+  font-weight: 700;
+  font-size: 28px;
+  margin-bottom: 16px;
+  font-family: inherit;
+}
+.sbm-summary-section {
+  font-weight: 600;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.sbm-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.sbm-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sbm-summary-icon {
+  font-size: 20px;
+}
+.sbm-summary-value {
+  font-size: 16px;
+}
+
+.sbm-expiration-date-label {
+  font-size: 14px;
+  color: #222;
+  margin-bottom: 4px;
+}
+
+.sbm-form-section-title {
+  font-weight: 600;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.sbm-input, .sbm-textarea {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 12px 16px;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+.sbm-textarea {
+  min-height: 80px;
+  background: #f6f6f6;
+  resize: vertical;
+  margin-bottom: 24px;
+}
+
+.sbm-discount-section {
+  margin-bottom: 12px;
+}
+.sbm-discount-label {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+.sbm-discount-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.sbm-discount-switch {
+  accent-color: #9633eb;
+  width: 20px;
+  height: 20px;
+}
+.sbm-discount-value {
+  width: 80px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  font-size: 16px;
+}
+.sbm-discount-percent {
+  font-size: 18px;
+}
+
+.sbm-btn-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+}
+.sbm-btn {
+  flex: 1;
+  padding: 14px 0;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.sbm-btn-close {
+  border: 2px solid #9633eb;
+  background: #fff;
+  color: #9633eb;
+}
+.sbm-btn-submit {
+  border: none;
+  background: #9633eb;
+  color: #fff;
+}
+.sbm-btn-submit[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+} 
+
+.sbm-quill {
+  border-radius: 8px;
+  background: #f6f6f6;
+  margin-bottom: 24px;
+  min-height: 120px;
+}
+.sbm-quill .ql-container {
+  border-radius: 8px;
+  background: #f6f6f6;
+  min-height: 120px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+}
+.sbm-quill .ql-toolbar {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+.sbm-quill .ql-editor {
+  min-height: 80px;
+  padding: 12px 16px;
+} 
+
+.sbm-toolbox {
+  background: #faf5ff;
+  border: 1.5px solid #f0e6ff;
+  border-radius: 12px;
+  padding: 18px 16px 12px 16px;
+  margin: 16px 0 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .sbm-toolbox {
+    padding: 12px 8px 8px 8px;
+    margin: 12px 0 14px 0;
+    gap: 8px;
+  }
+} 

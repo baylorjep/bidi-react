@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import RequestDisplayMini from "./RequestDisplayMini";
+import SlidingBidModal from "./SlidingBidModal";
 import "../../App.css";
 import "../../styles/OpenRequests.css";
 import SearchBar from "../SearchBar/SearchBar";
@@ -74,6 +75,8 @@ function OpenRequests({ onMessageClick }) {
   const [showHidden, setShowHidden] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [user, setUser] = useState(null);
+  const [isSlidingModalOpen, setIsSlidingModalOpen] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
 
   // Add this new function to fetch user's bids
   const fetchUserBids = async (userId) => {
@@ -759,6 +762,16 @@ function OpenRequests({ onMessageClick }) {
     return budget >= minimumPrice;
   };
 
+  const handleViewMore = (requestId) => {
+    setSelectedRequestId(requestId);
+    setIsSlidingModalOpen(true);
+  };
+
+  const handleCloseSlidingModal = () => {
+    setIsSlidingModalOpen(false);
+    setSelectedRequestId(null);
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -854,10 +867,18 @@ function OpenRequests({ onMessageClick }) {
               isHidden={Array.isArray(request.hidden_by_vendor) ? request.hidden_by_vendor.includes(businessId) : false}
               currentVendorId={businessId}
               onMessageClick={onMessageClick}
+              onViewMore={handleViewMore}
             />
           ))}
         </div>
       </div>
+
+      {/* Sliding Bid Modal */}
+      <SlidingBidModal
+        isOpen={isSlidingModalOpen}
+        onClose={handleCloseSlidingModal}
+        requestId={selectedRequestId}
+      />
     </div>
   );
 }

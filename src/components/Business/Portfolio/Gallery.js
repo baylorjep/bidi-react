@@ -590,7 +590,7 @@ const Gallery = () => {
     }
     .gallery-image, .gallery-video {
       width: 100%;
-      height: 250px;
+      height: 500px;
       object-fit: cover;
       border-radius: 12px;
       transition: all 0.2s ease;
@@ -1232,17 +1232,17 @@ const Gallery = () => {
         {(() => {
           const stats = getCategoryStats();
           return (
-            <>
-              <div className="stat-item">
-                <strong>{stats.totalMedia}</strong> Total Media
-              </div>
-              <div className="stat-item">
+            <div className="stats-container">
+              <span className="stat-item">
+                <strong>{stats.totalMedia}</strong> Total
+              </span>
+              <span className="stat-item">
                 <strong>{stats.totalImages}</strong> Images
-              </div>
-              <div className="stat-item">
+              </span>
+              <span className="stat-item">
                 <strong>{stats.totalVideos}</strong> Videos
-              </div>
-            </>
+              </span>
+            </div>
           );
         })()}
       </div>
