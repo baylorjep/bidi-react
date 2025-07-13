@@ -12,6 +12,8 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
   const [requests, setRequests] = useState(demoMode ? demoRequests : []);
   const [loading, setLoading] = useState(!demoMode);
   const [requestsLoading, setRequestsLoading] = useState(false);
+  const [bidsLoading, setBidsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showAddVendor, setShowAddVendor] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
@@ -61,25 +63,58 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
   ];
 
   useEffect(() => {
-    if (weddingData && !demoMode) {
-      loadVendors();
-      loadCustomCategories();
-      loadBids();
-      loadRequests();
-      getCurrentUser();
-    } else if (demoMode) {
+    // Reset initialization state when weddingData changes
+    if (weddingData?.id) {
+      setIsInitialized(false);
+      setBidsLoading(false);
+      setRequestsLoading(false);
+    }
+  }, [weddingData?.id]);
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    if (weddingData && !demoMode && !isInitialized) {
+      console.log('Initial load for wedding:', weddingData.id);
+      setIsInitialized(true);
+      
+      const initializeData = async () => {
+        if (!isMounted) return;
+        
+        try {
+          await Promise.all([
+            loadVendors(),
+            loadCustomCategories(),
+            loadBids(),
+            loadRequests(),
+            getCurrentUser()
+          ]);
+        } catch (error) {
+          console.error('Error during initialization:', error);
+        }
+      };
+      
+      initializeData();
+    } else if (demoMode && !isInitialized) {
+      console.log('Setting demo data');
+      setIsInitialized(true);
       setVendors(demoVendors);
       setBids(demoBids);
       setRequests(demoRequests);
       setLoading(false);
     }
-  }, [weddingData, demoMode, demoVendors, demoBids, demoRequests]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [weddingData?.id, demoMode, demoVendors, demoBids, demoRequests, isInitialized]);
 
   useEffect(() => {
-    if (currentUserId && requests.length > 0 && !demoMode) {
+    if (currentUserId && requests.length > 0 && !demoMode && !bidsLoading) {
+      console.log('Reloading bids due to tab/user change');
       loadBids();
     }
-  }, [activeTab, currentUserId, currentRequestIndex, requests, demoMode]);
+  }, [activeTab, currentUserId, currentRequestIndex, demoMode, bidsLoading]);
 
   // Update document title when component mounts
   useEffect(() => {
@@ -99,7 +134,20 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
   };
 
   const loadBids = async () => {
+    if (bidsLoading) {
+      console.log('loadBids already in progress, skipping');
+      return;
+    }
+    
+    if (!weddingData?.user_id) {
+      console.log('No wedding data or user ID, skipping loadBids');
+      return;
+    }
+    
     try {
+      setBidsLoading(true);
+      console.log('Starting loadBids for user:', weddingData.user_id);
+      
       // First, get all request IDs for this wedding from all request tables
       const requestTables = [
         'photography_requests',
@@ -115,64 +163,97 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
       
       // Query each request table to get IDs for this wedding
       for (const table of requestTables) {
-        let query = supabase.from(table).select('id, event_type');
-        
-        // Handle different user ID column names
-        if (table === 'photography_requests') {
-          query = query.eq('profile_id', weddingData.user_id);
-        } else {
-          query = query.eq('user_id', weddingData.user_id);
-        }
+        try {
+          let query = supabase.from(table).select('id, event_type');
+          
+          // Handle different user ID column names
+          if (table === 'photography_requests') {
+            query = query.eq('profile_id', weddingData.user_id);
+          } else {
+            query = query.eq('user_id', weddingData.user_id);
+          }
 
-        const { data: requests, error } = await query;
+          const { data: requests, error } = await Promise.race([
+            query,
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error(`${table} timeout`)), 10000)
+            )
+          ]);
 
-        if (error) {
-          console.error(`Error fetching from ${table}:`, error);
+          if (error) {
+            console.error(`Error fetching from ${table}:`, error);
+            continue;
+          }
+
+          if (requests && requests.length > 0) {
+            allRequestIds.push(...requests.map(req => ({ id: req.id, table, event_type: req.event_type })));
+          }
+        } catch (error) {
+          console.error(`Timeout or error fetching from ${table}:`, error);
           continue;
-        }
-
-        if (requests && requests.length > 0) {
-          allRequestIds.push(...requests.map(req => ({ id: req.id, table, event_type: req.event_type })));
         }
       }
 
       if (allRequestIds.length === 0) {
+        console.log('No request IDs found, setting empty bids array');
         setBids([]);
         return;
       }
 
+      console.log(`Found ${allRequestIds.length} request IDs`);
+
       // Now fetch bids for all these request IDs
-      const { data: bidsData, error: bidsError } = await supabase
-        .from('bids')
-        .select(`
-          *,
-          business_profiles (
-            id,
-            business_name,
-            membership_tier,
-            google_calendar_connected
-          )
-        `)
-        .in('request_id', allRequestIds.map(req => req.id))
-        .order('created_at', { ascending: false });
+      const { data: bidsData, error: bidsError } = await Promise.race([
+        supabase
+          .from('bids')
+          .select(`
+            *,
+            business_profiles (
+              id,
+              business_name,
+              membership_tier,
+              google_calendar_connected,
+              stripe_account_id,
+              down_payment_type,
+              amount
+            )
+          `)
+          .in('request_id', allRequestIds.map(req => req.id))
+          .order('created_at', { ascending: false }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Bids query timeout')), 15000)
+        )
+      ]);
 
       if (bidsError) throw bidsError;
+
+      console.log(`Found ${bidsData?.length || 0} bids`);
+      console.log('Sample bid data:', bidsData?.[0]);
 
       // Fetch profile photos for all businesses
       const businessIds = [...new Set(bidsData?.map(bid => bid.business_profiles?.id).filter(Boolean) || [])];
       let profilePhotos = {};
       
       if (businessIds.length > 0) {
-        const { data: photosData, error: photosError } = await supabase
-          .from('profile_photos')
-          .select('user_id, photo_url')
-          .eq('photo_type', 'profile')
-          .in('user_id', businessIds);
+        try {
+          const { data: photosData, error: photosError } = await Promise.race([
+            supabase
+              .from('profile_photos')
+              .select('user_id, photo_url')
+              .eq('photo_type', 'profile')
+              .in('user_id', businessIds),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Profile photos timeout')), 10000)
+            )
+          ]);
 
-        if (!photosError && photosData) {
-          photosData.forEach(photo => {
-            profilePhotos[photo.user_id] = photo.photo_url;
-          });
+          if (!photosError && photosData) {
+            photosData.forEach(photo => {
+              profilePhotos[photo.user_id] = photo.photo_url;
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching profile photos:', error);
         }
       }
 
@@ -198,16 +279,44 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
         }
       }));
 
+      console.log(`Setting ${bidsWithCategory.length} bids`);
       setBids(bidsWithCategory);
     } catch (error) {
       console.error('Error loading bids:', error);
+      // Set empty array on error to prevent issues
+      setBids([]);
+    } finally {
+      setBidsLoading(false);
     }
   };
 
   const loadRequests = async () => {
+    if (requestsLoading) {
+      console.log('loadRequests already in progress, skipping');
+      return;
+    }
+    
+    if (!weddingData?.user_id) {
+      console.log('No wedding data or user ID, skipping loadRequests');
+      return;
+    }
+    
     try {
       setRequestsLoading(true);
-      // Get all requests from different tables
+      console.log('Starting loadRequests for user:', weddingData.user_id);
+      
+      // Get all requests from different tables with timeout
+      const requestPromises = [
+        supabase.from('requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('photography_requests').select('*').eq('profile_id', weddingData.user_id),
+        supabase.from('dj_requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('catering_requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('beauty_requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('videography_requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('florist_requests').select('*').eq('user_id', weddingData.user_id),
+        supabase.from('wedding_planning_requests').select('*').eq('user_id', weddingData.user_id)
+      ];
+
       const [
         { data: regularRequests, error: regularError },
         { data: photoRequests, error: photoError },
@@ -217,16 +326,24 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
         { data: videoRequests, error: videoError },
         { data: floristRequests, error: floristError },
         { data: weddingPlanningRequests, error: weddingPlanningError }
-      ] = await Promise.all([
-        supabase.from('requests').select('*').eq('user_id', weddingData.user_id),
-        supabase.from('photography_requests').select('*').eq('profile_id', weddingData.user_id),
-        supabase.from('dj_requests').select('*').eq('user_id', weddingData.user_id),
-        supabase.from('catering_requests').select('*').eq('user_id', weddingData.user_id),
-        supabase.from('beauty_requests').select('*').eq('user_id', weddingData.user_id),
-        supabase.from('videography_requests').select('*').eq('user_id', weddingData.user_id),
-        supabase.from('florist_requests').select('*').eq('user_id', weddingData.user_id),
-        supabase.from('wedding_planning_requests').select('*').eq('user_id', weddingData.user_id)
-      ]);
+      ] = await Promise.all(requestPromises.map(promise => 
+        Promise.race([
+          promise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timeout')), 15000)
+          )
+        ])
+      ));
+
+      // Log any errors from the initial requests
+      if (regularError) console.error('Error fetching regular requests:', regularError);
+      if (photoError) console.error('Error fetching photo requests:', photoError);
+      if (djError) console.error('Error fetching dj requests:', djError);
+      if (cateringError) console.error('Error fetching catering requests:', cateringError);
+      if (beautyError) console.error('Error fetching beauty requests:', beautyError);
+      if (videoError) console.error('Error fetching video requests:', videoError);
+      if (floristError) console.error('Error fetching florist requests:', floristError);
+      if (weddingPlanningError) console.error('Error fetching wedding planning requests:', weddingPlanningError);
 
       // Map of request types to their corresponding business categories
       const categoryMap = {
@@ -239,21 +356,34 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
         'wedding_planning': 'wedding_planning'
       };
 
-      // Get total business counts for each category
+      // Get total business counts for each category with timeout
       const totalBusinessCounts = {};
-      for (const [type, category] of Object.entries(categoryMap)) {
-        const { count, error } = await supabase
-          .from('business_profiles')
-          .select('*', { count: 'exact' })
-          .filter('business_category', 'ov', `{${category}}`);
+      const businessCountPromises = Object.entries(categoryMap).map(async ([type, category]) => {
+        try {
+          const { count, error } = await Promise.race([
+            supabase
+              .from('business_profiles')
+              .select('*', { count: 'exact' })
+              .filter('business_category', 'ov', `{${category}}`),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Business count timeout')), 10000)
+            )
+          ]);
 
-        if (error) {
-          console.error(`Error fetching total ${category} businesses:`, error);
+          if (error) {
+            console.error(`Error fetching total ${category} businesses:`, error);
+            totalBusinessCounts[type] = 0;
+          } else {
+            totalBusinessCounts[type] = count || 0;
+          }
+        } catch (error) {
+          console.error(`Timeout or error fetching ${category} business count:`, error);
           totalBusinessCounts[type] = 0;
-      } else {
-          totalBusinessCounts[type] = count || 0;
         }
-      }
+      });
+
+      // Wait for all business count queries to complete
+      await Promise.all(businessCountPromises);
 
       // Combine all requests with their types
       const allRequests = [
@@ -267,30 +397,52 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
         ...(weddingPlanningRequests || []).map(r => ({ ...r, type: 'wedding_planning' }))
       ];
 
-      // Get view counts for all requests
-      const viewCounts = await Promise.all(
-        allRequests.map(async (request) => {
-          // Get views
-          const { data: views, error: viewError } = await supabase
-            .from('request_views')
-            .select('business_id')
-            .eq('request_id', request.id)
-            .eq('request_type', `${request.type}_requests`);
+      console.log(`Found ${allRequests.length} total requests`);
+
+      // If no requests, set empty array and return early
+      if (allRequests.length === 0) {
+        console.log('No requests found, setting empty array');
+        setRequests([]);
+        return;
+      }
+
+      // Get view counts for all requests with timeout and error handling
+      const viewCountPromises = allRequests.map(async (request) => {
+        try {
+          // Get views with timeout
+          const viewsPromise = Promise.race([
+            supabase
+              .from('request_views')
+              .select('business_id')
+              .eq('request_id', request.id)
+              .eq('request_type', `${request.type}_requests`),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Views timeout')), 5000)
+            )
+          ]);
+
+          // Get bids with timeout
+          const bidsPromise = Promise.race([
+            supabase
+              .from('bids')
+              .select('user_id')
+              .eq('request_id', request.id),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Bids timeout')), 5000)
+            )
+          ]);
+
+          const [{ data: views, error: viewError }, { data: bids, error: bidError }] = await Promise.all([
+            viewsPromise,
+            bidsPromise
+          ]);
 
           if (viewError) {
-            console.error('Error fetching views:', viewError);
-            return { requestId: request.id, count: 0 };
+            console.error('Error fetching views for request', request.id, ':', viewError);
           }
 
-          // Get bids
-          const { data: bids, error: bidError } = await supabase
-            .from('bids')
-            .select('user_id')
-            .eq('request_id', request.id);
-
           if (bidError) {
-            console.error('Error fetching bids:', bidError);
-            return { requestId: request.id, count: 0 };
+            console.error('Error fetching bids for request', request.id, ':', bidError);
           }
 
           // Get hidden status
@@ -311,8 +463,17 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
             count: activeBusinessIds.size,
             total: totalBusinesses
           };
-        })
-      );
+        } catch (error) {
+          console.error('Error processing request', request.id, ':', error);
+          return { 
+            requestId: request.id, 
+            count: 0,
+            total: 0
+          };
+        }
+      });
+
+      const viewCounts = await Promise.all(viewCountPromises);
 
       // Add view counts and total business counts to requests
       const requestsWithViews = allRequests.map(request => ({
@@ -337,9 +498,12 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
         return new Date(b.created_at) - new Date(a.created_at);
       });
 
+      console.log(`Setting ${sortedRequests.length} requests`);
       setRequests(sortedRequests);
     } catch (error) {
       console.error('Error loading requests:', error);
+      // Set empty array on error to prevent infinite loading
+      setRequests([]);
     } finally {
       setRequestsLoading(false);
     }
@@ -1190,7 +1354,12 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
     }
     
     try {
-      if (!targetBid.business_profiles.stripe_account_id) {
+      console.log('handlePayNow - targetBid:', targetBid);
+      console.log('handlePayNow - business_profiles:', targetBid.business_profiles);
+      console.log('handlePayNow - stripe_account_id:', targetBid.business_profiles?.stripe_account_id);
+      
+      if (!targetBid.business_profiles?.stripe_account_id) {
+        console.log('handlePayNow - No stripe_account_id found');
         toast.error('This business is not yet set up to receive payments. Please contact them directly.');
         return;
       }

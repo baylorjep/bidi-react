@@ -12,6 +12,49 @@ const PaymentSuccess = () => {
     const navigate = useNavigate();
     const [paymentData, setPaymentData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [requestClosed, setRequestClosed] = useState(false);
+
+    // Helper function to close a request
+    const closeRequest = async (requestId) => {
+        try {
+            // Try to find and close the request in all possible request tables
+            const requestTables = [
+                'requests',
+                'photography_requests',
+                'videography_requests',
+                'catering_requests',
+                'dj_requests',
+                'florist_requests',
+                'beauty_requests',
+                'wedding_planning_requests'
+            ];
+
+            let requestClosed = false;
+
+            for (const table of requestTables) {
+                const { data, error } = await supabase
+                    .from(table)
+                    .update({ 
+                        status: 'closed',
+                        closed_at: new Date().toISOString()
+                    })
+                    .eq('id', requestId);
+
+                if (!error && data && data.length > 0) {
+                    console.log(`Successfully closed request in ${table}`);
+                    requestClosed = true;
+                    setRequestClosed(true);
+                    break; // Found and closed the request, no need to check other tables
+                }
+            }
+
+            if (!requestClosed) {
+                console.log('Request not found in any table or already closed');
+            }
+        } catch (error) {
+            console.error('Error closing request:', error);
+        }
+    };
 
     useEffect(() => {
         const getPaymentData = async () => {
@@ -43,23 +86,40 @@ const PaymentSuccess = () => {
                     console.log('Setting payment data:', paymentDataObj);
                     setPaymentData(paymentDataObj);
 
-                    // Update bid status if bidId is present
+                    // Update bid status and close request if bidId is present
                     if (bidId) {
                         try {
-                            const { error } = await supabase
+                            // First, get the bid to find the request_id
+                            const { data: bidData, error: bidError } = await supabase
                                 .from('bids')
-                                .update({ 
-                                    status: 'paid',
-                                    paid_at: new Date().toISOString(),
-                                    payment_amount: parseFloat(amount),
-                                    payment_type: paymentType
-                                })
-                                .eq('id', bidId);
+                                .select('request_id')
+                                .eq('id', bidId)
+                                .single();
 
-                            if (error) {
-                                console.error('Error updating bid status:', error);
+                            if (bidError) {
+                                console.error('Error fetching bid data:', bidError);
                             } else {
-                                console.log('Successfully updated bid status to paid');
+                                // Update bid status to paid
+                                const { error: updateBidError } = await supabase
+                                    .from('bids')
+                                    .update({ 
+                                        status: 'paid',
+                                        paid_at: new Date().toISOString(),
+                                        payment_amount: parseFloat(amount),
+                                        payment_type: paymentType
+                                    })
+                                    .eq('id', bidId);
+
+                                if (updateBidError) {
+                                    console.error('Error updating bid status:', updateBidError);
+                                } else {
+                                    console.log('Successfully updated bid status to paid');
+                                }
+
+                                // Close the request if this is a full payment
+                                if (paymentType === 'full' && bidData.request_id) {
+                                    await closeRequest(bidData.request_id);
+                                }
                             }
                         } catch (error) {
                             console.error('Error updating bid:', error);
@@ -76,23 +136,40 @@ const PaymentSuccess = () => {
                             date: new Date().toISOString()
                         });
 
-                        // Update bid status if bidId is present in state data
+                        // Update bid status and close request if bidId is present in state data
                         if (stateData.bid_id) {
                             try {
-                                const { error } = await supabase
+                                // First, get the bid to find the request_id
+                                const { data: bidData, error: bidError } = await supabase
                                     .from('bids')
-                                    .update({ 
-                                        status: 'paid',
-                                        paid_at: new Date().toISOString(),
-                                        payment_amount: parseFloat(stateData.amount),
-                                        payment_type: stateData.payment_type
-                                    })
-                                    .eq('id', stateData.bid_id);
+                                    .select('request_id')
+                                    .eq('id', stateData.bid_id)
+                                    .single();
 
-                                if (error) {
-                                    console.error('Error updating bid status:', error);
+                                if (bidError) {
+                                    console.error('Error fetching bid data:', bidError);
                                 } else {
-                                    console.log('Successfully updated bid status to paid');
+                                    // Update bid status to paid
+                                    const { error: updateBidError } = await supabase
+                                        .from('bids')
+                                        .update({ 
+                                            status: 'paid',
+                                            paid_at: new Date().toISOString(),
+                                            payment_amount: parseFloat(stateData.amount),
+                                            payment_type: stateData.payment_type
+                                        })
+                                        .eq('id', stateData.bid_id);
+
+                                    if (updateBidError) {
+                                        console.error('Error updating bid status:', updateBidError);
+                                    } else {
+                                        console.log('Successfully updated bid status to paid');
+                                    }
+
+                                    // Close the request if this is a full payment
+                                    if (stateData.payment_type === 'full' && bidData.request_id) {
+                                        await closeRequest(bidData.request_id);
+                                    }
                                 }
                             } catch (error) {
                                 console.error('Error updating bid:', error);
@@ -243,6 +320,12 @@ const PaymentSuccess = () => {
                 <div className="success-message">
                     <h2>Payment Successful!</h2>
                     <p>Your payment has been processed successfully.</p>
+                    {requestClosed && (
+                        <div className="request-closed-notification">
+                            <i className="fas fa-lock"></i>
+                            <span>Your request has been automatically closed since this was a full payment.</span>
+                        </div>
+                    )}
                     <i className="fas fa-check-circle check-icon"></i>
                 </div>
                 
