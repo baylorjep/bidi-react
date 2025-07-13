@@ -138,6 +138,7 @@ function BidDisplay({
   };
 
   const bidStatus = getBidStatus();
+  console.log('Final bidStatus:', bidStatus);
 
   // Handle heart click to toggle interested state
   const handleHeartClick = () => {
@@ -265,19 +266,28 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
         );
       
       case 'approved':
-        console.log('Rendering approved status actions');
         const downPaymentText = downPayment ? `Pay Down Payment (${downPayment.display})` : 'Pay Down Payment';
         return (
           <div className="bid-status-actions">
             <button className="bid-card-btn bid-card-btn-primary" onClick={() => {
-              console.log('Pay in Full button clicked');
-              onPayNow && onPayNow('full');
+              console.log('BidDisplay: Pay in Full button clicked');
+              console.log('BidDisplay: onPayNow function:', onPayNow);
+              if (onPayNow) {
+                onPayNow('full');
+              } else {
+                console.error('BidDisplay: onPayNow is not defined');
+              }
             }}>
               Pay in Full (${bid.bid_amount})
             </button>
             <button className="bid-card-btn bid-card-btn-secondary" onClick={() => {
-              console.log('Pay Down Payment button clicked');
-              onPayNow && onPayNow('downpayment');
+              console.log('BidDisplay: Pay Down Payment button clicked');
+              console.log('BidDisplay: onPayNow function:', onPayNow);
+              if (onPayNow) {
+                onPayNow('downpayment');
+              } else {
+                console.error('BidDisplay: onPayNow is not defined');
+              }
             }}>
               {downPaymentText}
             </button>

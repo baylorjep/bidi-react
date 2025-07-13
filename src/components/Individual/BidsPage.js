@@ -505,9 +505,10 @@ export default function BidsPage({ onOpenChat }) {
     };
 
     const handlePayNow = (bid) => {
+        console.log('BidsPage: handlePayNow called with bid:', bid);
         try {
             if (!bid.business_profiles.stripe_account_id) {
-                alert('This business is not yet set up to receive payments. Please contact them directly.');
+                toast.error('This business is not yet set up to receive payments. Please contact them directly.');
                 return;
             }
 
@@ -519,17 +520,19 @@ export default function BidsPage({ onOpenChat }) {
                 business_name: bid.business_profiles.business_name,
                 description: bid.message || 'Service payment'
             };
+            console.log('BidsPage: Navigating to checkout with payment data:', paymentData);
             navigate('/checkout', { state: { paymentData } });
         } catch (error) {
             console.error('Error preparing payment:', error);
-            alert('There was an error processing your payment. Please try again.');
+            toast.error('There was an error processing your payment. Please try again.');
         }
     };
 
     const handleDownPayNow = (bid) => {
+        console.log('BidsPage: handleDownPayNow called with bid:', bid);
         try {
             if (!bid.business_profiles.stripe_account_id) {
-                alert('This business is not yet set up to receive payments. Please contact them directly.');
+                toast.error('This business is not yet set up to receive payments. Please contact them directly.');
                 return;
             }
 
@@ -546,10 +549,11 @@ export default function BidsPage({ onOpenChat }) {
                 business_name: bid.business_profiles.business_name,
                 description: `Down payment for ${bid.message || 'service'}`
             };
+            console.log('BidsPage: Navigating to checkout with down payment data:', paymentData);
             navigate('/checkout', { state: { paymentData } });
         } catch (error) {
             console.error('Error preparing down payment:', error);
-            alert('There was an error processing your down payment. Please try again.');
+            toast.error('There was an error processing your down payment. Please try again.');
         }
     };
 
@@ -1145,7 +1149,15 @@ export default function BidsPage({ onOpenChat }) {
                 handleInterested: () => handleMoveToPending(bid),
                 showInterested: true,
                 handlePending: () => handleMoveToPending(bid),
-                onMoveToPending: () => handleMoveToPending(bid)
+                onMoveToPending: () => handleMoveToPending(bid),
+                downPayment: calculateDownPayment(bid),
+                onPayNow: (paymentType) => {
+                    if (paymentType === 'downpayment') {
+                        handleDownPayNow(bid);
+                    } else {
+                        handlePayNow(bid);
+                    }
+                }
             };
         } else if (bid.status === 'denied') {
             statusProps = {
@@ -1155,7 +1167,15 @@ export default function BidsPage({ onOpenChat }) {
                 onMoveToPending: () => handleMoveToPending(bid),
                 showPending: true,
                 showNotInterested: true,
-                handleInterested: () => handleMoveToInterested(bid)
+                handleInterested: () => handleMoveToInterested(bid),
+                downPayment: calculateDownPayment(bid),
+                onPayNow: (paymentType) => {
+                    if (paymentType === 'downpayment') {
+                        handleDownPayNow(bid);
+                    } else {
+                        handlePayNow(bid);
+                    }
+                }
             };
         } else {
             // pending status
@@ -1165,7 +1185,15 @@ export default function BidsPage({ onOpenChat }) {
                 handleInterested: () => handleMoveToInterested(bid),
                 handlePending: () => handleMoveToPending(bid),
                 onMoveToPending: () => handleMoveToPending(bid),
-                showPending: true
+                showPending: true,
+                downPayment: calculateDownPayment(bid),
+                onPayNow: (paymentType) => {
+                    if (paymentType === 'downpayment') {
+                        handleDownPayNow(bid);
+                    } else {
+                        handlePayNow(bid);
+                    }
+                }
             };
         }
 

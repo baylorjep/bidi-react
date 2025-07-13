@@ -544,7 +544,13 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
           downPayment={bid.status === 'approved' ? calculateDownPayment(bid) : null}
           onDownPayment={() => handlePayNow('downpayment', bid)}
           onMessage={handleMessage}
-          onPayNow={(paymentType) => handlePayNow(paymentType, bid)}
+          onPayNow={(paymentType) => {
+            if (paymentType === 'downpayment') {
+              handlePayNow('downpayment', bid);
+            } else {
+              handlePayNow('full', bid);
+            }
+          }}
           onScheduleConsultation={handleScheduleConsultation}
           currentUserId={currentUserId}
           isNew={!bid.viewed}
@@ -1214,7 +1220,6 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
           : (targetBid.bid_description || 'Service payment')
       };
       
-      console.log('Navigating to checkout with payment data:', paymentData);
       navigate('/checkout', { state: { paymentData } });
     } catch (error) {
       console.error('Error preparing payment:', error);
