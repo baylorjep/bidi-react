@@ -7,7 +7,7 @@ export const categoryPricingConfig = {
     pricingModels: ["package", "hourly", "fixed"],
     defaultModel: "package",
     fields: {
-      // Basic pricing
+      // Fields for hourly model
       hourly_rate: {
         label: "Hourly Rate ($)",
         type: "number",
@@ -15,8 +15,33 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Your standard hourly rate for photography services",
-        required: false
+        required: false,
+        showFor: ["hourly"]
       },
+      overtime_rate: {
+        label: "Overtime Rate ($)",
+        type: "number",
+        placeholder: "e.g., 200",
+        min: 0,
+        step: 0.01,
+        description: "Rate per hour after standard booking time",
+        required: false,
+        showFor: ["hourly"]
+      },
+      
+      // Fields for fixed model
+      base_price: {
+        label: "Base Price ($)",
+        type: "number",
+        placeholder: "e.g., 800",
+        min: 0,
+        step: 0.01,
+        description: "Your standard base price for photography services",
+        required: false,
+        showFor: ["fixed"]
+      },
+      
+      // Fields for package model
       full_day_rate: {
         label: "Full Day Rate ($)",
         type: "number",
@@ -24,7 +49,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Rate for full day coverage (typically 8-10 hours)",
-        required: false
+        required: false,
+        showFor: ["package"]
       },
       half_day_rate: {
         label: "Half Day Rate ($)",
@@ -33,8 +59,11 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Rate for half day coverage (typically 4-5 hours)",
-        required: false
+        required: false,
+        showFor: ["package"]
       },
+      
+      // Common fields for all models
       photo_editing_rate: {
         label: "Photo Editing Rate ($)",
         type: "number",
@@ -42,7 +71,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Cost per additional edited photo",
-        required: false
+        required: false,
+        showFor: ["package", "hourly", "fixed"]
       },
       rush_editing_fee: {
         label: "Rush Editing Fee ($)",
@@ -51,7 +81,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Additional fee for expedited photo delivery",
-        required: false
+        required: false,
+        showFor: ["package", "hourly", "fixed"]
       },
       // Package templates
       packageTemplates: [
@@ -85,17 +116,7 @@ export const categoryPricingConfig = {
         { name: "Second Photographer", type: "fixed", defaultPrice: 500 },
         { name: "Drone Coverage", type: "fixed", defaultPrice: 200 }
       ]
-    },
-    defaultPricing: {
-      hourly_rate: 150,
-      full_day_rate: 1200,
-      half_day_rate: 600,
-      photo_editing_rate: 25,
-      rush_editing_fee: 100,
-      wedding_premium: 0, // Photography doesn't typically have wedding premiums
-      rush_fee_percentage: 25,
-      deposit_percentage: 30
-    }
+
   },
 
   florist: {
@@ -105,7 +126,7 @@ export const categoryPricingConfig = {
     pricingModels: ["per_person", "package", "fixed"],
     defaultModel: "per_person",
     fields: {
-      // Basic pricing
+      // Fields for per_person model
       per_person_rate: {
         label: "Per Person Rate ($)",
         type: "number",
@@ -113,22 +134,45 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Cost per guest for floral arrangements",
-        required: true
+        required: false,
+        showFor: ["per_person"]
       },
-      // Seasonal pricing
-      seasonal_pricing: {
-        spring: { label: "Spring Multiplier", default: 1.2, description: "20% premium for spring weddings" },
-        summer: { label: "Summer Multiplier", default: 1.0, description: "Standard pricing for summer" },
-        fall: { label: "Fall Multiplier", default: 1.1, description: "10% premium for fall weddings" },
-        winter: { label: "Winter Multiplier", default: 1.3, description: "30% premium for winter weddings" }
+      
+      // Fields for fixed model
+      base_price: {
+        label: "Base Price ($)",
+        type: "number",
+        placeholder: "e.g., 500",
+        min: 0,
+        step: 0.01,
+        description: "Your standard base price for floral services",
+        required: false,
+        showFor: ["fixed"]
       },
-      // Flower tiers
-      flower_tiers: {
-        standard: { label: "Standard Flowers", multiplier: 1.0, description: "Common flowers (roses, carnations)" },
-        premium: { label: "Premium Flowers", multiplier: 1.4, description: "Premium flowers (peonies, garden roses)" },
-        luxury: { label: "Luxury Flowers", multiplier: 2.0, description: "Luxury flowers (orchids, imported blooms)" }
+      
+      // Fields for package model
+      bridal_package_price: {
+        label: "Bridal Package Price ($)",
+        type: "number",
+        placeholder: "e.g., 200",
+        min: 0,
+        step: 0.01,
+        description: "Price for bridal bouquet and bridesmaid bouquets",
+        required: false,
+        showFor: ["package"]
       },
-      // Service fees
+      ceremony_package_price: {
+        label: "Ceremony Package Price ($)",
+        type: "number",
+        placeholder: "e.g., 300",
+        min: 0,
+        step: 0.01,
+        description: "Price for ceremony arch and aisle decorations",
+        required: false,
+        showFor: ["package"]
+      },
+      
+      // Common fields for all models
       setup_fee: {
         label: "Setup Fee ($)",
         type: "number",
@@ -136,7 +180,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Fee for setting up floral arrangements on-site",
-        required: false
+        required: false,
+        showFor: ["per_person", "package", "fixed"]
       },
       delivery_fee: {
         label: "Delivery Fee ($)",
@@ -145,7 +190,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Fee for delivering flowers to venue",
-        required: false
+        required: false,
+        showFor: ["per_person", "package", "fixed"]
       },
       // Package templates
       packageTemplates: [
@@ -175,15 +221,7 @@ export const categoryPricingConfig = {
         { name: "Petals for Aisle", type: "per_bag", defaultPrice: 25 },
         { name: "Preserved Flowers", type: "multiplier", defaultPrice: 1.5 }
       ]
-    },
-    defaultPricing: {
-      per_person_rate: 25,
-      setup_fee: 150,
-      delivery_fee: 75,
-      wedding_premium: 0, // Built into per-person rate
-      rush_fee_percentage: 20,
-      deposit_percentage: 50
-    }
+
   },
 
   dj: {
@@ -193,7 +231,7 @@ export const categoryPricingConfig = {
     pricingModels: ["hourly", "package", "fixed"],
     defaultModel: "hourly",
     fields: {
-      // Basic pricing
+      // Fields for hourly model
       hourly_rate: {
         label: "Hourly Rate ($)",
         type: "number",
@@ -201,7 +239,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Your standard hourly rate for DJ services",
-        required: true
+        required: false,
+        showFor: ["hourly"]
       },
       overtime_rate: {
         label: "Overtime Rate ($)",
@@ -210,7 +249,52 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Rate per hour after standard booking time",
-        required: false
+        required: false,
+        showFor: ["hourly"]
+      },
+      
+      // Fields for fixed model
+      base_price: {
+        label: "Base Price ($)",
+        type: "number",
+        placeholder: "e.g., 800",
+        min: 0,
+        step: 0.01,
+        description: "Your standard base price for DJ services",
+        required: false,
+        showFor: ["fixed"]
+      },
+      
+      // Fields for package model
+      ceremony_only_price: {
+        label: "Ceremony Only Price ($)",
+        type: "number",
+        placeholder: "e.g., 300",
+        min: 0,
+        step: 0.01,
+        description: "Price for ceremony music only",
+        required: false,
+        showFor: ["package"]
+      },
+      reception_only_price: {
+        label: "Reception Only Price ($)",
+        type: "number",
+        placeholder: "e.g., 800",
+        min: 0,
+        step: 0.01,
+        description: "Price for reception entertainment only",
+        required: false,
+        showFor: ["package"]
+      },
+      full_day_price: {
+        label: "Full Day Price ($)",
+        type: "number",
+        placeholder: "e.g., 1000",
+        min: 0,
+        step: 0.01,
+        description: "Price for complete wedding day entertainment",
+        required: false,
+        showFor: ["package"]
       },
       // Equipment packages
       equipment_packages: {
@@ -270,14 +354,7 @@ export const categoryPricingConfig = {
         { name: "Uplighting", type: "fixed", defaultPrice: 200 },
         { name: "Ceremony Sound", type: "fixed", defaultPrice: 150 }
       ]
-    },
-    defaultPricing: {
-      hourly_rate: 125,
-      overtime_rate: 150,
-      wedding_premium: 0, // Built into hourly rate
-      rush_fee_percentage: 30,
-      deposit_percentage: 25
-    }
+
   },
 
   catering: {
@@ -287,7 +364,7 @@ export const categoryPricingConfig = {
     pricingModels: ["per_person", "package", "fixed"],
     defaultModel: "per_person",
     fields: {
-      // Basic pricing
+      // Fields for per_person model
       per_person_rate: {
         label: "Per Person Rate ($)",
         type: "number",
@@ -295,48 +372,55 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Cost per guest for catering services",
-        required: true
+        required: false,
+        showFor: ["per_person"]
       },
-      // Menu tiers
-      menu_tiers: {
-        buffet: {
-          label: "Buffet Service",
-          multiplier: 1.0,
-          description: "Self-serve buffet style"
-        },
-        plated: {
-          label: "Plated Service",
-          multiplier: 1.3,
-          description: "Served plated meals"
-        },
-        family_style: {
-          label: "Family Style",
-          multiplier: 1.1,
-          description: "Large platters for sharing"
-        }
+      
+      // Fields for fixed model
+      base_price: {
+        label: "Base Price ($)",
+        type: "number",
+        placeholder: "e.g., 2000",
+        min: 0,
+        step: 0.01,
+        description: "Your standard base price for catering services",
+        required: false,
+        showFor: ["fixed"]
       },
-      // Service staff
-      service_staff: {
-        ratio: {
-          label: "Staff to Guest Ratio",
-          type: "number",
-          placeholder: "e.g., 20",
-          min: 10,
-          max: 50,
-          description: "Number of guests per server (typically 15-25)",
-          default: 20
-        },
-        rate_per_server: {
-          label: "Server Rate per Hour ($)",
-          type: "number",
-          placeholder: "e.g., 25",
-          min: 0,
-          step: 0.01,
-          description: "Hourly rate for service staff",
-          default: 25
-        }
+      
+      // Fields for package model
+      appetizers_only_price: {
+        label: "Appetizers Only Price ($)",
+        type: "number",
+        placeholder: "e.g., 15",
+        min: 0,
+        step: 0.01,
+        description: "Price per person for appetizers only",
+        required: false,
+        showFor: ["package"]
       },
-      // Additional fees
+      full_service_price: {
+        label: "Full Service Price ($)",
+        type: "number",
+        placeholder: "e.g., 45",
+        min: 0,
+        step: 0.01,
+        description: "Price per person for full catering service",
+        required: false,
+        showFor: ["package"]
+      },
+      premium_service_price: {
+        label: "Premium Service Price ($)",
+        type: "number",
+        placeholder: "e.g., 65",
+        min: 0,
+        step: 0.01,
+        description: "Price per person for premium catering service",
+        required: false,
+        showFor: ["package"]
+      },
+      
+      // Common fields for all models
       kitchen_rental: {
         label: "Kitchen Rental Fee ($)",
         type: "number",
@@ -344,7 +428,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Fee for kitchen facility rental",
-        required: false
+        required: false,
+        showFor: ["per_person", "package", "fixed"]
       },
       china_rental: {
         label: "China Rental per Person ($)",
@@ -353,7 +438,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Cost per person for china/glassware rental",
-        required: false
+        required: false,
+        showFor: ["per_person", "package", "fixed"]
       },
       // Package templates
       packageTemplates: [
@@ -383,15 +469,7 @@ export const categoryPricingConfig = {
         { name: "Late Night Snacks", type: "per_person", defaultPrice: 8 },
         { name: "Cake Cutting", type: "fixed", defaultPrice: 50 }
       ]
-    },
-    defaultPricing: {
-      per_person_rate: 35,
-      kitchen_rental: 500,
-      china_rental: 8,
-      wedding_premium: 0, // Built into per-person rate
-      rush_fee_percentage: 25,
-      deposit_percentage: 40
-    }
+
   },
 
   videography: {
@@ -401,7 +479,7 @@ export const categoryPricingConfig = {
     pricingModels: ["package", "hourly", "fixed"],
     defaultModel: "package",
     fields: {
-      // Basic pricing
+      // Fields for hourly model
       hourly_rate: {
         label: "Hourly Rate ($)",
         type: "number",
@@ -409,17 +487,55 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Your standard hourly rate for videography",
-        required: false
+        required: false,
+        showFor: ["hourly"]
       },
-      full_day_rate: {
-        label: "Full Day Rate ($)",
+      
+      // Fields for fixed model
+      base_price: {
+        label: "Base Price ($)",
         type: "number",
-        placeholder: "e.g., 1500",
+        placeholder: "e.g., 1200",
         min: 0,
         step: 0.01,
-        description: "Rate for full day coverage",
-        required: false
+        description: "Your standard base price for videography services",
+        required: false,
+        showFor: ["fixed"]
       },
+      
+      // Fields for package model
+      highlight_video_price: {
+        label: "Highlight Video Price ($)",
+        type: "number",
+        placeholder: "e.g., 800",
+        min: 0,
+        step: 0.01,
+        description: "Price for short highlight video",
+        required: false,
+        showFor: ["package"]
+      },
+      full_documentary_price: {
+        label: "Full Documentary Price ($)",
+        type: "number",
+        placeholder: "e.g., 2000",
+        min: 0,
+        step: 0.01,
+        description: "Price for complete wedding documentary",
+        required: false,
+        showFor: ["package"]
+      },
+      cinematic_package_price: {
+        label: "Cinematic Package Price ($)",
+        type: "number",
+        placeholder: "e.g., 3500",
+        min: 0,
+        step: 0.01,
+        description: "Price for premium cinematic experience",
+        required: false,
+        showFor: ["package"]
+      },
+      
+      // Common fields for all models
       editing_rate: {
         label: "Editing Rate per Hour ($)",
         type: "number",
@@ -427,7 +543,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Rate for video editing time",
-        required: false
+        required: false,
+        showFor: ["package", "hourly", "fixed"]
       },
       rush_editing_fee: {
         label: "Rush Editing Fee ($)",
@@ -436,7 +553,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Additional fee for expedited video delivery",
-        required: false
+        required: false,
+        showFor: ["package", "hourly", "fixed"]
       },
       // Package templates
       packageTemplates: [
@@ -470,16 +588,7 @@ export const categoryPricingConfig = {
         { name: "Same Day Edit", type: "fixed", defaultPrice: 500 },
         { name: "Extended Highlight", type: "fixed", defaultPrice: 200 }
       ]
-    },
-    defaultPricing: {
-      hourly_rate: 200,
-      full_day_rate: 1500,
-      editing_rate: 75,
-      rush_editing_fee: 200,
-      wedding_premium: 0,
-      rush_fee_percentage: 30,
-      deposit_percentage: 30
-    }
+
   },
 
   beauty: {
@@ -489,7 +598,7 @@ export const categoryPricingConfig = {
     pricingModels: ["per_person", "package", "fixed"],
     defaultModel: "per_person",
     fields: {
-      // Basic pricing
+      // Fields for per_person model
       per_person_rate: {
         label: "Per Person Rate ($)",
         type: "number",
@@ -497,8 +606,45 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Cost per person for hair and makeup",
-        required: true
+        required: false,
+        showFor: ["per_person"]
       },
+      
+      // Fields for fixed model
+      base_price: {
+        label: "Base Price ($)",
+        type: "number",
+        placeholder: "e.g., 500",
+        min: 0,
+        step: 0.01,
+        description: "Your standard base price for beauty services",
+        required: false,
+        showFor: ["fixed"]
+      },
+      
+      // Fields for package model
+      bridal_package_price: {
+        label: "Bridal Package Price ($)",
+        type: "number",
+        placeholder: "e.g., 200",
+        min: 0,
+        step: 0.01,
+        description: "Price for complete bridal beauty service",
+        required: false,
+        showFor: ["package"]
+      },
+      bridesmaid_package_price: {
+        label: "Bridesmaid Package Price ($)",
+        type: "number",
+        placeholder: "e.g., 150",
+        min: 0,
+        step: 0.01,
+        description: "Price for bridesmaid beauty services",
+        required: false,
+        showFor: ["package"]
+      },
+      
+      // Common fields for all models
       hair_only_rate: {
         label: "Hair Only Rate ($)",
         type: "number",
@@ -506,7 +652,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Rate for hair styling only",
-        required: false
+        required: false,
+        showFor: ["per_person", "package", "fixed"]
       },
       makeup_only_rate: {
         label: "Makeup Only Rate ($)",
@@ -515,7 +662,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Rate for makeup only",
-        required: false
+        required: false,
+        showFor: ["per_person", "package", "fixed"]
       },
       travel_fee: {
         label: "Travel Fee ($)",
@@ -524,7 +672,8 @@ export const categoryPricingConfig = {
         min: 0,
         step: 0.01,
         description: "Fee for traveling to venue/home",
-        required: false
+        required: false,
+        showFor: ["per_person", "package", "fixed"]
       },
       // Package templates
       packageTemplates: [
@@ -554,27 +703,13 @@ export const categoryPricingConfig = {
         { name: "Hair Extensions", type: "fixed", defaultPrice: 50 },
         { name: "Touch-up Service", type: "fixed", defaultPrice: 75 }
       ]
-    },
-    defaultPricing: {
-      per_person_rate: 150,
-      hair_only_rate: 100,
-      makeup_only_rate: 100,
-      travel_fee: 50,
-      wedding_premium: 0,
-      rush_fee_percentage: 20,
-      deposit_percentage: 25
-    }
+
   }
 };
 
 // Helper functions
 export const getCategoryConfig = (category) => {
   return categoryPricingConfig[category] || categoryPricingConfig.photography;
-};
-
-export const getDefaultPricing = (category) => {
-  const config = getCategoryConfig(category);
-  return config.defaultPricing;
 };
 
 export const getPackageTemplates = (category) => {

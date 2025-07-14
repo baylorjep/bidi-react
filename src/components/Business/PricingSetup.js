@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../LoadingSpinner';
-import { getCategoryConfig, getDefaultPricing, getPackageTemplates, getAddons } from './categoryPricingConfig';
+import { getCategoryConfig, getPackageTemplates, getAddons } from './categoryPricingConfig';
 import './PricingSetup.css';
 
 const PricingSetup = () => {
@@ -22,7 +22,6 @@ const PricingSetup = () => {
     per_person_rate: '',
     travel_fee_per_mile: '',
     bid_aggressiveness: 'balanced', // conservative, balanced, aggressive
-    accept_unknowns: true,
     blocklist_keywords: [],
     default_message: '',
     additional_comments: '',
@@ -30,7 +29,6 @@ const PricingSetup = () => {
     
     // Category-specific pricing
     wedding_premium: '',
-    duration_multipliers: {},
     service_addons: {},
     seasonal_pricing: {},
     rush_fee_percentage: '',
@@ -70,7 +68,21 @@ const PricingSetup = () => {
     // Beauty-specific
     hair_only_rate: '',
     makeup_only_rate: '',
-    travel_fee: ''
+    travel_fee: '',
+    
+    // New category-specific fields
+    bridal_package_price: '',
+    ceremony_package_price: '',
+    ceremony_only_price: '',
+    reception_only_price: '',
+    full_day_price: '',
+    appetizers_only_price: '',
+    full_service_price: '',
+    premium_service_price: '',
+    highlight_video_price: '',
+    full_documentary_price: '',
+    cinematic_package_price: '',
+    bridesmaid_package_price: ''
   });
 
   // Package builder state
@@ -226,13 +238,11 @@ const PricingSetup = () => {
         per_person_rate: existing.per_person_rate?.toString() || '',
         travel_fee_per_mile: existing.travel_fee_per_mile?.toString() || '',
         bid_aggressiveness: existing.bid_aggressiveness || 'balanced',
-        accept_unknowns: existing.accept_unknowns ?? true,
         blocklist_keywords: existing.blocklist_keywords || [],
         default_message: existing.default_message || '',
         additional_comments: existing.additional_comments || '',
         pricing_packages: existing.pricing_packages || [],
         wedding_premium: existing.wedding_premium?.toString() || '',
-        duration_multipliers: existing.duration_multipliers || {},
         service_addons: existing.service_addons || {},
         seasonal_pricing: existing.seasonal_pricing || {},
         rush_fee_percentage: existing.rush_fee_percentage?.toString() || '',
@@ -260,15 +270,65 @@ const PricingSetup = () => {
         editing_rate: existing.editing_rate?.toString() || '',
         hair_only_rate: existing.hair_only_rate?.toString() || '',
         makeup_only_rate: existing.makeup_only_rate?.toString() || '',
-        travel_fee: existing.travel_fee?.toString() || ''
+        travel_fee: existing.travel_fee?.toString() || '',
+        
+        // New category-specific fields
+        bridal_package_price: existing.bridal_package_price?.toString() || '',
+        ceremony_package_price: existing.ceremony_package_price?.toString() || '',
+        ceremony_only_price: existing.ceremony_only_price?.toString() || '',
+        reception_only_price: existing.reception_only_price?.toString() || '',
+        full_day_price: existing.full_day_price?.toString() || '',
+        appetizers_only_price: existing.appetizers_only_price?.toString() || '',
+        full_service_price: existing.full_service_price?.toString() || '',
+        premium_service_price: existing.premium_service_price?.toString() || '',
+        highlight_video_price: existing.highlight_video_price?.toString() || '',
+        full_documentary_price: existing.full_documentary_price?.toString() || '',
+        cinematic_package_price: existing.cinematic_package_price?.toString() || '',
+        bridesmaid_package_price: existing.bridesmaid_package_price?.toString() || ''
       });
     } else {
-      // Load defaults for the category
+      // Reset to empty state for new category
       const categoryConfig = getCategoryConfig(category);
       setPricingData(prev => ({
         ...prev,
         pricing_model: categoryConfig.defaultModel,
-        ...categoryConfig.defaultPricing
+        // Reset all numeric fields to empty strings
+        hourly_rate: '',
+        base_price: '',
+        per_person_rate: '',
+        travel_fee_per_mile: '',
+        wedding_premium: '',
+        rush_fee_percentage: '',
+        deposit_percentage: '',
+        minimum_guests: '',
+        maximum_guests: '',
+        full_day_rate: '',
+        half_day_rate: '',
+        photo_editing_rate: '',
+        rush_editing_fee: '',
+        setup_fee: '',
+        delivery_fee: '',
+        overtime_rate: '',
+        kitchen_rental: '',
+        china_rental: '',
+        editing_rate: '',
+        hair_only_rate: '',
+        makeup_only_rate: '',
+        travel_fee: '',
+        
+        // New category-specific fields
+        bridal_package_price: '',
+        ceremony_package_price: '',
+        ceremony_only_price: '',
+        reception_only_price: '',
+        full_day_price: '',
+        appetizers_only_price: '',
+        full_service_price: '',
+        premium_service_price: '',
+        highlight_video_price: '',
+        full_documentary_price: '',
+        cinematic_package_price: '',
+        bridesmaid_package_price: ''
       }));
     }
     setCurrentStep(0);
@@ -319,7 +379,21 @@ const PricingSetup = () => {
         // Beauty-specific fields
         hair_only_rate: pricingData.hair_only_rate === '' ? null : parseFloat(pricingData.hair_only_rate),
         makeup_only_rate: pricingData.makeup_only_rate === '' ? null : parseFloat(pricingData.makeup_only_rate),
-        travel_fee: pricingData.travel_fee === '' ? null : parseFloat(pricingData.travel_fee)
+        travel_fee: pricingData.travel_fee === '' ? null : parseFloat(pricingData.travel_fee),
+        
+        // New category-specific fields
+        bridal_package_price: pricingData.bridal_package_price === '' ? null : parseFloat(pricingData.bridal_package_price),
+        ceremony_package_price: pricingData.ceremony_package_price === '' ? null : parseFloat(pricingData.ceremony_package_price),
+        ceremony_only_price: pricingData.ceremony_only_price === '' ? null : parseFloat(pricingData.ceremony_only_price),
+        reception_only_price: pricingData.reception_only_price === '' ? null : parseFloat(pricingData.reception_only_price),
+        full_day_price: pricingData.full_day_price === '' ? null : parseFloat(pricingData.full_day_price),
+        appetizers_only_price: pricingData.appetizers_only_price === '' ? null : parseFloat(pricingData.appetizers_only_price),
+        full_service_price: pricingData.full_service_price === '' ? null : parseFloat(pricingData.full_service_price),
+        premium_service_price: pricingData.premium_service_price === '' ? null : parseFloat(pricingData.premium_service_price),
+        highlight_video_price: pricingData.highlight_video_price === '' ? null : parseFloat(pricingData.highlight_video_price),
+        full_documentary_price: pricingData.full_documentary_price === '' ? null : parseFloat(pricingData.full_documentary_price),
+        cinematic_package_price: pricingData.cinematic_package_price === '' ? null : parseFloat(pricingData.cinematic_package_price),
+        bridesmaid_package_price: pricingData.bridesmaid_package_price === '' ? null : parseFloat(pricingData.bridesmaid_package_price)
       };
 
       const pricingRule = {
@@ -432,6 +506,12 @@ const PricingSetup = () => {
           {Object.entries(categoryFields).map(([fieldKey, fieldConfig]) => {
             if (typeof fieldConfig === 'object' && fieldConfig.type === 'number' && 
                 !['seasonal_pricing', 'flower_tiers', 'equipment_packages', 'menu_tiers', 'service_staff', 'travel_zones'].includes(fieldKey)) {
+              
+              // Check if this field should be shown for the current pricing model
+              const shouldShow = !fieldConfig.showFor || fieldConfig.showFor.includes(pricingData.pricing_model);
+              
+              if (!shouldShow) return null;
+              
               return (
                 <div key={fieldKey} className="form-group">
                   <label>{fieldConfig.label}</label>
@@ -821,16 +901,7 @@ const PricingSetup = () => {
                 />
               </div>
 
-              <div className="form-group checkbox-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={pricingData.accept_unknowns}
-                    onChange={(e) => handleInputChange('accept_unknowns', e.target.checked)}
-                  />
-                  <span>Accept requests with unknown guest counts</span>
-                </label>
-              </div>
+
             </>
           )}
         </div>
