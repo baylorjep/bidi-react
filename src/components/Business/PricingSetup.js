@@ -770,20 +770,7 @@ const PricingSetup = () => {
           </div>
         </div>
 
-        {/* Step Progress */}
-        <div className="step-progress">
-          <div className="step-indicators">
-            <div className={`step-indicator ${currentStep >= 0 ? 'active' : ''}`}>
-              <span className="step-label">Basic Pricing</span>
-            </div>
-            <div className={`step-indicator ${currentStep >= 1 ? 'active' : ''}`}>
-              <span className="step-label">Category Specific</span>
-            </div>
-            <div className={`step-indicator ${currentStep >= 2 ? 'active' : ''}`}>
-              <span className="step-label">Communication</span>
-            </div>
-          </div>
-        </div>
+
 
         {/* Step Content */}
         <div className="step-content">

@@ -9,7 +9,7 @@
 
 /* Header */
 .pricing-setup-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #9633eb 0%, #a855f7 100%);
   color: white;
   padding: 4rem 2rem;
   text-align: center;
@@ -95,7 +95,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(90deg, #9633eb 0%, #a855f7 100%);
   border-radius: 6px;
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -144,15 +144,15 @@
 .category-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-  border-color: #667eea;
+  border-color: #9633eb;
 }
 
 .category-card.active {
-  border-color: #667eea;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #9633eb;
+  background: linear-gradient(135deg, #9633eb 0%, #a855f7 100%);
   color: white;
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 12px 24px rgba(150, 51, 235, 0.3);
 }
 
 .category-card.completed {
@@ -216,7 +216,7 @@
 }
 
 .category-highlight {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #9633eb 0%, #a855f7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -234,58 +234,7 @@
   border-radius: 20px;
 }
 
-/* Step Progress */
-.step-progress {
-  padding: 2rem;
-  border-bottom: 1px solid #e2e8f0;
-  background: white;
-}
 
-.step-indicators {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 2rem;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.step-indicator {
-  display: flex;
-  align-items: center;
-  padding: 1rem 2rem;
-  border-radius: 30px;
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
-  transition: all 0.3s ease;
-  opacity: 0.6;
-  cursor: pointer;
-}
-
-.step-indicator:hover {
-  border-color: #cbd5e1;
-  background: #f1f5f9;
-}
-
-.step-indicator.active {
-  opacity: 1;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-  transform: translateY(-2px);
-}
-
-.step-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #64748b;
-  white-space: nowrap;
-  transition: all 0.3s ease;
-}
-
-.step-indicator.active .step-label {
-  color: white;
-}
 
 /* Step Content */
 .step-content {
@@ -369,8 +318,8 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #9633eb;
+  box-shadow: 0 0 0 3px rgba(150, 51, 235, 0.1);
   transform: translateY(-1px);
 }
 
@@ -397,14 +346,14 @@
 }
 
 .checkbox-label:hover {
-  border-color: #667eea;
+  border-color: #9633eb;
   background: #f0f9ff;
 }
 
 .checkbox-label input[type="checkbox"] {
   width: 20px;
   height: 20px;
-  accent-color: #667eea;
+  accent-color: #9633eb;
   margin: 0;
 }
 
@@ -453,7 +402,7 @@
 }
 
 .package-card:hover {
-  border-color: #667eea;
+  border-color: #9633eb;
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
@@ -475,7 +424,7 @@
 .package-price {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #667eea;
+  color: #9633eb;
   background: #f0f9ff;
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -553,8 +502,8 @@
 }
 
 .add-package-btn:hover {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: #9633eb;
+  color: #9633eb;
   background: #f0f9ff;
   transform: translateY(-2px);
 }
@@ -613,7 +562,7 @@
 
 .add-feature-btn {
   padding: 0.75rem 1.5rem;
-  background: #667eea;
+  background: #9633eb;
   color: white;
   border: none;
   border-radius: 8px;
@@ -625,7 +574,7 @@
 }
 
 .add-feature-btn:hover {
-  background: #5a67d8;
+  background: #8b5cf6;
   transform: translateY(-1px);
 }
 
@@ -693,14 +642,23 @@
   overflow: hidden;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.btn-primary,
+.btn-primary:visited {
+  background: linear-gradient(135deg, #9633eb 0%, #a855f7 100%);
   color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 1rem 2.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(150, 51, 235, 0.08);
+  transition: all 0.2s;
+  cursor: pointer;
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, #a855f7 0%, #9633eb 100%);
+  box-shadow: 0 8px 24px rgba(150, 51, 235, 0.15);
 }
 
 .btn-primary:disabled {
@@ -716,8 +674,8 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: #9633eb;
+  color: #9633eb;
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
@@ -731,7 +689,7 @@
 /* Info Section */
 .pricing-info {
   margin: 0 2rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #9633eb 0%, #a855f7 100%);
   border-radius: 20px;
   padding: 2rem;
   color: white;
