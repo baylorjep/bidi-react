@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../LoadingSpinner';
 import { getCategoryConfig, getPackageTemplates, getAddons } from './categoryPricingConfig';
+import { toast } from 'react-toastify';
 import './PricingSetup.css';
 
 const PricingSetup = () => {
