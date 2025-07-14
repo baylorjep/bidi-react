@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../LoadingSpinner';
+import { getCategoryConfig, getDefaultPricing, getPackageTemplates, getAddons } from './categoryPricingConfig';
 import './PricingSetup.css';
 
 const PricingSetup = () => {
@@ -15,7 +16,7 @@ const PricingSetup = () => {
   
   // Pricing form state
   const [pricingData, setPricingData] = useState({
-    pricing_model: 'fixed', // fixed, hourly, per_person, custom
+    pricing_model: 'fixed', // fixed, hourly, per_person, package, custom
     hourly_rate: '',
     base_price: '',
     per_person_rate: '',
@@ -40,7 +41,36 @@ const PricingSetup = () => {
     maximum_guests: '',
     group_discounts: {},
     package_discounts: {},
-    custom_pricing_rules: []
+    custom_pricing_rules: [],
+    
+    // Photography-specific
+    full_day_rate: '',
+    half_day_rate: '',
+    photo_editing_rate: '',
+    rush_editing_fee: '',
+    
+    // Florist-specific
+    flower_tiers: {},
+    setup_fee: '',
+    delivery_fee: '',
+    
+    // DJ-specific
+    overtime_rate: '',
+    equipment_packages: {},
+    
+    // Catering-specific
+    menu_tiers: {},
+    service_staff: {},
+    kitchen_rental: '',
+    china_rental: '',
+    
+    // Videography-specific
+    editing_rate: '',
+    
+    // Beauty-specific
+    hair_only_rate: '',
+    makeup_only_rate: '',
+    travel_fee: ''
   });
 
   // Package builder state
@@ -211,34 +241,35 @@ const PricingSetup = () => {
         maximum_guests: existing.maximum_guests?.toString() || '',
         group_discounts: existing.group_discounts || {},
         package_discounts: existing.package_discounts || {},
-        custom_pricing_rules: existing.custom_pricing_rules || []
+        custom_pricing_rules: existing.custom_pricing_rules || [],
+        
+        // Category-specific fields
+        full_day_rate: existing.full_day_rate?.toString() || '',
+        half_day_rate: existing.half_day_rate?.toString() || '',
+        photo_editing_rate: existing.photo_editing_rate?.toString() || '',
+        rush_editing_fee: existing.rush_editing_fee?.toString() || '',
+        flower_tiers: existing.flower_tiers || {},
+        setup_fee: existing.setup_fee?.toString() || '',
+        delivery_fee: existing.delivery_fee?.toString() || '',
+        overtime_rate: existing.overtime_rate?.toString() || '',
+        equipment_packages: existing.equipment_packages || {},
+        menu_tiers: existing.menu_tiers || {},
+        service_staff: existing.service_staff || {},
+        kitchen_rental: existing.kitchen_rental?.toString() || '',
+        china_rental: existing.china_rental?.toString() || '',
+        editing_rate: existing.editing_rate?.toString() || '',
+        hair_only_rate: existing.hair_only_rate?.toString() || '',
+        makeup_only_rate: existing.makeup_only_rate?.toString() || '',
+        travel_fee: existing.travel_fee?.toString() || ''
       });
     } else {
-      // Reset to defaults for new category
-      setPricingData({
-        pricing_model: 'fixed',
-        hourly_rate: '',
-        base_price: '',
-        per_person_rate: '',
-        travel_fee_per_mile: '',
-        bid_aggressiveness: 'balanced',
-        accept_unknowns: true,
-        blocklist_keywords: [],
-        default_message: '',
-        additional_comments: '',
-        pricing_packages: [],
-        wedding_premium: '',
-        duration_multipliers: {},
-        service_addons: {},
-        seasonal_pricing: {},
-        rush_fee_percentage: '',
-        deposit_percentage: '',
-        minimum_guests: '',
-        maximum_guests: '',
-        group_discounts: {},
-        package_discounts: {},
-        custom_pricing_rules: []
-      });
+      // Load defaults for the category
+      const categoryConfig = getCategoryConfig(category);
+      setPricingData(prev => ({
+        ...prev,
+        pricing_model: categoryConfig.defaultModel,
+        ...categoryConfig.defaultPricing
+      }));
     }
     setCurrentStep(0);
   };
@@ -327,320 +358,459 @@ const PricingSetup = () => {
     }
   };
 
-  const renderBasicPricingStep = () => (
-    <div className="pricing-step">
-      <div className="step-header">
-        <div className="step-icon">💰</div>
-        <div>
-          <h3>Basic Pricing Structure</h3>
-          <p>Set up your fundamental pricing model and rates</p>
-        </div>
-      </div>
-      
-      <div className="form-grid">
-        <div className="form-group">
-          <label>Pricing Model</label>
-          <select
-            value={pricingData.pricing_model}
-            onChange={(e) => handleInputChange('pricing_model', e.target.value)}
-          >
-            <option value="fixed">Fixed Price</option>
-            <option value="hourly">Hourly Rate</option>
-            <option value="per_person">Per Person</option>
-            <option value="custom">Custom</option>
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Bid Aggressiveness</label>
-          <select
-            value={pricingData.bid_aggressiveness}
-            onChange={(e) => handleInputChange('bid_aggressiveness', e.target.value)}
-          >
-            <option value="conservative">Conservative (Higher prices)</option>
-            <option value="balanced">Balanced (Market rates)</option>
-            <option value="aggressive">Aggressive (Lower prices)</option>
-          </select>
-        </div>
-
-        {pricingData.pricing_model === 'fixed' && (
-          <div className="form-group">
-            <label>Base Price ($)</label>
-            <input
-              type="number"
-              value={pricingData.base_price}
-              onChange={(e) => handleInputChange('base_price', e.target.value)}
-              placeholder="e.g., 500"
-              min="0"
-              step="0.01"
-            />
+  const renderBasicPricingStep = () => {
+    const categoryConfig = getCategoryConfig(currentCategory);
+    const categoryFields = categoryConfig.fields;
+    
+    return (
+      <div className="pricing-step">
+        <div className="step-header">
+          <div className="step-icon">{categoryConfig.icon}</div>
+          <div>
+            <h3>{categoryConfig.name} Pricing Structure</h3>
+            <p>Set up your fundamental pricing model and rates for {categoryConfig.name.toLowerCase()} services</p>
           </div>
-        )}
-
-        {pricingData.pricing_model === 'hourly' && (
-          <div className="form-group">
-            <label>Hourly Rate ($)</label>
-            <input
-              type="number"
-              value={pricingData.hourly_rate}
-              onChange={(e) => handleInputChange('hourly_rate', e.target.value)}
-              placeholder="e.g., 75"
-              min="0"
-              step="0.01"
-            />
-          </div>
-        )}
-
-        {pricingData.pricing_model === 'per_person' && (
-          <div className="form-group">
-            <label>Per Person Rate ($)</label>
-            <input
-              type="number"
-              value={pricingData.per_person_rate}
-              onChange={(e) => handleInputChange('per_person_rate', e.target.value)}
-              placeholder="e.g., 25"
-              min="0"
-              step="0.01"
-            />
-          </div>
-        )}
-
-        <div className="form-group">
-          <label>Travel Fee per Mile ($)</label>
-          <input
-            type="number"
-            value={pricingData.travel_fee_per_mile}
-            onChange={(e) => handleInputChange('travel_fee_per_mile', e.target.value)}
-            placeholder="e.g., 2.50"
-            min="0"
-            step="0.01"
-          />
-        </div>
-      </div>
-
-      {/* Package Builder */}
-      <div className="package-builder">
-        <div className="section-header">
-          <h4>Pricing Packages</h4>
-          <p>Create custom packages for your services</p>
         </div>
         
-        {pricingData.pricing_packages.length > 0 && (
-          <div className="packages-grid">
-            {pricingData.pricing_packages.map((pkg) => (
-              <div key={pkg.id} className="package-card">
-                <div className="package-header">
-                  <h5>{pkg.name}</h5>
-                  <span className="package-price">${pkg.price}</span>
-                </div>
-                {pkg.description && <p className="package-description">{pkg.description}</p>}
-                {pkg.duration && <p className="package-duration">⏱️ {pkg.duration}</p>}
-                {pkg.features.length > 0 && (
-                  <ul className="package-features">
-                    {pkg.features.map((feature, index) => (
-                      <li key={index}>✓ {feature}</li>
-                    ))}
-                  </ul>
-                )}
-                <button 
-                  className="remove-package-btn"
-                  onClick={() => handleRemovePackage(pkg.id)}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Pricing Model</label>
+            <select
+              value={pricingData.pricing_model}
+              onChange={(e) => handleInputChange('pricing_model', e.target.value)}
+            >
+              {categoryConfig.pricingModels.map(model => (
+                <option key={model} value={model}>
+                  {model === 'fixed' ? 'Fixed Price' : 
+                   model === 'hourly' ? 'Hourly Rate' : 
+                   model === 'per_person' ? 'Per Person' : 
+                   model === 'package' ? 'Package Based' : 'Custom'}
+                </option>
+              ))}
+            </select>
           </div>
-        )}
 
-        {!showPackageForm ? (
-          <button 
-            className="add-package-btn"
-            onClick={() => setShowPackageForm(true)}
-          >
-            <span>+</span>
-            <span>Add New Package</span>
-          </button>
-        ) : (
-          <div className="package-form">
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Package Name</label>
-                <input
-                  type="text"
-                  value={newPackage.name}
-                  onChange={(e) => setNewPackage(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g., Basic Package"
-                />
-              </div>
-              <div className="form-group">
-                <label>Price ($)</label>
-                <input
-                  type="number"
-                  value={newPackage.price}
-                  onChange={(e) => setNewPackage(prev => ({ ...prev, price: e.target.value }))}
-                  placeholder="e.g., 500"
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-              <div className="form-group">
-                <label>Description</label>
-                <input
-                  type="text"
-                  value={newPackage.description}
-                  onChange={(e) => setNewPackage(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Brief description of the package"
-                />
-              </div>
-              <div className="form-group">
-                <label>Duration</label>
-                <input
-                  type="text"
-                  value={newPackage.duration}
-                  onChange={(e) => setNewPackage(prev => ({ ...prev, duration: e.target.value }))}
-                  placeholder="e.g., 4 hours, Full day"
-                />
-              </div>
-            </div>
+          <div className="form-group">
+            <label>Bid Aggressiveness</label>
+            <select
+              value={pricingData.bid_aggressiveness}
+              onChange={(e) => handleInputChange('bid_aggressiveness', e.target.value)}
+            >
+              <option value="conservative">Conservative (Higher prices)</option>
+              <option value="balanced">Balanced (Market rates)</option>
+              <option value="aggressive">Aggressive (Lower prices)</option>
+            </select>
+          </div>
 
-            <div className="form-group">
-              <label>Features</label>
-              <div className="features-container">
-                {newPackage.features.map((feature, index) => (
-                  <div key={index} className="feature-input">
-                    <input
-                      type="text"
-                      value={feature}
-                      onChange={(e) => handleFeatureChange(index, e.target.value)}
-                      placeholder={`Feature ${index + 1}`}
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => handleRemoveFeature(index)}
-                      className="remove-feature-btn"
-                    >
-                      ×
-                    </button>
+          {/* Category-specific basic fields */}
+          {Object.entries(categoryFields).map(([fieldKey, fieldConfig]) => {
+            if (typeof fieldConfig === 'object' && fieldConfig.type === 'number' && 
+                !['seasonal_pricing', 'flower_tiers', 'equipment_packages', 'menu_tiers', 'service_staff', 'travel_zones'].includes(fieldKey)) {
+              return (
+                <div key={fieldKey} className="form-group">
+                  <label>{fieldConfig.label}</label>
+                  <input
+                    type={fieldConfig.type}
+                    value={pricingData[fieldKey] || ''}
+                    onChange={(e) => handleInputChange(fieldKey, e.target.value)}
+                    placeholder={fieldConfig.placeholder}
+                    min={fieldConfig.min}
+                    max={fieldConfig.max}
+                    step={fieldConfig.step}
+                  />
+                  {fieldConfig.description && (
+                    <small>{fieldConfig.description}</small>
+                  )}
+                </div>
+              );
+            }
+            return null;
+          })}
+
+          <div className="form-group">
+            <label>Travel Fee per Mile ($)</label>
+            <input
+              type="number"
+              value={pricingData.travel_fee_per_mile}
+              onChange={(e) => handleInputChange('travel_fee_per_mile', e.target.value)}
+              placeholder="e.g., 2.50"
+              min="0"
+              step="0.01"
+            />
+          </div>
+        </div>
+
+        {/* Package Builder */}
+        <div className="package-builder">
+          <div className="section-header">
+            <h4>Pricing Packages</h4>
+            <p>Create custom packages for your {categoryConfig.name.toLowerCase()} services</p>
+          </div>
+          
+          {pricingData.pricing_packages.length > 0 && (
+            <div className="packages-grid">
+              {pricingData.pricing_packages.map((pkg) => (
+                <div key={pkg.id} className="package-card">
+                  <div className="package-header">
+                    <h5>{pkg.name}</h5>
+                    <span className="package-price">${pkg.price}</span>
                   </div>
-                ))}
+                  {pkg.description && <p className="package-description">{pkg.description}</p>}
+                  {pkg.duration && <p className="package-duration">⏱️ {pkg.duration}</p>}
+                  {pkg.features.length > 0 && (
+                    <ul className="package-features">
+                      {pkg.features.map((feature, index) => (
+                        <li key={index}>✓ {feature}</li>
+                      ))}
+                    </ul>
+                  )}
+                  <button 
+                    className="remove-package-btn"
+                    onClick={() => handleRemovePackage(pkg.id)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!showPackageForm ? (
+            <button 
+              className="add-package-btn"
+              onClick={() => setShowPackageForm(true)}
+            >
+              <span>+</span>
+              <span>Add New Package</span>
+            </button>
+          ) : (
+            <div className="package-form">
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Package Name</label>
+                  <input
+                    type="text"
+                    value={newPackage.name}
+                    onChange={(e) => setNewPackage(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Basic Package"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Price ($)</label>
+                  <input
+                    type="number"
+                    value={newPackage.price}
+                    onChange={(e) => setNewPackage(prev => ({ ...prev, price: e.target.value }))}
+                    placeholder="e.g., 500"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Description</label>
+                  <input
+                    type="text"
+                    value={newPackage.description}
+                    onChange={(e) => setNewPackage(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Brief description of the package"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Duration</label>
+                  <input
+                    type="text"
+                    value={newPackage.duration}
+                    onChange={(e) => setNewPackage(prev => ({ ...prev, duration: e.target.value }))}
+                    placeholder="e.g., 4 hours, Full day"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Features</label>
+                <div className="features-container">
+                  {newPackage.features.map((feature, index) => (
+                    <div key={index} className="feature-input">
+                      <input
+                        type="text"
+                        value={feature}
+                        onChange={(e) => handleFeatureChange(index, e.target.value)}
+                        placeholder={`Feature ${index + 1}`}
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => handleRemoveFeature(index)}
+                        className="remove-feature-btn"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button 
+                    type="button"
+                    onClick={handleAddFeature}
+                    className="add-feature-btn"
+                  >
+                    + Add Feature
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-actions">
                 <button 
                   type="button"
-                  onClick={handleAddFeature}
-                  className="add-feature-btn"
+                  onClick={handleAddPackage}
+                  className="save-package-btn"
                 >
-                  + Add Feature
+                  Save Package
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setShowPackageForm(false)}
+                  className="cancel-package-btn"
+                >
+                  Cancel
                 </button>
               </div>
             </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
-            <div className="form-actions">
-              <button 
-                type="button"
-                onClick={handleAddPackage}
-                className="save-package-btn"
-              >
-                Save Package
-              </button>
-              <button 
-                type="button"
-                onClick={() => setShowPackageForm(false)}
-                className="cancel-package-btn"
-              >
-                Cancel
-              </button>
-            </div>
+  const renderCategorySpecificStep = () => {
+    const categoryConfig = getCategoryConfig(currentCategory);
+    const categoryFields = categoryConfig.fields;
+    
+    return (
+      <div className="pricing-step">
+        <div className="step-header">
+          <div className="step-icon">{categoryConfig.icon}</div>
+          <div>
+            <h3>{categoryConfig.name} Specific Pricing</h3>
+            <p>Set pricing rules specific to {categoryConfig.name.toLowerCase()} services</p>
           </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderCategorySpecificStep = () => (
-    <div className="pricing-step">
-      <div className="step-header">
-        <div className="step-icon">⚙️</div>
-        <div>
-          <h3>Category-Specific Pricing</h3>
-          <p>Set pricing rules specific to {currentCategory} services</p>
         </div>
-      </div>
-      
-      <div className="form-grid">
-        <div className="form-group">
-          <label>Wedding Premium (%)</label>
-          <input
-            type="number"
-            value={pricingData.wedding_premium}
-            onChange={(e) => handleInputChange('wedding_premium', e.target.value)}
-            placeholder="e.g., 20"
-            min="0"
-            max="100"
-          />
-          <small>Additional percentage for wedding events</small>
-        </div>
+        
+        <div className="form-grid">
+          {/* Seasonal Pricing (Florist) */}
+          {categoryFields.seasonal_pricing && (
+            <div className="form-group">
+              <label>Seasonal Pricing Multipliers</label>
+              <div className="seasonal-pricing-grid">
+                {Object.entries(categoryFields.seasonal_pricing).map(([season, config]) => (
+                  <div key={season} className="seasonal-item">
+                    <label>{config.label}</label>
+                    <input
+                      type="number"
+                      value={pricingData.seasonal_pricing?.[season] || config.default}
+                      onChange={(e) => handleInputChange('seasonal_pricing', {
+                        ...pricingData.seasonal_pricing,
+                        [season]: parseFloat(e.target.value)
+                      })}
+                      placeholder={config.default.toString()}
+                      min="0.5"
+                      max="3"
+                      step="0.1"
+                    />
+                    <small>{config.description}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-        <div className="form-group">
-          <label>Rush Fee (%)</label>
-          <input
-            type="number"
-            value={pricingData.rush_fee_percentage}
-            onChange={(e) => handleInputChange('rush_fee_percentage', e.target.value)}
-            placeholder="e.g., 15"
-            min="0"
-            max="100"
-          />
-          <small>Additional fee for last-minute bookings</small>
-        </div>
+          {/* Flower Tiers (Florist) */}
+          {categoryFields.flower_tiers && (
+            <div className="form-group">
+              <label>Flower Tier Multipliers</label>
+              <div className="flower-tiers-grid">
+                {Object.entries(categoryFields.flower_tiers).map(([tier, config]) => (
+                  <div key={tier} className="flower-tier-item">
+                    <label>{config.label}</label>
+                    <input
+                      type="number"
+                      value={pricingData.flower_tiers?.[tier] || config.multiplier}
+                      onChange={(e) => handleInputChange('flower_tiers', {
+                        ...pricingData.flower_tiers,
+                        [tier]: parseFloat(e.target.value)
+                      })}
+                      placeholder={config.multiplier.toString()}
+                      min="0.5"
+                      max="3"
+                      step="0.1"
+                    />
+                    <small>{config.description}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-        <div className="form-group">
-          <label>Deposit Percentage (%)</label>
-          <input
-            type="number"
-            value={pricingData.deposit_percentage}
-            onChange={(e) => handleInputChange('deposit_percentage', e.target.value)}
-            placeholder="e.g., 25"
-            min="0"
-            max="100"
-          />
-          <small>Required deposit to secure booking</small>
-        </div>
+          {/* Equipment Packages (DJ) */}
+          {categoryFields.equipment_packages && (
+            <div className="form-group">
+              <label>Equipment Package Pricing</label>
+              <div className="equipment-packages-grid">
+                {Object.entries(categoryFields.equipment_packages).map(([pkg, config]) => (
+                  <div key={pkg} className="equipment-package-item">
+                    <label>{config.label}</label>
+                    <input
+                      type="number"
+                      value={pricingData.equipment_packages?.[pkg]?.price || config.price}
+                      onChange={(e) => handleInputChange('equipment_packages', {
+                        ...pricingData.equipment_packages,
+                        [pkg]: {
+                          ...config,
+                          price: parseFloat(e.target.value)
+                        }
+                      })}
+                      placeholder={config.price.toString()}
+                      min="0"
+                      step="0.01"
+                    />
+                    <small>{config.description}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-        <div className="form-group">
-          <label>Minimum Guests</label>
-          <input
-            type="number"
-            value={pricingData.minimum_guests}
-            onChange={(e) => handleInputChange('minimum_guests', e.target.value)}
-            placeholder="e.g., 10"
-            min="0"
-          />
-        </div>
+          {/* Menu Tiers (Catering) */}
+          {categoryFields.menu_tiers && (
+            <div className="form-group">
+              <label>Menu Service Multipliers</label>
+              <div className="menu-tiers-grid">
+                {Object.entries(categoryFields.menu_tiers).map(([tier, config]) => (
+                  <div key={tier} className="menu-tier-item">
+                    <label>{config.label}</label>
+                    <input
+                      type="number"
+                      value={pricingData.menu_tiers?.[tier] || config.multiplier}
+                      onChange={(e) => handleInputChange('menu_tiers', {
+                        ...pricingData.menu_tiers,
+                        [tier]: parseFloat(e.target.value)
+                      })}
+                      placeholder={config.multiplier.toString()}
+                      min="0.5"
+                      max="3"
+                      step="0.1"
+                    />
+                    <small>{config.description}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-        <div className="form-group">
-          <label>Maximum Guests</label>
-          <input
-            type="number"
-            value={pricingData.maximum_guests}
-            onChange={(e) => handleInputChange('maximum_guests', e.target.value)}
-            placeholder="e.g., 200"
-            min="0"
-          />
-        </div>
+          {/* Service Staff (Catering) */}
+          {categoryFields.service_staff && (
+            <div className="form-group">
+              <label>Service Staff Configuration</label>
+              <div className="service-staff-grid">
+                <div className="form-group">
+                  <label>{categoryFields.service_staff.ratio.label}</label>
+                  <input
+                    type="number"
+                    value={pricingData.service_staff?.ratio || categoryFields.service_staff.ratio.default}
+                    onChange={(e) => handleInputChange('service_staff', {
+                      ...pricingData.service_staff,
+                      ratio: parseInt(e.target.value)
+                    })}
+                    placeholder={categoryFields.service_staff.ratio.default.toString()}
+                    min={categoryFields.service_staff.ratio.min}
+                    max={categoryFields.service_staff.ratio.max}
+                  />
+                  <small>{categoryFields.service_staff.ratio.description}</small>
+                </div>
+                <div className="form-group">
+                  <label>{categoryFields.service_staff.rate_per_server.label}</label>
+                  <input
+                    type="number"
+                    value={pricingData.service_staff?.rate_per_server || categoryFields.service_staff.rate_per_server.default}
+                    onChange={(e) => handleInputChange('service_staff', {
+                      ...pricingData.service_staff,
+                      rate_per_server: parseFloat(e.target.value)
+                    })}
+                    placeholder={categoryFields.service_staff.rate_per_server.default.toString()}
+                    min="0"
+                    step="0.01"
+                  />
+                  <small>{categoryFields.service_staff.rate_per_server.description}</small>
+                </div>
+              </div>
+            </div>
+          )}
 
-        <div className="form-group checkbox-group">
-          <label className="checkbox-label">
+          {/* Universal fields */}
+          <div className="form-group">
+            <label>Rush Fee (%)</label>
             <input
-              type="checkbox"
-              checked={pricingData.accept_unknowns}
-              onChange={(e) => handleInputChange('accept_unknowns', e.target.checked)}
+              type="number"
+              value={pricingData.rush_fee_percentage}
+              onChange={(e) => handleInputChange('rush_fee_percentage', e.target.value)}
+              placeholder="e.g., 15"
+              min="0"
+              max="100"
             />
-            <span>Accept requests with unknown guest counts</span>
-          </label>
+            <small>Additional fee for last-minute bookings</small>
+          </div>
+
+          <div className="form-group">
+            <label>Deposit Percentage (%)</label>
+            <input
+              type="number"
+              value={pricingData.deposit_percentage}
+              onChange={(e) => handleInputChange('deposit_percentage', e.target.value)}
+              placeholder="e.g., 25"
+              min="0"
+              max="100"
+            />
+            <small>Required deposit to secure booking</small>
+          </div>
+
+          {/* Guest-dependent fields (only show for relevant categories) */}
+          {(currentCategory === 'florist' || currentCategory === 'catering') && (
+            <>
+              <div className="form-group">
+                <label>Minimum Guests</label>
+                <input
+                  type="number"
+                  value={pricingData.minimum_guests}
+                  onChange={(e) => handleInputChange('minimum_guests', e.target.value)}
+                  placeholder="e.g., 10"
+                  min="0"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Maximum Guests</label>
+                <input
+                  type="number"
+                  value={pricingData.maximum_guests}
+                  onChange={(e) => handleInputChange('maximum_guests', e.target.value)}
+                  placeholder="e.g., 200"
+                  min="0"
+                />
+              </div>
+
+              <div className="form-group checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={pricingData.accept_unknowns}
+                    onChange={(e) => handleInputChange('accept_unknowns', e.target.checked)}
+                  />
+                  <span>Accept requests with unknown guest counts</span>
+                </label>
+              </div>
+            </>
+          )}
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderCommunicationStep = () => (
     <div className="pricing-step">
