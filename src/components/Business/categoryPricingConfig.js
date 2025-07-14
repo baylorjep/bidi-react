@@ -588,7 +588,7 @@ export const categoryPricingConfig = {
         { name: "Same Day Edit", type: "fixed", defaultPrice: 500 },
         { name: "Extended Highlight", type: "fixed", defaultPrice: 200 }
       ]
-
+    }
   },
 
   beauty: {
@@ -703,7 +703,7 @@ export const categoryPricingConfig = {
         { name: "Hair Extensions", type: "fixed", defaultPrice: 50 },
         { name: "Touch-up Service", type: "fixed", defaultPrice: 75 }
       ]
-
+    }
   }
 };
 
