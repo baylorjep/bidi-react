@@ -310,7 +310,7 @@ const PricingSetup = () => {
 
       if (completedCategories >= allCategories) {
         // All categories complete, redirect to Bidi AI trainer
-        navigate('/dashboard/autobid-trainer');
+        navigate('/autobid-trainer');
       } else {
         // Move to next incomplete category
         const nextCategory = businessCategories.find(cat => !existingPricingRules[cat]);
