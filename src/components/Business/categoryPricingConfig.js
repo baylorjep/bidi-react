@@ -116,7 +116,7 @@ export const categoryPricingConfig = {
         { name: "Second Photographer", type: "fixed", defaultPrice: 500 },
         { name: "Drone Coverage", type: "fixed", defaultPrice: 200 }
       ]
-
+    }
   },
 
   florist: {
@@ -221,7 +221,7 @@ export const categoryPricingConfig = {
         { name: "Petals for Aisle", type: "per_bag", defaultPrice: 25 },
         { name: "Preserved Flowers", type: "multiplier", defaultPrice: 1.5 }
       ]
-
+    }
   },
 
   dj: {
@@ -354,7 +354,7 @@ export const categoryPricingConfig = {
         { name: "Uplighting", type: "fixed", defaultPrice: 200 },
         { name: "Ceremony Sound", type: "fixed", defaultPrice: 150 }
       ]
-
+    }
   },
 
   catering: {
@@ -469,7 +469,7 @@ export const categoryPricingConfig = {
         { name: "Late Night Snacks", type: "per_person", defaultPrice: 8 },
         { name: "Cake Cutting", type: "fixed", defaultPrice: 50 }
       ]
-
+    }
   },
 
   videography: {
