@@ -25,7 +25,6 @@ const PricingSetup = () => {
     blocklist_keywords: [],
     default_message: '',
     additional_comments: '',
-    pricing_packages: [], // Array of package objects
     
     // Category-specific pricing
     wedding_premium: '',
@@ -94,6 +93,7 @@ const PricingSetup = () => {
     features: []
   });
   const [showPackageForm, setShowPackageForm] = useState(false);
+  const [existingPackages, setExistingPackages] = useState([]);
 
   const navigate = useNavigate();
 
@@ -144,6 +144,19 @@ const PricingSetup = () => {
           setExistingPricingRules(rulesByCategory);
         }
 
+        // Fetch existing packages from business_packages table
+        const { data: packagesData, error: packagesError } = await supabase
+          .from('business_packages')
+          .select('*')
+          .eq('business_id', currentUser.id)
+          .order('created_at', { ascending: true });
+
+        if (packagesError) {
+          console.error('Error fetching packages:', packagesError);
+        } else {
+          setExistingPackages(packagesData || []);
+        }
+
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -169,42 +182,69 @@ const PricingSetup = () => {
   };
 
   // Package management functions
-  const handleAddPackage = () => {
+  const handleAddPackage = async () => {
     if (!newPackage.name || !newPackage.price) {
       alert('Please enter at least a package name and price');
       return;
     }
 
-    const packageToAdd = {
-      id: Date.now(), // Simple unique ID
-      name: newPackage.name,
-      price: parseFloat(newPackage.price),
-      description: newPackage.description,
-      duration: newPackage.duration,
-      features: newPackage.features.filter(f => f.trim() !== '')
-    };
+    try {
+      // Save to business_packages table
+      const packageData = {
+        business_id: user.id,
+        name: newPackage.name,
+        price: parseFloat(newPackage.price),
+        description: newPackage.description || '',
+        features: newPackage.features.filter(f => f.trim() !== ''),
+        image_url: null // Can be added later
+      };
 
-    setPricingData(prev => ({
-      ...prev,
-      pricing_packages: [...prev.pricing_packages, packageToAdd]
-    }));
+      const { data: savedPackage, error } = await supabase
+        .from('business_packages')
+        .insert([packageData])
+        .select()
+        .single();
 
-    // Reset form
-    setNewPackage({
-      name: '',
-      price: '',
-      description: '',
-      duration: '',
-      features: []
-    });
-    setShowPackageForm(false);
+      if (error) throw error;
+
+      // Add to local state
+      setExistingPackages(prev => [...prev, savedPackage]);
+
+      // Reset form
+      setNewPackage({
+        name: '',
+        price: '',
+        description: '',
+        duration: '',
+        features: []
+      });
+      setShowPackageForm(false);
+
+      toast.success('Package added successfully!');
+    } catch (error) {
+      console.error('Error adding package:', error);
+      toast.error('Failed to add package. Please try again.');
+    }
   };
 
-  const handleRemovePackage = (packageId) => {
-    setPricingData(prev => ({
-      ...prev,
-      pricing_packages: prev.pricing_packages.filter(pkg => pkg.id !== packageId)
-    }));
+  const handleRemovePackage = async (packageId) => {
+    try {
+      // Remove from database
+      const { error } = await supabase
+        .from('business_packages')
+        .delete()
+        .eq('id', packageId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setExistingPackages(prev => prev.filter(pkg => pkg.id !== packageId));
+
+      toast.success('Package removed successfully!');
+    } catch (error) {
+      console.error('Error removing package:', error);
+      toast.error('Failed to remove package. Please try again.');
+    }
   };
 
   const handleAddFeature = () => {
@@ -241,7 +281,6 @@ const PricingSetup = () => {
         blocklist_keywords: existing.blocklist_keywords || [],
         default_message: existing.default_message || '',
         additional_comments: existing.additional_comments || '',
-        pricing_packages: existing.pricing_packages || [],
         wedding_premium: existing.wedding_premium?.toString() || '',
         service_addons: existing.service_addons || {},
         seasonal_pricing: existing.seasonal_pricing || {},
@@ -553,17 +592,20 @@ const PricingSetup = () => {
             <p>Create custom packages for your {categoryConfig.name.toLowerCase()} services</p>
           </div>
           
-          {pricingData.pricing_packages.length > 0 && (
+          {existingPackages.length > 0 && (
             <div className="packages-grid">
-              {pricingData.pricing_packages.map((pkg) => (
+              <div className="packages-header">
+                <h5>Your Existing Packages</h5>
+                <p>These packages are already displayed on your portfolio</p>
+              </div>
+              {existingPackages.map((pkg) => (
                 <div key={pkg.id} className="package-card">
                   <div className="package-header">
                     <h5>{pkg.name}</h5>
                     <span className="package-price">${pkg.price}</span>
                   </div>
                   {pkg.description && <p className="package-description">{pkg.description}</p>}
-                  {pkg.duration && <p className="package-duration">⏱️ {pkg.duration}</p>}
-                  {pkg.features.length > 0 && (
+                  {pkg.features && pkg.features.length > 0 && (
                     <ul className="package-features">
                       {pkg.features.map((feature, index) => (
                         <li key={index}>✓ {feature}</li>

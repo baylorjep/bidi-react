@@ -444,6 +444,28 @@
   margin-bottom: 2rem;
 }
 
+.packages-header {
+  grid-column: 1 / -1;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border-radius: 12px;
+  border: 1px solid #e1e8ff;
+}
+
+.packages-header h5 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.packages-header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
 .package-card {
   background: white;
   border: 2px solid #e2e8f0;
