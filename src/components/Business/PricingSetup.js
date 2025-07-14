@@ -765,13 +765,20 @@ const PricingSetup = () => {
         {/* Step Progress */}
         <div className="step-progress">
           <div className="step-indicators">
-            {['Basic Pricing', 'Category Specific', 'Communication'].map((step, index) => (
+            {[
+              { title: 'Basic Pricing', icon: '💰' },
+              { title: 'Category Specific', icon: '⚙️' },
+              { title: 'Communication', icon: '💬' }
+            ].map((step, index) => (
               <div 
-                key={step}
+                key={step.title}
                 className={`step-indicator ${index <= currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
               >
-                <div className="step-number">{index + 1}</div>
-                <span className="step-label">{step}</span>
+                <div className="step-circle">
+                  <span className="step-icon">{step.icon}</span>
+                  <span className="step-number">{index + 1}</span>
+                </div>
+                <span className="step-label">{step.title}</span>
               </div>
             ))}
           </div>
