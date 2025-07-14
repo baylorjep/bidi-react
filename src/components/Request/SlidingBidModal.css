@@ -134,6 +134,7 @@
   font-weight: 600;
   font-size: 18px;
   margin-bottom: 8px;
+  text-align: left;
 }
 .sbm-input, .sbm-textarea {
   width: 100%;
@@ -152,11 +153,15 @@
 
 .sbm-discount-section {
   margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 .sbm-discount-label {
   font-weight: 600;
   font-size: 16px;
   margin-bottom: 4px;
+  text-align: left;
 }
 .sbm-discount-row {
   display: flex;
@@ -236,14 +241,29 @@
 } 
 
 .sbm-toolbox {
-  background: #faf5ff;
-  border: 1.5px solid #f0e6ff;
-  border-radius: 12px;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0 0 8px 8px;
   padding: 18px 16px 12px 16px;
   margin: 16px 0 18px 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 12px;
+  padding-top: 0;
+  margin-top: 12px;
+}
+
+.sbm-toolbox-toggle {
+  background: #faf5ff;
+  border: 1.5px solid #f0e6ff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  display: flex;
 }
 @media (max-width: 600px) {
   .sbm-toolbox {

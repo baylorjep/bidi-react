@@ -26,6 +26,11 @@ const formatAndCheckValue = (value, formatter = null) => {
     return value;
 };
 
+// Helper function to check if there are photos to display
+const hasPhotos = (photos) => {
+    return photos && photos.length > 0;
+};
+
 // Collapsible Section Component
 const CollapsibleSection = ({ title, children, defaultOpen = false }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -384,11 +389,13 @@ const WeddingPlanningRequest = ({ request, filteredPhotos, onPhotoClick, getPubl
                 </CollapsibleSection>
             )}
 
-            <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
-                photos={filteredPhotos} 
-                onPhotoClick={onPhotoClick} 
-                getPublicUrl={getPublicUrl} 
-            /></CollapsibleSection>
+            {hasPhotos(filteredPhotos) && (
+                <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
+                    photos={filteredPhotos} 
+                    onPhotoClick={onPhotoClick} 
+                    getPublicUrl={getPublicUrl} 
+                /></CollapsibleSection>
+            )}
         </div>
     );
 };
@@ -779,11 +786,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                             </CollapsibleSection>
                         )}
 
-                        <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
-                            photos={filteredPhotos} 
-                            onPhotoClick={handlePhotoClick} 
-                            getPublicUrl={getPublicUrl} 
-                        /></CollapsibleSection>
+                        {hasPhotos(filteredPhotos) && (
+                            <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
+                                photos={filteredPhotos} 
+                                onPhotoClick={handlePhotoClick} 
+                                getPublicUrl={getPublicUrl} 
+                            /></CollapsibleSection>
+                        )}
                     </div>
                 );
             case 'photography_requests':
@@ -1018,11 +1027,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                             </CollapsibleSection>
                         )}
 
-                        <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
-                            photos={filteredPhotos} 
-                            onPhotoClick={handlePhotoClick} 
-                            getPublicUrl={getPublicUrl} 
-                        /></CollapsibleSection>
+                        {hasPhotos(filteredPhotos) && (
+                            <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
+                                photos={filteredPhotos} 
+                                onPhotoClick={handlePhotoClick} 
+                                getPublicUrl={getPublicUrl} 
+                            /></CollapsibleSection>
+                        )}
                     </div>
                 );
             case 'dj_requests':
@@ -1204,11 +1215,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                             </CollapsibleSection>
                         )}
 
-                        <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
-                            photos={filteredPhotos} 
-                            onPhotoClick={handlePhotoClick} 
-                            getPublicUrl={getPublicUrl} 
-                        /></CollapsibleSection>
+                        {hasPhotos(filteredPhotos) && (
+                            <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
+                                photos={filteredPhotos} 
+                                onPhotoClick={handlePhotoClick} 
+                                getPublicUrl={getPublicUrl} 
+                            /></CollapsibleSection>
+                        )}
                     </div>
                 );
             case 'florist_requests':
@@ -1466,11 +1479,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                             </CollapsibleSection>
                         )}
 
-                        <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
-                            photos={filteredPhotos} 
-                            onPhotoClick={handlePhotoClick} 
-                            getPublicUrl={getPublicUrl} 
-                        /></CollapsibleSection>
+                        {hasPhotos(filteredPhotos) && (
+                            <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
+                                photos={filteredPhotos} 
+                                onPhotoClick={handlePhotoClick} 
+                                getPublicUrl={getPublicUrl} 
+                            /></CollapsibleSection>
+                        )}
                     </div>
                 );
             case 'catering_requests':
@@ -1659,11 +1674,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                             </CollapsibleSection>
                         )}
 
-                        <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
-                            photos={filteredPhotos} 
-                            onPhotoClick={handlePhotoClick} 
-                            getPublicUrl={getPublicUrl} 
-                        /></CollapsibleSection>
+                        {hasPhotos(filteredPhotos) && (
+                            <CollapsibleSection title="Inspiration Photos"><PhotoGrid 
+                                photos={filteredPhotos} 
+                                onPhotoClick={handlePhotoClick} 
+                                getPublicUrl={getPublicUrl} 
+                            /></CollapsibleSection>
+                        )}
                     </div>
                 );
             case 'videography_requests':
@@ -2018,11 +2035,13 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                             />
                         )}
                         
-                        <CollapsibleSection title="Inspiration Photos"><PhotoGrid
-                            photos={servicePhotos && servicePhotos.length > 0 ? servicePhotos : filteredPhotos}
-                            onPhotoClick={handlePhotoClick}
-                            getPublicUrl={getPublicUrl}
-                        /></CollapsibleSection>
+                        {hasPhotos(servicePhotos && servicePhotos.length > 0 ? servicePhotos : filteredPhotos) && (
+                            <CollapsibleSection title="Inspiration Photos"><PhotoGrid
+                                photos={servicePhotos && servicePhotos.length > 0 ? servicePhotos : filteredPhotos}
+                                onPhotoClick={handlePhotoClick}
+                                getPublicUrl={getPublicUrl}
+                            /></CollapsibleSection>
+                        )}
                     </div>
                 );
         }
@@ -2030,7 +2049,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
 
     return (
         <div className="rdm-root">
-            <div style={{ padding: '0 0 24px 0', maxWidth: 900, margin: '0 auto' }}>
+            <div style={{ maxWidth: 900, margin: '0 auto' }}>
                 <div className="rdm-title">{getTitle()}</div>
                 <div className="rdm-status-row">
                     {isNew(request.created_at) && (
