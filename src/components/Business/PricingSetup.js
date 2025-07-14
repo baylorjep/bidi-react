@@ -251,10 +251,24 @@ const PricingSetup = () => {
   const handleSavePricing = async () => {
     setIsSaving(true);
     try {
+      // Clean numeric fields - convert empty strings to null
+      const cleanedData = {
+        ...pricingData,
+        hourly_rate: pricingData.hourly_rate === '' ? null : parseFloat(pricingData.hourly_rate),
+        base_price: pricingData.base_price === '' ? null : parseFloat(pricingData.base_price),
+        per_person_rate: pricingData.per_person_rate === '' ? null : parseFloat(pricingData.per_person_rate),
+        travel_fee_per_mile: pricingData.travel_fee_per_mile === '' ? null : parseFloat(pricingData.travel_fee_per_mile),
+        wedding_premium: pricingData.wedding_premium === '' ? null : parseFloat(pricingData.wedding_premium),
+        rush_fee_percentage: pricingData.rush_fee_percentage === '' ? null : parseFloat(pricingData.rush_fee_percentage),
+        deposit_percentage: pricingData.deposit_percentage === '' ? null : parseFloat(pricingData.deposit_percentage),
+        minimum_guests: pricingData.minimum_guests === '' ? null : parseInt(pricingData.minimum_guests),
+        maximum_guests: pricingData.maximum_guests === '' ? null : parseInt(pricingData.maximum_guests)
+      };
+
       const pricingRule = {
         business_id: user.id,
         category: currentCategory,
-        ...pricingData,
+        ...cleanedData,
         created_at: new Date().toISOString()
       };
 

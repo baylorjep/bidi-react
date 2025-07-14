@@ -321,6 +321,7 @@
 /* Checkbox Group */
 .checkbox-group {
   grid-column: 1 / -1;
+  margin-top: 1rem;
 }
 
 .checkbox-label {
@@ -333,6 +334,7 @@
   border-radius: 12px;
   border: 2px solid #e2e8f0;
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 .checkbox-label:hover {
