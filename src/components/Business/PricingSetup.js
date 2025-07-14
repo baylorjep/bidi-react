@@ -285,6 +285,7 @@ const PricingSetup = () => {
       // Clean numeric fields - convert empty strings to null
       const cleanedData = {
         ...pricingData,
+        // Basic fields
         hourly_rate: pricingData.hourly_rate === '' ? null : parseFloat(pricingData.hourly_rate),
         base_price: pricingData.base_price === '' ? null : parseFloat(pricingData.base_price),
         per_person_rate: pricingData.per_person_rate === '' ? null : parseFloat(pricingData.per_person_rate),
@@ -293,7 +294,32 @@ const PricingSetup = () => {
         rush_fee_percentage: pricingData.rush_fee_percentage === '' ? null : parseFloat(pricingData.rush_fee_percentage),
         deposit_percentage: pricingData.deposit_percentage === '' ? null : parseFloat(pricingData.deposit_percentage),
         minimum_guests: pricingData.minimum_guests === '' ? null : parseInt(pricingData.minimum_guests),
-        maximum_guests: pricingData.maximum_guests === '' ? null : parseInt(pricingData.maximum_guests)
+        maximum_guests: pricingData.maximum_guests === '' ? null : parseInt(pricingData.maximum_guests),
+        
+        // Photography-specific fields
+        full_day_rate: pricingData.full_day_rate === '' ? null : parseFloat(pricingData.full_day_rate),
+        half_day_rate: pricingData.half_day_rate === '' ? null : parseFloat(pricingData.half_day_rate),
+        photo_editing_rate: pricingData.photo_editing_rate === '' ? null : parseFloat(pricingData.photo_editing_rate),
+        rush_editing_fee: pricingData.rush_editing_fee === '' ? null : parseFloat(pricingData.rush_editing_fee),
+        
+        // Florist-specific fields
+        setup_fee: pricingData.setup_fee === '' ? null : parseFloat(pricingData.setup_fee),
+        delivery_fee: pricingData.delivery_fee === '' ? null : parseFloat(pricingData.delivery_fee),
+        
+        // DJ-specific fields
+        overtime_rate: pricingData.overtime_rate === '' ? null : parseFloat(pricingData.overtime_rate),
+        
+        // Catering-specific fields
+        kitchen_rental: pricingData.kitchen_rental === '' ? null : parseFloat(pricingData.kitchen_rental),
+        china_rental: pricingData.china_rental === '' ? null : parseFloat(pricingData.china_rental),
+        
+        // Videography-specific fields
+        editing_rate: pricingData.editing_rate === '' ? null : parseFloat(pricingData.editing_rate),
+        
+        // Beauty-specific fields
+        hair_only_rate: pricingData.hair_only_rate === '' ? null : parseFloat(pricingData.hair_only_rate),
+        makeup_only_rate: pricingData.makeup_only_rate === '' ? null : parseFloat(pricingData.makeup_only_rate),
+        travel_fee: pricingData.travel_fee === '' ? null : parseFloat(pricingData.travel_fee)
       };
 
       const pricingRule = {
