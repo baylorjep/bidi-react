@@ -216,30 +216,13 @@
   min-width: 120px;
 }
 
-.step-indicator:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 60%;
-  width: 80%;
-  height: 2px;
-  background: #e5e7eb;
-  z-index: 1;
-}
 
-.step-indicator.completed:not(:last-child)::after {
-  background: #10b981;
-}
-
-.step-indicator.active:not(:last-child)::after {
-  background: #9633eb;
-}
 
 .step-number {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #ffffff;
+  background: #e5e7eb;
   color: #6b7280;
   display: flex;
   align-items: center;
