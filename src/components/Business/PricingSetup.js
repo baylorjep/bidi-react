@@ -315,10 +315,15 @@ const PricingSetup = () => {
 
   const renderBasicPricingStep = () => (
     <div className="pricing-step">
-      <h3>Basic Pricing Structure</h3>
-      <p className="step-description">Set up your fundamental pricing model and rates.</p>
+      <div className="step-header">
+        <div className="step-icon">💰</div>
+        <div>
+          <h3>Basic Pricing Structure</h3>
+          <p>Set up your fundamental pricing model and rates</p>
+        </div>
+      </div>
       
-      <div className="form-row">
+      <div className="form-grid">
         <div className="form-group">
           <label>Pricing Model</label>
           <select
@@ -343,9 +348,7 @@ const PricingSetup = () => {
             <option value="aggressive">Aggressive (Lower prices)</option>
           </select>
         </div>
-      </div>
 
-      <div className="form-row">
         {pricingData.pricing_model === 'fixed' && (
           <div className="form-group">
             <label>Base Price ($)</label>
@@ -403,26 +406,28 @@ const PricingSetup = () => {
 
       {/* Package Builder */}
       <div className="package-builder">
-        <h4>Pricing Packages</h4>
-        <p>Create custom packages for your services</p>
+        <div className="section-header">
+          <h4>Pricing Packages</h4>
+          <p>Create custom packages for your services</p>
+        </div>
         
         {pricingData.pricing_packages.length > 0 && (
-          <div className="packages-list">
+          <div className="packages-grid">
             {pricingData.pricing_packages.map((pkg) => (
-              <div key={pkg.id} className="package-item">
-                <div className="package-info">
+              <div key={pkg.id} className="package-card">
+                <div className="package-header">
                   <h5>{pkg.name}</h5>
-                  <p className="package-price">${pkg.price}</p>
-                  {pkg.description && <p className="package-description">{pkg.description}</p>}
-                  {pkg.duration && <p className="package-duration">Duration: {pkg.duration}</p>}
-                  {pkg.features.length > 0 && (
-                    <ul className="package-features">
-                      {pkg.features.map((feature, index) => (
-                        <li key={index}>{feature}</li>
-                      ))}
-                    </ul>
-                  )}
+                  <span className="package-price">${pkg.price}</span>
                 </div>
+                {pkg.description && <p className="package-description">{pkg.description}</p>}
+                {pkg.duration && <p className="package-duration">⏱️ {pkg.duration}</p>}
+                {pkg.features.length > 0 && (
+                  <ul className="package-features">
+                    {pkg.features.map((feature, index) => (
+                      <li key={index}>✓ {feature}</li>
+                    ))}
+                  </ul>
+                )}
                 <button 
                   className="remove-package-btn"
                   onClick={() => handleRemovePackage(pkg.id)}
@@ -439,11 +444,12 @@ const PricingSetup = () => {
             className="add-package-btn"
             onClick={() => setShowPackageForm(true)}
           >
-            + Add Package
+            <span>+</span>
+            <span>Add New Package</span>
           </button>
         ) : (
           <div className="package-form">
-            <div className="form-row">
+            <div className="form-grid">
               <div className="form-group">
                 <label>Package Name</label>
                 <input
@@ -464,9 +470,6 @@ const PricingSetup = () => {
                   step="0.01"
                 />
               </div>
-            </div>
-
-            <div className="form-row">
               <div className="form-group">
                 <label>Description</label>
                 <input
@@ -489,33 +492,35 @@ const PricingSetup = () => {
 
             <div className="form-group">
               <label>Features</label>
-              {newPackage.features.map((feature, index) => (
-                <div key={index} className="feature-input">
-                  <input
-                    type="text"
-                    value={feature}
-                    onChange={(e) => handleFeatureChange(index, e.target.value)}
-                    placeholder={`Feature ${index + 1}`}
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => handleRemoveFeature(index)}
-                    className="remove-feature-btn"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              <button 
-                type="button"
-                onClick={handleAddFeature}
-                className="add-feature-btn"
-              >
-                + Add Feature
-              </button>
+              <div className="features-container">
+                {newPackage.features.map((feature, index) => (
+                  <div key={index} className="feature-input">
+                    <input
+                      type="text"
+                      value={feature}
+                      onChange={(e) => handleFeatureChange(index, e.target.value)}
+                      placeholder={`Feature ${index + 1}`}
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => handleRemoveFeature(index)}
+                      className="remove-feature-btn"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button 
+                  type="button"
+                  onClick={handleAddFeature}
+                  className="add-feature-btn"
+                >
+                  + Add Feature
+                </button>
+              </div>
             </div>
 
-            <div className="package-form-actions">
+            <div className="form-actions">
               <button 
                 type="button"
                 onClick={handleAddPackage}
@@ -539,10 +544,15 @@ const PricingSetup = () => {
 
   const renderCategorySpecificStep = () => (
     <div className="pricing-step">
-      <h3>Category-Specific Pricing</h3>
-      <p className="step-description">Set pricing rules specific to {currentCategory} services.</p>
+      <div className="step-header">
+        <div className="step-icon">⚙️</div>
+        <div>
+          <h3>Category-Specific Pricing</h3>
+          <p>Set pricing rules specific to {currentCategory} services</p>
+        </div>
+      </div>
       
-      <div className="form-row">
+      <div className="form-grid">
         <div className="form-group">
           <label>Wedding Premium (%)</label>
           <input
@@ -568,9 +578,7 @@ const PricingSetup = () => {
           />
           <small>Additional fee for last-minute bookings</small>
         </div>
-      </div>
 
-      <div className="form-row">
         <div className="form-group">
           <label>Deposit Percentage (%)</label>
           <input
@@ -594,9 +602,7 @@ const PricingSetup = () => {
             min="0"
           />
         </div>
-      </div>
 
-      <div className="form-row">
         <div className="form-group">
           <label>Maximum Guests</label>
           <input
@@ -608,17 +614,15 @@ const PricingSetup = () => {
           />
         </div>
 
-        <div className="form-group">
-          <label>Accept Unknown Guest Counts</label>
-          <div className="checkbox-group">
+        <div className="form-group checkbox-group">
+          <label className="checkbox-label">
             <input
               type="checkbox"
-              id="accept_unknowns"
               checked={pricingData.accept_unknowns}
               onChange={(e) => handleInputChange('accept_unknowns', e.target.checked)}
             />
-            <label htmlFor="accept_unknowns">Accept requests with unknown guest counts</label>
-          </div>
+            <span>Accept requests with unknown guest counts</span>
+          </label>
         </div>
       </div>
     </div>
@@ -626,10 +630,15 @@ const PricingSetup = () => {
 
   const renderCommunicationStep = () => (
     <div className="pricing-step">
-      <h3>Communication & Preferences</h3>
-      <p className="step-description">Set your default message and communication preferences. This helps Bidi AI craft personalized responses.</p>
+      <div className="step-header">
+        <div className="step-icon">💬</div>
+        <div>
+          <h3>Communication & Preferences</h3>
+          <p>Set your default message and communication preferences</p>
+        </div>
+      </div>
       
-      <div className="form-group full-width">
+      <div className="form-group">
         <label>Default Message Template</label>
         <textarea
           value={pricingData.default_message}
@@ -640,7 +649,7 @@ const PricingSetup = () => {
         <small>Use {'${amount}'} to include the bid amount in your message</small>
       </div>
 
-      <div className="form-group full-width">
+      <div className="form-group">
         <label>Additional Comments</label>
         <textarea
           value={pricingData.additional_comments}
@@ -650,7 +659,7 @@ const PricingSetup = () => {
         />
       </div>
 
-      <div className="form-group full-width">
+      <div className="form-group">
         <label>Blocklist Keywords</label>
         <input
           type="text"
@@ -707,73 +716,79 @@ const PricingSetup = () => {
     <div className="pricing-setup-container">
       {/* Header */}
       <div className="pricing-setup-header">
-        <h1>Bidi AI Pricing Setup</h1>
-        <p>Configure your pricing rules to train Bidi AI to generate accurate bids</p>
+        <div className="header-content">
+          <h1>Bidi AI Pricing Setup</h1>
+          <p>Configure your pricing rules to train Bidi AI to generate accurate bids</p>
+        </div>
       </div>
 
       {/* Overall Progress */}
       <div className="overall-progress">
-        <div className="progress-header">
+        <div className="progress-info">
           <h3>Overall Progress</h3>
           <span className="progress-count">{completedCategories} of {totalCategories} categories complete</span>
         </div>
-        <div className="progress-bar-container">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${overallProgress}%` }}
-            ></div>
-          </div>
+        <div className="progress-bar">
+          <div 
+            className="progress-fill" 
+            style={{ width: `${overallProgress}%` }}
+          ></div>
         </div>
       </div>
 
       {/* Category Navigation */}
       <div className="category-navigation">
-        <div className="category-tabs">
-          {businessCategories.map((category, index) => (
-            <button
-              key={category}
-              className={`category-tab ${category === currentCategory ? 'active' : ''} ${existingPricingRules[category] ? 'completed' : ''}`}
-              onClick={() => handleCategoryChange(category)}
-            >
-              <div className="tab-icon">
-                {existingPricingRules[category] ? (
-                  <span className="check-icon">✓</span>
-                ) : (
-                  <span className="tab-number">{index + 1}</span>
-                )}
-              </div>
-              <span className="tab-label">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
-            </button>
-          ))}
-        </div>
+        {businessCategories.map((category, index) => (
+          <button
+            key={category}
+            className={`category-card ${category === currentCategory ? 'active' : ''} ${existingPricingRules[category] ? 'completed' : ''}`}
+            onClick={() => handleCategoryChange(category)}
+          >
+            <div className="category-icon">
+              {existingPricingRules[category] ? (
+                <span className="check-icon">✓</span>
+              ) : (
+                <span className="category-number">{index + 1}</span>
+              )}
+            </div>
+            <span className="category-name">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+          </button>
+        ))}
       </div>
 
       {/* Current Category Content */}
       <div className="category-content">
         <div className="category-header">
-          <h2>Setting up pricing for: <span className="category-highlight">{currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</span></h2>
-          {existingPricingRules[currentCategory] && (
-            <div className="category-status completed">
-              <span className="status-icon">✓</span>
-              <span>Pricing rules saved</span>
-            </div>
-          )}
+          <div className="category-info">
+            <h2>Setting up pricing for: <span className="category-highlight">{currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</span></h2>
+            {existingPricingRules[currentCategory] && (
+              <div className="category-status">
+                <span className="status-icon">✓</span>
+                <span>Pricing rules saved</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Simple Step Progress */}
+        {/* Step Progress */}
         <div className="step-progress">
           <div className="step-indicators">
             <div className={`step-indicator ${currentStep >= 0 ? 'active' : ''}`}>
-              <div className="step-number">1</div>
+              <div className="step-circle">
+                <span className="step-number">1</span>
+              </div>
               <span className="step-label">Basic Pricing</span>
             </div>
             <div className={`step-indicator ${currentStep >= 1 ? 'active' : ''}`}>
-              <div className="step-number">2</div>
+              <div className="step-circle">
+                <span className="step-number">2</span>
+              </div>
               <span className="step-label">Category Specific</span>
             </div>
             <div className={`step-indicator ${currentStep >= 2 ? 'active' : ''}`}>
-              <div className="step-number">3</div>
+              <div className="step-circle">
+                <span className="step-number">3</span>
+              </div>
               <span className="step-label">Communication</span>
             </div>
           </div>
@@ -808,12 +823,14 @@ const PricingSetup = () => {
 
       {/* Info Section */}
       <div className="pricing-info">
-        <h4>Why is this important?</h4>
-        <p>
-          Bidi AI needs to understand your exact pricing structure to generate accurate bids. 
-          This includes your base rates, multipliers, and special considerations. 
-          The more detailed your pricing rules, the more accurate the Bidi AI-generated bids will be.
-        </p>
+        <div className="info-content">
+          <h4>Why is this important?</h4>
+          <p>
+            Bidi AI needs to understand your exact pricing structure to generate accurate bids. 
+            This includes your base rates, multipliers, and special considerations. 
+            The more detailed your pricing rules, the more accurate the Bidi AI-generated bids will be.
+          </p>
+        </div>
       </div>
     </div>
   );
