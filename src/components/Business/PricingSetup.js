@@ -601,11 +601,21 @@ const PricingSetup = () => {
               </div>
               {existingPackages.map((pkg) => (
                 <div key={pkg.id} className="package-card">
+                  {pkg.image_url && (
+                    <div className="package-image">
+                      <img src={pkg.image_url} alt={pkg.name} />
+                    </div>
+                  )}
                   <div className="package-header">
                     <h5>{pkg.name}</h5>
                     <span className="package-price">${pkg.price}</span>
                   </div>
-                  {pkg.description && <p className="package-description">{pkg.description}</p>}
+                  {pkg.description && (
+                    <div 
+                      className="package-description"
+                      dangerouslySetInnerHTML={{ __html: pkg.description }}
+                    />
+                  )}
                   {pkg.features && pkg.features.length > 0 && (
                     <ul className="package-features">
                       {pkg.features.map((feature, index) => (
