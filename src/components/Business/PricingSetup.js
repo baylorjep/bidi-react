@@ -627,7 +627,7 @@ const PricingSetup = () => {
   const renderCommunicationStep = () => (
     <div className="pricing-step">
       <h3>Communication & Preferences</h3>
-      <p className="step-description">Set your default message and communication preferences. This helps the AI craft personalized responses.</p>
+      <p className="step-description">Set your default message and communication preferences. This helps Bidi AI craft personalized responses.</p>
       
       <div className="form-group full-width">
         <label>Default Message Template</label>
@@ -691,7 +691,6 @@ const PricingSetup = () => {
   const completedCategories = Object.keys(existingPricingRules).length;
   const totalCategories = businessCategories.length;
   const overallProgress = (completedCategories / totalCategories) * 100;
-  const currentCategoryIndex = businessCategories.indexOf(currentCategory);
 
   if (isLoading) {
     return (
@@ -762,25 +761,21 @@ const PricingSetup = () => {
           )}
         </div>
 
-        {/* Step Progress */}
+        {/* Simple Step Progress */}
         <div className="step-progress">
           <div className="step-indicators">
-            {[
-              { title: 'Basic Pricing', icon: '💰' },
-              { title: 'Category Specific', icon: '⚙️' },
-              { title: 'Communication', icon: '💬' }
-            ].map((step, index) => (
-              <div 
-                key={step.title}
-                className={`step-indicator ${index <= currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
-              >
-                <div className="step-circle">
-                  <span className="step-icon">{step.icon}</span>
-                  <span className="step-number">{index + 1}</span>
-                </div>
-                <span className="step-label">{step.title}</span>
-              </div>
-            ))}
+            <div className={`step-indicator ${currentStep >= 0 ? 'active' : ''}`}>
+              <div className="step-number">1</div>
+              <span className="step-label">Basic Pricing</span>
+            </div>
+            <div className={`step-indicator ${currentStep >= 1 ? 'active' : ''}`}>
+              <div className="step-number">2</div>
+              <span className="step-label">Category Specific</span>
+            </div>
+            <div className={`step-indicator ${currentStep >= 2 ? 'active' : ''}`}>
+              <div className="step-number">3</div>
+              <span className="step-label">Communication</span>
+            </div>
           </div>
         </div>
 
