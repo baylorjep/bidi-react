@@ -1732,7 +1732,16 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
 
       <div className="vendor-categories-vendor-manager">
         {vendorCategories
-          .filter(category => !demoMode || category.id === 'catering') // Only show catering in demo mode
+          .filter(category => {
+            if (!demoMode) return true;
+            // In demo mode, show the category that matches the demo data
+            if (demoRequests && demoRequests.length > 0) {
+              const demoCategory = demoRequests[0].type;
+              return category.id === demoCategory;
+            }
+            // Fallback to photography for wedding demo, catering for corporate demo
+            return category.id === 'photography';
+          })
           .map(category => {
           const categoryVendors = getVendorsByCategory(category.id);
           const categoryBids = getBidsByCategory(category.id);

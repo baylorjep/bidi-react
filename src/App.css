@@ -11546,7 +11546,7 @@ footer a:hover, footer a:active, footer a:focus {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  height: 800px;
+  height: 900px;
   gap: 8px;
   position: relative;
   margin-top: 4px;
