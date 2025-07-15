@@ -1142,23 +1142,16 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         <meta property="og:description" content={getSeoDescription()} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
-        {profileImage && (
-          <>
-            <meta property="og:image" content={profileImage} />
-            <meta property="og:image:width" content="1200" />
-            <meta property="og:image:height" content="630" />
-            <meta property="og:image:alt" content={`${business.business_name} portfolio image`} />
-          </>
-        )}
+        <meta property="og:image" content={profileImage || portfolioPics[0] || "/images/og-image.png"} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={`${business.business_name} portfolio image`} />
+        <meta property="og:image:type" content="image/jpeg" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={getSeoTitle()} />
         <meta name="twitter:description" content={getSeoDescription()} />
-        {profileImage && (
-          <>
-            <meta name="twitter:image" content={profileImage} />
-            <meta name="twitter:image:alt" content={`${business.business_name} portfolio image`} />
-          </>
-        )}
+        <meta name="twitter:image" content={profileImage || portfolioPics[0] || "/images/og-image.png"} />
+        <meta name="twitter:image:alt" content={`${business.business_name} portfolio image`} />
         <link rel="canonical" href={window.location.href} />
         <meta name="robots" content="index, follow" />
         <meta httpEquiv="Content-Language" content="en" />
