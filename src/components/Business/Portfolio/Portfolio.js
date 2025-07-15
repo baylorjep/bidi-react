@@ -1052,16 +1052,28 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     let formattedCategory = category;
     if (category.toLowerCase().includes('photography')) {
       formattedCategory = 'Photographer';
+    } else if (category.toLowerCase().includes('videography')) {
+      formattedCategory = 'Videographer';
+    } else if (category.toLowerCase().includes('beauty')) {
+      formattedCategory = 'Hair and Makeup Artist';
     } else if (category.toLowerCase().includes('wedding planner')) {
       formattedCategory = 'Wedding Planner';
-    } else if (category.toLowerCase().includes('beauty')) {
-      formattedCategory = 'Beauty Professional';
+    } else if (category.toLowerCase().includes('catering')) {
+      formattedCategory = 'Caterer';
+    } else if (category.toLowerCase().includes('florist') || category.toLowerCase().includes('flowers')) {
+      formattedCategory = 'Florist';
+    } else if (category.toLowerCase().includes('dj') || category.toLowerCase().includes('disc jockey')) {
+      formattedCategory = 'DJ';
+    } else if (category.toLowerCase().includes('venue')) {
+      formattedCategory = 'Venue';
+    } else if (category.toLowerCase().includes('cake') || category.toLowerCase().includes('bakery')) {
+      formattedCategory = 'Baker';
     } else {
       // Capitalize first letter and remove any extra spaces
       formattedCategory = category.charAt(0).toUpperCase() + category.slice(1).replace(/\s+/g, ' ');
     }
     
-    return `${business.business_name} - Professional ${formattedCategory} | Reviews & Portfolio`;
+    return `Is ${business.business_name} a Good ${formattedCategory}? | Reviews & Portfolio`;
   };
 
   const getSeoDescription = () => {
