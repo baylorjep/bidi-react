@@ -522,10 +522,15 @@ const BidDisplayMini = ({
       if (error) throw error;
 
       // Use the onMessageClick prop instead of navigate
-      onMessageClick(
-        request.profile_id || request.user_id,
-        "Hi! I wanted to follow up about your request. Are you still looking for services?"
-      );
+      if (onMessageClick) {
+        onMessageClick(
+          request.profile_id || request.user_id,
+          "Hi! I wanted to follow up about your request. Are you still looking for services?"
+        );
+      } else {
+        console.error('onMessageClick prop is not provided');
+        toast.error('Messaging functionality is not available');
+      }
 
     } catch (error) {
       console.error('Error sending follow-up:', error);
@@ -983,7 +988,7 @@ const BidDisplayMini = ({
           >
             Withdraw
           </button>
-          {(bid.status === "approved" || bid.status === "accepted" || bid.status === "interested") && (
+          {(bid.status === "approved" || bid.status === "accepted" || bid.status === "interested") && onMessageClick && (
             <button
               className="action-button"
               onClick={() => onMessageClick(
