@@ -23,7 +23,7 @@ const sortOptions = [
     { id: 'base_price_high', name: 'Base Price: High to Low' }
 ];
 
-const VendorListWithFilters = () => {
+const VendorListWithFilters = ({ showAds = true }) => {
     const [selectedCategory, setSelectedCategory] = useState('photography');
     const [sortOrder, setSortOrder] = useState(sortOptions[0].id);
     const [vendorCount, setVendorCount] = useState(0);
@@ -172,9 +172,11 @@ const VendorListWithFilters = () => {
                         searchQuery={searchQuery}
                     />
                 </div>
-                <aside className="vendor-list-ads">
-                    <Ads />
-                </aside>
+                {showAds && (
+                    <aside className="vendor-list-ads">
+                        <Ads />
+                    </aside>
+                )}
             </div>
         </div>
     );

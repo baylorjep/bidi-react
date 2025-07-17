@@ -8,21 +8,41 @@ const VendorListWithFilters = ({
     sortOrder,
     preferredLocation,
     categoryType,
-    currentPage,
-    vendorsPerPage,
+    currentPage =1,
+    vendorsPerPage =5,
     setCurrentPage,
     setTotalCount,
     preferredType,
     onVendorSelect,
     onVendorDeselect,
-    selectedVendors,
-    customButtonText,
-    showSelectionButton,
+    selectedVendors = [],
+    customButtonText = "Get a Tailored Bid",
+    showSelectionButton =false,
     selectedCity,
     selectedCounty
 }) => {
     const [sortType, setSortType] = useState(sortOrder || 'recommended');
     const navigate = useNavigate();
+
+    // Debug logging
+    console.log('VendorListWithFilters props:', {
+        selectedCategory,
+        sortOrder,
+        preferredLocation,
+        categoryType,
+        currentPage,
+        vendorsPerPage,
+        setCurrentPage,
+        setTotalCount,
+        preferredType,
+        onVendorSelect,
+        onVendorDeselect,
+        selectedVendors,
+        customButtonText,
+        showSelectionButton,
+        selectedCity,
+        selectedCounty
+    });
 
     // Update sortType when sortOrder prop changes
     useEffect(() => {

@@ -312,7 +312,9 @@ const VendorList = ({
         if (initialVendors && initialVendors.length > 0) {
             const sortedVendors = sortVendors(initialVendors);
             setVendors(sortedVendors);
-            setTotalCount(sortedVendors.length);
+            if (setTotalCount) {
+                setTotalCount(sortedVendors.length);
+            }
             setLoading(false);
         }
     }, [initialVendors, sortOrder]);
@@ -426,6 +428,18 @@ const VendorList = ({
     }
 
     const fetchVendors = async () => {
+        console.log('fetchVendors called with params:', {
+            selectedCategory,
+            sortOrder,
+            preferredLocation,
+            categoryType,
+            currentPage,
+            vendorsPerPage,
+            selectedCounty,
+            selectedCity,
+            searchQuery
+        });
+        
         setLoading(true);
         setVendorPhotosLoaded({});
         
@@ -444,15 +458,20 @@ const VendorList = ({
                 `)
                 .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
 
+            console.log('Initial query created');
+
             if (selectedCategory) {
+                console.log('Adding category filter:', selectedCategory);
                 query = query.contains('business_category', [selectedCategory]);
             }
 
             // Add search query filter
             if (searchQuery) {
+                console.log('Adding search filter:', searchQuery);
                 query = query.ilike('business_name', `%${searchQuery}%`);
             }
 
+            console.log('Executing query...');
             const { data: allVendorData, error: vendorError } = await query;
             
             if (vendorError) {
@@ -461,6 +480,7 @@ const VendorList = ({
             }
 
             console.log('Total vendors found:', allVendorData?.length || 0);
+            console.log('Raw vendor data:', allVendorData);
 
             // Add debug logging
             console.log('Fetched vendors:', allVendorData.map(v => ({
@@ -490,7 +510,9 @@ const VendorList = ({
             });
 
             // Set total count for pagination
-            setTotalCount(vendorsWithRatings.length);
+            if (setTotalCount) {
+                setTotalCount(vendorsWithRatings.length);
+            }
             setTotalCountState(vendorsWithRatings.length);
 
             // Get ALL photos first to calculate counts
