@@ -1238,3 +1238,204 @@ body.modal-open {
   background-color: #8200c2;
   transform: translateY(-1px);
 }
+
+/* Skeleton Loading Styles for Chat Components */
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Chat Interface Skeletons */
+.skeleton-chat-item {
+    padding: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    pointer-events: none;
+}
+
+.skeleton-chat-name {
+    height: 18px;
+    width: 70%;
+    background: #f0f0f0;
+    border-radius: 4px;
+    animation: pulse 2s ease-in-out infinite;
+    margin-bottom: 8px;
+}
+
+.skeleton-unseen-badge {
+    height: 16px;
+    width: 20px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-message-preview {
+    height: 14px;
+    width: 85%;
+    background: #f0f0f0;
+    border-radius: 4px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-message-time {
+    height: 12px;
+    width: 40%;
+    background: #f0f0f0;
+    border-radius: 4px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-chat-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 2rem;
+}
+
+.skeleton-placeholder-text {
+    height: 20px;
+    width: 60%;
+    background: #f0f0f0;
+    border-radius: 4px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Messaging View Skeletons */
+.skeleton-header {
+    pointer-events: none;
+}
+
+.skeleton-back-button {
+    height: 32px;
+    width: 80px;
+    background: #f0f0f0;
+    border-radius: 6px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-profile-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-business-name {
+    height: 16px;
+    width: 120px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    animation: pulse 2s ease-in-out infinite;
+    margin-top: 4px;
+}
+
+.skeleton-bid-info {
+    pointer-events: none;
+}
+
+.skeleton-bid-amount {
+    height: 20px;
+    width: 100px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-bid-button {
+    height: 32px;
+    width: 80px;
+    background: #f0f0f0;
+    border-radius: 6px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-message {
+    pointer-events: none;
+}
+
+.skeleton-message-content {
+    height: 40px;
+    width: 60%;
+    background: #f0f0f0;
+    border-radius: 12px;
+    animation: pulse 2s ease-in-out infinite;
+    margin-bottom: 8px;
+}
+
+.skeleton-message-time {
+    height: 12px;
+    width: 50px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-footer {
+    pointer-events: none;
+}
+
+.skeleton-upload-btn {
+    height: 40px;
+    width: 40px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-input {
+    height: 40px;
+    width: 100%;
+    background: #f0f0f0;
+    border-radius: 8px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-send-btn {
+    height: 40px;
+    width: 60px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Mobile Chat List Skeleton Styles */
+.skeleton-chat-name-mobile {
+    height: 18px;
+    width: 60%;
+    background: #f0f0f0;
+    border-radius: 4px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-unseen-badge-mobile {
+    height: 16px;
+    width: 20px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-message-preview-mobile {
+    height: 14px;
+    width: 70%;
+    background: #f0f0f0;
+    border-radius: 4px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-message-time-mobile {
+    height: 12px;
+    width: 40px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    animation: pulse 2s ease-in-out infinite;
+}

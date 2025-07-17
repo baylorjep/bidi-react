@@ -114,7 +114,7 @@ function RequestCategories() {
               <div className="category-icon">
                 <i className={`fas ${category.icon}`}></i>
               </div>
-              <div className="category-content">
+              <div className="category-content-request-categories">
                 <h3>{category.name}</h3>
                 <p>{category.description}</p>
               </div>

@@ -82,20 +82,20 @@
   color: #a328f4;
 }
 
-.category-content {
+.category-content-request-categories {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.category-content h3 {
+.category-content-request-categories h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
   color: #333;
 }
 
-.category-content p {
+.category-content-request-categories p {
   margin: 0;
   font-size: 0.85rem;
   color: #666;

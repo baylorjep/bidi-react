@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../supabaseClient';
 import { formatBusinessName } from '../../utils/formatBusinessName';
 import '../../styles/BidsPage.css';
@@ -14,6 +14,117 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import { Helmet } from 'react-helmet';
 import { toast } from 'react-toastify';
+
+// Skeleton components for loading states
+const RequestCardSkeleton = () => (
+  <div className="request-card skeleton-request-card">
+    <div className="request-header">
+      <div className="request-category">
+        <div className="category-icon skeleton-category-icon"></div>
+        <div className="category-info">
+          <div className="skeleton-category-name"></div>
+          <div className="request-status-container">
+            <div className="skeleton-status-badge"></div>
+            <div className="skeleton-status-badge"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div className="request-actions">
+      <div className="skeleton-action-btn"></div>
+      <div className="skeleton-action-btn"></div>
+      <div className="skeleton-action-btn"></div>
+    </div>
+    <div className="request-details">
+      <div className="detail-item">
+        <div className="skeleton-detail-icon"></div>
+        <div className="skeleton-detail-label"></div>
+        <div className="skeleton-detail-value"></div>
+      </div>
+      <div className="detail-item">
+        <div className="skeleton-detail-icon"></div>
+        <div className="skeleton-detail-label"></div>
+        <div className="skeleton-detail-value"></div>
+      </div>
+      <div className="detail-item">
+        <div className="skeleton-detail-icon"></div>
+        <div className="skeleton-detail-label"></div>
+        <div className="skeleton-detail-value"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const BidCardSkeleton = () => (
+  <div className="bid-display-wrapper skeleton-bid-card">
+    <div className="skeleton-bid-header">
+      <div className="skeleton-profile-image"></div>
+      <div className="skeleton-business-info">
+        <div className="skeleton-business-name"></div>
+        <div className="skeleton-business-category"></div>
+      </div>
+    </div>
+    <div className="skeleton-bid-content">
+      <div className="skeleton-bid-amount"></div>
+      <div className="skeleton-bid-message"></div>
+      <div className="skeleton-bid-message"></div>
+    </div>
+    <div className="skeleton-bid-actions">
+      <div className="skeleton-action-btn"></div>
+      <div className="skeleton-action-btn"></div>
+    </div>
+  </div>
+);
+
+const BidsPageSkeleton = () => (
+  <div className="bids-page">
+    <h1 className="section-title">Your Service Requests</h1>
+    <p className="section-description">
+      View all your service requests and manage the bids you've received.
+    </p>
+    
+    <div className="requests-list-container">
+      <div className="requests-list-bids-page">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <RequestCardSkeleton key={index} />
+        ))}
+      </div>
+    </div>
+    
+    <div className="bids-section active">
+      <h2 className="section-title">Bids for Selected Request</h2>
+      <p className="section-description">
+        Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
+      </p>
+      
+      <div className="bids-container">
+        <div className="bids-section bids-section-pending" style={{ marginBottom: 24 }}>
+          <div className="bids-section-header" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}>
+            <span style={{ marginRight: 8 }}>▶</span>
+            <h4 style={{ margin: 0 }}>Pending Bids (3)</h4>
+          </div>
+          <div className="bids-grid">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <BidCardSkeleton key={index} />
+            ))}
+          </div>
+        </div>
+        
+        <div className="bids-section bids-section-interested" style={{ marginBottom: 24 }}>
+          <div className="bids-section-header" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}>
+            <span style={{ marginRight: 8 }}>▶</span>
+            <h4 style={{ margin: 0 }}>Interested Bids (2)</h4>
+          </div>
+          <div className="bids-grid">
+            {Array.from({ length: 2 }).map((_, index) => (
+              <BidCardSkeleton key={index} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 export default function BidsPage({ onOpenChat }) {
     const [requests, setRequests] = useState([]);
@@ -47,6 +158,9 @@ export default function BidsPage({ onOpenChat }) {
     const [currentUserId, setCurrentUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+
+    // Memoize the loading skeleton at the top level to avoid conditional hook calls
+    const loadingSkeleton = useMemo(() => <BidsPageSkeleton />, []);
 
     const getDate = (request) => {
         const startDate = request.start_date || request.service_date;
@@ -1447,16 +1561,7 @@ export default function BidsPage({ onOpenChat }) {
     };
 
     if (loading) {
-        return (
-            <div className="bids-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div className="spinner-border" role="status" style={{ width: 48, height: 48, marginBottom: 16, color: '#8000ff', borderColor: '#8000ff', borderRightColor: 'transparent' }}>
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <div style={{ fontSize: 18, color: '#555' }}>Loading...</div>
-                </div>
-            </div>
-        );
+        return loadingSkeleton;
     }
 
     return (

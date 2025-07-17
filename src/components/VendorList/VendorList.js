@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Slider from 'react-slick';
 import { supabase } from '../../supabaseClient';
@@ -12,6 +12,49 @@ import LoadingPlaceholder from '../Common/LoadingPlaceholder';
 import LoadingSpinner from '../LoadingSpinner';
 import ImageErrorBoundary from '../Common/ImageErrorBoundary';
 import ImageModal from '../Business/Portfolio/ImageModal';
+
+// Skeleton loading component
+const VendorSkeleton = () => {
+    return (
+        <div className="vendor-card skeleton-card">
+            <div className="portfolio-images skeleton-images">
+                <div className="skeleton-image-placeholder"></div>
+            </div>
+            <div className="vendor-info">
+                <div className="vendor-header skeleton-header">
+                    <div className="skeleton-profile-image"></div>
+                    <div className="skeleton-name-container">
+                        <div className="skeleton-name"></div>
+                        <div className="skeleton-verified"></div>
+                        <div className="skeleton-rating"></div>
+                    </div>
+                </div>
+                <div className="skeleton-content">
+                    <div className="skeleton-location"></div>
+                    <div className="skeleton-price"></div>
+                    <div className="skeleton-description">
+                        <div className="skeleton-line"></div>
+                        <div className="skeleton-line"></div>
+                        <div className="skeleton-line short"></div>
+                    </div>
+                    <div className="skeleton-story">
+                        <div className="skeleton-line"></div>
+                        <div className="skeleton-line short"></div>
+                    </div>
+                    <div className="skeleton-specializations">
+                        <div className="skeleton-tag"></div>
+                        <div className="skeleton-tag"></div>
+                        <div className="skeleton-tag"></div>
+                    </div>
+                    <div className="skeleton-buttons">
+                        <div className="skeleton-button"></div>
+                        <div className="skeleton-button secondary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // Import cities data
 const cities = [
@@ -669,13 +712,13 @@ const VendorList = ({
         window.scrollTo(0, 0);
     };
 
+    // Memoize the skeletons at the top level to avoid conditional hook calls
+    const skeletons = useMemo(() => (
+        Array.from({ length: 5 }).map((_, index) => <VendorSkeleton key={index} />)
+    ), []);
+
     if (loading) {
-        return (
-            <div className="loading-container">
-                <div className="loading-spinner">
-                </div>
-            </div>
-        );
+        return <div className="vendor-list">{skeletons}</div>;
     }
 
     const settings = {

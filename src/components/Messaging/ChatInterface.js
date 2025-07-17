@@ -1,10 +1,54 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "../../supabaseClient";
 import MessagingView from "./MessagingView";
 import StartNewChatModal from "./StartNewChatModal";
 import "../../styles/chat.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+
+// Skeleton components for loading states
+const ChatListSkeleton = () => (
+  <li className="skeleton-chat-item">
+    <div className="chat-list-item-content">
+      <div className="chat-list-header">
+        <div className="skeleton-chat-name"></div>
+        <div className="skeleton-unseen-badge"></div>
+      </div>
+      <div className="chat-list-footer">
+        <div className="skeleton-message-preview"></div>
+        <div className="skeleton-message-time"></div>
+      </div>
+    </div>
+  </li>
+);
+
+const ChatInterfaceSkeleton = () => (
+  <div>
+    <h1 style={{ fontFamily: "Outfit", fontWeight: "bold" }}>
+      Messages
+    </h1>
+    <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>
+      Chat with your clients and vendors
+    </p>
+    <div className="chat-app">
+      <aside className="chat-sidebar">
+        <header>
+          <span>Your Chats</span>
+        </header>
+        <ul>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <ChatListSkeleton key={index} />
+          ))}
+        </ul>
+      </aside>
+      <main className="chat-main">
+        <div className="skeleton-chat-placeholder">
+          <div className="skeleton-placeholder-text"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+);
 
 export default function ChatInterface({ initialChat }) {
   const [currentUserId, setCurrentUserId] = useState("");
@@ -16,6 +60,9 @@ export default function ChatInterface({ initialChat }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Memoize the loading skeleton at the top level to avoid conditional hook calls
+  const loadingSkeleton = useMemo(() => <ChatInterfaceSkeleton />, []);
 
   // Set active business from initialChat prop or navigation state
   useEffect(() => {
@@ -173,6 +220,11 @@ export default function ChatInterface({ initialChat }) {
       setChats(formatted);
     })();
   }, [currentUserId, userType]);
+
+  // Show skeleton loading while fetching data
+  if (!currentUserId || !userType) {
+    return loadingSkeleton;
+  }
 
   const handleChatSelect = async (chat) => {
     setActiveBusiness(chat.business_id);
