@@ -27,6 +27,15 @@ const PricingSetup = () => {
     default_message: '',
     additional_comments: '',
     
+    // Core autobidding fields
+    base_category_rates: {},
+    seasonal_pricing: {},
+    travel_config: {},
+    platform_markup: '',
+    consultation_required: false,
+    dealbreakers: [],
+    style_preferences: [],
+    
     // Category-specific pricing
     wedding_premium: '',
     service_addons: {},
@@ -962,6 +971,176 @@ const PricingSetup = () => {
     );
   };
 
+  const renderAutobidStep = () => {
+    const categoryConfig = getCategoryConfig(currentCategory);
+    const autobidConfig = categoryConfig.autobidConfig;
+    
+    if (!autobidConfig) {
+      return (
+        <div className="pricing-step">
+          <div className="step-header">
+            <div className="step-icon">🤖</div>
+            <div>
+              <h3>Autobid Setup</h3>
+              <p>Configure how Bidi AI should generate bids for you</p>
+            </div>
+          </div>
+          <p>Autobid configuration not available for this category yet.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="pricing-step">
+        <div className="step-header">
+          <div className="step-icon">🤖</div>
+          <div>
+            <h3>Autobid Setup</h3>
+            <p>Configure how Bidi AI should generate bids for you</p>
+          </div>
+        </div>
+        
+        {/* Base Category Rates */}
+        <div className="form-group">
+          <label>Base Category Rates</label>
+          <div className="rates-grid">
+            {Object.entries(autobidConfig.baseCategoryRates).map(([key, config]) => (
+              <div key={key} className="rate-item">
+                <label>{config.label}</label>
+                <input
+                  type="number"
+                  value={pricingData.base_category_rates[key] || config.default}
+                  onChange={(e) => handleInputChange('base_category_rates', {
+                    ...pricingData.base_category_rates,
+                    [key]: parseFloat(e.target.value)
+                  })}
+                  placeholder={config.default.toString()}
+                  min="0"
+                  step="0.01"
+                />
+                {config.description && <small>{config.description}</small>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Seasonal Pricing */}
+        {autobidConfig.seasonalPricing && (
+          <div className="form-group">
+            <label>Seasonal Pricing Multipliers</label>
+            <div className="seasonal-grid">
+              {Object.entries(autobidConfig.seasonalPricing).map(([season, config]) => (
+                <div key={season} className="seasonal-item">
+                  <label>{config.label}</label>
+                  <input
+                    type="number"
+                    value={pricingData.seasonal_pricing[season] || config.default}
+                    onChange={(e) => handleInputChange('seasonal_pricing', {
+                      ...pricingData.seasonal_pricing,
+                      [season]: parseFloat(e.target.value)
+                    })}
+                    placeholder={config.default.toString()}
+                    min="0.5"
+                    max="3"
+                    step="0.1"
+                  />
+                  <small>Applied to {config.months.map(m => new Date(2024, m-1).toLocaleString('default', { month: 'long' })).join(', ')}</small>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Travel Configuration */}
+        {autobidConfig.travelConfig && (
+          <div className="form-group">
+            <label>Travel Configuration</label>
+            <div className="travel-grid">
+              {Object.entries(autobidConfig.travelConfig).map(([key, config]) => (
+                <div key={key} className="travel-item">
+                  {typeof config === 'object' ? (
+                    <>
+                      <label>{config.label}</label>
+                      <input
+                        type="number"
+                        value={pricingData.travel_config[key] || config.default}
+                        onChange={(e) => handleInputChange('travel_config', {
+                          ...pricingData.travel_config,
+                          [key]: parseFloat(e.target.value)
+                        })}
+                        placeholder={config.default.toString()}
+                        min="0"
+                        step="0.01"
+                      />
+                    </>
+                  ) : (
+                    <div className="travel-warning">
+                      <span>⚠️ {config}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Platform Markup */}
+        <div className="form-group">
+          <label>{autobidConfig.platformMarkup.label}</label>
+          <input
+            type="number"
+            value={pricingData.platform_markup}
+            onChange={(e) => handleInputChange('platform_markup', e.target.value)}
+            placeholder={autobidConfig.platformMarkup.default.toString()}
+            min="0"
+            max="50"
+            step="0.1"
+          />
+          <small>Percentage added to cover Bidi platform fees</small>
+        </div>
+
+        {/* Consultation Required */}
+        <div className="form-group">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={pricingData.consultation_required}
+              onChange={(e) => handleInputChange('consultation_required', e.target.checked)}
+            />
+            <span>Require consultation call before final quote</span>
+          </label>
+          <small>When checked, bids will include a note about scheduling a consultation</small>
+        </div>
+
+        {/* Dealbreakers */}
+        <div className="form-group">
+          <label>Dealbreakers</label>
+          <div className="dealbreakers-list">
+            {autobidConfig.dealbreakers.map((dealbreaker, index) => (
+              <div key={index} className="dealbreaker-item">
+                <span>❌ {dealbreaker}</span>
+              </div>
+            ))}
+          </div>
+          <small>These are automatically applied to your profile</small>
+        </div>
+
+        {/* Style Preferences (for DJs) */}
+        {autobidConfig.stylePreferences && (
+          <div className="form-group">
+            <label>Style Preferences</label>
+            <div className="style-preferences">
+              {autobidConfig.stylePreferences.map((style, index) => (
+                <span key={index} className="style-tag">{style}</span>
+              ))}
+            </div>
+            <small>These help match you with appropriate requests</small>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderCommunicationStep = () => (
     <div className="pricing-step">
       <div className="step-header">
@@ -1010,6 +1189,7 @@ const PricingSetup = () => {
     const steps = [
       { component: renderBasicPricingStep, title: 'Basic Pricing' },
       { component: renderCategorySpecificStep, title: 'Category Specific' },
+      { component: renderAutobidStep, title: 'Autobid Setup' },
       { component: renderCommunicationStep, title: 'Communication' }
     ];
 
@@ -1017,7 +1197,7 @@ const PricingSetup = () => {
   };
 
   const handleNextStep = () => {
-    if (currentStep < 2) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     } else {
       handleSavePricing();
@@ -1128,7 +1308,7 @@ const PricingSetup = () => {
             onClick={handleNextStep}
             disabled={isSaving}
           >
-            {isSaving ? 'Saving...' : currentStep === 2 ? 'Save & Continue' : 'Next'}
+            {isSaving ? 'Saving...' : currentStep === 3 ? 'Save & Continue' : 'Next'}
           </button>
         </div>
       </div>

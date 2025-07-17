@@ -6,6 +6,22 @@ export const categoryPricingConfig = {
     description: "Professional photography services",
     pricingModels: ["package", "hourly", "fixed"],
     defaultModel: "package",
+    // Core autobidding configuration
+    autobidConfig: {
+      baseCategoryRates: {
+        wedding: { label: "Wedding Rate ($/hr)", default: 400 },
+        family: { label: "Family Session Rate ($)", default: 600, perPerson: 25 },
+        couples: { label: "Couples Rate ($/hr)", default: 550 },
+        portraits: { label: "Portrait Rate ($)", default: 450 }
+      },
+      travelConfig: {
+        drivingRate: { label: "Driving Rate ($/mile)", default: 0.70 },
+        flightWarning: "Travel fees may apply to engagements and bridals"
+      },
+      platformMarkup: { label: "Platform Fee Markup (%)", default: 12.5 },
+      consultationRequired: true,
+      dealbreakers: ["No raw footage"]
+    },
     fields: {
       // Fields for hourly model
       hourly_rate: {
@@ -230,6 +246,25 @@ export const categoryPricingConfig = {
     description: "Wedding and event entertainment",
     pricingModels: ["hourly", "package", "fixed"],
     defaultModel: "hourly",
+    // Core autobidding configuration
+    autobidConfig: {
+      baseCategoryRates: {
+        firstHour: { label: "First Hour Rate ($)", default: 300, description: "Includes setup/teardown" },
+        additionalHours: { label: "Additional Hours Rate ($/hr)", default: 150 }
+      },
+      seasonalPricing: {
+        summer: { label: "Summer Multiplier", default: 1.2, months: [6, 7, 8] },
+        winter: { label: "Winter Multiplier", default: 0.8, months: [12, 1, 2] }
+      },
+      travelConfig: {
+        freeDistance: { label: "Free Travel Distance (miles)", default: 25 },
+        travelWarning: "Jobs too far may require additional compensation"
+      },
+      platformMarkup: { label: "Platform Fee Markup (%)", default: 10 },
+      consultationRequired: false,
+      dealbreakers: ["80s music", "Jobs too far with no compensation"],
+      stylePreferences: ["2000s", "Top 40", "Hip Hop"]
+    },
     fields: {
       // Fields for hourly model
       hourly_rate: {
