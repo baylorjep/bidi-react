@@ -17,6 +17,38 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: none;
+  border: none;
+  color: #9633eb;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.back-button:hover {
+  background: rgba(150, 51, 235, 0.1);
+  transform: translateX(-2px);
+}
+
+.pricing-setup-header {
+  position: relative;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  padding: 40px 20px;
+  text-align: center;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #e1e8ff;
+}
 
 
 .header-content {
@@ -964,6 +996,35 @@
 }
 
 .rate-item small {
+  display: block;
+  margin-top: 4px;
+  color: #666;
+  font-size: 12px;
+}
+
+.hourly-rate-field {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e1e8ff;
+}
+
+.hourly-rate-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 14px;
+}
+
+.hourly-rate-field input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.hourly-rate-field small {
   display: block;
   margin-top: 4px;
   color: #666;

@@ -9,10 +9,10 @@ export const categoryPricingConfig = {
     // Core autobidding configuration
     autobidConfig: {
       baseCategoryRates: {
-        wedding: { label: "Wedding Rate ($/hr)", default: 400 },
-        family: { label: "Family Session Rate ($)", default: 600, perPerson: 25 },
-        couples: { label: "Couples Rate ($/hr)", default: 550 },
-        portraits: { label: "Portrait Rate ($)", default: 450 }
+        wedding: { label: "Wedding Base Price ($)", default: 800, hourlyRate: 400 },
+        family: { label: "Family Session Base Price ($)", default: 600, perPerson: 25 },
+        couples: { label: "Couples Base Price ($)", default: 550, hourlyRate: 550 },
+        portraits: { label: "Portrait Base Price ($)", default: 450 }
       },
       travelConfig: {
         drivingRate: { label: "Driving Rate ($/mile)", default: 0.70 },
@@ -249,6 +249,7 @@ export const categoryPricingConfig = {
     // Core autobidding configuration
     autobidConfig: {
       baseCategoryRates: {
+        basePrice: { label: "Base Price ($)", default: 300, description: "Standard base price for events" },
         firstHour: { label: "First Hour Rate ($)", default: 300, description: "Includes setup/teardown" },
         additionalHours: { label: "Additional Hours Rate ($/hr)", default: 150 }
       },

@@ -1019,6 +1019,25 @@ const PricingSetup = () => {
                   step="0.01"
                 />
                 {config.description && <small>{config.description}</small>}
+                
+                {/* Show hourly rate field if config has hourlyRate */}
+                {config.hourlyRate && (
+                  <div className="hourly-rate-field">
+                    <label>{config.label.replace('Base Price', 'Hourly Rate')}</label>
+                    <input
+                      type="number"
+                      value={pricingData.base_category_rates[`${key}_hourly`] || config.hourlyRate}
+                      onChange={(e) => handleInputChange('base_category_rates', {
+                        ...pricingData.base_category_rates,
+                        [`${key}_hourly`]: parseFloat(e.target.value)
+                      })}
+                      placeholder={config.hourlyRate.toString()}
+                      min="0"
+                      step="0.01"
+                    />
+                    <small>Hourly rate for this service type</small>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1231,6 +1250,12 @@ const PricingSetup = () => {
       {/* Header */}
       <div className="pricing-setup-header">
         <div className="header-content">
+          <button 
+            className="back-button"
+            onClick={() => navigate('/dashboard')}
+          >
+            ← Back to Dashboard
+          </button>
           <h1>Bidi AI Pricing Setup</h1>
           <p>Configure your pricing rules to train Bidi AI to generate accurate bids</p>
         </div>
