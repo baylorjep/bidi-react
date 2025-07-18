@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Slider from 'react-slick';
 import { supabase } from '../../supabaseClient';
@@ -12,6 +12,49 @@ import LoadingPlaceholder from '../Common/LoadingPlaceholder';
 import LoadingSpinner from '../LoadingSpinner';
 import ImageErrorBoundary from '../Common/ImageErrorBoundary';
 import ImageModal from '../Business/Portfolio/ImageModal';
+
+// Skeleton loading component
+const VendorSkeleton = () => {
+    return (
+        <div className="vendor-card skeleton-card">
+            <div className="portfolio-images skeleton-images">
+                <div className="skeleton-image-placeholder"></div>
+            </div>
+            <div className="vendor-info">
+                <div className="vendor-header skeleton-header">
+                    <div className="skeleton-profile-image"></div>
+                    <div className="skeleton-name-container">
+                        <div className="skeleton-name"></div>
+                        <div className="skeleton-verified"></div>
+                        <div className="skeleton-rating"></div>
+                    </div>
+                </div>
+                <div className="skeleton-content">
+                    <div className="skeleton-location"></div>
+                    <div className="skeleton-price"></div>
+                    <div className="skeleton-description">
+                        <div className="skeleton-line"></div>
+                        <div className="skeleton-line"></div>
+                        <div className="skeleton-line short"></div>
+                    </div>
+                    <div className="skeleton-story">
+                        <div className="skeleton-line"></div>
+                        <div className="skeleton-line short"></div>
+                    </div>
+                    <div className="skeleton-specializations">
+                        <div className="skeleton-tag"></div>
+                        <div className="skeleton-tag"></div>
+                        <div className="skeleton-tag"></div>
+                    </div>
+                    <div className="skeleton-buttons">
+                        <div className="skeleton-button"></div>
+                        <div className="skeleton-button secondary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // Import cities data
 const cities = [
@@ -269,7 +312,9 @@ const VendorList = ({
         if (initialVendors && initialVendors.length > 0) {
             const sortedVendors = sortVendors(initialVendors);
             setVendors(sortedVendors);
-            setTotalCount(sortedVendors.length);
+            if (setTotalCount) {
+                setTotalCount(sortedVendors.length);
+            }
             setLoading(false);
         }
     }, [initialVendors, sortOrder]);
@@ -383,6 +428,18 @@ const VendorList = ({
     }
 
     const fetchVendors = async () => {
+        console.log('fetchVendors called with params:', {
+            selectedCategory,
+            sortOrder,
+            preferredLocation,
+            categoryType,
+            currentPage,
+            vendorsPerPage,
+            selectedCounty,
+            selectedCity,
+            searchQuery
+        });
+        
         setLoading(true);
         setVendorPhotosLoaded({});
         
@@ -401,15 +458,20 @@ const VendorList = ({
                 `)
                 .or('stripe_account_id.not.is.null,Bidi_Plus.eq.true');
 
+            console.log('Initial query created');
+
             if (selectedCategory) {
+                console.log('Adding category filter:', selectedCategory);
                 query = query.contains('business_category', [selectedCategory]);
             }
 
             // Add search query filter
             if (searchQuery) {
+                console.log('Adding search filter:', searchQuery);
                 query = query.ilike('business_name', `%${searchQuery}%`);
             }
 
+            console.log('Executing query...');
             const { data: allVendorData, error: vendorError } = await query;
             
             if (vendorError) {
@@ -418,6 +480,7 @@ const VendorList = ({
             }
 
             console.log('Total vendors found:', allVendorData?.length || 0);
+            console.log('Raw vendor data:', allVendorData);
 
             // Add debug logging
             console.log('Fetched vendors:', allVendorData.map(v => ({
@@ -447,7 +510,9 @@ const VendorList = ({
             });
 
             // Set total count for pagination
-            setTotalCount(vendorsWithRatings.length);
+            if (setTotalCount) {
+                setTotalCount(vendorsWithRatings.length);
+            }
             setTotalCountState(vendorsWithRatings.length);
 
             // Get ALL photos first to calculate counts
@@ -669,13 +734,13 @@ const VendorList = ({
         window.scrollTo(0, 0);
     };
 
+    // Memoize the skeletons at the top level to avoid conditional hook calls
+    const skeletons = useMemo(() => (
+        Array.from({ length: 5 }).map((_, index) => <VendorSkeleton key={index} />)
+    ), []);
+
     if (loading) {
-        return (
-            <div className="loading-container">
-                <div className="loading-spinner">
-                </div>
-            </div>
-        );
+        return <div className="vendor-list">{skeletons}</div>;
     }
 
     const settings = {

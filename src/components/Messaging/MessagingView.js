@@ -1,6 +1,6 @@
 // src/components/MessagingView.js
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { socket } from "../../socket";
 import { supabase } from "../../supabaseClient";
 import "../../styles/chat.css";
@@ -8,6 +8,31 @@ import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { formatMessageText } from "../../utils/formatMessageText";
 import { formatBusinessName } from '../../utils/formatBusinessName';
+
+// Skeleton components for loading states
+const MessageSkeleton = ({ isSent }) => (
+  <div className={`message-bubble skeleton-message ${isSent ? "sent" : "received"}`}>
+    <div className="skeleton-message-content"></div>
+    <div className="skeleton-message-time"></div>
+  </div>
+);
+
+const ChatHeaderSkeleton = () => (
+  <header className="chat-header skeleton-header">
+    <div className="skeleton-back-button"></div>
+    <div className="header-center-messaging">
+      <div className="skeleton-profile-circle"></div>
+      <div className="skeleton-business-name"></div>
+    </div>
+  </header>
+);
+
+const BidInfoSkeleton = () => (
+  <div className="bid-info-header skeleton-bid-info">
+    <div className="skeleton-bid-amount"></div>
+    <div className="skeleton-bid-button"></div>
+  </div>
+);
 
 export default function MessagingView({
   currentUserId,
@@ -32,6 +57,29 @@ export default function MessagingView({
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [bidInfo, setBidInfo] = useState(null);
   const [isCurrentUserBusiness, setIsCurrentUserBusiness] = useState(false);
+
+  // Memoize the loading skeletons at the top level to avoid conditional hook calls
+  const loadingSkeletons = useMemo(() => (
+    <div className="messaging-view">
+      <ChatHeaderSkeleton />
+      <BidInfoSkeleton />
+      <div className="chat-window">
+        <div className="chat-body">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <MessageSkeleton 
+              key={index} 
+              isSent={index % 2 === 0} 
+            />
+          ))}
+        </div>
+      </div>
+      <div className="chat-footer skeleton-footer">
+        <div className="skeleton-upload-btn"></div>
+        <div className="skeleton-input"></div>
+        <div className="skeleton-send-btn"></div>
+      </div>
+    </div>
+  ), []);
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -413,7 +461,7 @@ export default function MessagingView({
   }, [currentUserId]);
 
   if (!currentUserId || !businessId) {
-    return <div style={{ padding: 32, textAlign: 'center' }}>Loading chat…</div>;
+    return loadingSkeletons;
   }
 
   const sendMessage = async () => {

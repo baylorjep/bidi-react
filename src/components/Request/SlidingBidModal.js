@@ -10,6 +10,40 @@ import BidDisplay from '../Bid/BidDisplay';
 import LoadingSpinner from '../LoadingSpinner';
 import './SlidingBidModal.css';
 
+// iPhone-style Toggle Component
+const IPhoneToggle = ({ checked, onChange, disabled = false }) => {
+    return (
+        <div
+            style={{
+                position: 'relative',
+                width: '51px',
+                height: '31px',
+                backgroundColor: checked ? '#755df1' : '#E9E9EA',
+                borderRadius: '16px',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                transition: 'background-color 0.2s ease',
+                opacity: disabled ? 0.5 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                padding: '2px'
+            }}
+            onClick={() => !disabled && onChange(!checked)}
+        >
+            <div
+                style={{
+                    width: '27px',
+                    height: '27px',
+                    backgroundColor: 'white',
+                    borderRadius: '50%',
+                    transform: `translateX(${checked ? '20px' : '0px'})`,
+                    transition: 'transform 0.2s ease',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}
+            />
+        </div>
+    );
+};
+
 const sendEmailNotification = async (recipientEmail, subject, htmlContent) => {
     try {
         await fetch('https://bidi-express.vercel.app/send-email', {
@@ -466,7 +500,7 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                     />
 
                     {/* Bid Form */}
-                    <form onSubmit={handleSubmit} style={{ marginTop: 24 }}>
+                    <form onSubmit={handleSubmit} style={{ maxWidth:'900px', marginLeft:'auto', marginRight:'auto' }}>
                         <div className="sbm-form-section-title">Bid</div>
                         <input
                             className="sbm-input"
@@ -528,20 +562,34 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                                 onChange={(e) => setBidExpirationDate(e.target.value)}
                                 min={new Date().toISOString().split('T')[0]}
                             />
+                                                            <div className="sbm-discount-label">Discount (Optional)</div>
                             <div className="sbm-discount-section">
-                                <div className="sbm-discount-label">Discount (Optional)</div>
-                                <div className="sbm-discount-row">
+
+                                <div className="sbm-discount-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <input
-                                            type="checkbox"
+                                        <IPhoneToggle
                                             checked={!!discountType}
-                                            onChange={e => setDiscountType(e.target.checked ? 'percentage' : '')}
-                                            className="sbm-discount-switch"
+                                            onChange={() => setDiscountType(discountType ? '' : 'percentage')}
+                                            disabled={!connectedAccountId && !Bidi_Plus}
                                         />
                                         <span style={{ fontSize: 16 }}>{discountType ? 'Yes' : 'No'}</span>
                                     </label>
                                     {discountType && (
                                         <>
+                                            <select
+                                                value={discountType}
+                                                onChange={e => setDiscountType(e.target.value)}
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    borderRadius: '6px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '14px',
+                                                    backgroundColor: 'white'
+                                                }}
+                                            >
+                                                <option value="percentage">%</option>
+                                                <option value="flat">$</option>
+                                            </select>
                                             <input
                                                 className="sbm-discount-value"
                                                 id="discountValue"
@@ -549,12 +597,30 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                                                 type="number"
                                                 min="0"
                                                 step="0.01"
-                                                placeholder="%"
+                                                placeholder={discountType === 'percentage' ? '%' : '$'}
                                                 value={discountValue}
                                                 onChange={e => setDiscountValue(e.target.value)}
                                                 required
                                             />
-                                            <span className="sbm-discount-percent">%</span>
+                                            <span className="sbm-discount-percent">
+                                                {discountType === 'percentage' ? '%' : ''}
+                                            </span>
+                                            <input
+                                                className="sbm-input"
+                                                id="discountDeadline"
+                                                name="discountDeadline"
+                                                type="date"
+                                                value={discountDeadline}
+                                                onChange={e => setDiscountDeadline(e.target.value)}
+                                                min={new Date().toISOString().split('T')[0]}
+                                                required
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    borderRadius: '6px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '14px'
+                                                }}
+                                            />
                                         </>
                                     )}
                                 </div>

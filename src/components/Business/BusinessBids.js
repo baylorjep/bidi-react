@@ -6,6 +6,8 @@ import "../../styles/BusinessBids.css";
 import WithdrawConfirmationModal from "./WithdrawConfirmationModal";
 import BidDisplayMini from "./BidDisplayMini";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import ChatInterface from "../Messaging/ChatInterface";
+import MessagingView from "../Messaging/MessagingView";
 
 const BusinessBids = ({ setActiveSection }) => {
   const [bids, setBids] = useState([]);
@@ -14,6 +16,10 @@ const BusinessBids = ({ setActiveSection }) => {
   const [selectedBidId, setSelectedBidId] = useState(null);
   const [activeTab, setActiveTab] = useState("pending");
   const [isFullScreen, setIsFullScreen] = useState(window.innerWidth > 1200);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [user, setUser] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const filteredBids = bids
     .filter((bid) => 
       activeTab === "approved" 
@@ -43,6 +49,7 @@ const BusinessBids = ({ setActiveSection }) => {
   useEffect(() => {
     const handleResize = () => {
       setIsFullScreen(window.innerWidth > 1200);
+      setIsMobile(window.innerWidth <= 768);
     };
 
     window.addEventListener("resize", handleResize);
@@ -54,21 +61,22 @@ const BusinessBids = ({ setActiveSection }) => {
       setIsLoading(true);
       try {
         const {
-          data: { user },
+          data: { user: currentUser },
           error: userError,
         } = await supabase.auth.getUser();
-        if (userError || !user) {
+        if (userError || !currentUser) {
           console.error(
             "❌ Error fetching user:",
             userError || "No user found."
           );
           return;
         }
+        setUser(currentUser);
 
         const { data: businessBids, error: bidError } = await supabase
           .from("bids")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", currentUser.id)
           .or('hidden.is.false,hidden.is.null');
 
         if (bidError) {
@@ -347,15 +355,17 @@ const pendingBids = bids.filter((bid) =>
     }
   };
 
-  const handleMessageClick = (userId, preset) => {
-    // Switch to messages tab and pass the data
-    setActiveSection("messages");
-    // Add delay to ensure state updates
-    setTimeout(() => {
-      if (window.handleMessageFromRequest) {
-        window.handleMessageFromRequest(userId, preset);
-      }
-    }, 100);
+  const handleMessageClick = (userId, preset = null) => {
+    // Find the request to get user information
+    const request = requests.find(req => req.user_id === userId || req.profile_id === userId);
+    if (request) {
+      setSelectedChat({ 
+        id: userId, 
+        name: `${request.user_first_name || ''} ${request.user_last_name || ''}`.trim() || 'Client',
+        preset 
+      });
+      setShowChatModal(true);
+    }
   };
 
   if (isLoading) {
@@ -388,7 +398,7 @@ const pendingBids = bids.filter((bid) =>
                     }
                     openWithdrawModal={openWithdrawModal}
                     onContractUpload={handleContractUpload}
-                    onMessageClick={bid.status === "interested" ? () => handleMessageClick(request.user_id, `I'm interested in your request for ${request.title}`) : undefined}
+                    onMessageClick={() => handleMessageClick(request.user_id || request.profile_id, `I'm interested in your request for ${request.title}`)}
                   />
                 )
               );
@@ -406,6 +416,33 @@ const pendingBids = bids.filter((bid) =>
           onClose={closeWithdrawModal}
           onConfirm={confirmWithdraw}
         />
+      )}
+
+      {/* Chat Interface Modal */}
+      {showChatModal && selectedChat && (
+        <div className="chat-modal-overlay" onClick={() => setShowChatModal(false)}>
+          <div className="chat-modal" onClick={e => e.stopPropagation()}>
+            <button 
+              className="chat-modal-close" 
+              onClick={() => setShowChatModal(false)}
+            >
+              ×
+            </button>
+            {isMobile ? (
+              <MessagingView
+                currentUserId={user?.id}
+                businessId={selectedChat.id}
+                onBack={() => setShowChatModal(false)}
+              />
+            ) : (
+              <ChatInterface 
+                currentUserId={user?.id}
+                userType="business"
+                initialChat={selectedChat}
+              />
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

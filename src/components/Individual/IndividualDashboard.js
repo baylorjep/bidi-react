@@ -645,7 +645,7 @@ const IndividualDashboard = () => {
               <RequestCategories />
             )
           ) : activeSection === "vendors" ? (
-            <VendorListWithFilters />
+            <VendorListWithFilters showAds={false} />
           ) : activeSection === "profile" ? (
             <Settings currentDashboard="individual" />
           ) : (

@@ -1,5 +1,5 @@
   // src/components/Messaging/MobileChatList.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import dashboardIcon from "../../assets/images/Icons/dashboard.svg";
@@ -9,10 +9,64 @@ import profileIcon from "../../assets/images/Icons/profile.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
 import { FaArrowLeft } from "react-icons/fa";
 
+// Skeleton components for loading states
+const MobileChatItemSkeleton = () => (
+  <li
+    style={{
+      background: "#f6eafe",
+      padding: "1rem",
+      borderRadius: "1rem",
+      marginBottom: "1rem",
+      pointerEvents: "none"
+    }}
+  >
+    <div style={{ 
+      display: "flex", 
+      justifyContent: "space-between", 
+      alignItems: "center",
+      marginBottom: "0.5rem"
+    }}>
+      <div className="skeleton-chat-name-mobile"></div>
+      <div className="skeleton-unseen-badge-mobile"></div>
+    </div>
+    <div style={{ 
+      display: "flex", 
+      justifyContent: "space-between", 
+      alignItems: "center",
+      fontSize: "0.85rem"
+    }}>
+      <div className="skeleton-message-preview-mobile"></div>
+      <div className="skeleton-message-time-mobile"></div>
+    </div>
+  </li>
+);
+
+const MobileChatListSkeleton = () => (
+  <div style={{ padding: "1rem" }}>
+    <div style={{ 
+      display: "flex", 
+      alignItems: "center", 
+      marginBottom: "1rem",
+      gap: "1rem"
+    }}>
+      <h2 style={{ margin: 0 }}>Messages</h2>
+    </div>
+    <ul style={{ listStyle: "none", padding: 0 }}>
+      {Array.from({ length: 4 }).map((_, index) => (
+        <MobileChatItemSkeleton key={index} />
+      ))}
+    </ul>
+  </div>
+);
+
 export default function MobileChatList({ currentUserId, userType, onChatSelect }) {
   const [chats, setChats] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Memoize the loading skeleton at the top level to avoid conditional hook calls
+  const loadingSkeleton = useMemo(() => <MobileChatListSkeleton />, []);
 
   console.log('MobileChatList - userType:', userType); // Debug log
 
@@ -21,8 +75,11 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
     const fetchChats = async () => {
       if (!currentUserId || !userType) {
         console.log('Missing required props:', { currentUserId, userType }); // Debug log
+        setIsLoading(false);
         return;
       }
+
+      setIsLoading(true);
 
       const { data: messages = [], error: messagesError } = await supabase
         .from("messages")
@@ -32,6 +89,7 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
 
       if (messagesError) {
         console.error("Error fetching messages:", messagesError);
+        setIsLoading(false);
         return;
       }
 
@@ -53,7 +111,11 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
       });
 
       const otherIds = Object.keys(latestMap);
-      if (otherIds.length === 0) return setChats([]);
+      if (otherIds.length === 0) {
+        setChats([]);
+        setIsLoading(false);
+        return;
+      }
 
       const otherTable = userType === "individual" ? "business_profiles" : "individual_profiles";
 
@@ -64,6 +126,7 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
+        setIsLoading(false);
         return;
       }
 
@@ -81,10 +144,16 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
       }));
 
       setChats(formatted);
+      setIsLoading(false);
     };
 
     fetchChats();
   }, [currentUserId, userType]);
+
+  // Show skeleton loading while fetching data
+  if (!currentUserId || !userType || isLoading) {
+    return loadingSkeleton;
+  }
 
   const handleChatSelect = async (chat) => {
     // Mark messages as seen when chat is opened

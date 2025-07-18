@@ -1080,16 +1080,28 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     let formattedCategory = category;
     if (category.toLowerCase().includes('photography')) {
       formattedCategory = 'Photographer';
+    } else if (category.toLowerCase().includes('videography')) {
+      formattedCategory = 'Videographer';
+    } else if (category.toLowerCase().includes('beauty')) {
+      formattedCategory = 'Hair and Makeup Artist';
     } else if (category.toLowerCase().includes('wedding planner')) {
       formattedCategory = 'Wedding Planner';
-    } else if (category.toLowerCase().includes('beauty')) {
-      formattedCategory = 'Beauty Professional';
+    } else if (category.toLowerCase().includes('catering')) {
+      formattedCategory = 'Caterer';
+    } else if (category.toLowerCase().includes('florist') || category.toLowerCase().includes('flowers')) {
+      formattedCategory = 'Florist';
+    } else if (category.toLowerCase().includes('dj') || category.toLowerCase().includes('disc jockey')) {
+      formattedCategory = 'DJ';
+    } else if (category.toLowerCase().includes('venue')) {
+      formattedCategory = 'Venue';
+    } else if (category.toLowerCase().includes('cake') || category.toLowerCase().includes('bakery')) {
+      formattedCategory = 'Baker';
     } else {
       // Capitalize first letter and remove any extra spaces
       formattedCategory = category.charAt(0).toUpperCase() + category.slice(1).replace(/\s+/g, ' ');
     }
     
-    return `${business.business_name} - Professional ${formattedCategory} | Reviews & Portfolio`;
+    return `Is ${business.business_name} a Good ${formattedCategory}? | Reviews & Portfolio`;
   };
 
   const getSeoDescription = () => {
@@ -1158,23 +1170,16 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         <meta property="og:description" content={getSeoDescription()} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
-        {profileImage && (
-          <>
-            <meta property="og:image" content={profileImage} />
-            <meta property="og:image:width" content="1200" />
-            <meta property="og:image:height" content="630" />
-            <meta property="og:image:alt" content={`${business.business_name} portfolio image`} />
-          </>
-        )}
+        <meta property="og:image" content={profileImage || portfolioPics[0] || "/images/og-image.png"} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={`${business.business_name} portfolio image`} />
+        <meta property="og:image:type" content="image/jpeg" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={getSeoTitle()} />
         <meta name="twitter:description" content={getSeoDescription()} />
-        {profileImage && (
-          <>
-            <meta name="twitter:image" content={profileImage} />
-            <meta name="twitter:image:alt" content={`${business.business_name} portfolio image`} />
-          </>
-        )}
+        <meta name="twitter:image" content={profileImage || portfolioPics[0] || "/images/og-image.png"} />
+        <meta name="twitter:image:alt" content={`${business.business_name} portfolio image`} />
         <link rel="canonical" href={window.location.href} />
         <meta name="robots" content="index, follow" />
         <meta httpEquiv="Content-Language" content="en" />

@@ -17,7 +17,7 @@ import LoadingSpinner from "../LoadingSpinner.js";
 import MobileChatList from "../Messaging/MobileChatList.js";
 import MessagingView from "../Messaging/MessagingView.js";
 import RequestCategories from "../Request/RequestCategories.js";
-import VendorListWithFilters from "../VendorListWithFilters/VendorListWithFilters.js";
+import VendorListWithFilters from "../VendorList/VendorListWithFilters.js";
 import OpenRequests from "../Request/OpenRequests.js";
 import BusinessBids from "../Business/BusinessBids.js";
 import PortfolioPage from "../Business/Portfolio/Portfolio.js";
