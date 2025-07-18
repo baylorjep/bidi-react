@@ -34,6 +34,24 @@
   transform: translateX(0);
 }
 
+.sidebar-link-text {
+  text-align: center;
+  font-family: Outfit;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: -0.048px;
+}
+
+.sidebar-link-text:hover {
+  color: #9633eb;
+}
+
+.sidebar-link-text.active {
+  color: #9633eb;
+}
+
 /* Main Dashboard */
 .dashboard-main {
   transition: margin-left 0.3s ease, width 0.3s ease;
@@ -145,15 +163,13 @@
   margin: 4px 8px;
 }
 
-.sidebar-links li img {
+.sidebar-links li img,
+.sidebar-links li i {
   width: 24px;
   height: 24px;
   margin-right: 12px;
-}
-
-.sidebar-links li span {
-  font-size: 14px;
-  color: #333;
+  filter: brightness(0) saturate(100%) invert(47%) sepia(8%) saturate(1234%) hue-rotate(200deg) brightness(89%) contrast(86%);
+  transition: filter 0.2s ease;
 }
 
 .sidebar-links li.active {
@@ -162,7 +178,12 @@
 }
 
 .sidebar-links li.active img {
-  /* Remove the filter that changes icon color */
+  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(246deg) brightness(104%) contrast(97%);
+}
+
+.sidebar-links li.active i {
+  filter: none;
+  color: #9633eb;
 }
 
 .sidebar-links li:hover {
@@ -171,7 +192,12 @@
 }
 
 .sidebar-links li:hover img {
-  /* Remove the filter that changes icon color */
+  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(246deg) brightness(104%) contrast(97%);
+}
+
+.sidebar-links li:hover i {
+  filter: none;
+  color: #9633eb;
 }
 
 .sidebar-links .sidebar-section-title {
@@ -271,6 +297,7 @@
   width: 28px;
   height: 28px;
   margin-bottom: 8px;
+  transition: filter 0.2s ease;
 }
 
 .nav-label {
@@ -289,6 +316,14 @@
 
 .bottom-nav button.active .nav-label {
   color: #a328f4;
+}
+
+.bottom-nav button.active img {
+  filter: none;
+}
+
+.bottom-nav button:hover img {
+  filter: none;
 }
 
 /* Mobile Responsive Styles */
@@ -353,6 +388,16 @@
     width: 32px;
     height: 32px;
     margin-bottom: 8px;
+    filter: brightness(0) saturate(100%) invert(47%) sepia(8%) saturate(1234%) hue-rotate(200deg) brightness(89%) contrast(86%);
+    transition: filter 0.2s ease;
+  }
+
+  .bottom-nav button.active img {
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(246deg) brightness(104%) contrast(97%);
+  }
+
+  .bottom-nav button:hover img {
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(246deg) brightness(104%) contrast(97%);
   }
 }
 
@@ -367,6 +412,16 @@
   .bottom-nav button img {
     width: 28px;
     height: 28px;
+    filter: brightness(0) saturate(100%) invert(47%) sepia(8%) saturate(1234%) hue-rotate(200deg) brightness(89%) contrast(86%);
+    transition: filter 0.2s ease;
+  }
+
+  .bottom-nav button.active img {
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(246deg) brightness(104%) contrast(97%);
+  }
+
+  .bottom-nav button:hover img {
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(246deg) brightness(104%) contrast(97%);
   }
 
   .profile-nav-image {
@@ -431,12 +486,48 @@
   position: relative;
 }
 
+/* Mobile Settings Button - Separate styling */
+.mobile-settings-button {
+  position: relative;
+}
+
+.mobile-settings-button .profile-nav-image-settings {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 8px;
+  border: 2px solid #80858b;
+  transition: border-color 0.2s ease;
+  background: transparent;
+  filter: none;
+}
+
+.mobile-settings-button.active .profile-nav-image-settings {
+  border: 2px solid #9633eb;
+  background: transparent;
+  filter: none;
+}
+
+.mobile-settings-button:hover .profile-nav-image-settings  {
+  border: 2px solid #9633eb;
+  background: transparent;
+  filter: none;
+}
+
+.mobile-settings-button .profile-nav-image-settings {
+  background: transparent;
+}
+
 .profile-nav-image {
   width: 32px !important;
   height: 32px !important;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 8px;
+  border: 2px solid #80858b;
+  transition: border-color 0.2s ease;
+  background: transparent;
 }
 
 .profile-menu {
@@ -504,5 +595,15 @@
 }
 
 .bottom-nav button.profile-nav-button.active .profile-nav-image {
-  border: 2px solid #a328f4;
+  border: 2px solid #9633eb;
+  background: transparent;
+}
+
+.bottom-nav button.profile-nav-button:hover .profile-nav-image {
+  border: 2px solid #9633eb;
+  background: transparent;
+}
+
+.bottom-nav button.profile-nav-button .profile-nav-image {
+  background: transparent;
 }

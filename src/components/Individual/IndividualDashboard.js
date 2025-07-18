@@ -6,7 +6,8 @@ import "../../styles/IndividualDashboard.css";
 import "../../styles/Sidebar.css";
 import "./WeddingPlannerModal.css";
 import verifiedCheckIcon from "../../assets/images/Icons/verified-check.svg";
-import bidsIcon from "../../assets/images/Icons/bids.svg";
+import HomeIcon from "../../assets/images/Icons/dashboard.svg";
+import BidsIcon from "../../assets/images/Icons/bids.svg";
 import messageIcon from "../../assets/images/Icons/message.svg";
 import profileIcon from "../../assets/images/Icons/profile.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
@@ -536,36 +537,36 @@ const IndividualDashboard = () => {
               onClick={() => handleSectionChange("bids")}
               className={activeSection === "bids" ? "active" : ""}
             >
-              <img src={bidsIcon} alt="Bids" />
-              <span>Bids</span>
+              <img src={HomeIcon} alt="Bids" />
+              <span className="sidebar-link-text">Bids</span>
             </li>
             <li 
               onClick={handleMessagesClick}
               className={activeSection === "messages" ? "active" : ""}
             >
               <img src={messageIcon} alt="Message" />
-              <span>Messages</span>
+              <span className="sidebar-link-text">Messages</span>
             </li>
             <li 
               onClick={() => handleSectionChange("request")}
               className={activeSection === "request" ? "active" : ""}
             >
-              <img src={bidsIcon} alt="Request Bid" />
-              <span>Request Bid</span>
+              <img src={BidsIcon} alt="Request Bid" />
+              <span className="sidebar-link-text">Request Bid</span>
             </li>
             <li 
               onClick={() => handleSectionChange("vendors")}
               className={activeSection === "vendors" ? "active" : ""}
             >
               <img src={profileIcon} alt="Vendors" />
-              <span>Find Vendors</span>
+              <span className="sidebar-link-text">Find Vendors</span>
             </li>
             <li 
               onClick={() => handleSectionChange("profile")}
               className={activeSection === "profile" ? "active" : ""}
             >
               <img src={settingsIcon} alt="Profile" />
-              <span>Profile</span>
+              <span className="sidebar-link-text">Profile</span>
             </li>
           </ul>
 
@@ -576,7 +577,7 @@ const IndividualDashboard = () => {
               className="logout-button"
             >
               <i className="fas fa-sign-out-alt"></i>
-              <span>Log Out</span>
+              <span className="sidebar-link-text">Log Out</span>
             </button>
           </div>
         </aside>
@@ -660,45 +661,45 @@ const IndividualDashboard = () => {
               onClick={() => handleSectionChange("bids")}
               className={activeSection === "bids" ? "active" : ""}
             >
-              <div className="nav-item">
-                <img src={bidsIcon} alt="Bids" />
-                <span className="nav-label">Bids</span>
+              <div className="nav-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <img src={HomeIcon} alt="Bids" />
+                    <span className="sidebar-link-text">Bids</span>
               </div>
             </button>
             <button 
               onClick={handleMessagesClick}
               className={activeSection === "messages" ? "active" : ""}
             >
-              <div className="nav-item">
+              <div className="nav-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <img src={messageIcon} alt="Message" />
-                <span className="nav-label">Messages</span>
+                <span className="sidebar-link-text">Messages</span>
               </div>
             </button>
             <button 
               onClick={() => handleSectionChange("request")}
               className={activeSection === "request" ? "active" : ""}
             >
-              <div className="nav-item">
-                <img src={bidsIcon} alt="Request" />
-                <span className="nav-label">Request</span>
+              <div className="nav-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <img src={BidsIcon} alt="Request" />
+                <span className="sidebar-link-text">Request</span>
               </div>
             </button>
             <button 
               onClick={() => handleSectionChange("vendors")}
               className={activeSection === "vendors" ? "active" : ""}
             >
-              <div className="nav-item">
+              <div className="nav-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <img src={profileIcon} alt="Vendors" />
-                <span className="nav-label">Vendors</span>
+                <span className="sidebar-link-text">Vendors</span>
               </div>
             </button>
             <button 
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className={`profile-nav-button ${showProfileMenu ? 'active' : ''}`}
+              className={`mobile-settings-button ${showProfileMenu ? 'active' : ''}`}
             >
-              <div className="nav-item">
-                <img src={profileImage} alt="Profile" className="profile-nav-image" />
-                <span className="nav-label">Profile</span>
+              <div className="nav-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <img src={profileImage} alt="Profile" className="profile-nav-image-settings" />
+                <span className="sidebar-link-text" >Profile</span>
               </div>
             </button>
           </nav>

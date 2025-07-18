@@ -483,6 +483,7 @@ const Gallery = () => {
       max-width: 1400px;
       margin: 0 auto;
       padding: 20px;
+      margin-top: 80px; /* Add top margin to account for navbar */
     }
     .gallery-header-container {
       display: flex;
@@ -490,6 +491,8 @@ const Gallery = () => {
       justify-content: space-between;
       margin-bottom: 30px;
       padding: 0 20px;
+      position: relative;
+      z-index: 10; /* Ensure it's above other elements */
     }
     .gallery-header {
       font-size: 28px;
@@ -506,9 +509,16 @@ const Gallery = () => {
       border-radius: 20px;
       cursor: pointer;
       transition: all 0.2s ease;
+      position: relative;
+      z-index: 15; /* Higher z-index to ensure it's clickable */
+      font-weight: 500;
+      min-width: 80px;
+      justify-content: center;
     }
     .back-button:hover {
       background: rgba(163, 40, 244, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(163, 40, 244, 0.2);
     }
     .edit-gallery-button {
       padding: 8px 20px;
@@ -1197,7 +1207,6 @@ const Gallery = () => {
     return (
       <div className="loading-container">
         <div className="loading-spinner">
-          Loading gallery...
         </div>
       </div>
     );
@@ -1280,54 +1289,68 @@ const Gallery = () => {
       {categories.length === 1 ? (
         <div className="category-carousel">
           <div className="carousel-container">
-            <Slider {...getDynamicSettings(portfolioMedia[categories[0].id])}>
-              {portfolioMedia[categories[0].id]?.map((media, index) => (
-                <div
-                  key={index}
-                  className="carousel-item"
-                  onClick={() => handleMediaClick(media, index)}
-                >
-                  {media.type === 'video' ? (
-                    <div className="video-container">
-                      <video
-                        src={media.url}
-                        className="gallery-video"
-                        poster={`${media.url}?thumb`}
-                        preload="metadata"
-                        muted
-                        autoPlay={index < AUTO_PLAY_COUNT}
-                        loop
-                        playsInline
-                      />
-                      <div className="video-play-overlay">
-                        <button 
-                          className="play-button"
-                          onClick={e => {
-                            e.stopPropagation();
-                            const video = e.currentTarget.parentElement.previousElementSibling;
-                            if (video.paused) {
-                              video.play();
-                              e.currentTarget.parentElement.style.display = 'none';
-                            }
-                          }}
-                        >
-                          ▶
-                        </button>
-                      </div>
+            {(() => {
+              const categoryMedia = portfolioMedia[categories[0].id] || [];
+              const photosMedia = portfolioMedia['photos'] || [];
+              const mediaToShow = categoryMedia.length > 0 ? categoryMedia : photosMedia;
+              console.log('Single category rendering:', {
+                categoryId: categories[0].id,
+                categoryName: categories[0].name,
+                categoryMedia: categoryMedia,
+                photosMedia: photosMedia,
+                mediaToShow: mediaToShow
+              });
+              return (
+                <Slider {...getDynamicSettings(mediaToShow)}>
+                                    {mediaToShow.map((media, index) => (
+                    <div
+                      key={index}
+                      className="carousel-item"
+                      onClick={() => handleMediaClick(media, index)}
+                    >
+                      {media.type === 'video' ? (
+                        <div className="video-container">
+                          <video
+                            src={media.url}
+                            className="gallery-video"
+                            poster={`${media.url}?thumb`}
+                            preload="metadata"
+                            muted
+                            autoPlay={index < AUTO_PLAY_COUNT}
+                            loop
+                            playsInline
+                          />
+                          <div className="video-play-overlay">
+                            <button 
+                              className="play-button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                const video = e.currentTarget.parentElement.previousElementSibling;
+                                if (video.paused) {
+                                  video.play();
+                                  e.currentTarget.parentElement.style.display = 'none';
+                                }
+                              }}
+                            >
+                              ▶
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <ImageErrorBoundary>
+                          <img
+                            src={media.url}
+                            alt={`${categories[0].name} ${index + 1}`}
+                            className="gallery-image"
+                            loading="lazy"
+                          />
+                        </ImageErrorBoundary>
+                      )}
                     </div>
-                  ) : (
-                    <ImageErrorBoundary>
-                      <img
-                        src={media.url}
-                        alt={`${categories[0].name} ${index + 1}`}
-                        className="gallery-image"
-                        loading="lazy"
-                      />
-                    </ImageErrorBoundary>
-                  )}
-                </div>
-              ))}
-            </Slider>
+                  ))}
+                </Slider>
+              );
+            })()}
           </div>
         </div>
       ) : (

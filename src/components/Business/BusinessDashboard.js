@@ -505,7 +505,7 @@ const BusinessDashSidebar = () => {
               {BidiPlus && <div className="verified-badge">Verified</div>}
             </div>
             <h4 className="profile-name">
-              <span className="business-name-under-picture">
+              <span className="business-name-under-picture sidebar-link-text">
                 {formatBusinessName(businessName)}
               </span>
             </h4>
@@ -518,21 +518,21 @@ const BusinessDashSidebar = () => {
               className={activeSection === "dashboard" ? "active" : ""}
             >
               <img src={dashboardIcon} alt="Requests" />
-              <span>Requests</span>
+              <span className="sidebar-link-text">Requests</span>
             </li>
             <li 
               onClick={() => handleSectionChange("bids")}
               className={activeSection === "bids" ? "active" : ""}
             >
               <img src={bidsIcon} alt="Bids" />
-              <span>Bids</span>
+              <span className="sidebar-link-text">Bids</span>
             </li>
             <li 
               onClick={handleMessagesClick}
               className={activeSection === "messages" ? "active" : ""}
             >
               <img src={messageIcon} alt="Message" />
-              <span>Message</span>
+              <span className="sidebar-link-text">Message</span>
             </li>
             <li
               onClick={() => {
@@ -541,21 +541,21 @@ const BusinessDashSidebar = () => {
               className={activeSection === "portfolio" ? "active" : ""}
             >
               <img src={profileIcon} alt="Portfolio" />
-              <span>Portfolio</span>
+              <span className="sidebar-link-text">Portfolio</span>
             </li>
             <li 
               onClick={() => handleSectionChange("training")}
               className={activeSection === "training" ? "active" : ""}
             >
               <i className="fas fa-play-circle" style={{ width: '24px', height: '24px', marginRight: '12px', fontSize: '20px', color: '#9633eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}></i>
-              <span>Training</span>
+              <span className="sidebar-link-text">Training</span>
             </li>
             <li 
               onClick={() => handleSectionChange("settings")}
               className={activeSection === "settings" ? "active" : ""}
             >
               <img src={settingsIcon} alt="Settings" />
-              <span>Settings</span>
+              <span className="sidebar-link-text">Settings</span>
             </li>
             {isAdmin && (
               <li 
@@ -563,7 +563,7 @@ const BusinessDashSidebar = () => {
                 className={activeSection === "admin" ? "active" : ""}
               >
                 <i className="fas fa-shield-alt" style={{ width: '24px', height: '24px', marginRight: '12px', fontSize: '20px', color: '#9633eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}></i>
-                <span>Admin</span>
+                <span className="sidebar-link-text">Admin</span>
               </li>
             )}
           </ul>
@@ -582,7 +582,7 @@ const BusinessDashSidebar = () => {
               className="logout-button"
             >
               <i className="fas fa-sign-out-alt"></i>
-              <span>Log Out</span>
+              <span className="sidebar-link-text">Log Out</span>
             </button>
           </div>
         </aside>
@@ -701,10 +701,10 @@ const BusinessDashSidebar = () => {
               </button>
               <button 
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className={`profile-nav-button ${showProfileMenu ? 'active' : ''}`}
+                className={`mobile-settings-button ${showProfileMenu ? 'active' : ''}`}
               >
                 <div className="nav-item">
-                  <img src={profileImage} alt="Profile" className="profile-nav-image" />
+                  <img src={profileImage} alt="Profile" className="profile-nav-image-settings" />
                   <span className="nav-label">Settings</span>
                 </div>
               </button>
