@@ -56,7 +56,35 @@ const formatLocationName = (name) => {
         'saltlake': 'Salt Lake',
         'saltlakecounty': 'Salt Lake County',
         'slc County': 'Salt Lake County',
-        'slc': "Salt Lake"
+        'salt-lake-city': 'Salt Lake City',
+        'west-valley-city': 'West Valley City',
+        'west-jordan': 'West Jordan',
+        'south-jordan': 'South Jordan',
+        'cottonwood-heights': 'Cottonwood Heights',
+        'south-salt-lake': 'South Salt Lake',
+        'pleasant-grove': 'Pleasant Grove',
+        'spanish-fork': 'Spanish Fork',
+        'american-fork': 'American Fork',
+        'saratoga-springs': 'Saratoga Springs',
+        'eagle-mountain': 'Eagle Mountain',
+        'cedar-hills': 'Cedar Hills',
+        'north-salt-lake': 'North Salt Lake',
+        'woods-cross': 'Woods Cross',
+        'fruit-heights': 'Fruit Heights',
+        'west-bountiful': 'West Bountiful',
+        'south-ogden': 'South Ogden',
+        'north-ogden': 'North Ogden',
+        'washington-terrace': 'Washington Terrace',
+        'pleasant-view': 'Pleasant View',
+        'st-george': 'St. George',
+        'washington-city': 'Washington City',
+        'santa-clara': 'Santa Clara',
+        'la-verkin': 'La Verkin',
+        'north-logan': 'North Logan',
+        'stansbury-park': 'Stansbury Park',
+        'kimball-junction': 'Kimball Junction',
+        'heber-city': 'Heber City',
+        'park-city': 'Park City'
     };
 
     // Convert to lowercase for comparison
@@ -1485,7 +1513,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                           )}
                         </div>
                       </div>
-                      {business.service_areas && Object.keys(business.service_areas).length > 1 && (
+                      {business.service_areas && Array.isArray(business.service_areas) && business.service_areas.length > 0 && (
                         <div className="service-areas">
                           <button 
                             className="service-areas-toggle"
@@ -1497,9 +1525,9 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                             <div className="service-areas-content">
                               <h3 className="service-areas-title">Additional Service Areas</h3>
                               <div className="service-areas-list">
-                                {Object.entries(business.service_areas).map(([area, value]) => (
-                                  value && <span key={area} className="service-area-tag">
-                                    {formatLocationName(area)}
+                                {business.service_areas.map((areaId, index) => (
+                                  <span key={index} className="service-area-tag">
+                                    {formatLocationName(areaId)}
                                   </span>
                                 ))}
                               </div>
