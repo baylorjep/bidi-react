@@ -1111,6 +1111,101 @@
   margin-left: 6px;
 }
 
+/* Itemized Quote Breakdown Styles */
+.bid-itemized-breakdown {
+  width: 100%;
+}
+
+.bid-breakdown-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.bid-breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+.bid-breakdown-item .item-description {
+  color: #666;
+  flex: 1;
+}
+
+.bid-breakdown-item .item-amount {
+  font-weight: 600;
+  color: #333;
+  text-align: right;
+}
+
+.bid-breakdown-item.bid-total {
+  border-top: 1px solid #e1e5e9;
+  padding-top: 8px;
+  margin-top: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  color: #9633eb;
+}
+
+.bid-breakdown-item.bid-total .item-description {
+  color: #333;
+}
+
+.bid-breakdown-item.bid-total .item-amount {
+  color: #9633eb;
+  font-size: 18px;
+}
+
+.bid-breakdown-item.bid-discount {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.bid-breakdown-item.bid-discount .item-description {
+  color: #28a745;
+}
+
+.bid-breakdown-item.bid-discount .item-amount {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+.bid-simple-price-with-discount {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bid-original-price {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.bid-discounted-price {
+  color: #dc3545;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .bid-breakdown-item {
+    font-size: 13px;
+  }
+  
+  .bid-breakdown-item.bid-total {
+    font-size: 15px;
+  }
+  
+  .bid-breakdown-item.bid-total .item-amount {
+    font-size: 16px;
+  }
+}
+
 .bid-card-description {
   margin: 10px 0 18px 0;
 }
@@ -1732,8 +1827,8 @@
 }
 
 .discount-badge {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 2px solid #f59e0b;
+  background: rgba(252, 231, 243, 0.85); /* lighter, more transparent pink */
+  border: 2px solid #f247d1;
   border-radius: 12px;
   padding: 16px;
   text-align: center;
@@ -1748,8 +1843,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.18) 50%, transparent 70%);
   animation: shimmer 2s infinite;
+  z-index: 1;
 }
 
 @keyframes shimmer {
@@ -1761,33 +1857,41 @@
   display: block;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #92400e;
+  color: #a21caf; /* deep magenta for contrast */
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  position: relative;
+  z-index: 2;
 }
 
 .discount-price {
   display: block;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #dc2626;
+  color: #d72660; /* bold pink for strong contrast */
   margin-bottom: 4px;
+  position: relative;
+  z-index: 2;
 }
 
 .discount-original {
   display: block;
   font-size: 1rem;
-  color: #6b7280;
+  color: #b91c1c; /* strong red for strikethrough */
   text-decoration: line-through;
   margin-bottom: 8px;
+  position: relative;
+  z-index: 2;
 }
 
 .discount-timer {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #92400e;
+  color: #7c2bd9; /* purple for contrast */
+  position: relative;
+  z-index: 2;
 }
 
 /* Status-based card styling */
@@ -2010,12 +2114,43 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.bid-card-messages-header:hover {
+  background-color: #f8f9fa;
 }
 
 .bid-card-messages-label {
   font-weight: 600;
   color: #333;
   font-size: 14px;
+}
+
+.bid-card-close-conversation-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.bid-card-close-conversation-btn:hover {
+  background: #f3f3f3;
+  color: #666;
+}
+
+.bid-card-close-conversation-btn svg {
+  transition: transform 0.2s ease;
 }
 
 .bid-card-open-messaging-btn {

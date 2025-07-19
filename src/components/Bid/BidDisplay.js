@@ -99,6 +99,7 @@ function BidDisplay({
   const [expandedPreviewMessages, setExpandedPreviewMessages] = useState(new Set());
   const [newMessage, setNewMessage] = useState('');
   const [showBidMessaging, setShowBidMessaging] = useState(false);
+  const [showConversation, setShowConversation] = useState(true);
   
   // Payment request state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -223,7 +224,19 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
     const deadline = new Date(bid.discount_deadline);
     if (now > deadline) return null;
 
-    let discounted = Number(bid.bid_amount);
+    // For itemized quotes, use the total amount (which includes tax)
+    // For simple bids, use the bid_amount
+    let baseAmount = Number(bid.bid_amount);
+    
+    // If we have line items, the bid_amount should already be the total including tax
+    // But we can double-check by calculating from line items if available
+    if (bid.line_items && bid.line_items.length > 0) {
+      const subtotal = bid.subtotal || 0;
+      const tax = bid.tax || 0;
+      baseAmount = subtotal + tax;
+    }
+
+    let discounted = baseAmount;
     if (bid.discount_type === 'percentage') {
       discounted = discounted * (1 - Number(bid.discount_value) / 100);
     } else if (bid.discount_type === 'flat') {
@@ -1786,8 +1799,52 @@ useEffect(() => {
               </span>
             )}
           </div>
-          <div className="bid-card-price">${bid.bid_amount}</div>
         </div>
+      </div>
+
+      {/* Price Breakdown - Moved below profile row */}
+      <div className="bid-card-price-section">
+        {bid.line_items && bid.line_items.length > 0 ? (
+          <div className="bid-itemized-breakdown">
+            <div className="bid-breakdown-items">
+              {bid.line_items.map((item, index) => (
+                <div key={index} className="bid-breakdown-item">
+                  <span className="item-description">{item.description} - {item.quantity} x ${item.rate}</span>
+                  <span className="item-amount">${item.amount.toFixed(2)}</span>
+                </div>
+              ))}
+              {bid.tax_rate > 0 && (
+                <div className="bid-breakdown-item">
+                  <span className="item-description">Tax ({bid.tax_rate}%)</span>
+                  <span className="item-amount">${bid.tax.toFixed(2)}</span>
+                </div>
+              )}
+              {discountedPrice && (
+                <div className="bid-breakdown-item bid-discount">
+                  <span className="item-description">Discount ({bid.discount_type === 'percentage' ? `${bid.discount_value}%` : `$${bid.discount_value}`})</span>
+                  <span className="item-amount">-${(Number(bid.bid_amount) - Number(discountedPrice)).toFixed(2)}</span>
+                </div>
+              )}
+              <div className="bid-breakdown-item bid-total">
+                <span className="item-description">Total</span>
+                <span className="item-amount">
+                  {discountedPrice ? `$${discountedPrice}` : `$${bid.bid_amount}`}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bid-simple-price">
+            {discountedPrice ? (
+              <div className="bid-simple-price-with-discount">
+                <span className="bid-original-price">${bid.bid_amount}</span>
+                <span className="bid-discounted-price">${discountedPrice}</span>
+              </div>
+            ) : (
+              <span className="bid-amount">${bid.bid_amount}</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Discount Info */}
@@ -1799,170 +1856,207 @@ useEffect(() => {
       {/* Messages Section - Show conversation instead of static description */}
       {(bidStatus === 'pending' || bidStatus === 'interested' || bidStatus === 'default') && (
         <div className="bid-card-messages-section">
-          <div className="bid-card-messages-header">
+          <div 
+            className="bid-card-messages-header"
+            onClick={() => setShowConversation(!showConversation)}
+            style={{ cursor: 'pointer' }}
+          >
             <span className="bid-card-messages-label">Conversation</span>
-          </div>
-
-          {isLoadingMessages ? (
-            <div className="bid-card-messages-loading">
-              <div className="loading-spinner"></div>
-              <span>Loading messages...</span>
-            </div>
-          ) : bidMessages.length > 0 ? (
-            <div className="bid-card-messages-preview">
-              {bidMessages.slice(-3).map((msg, index) => (
-                <div
-                  key={index}
-                  className={`bid-message-preview ${msg.sender_id === currentUserId ? 'sent' : 'received'} ${msg.is_virtual ? 'virtual-message' : ''}`}
-                >
-                  <div className="bid-message-preview-content">
-                    {shouldTruncatePreviewMessage(msg.message) && !expandedPreviewMessages.has(msg.id) ? (
-                      <div>
-                        {msg.is_virtual || msg.message.includes('<p>') ? (
-                          <div 
-                            className="message-preview-html-content"
-                            dangerouslySetInnerHTML={{ __html: getTruncatedPreviewMessage(msg.message) }}
-                          />
-                        ) : msg.type === 'payment_request' ? (
-                          <PaymentCard
-                            amount={msg.payment_amount || JSON.parse(msg.message).amount}
-                            businessName={bid.business_profiles.business_name}
-                            stripeAccountId={msg.payment_data?.stripe_account_id || JSON.parse(msg.message).paymentData.stripe_account_id}
-                            description={msg.payment_data?.description || JSON.parse(msg.message).description}
-                            lineItems={msg.payment_data?.lineItems || JSON.parse(msg.message).paymentData.lineItems}
-                            subtotal={msg.payment_data?.subtotal || JSON.parse(msg.message).paymentData.subtotal}
-                            tax={msg.payment_data?.tax || JSON.parse(msg.message).paymentData.tax}
-                            taxRate={msg.payment_data?.taxRate || JSON.parse(msg.message).paymentData.taxRate}
-                            paymentStatus={msg.payment_status}
-                          />
-                        ) : (
-                          formatMessageText(getTruncatedPreviewMessage(msg.message))
-                        )}
-                        <button 
-                          className="read-more-preview-btn"
-                          onClick={() => togglePreviewMessageExpansion(msg.id)}
-                        >
-                          Read more
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        {msg.is_virtual || msg.message.includes('<p>') ? (
-                          <div 
-                            className="message-preview-html-content"
-                            dangerouslySetInnerHTML={{ __html: msg.message }}
-                          />
-                        ) : msg.type === 'payment_request' ? (
-                          <PaymentCard
-                            amount={msg.payment_amount || JSON.parse(msg.message).amount}
-                            businessName={bid.business_profiles.business_name}
-                            stripeAccountId={msg.payment_data?.stripe_account_id || JSON.parse(msg.message).paymentData.stripe_account_id}
-                            description={msg.payment_data?.description || JSON.parse(msg.message).description}
-                            lineItems={msg.payment_data?.lineItems || JSON.parse(msg.message).paymentData.lineItems}
-                            subtotal={msg.payment_data?.subtotal || JSON.parse(msg.message).paymentData.subtotal}
-                            tax={msg.payment_data?.tax || JSON.parse(msg.message).paymentData.tax}
-                            taxRate={msg.payment_data?.taxRate || JSON.parse(msg.message).paymentData.taxRate}
-                            paymentStatus={msg.payment_status}
-                          />
-                        ) : (
-                          formatMessageText(msg.message)
-                        )}
-                        {shouldTruncatePreviewMessage(msg.message) && expandedPreviewMessages.has(msg.id) && (
-                          <button 
-                            className="read-less-preview-btn"
-                            onClick={() => togglePreviewMessageExpansion(msg.id)}
-                          >
-                            Show less
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="bid-message-preview-time">
-                    {new Date(msg.created_at).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
-                    {msg.is_virtual && (
-                      <span className="virtual-indicator-preview">Original Bid</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {bidMessages.length > 3 && (
-                <div className="bid-messages-more" onClick={() => setShowBidMessaging(true)}>
-                  <span>+{bidMessages.length - 3} more messages</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="bid-card-no-messages">
-              <p>No messages yet. Start the conversation!</p>
-            </div>
-          )}
-
-          {/* Inline messaging interface */}
-          <div className="bid-card-messaging-interface">
-            <div className="bid-card-input-wrapper">
-              <label htmlFor="file-upload-inline" className="bid-card-upload-btn">
-                <span>＋</span>
-                <input
-                  id="file-upload-inline"
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={handleFileUpload}
-                />
-              </label>
-              {isCurrentUserBusiness && stripeAccountId && (
-                <button 
-                  className="bid-card-payment-btn"
-                  onClick={() => setShowPaymentModal(true)}
-                  title="Send Payment Request"
-                >
-                  <FaCreditCard />
-                </button>
-              )}
-              <div className="bid-card-input-container">
-                {previewImageUrl && (
-                  <div className="inline-image-preview">
-                    <img src={previewImageUrl} alt="Preview" />
-                    <button className="inline-remove-button" onClick={() => {
-                      setPreviewImageUrl(null);
-                      setPendingFile(null);
-                    }}>×</button>
-                  </div>
-                )}
-                <textarea
-                  className="bid-card-input"
-                  placeholder="Add a message…"
-                  value={newMessage}
-                  onChange={(e) => {
-                    setNewMessage(e.target.value);
-                    // Auto-resize the textarea
-                    e.target.style.height = 'auto';
-                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage();
-                    }
-                  }}
-                  rows={1}
-                  style={{ resize: 'none', overflow: 'hidden' }}
-                />
-              </div>
-            </div>
             <button 
-              className="bid-card-send-btn" 
-              onClick={sendMessage}
-              disabled={!newMessage.trim() && !pendingFile}
+              className="bid-card-close-conversation-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowConversation(!showConversation);
+              }}
+              title={showConversation ? "Hide conversation" : "Show conversation"}
             >
-              Send
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{
+                  transform: showConversation ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease'
+                }}
+              >
+                <path
+                  d="M6 9L12 15L18 9"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
           </div>
+
+          {showConversation && (
+            <>
+              {isLoadingMessages ? (
+                <div className="bid-card-messages-loading">
+                  <div className="loading-spinner"></div>
+                  <span>Loading messages...</span>
+                </div>
+              ) : bidMessages.length > 0 ? (
+                <div className="bid-card-messages-preview">
+                  {bidMessages.slice(-3).map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`bid-message-preview ${msg.sender_id === currentUserId ? 'sent' : 'received'} ${msg.is_virtual ? 'virtual-message' : ''}`}
+                    >
+                      <div className="bid-message-preview-content">
+                        {shouldTruncatePreviewMessage(msg.message) && !expandedPreviewMessages.has(msg.id) ? (
+                          <div>
+                            {msg.is_virtual || msg.message.includes('<p>') ? (
+                              <div 
+                                className="message-preview-html-content"
+                                dangerouslySetInnerHTML={{ __html: getTruncatedPreviewMessage(msg.message) }}
+                              />
+                            ) : msg.type === 'payment_request' ? (
+                              <PaymentCard
+                                amount={msg.payment_amount || JSON.parse(msg.message).amount}
+                                businessName={bid.business_profiles.business_name}
+                                stripeAccountId={msg.payment_data?.stripe_account_id || JSON.parse(msg.message).paymentData.stripe_account_id}
+                                description={msg.payment_data?.description || JSON.parse(msg.message).description}
+                                lineItems={msg.payment_data?.lineItems || JSON.parse(msg.message).paymentData.lineItems}
+                                subtotal={msg.payment_data?.subtotal || JSON.parse(msg.message).paymentData.subtotal}
+                                tax={msg.payment_data?.tax || JSON.parse(msg.message).paymentData.tax}
+                                taxRate={msg.payment_data?.taxRate || JSON.parse(msg.message).paymentData.taxRate}
+                                paymentStatus={msg.payment_status}
+                              />
+                            ) : (
+                              formatMessageText(getTruncatedPreviewMessage(msg.message))
+                            )}
+                            <button 
+                              className="read-more-preview-btn"
+                              onClick={() => togglePreviewMessageExpansion(msg.id)}
+                            >
+                              Read more
+                            </button>
+                          </div>
+                        ) : (
+                          <div>
+                            {msg.is_virtual || msg.message.includes('<p>') ? (
+                              <div 
+                                className="message-preview-html-content"
+                                dangerouslySetInnerHTML={{ __html: msg.message }}
+                              />
+                            ) : msg.type === 'payment_request' ? (
+                              <PaymentCard
+                                amount={msg.payment_amount || JSON.parse(msg.message).amount}
+                                businessName={bid.business_profiles.business_name}
+                                stripeAccountId={msg.payment_data?.stripe_account_id || JSON.parse(msg.message).paymentData.stripe_account_id}
+                                description={msg.payment_data?.description || JSON.parse(msg.message).description}
+                                lineItems={msg.payment_data?.lineItems || JSON.parse(msg.message).paymentData.lineItems}
+                                subtotal={msg.payment_data?.subtotal || JSON.parse(msg.message).paymentData.subtotal}
+                                tax={msg.payment_data?.tax || JSON.parse(msg.message).paymentData.tax}
+                                taxRate={msg.payment_data?.taxRate || JSON.parse(msg.message).paymentData.taxRate}
+                                paymentStatus={msg.payment_status}
+                              />
+                            ) : (
+                              formatMessageText(msg.message)
+                            )}
+                            {shouldTruncatePreviewMessage(msg.message) && expandedPreviewMessages.has(msg.id) && (
+                              <button 
+                                className="read-less-preview-btn"
+                                onClick={() => togglePreviewMessageExpansion(msg.id)}
+                              >
+                                Show less
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="bid-message-preview-time">
+                        {new Date(msg.created_at).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true,
+                          timeZone: 'America/Denver'
+                        })}
+                        {msg.is_virtual && (
+                          <span className="virtual-indicator-preview">Original Bid</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {bidMessages.length > 3 && (
+                    <div className="bid-messages-more" onClick={() => setShowBidMessaging(true)}>
+                      <span>+{bidMessages.length - 3} more messages</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bid-card-no-messages">
+                  <p>No messages yet. Start the conversation!</p>
+                </div>
+              )}
+
+              {/* Inline messaging interface */}
+              <div className="bid-card-messaging-interface">
+                <div className="bid-card-input-wrapper">
+                  <label htmlFor="file-upload-inline" className="bid-card-upload-btn">
+                    <span>＋</span>
+                    <input
+                      id="file-upload-inline"
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={handleFileUpload}
+                    />
+                  </label>
+                  {isCurrentUserBusiness && stripeAccountId && (
+                    <button 
+                      className="bid-card-payment-btn"
+                      onClick={() => setShowPaymentModal(true)}
+                      title="Send Payment Request"
+                    >
+                      <FaCreditCard />
+                    </button>
+                  )}
+                  <div className="bid-card-input-container">
+                    {previewImageUrl && (
+                      <div className="inline-image-preview">
+                        <img src={previewImageUrl} alt="Preview" />
+                        <button className="inline-remove-button" onClick={() => {
+                          setPreviewImageUrl(null);
+                          setPendingFile(null);
+                        }}>×</button>
+                      </div>
+                    )}
+                    <textarea
+                      className="bid-card-input"
+                      placeholder="Add a message…"
+                      value={newMessage}
+                      onChange={(e) => {
+                        setNewMessage(e.target.value);
+                        // Auto-resize the textarea
+                        e.target.style.height = 'auto';
+                        e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          sendMessage();
+                        }
+                      }}
+                      rows={1}
+                      style={{ resize: 'none', overflow: 'hidden' }}
+                    />
+                  </div>
+                </div>
+                <button 
+                  className="bid-card-send-btn" 
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim() && !pendingFile}
+                >
+                  Send
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 

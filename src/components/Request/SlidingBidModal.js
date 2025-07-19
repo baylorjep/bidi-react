@@ -9,6 +9,7 @@ import 'react-quill/dist/quill.snow.css';
 import BidDisplay from '../Bid/BidDisplay';
 import LoadingSpinner from '../LoadingSpinner';
 import './SlidingBidModal.css';
+import { FaPlus, FaTrash } from 'react-icons/fa';
 
 // iPhone-style Toggle Component
 const IPhoneToggle = ({ checked, onChange, disabled = false }) => {
@@ -105,6 +106,13 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
     const [currentTranslateY, setCurrentTranslateY] = useState(0);
     const modalRef = useRef(null);
     const [isToolboxOpen, setIsToolboxOpen] = useState(true);
+
+    // New state for itemized quotes
+    const [lineItems, setLineItems] = useState([
+        { id: 1, description: '', quantity: 1, rate: '', amount: 0 }
+    ]);
+    const [taxRate, setTaxRate] = useState(0);
+    const [useItemizedQuote, setUseItemizedQuote] = useState(false);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 600);
@@ -305,6 +313,70 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
         validateBidDescription(content);
     };
 
+    // Calculate subtotal from line items
+    const calculateSubtotal = () => {
+        return lineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+    };
+
+    // Calculate tax amount
+    const calculateTax = () => {
+        return (calculateSubtotal() * taxRate) / 100;
+    };
+
+    // Calculate discount amount
+    const calculateDiscount = () => {
+        if (!discountType || !discountValue) return 0;
+        const subtotalWithTax = calculateSubtotal() + calculateTax();
+        if (discountType === 'percentage') {
+            return (subtotalWithTax * parseFloat(discountValue)) / 100;
+        } else {
+            return parseFloat(discountValue) || 0;
+        }
+    };
+
+    // Calculate total amount with discount
+    const calculateTotal = () => {
+        const subtotalWithTax = calculateSubtotal() + calculateTax();
+        return subtotalWithTax - calculateDiscount();
+    };
+
+    // Add new line item
+    const addLineItem = () => {
+        const newId = Math.max(...lineItems.map(item => item.id), 0) + 1;
+        setLineItems([...lineItems, { id: newId, description: '', quantity: 1, rate: '', amount: 0 }]);
+    };
+
+    // Remove line item
+    const removeLineItem = (id) => {
+        if (lineItems.length > 1) {
+            setLineItems(lineItems.filter(item => item.id !== id));
+        }
+    };
+
+    // Update line item
+    const updateLineItem = (id, field, value) => {
+        setLineItems(lineItems.map(item => {
+            if (item.id === id) {
+                const updatedItem = { ...item, [field]: value };
+                if (field === 'quantity' || field === 'rate') {
+                    const quantity = field === 'quantity' ? parseFloat(value) || 0 : item.quantity;
+                    const rate = field === 'rate' ? parseFloat(value) || 0 : item.rate;
+                    updatedItem.amount = quantity * rate;
+                }
+                return updatedItem;
+            }
+            return item;
+        }));
+    };
+
+    // Update bid amount when total changes (use original total, not discounted)
+    useEffect(() => {
+        if (useItemizedQuote) {
+            const originalTotal = calculateSubtotal() + calculateTax();
+            setBidAmount(originalTotal.toString());
+        }
+    }, [lineItems, taxRate, useItemizedQuote]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -347,19 +419,30 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
 
             const category = categoryMap[requestType] || 'General';
 
+            // Prepare bid data with itemized quote information
+            const bidData = {
+                request_id: requestId,
+                user_id: user.id,
+                bid_amount: parseFloat(bidAmount).toFixed(2),
+                bid_description: bidDescription,
+                category: category,
+                ...(bidExpirationDate && { expiration_date: bidExpirationDate }),
+                discount_type: discountType || null,
+                discount_value: discountType ? discountValue : null,
+                discount_deadline: discountType ? discountDeadline : null,
+            };
+
+            // Add itemized quote data if enabled
+            if (useItemizedQuote) {
+                bidData.line_items = lineItems.filter(item => item.amount > 0);
+                bidData.subtotal = calculateSubtotal();
+                bidData.tax = calculateTax();
+                bidData.tax_rate = taxRate;
+            }
+
             const { error: insertError } = await supabase
                 .from('bids')
-                .insert([{
-                    request_id: requestId,
-                    user_id: user.id,
-                    bid_amount: bidAmount,
-                    bid_description: bidDescription,
-                    category: category,
-                    ...(bidExpirationDate && { expiration_date: bidExpirationDate }),
-                    discount_type: discountType || null,
-                    discount_value: discountType ? discountValue : null,
-                    discount_deadline: discountType ? discountDeadline : null,
-                }]);
+                .insert([bidData]);
 
             if (insertError) throw insertError;
 
@@ -456,7 +539,14 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
               profile_image: "/images/default.jpg",
               id: "preview-business-id"
             },
-        status: "pending"
+        status: "pending",
+        // Add itemized quote data to preview
+        ...(useItemizedQuote && {
+            line_items: lineItems.filter(item => item.amount > 0),
+            subtotal: calculateSubtotal(),
+            tax: calculateTax(),
+            tax_rate: taxRate
+        })
     };
 
     if (!isOpen) return null;
@@ -541,17 +631,143 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                                 </div>
                             </div>
                         )}
-                        
-                        <input
-                            className="sbm-input"
-                            id="bidAmount"
-                            name="bidAmount"
-                            type="number"
-                            placeholder="Enter Price"
-                            value={bidAmount}
-                            onChange={(e) => setBidAmount(e.target.value)}
-                            required
-                        />
+
+                        {/* Itemized Quote Toggle */}
+                        <div className="sbm-itemized-toggle">
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <IPhoneToggle
+                                    checked={useItemizedQuote}
+                                    onChange={() => setUseItemizedQuote(!useItemizedQuote)}
+                                />
+                                <span style={{ fontSize: 16 }}>Create Itemized Quote</span>
+                            </label>
+                        </div>
+
+                        {/* Itemized Quote Section */}
+                        {useItemizedQuote ? (
+                            <div className="sbm-itemized-section">
+                                <div className="sbm-itemized-header">
+                                    <h4>Service Breakdown</h4>
+                                    <button 
+                                        type="button"
+                                        className="sbm-add-line-item-btn"
+                                        onClick={addLineItem}
+                                    >
+                                        <FaPlus /> Add Service
+                                    </button>
+                                </div>
+                                
+                                <div className="sbm-itemized-help">
+                                    <p><strong>Itemize your services:</strong> List each service or item separately. For example: "Wedding Photography" (8 hours × $150), "Bouquet Design" (1 item × $200), etc.</p>
+                                </div>
+                                
+                                <div className="sbm-line-items-list">
+                                    {lineItems.map((item) => (
+                                        <div key={item.id} className="sbm-line-item">
+                                            <div className="sbm-line-item-row">
+                                                <div className="sbm-line-item-description">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="e.g., Wedding Photography, Bouquet Design, DJ Services"
+                                                        value={item.description}
+                                                        onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="sbm-line-item-quantity">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Hours/Qty"
+                                                        min="1"
+                                                        value={item.quantity}
+                                                        onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="sbm-line-item-rate">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="$ per hour/item"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={item.rate}
+                                                        onChange={(e) => updateLineItem(item.id, 'rate', e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="sbm-line-item-amount">
+                                                    ${(item.amount || 0).toFixed(2)}
+                                                </div>
+                                                <div className="sbm-line-item-actions">
+                                                    <button
+                                                        type="button"
+                                                        className="sbm-remove-line-item-btn"
+                                                        onClick={() => removeLineItem(item.id)}
+                                                        disabled={lineItems.length === 1}
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Tax Section */}
+                                <div className="sbm-tax-section">
+                                    <div className="sbm-tax-input">
+                                        <label>Tax Rate (%)</label>
+                                        <input
+                                            type="number"
+                                            placeholder="0"
+                                            min="0"
+                                            max="100"
+                                            step="0.01"
+                                            value={taxRate}
+                                            onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                                        />
+                                        <small>Leave as 0 if no tax applies</small>
+                                    </div>
+                                </div>
+
+                                {/* Payment Summary */}
+                                <div className="sbm-payment-summary">
+                                    <h4>Payment Summary</h4>
+                                    {lineItems.filter(item => item.amount > 0).map((item, index) => (
+                                        <div key={index} className="sbm-summary-row">
+                                            <span>{item.description || `Item ${index + 1}`} - {item.quantity} x ${item.rate}</span>
+                                            <span>${item.amount.toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                    {taxRate > 0 && (
+                                        <div className="sbm-summary-row">
+                                            <span>Tax ({taxRate}%)</span>
+                                            <span>${calculateTax().toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {discountType && discountValue && (
+                                        <div className="sbm-summary-row sbm-discount">
+                                            <span>Discount ({discountType === 'percentage' ? `${discountValue}%` : `$${discountValue}`})</span>
+                                            <span>-${calculateDiscount().toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    <div className="sbm-summary-row sbm-total">
+                                        <span>Total Amount:</span>
+                                        <span>${calculateTotal().toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            /* Simple Bid Amount Input */
+                            <input
+                                className="sbm-input"
+                                id="bidAmount"
+                                name="bidAmount"
+                                type="number"
+                                placeholder="Enter Price"
+                                value={bidAmount}
+                                onChange={(e) => setBidAmount(e.target.value)}
+                                required
+                            />
+                        )}
+
                         {/* Toolbox Toggle */}
                         <div
                             className="rdm-collapsible-header sbm-toolbox-toggle"
@@ -602,7 +818,7 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                                 onChange={(e) => setBidExpirationDate(e.target.value)}
                                 min={new Date().toISOString().split('T')[0]}
                             />
-                                                            <div className="sbm-discount-label">Discount (Optional)</div>
+                                                            <div style={{ marginTop: "12px" }} className="sbm-discount-label">Discount (Optional)</div>
                             <div className="sbm-discount-section">
 
                                 <div className="sbm-discount-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -645,25 +861,30 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                                             <span className="sbm-discount-percent">
                                                 {discountType === 'percentage' ? '%' : ''}
                                             </span>
-                                            <input
-                                                className="sbm-input"
-                                                id="discountDeadline"
-                                                name="discountDeadline"
-                                                type="date"
-                                                value={discountDeadline}
-                                                onChange={e => setDiscountDeadline(e.target.value)}
-                                                min={new Date().toISOString().split('T')[0]}
-                                                required
-                                                style={{
-                                                    padding: '8px 12px',
-                                                    borderRadius: '6px',
-                                                    border: '1px solid #ddd',
-                                                    fontSize: '14px'
-                                                }}
-                                            />
                                         </>
                                     )}
                                 </div>
+                                {discountType && (
+                                    <div style={{ width: '100%', marginTop: 12 }}>
+                                        <div className="sbm-discount-label">Discount Deadline (Optional)</div>
+                                        <input
+                                            className="sbm-input"
+                                            id="discountDeadline"
+                                            name="discountDeadline"
+                                            type="date"
+                                            value={discountDeadline}
+                                            onChange={e => setDiscountDeadline(e.target.value)}
+                                            min={new Date().toISOString().split('T')[0]}
+                                            required
+                                            style={{
+                                                padding: '8px 12px',
+                                                borderRadius: '6px',
+                                                border: '1px solid #ddd',
+                                                fontSize: '14px'
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                         {/* Message Section */}
