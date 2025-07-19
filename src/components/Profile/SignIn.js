@@ -104,7 +104,7 @@ const SignIn = ({ onSuccess }) => {
                         navigate('/wedding-planner');
                     } else {
                         // User prefers individual dashboard or no preference set
-                        navigate('/individual-dashboard');
+                        navigate('/individual-dashboard/bids');
                     }
                 }
                 // Handle business user
@@ -118,7 +118,7 @@ const SignIn = ({ onSuccess }) => {
                 // Handle new user with no profiles
                 else {
                     // New user, redirect to individual dashboard
-                    navigate('/individual-dashboard');
+                    navigate('/individual-dashboard/bids');
                 }
             }
         } catch (error) {

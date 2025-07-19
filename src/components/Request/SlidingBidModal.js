@@ -196,8 +196,20 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                 expirationDate.setDate(expirationDate.getDate() + profile.default_expiration_days);
                 setBidExpirationDate(expirationDate.toISOString().split('T')[0]);
             }
-            if (!profile?.stripe_account_id && !profile?.Bidi_Plus) {
+            
+            // Check if user needs to set up Stripe account
+            const needsStripeSetup = !profile?.stripe_account_id && !profile?.Bidi_Plus;
+            console.log('Profile:', profile);
+            console.log('Needs Stripe setup:', needsStripeSetup);
+            console.log('stripe_account_id:', profile?.stripe_account_id);
+            console.log('Bidi_Plus:', profile?.Bidi_Plus);
+            
+            if (needsStripeSetup) {
+                console.log('User needs Stripe setup - showing modal');
                 setShowModal(true);
+            } else {
+                console.log('User has Stripe setup or Bidi Plus');
+                setShowModal(false);
             }
         }
     };
@@ -296,7 +308,13 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        console.log('Submit button clicked');
+        console.log('connectedAccountId:', connectedAccountId);
+        console.log('Bidi_Plus:', Bidi_Plus);
+
+        // Check if user needs to set up Stripe account
         if (!connectedAccountId && !Bidi_Plus) {
+            console.log('User needs Stripe setup - showing modal in handleSubmit');
             setShowModal(true);
             return;
         }
@@ -502,6 +520,28 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                     {/* Bid Form */}
                     <form onSubmit={handleSubmit} style={{ maxWidth:'900px', marginLeft:'auto', marginRight:'auto' }}>
                         <div className="sbm-form-section-title">Bid</div>
+                        
+                        {/* Bid Statistics */}
+                        {bidStats.min !== null && (
+                            <div className="sbm-bid-stats">
+                                <div className="sbm-bid-stats-title">Current Bid Statistics</div>
+                                <div className="sbm-bid-stats-grid">
+                                    <div className="sbm-bid-stat">
+                                        <div className="sbm-bid-stat-label">Lowest Bid</div>
+                                        <div className="sbm-bid-stat-value">${bidStats.min?.toFixed(2)}</div>
+                                    </div>
+                                    <div className="sbm-bid-stat">
+                                        <div className="sbm-bid-stat-label">Average Bid</div>
+                                        <div className="sbm-bid-stat-value">${bidStats.avg?.toFixed(2)}</div>
+                                    </div>
+                                    <div className="sbm-bid-stat">
+                                        <div className="sbm-bid-stat-label">Highest Bid</div>
+                                        <div className="sbm-bid-stat-value">${bidStats.max?.toFixed(2)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
                         <input
                             className="sbm-input"
                             id="bidAmount"
@@ -656,6 +696,7 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                 </div>
 
                 {/* Stripe Modal */}
+                {console.log('Modal show state:', showModal)}
                 <Modal show={showModal} onHide={() => setShowModal(false)}>
                     <Modal.Header closeButton>
                         <Modal.Title>Stripe Account Setup Required</Modal.Title>

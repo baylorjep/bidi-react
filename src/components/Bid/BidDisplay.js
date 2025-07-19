@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { toast } from 'react-toastify';
 import { supabase } from "../../supabaseClient"; // Import your Supabase client
+import { socket } from '../../socket';
 import bidiCheck from "../../assets/Frame 1162.svg";
 import StarIcon from "../../assets/star-duotone.svg";
 import { Link, useNavigate } from "react-router-dom";
@@ -24,7 +25,9 @@ import { saveAs } from 'file-saver';
 import ContractSignatureModal from "./ContractSignatureModal";
 import CloseIcon from '@mui/icons-material/Close';
 import ChatInterface from '../Messaging/ChatInterface';
+import BidMessaging from './BidMessaging';
 import ReactDOM from 'react-dom';
+import { formatMessageText } from '../../utils/formatMessageText';
 // Set the workerSrc for pdfjs to use the local public directory for compatibility
 pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.js`;
 
@@ -88,6 +91,12 @@ function BidDisplay({
   const [selectedFileName, setSelectedFileName] = useState("");
   const [useTemplate, setUseTemplate] = useState(false);
   const [hasTemplate, setHasTemplate] = useState(false);
+
+  const [bidMessages, setBidMessages] = useState([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [expandedPreviewMessages, setExpandedPreviewMessages] = useState(new Set());
+  const [newMessage, setNewMessage] = useState('');
+  const [showBidMessaging, setShowBidMessaging] = useState(false);
   const {
     selectedDate,
     selectedTimeSlot,
@@ -309,6 +318,9 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
       case 'pending':
         return (
           <div className="bid-status-actions">
+            <button className="bid-card-btn bid-card-btn-primary" onClick={() => handleAction(handleApprove, bid.id)}>
+              Approve Bid
+            </button>
             <button className="bid-card-btn bid-card-btn-secondary" onClick={handleProfileClick}>
               View Profile
             </button>
@@ -1258,6 +1270,214 @@ useEffect(() => {
     checkAuth();
 }, [navigate, demoMode]);
 
+  // Fetch bid messages
+  const fetchBidMessages = async () => {
+    if (!bid.id || !currentUserId) return;
+    
+    setIsLoadingMessages(true);
+    try {
+      // Get the other user's ID
+      const otherUserId = currentUserId === bid.user_id ? bid.business_profiles?.id : bid.user_id;
+      
+      if (!otherUserId) return;
+
+      // Fetch messages related to this bid
+      const { data: bidMessages, error: bidMessagesError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('bid_id', bid.id)
+        .order('created_at', { ascending: true });
+
+      if (bidMessagesError) {
+        console.error('Error fetching bid messages:', bidMessagesError);
+        return;
+      }
+
+      // Also fetch general messages between these users
+      const { data: generalMessages, error: generalMessagesError } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${currentUserId})`)
+        .is('bid_id', null)
+        .order('created_at', { ascending: true });
+
+      if (generalMessagesError) {
+        console.error('Error fetching general messages:', generalMessagesError);
+        return;
+      }
+
+      // Combine and sort all messages
+      let allMessages = [...(bidMessages || []), ...(generalMessages || [])];
+      allMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+      // Handle legacy bids - if no bid messages exist but bid has description, create a virtual message
+      if ((!bidMessages || bidMessages.length === 0) && bid.bid_description) {
+        // Create a virtual message object from the bid description
+        const virtualMessage = {
+          id: `virtual-${bid.id}`,
+          sender_id: bid.user_id,
+          receiver_id: otherUserId,
+          message: `💼 **Bid: $${bid.bid_amount}**\n\n${bid.bid_description}`,
+          created_at: bid.created_at || new Date().toISOString(),
+          seen: false,
+          type: 'text',
+          is_bid_message: true,
+          is_virtual: true // Flag to identify this as a virtual message
+        };
+        
+        // Add the virtual message to the beginning of the messages array
+        allMessages = [virtualMessage, ...allMessages];
+      }
+
+      setBidMessages(allMessages);
+    } catch (error) {
+      console.error('Error fetching bid messages:', error);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  // Load messages when bid changes
+  useEffect(() => {
+    if (bid && currentUserId) {
+      fetchBidMessages();
+    }
+  }, [bid.id, currentUserId]);
+
+  // WebSocket connection for real-time messaging
+  useEffect(() => {
+    if (!currentUserId || !bid) return;
+
+    const otherUserId = currentUserId === bid.user_id ? bid.business_profiles?.id : bid.user_id;
+
+    socket.emit("join", currentUserId);
+
+    const handleReceive = (msg) => {
+      if (
+        (msg.senderId === otherUserId && msg.receiverId === currentUserId) ||
+        (msg.senderId === currentUserId && msg.receiverId === otherUserId)
+      ) {
+        // Refresh messages to show the new one
+        fetchBidMessages();
+      }
+    };
+
+    socket.on("receive_message", handleReceive);
+
+    return () => {
+      socket.off("receive_message", handleReceive);
+    };
+  }, [currentUserId, bid]);
+
+
+
+  // Helper functions for read more functionality in preview
+  const shouldTruncatePreviewMessage = (message) => {
+    // Strip HTML tags for length calculation
+    const textContent = message.replace(/<[^>]*>/g, '');
+    return textContent.length > 80; // Shorter limit for preview
+  };
+
+  const getTruncatedPreviewMessage = (message) => {
+    // Strip HTML tags for length calculation
+    const textContent = message.replace(/<[^>]*>/g, '');
+    if (textContent.length <= 80) return message;
+    
+    // Find the last complete word within 80 characters
+    const truncatedText = textContent.substring(0, 80).split(' ').slice(0, -1).join(' ');
+    
+    // Find the position of this truncated text in the original HTML
+    let currentPos = 0;
+    let textPos = 0;
+    let result = '';
+    
+    while (currentPos < message.length && textPos < truncatedText.length) {
+      if (message[currentPos] === '<') {
+        // Skip HTML tag
+        while (currentPos < message.length && message[currentPos] !== '>') {
+          result += message[currentPos];
+          currentPos++;
+        }
+        if (currentPos < message.length) {
+          result += message[currentPos];
+          currentPos++;
+        }
+      } else {
+        result += message[currentPos];
+        textPos++;
+        currentPos++;
+      }
+    }
+    
+    return result + '...';
+  };
+
+  const togglePreviewMessageExpansion = (messageId) => {
+    setExpandedPreviewMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle sending messages inline
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
+
+    const otherUserId = currentUserId === bid.user_id ? bid.business_profiles?.id : bid.user_id;
+
+    const messageData = {
+      senderId: currentUserId,
+      receiverId: otherUserId,
+      message: newMessage.trim(),
+      type: 'text',
+      seen: false,
+      bid_id: bid.id,
+      is_bid_message: true
+    };
+
+    // Send via socket for real-time
+    socket.emit("send_message", messageData);
+
+    // Also save to database
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert([{
+          sender_id: currentUserId,
+          receiver_id: otherUserId,
+          message: newMessage.trim(),
+          type: 'text',
+          seen: false,
+          bid_id: bid.id,
+          is_bid_message: true
+        }]);
+
+      if (error) {
+        console.error('Error saving message:', error);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+
+    setNewMessage('');
+    
+    // Refresh messages to show the new one
+    await fetchBidMessages();
+  };
+
+  const handleOpenBidMessaging = () => {
+    setShowBidMessaging(true);
+  };
+
+  const handleCloseBidMessaging = () => {
+    setShowBidMessaging(false);
+  };
+
   return (
     <div className="bid-card-modern">
       {console.log('BidDisplay rendering with bid:', bid.id, 'isNew:', isNew, 'bid.viewed:', bid.viewed, 'showInterested:', showInterested, 'handleInterested:', handleInterested, 'handleDeny:', handleDeny)}
@@ -1385,20 +1605,119 @@ useEffect(() => {
       {/* Expiration Info */}
       {renderExpirationInfo()}
 
-      {/* Description - Only show for certain statuses */}
+      {/* Messages Section - Show conversation instead of static description */}
       {(bidStatus === 'pending' || bidStatus === 'interested' || bidStatus === 'default') && (
-        <div className="bid-card-description-section">
-          <span className="bid-card-description-label">Description</span>
-          <div 
-            className={`bid-card-description-content${!isDescriptionExpanded ? ' description-collapsed' : ''}`}
-            dangerouslySetInnerHTML={{ __html: bid.bid_description?.replace(/\n/g, '<br>') }}
-          />
-          <button 
-            className="read-more-btn"
-            onClick={handleDescriptionToggle}
-          >
-            {isDescriptionExpanded ? 'Show Less' : 'Read More'}
-          </button>
+        <div className="bid-card-messages-section">
+          <div className="bid-card-messages-header">
+            <span className="bid-card-messages-label">Conversation</span>
+          </div>
+
+          {isLoadingMessages ? (
+            <div className="bid-card-messages-loading">
+              <div className="loading-spinner"></div>
+              <span>Loading messages...</span>
+            </div>
+          ) : bidMessages.length > 0 ? (
+            <div className="bid-card-messages-preview">
+              {bidMessages.slice(-3).map((msg, index) => (
+                <div
+                  key={index}
+                  className={`bid-message-preview ${msg.sender_id === currentUserId ? 'sent' : 'received'} ${msg.is_virtual ? 'virtual-message' : ''}`}
+                >
+                  <div className="bid-message-preview-content">
+                    {shouldTruncatePreviewMessage(msg.message) && !expandedPreviewMessages.has(msg.id) ? (
+                      <div>
+                        {msg.is_virtual || msg.message.includes('<p>') ? (
+                          <div 
+                            className="message-preview-html-content"
+                            dangerouslySetInnerHTML={{ __html: getTruncatedPreviewMessage(msg.message) }}
+                          />
+                        ) : (
+                          formatMessageText(getTruncatedPreviewMessage(msg.message))
+                        )}
+                        <button 
+                          className="read-more-preview-btn"
+                          onClick={() => togglePreviewMessageExpansion(msg.id)}
+                        >
+                          Read more
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        {msg.is_virtual || msg.message.includes('<p>') ? (
+                          <div 
+                            className="message-preview-html-content"
+                            dangerouslySetInnerHTML={{ __html: msg.message }}
+                          />
+                        ) : (
+                          formatMessageText(msg.message)
+                        )}
+                        {shouldTruncatePreviewMessage(msg.message) && expandedPreviewMessages.has(msg.id) && (
+                          <button 
+                            className="read-less-preview-btn"
+                            onClick={() => togglePreviewMessageExpansion(msg.id)}
+                          >
+                            Show less
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="bid-message-preview-time">
+                    {new Date(msg.created_at).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
+                    {msg.is_virtual && (
+                      <span className="virtual-indicator-preview">Original Bid</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {bidMessages.length > 3 && (
+                <div className="bid-messages-more" onClick={() => setShowBidMessaging(true)}>
+                  <span>+{bidMessages.length - 3} more messages</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bid-card-no-messages">
+              <p>No messages yet. Start the conversation!</p>
+            </div>
+          )}
+
+          {/* Inline messaging interface */}
+          <div className="bid-card-messaging-interface">
+            <div className="bid-card-input-wrapper">
+              <textarea
+                className="bid-card-input"
+                placeholder="Add a message…"
+                value={newMessage}
+                onChange={(e) => {
+                  setNewMessage(e.target.value);
+                  // Auto-resize the textarea
+                  e.target.style.height = 'auto';
+                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                rows={1}
+                style={{ resize: 'none', overflow: 'hidden' }}
+              />
+            </div>
+            <button 
+              className="bid-card-send-btn" 
+              onClick={handleSendMessage}
+              disabled={!newMessage.trim()}
+            >
+              Send
+            </button>
+          </div>
         </div>
       )}
 
@@ -1459,6 +1778,16 @@ useEffect(() => {
         </div>,
         document.body
       )}
+
+      {/* Bid Messaging Modal */}
+      <BidMessaging
+        bid={bid}
+        currentUserId={currentUserId}
+        onClose={handleCloseBidMessaging}
+        isOpen={showBidMessaging}
+        businessName={bid.business_profiles.business_name}
+        profileImage={profileImage}
+      />
     </div>
   );
 }

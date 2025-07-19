@@ -87,6 +87,73 @@
   }
 }
 
+/* Bid Statistics Styles */
+.sbm-bid-stats {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.sbm-bid-stats-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.sbm-bid-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.sbm-bid-stat {
+  text-align: center;
+  padding: 8px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.sbm-bid-stat-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.sbm-bid-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #9633eb;
+}
+
+@media (max-width: 600px) {
+  .sbm-bid-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .sbm-bid-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+  }
+  
+  .sbm-bid-stat-label {
+    margin-bottom: 0;
+    font-size: 14px;
+  }
+  
+  .sbm-bid-stat-value {
+    font-size: 16px;
+  }
+}
+
 .sbm-summary {
   margin-bottom: 32px;
 }

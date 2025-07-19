@@ -343,7 +343,8 @@ useEffect(() => {
 
             const category = categoryMap[requestType] || 'General';
 
-            const { error: insertError } = await supabase
+            // First, insert the bid
+            const { data: bidData, error: insertError } = await supabase
                 .from('bids')
                 .insert([{
                     request_id: requestId,
@@ -355,9 +356,34 @@ useEffect(() => {
                     discount_type: discountType || null,
                     discount_value: discountType ? discountValue : null,
                     discount_deadline: discountType ? discountDeadline : null,
-                }]);
+                }])
+                .select()
+                .single();
 
             if (insertError) throw insertError;
+
+            // Get the request details to find the user who made the request
+            const requestUserId = requestDetails.user_id || requestDetails.profile_id;
+            
+            if (requestUserId) {
+                // Create an initial message from the bid description
+                const { error: messageError } = await supabase
+                    .from('messages')
+                    .insert([{
+                        sender_id: user.id,
+                        receiver_id: requestUserId,
+                        message: `💼 **New Bid: $${bidAmount}**\n\n${bidDescription}`,
+                        type: 'text',
+                        seen: false,
+                        bid_id: bidData.id, // Link message to the bid
+                        is_bid_message: true // Flag to identify bid-related messages
+                    }]);
+
+                if (messageError) {
+                    console.error('Error creating bid message:', messageError);
+                    // Don't throw here as the bid was already created successfully
+                }
+            }
 
             const subject = 'New Bid Received';
             const htmlContent = `<p>A new bid has been placed on your request.</p>
@@ -664,6 +690,12 @@ useEffect(() => {
                                     ))}
                                 </div>
                             )}
+                            <div style={{ marginBottom: '12px' }}>
+                                <label className="custom-label">Bid Description & Initial Message</label>
+                                <small style={{ color: '#888', display: 'block', marginTop: 4 }}>
+                                    This will be your first message to the client. Be detailed and engaging to start a great conversation!
+                                </small>
+                            </div>
                             <ReactQuill
                                 theme="snow"
                                 value={bidDescription}
@@ -675,6 +707,7 @@ useEffect(() => {
                                     marginBottom: '20px',
                                     backgroundColor: 'white'
                                 }}
+                                placeholder="Write a detailed message introducing your services, experience, and why you're the perfect fit for this project. This will start the conversation with the client..."
                             />
                         </div>
                     </form>

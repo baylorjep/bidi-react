@@ -1,0 +1,441 @@
+.bid-messaging-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
+
+.bid-messaging-container {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  height: 80vh;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.bid-messaging-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+}
+
+@media (max-width: 768px) {
+  .bid-messaging-header {
+    margin-top: 72px;
+  }
+}
+
+.bid-messaging-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bid-messaging-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.bid-messaging-user-details h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.bid-messaging-bid-info {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.bid-messaging-close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.bid-messaging-close-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.bid-messaging-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: #f8f9fa;
+}
+
+.bid-messaging-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #9633eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Use the same message bubble styles as the regular chat */
+.message-bubble {
+  margin-bottom: 16px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.message-bubble.sent {
+  margin-left: auto;
+  background: #9633eb;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 18px 18px 4px 18px;
+  position: relative;
+}
+
+.message-bubble.received {
+  margin-right: auto;
+  background: white;
+  color: #333;
+  padding: 12px 16px;
+  border-radius: 18px 18px 18px 4px;
+  border: 1px solid #e0e0e0;
+  position: relative;
+}
+
+.message-bubble.virtual-message {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+  border-left: 3px solid #f39c12;
+}
+
+.message-time {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.seen-indicator {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.virtual-indicator {
+  font-size: 10px;
+  color: #f39c12;
+  font-weight: 500;
+  background: #fff3cd;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+.read-more-btn,
+.read-less-btn {
+  background: none;
+  border: none;
+  color: #9633eb;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-top: 8px;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.read-more-btn:hover,
+.read-less-btn:hover {
+  color: #7c2bd9;
+}
+
+.message-bubble.sent .read-more-btn,
+.message-bubble.sent .read-less-btn {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message-bubble.sent .read-more-btn:hover,
+.message-bubble.sent .read-less-btn:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+.message-html-content {
+  line-height: 1.5;
+}
+
+.message-html-content p {
+  margin: 0;
+  display: inline;
+}
+
+.message-html-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message-html-content strong,
+.message-html-content b {
+  font-weight: 600;
+}
+
+.message-html-content em,
+.message-html-content i {
+  font-style: italic;
+}
+
+.message-html-content ul,
+.message-html-content ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.message-html-content li {
+  margin: 4px 0;
+}
+
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 18px;
+  width: fit-content;
+  margin-bottom: 16px;
+}
+
+.typing-indicator .dot {
+  width: 8px;
+  height: 8px;
+  background: #ccc;
+  border-radius: 50%;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-indicator .dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-indicator .dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typing {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Use the same input styles as the regular chat */
+.chat-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #eee;
+  background: white;
+  border-radius: 0 0 12px 12px;
+}
+
+@media (max-width: 768px) {
+  .chat-footer {
+    margin-bottom: 90px;
+  }
+}
+
+.chat-input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.chat-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 24px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-input:focus {
+  border-color: #9633eb;
+}
+
+.chat-send-btn {
+  background: #9633eb;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.chat-send-btn:hover {
+  background: #7c2bd9;
+}
+
+.chat-send-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .bid-messaging-container {
+    width: 100%;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+    margin: 0;
+  }
+  
+  .bid-messaging-overlay {
+    padding: 0;
+  }
+  
+  .bid-messaging-header {
+    padding: 12px 16px;
+  }
+  
+  .bid-messaging-messages {
+    padding: 16px;
+  }
+  
+  .chat-footer {
+    padding: 12px 16px;
+  }
+  
+  .chat-input {
+    padding: 10px 14px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .chat-send-btn {
+    padding: 10px 16px;
+    font-size: 16px;
+  }
+}
+
+/* Ensure modal appears above all other elements */
+@media (max-width: 480px) {
+  .bid-messaging-container {
+    width: 100%;
+    height: 100vh;
+    border-radius: 0;
+    max-height: none;
+  }
+  
+  .bid-messaging-overlay {
+    padding: 0;
+  }
+}
+
+/* Additional styles to ensure modal appears above everything */
+.bid-messaging-overlay {
+  position: fixed !important;
+  z-index: 9999 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}
+
+.bid-messaging-container {
+  position: relative !important;
+  z-index: 10000 !important;
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  .bid-messaging-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+  }
+  
+  .bid-messaging-messages {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+  
+  .chat-footer {
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    background: white;
+    border-top: 1px solid #eee;
+  }
+  
+  /* Prevent text zoom on iOS */
+  .chat-input {
+    font-size: 16px !important;
+  }
+  
+  /* Better touch targets */
+  .chat-send-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .bid-messaging-close-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+} 

@@ -1995,3 +1995,306 @@
 .bid-card-modern {
   position: relative;
 } 
+
+/* Bid Messages Section */
+.bid-card-messages-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.bid-card-messages-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bid-card-messages-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.bid-card-open-messaging-btn {
+  display: flex;
+  align-items: center;
+  background: #9633eb;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.bid-card-open-messaging-btn:hover {
+  background: #7c2bd9;
+}
+
+.bid-card-messages-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 14px;
+}
+
+.bid-card-messages-loading .loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #9633eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.bid-card-messages-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bid-message-preview {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+.bid-message-preview.sent {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.bid-message-preview.received {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.bid-message-preview-content {
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.3;
+  word-wrap: break-word;
+  max-width: 100%;
+}
+
+.bid-message-preview.sent .bid-message-preview-content {
+  background: #9633eb;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.bid-message-preview.received .bid-message-preview-content {
+  background: #e9ecef;
+  color: #333;
+  border-bottom-left-radius: 4px;
+}
+
+.bid-message-preview.virtual-message .bid-message-preview-content {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+  border-left: 3px solid #f39c12;
+}
+
+.virtual-indicator-preview {
+  font-size: 10px;
+  color: #f39c12;
+  font-weight: 500;
+  background: #fff3cd;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+
+.read-more-preview-btn,
+.read-less-preview-btn {
+  background: none;
+  border: none;
+  color: #9633eb;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 6px;
+  margin-top: 4px;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.read-more-preview-btn:hover,
+.read-less-preview-btn:hover {
+  color: #7c2bd9;
+}
+
+.bid-message-preview.sent .read-more-preview-btn,
+.bid-message-preview.sent .read-less-preview-btn {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.bid-message-preview.sent .read-more-preview-btn:hover,
+.bid-message-preview.sent .read-less-preview-btn:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+.message-preview-html-content {
+  line-height: 1.4;
+}
+
+.message-preview-html-content p {
+  margin: 0;
+  display: inline;
+}
+
+.message-preview-html-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message-preview-html-content strong,
+.message-preview-html-content b {
+  font-weight: 600;
+}
+
+.message-preview-html-content em,
+.message-preview-html-content i {
+  font-style: italic;
+}
+
+.message-preview-html-content ul,
+.message-preview-html-content ol {
+  margin: 6px 0;
+  padding-left: 16px;
+}
+
+.message-preview-html-content li {
+  margin: 3px 0;
+}
+
+.bid-message-preview-time {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.bid-messages-more {
+  text-align: center;
+  padding: 8px;
+  color: #9633eb;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.bid-messages-more:hover {
+  color: #7c2bd9;
+  text-decoration: underline;
+}
+
+.bid-card-no-messages {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.bid-card-no-messages p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+}
+
+.bid-card-start-chat-btn {
+  background: #9633eb;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.bid-card-start-chat-btn:hover {
+  background: #7c2bd9;
+}
+
+.bid-card-messaging-interface {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-top: 1px solid #eee;
+  margin-top: 16px;
+}
+
+.bid-card-input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.bid-card-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  line-height: 1.4;
+  min-height: 40px;
+  max-height: 120px;
+  box-sizing: border-box;
+}
+
+.bid-card-input:focus {
+  border-color: #9633eb;
+}
+
+.bid-card-send-btn {
+  background: #9633eb;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.bid-card-send-btn:hover:not(:disabled) {
+  background: #7c2bd9;
+}
+
+.bid-card-send-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Mobile responsiveness for messages */
+@media (max-width: 768px) {
+  .bid-card-messages-section {
+    padding: 12px;
+  }
+  
+  .bid-card-messages-header {
+    margin-bottom: 8px;
+  }
+  
+  .bid-card-open-messaging-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  
+  .bid-message-preview-content {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+} 

@@ -764,13 +764,24 @@ export default function MessagingView({
               }}>×</button>
             </div>
           )}
-          <input
+          <textarea
             className="chat-input"
-            type="text"
             placeholder="Add a message…"
             value={newMessage}
-            onChange={handleTyping}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            onChange={(e) => {
+              handleTyping(e);
+              // Auto-resize the textarea
+              e.target.style.height = 'auto';
+              e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
+            rows={1}
+            style={{ resize: 'none', overflow: 'hidden' }}
           />
         </div>
 

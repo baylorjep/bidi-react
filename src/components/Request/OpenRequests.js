@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import RequestDisplayMini from "./RequestDisplayMini";
 import SlidingBidModal from "./SlidingBidModal";
+import { Modal, Button } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import "../../App.css";
 import "../../styles/OpenRequests.css";
 import SearchBar from "../SearchBar/SearchBar";
@@ -62,6 +64,7 @@ const hasMatchingCategory = (requestCategory, businessCategories) => {
 };
 
 function OpenRequests({ onMessageClick }) {
+  const navigate = useNavigate();
   const [openRequests, setOpenRequests] = useState([]);
   const [openPhotoRequests, setOpenPhotoRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -77,6 +80,7 @@ function OpenRequests({ onMessageClick }) {
   const [user, setUser] = useState(null);
   const [isSlidingModalOpen, setIsSlidingModalOpen] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState(null);
+  const [showStripeModal, setShowStripeModal] = useState(false);
 
   // Add this new function to fetch user's bids
   const fetchUserBids = async (userId) => {
@@ -762,7 +766,25 @@ function OpenRequests({ onMessageClick }) {
     return budget >= minimumPrice;
   };
 
-  const handleViewMore = (requestId) => {
+  const handleViewMore = async (requestId) => {
+    // Check if user has Stripe account set up
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from('business_profiles')
+        .select('stripe_account_id, Bidi_Plus')
+        .eq('id', user.id)
+        .single();
+
+      const needsStripeSetup = !profile?.stripe_account_id && !profile?.Bidi_Plus;
+      
+      if (needsStripeSetup) {
+        // Show Stripe setup modal instead of bid modal
+        setShowStripeModal(true);
+        return;
+      }
+    }
+    
     setSelectedRequestId(requestId);
     setIsSlidingModalOpen(true);
   };
@@ -879,6 +901,19 @@ function OpenRequests({ onMessageClick }) {
         onClose={handleCloseSlidingModal}
         requestId={selectedRequestId}
       />
+
+      {/* Stripe Setup Modal */}
+      <Modal show={showStripeModal} onHide={() => setShowStripeModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Stripe Account Setup Required</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="d-flex flex-column align-items-center justify-content-center">
+          <p className="text-center">
+            To place bids and get paid for jobs you win, you'll need to set up a payment account. Bidi won't charge you to talk to users or bid — a small fee is only deducted after you've been paid.
+          </p>
+          <Button className="btn-secondary" onClick={() => navigate("/onboarding")}>Set Up Account</Button>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

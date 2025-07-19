@@ -198,6 +198,13 @@
   border: 1px solid #ccc;
   border-radius: 8px;
   outline: none;
+  font-family: inherit;
+  line-height: 1.4;
+  min-height: 40px;
+  max-height: 120px;
+  box-sizing: border-box;
+  resize: none;
+  overflow: hidden;
 }
 .chat-send-btn {
   padding: 0.6rem 1.2rem;

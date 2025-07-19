@@ -906,25 +906,36 @@ export default function BidsPage({ onOpenChat }) {
 
     const handleConfirmAccept = async () => {
         if (selectedBid) {
-            // Update the bid status and add acceptance timestamp
-            const updateData = {
-                status: 'accepted',
-                accepted_at: new Date().toISOString()
-            };
+            try {
+                // Update the bid status and add acceptance timestamp
+                const updateData = {
+                    status: 'accepted',
+                    accepted_at: new Date().toISOString()
+                };
 
-            const { error } = await supabase
-                .from('bids')
-                .update(updateData)
-                .eq('id', selectedBid.id);
+                const { error } = await supabase
+                    .from('bids')
+                    .update(updateData)
+                    .eq('id', selectedBid.id);
 
-            if (error) {
-                console.error('Error updating bid:', error);
-                return;
+                if (error) {
+                    console.error('Error updating bid:', error);
+                    toast.error('Failed to accept bid. Please try again.');
+                    return;
+                }
+
+                // Reload bids to reflect the change
+                await loadBids();
+                
+                // Close modal and reset state
+                setShowAcceptModal(false);
+                setSelectedBid(null);
+                
+                toast.success('Bid accepted successfully!');
+            } catch (error) {
+                console.error('Error accepting bid:', error);
+                toast.error('Failed to accept bid. Please try again.');
             }
-
-            await handleMoveToAccepted(selectedBid);
-            setShowAcceptModal(false);
-            setSelectedBid(null);
         }
     };
 
