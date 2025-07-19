@@ -742,7 +742,7 @@ export default function MessagingView({
         </div>
       )}
 
-      <footer className="chat-footer">
+      <footer className="chat-footer" style={{ marginBottom: '0px' }}>
         <label htmlFor="file-upload" className="chat-upload-btn">
           <span>＋</span>
           <input

@@ -125,7 +125,6 @@ function BidDisplay({
   const [lastViewedAt, setLastViewedAt] = useState(null);
   const [showEditNotification, setShowEditNotification] = useState(false);
   const [showViewContractButton, setShowViewContractButton] = useState(false);
-  const [showChatModal, setShowChatModal] = useState(false);
 
   // Determine bid status based on props and heart state
   const getBidStatus = () => {
@@ -472,17 +471,8 @@ useEffect(() => {
       return;
     }
     
-    if (isMobile) {
-      if (onMessage) {
-        onMessage({
-          id: bid.business_profiles.id,
-          name: bid.business_profiles.business_name,
-          profileImage: bid.business_profiles.profile_image,
-        });
-      }
-    } else {
-      setShowChatModal(true);
-    }
+    // Always show the bid messaging modal for both mobile and desktop
+    setShowBidMessaging(true);
   };
 
   const handleBackFromMessaging = () => {
@@ -1768,16 +1758,7 @@ useEffect(() => {
         businessTimezone={bid.business_profiles.consultation_hours?.timezone || null}
       />
 
-      {/* Chat Modal for Desktop */}
-      {showChatModal && ReactDOM.createPortal(
-        <div className="bid-card-messaging-modal-overlay" onClick={() => setShowChatModal(false)}>
-          <div className="bid-card-messaging-modal" onClick={e => e.stopPropagation()}>
-            <button className="bid-card-icon-btn bid-card-messaging-modal-close" onClick={() => setShowChatModal(false)}>&#10005;</button>
-            <ChatInterface initialChat={{ id: bid.business_profiles.id, name: bid.business_profiles.business_name }} />
-          </div>
-        </div>,
-        document.body
-      )}
+
 
       {/* Bid Messaging Modal */}
       <BidMessaging
