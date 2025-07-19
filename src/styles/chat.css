@@ -778,6 +778,49 @@ body.modal-open {
   background: #8200c2;
 }
 
+.chat-upload-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chat-payment-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #9633eb 0%, #a328f4 100%);
+  color: white;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 48px;
+  max-height: 48px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(150, 51, 235, 0.3);
+  border: none;
+}
+
+.chat-payment-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(150, 51, 235, 0.4);
+  background: linear-gradient(135deg, #7a29bc 0%, #8a1fd4 100%);
+}
+
+@media (max-width: 500px) {
+  .chat-payment-btn {
+    width: 2.2rem;
+    height: 2.2rem;
+    font-size: 0.9rem;
+  }
+}
+
 
 .preview-container {
   position: relative;

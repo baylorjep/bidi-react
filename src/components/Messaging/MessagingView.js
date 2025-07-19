@@ -4,10 +4,11 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { socket } from "../../socket";
 import { supabase } from "../../supabaseClient";
 import "../../styles/chat.css";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaCreditCard } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { formatMessageText } from "../../utils/formatMessageText";
 import { formatBusinessName } from '../../utils/formatBusinessName';
+import PaymentCard from './PaymentCard';
 
 // Skeleton components for loading states
 const MessageSkeleton = ({ isSent }) => (
@@ -57,6 +58,8 @@ export default function MessagingView({
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [bidInfo, setBidInfo] = useState(null);
   const [isCurrentUserBusiness, setIsCurrentUserBusiness] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [stripeAccountId, setStripeAccountId] = useState(null);
 
   // Memoize the loading skeletons at the top level to avoid conditional hook calls
   const loadingSkeletons = useMemo(() => (
@@ -446,12 +449,13 @@ export default function MessagingView({
       try {
         const { data, error } = await supabase
           .from('business_profiles')
-          .select('id')
+          .select('id, stripe_account_id')
           .eq('id', currentUserId)
           .single();
         
         console.log('Business profile check:', { data, error });
         setIsCurrentUserBusiness(!!data);
+        setStripeAccountId(data?.stripe_account_id || null);
       } catch (error) {
         console.error('Error checking business profile:', error);
       }
@@ -624,6 +628,43 @@ export default function MessagingView({
     navigate(`/portfolio/${businessId}/${formattedName}`);
   };
 
+  const handleSendPaymentRequest = (paymentData) => {
+    if (!stripeAccountId) {
+      console.error('No Stripe account ID found for business');
+      return;
+    }
+
+    const messageData = {
+      senderId: currentUserId,
+      receiverId: businessId,
+      message: JSON.stringify({
+        type: 'payment_request',
+        amount: paymentData.amount,
+        description: paymentData.description,
+        paymentData: {
+          ...paymentData.paymentData,
+          stripe_account_id: stripeAccountId
+        }
+      }),
+      type: 'payment_request',
+      payment_amount: paymentData.amount,
+      payment_status: 'pending',
+      payment_data: {
+        lineItems: paymentData.paymentData.lineItems,
+        subtotal: paymentData.paymentData.subtotal,
+        tax: paymentData.paymentData.tax,
+        taxRate: paymentData.paymentData.taxRate,
+        stripe_account_id: stripeAccountId,
+        business_name: businessName,
+        description: paymentData.description
+      },
+      seen: false
+    };
+
+    socket.emit("send_message", messageData);
+    setShowPaymentModal(false);
+  };
+
   return (
     <div className="messaging-view">
       {!location.state?.fromDashboard && (
@@ -696,6 +737,18 @@ export default function MessagingView({
                     setShowImageModal(true);
                   }}
                 />
+              ) : msg.type === 'payment_request' ? (
+                <PaymentCard
+                  amount={msg.payment_amount || JSON.parse(msg.message).amount}
+                  businessName={businessName}
+                  stripeAccountId={msg.payment_data?.stripe_account_id || JSON.parse(msg.message).paymentData.stripe_account_id}
+                  description={msg.payment_data?.description || JSON.parse(msg.message).description}
+                  lineItems={msg.payment_data?.lineItems || JSON.parse(msg.message).paymentData.lineItems}
+                  subtotal={msg.payment_data?.subtotal || JSON.parse(msg.message).paymentData.subtotal}
+                  tax={msg.payment_data?.tax || JSON.parse(msg.message).paymentData.tax}
+                  taxRate={msg.payment_data?.taxRate || JSON.parse(msg.message).paymentData.taxRate}
+                  paymentStatus={msg.payment_status}
+                />
               ) : (
                 formatMessageText(msg.message)
               )}
@@ -743,16 +796,27 @@ export default function MessagingView({
       )}
 
       <footer className="chat-footer" style={{ marginBottom: '0px' }}>
-        <label htmlFor="file-upload" className="chat-upload-btn">
-          <span>＋</span>
-          <input
-            id="file-upload"
-            type="file"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={handleFileUpload}
-          />
-        </label>
+        <div className="chat-upload-container">
+          <label htmlFor="file-upload" className="chat-upload-btn">
+            <span>＋</span>
+            <input
+              id="file-upload"
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleFileUpload}
+            />
+          </label>
+          {isCurrentUserBusiness && stripeAccountId && (
+            <button 
+              className="chat-payment-btn"
+              onClick={() => setShowPaymentModal(true)}
+              title="Send Payment Request"
+            >
+              <FaCreditCard />
+            </button>
+          )}
+        </div>
 
         <div className="chat-input-wrapper">
           {previewImageUrl && (
@@ -789,6 +853,77 @@ export default function MessagingView({
           Send
         </button>
       </footer>
+
+      {/* Payment Request Modal */}
+      {showPaymentModal && (
+        <div className="payment-modal-overlay" onClick={() => setShowPaymentModal(false)}>
+          <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="payment-modal-header">
+              <h3>Send Payment Request</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowPaymentModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="payment-modal-content">
+              <div className="form-group">
+                <label>Amount ($)</label>
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                  id="payment-amount"
+                />
+              </div>
+              <div className="form-group">
+                <label>Description</label>
+                <textarea
+                  placeholder="Payment description..."
+                  rows="3"
+                  id="payment-description"
+                />
+              </div>
+            </div>
+            <div className="payment-modal-actions">
+              <button 
+                className="cancel-btn"
+                onClick={() => setShowPaymentModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="send-btn"
+                onClick={() => {
+                  const amount = document.getElementById('payment-amount').value;
+                  const description = document.getElementById('payment-description').value;
+                  
+                  if (!amount || parseFloat(amount) <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                  }
+
+                  handleSendPaymentRequest({
+                    amount: parseFloat(amount),
+                    description: description || 'Service Payment',
+                    paymentData: {
+                      amount: parseFloat(amount),
+                      stripe_account_id: stripeAccountId,
+                      payment_type: 'custom',
+                      business_name: businessName,
+                      description: description || 'Service Payment'
+                    }
+                  });
+                }}
+              >
+                Send Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
