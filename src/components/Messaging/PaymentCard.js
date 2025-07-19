@@ -19,18 +19,18 @@ const PaymentCard = ({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [customAmount, setCustomAmount] = useState(amount || '');
   const [paymentDescription, setPaymentDescription] = useState(description);
-  const [lineItems, setLineItems] = useState([
+  const [modalLineItems, setModalLineItems] = useState([
     { id: 1, description: '', quantity: 1, rate: '', amount: 0 }
   ]);
-  const [taxRate, setTaxRate] = useState(0);
+  const [modalTaxRate, setModalTaxRate] = useState(0);
   const navigate = useNavigate();
 
   const calculateSubtotal = () => {
-    return lineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+    return modalLineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
   };
 
   const calculateTax = () => {
-    return (calculateSubtotal() * taxRate) / 100;
+    return (calculateSubtotal() * modalTaxRate) / 100;
   };
 
   const calculateTotal = () => {
@@ -38,18 +38,18 @@ const PaymentCard = ({
   };
 
   const addLineItem = () => {
-    const newId = Math.max(...lineItems.map(item => item.id), 0) + 1;
-    setLineItems([...lineItems, { id: newId, description: '', quantity: 1, rate: '', amount: 0 }]);
+    const newId = Math.max(...modalLineItems.map(item => item.id), 0) + 1;
+    setModalLineItems([...modalLineItems, { id: newId, description: '', quantity: 1, rate: '', amount: 0 }]);
   };
 
   const removeLineItem = (id) => {
-    if (lineItems.length > 1) {
-      setLineItems(lineItems.filter(item => item.id !== id));
+    if (modalLineItems.length > 1) {
+      setModalLineItems(modalLineItems.filter(item => item.id !== id));
     }
   };
 
   const updateLineItem = (id, field, value) => {
-    setLineItems(lineItems.map(item => {
+    setModalLineItems(modalLineItems.map(item => {
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value };
         if (field === 'quantity' || field === 'rate') {
@@ -81,10 +81,10 @@ const PaymentCard = ({
       payment_type: 'custom',
       business_name: businessName,
       description: paymentDescription,
-      lineItems: lineItems.filter(item => item.amount > 0),
+      lineItems: modalLineItems.filter(item => item.amount > 0),
       subtotal: calculateSubtotal(),
       tax: calculateTax(),
-      taxRate: taxRate
+      taxRate: modalTaxRate
     };
 
     // Send as a special message type
@@ -212,7 +212,7 @@ const PaymentCard = ({
                 </div>
                 
                 <div className="line-items-list">
-                  {lineItems.map((item, index) => (
+                  {modalLineItems.map((item, index) => (
                     <div key={item.id} className="line-item">
                       <div className="line-item-row">
                         <div className="line-item-description">
@@ -250,7 +250,7 @@ const PaymentCard = ({
                             className="remove-line-item-btn"
                             onClick={() => removeLineItem(item.id)}
                             type="button"
-                            disabled={lineItems.length === 1}
+                            disabled={modalLineItems.length === 1}
                           >
                             <FaTrash />
                           </button>
@@ -270,8 +270,8 @@ const PaymentCard = ({
                     min="0"
                     max="100"
                     step="0.01"
-                    value={taxRate}
-                    onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                    value={modalTaxRate}
+                    onChange={(e) => setModalTaxRate(parseFloat(e.target.value) || 0)}
                   />
                 </div>
               </div>
@@ -282,7 +282,7 @@ const PaymentCard = ({
                   <span>${calculateSubtotal().toFixed(2)}</span>
                 </div>
                 <div className="summary-row">
-                  <span>Tax ({taxRate}%):</span>
+                  <span>Tax ({modalTaxRate}%):</span>
                   <span>${calculateTax().toFixed(2)}</span>
                 </div>
                 <div className="summary-row total">
