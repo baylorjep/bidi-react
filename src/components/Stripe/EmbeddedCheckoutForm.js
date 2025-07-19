@@ -32,13 +32,12 @@ const EmbeddedCheckoutForm = () => {
         // Create detailed description with line items
         let detailedDescription = paymentData.business_name;
         if (paymentData.lineItems && paymentData.lineItems.length > 0) {
-          detailedDescription += ' - ';
-          const itemDescriptions = paymentData.lineItems.map(item => 
-            `${item.description} (${item.quantity}×$${item.rate})`
-          );
-          detailedDescription += itemDescriptions.join(', ');
+          detailedDescription += '\n';
+          paymentData.lineItems.forEach((item, index) => {
+            detailedDescription += `• ${item.description} (${item.quantity}×$${item.rate})\n`;
+          });
           if (paymentData.taxRate > 0) {
-            detailedDescription += ` + ${paymentData.taxRate}% tax`;
+            detailedDescription += `• Tax (${paymentData.taxRate}%)`;
           }
         }
 
@@ -100,63 +99,13 @@ const EmbeddedCheckoutForm = () => {
           {errorMessage}
         </div>
       ) : clientSecret ? (
-        <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
-          {/* Payment Summary on the left */}
-          <div style={{ flex: '1', maxWidth: '400px', padding: '20px', border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
-            <h3 style={{ marginBottom: '20px', color: '#333' }}>Payment Summary</h3>
-            
-            {paymentData?.lineItems && paymentData.lineItems.length > 0 ? (
-              <div>
-                {paymentData.lineItems.map((item, index) => (
-                  <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', padding: '8px 0', borderBottom: '1px solid #eee' }}>
-                    <div>
-                      <div style={{ fontWeight: 'bold', color: '#333' }}>{item.description}</div>
-                      <div style={{ fontSize: '14px', color: '#666' }}>
-                        {item.quantity} × ${item.rate}
-                      </div>
-                    </div>
-                    <div style={{ fontWeight: 'bold' }}>${item.amount.toFixed(2)}</div>
-                  </div>
-                ))}
-                
-                {paymentData.taxRate > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', padding: '8px 0', borderBottom: '1px solid #eee' }}>
-                    <div>
-                      <div style={{ color: '#666' }}>Tax ({paymentData.taxRate}%)</div>
-                    </div>
-                    <div>${paymentData.tax.toFixed(2)}</div>
-                  </div>
-                )}
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px', paddingTop: '15px', borderTop: '2px solid #333', fontWeight: 'bold', fontSize: '18px' }}>
-                  <div>Total</div>
-                  <div>${paymentData.amount.toFixed(2)}</div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', color: '#666' }}>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>
-                  ${paymentData?.amount?.toFixed(2) || '0.00'}
-                </div>
-                <div>{paymentData?.description || 'Payment'}</div>
-              </div>
-            )}
-            
-            <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #e0e0e0' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>From:</div>
-              <div style={{ color: '#666' }}>{paymentData?.business_name || 'Business'}</div>
-            </div>
-          </div>
-          
-          {/* Stripe Checkout on the right */}
-          <div style={{ flex: '2' }}>
-            <EmbeddedCheckoutProvider
-              stripe={stripePromise}
-              options={{ clientSecret }}
-            >
-              <EmbeddedCheckout />
-            </EmbeddedCheckoutProvider>
-          </div>
+        <div style={{ padding: '20px' }}>
+          <EmbeddedCheckoutProvider
+            stripe={stripePromise}
+            options={{ clientSecret }}
+          >
+            <EmbeddedCheckout />
+          </EmbeddedCheckoutProvider>
         </div>
       ) : (
         <div className='center' style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center',height:'50vh' }}>
