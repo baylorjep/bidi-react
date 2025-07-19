@@ -107,6 +107,20 @@ const PricingSetup = () => {
 
   const navigate = useNavigate();
 
+  // Update page title based on current step
+  useEffect(() => {
+    let title = 'Set Pricing - Bidi';
+    
+    if (currentCategory) {
+      const categoryConfig = getCategoryConfig(currentCategory);
+      const stepNames = ['Basic Pricing', 'Category Specific', 'Autobid Setup', 'Communication'];
+      const currentStepName = stepNames[currentStep] || 'Set Pricing';
+      title = `${currentStepName} - ${categoryConfig.name} - Bidi`;
+    }
+    
+    document.title = title;
+  }, [currentCategory, currentStep]);
+
   useEffect(() => {
     const fetchUserAndCategories = async () => {
       try {

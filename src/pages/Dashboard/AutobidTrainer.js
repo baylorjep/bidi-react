@@ -56,6 +56,23 @@ const AutobidTrainer = () => {
 
   const TOTAL_STEPS = 5;
 
+  // Update page title based on current step
+  useEffect(() => {
+    let title = 'AI Training - Bidi';
+    
+    if (showCompletion) {
+      title = 'Training Complete - Bidi';
+    } else if (showTransitionStep) {
+      title = 'AI Testing Ready - Bidi';
+    } else if (showSampleBid) {
+      title = 'AI Sample Bid Test - Bidi';
+    } else if (currentCategory) {
+      title = `${capitalizeCategory(currentCategory)} Training - Bidi`;
+    }
+    
+    document.title = title;
+  }, [showCompletion, showTransitionStep, showSampleBid, currentCategory, currentStep]);
+
   // Helper function to generate category-specific request data
   const generateCategorySpecificRequest = (category) => {
     const baseRequest = {
@@ -1081,7 +1098,7 @@ const AutobidTrainer = () => {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 1.1, duration: 0.6 }}
                   className="btn-primary"
-                  onClick={() => navigate('/business-dashboard')}
+                  onClick={() => navigate('/dashboard')}
                 >
                   Return to Dashboard
                 </motion.button>
@@ -1140,7 +1157,7 @@ const AutobidTrainer = () => {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 1.1, duration: 0.6 }}
                     className="btn-primary"
-                    onClick={() => navigate('/business-dashboard')}
+                    onClick={() => navigate('/dashboard')}
                   >
                     Return to Dashboard
                   </motion.button>
@@ -1232,7 +1249,7 @@ const AutobidTrainer = () => {
       <div className="trainer-header">
         <button 
           className="back-button"
-            onClick={() => navigate('/business-dashboard')}
+            onClick={() => navigate('/dashboard')}
           >
             ← Back to Dashboard
           </button>
@@ -1364,7 +1381,7 @@ const AutobidTrainer = () => {
           <div className="trainer-header">
             <button 
               className="back-button"
-              onClick={() => navigate('/business-dashboard')}
+              onClick={() => navigate('/dashboard')}
             >
               ← Back to Dashboard
         </button>
@@ -1394,7 +1411,7 @@ const AutobidTrainer = () => {
           <div className="trainer-header">
             <button 
               className="back-button"
-              onClick={() => navigate('/business-dashboard')}
+              onClick={() => navigate('/dashboard')}
             >
               ← Back to Dashboard
             </button>
@@ -1435,7 +1452,7 @@ const AutobidTrainer = () => {
         <div className="trainer-header">
           <button 
             className="back-button"
-            onClick={() => navigate('/business-dashboard')}
+            onClick={() => navigate('/dashboard')}
           >
             ← Back to Dashboard
           </button>
@@ -1591,7 +1608,7 @@ const AutobidTrainer = () => {
       <div className="trainer-header">
         <button 
           className="back-button"
-          onClick={() => navigate('/business-dashboard')}
+          onClick={() => navigate('/dashboard')}
         >
           ← Back to Dashboard
         </button>

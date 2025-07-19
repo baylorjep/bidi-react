@@ -24,6 +24,16 @@ export const categoryPricingConfig = {
     },
     fields: {
       // Fields for hourly model
+      base_price: {
+        label: "Base Price ($)",
+        type: "number",
+        placeholder: "e.g., 200",
+        min: 0,
+        step: 0.01,
+        description: "Your base price for photography services (setup, travel, etc.)",
+        required: false,
+        showFor: ["hourly"]
+      },
       hourly_rate: {
         label: "Hourly Rate ($)",
         type: "number",
@@ -268,6 +278,16 @@ export const categoryPricingConfig = {
     },
     fields: {
       // Fields for hourly model
+      base_price: {
+        label: "Base Price ($)",
+        type: "number",
+        placeholder: "e.g., 200",
+        min: 0,
+        step: 0.01,
+        description: "Your base price for DJ services (setup, travel, etc.)",
+        required: false,
+        showFor: ["hourly"]
+      },
       hourly_rate: {
         label: "Hourly Rate ($)",
         type: "number",
@@ -516,6 +536,16 @@ export const categoryPricingConfig = {
     defaultModel: "package",
     fields: {
       // Fields for hourly model
+      base_price: {
+        label: "Base Price ($)",
+        type: "number",
+        placeholder: "e.g., 300",
+        min: 0,
+        step: 0.01,
+        description: "Your base price for videography services (setup, travel, etc.)",
+        required: false,
+        showFor: ["hourly"]
+      },
       hourly_rate: {
         label: "Hourly Rate ($)",
         type: "number",
