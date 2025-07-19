@@ -55,17 +55,7 @@ export const categoryPricingConfig = {
         showFor: ["hourly"]
       },
       
-      // Fields for fixed model
-      base_price: {
-        label: "Base Price ($)",
-        type: "number",
-        placeholder: "e.g., 800",
-        min: 0,
-        step: 0.01,
-        description: "Your standard base price for photography services",
-        required: false,
-        showFor: ["fixed"]
-      },
+      // Fields for fixed model (reuse base_price from above)
       
       // Fields for package model
       full_day_rate: {
