@@ -32,7 +32,7 @@ export const categoryPricingConfig = {
         step: 0.01,
         description: "Your base price for photography services (setup, travel, etc.)",
         required: false,
-        showFor: ["hourly"]
+        showFor: ["hourly", "fixed"]
       },
       hourly_rate: {
         label: "Hourly Rate ($)",
@@ -286,7 +286,7 @@ export const categoryPricingConfig = {
         step: 0.01,
         description: "Your base price for DJ services (setup, travel, etc.)",
         required: false,
-        showFor: ["hourly"]
+        showFor: ["hourly", "fixed"]
       },
       hourly_rate: {
         label: "Hourly Rate ($)",
@@ -309,17 +309,7 @@ export const categoryPricingConfig = {
         showFor: ["hourly"]
       },
       
-      // Fields for fixed model
-      base_price: {
-        label: "Base Price ($)",
-        type: "number",
-        placeholder: "e.g., 800",
-        min: 0,
-        step: 0.01,
-        description: "Your standard base price for DJ services",
-        required: false,
-        showFor: ["fixed"]
-      },
+      // Fields for fixed model (reuse base_price from hourly)
       
       // Fields for package model
       ceremony_only_price: {
@@ -544,7 +534,7 @@ export const categoryPricingConfig = {
         step: 0.01,
         description: "Your base price for videography services (setup, travel, etc.)",
         required: false,
-        showFor: ["hourly"]
+        showFor: ["hourly", "fixed"]
       },
       hourly_rate: {
         label: "Hourly Rate ($)",
@@ -557,17 +547,7 @@ export const categoryPricingConfig = {
         showFor: ["hourly"]
       },
       
-      // Fields for fixed model
-      base_price: {
-        label: "Base Price ($)",
-        type: "number",
-        placeholder: "e.g., 1200",
-        min: 0,
-        step: 0.01,
-        description: "Your standard base price for videography services",
-        required: false,
-        showFor: ["fixed"]
-      },
+      // Fields for fixed model (reuse base_price from hourly)
       
       // Fields for package model
       highlight_video_price: {

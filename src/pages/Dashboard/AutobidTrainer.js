@@ -1098,7 +1098,7 @@ const AutobidTrainer = () => {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 1.1, duration: 0.6 }}
                   className="btn-primary"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/business-dashboard')}
                 >
                   Return to Dashboard
                 </motion.button>
@@ -1157,7 +1157,7 @@ const AutobidTrainer = () => {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 1.1, duration: 0.6 }}
                     className="btn-primary"
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => navigate('/business-dashboard')}
                   >
                     Return to Dashboard
                   </motion.button>
@@ -1249,7 +1249,7 @@ const AutobidTrainer = () => {
       <div className="trainer-header">
         <button 
           className="back-button"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/business-dashboard')}
           >
             ← Back to Dashboard
           </button>
@@ -1381,7 +1381,7 @@ const AutobidTrainer = () => {
           <div className="trainer-header">
             <button 
               className="back-button"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/business-dashboard')}
             >
               ← Back to Dashboard
         </button>
@@ -1411,7 +1411,7 @@ const AutobidTrainer = () => {
           <div className="trainer-header">
             <button 
               className="back-button"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/business-dashboard')}
             >
               ← Back to Dashboard
             </button>
@@ -1452,7 +1452,7 @@ const AutobidTrainer = () => {
         <div className="trainer-header">
           <button 
             className="back-button"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/business-dashboard')}
           >
             ← Back to Dashboard
           </button>
@@ -1608,7 +1608,7 @@ const AutobidTrainer = () => {
       <div className="trainer-header">
         <button 
           className="back-button"
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/business-dashboard')}
         >
           ← Back to Dashboard
         </button>
