@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { socket } from "../../socket";
 import { supabase } from "../../supabaseClient";
 import "../../styles/chat.css";
-import { FaArrowLeft, FaCreditCard } from "react-icons/fa";
+import { FaArrowLeft, FaCreditCard, FaPlus, FaTrash } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { formatMessageText } from "../../utils/formatMessageText";
 import { formatBusinessName } from '../../utils/formatBusinessName';
@@ -60,6 +60,10 @@ export default function MessagingView({
   const [isCurrentUserBusiness, setIsCurrentUserBusiness] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [stripeAccountId, setStripeAccountId] = useState(null);
+  const [modalLineItems, setModalLineItems] = useState([
+    { id: 1, description: '', quantity: 1, rate: '', amount: 0 }
+  ]);
+  const [modalTaxRate, setModalTaxRate] = useState(0);
 
   // Memoize the loading skeletons at the top level to avoid conditional hook calls
   const loadingSkeletons = useMemo(() => (
@@ -628,9 +632,53 @@ export default function MessagingView({
     navigate(`/portfolio/${businessId}/${formattedName}`);
   };
 
+  const calculateSubtotal = () => {
+    return modalLineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+  };
+
+  const calculateTax = () => {
+    return (calculateSubtotal() * modalTaxRate) / 100;
+  };
+
+  const calculateTotal = () => {
+    return calculateSubtotal() + calculateTax();
+  };
+
+  const addLineItem = () => {
+    const newId = Math.max(...modalLineItems.map(item => item.id), 0) + 1;
+    setModalLineItems([...modalLineItems, { id: newId, description: '', quantity: 1, rate: '', amount: 0 }]);
+  };
+
+  const removeLineItem = (id) => {
+    if (modalLineItems.length > 1) {
+      setModalLineItems(modalLineItems.filter(item => item.id !== id));
+    }
+  };
+
+  const updateLineItem = (id, field, value) => {
+    setModalLineItems(modalLineItems.map(item => {
+      if (item.id === id) {
+        const updatedItem = { ...item, [field]: value };
+        if (field === 'quantity' || field === 'rate') {
+          const quantity = field === 'quantity' ? parseFloat(value) || 0 : item.quantity;
+          const rate = field === 'rate' ? parseFloat(value) || 0 : item.rate;
+          updatedItem.amount = quantity * rate;
+        }
+        return updatedItem;
+      }
+      return item;
+    }));
+  };
+
   const handleSendPaymentRequest = (paymentData) => {
     if (!stripeAccountId) {
       console.error('No Stripe account ID found for business');
+      return;
+    }
+
+    const total = calculateTotal();
+    if (total <= 0) {
+      alert('Please add at least one line item with a valid amount');
       return;
     }
 
@@ -639,24 +687,31 @@ export default function MessagingView({
       receiverId: businessId,
       message: JSON.stringify({
         type: 'payment_request',
-        amount: paymentData.amount,
-        description: paymentData.description,
+        amount: total,
+        description: 'Service Payment',
         paymentData: {
-          ...paymentData.paymentData,
-          stripe_account_id: stripeAccountId
+          amount: total,
+          stripe_account_id: stripeAccountId,
+          payment_type: 'custom',
+          business_name: businessName,
+          description: 'Service Payment',
+          lineItems: modalLineItems.filter(item => item.amount > 0),
+          subtotal: calculateSubtotal(),
+          tax: calculateTax(),
+          taxRate: modalTaxRate
         }
       }),
       type: 'payment_request',
-      payment_amount: paymentData.amount,
+      payment_amount: total,
       payment_status: 'pending',
       payment_data: {
-        lineItems: paymentData.paymentData.lineItems,
-        subtotal: paymentData.paymentData.subtotal,
-        tax: paymentData.paymentData.tax,
-        taxRate: paymentData.paymentData.taxRate,
+        lineItems: modalLineItems.filter(item => item.amount > 0),
+        subtotal: calculateSubtotal(),
+        tax: calculateTax(),
+        taxRate: modalTaxRate,
         stripe_account_id: stripeAccountId,
         business_name: businessName,
-        description: paymentData.description
+        description: 'Service Payment'
       },
       seen: false
     };
@@ -868,23 +923,104 @@ export default function MessagingView({
               </button>
             </div>
             <div className="payment-modal-content">
-              <div className="form-group">
-                <label>Amount ($)</label>
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  id="payment-amount"
-                />
+              <div className="line-items-section">
+                <div className="line-items-header">
+                  <h4>Service Breakdown</h4>
+                  <button 
+                    className="add-line-item-btn"
+                    onClick={addLineItem}
+                    type="button"
+                  >
+                    <FaPlus /> Add Service
+                  </button>
+                </div>
+                
+                <div className="line-items-help">
+                  <p><strong>Itemize your services:</strong> List each service or item separately. For example: "Wedding Photography" (8 hours × $150), "Bouquet Design" (1 item × $200), etc.</p>
+                </div>
+                
+                <div className="line-items-list">
+                  {modalLineItems.map((item) => (
+                    <div key={item.id} className="line-item">
+                      <div className="line-item-row">
+                        <div className="line-item-description">
+                          <input
+                            type="text"
+                            placeholder="e.g., Wedding Photography, Bouquet Design, DJ Services"
+                            value={item.description}
+                            onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
+                          />
+                        </div>
+                        <div className="line-item-quantity">
+                          <input
+                            type="number"
+                            placeholder="Hours/Qty"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)}
+                          />
+                        </div>
+                        <div className="line-item-rate">
+                          <input
+                            type="number"
+                            placeholder="$ per hour/item"
+                            min="0"
+                            step="0.01"
+                            value={item.rate}
+                            onChange={(e) => updateLineItem(item.id, 'rate', e.target.value)}
+                          />
+                        </div>
+                        <div className="line-item-amount">
+                          ${(item.amount || 0).toFixed(2)}
+                        </div>
+                        <div className="line-item-actions">
+                          <button
+                            className="remove-line-item-btn"
+                            onClick={() => removeLineItem(item.id)}
+                            type="button"
+                            disabled={modalLineItems.length === 1}
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  placeholder="Payment description..."
-                  rows="3"
-                  id="payment-description"
-                />
+
+              <div className="tax-section">
+                <div className="tax-input">
+                  <label>Tax Rate (%)</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={modalTaxRate}
+                    onChange={(e) => setModalTaxRate(parseFloat(e.target.value) || 0)}
+                  />
+                  <small>Leave as 0 if no tax applies</small>
+                </div>
+              </div>
+
+              <div className="payment-summary">
+                <h4>Payment Summary</h4>
+                <div className="summary-row">
+                  <span>Subtotal:</span>
+                  <span>${calculateSubtotal().toFixed(2)}</span>
+                </div>
+                {modalTaxRate > 0 && (
+                  <div className="summary-row">
+                    <span>Tax ({modalTaxRate}%):</span>
+                    <span>${calculateTax().toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="summary-row total">
+                  <span>Total Amount:</span>
+                  <span>${calculateTotal().toFixed(2)}</span>
+                </div>
               </div>
             </div>
             <div className="payment-modal-actions">
@@ -897,23 +1033,25 @@ export default function MessagingView({
               <button 
                 className="send-btn"
                 onClick={() => {
-                  const amount = document.getElementById('payment-amount').value;
-                  const description = document.getElementById('payment-description').value;
-                  
-                  if (!amount || parseFloat(amount) <= 0) {
-                    alert('Please enter a valid amount');
+                  const total = calculateTotal();
+                  if (total <= 0) {
+                    alert('Please add at least one line item with a valid amount');
                     return;
                   }
 
                   handleSendPaymentRequest({
-                    amount: parseFloat(amount),
-                    description: description || 'Service Payment',
+                    amount: total,
+                    description: 'Service Payment',
                     paymentData: {
-                      amount: parseFloat(amount),
+                      amount: total,
                       stripe_account_id: stripeAccountId,
                       payment_type: 'custom',
                       business_name: businessName,
-                      description: description || 'Service Payment'
+                      description: 'Service Payment',
+                      lineItems: modalLineItems.filter(item => item.amount > 0),
+                      subtotal: calculateSubtotal(),
+                      tax: calculateTax(),
+                      taxRate: modalTaxRate
                     }
                   });
                 }}

@@ -212,6 +212,8 @@ export default function ChatInterface({ initialChat }) {
             : `${p.first_name || ""} ${p.last_name || ""}`.trim() || "User",
         last_message: latestMap[p.id]?.type === 'image'
           ? (latestMap[p.id]?.sender_id === currentUserId ? "You sent an image" : "Image")
+          : latestMap[p.id]?.type === 'payment_request'
+          ? (latestMap[p.id]?.sender_id === currentUserId ? "You sent a payment request" : "Payment request")
           : latestMap[p.id]?.message || "",
         unseen_count: unseenCountMap[p.id] || 0,
         last_message_time: latestMap[p.id]?.created_at
