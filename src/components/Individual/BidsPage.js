@@ -1474,18 +1474,6 @@ export default function BidsPage({ onOpenChat }) {
                             {selectedRequest.event_title || selectedRequest.title || 'Selected Request'}
                         </h2>
                     </div>
-                    <div style={{ 
-                        textAlign: 'center', 
-                        padding: '10px', 
-                        backgroundColor: '#f8f9fa', 
-                        borderRadius: '8px',
-                        color: '#FF008A',
-                        fontWeight: 'bold',
-                        margin: '10px',
-                        fontSize: '14px'
-                    }}>
-                        Get 5% off everything when you book through Bidi! Limited time offer.
-                    </div>
                     <div className="mobile-bids-content">
                         <div className="bids-container">
                             {/* Show bids grouped by status as accordions */}
