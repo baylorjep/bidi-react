@@ -29,6 +29,19 @@ const EmbeddedCheckoutForm = () => {
     console.log('Payment data:', paymentData);
     const createCheckoutSession = async () => {
       try {
+        // Create detailed description with line items
+        let detailedDescription = paymentData.business_name;
+        if (paymentData.lineItems && paymentData.lineItems.length > 0) {
+          detailedDescription += ' - ';
+          const itemDescriptions = paymentData.lineItems.map(item => 
+            `${item.description} (${item.quantity}×$${item.rate})`
+          );
+          detailedDescription += itemDescriptions.join(', ');
+          if (paymentData.taxRate > 0) {
+            detailedDescription += ` + ${paymentData.taxRate}% tax`;
+          }
+        }
+
         const response = await fetch("https://bidi-express.vercel.app/create-checkout-session", {
           method: "POST",
           headers: {
@@ -38,9 +51,10 @@ const EmbeddedCheckoutForm = () => {
             connectedAccountId: paymentData.stripe_account_id,
             amount: Math.round(paymentData.amount * 100),
             applicationFeeAmount: Math.round(paymentData.amount * 5),
-            serviceName: paymentData.business_name,
+            serviceName: detailedDescription,
             successUrl: `${window.location.origin}/payment-success?amount=${paymentData.amount}&payment_type=${paymentData.payment_type}&business_name=${encodeURIComponent(paymentData.business_name)}&bid_id=${paymentData.bid_id}`,
             cancelUrl: `${window.location.origin}/bids`,
+
           }),
         });
     
