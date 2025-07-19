@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  z-index: 99999;
   backdrop-filter: blur(2px);
 }
 
@@ -24,6 +24,7 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
+  z-index: 100000;
 }
 
 .bid-messaging-header {
@@ -34,12 +35,6 @@
   border-bottom: 1px solid #eee;
   background: #f8f9fa;
   border-radius: 12px 12px 0 0;
-}
-
-@media (max-width: 768px) {
-  .bid-messaging-header {
-    margin-top: 72px;
-  }
 }
 
 .bid-messaging-user-info {
@@ -281,12 +276,6 @@
   border-radius: 0 0 12px 12px;
 }
 
-@media (max-width: 768px) {
-  .chat-footer {
-    margin-bottom: 90px;
-  }
-}
-
 .chat-input-wrapper {
   flex: 1;
   position: relative;
@@ -381,7 +370,7 @@
 /* Additional styles to ensure modal appears above everything */
 .bid-messaging-overlay {
   position: fixed !important;
-  z-index: 9999 !important;
+  z-index: 99999 !important;
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
@@ -390,7 +379,7 @@
 
 .bid-messaging-container {
   position: relative !important;
-  z-index: 10000 !important;
+  z-index: 100000 !important;
 }
 
 /* Prevent body scroll when modal is open */
@@ -437,5 +426,364 @@ body.modal-open {
   .bid-messaging-close-btn {
     min-height: 44px;
     min-width: 44px;
+  }
+} 
+
+/* Payment Request Styles */
+.chat-upload-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-payment-btn {
+  background: none;
+  border: none;
+  color: #9633eb;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-payment-btn:hover {
+  background-color: #f3e8ff;
+}
+
+/* Payment Modal Styles */
+.payment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100001;
+  padding: 20px;
+}
+
+.payment-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.payment-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 0 20px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 20px;
+}
+
+.payment-modal-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.payment-modal-content {
+  padding: 0 20px 20px 20px;
+}
+
+.line-items-section {
+  margin-bottom: 24px;
+}
+
+.line-items-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.line-items-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.add-line-item-btn {
+  background: #9633eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s;
+}
+
+.add-line-item-btn:hover {
+  background: #7c2bd9;
+}
+
+.line-items-help {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.line-items-help p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.line-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.line-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.line-item-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.line-item-description input,
+.line-item-quantity input,
+.line-item-rate input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.line-item-description input:focus,
+.line-item-quantity input:focus,
+.line-item-rate input:focus {
+  outline: none;
+  border-color: #9633eb;
+  box-shadow: 0 0 0 2px rgba(150, 51, 235, 0.1);
+}
+
+.line-item-amount {
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.line-item-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.remove-line-item-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.remove-line-item-btn:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.remove-line-item-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.tax-section {
+  margin-bottom: 24px;
+}
+
+.tax-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tax-input label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  min-width: 80px;
+}
+
+.tax-input input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  max-width: 120px;
+}
+
+.tax-input input:focus {
+  outline: none;
+  border-color: #9633eb;
+  box-shadow: 0 0 0 2px rgba(150, 51, 235, 0.1);
+}
+
+.tax-input small {
+  color: #666;
+  font-size: 12px;
+}
+
+.payment-summary {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.payment-summary h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.summary-row:last-child {
+  margin-bottom: 0;
+}
+
+.summary-row.total {
+  border-top: 1px solid #dee2e6;
+  padding-top: 8px;
+  margin-top: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  color: #333;
+}
+
+.payment-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid #eee;
+}
+
+.cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #5a6268;
+}
+
+.send-btn {
+  background: #9633eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.send-btn:hover {
+  background: #7c2bd9;
+}
+
+.send-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments for payment modal */
+@media (max-width: 768px) {
+  .line-item-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .line-item-description,
+  .line-item-quantity,
+  .line-item-rate,
+  .line-item-amount,
+  .line-item-actions {
+    grid-column: 1;
+  }
+  
+  .line-item-amount {
+    text-align: left;
+    font-weight: 600;
+  }
+  
+  .line-item-actions {
+    justify-content: flex-start;
+  }
+  
+  .tax-input {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .tax-input input {
+    width: 100%;
   }
 } 

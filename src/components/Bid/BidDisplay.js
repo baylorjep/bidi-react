@@ -28,6 +28,8 @@ import ChatInterface from '../Messaging/ChatInterface';
 import BidMessaging from './BidMessaging';
 import ReactDOM from 'react-dom';
 import { formatMessageText } from '../../utils/formatMessageText';
+import { FaCreditCard, FaPlus, FaTrash } from 'react-icons/fa';
+import PaymentCard from '../Messaging/PaymentCard';
 // Set the workerSrc for pdfjs to use the local public directory for compatibility
 pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.js`;
 
@@ -97,6 +99,23 @@ function BidDisplay({
   const [expandedPreviewMessages, setExpandedPreviewMessages] = useState(new Set());
   const [newMessage, setNewMessage] = useState('');
   const [showBidMessaging, setShowBidMessaging] = useState(false);
+  
+  // Payment request state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [stripeAccountId, setStripeAccountId] = useState(null);
+  const [isCurrentUserBusiness, setIsCurrentUserBusiness] = useState(false);
+  const [modalLineItems, setModalLineItems] = useState([
+    { id: 1, description: '', quantity: 1, rate: '', amount: 0 }
+  ]);
+  const [modalTaxRate, setModalTaxRate] = useState(0);
+  
+  // Image upload state
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [pendingFile, setPendingFile] = useState(null);
+  
+  // Get the other user's ID (the one we're chatting with)
+  const otherUserId = currentUserId === bid.user_id ? bid.business_profiles?.id : bid.user_id;
+  
   const {
     selectedDate,
     selectedTimeSlot,
@@ -1359,6 +1378,29 @@ useEffect(() => {
     };
   }, [currentUserId, bid]);
 
+  // Check if current user is a business and get Stripe account ID
+  useEffect(() => {
+    const checkBusinessProfile = async () => {
+      if (!currentUserId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('business_profiles')
+          .select('id, stripe_account_id')
+          .eq('id', currentUserId)
+          .single();
+        
+        console.log('Business profile check:', { data, error });
+        setIsCurrentUserBusiness(!!data);
+        setStripeAccountId(data?.stripe_account_id || null);
+      } catch (error) {
+        console.error('Error checking business profile:', error);
+      }
+    };
+
+    checkBusinessProfile();
+  }, [currentUserId]);
+
 
 
   // Helper functions for read more functionality in preview
@@ -1414,6 +1456,95 @@ useEffect(() => {
     });
   };
 
+  // Payment calculation functions
+  const calculateSubtotal = () => {
+    return modalLineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+  };
+
+  const calculateTax = () => {
+    return (calculateSubtotal() * modalTaxRate) / 100;
+  };
+
+  const calculateTotal = () => {
+    return calculateSubtotal() + calculateTax();
+  };
+
+  const addLineItem = () => {
+    const newId = Math.max(...modalLineItems.map(item => item.id), 0) + 1;
+    setModalLineItems([...modalLineItems, { id: newId, description: '', quantity: 1, rate: '', amount: 0 }]);
+  };
+
+  const removeLineItem = (id) => {
+    if (modalLineItems.length > 1) {
+      setModalLineItems(modalLineItems.filter(item => item.id !== id));
+    }
+  };
+
+  const updateLineItem = (id, field, value) => {
+    setModalLineItems(modalLineItems.map(item => {
+      if (item.id === id) {
+        const updatedItem = { ...item, [field]: value };
+        if (field === 'quantity' || field === 'rate') {
+          const quantity = field === 'quantity' ? parseFloat(value) || 0 : item.quantity;
+          const rate = field === 'rate' ? parseFloat(value) || 0 : item.rate;
+          updatedItem.amount = quantity * rate;
+        }
+        return updatedItem;
+      }
+      return item;
+    }));
+  };
+
+  const handleSendPaymentRequest = (paymentData) => {
+    if (!stripeAccountId) {
+      console.error('No Stripe account ID found for business');
+      return;
+    }
+
+    const total = calculateTotal();
+    if (total <= 0) {
+      alert('Please add at least one line item with a valid amount');
+      return;
+    }
+
+    const messageData = {
+      senderId: currentUserId,
+      receiverId: otherUserId,
+      message: JSON.stringify({
+        type: 'payment_request',
+        amount: total,
+        description: 'Service Payment',
+        paymentData: {
+          amount: total,
+          stripe_account_id: stripeAccountId,
+          payment_type: 'custom',
+          business_name: bid.business_profiles.business_name,
+          description: 'Service Payment',
+          lineItems: modalLineItems.filter(item => item.amount > 0),
+          subtotal: calculateSubtotal(),
+          tax: calculateTax(),
+          taxRate: modalTaxRate
+        }
+      }),
+      type: 'payment_request',
+      payment_amount: total,
+      payment_status: 'pending',
+      payment_data: {
+        lineItems: modalLineItems.filter(item => item.amount > 0),
+        subtotal: calculateSubtotal(),
+        tax: calculateTax(),
+        taxRate: modalTaxRate,
+        stripe_account_id: stripeAccountId,
+        business_name: bid.business_profiles.business_name,
+        description: 'Service Payment'
+      },
+      seen: false
+    };
+
+    socket.emit("send_message", messageData);
+    setShowPaymentModal(false);
+  };
+
   // Handle sending messages inline
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
@@ -1466,6 +1597,76 @@ useEffect(() => {
 
   const handleCloseBidMessaging = () => {
     setShowBidMessaging(false);
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+  
+    setPendingFile(file);
+    const localPreview = URL.createObjectURL(file);
+    setPreviewImageUrl(localPreview);
+
+    e.target.value = null;
+  };
+
+  // Send message
+  const sendMessage = async () => {
+    if (!pendingFile && !newMessage.trim()) return;
+  
+    let imageUrl = null;
+  
+    if (pendingFile && previewImageUrl) {
+      try {
+        const cleanFileName = pendingFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+        const fileName = `${Date.now()}_${cleanFileName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('chat-images')
+          .upload(fileName, pendingFile);
+  
+        if (uploadError) {
+          console.error("Image upload failed:", uploadError);
+          return;
+        }
+  
+        const { publicUrl } = supabase
+          .storage
+          .from('chat-images')
+          .getPublicUrl(fileName).data;
+  
+        imageUrl = publicUrl;
+      } catch (err) {
+        console.error("Image send failed:", err);
+        return;
+      }
+    }
+  
+    if (imageUrl) {
+      socket.emit("send_message", {
+        senderId: currentUserId,
+        receiverId: otherUserId,
+        message: imageUrl,
+        type: "image",
+        seen: false,
+      });
+    }
+  
+    if (newMessage.trim()) {
+      socket.emit("send_message", {
+        senderId: currentUserId,
+        receiverId: otherUserId,
+        message: newMessage.trim(),
+        type: "text",
+        seen: false,
+      });
+    }
+  
+    // Cleanup
+    setNewMessage("");
+    setPreviewImageUrl(null);
+    setPendingFile(null);
+    socket.emit("stop_typing", { senderId: currentUserId, receiverId: otherUserId });
   };
 
   return (
@@ -1622,6 +1823,18 @@ useEffect(() => {
                             className="message-preview-html-content"
                             dangerouslySetInnerHTML={{ __html: getTruncatedPreviewMessage(msg.message) }}
                           />
+                        ) : msg.type === 'payment_request' ? (
+                          <PaymentCard
+                            amount={msg.payment_amount || JSON.parse(msg.message).amount}
+                            businessName={bid.business_profiles.business_name}
+                            stripeAccountId={msg.payment_data?.stripe_account_id || JSON.parse(msg.message).paymentData.stripe_account_id}
+                            description={msg.payment_data?.description || JSON.parse(msg.message).description}
+                            lineItems={msg.payment_data?.lineItems || JSON.parse(msg.message).paymentData.lineItems}
+                            subtotal={msg.payment_data?.subtotal || JSON.parse(msg.message).paymentData.subtotal}
+                            tax={msg.payment_data?.tax || JSON.parse(msg.message).paymentData.tax}
+                            taxRate={msg.payment_data?.taxRate || JSON.parse(msg.message).paymentData.taxRate}
+                            paymentStatus={msg.payment_status}
+                          />
                         ) : (
                           formatMessageText(getTruncatedPreviewMessage(msg.message))
                         )}
@@ -1638,6 +1851,18 @@ useEffect(() => {
                           <div 
                             className="message-preview-html-content"
                             dangerouslySetInnerHTML={{ __html: msg.message }}
+                          />
+                        ) : msg.type === 'payment_request' ? (
+                          <PaymentCard
+                            amount={msg.payment_amount || JSON.parse(msg.message).amount}
+                            businessName={bid.business_profiles.business_name}
+                            stripeAccountId={msg.payment_data?.stripe_account_id || JSON.parse(msg.message).paymentData.stripe_account_id}
+                            description={msg.payment_data?.description || JSON.parse(msg.message).description}
+                            lineItems={msg.payment_data?.lineItems || JSON.parse(msg.message).paymentData.lineItems}
+                            subtotal={msg.payment_data?.subtotal || JSON.parse(msg.message).paymentData.subtotal}
+                            tax={msg.payment_data?.tax || JSON.parse(msg.message).paymentData.tax}
+                            taxRate={msg.payment_data?.taxRate || JSON.parse(msg.message).paymentData.taxRate}
+                            paymentStatus={msg.payment_status}
                           />
                         ) : (
                           formatMessageText(msg.message)
@@ -1680,30 +1905,60 @@ useEffect(() => {
           {/* Inline messaging interface */}
           <div className="bid-card-messaging-interface">
             <div className="bid-card-input-wrapper">
-              <textarea
-                className="bid-card-input"
-                placeholder="Add a message…"
-                value={newMessage}
-                onChange={(e) => {
-                  setNewMessage(e.target.value);
-                  // Auto-resize the textarea
-                  e.target.style.height = 'auto';
-                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                rows={1}
-                style={{ resize: 'none', overflow: 'hidden' }}
-              />
+              <label htmlFor="file-upload-inline" className="bid-card-upload-btn">
+                <span>＋</span>
+                <input
+                  id="file-upload-inline"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleFileUpload}
+                />
+              </label>
+              {isCurrentUserBusiness && stripeAccountId && (
+                <button 
+                  className="bid-card-payment-btn"
+                  onClick={() => setShowPaymentModal(true)}
+                  title="Send Payment Request"
+                >
+                  <FaCreditCard />
+                </button>
+              )}
+              <div className="bid-card-input-container">
+                {previewImageUrl && (
+                  <div className="inline-image-preview">
+                    <img src={previewImageUrl} alt="Preview" />
+                    <button className="inline-remove-button" onClick={() => {
+                      setPreviewImageUrl(null);
+                      setPendingFile(null);
+                    }}>×</button>
+                  </div>
+                )}
+                <textarea
+                  className="bid-card-input"
+                  placeholder="Add a message…"
+                  value={newMessage}
+                  onChange={(e) => {
+                    setNewMessage(e.target.value);
+                    // Auto-resize the textarea
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  rows={1}
+                  style={{ resize: 'none', overflow: 'hidden' }}
+                />
+              </div>
             </div>
             <button 
               className="bid-card-send-btn" 
-              onClick={handleSendMessage}
-              disabled={!newMessage.trim()}
+              onClick={sendMessage}
+              disabled={!newMessage.trim() && !pendingFile}
             >
               Send
             </button>
@@ -1761,14 +2016,171 @@ useEffect(() => {
 
 
       {/* Bid Messaging Modal */}
-      <BidMessaging
-        bid={bid}
-        currentUserId={currentUserId}
-        onClose={handleCloseBidMessaging}
-        isOpen={showBidMessaging}
-        businessName={bid.business_profiles.business_name}
-        profileImage={profileImage}
-      />
+      {showBidMessaging && ReactDOM.createPortal(
+        <BidMessaging
+          bid={bid}
+          currentUserId={currentUserId}
+          onClose={handleCloseBidMessaging}
+          isOpen={showBidMessaging}
+          businessName={bid.business_profiles.business_name}
+          profileImage={profileImage}
+        />,
+        document.body
+      )}
+
+      {/* Payment Request Modal */}
+      {showPaymentModal && (
+        <div className="payment-modal-overlay" onClick={() => setShowPaymentModal(false)}>
+          <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="payment-modal-header">
+              <h3>Send Payment Request</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowPaymentModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="payment-modal-content">
+              <div className="line-items-section">
+                <div className="line-items-header">
+                  <h4>Service Breakdown</h4>
+                  <button 
+                    className="add-line-item-btn"
+                    onClick={addLineItem}
+                    type="button"
+                  >
+                    <FaPlus /> Add Service
+                  </button>
+                </div>
+                
+                <div className="line-items-help">
+                  <p><strong>Itemize your services:</strong> List each service or item separately. For example: "Wedding Photography" (8 hours × $150), "Bouquet Design" (1 item × $200), etc.</p>
+                </div>
+                
+                <div className="line-items-list">
+                  {modalLineItems.map((item) => (
+                    <div key={item.id} className="line-item">
+                      <div className="line-item-row">
+                        <div className="line-item-description">
+                          <input
+                            type="text"
+                            placeholder="e.g., Wedding Photography, Bouquet Design, DJ Services"
+                            value={item.description}
+                            onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
+                          />
+                        </div>
+                        <div className="line-item-quantity">
+                          <input
+                            type="number"
+                            placeholder="Hours/Qty"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)}
+                          />
+                        </div>
+                        <div className="line-item-rate">
+                          <input
+                            type="number"
+                            placeholder="$ per hour/item"
+                            min="0"
+                            step="0.01"
+                            value={item.rate}
+                            onChange={(e) => updateLineItem(item.id, 'rate', e.target.value)}
+                          />
+                        </div>
+                        <div className="line-item-amount">
+                          ${(item.amount || 0).toFixed(2)}
+                        </div>
+                        <div className="line-item-actions">
+                          <button
+                            className="remove-line-item-btn"
+                            onClick={() => removeLineItem(item.id)}
+                            type="button"
+                            disabled={modalLineItems.length === 1}
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="tax-section">
+                <div className="tax-input">
+                  <label>Tax Rate (%)</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={modalTaxRate}
+                    onChange={(e) => setModalTaxRate(parseFloat(e.target.value) || 0)}
+                  />
+                  <small>Leave as 0 if no tax applies</small>
+                </div>
+              </div>
+
+              <div className="payment-summary">
+                <h4>Payment Summary</h4>
+                <div className="summary-row">
+                  <span>Subtotal:</span>
+                  <span>${calculateSubtotal().toFixed(2)}</span>
+                </div>
+                {modalTaxRate > 0 && (
+                  <div className="summary-row">
+                    <span>Tax ({modalTaxRate}%):</span>
+                    <span>${calculateTax().toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="summary-row total">
+                  <span>Total Amount:</span>
+                  <span>${calculateTotal().toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+            <div className="payment-modal-actions">
+              <button 
+                className="cancel-btn"
+                onClick={() => setShowPaymentModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="send-btn"
+                onClick={() => {
+                  const total = calculateTotal();
+                  if (total <= 0) {
+                    alert('Please add at least one line item with a valid amount');
+                    return;
+                  }
+
+                  handleSendPaymentRequest({
+                    amount: total,
+                    description: 'Service Payment',
+                    paymentData: {
+                      amount: total,
+                      stripe_account_id: stripeAccountId,
+                      payment_type: 'custom',
+                      business_name: bid.business_profiles.business_name,
+                      description: 'Service Payment',
+                      lineItems: modalLineItems.filter(item => item.amount > 0),
+                      subtotal: calculateSubtotal(),
+                      tax: calculateTax(),
+                      taxRate: modalTaxRate
+                    }
+                  });
+                }}
+              >
+                Send Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
