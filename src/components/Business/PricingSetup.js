@@ -525,6 +525,8 @@ const PricingSetup = () => {
     const categoryConfig = getCategoryConfig(currentCategory);
     const categoryFields = categoryConfig.fields;
     
+
+    
     return (
       <div className="pricing-step">
         <div className="step-header">
@@ -566,35 +568,42 @@ const PricingSetup = () => {
           </div>
 
           {/* Category-specific basic fields */}
-          {Object.entries(categoryFields).map(([fieldKey, fieldConfig]) => {
-            if (typeof fieldConfig === 'object' && fieldConfig.type === 'number' && 
-                !['seasonal_pricing', 'flower_tiers', 'equipment_packages', 'menu_tiers', 'service_staff', 'travel_zones'].includes(fieldKey)) {
-              
+          {Object.entries(categoryFields)
+            .filter(([fieldKey, fieldConfig]) => 
+              typeof fieldConfig === 'object' && 
+              fieldConfig.type === 'number' && 
+              !['seasonal_pricing', 'flower_tiers', 'equipment_packages', 'menu_tiers', 'service_staff', 'travel_zones'].includes(fieldKey)
+            )
+            .filter(([fieldKey, fieldConfig]) => {
               // Check if this field should be shown for the current pricing model
               const shouldShow = !fieldConfig.showFor || fieldConfig.showFor.includes(pricingData.pricing_model);
-              
-              if (!shouldShow) return null;
-              
-              return (
-                <div key={fieldKey} className="form-group">
-                  <label>{fieldConfig.label}</label>
-                  <input
-                    type={fieldConfig.type}
-                    value={pricingData[fieldKey] || ''}
-                    onChange={(e) => handleInputChange(fieldKey, e.target.value)}
-                    placeholder={fieldConfig.placeholder}
-                    min={fieldConfig.min}
-                    max={fieldConfig.max}
-                    step={fieldConfig.step}
-                  />
-                  {fieldConfig.description && (
-                    <small>{fieldConfig.description}</small>
-                  )}
-                </div>
-              );
-            }
-            return null;
-          })}
+              return shouldShow;
+            })
+            .sort(([aKey, aConfig], [bKey, bConfig]) => {
+              // Sort base_price first, then hourly_rate, then others
+              if (aKey === 'base_price') return -1;
+              if (bKey === 'base_price') return 1;
+              if (aKey === 'hourly_rate') return -1;
+              if (bKey === 'hourly_rate') return 1;
+              return 0;
+            })
+            .map(([fieldKey, fieldConfig]) => (
+              <div key={fieldKey} className="form-group">
+                <label>{fieldConfig.label}</label>
+                <input
+                  type={fieldConfig.type}
+                  value={pricingData[fieldKey] || ''}
+                  onChange={(e) => handleInputChange(fieldKey, e.target.value)}
+                  placeholder={fieldConfig.placeholder}
+                  min={fieldConfig.min}
+                  max={fieldConfig.max}
+                  step={fieldConfig.step}
+                />
+                {fieldConfig.description && (
+                  <small>{fieldConfig.description}</small>
+                )}
+              </div>
+            ))}
 
           <div className="form-group">
             <label>Travel Fee per Mile ($)</label>
