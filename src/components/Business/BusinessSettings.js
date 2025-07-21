@@ -1675,7 +1675,7 @@ useEffect(() => {
       {/* Setup Progress Checklist */}
       {Object.values(setupProgress).some(v => !v) && (
         <div className="setup-checklist">
-          <div className="checklist-header">
+          <div className="checklist-header-business-settings">
             <h3>Complete Your Setup</h3>
             <p>Finish these steps to get your business profile fully set up and ready to go!</p>
           </div>

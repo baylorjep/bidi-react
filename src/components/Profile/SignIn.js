@@ -113,7 +113,7 @@ const SignIn = ({ onSuccess }) => {
                 }
                 // Handle user with both profiles (wedding planner)
                 else if (businessProfile && individualProfile) {
-                    navigate('/wedding-planner-dashboard');
+                    navigate('/wedding-planner-dashboard/home');
                 }
                 // Handle new user with no profiles
                 else {
@@ -307,7 +307,7 @@ const SignIn = ({ onSuccess }) => {
                     } else if (currentProfile?.role === 'business') {
                         navigate('/business-dashboard');
                     } else if (currentProfile?.role === 'both') {
-                        navigate('/wedding-planner-dashboard');
+                        navigate('/wedding-planner-dashboard/home');
                     }
                 }}
                 userId={currentUserId}

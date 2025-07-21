@@ -26,18 +26,18 @@ import TrainingVideos from "../Business/TrainingVideos.js";
 import AdminDashboard from "../admin/AdminDashboard.js";
 
 const WeddingPlannerDashboard = () => {
+  const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [activeSection, setActiveSection] = useState("home");
+  const [activeSection, setActiveSection] = useState(() => params.activeSection || "home");
   const [profileImage, setProfileImage] = useState("/images/default.jpg");
   const [isMobile, setIsMobile] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedChat, setSelectedChat] = useState(null);
-  const navigate = useNavigate();
-  const params = useParams();
-  const location = useLocation();
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isPinned, setIsPinned] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
@@ -51,9 +51,12 @@ const WeddingPlannerDashboard = () => {
   const profileMenuRef = useRef(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Sync activeSection with URL param
   useEffect(() => {
-    if (params.activeSection) {
+    if (params.activeSection && params.activeSection !== activeSection) {
       setActiveSection(params.activeSection);
+    } else if (!params.activeSection && activeSection !== "home") {
+      setActiveSection("home");
     }
     if (location.state?.selectedChat) {
       setSelectedChat(location.state.selectedChat);
@@ -147,10 +150,12 @@ const WeddingPlannerDashboard = () => {
     localStorage.setItem("activeSection", activeSection);
   }, [activeSection]);
 
+  // When section changes, update the URL if needed
   const handleSectionChange = (newSection) => {
     setActiveSection(newSection);
-    // Update URL to reflect the active section
-    navigate(`/wedding-planner-dashboard/${newSection}`, { replace: true });
+    if (params.activeSection !== newSection) {
+      navigate(`/wedding-planner-dashboard/${newSection}`, { replace: true });
+    }
   };
 
   const toggleSidebar = () => {
@@ -417,7 +422,7 @@ const WeddingPlannerDashboard = () => {
               <span>Message Clients</span>
             </li>
             <li 
-              onClick={() => handleSectionChange('portfolio')}
+              onClick={() => handleViewPortfolio()}
               className={activeSection === 'portfolio' ? 'active' : ''}
             >
               <img src={profileIcon} alt="Portfolio" />
@@ -664,7 +669,7 @@ const WeddingPlannerDashboard = () => {
                   <i className="fas fa-comments"></i>
                   <span>Message Clients</span>
                 </button>
-                <button onClick={() => handleMenuOptionClick('portfolio')} className="profile-menu-item">
+                <button onClick={handleViewPortfolio} className="profile-menu-item">
                   <i className="fas fa-images"></i>
                   <span>My Portfolio</span>
                 </button>

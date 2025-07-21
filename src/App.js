@@ -335,6 +335,12 @@ function AppContent() {
               <WeddingPlanningDashboard />
             </PrivateRoute>
           } />
+
+          <Route path="/wedding-planner-dashboard/:activeSection" element={
+              <PrivateRoute>
+                <WeddingPlannerDashboard />
+              </PrivateRoute>
+            } />
           
           {/* Individual Routes */}
           <Route path="/my-requests" element={<MyRequests />} />
