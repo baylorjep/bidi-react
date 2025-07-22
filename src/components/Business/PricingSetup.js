@@ -405,6 +405,23 @@ const PricingSetup = () => {
   const handleSavePricing = async () => {
     setIsSaving(true);
     try {
+      // Validate hourly model requires both base_price and hourly_rate
+      if (pricingData.pricing_model === 'hourly') {
+        const hasBasePrice = pricingData.base_price && pricingData.base_price.trim() !== '';
+        const hasHourlyRate = pricingData.hourly_rate && pricingData.hourly_rate.trim() !== '';
+        
+        if (!hasBasePrice || !hasHourlyRate) {
+          alert('For hourly pricing, both Base Price and Hourly Rate are required. Base Price covers setup, travel, and fixed costs, while Hourly Rate covers the per-hour service cost.');
+          setIsSaving(false);
+          return;
+        }
+        
+        console.log('Hourly pricing validation passed:', {
+          base_price: pricingData.base_price,
+          hourly_rate: pricingData.hourly_rate
+        });
+      }
+
       // Clean numeric fields - convert empty strings to null
       const cleanedData = {
         ...pricingData,
@@ -459,6 +476,12 @@ const PricingSetup = () => {
         bridesmaid_package_price: pricingData.bridesmaid_package_price === '' ? null : parseFloat(pricingData.bridesmaid_package_price)
       };
 
+      console.log('Saving pricing data for category:', currentCategory, 'with model:', pricingData.pricing_model);
+      console.log('Hourly pricing data:', {
+        hourly_rate: cleanedData.hourly_rate,
+        base_price: cleanedData.base_price
+      });
+
       const pricingRule = {
         business_id: user.id,
         category: currentCategory,
@@ -491,6 +514,8 @@ const PricingSetup = () => {
       if (result.error) {
         throw result.error;
       }
+
+      console.log('Pricing rule saved successfully:', result);
 
       // Update local state
       setExistingPricingRules(prev => ({
@@ -589,7 +614,13 @@ const PricingSetup = () => {
             })
             .map(([fieldKey, fieldConfig]) => (
               <div key={fieldKey} className="form-group">
-                <label>{fieldConfig.label}</label>
+                <label>
+                  {fieldConfig.label}
+                  {pricingData.pricing_model === 'hourly' && 
+                   (fieldKey === 'base_price' || fieldKey === 'hourly_rate') && 
+                   <span className="required-indicator"> *</span>
+                  }
+                </label>
                 <input
                   type={fieldConfig.type}
                   value={pricingData[fieldKey] || ''}
@@ -598,9 +629,19 @@ const PricingSetup = () => {
                   min={fieldConfig.min}
                   max={fieldConfig.max}
                   step={fieldConfig.step}
+                  required={pricingData.pricing_model === 'hourly' && 
+                           (fieldKey === 'base_price' || fieldKey === 'hourly_rate')}
                 />
                 {fieldConfig.description && (
-                  <small>{fieldConfig.description}</small>
+                  <small>
+                    {fieldConfig.description}
+                    {pricingData.pricing_model === 'hourly' && fieldKey === 'base_price' && 
+                     ' (Required for hourly pricing - covers setup, travel, equipment, etc.)'
+                    }
+                    {pricingData.pricing_model === 'hourly' && fieldKey === 'hourly_rate' && 
+                     ' (Required for hourly pricing - your per-hour service rate)'
+                    }
+                  </small>
                 )}
               </div>
             ))}

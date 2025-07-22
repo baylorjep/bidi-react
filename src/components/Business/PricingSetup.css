@@ -379,9 +379,16 @@
 }
 
 .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #374151;
+  color: #1e293b;
   font-size: 0.875rem;
+}
+
+.required-indicator {
+  color: #ef4444;
+  font-weight: 700;
 }
 
 .form-group input,
