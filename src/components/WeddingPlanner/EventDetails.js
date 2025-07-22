@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import Settings from '../Settings/Settings';
 import './EventDetails.css';
 import LoadingSpinner from '../LoadingSpinner';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * EventDetails Component - Wedding Inspiration Hub
@@ -70,6 +71,8 @@ function EventDetails({ weddingData, onUpdate }) {
     { id: 'accent', name: 'Accent', value: '#f59e0b', isDefault: true },
     { id: 'neutral', name: 'Neutral', value: '#6b7280', isDefault: true }
   ]);
+
+  const navigate = useNavigate();
 
   // Load existing wedding data
   useEffect(() => {
@@ -1111,10 +1114,34 @@ function EventDetails({ weddingData, onUpdate }) {
   const renderMoodBoard = () => (
     <div className="details-section-wedding-details">
       <div className="mood-board-header-wedding-details">
+        <div>
         <h3 style={{marginBottom: '0px', fontFamily:'Outfit', fontSize:'2rem'}}>Inspo Board</h3>
-        <p className="section-description-wedding-details">
-          Upload and organize inspiration images to create your wedding inspiration board. 
-        </p>
+
+          <p className="section-description-wedding-details">
+            Upload and organize inspiration images to create your wedding inspiration board. 
+          </p>
+        </div>
+
+        <button
+          className="browse-inspiration-btn"
+          style={{
+            margin: '16px 0',
+            background: 'linear-gradient(90deg, #A328F4 0%, #e6007e 100%)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '20px',
+            padding: '10px 10px',
+            fontSize: '16px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(163, 40, 244, 0.12)',
+            display: 'inline-block',
+          }}
+          onClick={() => navigate('/wedding-inspiration')}
+        >
+          <i className="fas fa-images" style={{ marginRight: 8 }}></i>
+          Browse Inspo
+        </button>
       </div>
       
       <div className="integrated-photo-manager">
