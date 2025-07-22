@@ -1,0 +1,771 @@
+.wedding-inspiration-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  position: relative;
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle-btn {
+  position: fixed;
+  top: 100px;
+  left: -20px; /* Start slightly off-screen */
+  background: linear-gradient(90deg, #A328F4 0%, #e6007e 100%);
+  color: #fff;
+  border: none;
+  border-radius: 0 25px 25px 0; /* Round only right corners */
+  padding: 12px 20px 12px 30px; /* More padding on left */
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: 4px 4px 12px rgba(163, 40, 244, 0.3);
+  transition: all 0.3s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  left: 0; /* Slide out on hover */
+  box-shadow: 6px 4px 16px rgba(163, 40, 244, 0.4);
+}
+
+.sidebar-toggle-btn i {
+  margin-right: 8px;
+}
+
+/* Sidebar */
+.inspiration-sidebar {
+  position: fixed;
+  top: 0;
+  left: -400px;
+  width: 400px;
+  height: 100vh;
+  background: #fff;
+  box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: left 0.3s ease;
+  overflow-y: auto;
+}
+
+.inspiration-sidebar.open {
+  left: 0;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #eee;
+  background: transparent;
+  color: gray;
+  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+}
+
+.sidebar-close-btn {
+  background: none;
+  border: none;
+  color: gray;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+  height: 30px;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-close-btn:hover {
+  background-color: #e9e6e6;
+}
+
+.sidebar-content {
+  padding: 20px;
+}
+
+.sidebar-categories h4,
+.sidebar-photos h4 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.categories-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.categories-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.categories-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-category-btn-sidebar {
+  background: none;
+  border: none;
+  color: #a328f4;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+  font-size: 0.9rem;
+}
+
+.add-category-btn-sidebar:hover {
+  background: rgba(163, 40, 244, 0.1);
+}
+
+.accordion-toggle {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.accordion-toggle:hover {
+  background: #f5f5f5;
+}
+
+.category-list {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.category-list.expanded {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.category-list {
+  margin-bottom: 30px;
+}
+
+.category-item-wedding-inspo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 1px solid transparent;
+}
+
+.category-item-wedding-inspo:hover {
+  background: #f8f9fa;
+}
+
+.category-item-wedding-inspo.active {
+  background: linear-gradient(90deg, #A328F4 0%, #e6007e 100%);
+  color: #fff;
+}
+
+.category-info-wedding-inspo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.category-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.category-actions-sidebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.photo-count {
+  background: rgba(163, 40, 244, 0.1);
+  color: #a328f4;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.category-item-wedding-inspo.active .photo-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.category-action-buttons {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.category-item-wedding-inspo:hover .category-action-buttons {
+  opacity: 1;
+}
+
+.edit-category-btn,
+.delete-category-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  font-size: 0.8rem;
+}
+
+.edit-category-btn:hover {
+  background: rgba(163, 40, 244, 0.1);
+  color: #a328f4;
+}
+
+.delete-category-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.category-item-wedding-inspo.active .edit-category-btn,
+.category-item-wedding-inspo.active .delete-category-btn {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.category-item-wedding-inspo.active .edit-category-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.category-item-wedding-inspo.active .delete-category-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.sidebar-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.sidebar-photo-item {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.sidebar-photo-item:hover {
+  transform: scale(1.05);
+}
+
+.sidebar-photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-photos-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.no-photos-message i {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  color: #ccc;
+}
+
+.no-photos-message p {
+  margin: 8px 0 4px 0;
+  font-weight: 600;
+}
+
+.no-photos-message small {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+/* Main Content with Sidebar */
+.inspiration-main-content {
+  transition: margin-left 0.3s ease;
+}
+
+.inspiration-main-content.with-sidebar {
+  margin-left: 400px;
+}
+
+.inspiration-title {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #a328f4;
+  font-weight: 700;
+}
+
+.inspiration-subtitle {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 2rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+
+.inspiration-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+
+.inspiration-category-btn {
+  background: #fff;
+  color: #a328f4;
+  border: 1.5px solid #a328f4;
+  border-radius: 20px;
+  padding: 8px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  outline: none;
+}
+
+.inspiration-category-btn.active,
+.inspiration-category-btn:hover {
+  background: linear-gradient(90deg, #A328F4 0%, #e6007e 100%);
+  color: #fff;
+  border: 1.5px solid #a328f4;
+}
+
+.inspiration-masonry {
+  column-count: 4;
+  column-gap: 1.5rem;
+}
+
+@media (max-width: 1000px) {
+  .inspiration-masonry {
+    column-count: 3;
+  }
+}
+@media (max-width: 700px) {
+  .inspiration-masonry {
+    column-count: 2;
+  }
+}
+@media (max-width: 500px) {
+  .inspiration-masonry {
+    column-count: 1;
+  }
+}
+
+.inspiration-item {
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(163, 40, 244, 0.08);
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.inspiration-item:hover {
+  box-shadow: 0 6px 24px rgba(163, 40, 244, 0.18);
+}
+
+.inspiration-img-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.inspiration-img {
+  width: 100%;
+  display: block;
+  border-radius: 12px;
+  object-fit: cover;
+  transition: transform 0.2s;
+}
+
+.portfolio-tag {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #a328f4;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity 0.2s, transform 0.2s;
+  border: 1.5px solid #a328f4;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  backdrop-filter: blur(4px);
+}
+
+.save-to-wedding-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #e6007e;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition: opacity 0.2s, transform 0.2s;
+  border: 1.5px solid #e6007e;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  backdrop-filter: blur(4px);
+}
+
+.portfolio-tag i,
+.save-to-wedding-tag i {
+  margin-right: 6px;
+}
+
+.inspiration-img-wrapper:hover .portfolio-tag,
+.inspiration-img-wrapper:hover .save-to-wedding-tag {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.inspiration-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 2.5rem 0 1rem 0;
+}
+
+.inspiration-pagination-btn {
+  background: linear-gradient(90deg, #A328F4 0%, #e6007e 100%);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 28px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(163, 40, 244, 0.12);
+}
+
+.inspiration-pagination-btn:disabled {
+  background: #eee;
+  color: #aaa;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.inspiration-pagination-info {
+  font-size: 1.1rem;
+  color: #a328f4;
+  font-weight: 500;
+}
+
+.inspiration-loading {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #a328f4;
+  margin-top: 3rem;
+}
+
+/* Save Modal Styles */
+.save-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.save-modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.save-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #eee;
+}
+
+.save-modal-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.save-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.save-modal-close:hover {
+  background: #f5f5f5;
+}
+
+.save-modal-body {
+  padding: 24px;
+}
+
+.save-photo-preview {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.save-photo-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.save-category-selector {
+  margin-bottom: 24px;
+}
+
+.save-category-selector label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.save-category-selector select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+}
+
+.save-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.save-modal-actions .cancel-btn {
+  background: #f5f5f5;
+  color: #666;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.save-modal-actions .cancel-btn:hover {
+  background: #eee;
+}
+
+.save-modal-actions .save-btn {
+  background: linear-gradient(90deg, #A328F4 0%, #e6007e 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.save-modal-actions .save-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.save-modal-actions .save-btn:hover:not(:disabled) {
+  background: linear-gradient(90deg, #8a1fd8 0%, #cc0066 100%);
+}
+
+.view-photo-btn {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: linear-gradient(90deg, #A328F4 0%, #e6007e 100%);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(163, 40, 244, 0.12);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.view-photo-btn:active {
+  background: linear-gradient(90deg, #8a1fd8 0%, #cc0066 100%);
+}
+
+.inspiration-img-wrapper:hover .view-photo-btn {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .inspiration-sidebar {
+    width: 100%;
+    left: -100%;
+  }
+  
+  .inspiration-main-content.with-sidebar {
+    margin-left: 0;
+  }
+  
+  .sidebar-toggle-btn {
+    top: 80px;
+    left: 0px;
+    padding: 10px 16px;
+    font-size: 0.8rem;
+  }
+  .portfolio-tag,
+  .save-to-wedding-tag {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .portfolio-tag.always-visible,
+  .save-to-wedding-tag.always-visible {
+    opacity: 1 !important;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .view-photo-btn {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(10px);
+  }
+  .view-photo-btn.always-visible {
+    opacity: 1 !important;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+} 
+
+.skeleton-masonry {
+  column-count: 4;
+  column-gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+@media (max-width: 1000px) {
+  .skeleton-masonry {
+    column-count: 3;
+  }
+}
+@media (max-width: 700px) {
+  .skeleton-masonry {
+    column-count: 2;
+  }
+}
+@media (max-width: 500px) {
+  .skeleton-masonry {
+    column-count: 1;
+  }
+}
+.skeleton-photo-card {
+  width: 100%;
+  height: 260px;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  background: #ececec;
+  position: relative;
+  overflow: hidden;
+  display: block;
+}
+.skeleton-photo-card::after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, rgba(236,236,236,0) 0%, rgba(220,220,220,0.7) 50%, rgba(236,236,236,0) 100%);
+  animation: skeleton-shimmer 1.2s infinite;
+}
+@keyframes skeleton-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+} 

@@ -148,6 +148,7 @@ import WrongWithWeddings from "./components/Article/WrongWithWeddings";
 import ErrorPage from "./components/ErrorPage";
 import PartnershipLanding from "./components/PartnershipLanding";
 import NoGhostingGuarantee from "./components/NoGhostingGuarantee";
+import WeddingInspiration from "./components/WeddingInspiration";
 
 //wedding planner dashboard imports
 import WeddingPlanningDashboard from "./components/WeddingPlanner/WeddingPlanningDashboard";
@@ -438,6 +439,7 @@ function AppContent() {
           <Route path="/wedding-planner" element={<WeddingPlanningDashboard />} />
           <Route path="/wedding-planner/:activeTab" element={<WeddingPlanningDashboard />} />
           <Route path="/shared-timeline/:shareId" element={<SharedTimelineView />} />
+          <Route path="/wedding-inspiration" element={<WeddingInspiration />} />
 
           {/* Public RSVP Route */}
           <Route path="/rsvp/:linkId" element={<PublicRSVP />} />
@@ -484,6 +486,7 @@ function AppContent() {
             element={<WeddingMarketGuide />}
           />
           <Route path="/vendors" element={<VendorListWithFilters />} />
+          <Route path="/wedding-inspiration" element={<WeddingInspiration />} />
           {/* LocationBasedVendors Routes - Order matters! Most specific to least specific */}
           <Route
             path="/:type/wedding planner/coordinator/:location"
