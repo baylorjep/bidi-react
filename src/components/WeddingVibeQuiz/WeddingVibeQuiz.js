@@ -36,6 +36,7 @@ import modernFlowers from '../../assets/quiz/modern/modern-flowers.jpg';
 import romanticFlowers from '../../assets/quiz/romantic/romantic-flowers.jpg';
 import { Helmet } from 'react-helmet-async';
 import LoadingSpinner from '../LoadingSpinner';
+import { useNavigate } from 'react-router-dom';
 
 // At the top of the file, add this placeholder image mapping
 const placeholderImages = {
@@ -328,7 +329,7 @@ const vibeDescriptions = {
     title: "Free-Spirited Bohemian",
     description: "You have a free-spirited, artistic soul. Your wedding might feature natural elements, eclectic details, and a relaxed, unconventional atmosphere.",
     vendors: ["Outdoor venues", "Alternative photographers", "Food trucks"],
-    image: placeholderImages['bohemian-wedding']
+    image: placeholderImages['boho-wedding']
   },
   rustic: {
     title: "Rustic Charm",
@@ -414,6 +415,7 @@ const WeddingVibeQuiz = () => {
   const [exitDirection, setExitDirection] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [preloadedImages, setPreloadedImages] = useState({});
+  const navigate = useNavigate();
 
   // Preload images function
   const preloadImages = async (startIndex) => {
@@ -703,9 +705,9 @@ const WeddingVibeQuiz = () => {
         </div>
 
         {/* Retake Quiz Button */}
-        <div className="mt-5">
+        <div className="mt-5" style={{display:'flex',alignItems:'center', justifyContent:'center'}}>
           <button 
-            className="btn-primary"
+            style={{display:'flex', alignItems:'center', justifyContent:'center', backgroundColor:'#A328F4', color:'white', borderRadius:'20px', padding:'12px 32px', fontSize:'1.1rem', fontWeight:600, cursor:'pointer', boxShadow:'0 2px 8px rgba(163, 40, 244, 0.12)', display:'block', border:'none'}}
             onClick={() => {
               setCurrentIndex(0);
               setSelections([]);
@@ -716,6 +718,26 @@ const WeddingVibeQuiz = () => {
             Retake Quiz
           </button>
         </div>
+        <button
+            className="browse-inspiration-btn"
+            style={{
+              margin: '24px auto 0 auto',
+              background: 'linear-gradient(90deg, #A328F4 0%, #e6007e 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '20px',
+              padding: '12px 32px',
+              fontSize: '1.1rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(163, 40, 244, 0.12)',
+              display: 'block',
+            }}
+            onClick={() => navigate('/wedding-inspiration')}
+          >
+            <i className="fas fa-images" style={{ marginRight: 10 }}></i>
+            Browse Inspiration Gallery
+          </button>
       </div>
     );
   };

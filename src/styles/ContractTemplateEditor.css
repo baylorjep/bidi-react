@@ -495,10 +495,6 @@
   overflow: visible !important;
 }
 
-.col-md-4, .col-md-8, .col-md-12 {
-  min-height: 100vh;
-}
-
 /* Keep previous sticky/fixed logic as before */
 .editor-header {
   position: sticky;

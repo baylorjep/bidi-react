@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom'; // Import Link from react-router-dom
 import './Articles.css'; // Import the CSS file
 import Helmet from 'react-helmet'; // Import Helmet for SEO
 import Ads from '../Ads/Ads'; // Import Ads component
+import { supabase } from '../../supabaseClient';
 import weddingPlanning from '../../assets/articles/weddingplanning.jpg'
 import florist from '../../assets/articles/Florist/pexels-digitle-pixels-1775950082-30891131.jpg'
 import catering from '../../assets/articles/Catering/pexels-fu-zhichao-176355-587741.jpg'
@@ -12,6 +13,41 @@ import rusticWedding from '../../assets/quiz/rustic/rustic-wedding.jpg'
 import djHero from '../../assets/articles/UtahDJ/pexels-wendywei-1540319.jpg'
 
 const Articles = () => {
+    // Inspiration gallery cycling image state
+    const [inspoImages, setInspoImages] = useState([]);
+    const [currentInspoIdx, setCurrentInspoIdx] = useState(0);
+    const [inspoAnimation, setInspoAnimation] = useState('');
+
+    useEffect(() => {
+        // Fetch a few random inspiration images from profile_photos
+        const fetchInspoImages = async () => {
+            const { data, error } = await supabase
+                .from('profile_photos')
+                .select('photo_url, file_path, photo_type')
+                .not('photo_type', 'eq', 'profile');
+            if (!error && data && data.length > 0) {
+                // Shuffle and pick 5
+                const shuffled = [...data].sort(() => Math.random() - 0.5);
+                const images = shuffled.slice(0, 5).map(img => img.photo_url || img.file_path);
+                setInspoImages(images);
+            }
+        };
+        fetchInspoImages();
+    }, []);
+
+    useEffect(() => {
+        if (inspoImages.length < 2) return;
+        const interval = setInterval(() => {
+            setInspoAnimation('slide-out');
+            setTimeout(() => {
+                setCurrentInspoIdx(idx => (idx + 1) % inspoImages.length);
+                setInspoAnimation('slide-in');
+                setTimeout(() => setInspoAnimation(''), 400); // Reset after animation
+            }, 400); // Duration of slide-out
+        }, 2500);
+        return () => clearInterval(interval);
+    }, [inspoImages]);
+
     // Define articles with their dates
     const articles = [
         {
@@ -152,28 +188,55 @@ const Articles = () => {
                         </Link>
                     </div>
 
-                    <div className="interactive-feature">
-                        <Link to="/wedding-vibe-quiz" style={{ textDecoration: 'none', color: 'inherit' }}>
-                            <div className="interactive-feature-content">
-                                <div className="interactive-feature-text">
-                                    <span className="featured-label">INTERACTIVE</span>
-                                    <h2 className="featured-title">What's Your Wedding Style?</h2>
-                                    <p className="featured-description">
-                                        Take our quick quiz to discover your perfect wedding aesthetic and get matched with vendors who match your vision. 
-                                        From classic elegance to modern chic, find your unique style in minutes!
-                                    </p>
-                                    <div className="button-container">
-                                        <button className="take-quiz-button">Take the Quiz</button>
+                    {/* Interactive Features Section */}
+                    <div className="interactive-features-row">
+                        <div className="interactive-feature">
+                            <Link to="/wedding-vibe-quiz" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                <div className="interactive-feature-content">
+                                    <div className="interactive-feature-text">
+                                        <span className="featured-label">INTERACTIVE</span>
+                                        <h2 className="featured-title">What's Your Wedding Style?</h2>
+                                        <p className="featured-description">
+                                            Take our quick quiz to discover your perfect wedding aesthetic and get matched with vendors who match your vision. 
+                                            From classic elegance to modern chic, find your unique style in minutes!
+                                        </p>
+                                        <div className="button-container">
+                                            <button className="take-quiz-button">Take the Quiz</button>
+                                        </div>
+                                    </div>
+                                    <div className="interactive-feature-image">
+                                        <img 
+                                            src={rusticWedding}
+                                            alt="Wedding Style Quiz" 
+                                        />
                                     </div>
                                 </div>
-                                <div className="interactive-feature-image">
-                                    <img 
-                                        src={rusticWedding}
-                                        alt="Wedding Style Quiz" 
-                                    />
+                            </Link>
+                        </div>
+                        {/* Wedding Inspiration Gallery Card */}
+                        <div className="interactive-feature inspiration-feature">
+                            <Link to="/wedding-inspiration" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                <div className="interactive-feature-content">
+                                    <div className="interactive-feature-text">
+                                        <span className="featured-label">GALLERY</span>
+                                        <h2 className="featured-title">Wedding Inspiration Gallery</h2>
+                                        <p className="featured-description">
+                                            Browse thousands of real wedding photos, save your favorites, and get inspired for your big day! Create your own inspiration board and discover top local vendors.
+                                        </p>
+                                        <div className="button-container">
+                                            <button className="inspiration-gallery-btn" style={{ background: 'linear-gradient(90deg, #A328F4 0%, #e6007e 100%)', color: '#fff', border: 'none', borderRadius: 20, padding: '8px 22px', fontWeight: 600, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(163, 40, 244, 0.12)' }}>Explore Gallery</button>
+                                        </div>
+                                    </div>
+                                    <div className="interactive-feature-image inspiration-anim-image-wrapper">
+                                        <img 
+                                            src={inspoImages.length > 0 ? inspoImages[currentInspoIdx] : ''}
+                                            alt="Wedding Inspiration Gallery Preview" 
+                                            className={`inspiration-anim-image ${inspoAnimation}`}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        </Link>
+                            </Link>
+                        </div>
                     </div>
 
                     <h2 className="section-title">All Guides</h2>

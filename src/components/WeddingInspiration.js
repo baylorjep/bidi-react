@@ -35,6 +35,12 @@ const WeddingInspiration = () => {
   const [activeOverlayPhoto, setActiveOverlayPhoto] = useState(null); // photo id or index
   const overlayTimeoutRef = React.useRef(null);
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
+  // Multi-select state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState([]); // array of photo ids
+  const [batchSaveModalOpen, setBatchSaveModalOpen] = useState(false);
+  const [batchSaveCategory, setBatchSaveCategory] = useState("");
+  const [isBatchSaving, setIsBatchSaving] = useState(false);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -399,12 +405,57 @@ const WeddingInspiration = () => {
     };
   };
 
-  // Handle save button click
+  // Handle save button click (single)
   const handleSaveClick = (photo) => {
     if (!user) {
       setSignInPromptOpen(true);
     } else {
       handleSaveToWedding(photo);
+    }
+  };
+
+  // Handle select/deselect photo
+  const handleSelectPhoto = (photoId) => {
+    setSelectedPhotos((prev) =>
+      prev.includes(photoId)
+        ? prev.filter((id) => id !== photoId)
+        : [...prev, photoId]
+    );
+  };
+
+  // Handle batch save
+  const handleBatchSave = () => {
+    if (!user) {
+      setSignInPromptOpen(true);
+    } else {
+      setBatchSaveModalOpen(true);
+    }
+  };
+
+  // Actually save all selected photos to the chosen category
+  const saveBatchPhotos = async () => {
+    if (!batchSaveCategory || selectedPhotos.length === 0) return;
+    setIsBatchSaving(true);
+    try {
+      const batch = paginatedPhotos.filter((photo) => selectedPhotos.includes(photo.id));
+      const inserts = batch.map((photo) => ({
+        wedding_plan_id: userWeddingPlan.id,
+        image_url: photo.photo_url || photo.file_path,
+        image_name: `Inspiration from ${businesses[photo.user_id] || 'Vendor'}`,
+        category_id: batchSaveCategory,
+        uploaded_at: new Date().toISOString(),
+      }));
+      const { error } = await supabase.from('wedding_mood_board').insert(inserts);
+      if (error) throw error;
+      setBatchSaveModalOpen(false);
+      setSelectedPhotos([]);
+      setSelectionMode(false);
+      setBatchSaveCategory("");
+      alert('Photos saved to your wedding inspiration board!');
+    } catch (error) {
+      alert('Error saving photos. Please try again.');
+    } finally {
+      setIsBatchSaving(false);
     }
   };
 
@@ -664,6 +715,7 @@ const WeddingInspiration = () => {
           <header>
             <h1 className="inspiration-title">Wedding Inspiration Gallery</h1>
             <p className="inspiration-subtitle">Discover beautiful wedding photos from top vendors. Find inspiration for your special day.</p>
+
           </header>
           
           <nav className="inspiration-categories" role="navigation" aria-label="Filter by category">
@@ -681,13 +733,28 @@ const WeddingInspiration = () => {
           </nav>
           
           <section className="inspiration-masonry" aria-label="Wedding inspiration photos">
+          {!selectionMode && (
+              <button className="select-photos-btn" onClick={() => setSelectionMode(true)}>
+                <i className="fas fa-check-square"></i> Select Photos
+              </button>
+            )}
+            {selectionMode && (
+              <button className="cancel-select-btn" onClick={() => { setSelectionMode(false); setSelectedPhotos([]); }}>
+                Cancel
+              </button>
+            )}  
             {paginatedPhotos.map((photo, idx) => {
               const showOverlay = !mobile || activeOverlayPhoto === photo.id;
+              const isSelected = selectedPhotos.includes(photo.id);
               return (
-                <article className="inspiration-item" key={photo.id}>
+                <article className={`inspiration-item${selectionMode && isSelected ? ' selected' : ''}`} key={photo.id}>
                   <div
                     className="inspiration-img-wrapper"
                     onClick={e => {
+                      if (selectionMode) {
+                        handleSelectPhoto(photo.id);
+                        return;
+                      }
                       if (!mobile) {
                         setModalOpen(true); setModalIndex(idx);
                       } else {
@@ -709,6 +776,18 @@ const WeddingInspiration = () => {
                       className="inspiration-img"
                       loading="lazy"
                     />
+                    {/* Checkbox for selection mode */}
+                    {selectionMode && (
+                      <div className={`photo-checkbox${isSelected ? ' checked' : ''}`}
+                        onClick={e => { e.stopPropagation(); handleSelectPhoto(photo.id); }}
+                        role="checkbox"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                        aria-label={isSelected ? 'Deselect photo' : 'Select photo'}
+                      >
+                        {isSelected ? <i className="fas fa-check-square"></i> : <i className="far fa-square"></i>}
+                      </div>
+                    )}
                     {/* Overlays: hover on desktop, tap-to-reveal on mobile */}
                     <div
                       className={`portfolio-tag${showOverlay ? ' always-visible' : ''}`}
@@ -725,20 +804,23 @@ const WeddingInspiration = () => {
                       {businesses[photo.user_id] || 'View Portfolio'}
                     </div>
                     {/* Save button always visible, but logic depends on sign-in */}
-                    <div
-                      className={`save-to-wedding-tag${showOverlay ? ' always-visible' : ''}`}
-                      style={mobile && !showOverlay ? { display: 'none' } : {}}
-                      onClick={e => {
-                        e.stopPropagation();
-                        handleSaveClick(photo);
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      aria-label="Save photo to wedding planning board"
-                    >
-                      <i className="fas fa-heart" aria-hidden="true"></i>{' '}
-                      Save
-                    </div>
+                    {!selectionMode && (
+                      <div
+                        className={`save-to-wedding-tag${showOverlay ? ' always-visible' : ''}`}
+                        style={mobile && !showOverlay ? { display: 'none' } : {}}
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleSaveClick(photo);
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Save photo to wedding planning board"
+                      >
+                        <i className="fas fa-heart" aria-hidden="true"></i>{' '}
+                        Save
+                      </div>
+                    )}
+                    
                     {mobile && (
                       <button
                         className={`view-photo-btn${showOverlay ? ' always-visible' : ''}`}
@@ -759,7 +841,7 @@ const WeddingInspiration = () => {
               );
             })}
           </section>
-          
+          {/* Always show pagination bar */}
           <nav className="inspiration-pagination" role="navigation" aria-label="Photo gallery pagination">
             <button
               className="inspiration-pagination-btn"
@@ -782,6 +864,14 @@ const WeddingInspiration = () => {
             </button>
           </nav>
         </main>
+        {/* Save Selected button (bottom center) - moved outside <main> */}
+        {selectionMode && selectedPhotos.length > 0 && (
+          <div className="save-selected-bar">
+            <button className="save-selected-btn" onClick={handleBatchSave} disabled={isBatchSaving}>
+              <i className="fas fa-heart"></i> Save Selected ({selectedPhotos.length})
+            </button>
+          </div>
+        )}
 
         <ImageModal
           isOpen={modalOpen}
@@ -845,6 +935,56 @@ const WeddingInspiration = () => {
                     disabled={!selectedSaveCategory || isSaving}
                   >
                     {isSaving ? 'Saving...' : 'Save Photo'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Batch Save Modal */}
+        {batchSaveModalOpen && (
+          <div className="save-modal-overlay" onClick={() => setBatchSaveModalOpen(false)} role="dialog" aria-modal="true" aria-labelledby="batch-save-modal-title">
+            <div className="save-modal-content" onClick={e => e.stopPropagation()}>
+              <div className="save-modal-header">
+                <h3 id="batch-save-modal-title">Save Selected Photos</h3>
+                <button 
+                  className="save-modal-close"
+                  onClick={() => setBatchSaveModalOpen(false)}
+                  aria-label="Close batch save modal"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              <div className="save-modal-body">
+                <p>Save {selectedPhotos.length} photos to your wedding inspiration board.</p>
+                <div className="save-category-selector">
+                  <label htmlFor="batch-save-category-select">Save to category:</label>
+                  <select
+                    id="batch-save-category-select"
+                    value={batchSaveCategory}
+                    onChange={e => setBatchSaveCategory(e.target.value)}
+                  >
+                    <option value="">Choose a category...</option>
+                    {userCategories.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="save-modal-actions">
+                  <button
+                    className="cancel-btn"
+                    onClick={() => setBatchSaveModalOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="save-btn"
+                    onClick={saveBatchPhotos}
+                    disabled={!batchSaveCategory || isBatchSaving}
+                  >
+                    {isBatchSaving ? 'Saving...' : 'Save Photos'}
                   </button>
                 </div>
               </div>
