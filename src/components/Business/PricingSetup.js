@@ -405,6 +405,22 @@ const PricingSetup = () => {
   const handleSavePricing = async () => {
     setIsSaving(true);
     try {
+      // Test database connection and table existence
+      console.log('Testing database connection...');
+      const { data: testData, error: testError } = await supabase
+        .from('business_pricing_rules')
+        .select('count')
+        .limit(1);
+
+      if (testError) {
+        console.error('Database connection test failed:', testError);
+        alert('Database connection error. Please check if the pricing rules table exists and try again.');
+        setIsSaving(false);
+        return;
+      }
+
+      console.log('Database connection successful');
+
       // Validate hourly model requires both base_price and hourly_rate
       if (pricingData.pricing_model === 'hourly') {
         const hasBasePrice = pricingData.base_price && pricingData.base_price.trim() !== '';
@@ -476,35 +492,63 @@ const PricingSetup = () => {
         bridesmaid_package_price: pricingData.bridesmaid_package_price === '' ? null : parseFloat(pricingData.bridesmaid_package_price)
       };
 
+      // Remove any undefined or null values that might cause database issues
+      const sanitizedData = Object.fromEntries(
+        Object.entries(cleanedData).filter(([key, value]) => {
+          // Keep all non-null values and required fields
+          if (value !== null && value !== undefined) return true;
+          // Keep required fields even if null
+          if (['business_id', 'category', 'pricing_model'].includes(key)) return true;
+          return false;
+        })
+      );
+
       console.log('Saving pricing data for category:', currentCategory, 'with model:', pricingData.pricing_model);
       console.log('Hourly pricing data:', {
-        hourly_rate: cleanedData.hourly_rate,
-        base_price: cleanedData.base_price
+        hourly_rate: sanitizedData.hourly_rate,
+        base_price: sanitizedData.base_price
       });
 
       const pricingRule = {
         business_id: user.id,
         category: currentCategory,
-        ...cleanedData,
+        pricing_model: sanitizedData.pricing_model,
+        hourly_rate: sanitizedData.hourly_rate,
+        base_price: sanitizedData.base_price,
+        per_person_rate: sanitizedData.per_person_rate,
+        travel_fee_per_mile: sanitizedData.travel_fee_per_mile,
+        bid_aggressiveness: sanitizedData.bid_aggressiveness,
+        blocklist_keywords: sanitizedData.blocklist_keywords || [],
+        default_message: sanitizedData.default_message,
+        additional_comments: sanitizedData.additional_comments,
         created_at: new Date().toISOString()
       };
 
+      console.log('Full pricing rule to save:', pricingRule);
+
       // Check if pricing rule already exists
-      const { data: existing } = await supabase
+      const { data: existing, error: checkError } = await supabase
         .from('business_pricing_rules')
         .select('id')
         .eq('business_id', user.id)
         .eq('category', currentCategory)
         .single();
 
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking existing pricing rule:', checkError);
+        throw checkError;
+      }
+
       let result;
       if (existing) {
+        console.log('Updating existing pricing rule with ID:', existing.id);
         // Update existing rule
         result = await supabase
           .from('business_pricing_rules')
           .update(pricingRule)
           .eq('id', existing.id);
       } else {
+        console.log('Inserting new pricing rule');
         // Insert new rule
         result = await supabase
           .from('business_pricing_rules')
@@ -512,6 +556,23 @@ const PricingSetup = () => {
       }
 
       if (result.error) {
+        console.error('Database operation failed:', result.error);
+        console.error('Error details:', {
+          code: result.error.code,
+          message: result.error.message,
+          details: result.error.details,
+          hint: result.error.hint
+        });
+        
+        // Provide helpful error message
+        if (result.error.code === '42P01') {
+          alert('The pricing rules table does not exist. Please run the database migration first. Contact your administrator to run the SQL script: supabase/create_pricing_rules_table.sql');
+        } else if (result.error.code === '23505') {
+          alert('A pricing rule already exists for this category. The system will update the existing rule.');
+        } else {
+          alert(`Error saving pricing rules: ${result.error.message}. Please try again or contact support.`);
+        }
+        
         throw result.error;
       }
 
