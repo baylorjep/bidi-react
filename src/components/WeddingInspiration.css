@@ -36,13 +36,14 @@
 .inspiration-sidebar {
   position: fixed;
   top: 0;
-  left: -400px;
+  left: 0;
   width: 400px;
   height: 100vh;
   background: #fff;
   box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  transition: left 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  transform: translateX(-100%);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   display: flex;
@@ -52,7 +53,7 @@
 }
 
 .inspiration-sidebar.open {
-  left: 0;
+  transform: translateX(0);
 }
 
 .sidebar-header {
@@ -705,9 +706,11 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .inspiration-sidebar {
-    width: 100%;
-    left: -100%;
+    width: 100vw;
+    left: 0;
     height: 100vh;
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    transform: translateX(-100vw);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;

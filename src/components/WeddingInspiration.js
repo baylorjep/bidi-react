@@ -156,20 +156,24 @@ const WeddingInspiration = () => {
     if (!hasShuffled && filteredPhotos.length > 0) {
       let shuffled;
       if (selectedCategory === 'All') {
-        // Separate catering and non-catering photos
-        const cateringPhotos = filteredPhotos.filter(photo => {
+        // Separate photography, florist, and other photos
+        const photographyPhotos = filteredPhotos.filter(photo => {
           const cats = businessCategories[photo.user_id] || [];
-          return cats.includes('catering');
+          return cats.includes('photography') || cats.includes('videography');
         });
-        const nonCateringPhotos = filteredPhotos.filter(photo => {
+        const floristPhotos = filteredPhotos.filter(photo => {
           const cats = businessCategories[photo.user_id] || [];
-          return !cats.includes('catering');
+          return cats.includes('florist');
         });
-        
-        // Shuffle each group separately, then combine with catering at the back
-        const shuffledNonCatering = [...nonCateringPhotos].sort(() => Math.random() - 0.5);
-        const shuffledCatering = [...cateringPhotos].sort(() => Math.random() - 0.5);
-        shuffled = [...shuffledNonCatering, ...shuffledCatering];
+        const otherPhotos = filteredPhotos.filter(photo => {
+          const cats = businessCategories[photo.user_id] || [];
+          return !cats.includes('photography') && !cats.includes('videography') && !cats.includes('florist');
+        });
+        // Shuffle each group separately, then combine: photography, florist, other
+        const shuffledPhotography = [...photographyPhotos].sort(() => Math.random() - 0.5);
+        const shuffledFlorist = [...floristPhotos].sort(() => Math.random() - 0.5);
+        const shuffledOther = [...otherPhotos].sort(() => Math.random() - 0.5);
+        shuffled = [...shuffledPhotography, ...shuffledFlorist, ...shuffledOther];
       } else {
         // For specific categories, just shuffle normally
         shuffled = [...filteredPhotos].sort(() => Math.random() - 0.5);
