@@ -394,7 +394,7 @@ function AdminDashboard() {
             date
         }));
         try {
-            const response = await fetch('/api/send-resend-email', {
+            const response = await fetch('https://bidi-express.vercel.app/api/send-resend-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
