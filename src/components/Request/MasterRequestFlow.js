@@ -626,86 +626,26 @@ function MasterRequestFlow() {
       return;
     }
 
-    for (const business of businesses) {
-      const businessName = business.business_name;
-      const recipientEmail = business.profiles?.email;
-      if (!recipientEmail) continue; // skip if no email
+    // Build the businesses array for the API
+    const businessPayload = businesses
+      .filter(business => business.profiles?.email)
+      .map(business => ({
+        email: business.profiles.email,
+        businessName: business.business_name,
+        budget,
+        location,
+        date
+      }));
 
-      const subject = `You have a new ${category} request on Bidi!`;
-
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-          <body style="margin:0; padding:0; background:#f6f9fc;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f9fc; padding:40px 0;">
-              <tr>
-                <td align="center">
-                  <table width="480" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); padding:32px;">
-                    <tr>
-                      <td align="center" style="padding-bottom:24px;">
-                        <img src="https://www.savewithbidi.com/static/media/Bidi-Logo.27a418eddac8515e0463b805133471d0.svg" alt="Bidi Logo" width="120" style="display:block; margin:0 auto 12px;" />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td align="center" style="font-family:Segoe UI,Arial,sans-serif; color:#222; font-size:22px; font-weight:600; padding-bottom:12px;">
-                        Hi ${businessName},
-                      </td>
-                    </tr>
-                    <tr>
-                      <td align="center" style="font-family:Segoe UI,Arial,sans-serif; color:#444; font-size:16px; padding-bottom:24px;">
-                        You have a new <b>${category}</b> request waiting for you on Bidi!
-                      </td>
-                    </tr>
-                    <tr>
-                      <td align="center" style="padding-bottom:24px;">
-                        <table style="margin: 0 auto; background: #f6f9fc; border-radius: 8px; padding: 16px;">
-                          <tr>
-                            <td style="padding: 4px 12px;"><b>Budget:</b></td>
-                            <td style="padding: 4px 12px;">${budget}</td>
-                          </tr>
-                          <tr>
-                            <td style="padding: 4px 12px;"><b>Location:</b></td>
-                            <td style="padding: 4px 12px;">${location}</td>
-                          </tr>
-                          <tr>
-                            <td style="padding: 4px 12px;"><b>Date:</b></td>
-                            <td style="padding: 4px 12px;">${date}</td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td align="center" style="padding-bottom:32px;">
-                        <a href="https://www.savewithbidi.com/business-dashboard"
-                          style="background:#A328F4; color:#fff; text-decoration:none; font-weight:600; padding:14px 32px; border-radius:8px; font-size:16px; display:inline-block;">
-                          View Request
-                        </a>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td align="center" style="font-family:Segoe UI,Arial,sans-serif; color:#888; font-size:13px;">
-                        Best,<br/>The Bidi Team
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </body>
-        </html>
-      `;
-
-      await fetch('/send-resend-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          category,
-          subject,
-          htmlContent,
-          recipientEmail
-        })
-      });
-    }
+    // POST to the new API contract
+    await fetch('/api/send-resend-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        category,
+        businesses: businessPayload
+      })
+    });
   };
 
   const handleSubmit = async () => {
