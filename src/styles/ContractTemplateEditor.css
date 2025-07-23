@@ -422,19 +422,20 @@
 .mobile-sidebar {
   position: fixed;
   top: 0;
-  right: -100%;
+  right: 0;
   width: 100%;
   height: 100vh;
   background: white;
   z-index: 1001;
-  transition: right 0.3s ease-in-out;
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
   overflow-y: auto;
   padding: 1rem;
   padding-top: 4rem; /* Space for fixed header */
+  transform: translateX(100%);
 }
 
 .mobile-sidebar.active {
-  right: 0;
+  transform: translateX(0);
 }
 
 .mobile-sidebar-header {
