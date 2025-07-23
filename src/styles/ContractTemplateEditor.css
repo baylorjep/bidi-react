@@ -880,3 +880,22 @@
     justify-content: center;
   }
 } 
+
+/* Prevent background scroll when sidebar is open on mobile */
+body.sidebar-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+/* Ensure main content can scroll when sidebar is closed */
+.wedding-inspiration-container {
+  overflow-x: hidden;
+}
+
+/* Ensure sidebar itself can scroll */
+.inspiration-sidebar.open {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+} 

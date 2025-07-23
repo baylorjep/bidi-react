@@ -379,6 +379,16 @@ const WeddingInspiration = () => {
     return () => overlayTimeoutRef.current && clearTimeout(overlayTimeoutRef.current);
   }, [mobile, activeOverlayPhoto]);
 
+  // Prevent background scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (sidebarOpen && mobile) {
+      document.body.classList.add('sidebar-open');
+    } else {
+      document.body.classList.remove('sidebar-open');
+    }
+    return () => document.body.classList.remove('sidebar-open');
+  }, [sidebarOpen, mobile]);
+
   // Generate structured data for SEO
   const generateStructuredData = () => {
     return {

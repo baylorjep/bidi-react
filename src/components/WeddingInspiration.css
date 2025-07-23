@@ -43,9 +43,12 @@
   box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   transition: left 0.3s ease;
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .inspiration-sidebar.open {
@@ -97,6 +100,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .sidebar-categories h4,
@@ -163,6 +170,9 @@
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .category-list.expanded {
@@ -698,14 +708,20 @@
     width: 100%;
     left: -100%;
     height: 100vh;
-    overflow: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
   .sidebar-content {
     height: 100%;
     display: flex;
     flex-direction: column;
     padding: 20px;
-    overflow: visible;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
   .category-list.expanded {
     height: 40vh;
