@@ -373,6 +373,105 @@ function AdminDashboard() {
         }
     };
 
+    // Add test email sending function
+    const handleSendTestEmail = async () => {
+        // Filter for businesses with 'admin' in their business_category
+        const adminBusinesses = businesses.filter(biz => Array.isArray(biz.business_category) && biz.business_category.includes('admin'));
+        const testBusiness = adminBusinesses[0] || {
+            business_name: 'Test Admin Business',
+            email: 'test@example.com',
+        };
+        if (adminBusinesses.length === 0) {
+            alert('No admin category business found. Sending to fallback test address.');
+        }
+        const category = 'photography';
+        const subject = 'You have a new photography request on Bidi! (Test)';
+        const budget = '$2000 - $3000';
+        const location = 'Salt Lake City, UT';
+        const date = '09/15/2024';
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html>
+            <body style="margin:0; padding:0; background:#f6f9fc;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f9fc; padding:40px 0;">
+                <tr>
+                  <td align="center">
+                    <table width="480" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); padding:32px;">
+                      <tr>
+                        <td align="center" style="padding-bottom:24px;">
+                          <img src="https://www.savewithbidi.com/static/media/Bidi-Logo.27a418eddac8515e0463b805133471d0.svg" alt="Bidi Logo" width="120" style="display:block; margin:0 auto 12px;" />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="font-family:Segoe UI,Arial,sans-serif; color:#222; font-size:22px; font-weight:600; padding-bottom:12px;">
+                          Hi ${testBusiness.business_name},
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="font-family:Segoe UI,Arial,sans-serif; color:#444; font-size:16px; padding-bottom:24px;">
+                          You have a new <b>${category}</b> request waiting for you on Bidi!
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="padding-bottom:24px;">
+                          <table style="margin: 0 auto; background: #f6f9fc; border-radius: 8px; padding: 16px;">
+                            <tr>
+                              <td style="padding: 4px 12px;"><b>Budget:</b></td>
+                              <td style="padding: 4px 12px;">${budget}</td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 4px 12px;"><b>Location:</b></td>
+                              <td style="padding: 4px 12px;">${location}</td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 4px 12px;"><b>Date:</b></td>
+                              <td style="padding: 4px 12px;">${date}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="padding-bottom:32px;">
+                          <a href="https://www.savewithbidi.com/business-dashboard"
+                            style="background:#A328F4; color:#fff; text-decoration:none; font-weight:600; padding:14px 32px; border-radius:8px; font-size:16px; display:inline-block;">
+                            View Request
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="font-family:Segoe UI,Arial,sans-serif; color:#888; font-size:13px;">
+                          Best,<br/>The Bidi Team
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+          </html>
+        `;
+        try {
+            const response = await fetch('/send-resend-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category,
+                    subject,
+                    htmlContent,
+                    recipientEmail: testBusiness.email
+                })
+            });
+            if (response.ok) {
+                alert('Test email sent successfully!');
+            } else {
+                const errorData = await response.json();
+                alert('Failed to send test email: ' + (errorData.message || response.statusText));
+            }
+        } catch (error) {
+            alert('Error sending test email: ' + error.message);
+        }
+    };
+
     // Tab groups configuration
     const tabGroups = {
         requests: {
@@ -473,6 +572,12 @@ function AdminDashboard() {
 
     return (
         <div className="admin-dashboard-container">
+            <button
+                style={{ margin: '16px 0', background: '#A328F4', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '6px', fontWeight: 600, fontSize: '16px', cursor: 'pointer' }}
+                onClick={handleSendTestEmail}
+            >
+                Send Test Business Notification Email
+            </button>
             <div className="admin-dashboard-content">
                 <h2 className="admin-dashboard-title">Admin Dashboard</h2>
 

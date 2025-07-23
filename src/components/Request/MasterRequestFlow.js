@@ -561,6 +561,153 @@ function MasterRequestFlow() {
     }
   };
 
+  // Helper to notify businesses in a category
+  const notifyBusinessesByCategory = async (category) => {
+    try {
+      await fetch('/send-resend-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category }),
+      });
+    } catch (error) {
+      console.error('Error notifying businesses:', error);
+    }
+  };
+
+  // Helper to notify all businesses in a category with a personalized, branded email
+  const notifyBusinessesOfRequest = async (category, formData) => {
+    // Extract request details for the email (Budget, Location, Date)
+    const commonDetails = formData.commonDetails || {};
+    const categoryKey = Object.keys(formData.requests).find(
+      key => key.toLowerCase() === category.toLowerCase().replace(/\s/g, '')
+    ) || category;
+    const categoryData = formData.requests[categoryKey] || {};
+
+    // Budget logic (match review screen)
+    let budget = categoryData.priceRange || categoryData.budgetRange || 'Not specified';
+    if (budget && budget.includes('-')) {
+      const [min, max] = budget.split('-');
+      if (max === '+') {
+        budget = `$${min}+`;
+      } else {
+        budget = `$${min} - $${max}`;
+      }
+    } else if (budget && !budget.startsWith('$')) {
+      budget = `$${budget}`;
+    }
+    if (!budget) budget = 'Not specified';
+
+    // Location
+    const location = commonDetails.location || 'Not specified';
+
+    // Date logic (match review screen)
+    function formatDateString(dateString) {
+      if (!dateString) return 'Not specified';
+      const [year, month, day] = dateString.split('-');
+      return `${month}/${day}/${year}`;
+    }
+    let date = 'Not specified';
+    if (commonDetails.dateFlexibility === 'specific') {
+      date = formatDateString(commonDetails.startDate);
+    } else if (commonDetails.dateFlexibility === 'range') {
+      date = `${formatDateString(commonDetails.startDate)} to ${formatDateString(commonDetails.endDate)}`;
+    } else if (commonDetails.dateFlexibility === 'flexible') {
+      date = commonDetails.dateTimeframe || 'Not specified';
+    }
+
+    // Fetch all businesses in the category, joining to get their email
+    const { data: businesses, error } = await supabase
+      .from('business_profiles')
+      .select('business_name, business_category, id, profiles(email)')
+      .contains('business_category', [category]);
+
+    if (error) {
+      console.error('Error fetching businesses:', error);
+      return;
+    }
+
+    for (const business of businesses) {
+      const businessName = business.business_name;
+      const recipientEmail = business.profiles?.email;
+      if (!recipientEmail) continue; // skip if no email
+
+      const subject = `You have a new ${category} request on Bidi!`;
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+          <body style="margin:0; padding:0; background:#f6f9fc;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f9fc; padding:40px 0;">
+              <tr>
+                <td align="center">
+                  <table width="480" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); padding:32px;">
+                    <tr>
+                      <td align="center" style="padding-bottom:24px;">
+                        <img src="https://www.savewithbidi.com/static/media/Bidi-Logo.27a418eddac8515e0463b805133471d0.svg" alt="Bidi Logo" width="120" style="display:block; margin:0 auto 12px;" />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="font-family:Segoe UI,Arial,sans-serif; color:#222; font-size:22px; font-weight:600; padding-bottom:12px;">
+                        Hi ${businessName},
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="font-family:Segoe UI,Arial,sans-serif; color:#444; font-size:16px; padding-bottom:24px;">
+                        You have a new <b>${category}</b> request waiting for you on Bidi!
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="padding-bottom:24px;">
+                        <table style="margin: 0 auto; background: #f6f9fc; border-radius: 8px; padding: 16px;">
+                          <tr>
+                            <td style="padding: 4px 12px;"><b>Budget:</b></td>
+                            <td style="padding: 4px 12px;">${budget}</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 4px 12px;"><b>Location:</b></td>
+                            <td style="padding: 4px 12px;">${location}</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 4px 12px;"><b>Date:</b></td>
+                            <td style="padding: 4px 12px;">${date}</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="padding-bottom:32px;">
+                        <a href="https://www.savewithbidi.com/business-dashboard"
+                          style="background:#A328F4; color:#fff; text-decoration:none; font-weight:600; padding:14px 32px; border-radius:8px; font-size:16px; display:inline-block;">
+                          View Request
+                        </a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="font-family:Segoe UI,Arial,sans-serif; color:#888; font-size:13px;">
+                        Best,<br/>The Bidi Team
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `;
+
+      await fetch('/send-resend-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category,
+          subject,
+          htmlContent,
+          recipientEmail
+        })
+      });
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
@@ -757,6 +904,8 @@ function MasterRequestFlow() {
 
         submissionSuccess = true;
         setRequestIds(prev => ({ ...prev, photography: newPhotographyRequest.id }));
+        // Notify businesses in the photography category (personalized)
+        await notifyBusinessesOfRequest("photography", formData);
         
         // Check if there are more categories to complete
         const remainingCategories = formData.selectedRequests.filter(
@@ -870,7 +1019,9 @@ function MasterRequestFlow() {
 
         // Update request IDs state immediately
         setRequestIds(prev => ({ ...prev, videography: newVideographyRequest.id }));
-
+        // Notify businesses in the videography category (personalized)
+        await notifyBusinessesOfRequest("videography", formData);
+        
         // Handle photo uploads if any
         if (request.photos && request.photos.length > 0) {
           console.log(`Processing ${request.photos.length} photos for Videography`);
@@ -1154,6 +1305,8 @@ function MasterRequestFlow() {
 
         submissionSuccess = true;
         setRequestIds(prev => ({ ...prev, florist: newFloristRequest.id }));
+        // Notify businesses in the florist category (personalized)
+        await notifyBusinessesOfRequest("florist", formData);
         
         // Check if there are more categories to complete
         const remainingCategories = formData.selectedRequests.filter(
@@ -1290,6 +1443,8 @@ function MasterRequestFlow() {
 
         submissionSuccess = true;
         setRequestIds(prev => ({ ...prev, beauty: newBeautyRequest.id }));
+        // Notify businesses in the beauty category (personalized)
+        await notifyBusinessesOfRequest("beauty", formData);
         
         // Check if there are more categories to complete
         const remainingCategories = formData.selectedRequests.filter(
@@ -1402,6 +1557,8 @@ function MasterRequestFlow() {
         console.log('DJ request inserted successfully:', newDjRequest);
         submissionSuccess = true;
         setRequestIds(prev => ({ ...prev, dj: newDjRequest.id }));
+        // Notify businesses in the dj category (personalized)
+        await notifyBusinessesOfRequest("dj", formData);
         
         // Check if there are more categories to complete
         const remainingCategories = formData.selectedRequests.filter(
@@ -1505,6 +1662,8 @@ function MasterRequestFlow() {
         console.log('Successfully inserted catering request:', newCateringRequest);
         submissionSuccess = true;
         setRequestIds(prev => ({ ...prev, catering: newCateringRequest.id }));
+        // Notify businesses in the catering category (personalized)
+        await notifyBusinessesOfRequest("catering", formData);
         
         // Check if there are more categories to complete
         const remainingCategories = formData.selectedRequests.filter(
@@ -1701,6 +1860,8 @@ function MasterRequestFlow() {
 
         submissionSuccess = true;
         setRequestIds(prev => ({ ...prev, weddingPlanning: newWeddingPlanningRequest.id }));
+        // Notify businesses in the weddingplanning category (personalized)
+        await notifyBusinessesOfRequest("weddingplanning", formData);
         
         // Check if there are more categories to complete
         const remainingCategories = formData.selectedRequests.filter(
