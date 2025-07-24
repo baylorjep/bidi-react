@@ -79,19 +79,7 @@ const PricingSetup = () => {
     makeup_only_rate: '',
     travel_fee: '',
     
-    // New category-specific fields
-    bridal_package_price: '',
-    ceremony_package_price: '',
-    ceremony_only_price: '',
-    reception_only_price: '',
-    full_day_price: '',
-    appetizers_only_price: '',
-    full_service_price: '',
-    premium_service_price: '',
-    highlight_video_price: '',
-    full_documentary_price: '',
-    cinematic_package_price: '',
-    bridesmaid_package_price: ''
+    // Note: Category-specific package fields are handled in the frontend but not stored in the database
   });
 
   // Package builder state
@@ -335,19 +323,7 @@ const PricingSetup = () => {
         makeup_only_rate: existing.makeup_only_rate?.toString() || '',
         travel_fee: existing.travel_fee?.toString() || '',
         
-        // New category-specific fields
-        bridal_package_price: existing.bridal_package_price?.toString() || '',
-        ceremony_package_price: existing.ceremony_package_price?.toString() || '',
-        ceremony_only_price: existing.ceremony_only_price?.toString() || '',
-        reception_only_price: existing.reception_only_price?.toString() || '',
-        full_day_price: existing.full_day_price?.toString() || '',
-        appetizers_only_price: existing.appetizers_only_price?.toString() || '',
-        full_service_price: existing.full_service_price?.toString() || '',
-        premium_service_price: existing.premium_service_price?.toString() || '',
-        highlight_video_price: existing.highlight_video_price?.toString() || '',
-        full_documentary_price: existing.full_documentary_price?.toString() || '',
-        cinematic_package_price: existing.cinematic_package_price?.toString() || '',
-        bridesmaid_package_price: existing.bridesmaid_package_price?.toString() || ''
+        // Note: Category-specific package fields are handled in the frontend but not stored in the database
       });
     } else {
       // Reset to empty state for new category
@@ -379,19 +355,7 @@ const PricingSetup = () => {
         makeup_only_rate: '',
         travel_fee: '',
         
-        // New category-specific fields
-        bridal_package_price: '',
-        ceremony_package_price: '',
-        ceremony_only_price: '',
-        reception_only_price: '',
-        full_day_price: '',
-        appetizers_only_price: '',
-        full_service_price: '',
-        premium_service_price: '',
-        highlight_video_price: '',
-        full_documentary_price: '',
-        cinematic_package_price: '',
-        bridesmaid_package_price: ''
+        // Note: Category-specific package fields are handled in the frontend but not stored in the database
       }));
     }
     setCurrentStep(0);
@@ -477,19 +441,8 @@ const PricingSetup = () => {
         makeup_only_rate: pricingData.makeup_only_rate === '' ? null : parseFloat(pricingData.makeup_only_rate),
         travel_fee: pricingData.travel_fee === '' ? null : parseFloat(pricingData.travel_fee),
         
-        // New category-specific fields
-        bridal_package_price: pricingData.bridal_package_price === '' ? null : parseFloat(pricingData.bridal_package_price),
-        ceremony_package_price: pricingData.ceremony_package_price === '' ? null : parseFloat(pricingData.ceremony_package_price),
-        ceremony_only_price: pricingData.ceremony_only_price === '' ? null : parseFloat(pricingData.ceremony_only_price),
-        reception_only_price: pricingData.reception_only_price === '' ? null : parseFloat(pricingData.reception_only_price),
-        full_day_price: pricingData.full_day_price === '' ? null : parseFloat(pricingData.full_day_price),
-        appetizers_only_price: pricingData.appetizers_only_price === '' ? null : parseFloat(pricingData.appetizers_only_price),
-        full_service_price: pricingData.full_service_price === '' ? null : parseFloat(pricingData.full_service_price),
-        premium_service_price: pricingData.premium_service_price === '' ? null : parseFloat(pricingData.premium_service_price),
-        highlight_video_price: pricingData.highlight_video_price === '' ? null : parseFloat(pricingData.highlight_video_price),
-        full_documentary_price: pricingData.full_documentary_price === '' ? null : parseFloat(pricingData.full_documentary_price),
-        cinematic_package_price: pricingData.cinematic_package_price === '' ? null : parseFloat(pricingData.cinematic_package_price),
-        bridesmaid_package_price: pricingData.bridesmaid_package_price === '' ? null : parseFloat(pricingData.bridesmaid_package_price)
+        // Note: Category-specific package fields are handled in the frontend but not stored in the database
+        // These fields are used for UI display and validation only
       };
 
       // Remove any undefined or null values that might cause database issues
@@ -521,6 +474,40 @@ const PricingSetup = () => {
         blocklist_keywords: sanitizedData.blocklist_keywords || [],
         default_message: sanitizedData.default_message,
         additional_comments: sanitizedData.additional_comments,
+        wedding_premium: sanitizedData.wedding_premium,
+        duration_multipliers: sanitizedData.duration_multipliers || {},
+        service_addons: sanitizedData.service_addons || {},
+        seasonal_pricing: sanitizedData.seasonal_pricing || {},
+        rush_fee_percentage: sanitizedData.rush_fee_percentage,
+        deposit_percentage: sanitizedData.deposit_percentage,
+        minimum_guests: sanitizedData.minimum_guests,
+        maximum_guests: sanitizedData.maximum_guests,
+        group_discounts: sanitizedData.group_discounts || {},
+        package_discounts: sanitizedData.package_discounts || {},
+        custom_pricing_rules: sanitizedData.custom_pricing_rules || [],
+        full_day_rate: sanitizedData.full_day_rate,
+        half_day_rate: sanitizedData.half_day_rate,
+        photo_editing_rate: sanitizedData.photo_editing_rate,
+        rush_editing_fee: sanitizedData.rush_editing_fee,
+        flower_tiers: sanitizedData.flower_tiers || {},
+        setup_fee: sanitizedData.setup_fee,
+        delivery_fee: sanitizedData.delivery_fee,
+        overtime_rate: sanitizedData.overtime_rate,
+        equipment_packages: sanitizedData.equipment_packages || {},
+        menu_tiers: sanitizedData.menu_tiers || {},
+        service_staff: sanitizedData.service_staff || {},
+        kitchen_rental: sanitizedData.kitchen_rental,
+        china_rental: sanitizedData.china_rental,
+        editing_rate: sanitizedData.editing_rate,
+        hair_only_rate: sanitizedData.hair_only_rate,
+        makeup_only_rate: sanitizedData.makeup_only_rate,
+        travel_fee: sanitizedData.travel_fee,
+        base_category_rates: sanitizedData.base_category_rates || {},
+        travel_config: sanitizedData.travel_config || {},
+        platform_markup: sanitizedData.platform_markup,
+        consultation_required: sanitizedData.consultation_required || false,
+        dealbreakers: sanitizedData.dealbreakers || [],
+        style_preferences: sanitizedData.style_preferences || [],
         created_at: new Date().toISOString()
       };
 
