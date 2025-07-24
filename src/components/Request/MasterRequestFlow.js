@@ -584,7 +584,21 @@ function MasterRequestFlow() {
     const categoryData = formData.requests[categoryKey] || {};
 
     // Budget logic (match review screen)
-    let budget = categoryData.priceRange || categoryData.budgetRange || 'Not specified';
+    let budget = 'Not specified';
+    
+    // Handle different budget field names per category (matching review screen logic)
+    if (category.toLowerCase() === 'beauty' || category.toLowerCase() === 'hairandmakeup') {
+      budget = categoryData.priceRange || 
+                formData.requests.HairAndMakeup?.priceRange || 
+                formData.requests.Beauty?.priceRange || 
+                'Not specified';
+    } else if (category.toLowerCase() === 'weddingplanning') {
+      budget = categoryData.budgetRange || 'Not specified';
+    } else {
+      // For other categories, try both fields
+      budget = categoryData.priceRange || categoryData.budgetRange || 'Not specified';
+    }
+    
     if (budget && budget.includes('-')) {
       const [min, max] = budget.split('-');
       if (max === '+') {
@@ -638,7 +652,7 @@ function MasterRequestFlow() {
       }));
 
     // POST to the new API contract
-    await fetch('/api/send-resend-email', {
+    await fetch('https://bidi-express.vercel.app/api/send-resend-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
