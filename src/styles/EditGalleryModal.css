@@ -145,6 +145,7 @@
 .add-category {
   display: flex;
   gap: 0.5rem;
+  flex-direction: column;
 }
 
 .add-category input {
@@ -427,9 +428,26 @@
   z-index: 1000;
 }
 
+.modal-close-x {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #495057;
+  cursor: pointer;
+  z-index: 10;
+  transition: color 0.2s;
+}
+
+.modal-close-x:hover {
+  color: #a328f4;
+}
+
 @media (max-width: 768px) {
   .modal-content-gallery {
-    width: 95%;
+    width: 100%;
     padding: 1.5rem;
   }
 

@@ -1864,9 +1864,15 @@ export default function BidsPage({ onOpenChat }) {
                         padding: '24px',
                         borderRadius: '12px',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                        maxWidth: '500px',
-                        width: '90%',
-                        margin: '0 auto'
+                        maxWidth: '600px',
+                        margin: '0 auto',
+                        overflowY: 'auto',
+                        height: window.innerWidth > 1024 ? 'auto' : '80vh',
+                        marginBottom: '80px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        gap:'2px'
                     }}>
                         <h3 style={{ marginBottom: '16px', color: '#333' }}>Accept Bid Confirmation</h3>
                         <p style={{ marginBottom: '16px', color: '#666' }}>Are you sure you want to accept this bid from {selectedBid?.business_profiles?.business_name}?</p>
@@ -1879,7 +1885,6 @@ export default function BidsPage({ onOpenChat }) {
                             border: '1px solid #e9ecef'
                         }}>
                             <h4 style={{ color: '#9633eb', marginBottom: '12px' }}>Bidi Protection Guarantee</h4>
-                            <p style={{ marginBottom: '12px', color: '#666' }}>When you pay through Bidi, you're protected by our 100% Money-Back Guarantee:</p>
                             <ul style={{ 
                                 marginBottom: '12px', 
                                 color: '#666', 
@@ -1898,14 +1903,12 @@ export default function BidsPage({ onOpenChat }) {
                                     <i className="fas fa-hand-holding-usd" style={{ color: '#9633eb' }}></i>
                                     Secure payment processing through Stripe
                                 </li>
+                                <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-comments" style={{ color: '#9633eb' }}></i>
+                                    The business will be able to contact you through Bidi's messenger to discuss service details.
+                                </li>
                             </ul>
-                            <p style={{ fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
-                                We'll help you get a full refund if anything goes wrong with your booking.
-                            </p>
-                            <p style={{ marginTop: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <i className="fas fa-comments" style={{ color: '#9633eb' }}></i>
-                                The business will be able to contact you through Bidi's messenger to discuss service details.
-                            </p>
+
                         </div>
 
                         <div className="modal-buttons" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>

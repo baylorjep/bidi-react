@@ -1610,7 +1610,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                           dangerouslySetInnerHTML={{ __html: pkg.description || '' }}
                         />
                         {pkg.features && pkg.features.length > 0 && (
-                          <ul className="package-features">
+                          <ul className="package-features-portfolio">
                             {pkg.features.map((feature, featureIndex) => (
                               <li key={featureIndex}>{feature}</li>
                             ))}

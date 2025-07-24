@@ -323,6 +323,14 @@ const EditGalleryModal = ({ isOpen, onClose, businessId, categories: initialCate
     <div className="edit-gallery-modal">
       <div className="modal-overlay-gallery">
         <div className="modal-content-gallery">
+          <button 
+            className="modal-close-x"
+            onClick={onClose}
+            aria-label="Close modal"
+            style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 28, cursor: 'pointer', zIndex: 10 }}
+          >
+            ×
+          </button>
           <h2>Edit Gallery</h2>
           
           <div className="category-management">
@@ -399,6 +407,16 @@ const EditGalleryModal = ({ isOpen, onClose, businessId, categories: initialCate
             </div>
           ))}
 
+          <div className="modal-actions" style={{ marginTop: 0, marginBottom: '1rem' }}>
+            <button 
+              className="save-btn" 
+              onClick={onClose}
+              disabled={uploading}
+            >
+              Save Changes
+            </button>
+          </div>
+
           {/* Media Grid */}
           <div className="media-grid">
             <h3>Media Items</h3>
@@ -450,13 +468,6 @@ const EditGalleryModal = ({ isOpen, onClose, businessId, categories: initialCate
           </div>
 
           <div className="modal-actions">
-            <button 
-              className="save-btn" 
-              onClick={onClose}
-              disabled={uploading}
-            >
-              Save Changes
-            </button>
             <button 
               className="close-btn" 
               onClick={onClose}
