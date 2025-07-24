@@ -13,7 +13,10 @@ const AuthModal = ({ setIsModalOpen, onSuccess }) => {
 
     const handleClose = () => {
         setIsModalOpen(false);
-        navigate('/'); // Navigate to homepage
+        // Only navigate to homepage if we're on the sign-in page without any other context
+        if (location.pathname === '/signin' && !location.state?.from) {
+            navigate('/');
+        }
     };
 
     const handleSignupSuccess = async (userData) => {

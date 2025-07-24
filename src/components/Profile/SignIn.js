@@ -94,6 +94,13 @@ const SignIn = ({ onSuccess }) => {
                     .eq('id', data.user.id)
                     .single();
 
+                // If we have an onSuccess callback (from AuthModal), use it
+                if (onSuccess) {
+                    onSuccess(data.user);
+                    return;
+                }
+
+                // Otherwise, handle navigation based on user type
                 // Handle individual user
                 if (individualProfile && !businessProfile) {
                     // Check user's preferred dashboard

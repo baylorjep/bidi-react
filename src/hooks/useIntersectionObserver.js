@@ -14,7 +14,8 @@ export const useIntersectionObserver = (options = {}) => {
         observer.unobserve(entry.target);
       }
     }, { 
-      threshold: 0.3, // Requires 30% visibility before triggering
+      threshold: 0.1, // Lower threshold - only requires 10% visibility
+      rootMargin: '50px', // Trigger animation 50px before element comes into view
       ...options 
     });
 

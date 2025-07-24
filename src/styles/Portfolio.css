@@ -77,6 +77,19 @@
 .business-header {
   margin-top: 20px;
 }
+.business-header-mobile {
+  display: none;
+
+}
+@media (max-width: 768px) {
+  .business-header-mobile {
+    display: block;
+  }
+
+  .business-header-desktop {
+    display: none;
+  }
+}
 
 .business-name {
   font-size: 28px;
@@ -214,10 +227,38 @@
 
 /* Mobile Styling */
 @media (max-width: 768px) {
+  .portfolio-container {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Business header moved to top */
+  .business-header {
+    margin-top: 60px;
+    order: -1; /* Move to top */
+    padding: 8px 16px;
+    background: white;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .business-name {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+
+  .business-details {
+    padding: 0 16px 16px 16px;
+  }
+
+  /* Portfolio layout adjustments */
   .portfolio-layout {
     flex-direction: column;
     min-height: auto;
-    gap: 15px;
+    gap: 2px;
+    margin-top: 0;
   }
 
   .main-portfolio-image,
@@ -226,58 +267,93 @@
   }
 
   .main-portfolio-image {
-    height: 300px; /* Adjusted height for mobile */
+    height: 60vh; /* Changed from 100vw to 60vh */
+    border-radius: 0;
   }
 
   .portfolio-grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 150px); /* Fixed height for grid items */
-    gap: 15px;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 2px;
   }
 
   .portfolio-image-portfolio {
-    height: 150px !important;
+    height: 60vh !important; /* Changed from 100vw to 60vh */
     width: 100%;
+    object-fit: cover;
+    border-radius: 0;
+  }
+
+  /* Portfolio images mobile swiper */
+  .portfolio-images-mobile {
+    height: 60vh; /* Changed from 100vw to 60vh */
+  }
+
+  .portfolio-slide {
+    height: 60vh; /* Changed from 100vw to 60vh */
+  }
+
+  .portfolio-slide .portfolio-image {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
   }
 
+  .portfolio-slide .portfolio-image.video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Rest of the content */
   .vendor-section {
-    flex-direction: column;
-    align-items: flex-start;
+    padding: 16px;
+    background: white;
   }
 
   .section-container {
-    flex-direction: column;
-    padding: 10px;
+    padding: 0;
   }
 
-  .section-right {
-    margin-left: 0;
-    margin-top: 20px;
-    width: 100%;
+  .section-left {
+    padding: 0;
   }
 }
 
 @media (max-width: 480px) {
-  .gallery-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 5px;
-  }
-  .gallery-image {
-    height: 150px;
-  }
-
   .portfolio-container {
-    width: 95%;
-    padding: 10px;
+    width: 100%;
+    padding: 0;
   }
 
   .main-portfolio-image {
-    height: 250px; /* Even shorter for smaller screens */
+    height: 60vh; /* Changed from 100vw to 60vh */
   }
 
   .portfolio-image-portfolio {
-    height: 120px;
+    height: 60vh; /* Changed from 100vw to 60vh */
+  }
+
+  .portfolio-images-mobile {
+    height: 60vh; /* Changed from 100vw to 60vh */
+  }
+
+  .portfolio-slide {
+    height: 60vh; /* Changed from 100vw to 60vh */
+  }
+
+  /* Adjust business info for smaller screens */
+  .business-name {
+    font-size: 18px;
+  }
+
+  .business-description {
+    font-size: 16px;
+    font-weight: 400;
+  }
+
+  .detail-text {
+    font-size: 18px;
   }
 }
 
@@ -1076,6 +1152,8 @@
   display: none;
 }
 
+
+
 /* Swiper Container */
 .portfolio-images-mobile .slick-list {
   height: 100%;
@@ -1103,6 +1181,20 @@
 .portfolio-images-mobile .slick-dots li.slick-active button:before {
   color: white;
   opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .portfolio-images-mobile .slick-dots {
+    bottom: 0;
+  }
+
+  .portfolio-images-mobile {
+    height: 60vh;
+  }
+
+  .portfolio-slide {
+    height: 60vh;
+  }
 }
 
 /* Chat button specific styles */

@@ -70,7 +70,7 @@ function StatusBar({ steps, currentStep, onStepClick, visitedSteps = new Set([0]
                 
                 return (
                     <div key={category} className={`step-category ${isCurrentCategory ? 'active' : ''} ${isCompletedCategory ? 'completed' : ''}`}>
-                        <div className="category-header">
+                        <div className="category-header-status-bar">
                             <div className="category-indicator">
                                 {isCompletedCategory ? (
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -80,7 +80,7 @@ function StatusBar({ steps, currentStep, onStepClick, visitedSteps = new Set([0]
                                     groupIndex + 1
                                 )}
                             </div>
-                            <span className="category-title">{category}</span>
+                            <span className="category-title-status-bar">{category}</span>
                         </div>
                         
                         {isCurrentCategory && !isEventLogistics && (

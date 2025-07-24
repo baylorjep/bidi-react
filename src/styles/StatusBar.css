@@ -103,7 +103,7 @@
   border-radius: 8px;
 }
 
-.category-header {
+.category-header-status-bar {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -127,7 +127,7 @@
   background: #ea3389;
 }
 
-.category-title {
+.category-title-status-bar {
   font-weight: 600;
   color: #333;
   font-size: 16px;

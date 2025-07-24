@@ -118,7 +118,9 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
       height: 100vh !important;
       max-height: 100vh !important;
       border-radius: 0 !important;
-      background: #000 !important;
+      background: #000 !important;f
+      padding: 0 !important;
+      margin: 0 !important;
     }
     .modal-xl {
       max-width: 100vw !important;
@@ -250,7 +252,7 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
     }
     .view-gallery-button {
       position: absolute;
-      bottom: 20px;
+      bottom: 60px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(163, 40, 244, 0.9);
