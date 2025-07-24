@@ -70,7 +70,9 @@ const Gallery = () => {
         settings: {
           slidesToShow: 1,
           slidesToScroll: 1,
-          dots: false
+          dots: true,
+          centerMode: false,
+          centerPadding: '0px'
         }
       }
     ],
@@ -285,99 +287,7 @@ const Gallery = () => {
   const handleMediaClick = (media, index) => {
     console.log('Gallery - handleMediaClick:', { media, index });
     
-    // If it's a video, go full screen instead of opening modal
-    if (media.type === 'video') {
-      // Create container for video and close button
-      const container = document.createElement('div');
-      container.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: 9999;
-        background: #000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      `;
-      
-      // Create video element
-      const video = document.createElement('video');
-      video.src = media.url;
-      video.controls = true;
-      video.autoplay = true;
-      video.style.cssText = `
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-      `;
-      
-      // Create close button
-      const closeButton = document.createElement('button');
-      closeButton.innerHTML = '✖';
-      closeButton.style.cssText = `
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        width: 50px;
-        height: 50px;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        border: 2px solid white;
-        border-radius: 50%;
-        font-size: 24px;
-        font-weight: bold;
-        cursor: pointer;
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-      `;
-      
-      // Add hover effect
-      closeButton.addEventListener('mouseenter', () => {
-        closeButton.style.background = 'rgba(220, 53, 69, 0.9)';
-        closeButton.style.transform = 'scale(1.1)';
-      });
-      
-      closeButton.addEventListener('mouseleave', () => {
-        closeButton.style.background = 'rgba(0, 0, 0, 0.7)';
-        closeButton.style.transform = 'scale(1)';
-      });
-      
-      // Add close functionality
-      const closeVideo = () => {
-        document.body.removeChild(container);
-        document.removeEventListener('keydown', handleEscape);
-      };
-      
-      closeButton.addEventListener('click', closeVideo);
-      
-      // Add escape key functionality
-      const handleEscape = (e) => {
-        if (e.key === 'Escape') {
-          closeVideo();
-        }
-      };
-      document.addEventListener('keydown', handleEscape);
-      
-      // Add click outside video to close
-      container.addEventListener('click', (e) => {
-        if (e.target === container) {
-          closeVideo();
-        }
-      });
-      
-      // Append elements
-      container.appendChild(video);
-      container.appendChild(closeButton);
-      document.body.appendChild(container);
-      return;
-    }
-    
-    // For images, proceed with normal modal behavior
+    // Get the current category media
     const currentCategoryMedia = selectedCategory === 'all' 
       ? Object.values(portfolioMedia).flat()
       : portfolioMedia[selectedCategory] || [];
@@ -385,20 +295,34 @@ const Gallery = () => {
     // Find the correct index in the current category media
     const correctIndex = currentCategoryMedia.findIndex(item => item.url === media.url);
     
+    // Format media for ImageModal compatibility
+    const formattedCategoryMedia = currentCategoryMedia.map(item => ({
+      url: item.url,
+      type: item.type,
+      isVideo: item.type === 'video' // Add isVideo property for ImageModal
+    }));
+    
     console.log('Gallery - currentCategoryMedia:', currentCategoryMedia);
+    console.log('Gallery - formattedCategoryMedia:', formattedCategoryMedia);
     console.log('Gallery - correctIndex:', correctIndex);
+
+    // Ensure we have valid data before setting selected media
+    if (formattedCategoryMedia.length === 0) {
+      console.error('Gallery - No media to display in modal');
+      return;
+    }
 
     setSelectedMedia({
       url: media.url,
       isVideo: media.type === 'video',
-      categoryMedia: currentCategoryMedia,
-      currentIndex: correctIndex
+      categoryMedia: formattedCategoryMedia,
+      currentIndex: correctIndex >= 0 ? correctIndex : 0
     });
     console.log('Gallery - setSelectedMedia called with:', {
       url: media.url,
       isVideo: media.type === 'video',
-      categoryMediaLength: currentCategoryMedia.length,
-      currentIndex: correctIndex
+      categoryMediaLength: formattedCategoryMedia.length,
+      currentIndex: correctIndex >= 0 ? correctIndex : 0
     });
   };
 
@@ -735,49 +659,53 @@ const Gallery = () => {
     /* Mobile Responsive Styles */
     @media (max-width: 768px) {
       .gallery-container-main {
-        padding: 10px;
-        margin-top: 60px; /* Add space for fixed back button */
+        padding: 0;
+        margin-top: 0;
+        width: 100%;
+        max-width: 100%;
       }
       .gallery-header-container {
-        padding: 0 10px;
-        margin-bottom: 20px;
-        flex-direction: column;
-        gap: 15px;
-        align-items: flex-start;
+        padding: 16px;
+        margin-bottom: 0;
+        flex-direction: row;
+        gap: 10px;
+        align-items: center;
+        background: white;
+        border-bottom: 1px solid #eee;
       }
       .gallery-header {
-        font-size: 24px;
+        font-size: 20px;
         order: 2;
-        width: 100%;
+        flex: 1;
         text-align: center;
+        margin: 0;
       }
       .back-button {
-        padding: 8px 16px;
+        padding: 8px 12px;
         font-size: 14px;
         order: 1;
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        z-index: 1000;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: static;
+        background: rgba(163, 40, 244, 0.1);
+        border-radius: 8px;
+        margin: 0;
       }
       .edit-gallery-button {
-        padding: 8px 18px;
+        padding: 8px 16px;
         font-size: 14px;
         order: 3;
-        align-self: flex-end;
+        border-radius: 8px;
       }
       .gallery-categories {
-        padding: 0 10px;
-        margin-bottom: 20px;
+        padding: 16px;
+        margin-bottom: 0;
         gap: 8px;
         flex-wrap: nowrap;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
         -ms-overflow-style: none;
+        background: white;
+        border-bottom: 1px solid #eee;
       }
       .gallery-categories::-webkit-scrollbar {
         display: none;
@@ -788,31 +716,39 @@ const Gallery = () => {
         white-space: nowrap;
         flex-shrink: 0;
         min-width: fit-content;
+        border-radius: 20px;
       }
       .category-title {
         font-size: 18px;
-        padding: 0 10px;
-        margin-bottom: 15px;
+        padding: 16px;
+        margin-bottom: 0;
+        background: white;
+        border-bottom: 1px solid #eee;
       }
       .gallery-image, .gallery-video {
-        height: 250px;
-        border-radius: 8px;
-        object-fit: contain;
+        height: 90vh;
+        border-radius: 0;
+        object-fit: cover;
+        width: 100%;
       }
       .video-container {
-        height: 250px;
-        border-radius: 8px;
+        height: 90vh;
+        border-radius: 0;
+        width: 100%;
       }
       .video-container video {
         height: 100%;
-        object-fit: contain;
-        border-radius: 8px;
+        object-fit: cover;
+        border-radius: 0;
+        width: 100%;
       }
       .category-stats {
-        padding: 0 10px;
+        padding: 16px;
         gap: 10px;
-        margin-bottom: 15px;
+        margin-bottom: 0;
         justify-content: center;
+        background: white;
+        border-bottom: 1px solid #eee;
       }
       .stat-item {
         padding: 8px 16px;
@@ -820,27 +756,174 @@ const Gallery = () => {
         flex: 1;
         text-align: center;
         min-width: 0;
+        border-radius: 20px;
       }
       .carousel-container {
-        margin: 0 -10px;
-        padding: 0 10px;
+        margin: 0;
+        padding: 0;
+        height: 90vh;
+        width: 100%;
       }
       .slick-slider {
-        margin: 0 -10px;
+        margin: 0;
+        height: 90vh;
+        width: 100%;
       }
       .slick-list {
-        padding: 0 10px;
+        padding: 0;
+        height: 90vh;
+        width: 100%;
+      }
+      .slick-track {
+        height: 90vh;
+        width: 100%;
       }
       .carousel-item {
-        padding: 5px;
+        padding: 0;
+        height: 90vh;
+        width: 100%;
+      }
+      .slick-slide {
+        width: 100% !important;
+      }
+      .slick-slide > div {
+        width: 100%;
       }
       .play-button {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
       }
       .video-container {
-        border-radius: 8px;
+        border-radius: 0;
+        height: 90vh;
+      }
+      .custom-arrow {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 40px !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        backdrop-filter: blur(14px) !important;
+      }
+      .custom-next-arrow {
+        right: 10px !important;
+      }
+      .custom-prev-arrow {
+        left: 10px !important;
+      }
+      .custom-dots {
+        bottom: 20px;
+      }
+      .custom-dots li button {
+        width: 8px;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.5);
+      }
+      .custom-dots li.slick-active button {
+        background: white;
+      }
+    }
+
+    /* Small Mobile Styles */
+    @media (max-width: 480px) {
+      .gallery-container-main {
+        padding: 0;
+        margin-top: 0;
+      }
+      .gallery-header-container {
+        padding: 12px;
+        margin-bottom: 0;
+        gap: 8px;
+      }
+      .gallery-header {
+        font-size: 18px;
+        margin-top: 0;
+      }
+      .back-button {
+        padding: 6px 10px;
+        font-size: 13px;
+        position: static;
+      }
+      .edit-gallery-button {
+        padding: 6px 12px;
+        font-size: 13px;
+      }
+      .gallery-categories {
+        padding: 12px;
+        margin-bottom: 0;
+        gap: 6px;
+      }
+      .category-button {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      .category-title {
+        font-size: 16px;
+        padding: 12px;
+        margin-bottom: 0;
+      }
+      .gallery-image, .gallery-video {
+        height: 80vh;
+        border-radius: 0;
+        object-fit: cover;
+      }
+      .video-container {
+        height: 80vh;
+        border-radius: 0;
+      }
+      .video-container video {
+        height: 100%;
+        object-fit: cover;
+        border-radius: 0;
+      }
+      .category-stats {
+        padding: 12px;
+        gap: 8px;
+        margin-bottom: 0;
+        flex-direction: row;
+      }
+      .stat-item {
+        padding: 6px 12px;
+        font-size: 12px;
+        width: auto;
+        text-align: center;
+        flex: 1;
+      }
+      .carousel-container {
+        margin: 0;
+        padding: 0;
+        height: 80vh;
+        width: 100%;
+      }
+      .slick-slider {
+        margin: 0;
+        height: 80vh;
+        width: 100%;
+      }
+      .slick-list {
+        padding: 0;
+        height: 80vh;
+        width: 100%;
+      }
+      .carousel-item {
+        padding: 0;
+        height: 80vh;
+        width: 100%;
+      }
+      .slick-slide {
+        width: 100% !important;
+      }
+      .slick-slide > div {
+        width: 100%;
+      }
+      .play-button {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+      }
+      .video-container {
+        border-radius: 0;
+        height: 80vh;
       }
       .custom-arrow {
         width: 35px !important;
@@ -848,123 +931,17 @@ const Gallery = () => {
         border-radius: 35px !important;
       }
       .custom-next-arrow {
-        right: 5px !important;
+        right: 8px !important;
       }
       .custom-prev-arrow {
-        left: 5px !important;
+        left: 8px !important;
       }
       .custom-dots {
-        bottom: -25px;
+        bottom: 15px;
       }
       .custom-dots li button {
         width: 6px;
         height: 6px;
-      }
-    }
-
-    /* Small Mobile Styles */
-    @media (max-width: 480px) {
-      .gallery-container-main {
-        padding: 8px;
-        margin-top: 70px;
-      }
-      .gallery-header-container {
-        padding: 0 8px;
-        margin-bottom: 15px;
-        gap: 12px;
-      }
-      .gallery-header {
-        font-size: 20px;
-        margin-top: 10px;
-      }
-      .back-button {
-        padding: 6px 12px;
-        font-size: 13px;
-        top: 8px;
-        left: 8px;
-      }
-      .edit-gallery-button {
-        padding: 6px 14px;
-        font-size: 13px;
-      }
-      .gallery-categories {
-        padding: 0 8px;
-        margin-bottom: 15px;
-        gap: 6px;
-      }
-      .category-button {
-        padding: 6px 14px;
-        font-size: 12px;
-      }
-      .category-title {
-        font-size: 16px;
-        padding: 0 8px;
-        margin-bottom: 12px;
-      }
-      .gallery-image, .gallery-video {
-        height: 200px;
-        border-radius: 6px;
-        object-fit: contain;
-      }
-      .video-container {
-        height: 200px;
-        border-radius: 6px;
-      }
-      .video-container video {
-        height: 100%;
-        object-fit: contain;
-        border-radius: 6px;
-      }
-      .category-stats {
-        padding: 0 8px;
-        gap: 8px;
-        margin-bottom: 12px;
-        flex-direction: column;
-      }
-      .stat-item {
-        padding: 6px 12px;
-        font-size: 12px;
-        width: 100%;
-        text-align: center;
-      }
-      .carousel-container {
-        margin: 0 -8px;
-        padding: 0 8px;
-      }
-      .slick-slider {
-        margin: 0 -8px;
-      }
-      .slick-list {
-        padding: 0 8px;
-      }
-      .carousel-item {
-        padding: 4px;
-      }
-      .play-button {
-        width: 35px;
-        height: 35px;
-        font-size: 14px;
-      }
-      .video-container {
-        border-radius: 6px;
-      }
-      .custom-arrow {
-        width: 30px !important;
-        height: 30px !important;
-        border-radius: 30px !important;
-      }
-      .custom-next-arrow {
-        right: 2px !important;
-      }
-      .custom-prev-arrow {
-        left: 2px !important;
-      }
-      .custom-dots {
-        bottom: -20px;
-      }
-      .custom-dots li button {
-        width: 5px;
-        height: 5px;
       }
     }
 
@@ -1174,15 +1151,14 @@ const Gallery = () => {
     return {
       ...settings,
       infinite: hasMultipleItems,
-      centerMode: hasMultipleItems && !hasVideos, // Don't use center mode if there are videos
-      centerPadding: hasMultipleItems && !hasVideos ? '15%' : '0px',
-      slidesToShow: hasMultipleItems ? 
-        (windowWidth >= 1200 ? 3 : windowWidth >= 768 ? 2 : 1) : 1,
-      responsive: hasMultipleItems ? settings.responsive : [
+      centerMode: false, // Always disable center mode for full-width photos
+      centerPadding: '0px',
+      slidesToShow: windowWidth >= 1200 ? 3 : windowWidth >= 768 ? 2 : 1,
+      responsive: [
         {
           breakpoint: 1200,
           settings: {
-            slidesToShow: 1,
+            slidesToShow: 2,
             slidesToScroll: 1,
           }
         },
@@ -1191,7 +1167,9 @@ const Gallery = () => {
           settings: {
             slidesToShow: 1,
             slidesToScroll: 1,
-            dots: false
+            dots: true,
+            centerMode: false,
+            centerPadding: '0px'
           }
         }
       ]
@@ -1533,6 +1511,7 @@ const Gallery = () => {
         onClose={handleCloseModal}
         categoryMedia={selectedMedia?.categoryMedia}
         currentIndex={selectedMedia?.currentIndex}
+        businessId={businessId}
       />
 
       <EditGalleryModal

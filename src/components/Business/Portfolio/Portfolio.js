@@ -613,16 +613,22 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   };
 
   const handleCheckClick = (event) => {
-    const tooltip = event.currentTarget.querySelector(".verified-tooltip");
-    tooltip.style.visibility = "visible";
-    tooltip.style.opacity = "1";
-    tooltip.style.zIndex = "1000";
-    toast.info('This business is verified by Bidi with 100% money-back guarantee!');
-    setTimeout(() => {
-      tooltip.style.visibility = "hidden";
-      tooltip.style.opacity = "0";
-      tooltip.style.zIndex = "1";
-    }, 3000);
+    // Check if we're in the overlay (mobile) or regular header (desktop)
+    const tooltip = event.currentTarget.querySelector(".verified-tooltip") || 
+                   event.currentTarget.querySelector(".verified-tooltip-overlay");
+    
+    if (tooltip) {
+      tooltip.style.visibility = "visible";
+      tooltip.style.opacity = "1";
+      tooltip.style.zIndex = "1000";
+      setTimeout(() => {
+        tooltip.style.visibility = "hidden";
+        tooltip.style.opacity = "0";
+        tooltip.style.zIndex = "1";
+      }, 3000);
+    } else {
+      // Fallback if tooltip element is not found
+    }
   };
 
   const handleGetQuote = () => {
@@ -656,7 +662,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       }
     }
 
-    toast.info('Redirecting to request form for ' + business.business_name);
     // Navigate to the master request flow with the vendor data and selected category
     navigate("/master-request-flow", { 
       state: { 
@@ -887,7 +892,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     setShowConsultationModal(true);
-    toast.success('Successfully authenticated!');
   };
 
   const handleScheduleConsultation = async (data) => {
@@ -1055,7 +1059,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
     const messageTemplate = `Hi, I'm interested in learning more about your "${packageName}" package. Could you provide more details?`;
     
-    toast.info('Opening chat to learn more about ' + packageName);
     navigate('/individual-dashboard', {
       state: {
         activeSection: 'messages',
@@ -1126,7 +1129,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     
     console.log('User authenticated, showing consultation modal');
     setShowConsultationModal(true);
-    toast.info('Opening consultation scheduler for ' + business.business_name);
   };
 
   if (loading) {
@@ -1215,10 +1217,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         </script>
       </Helmet>
 
-      <div className="portfolio-back-button" onClick={handleBack}>
-        <i className="fas fa-arrow-left"></i> Back
-      </div>
-
       <EditProfileModal
         isOpen={showEditModal}
         onClose={handleModalClose}
@@ -1257,65 +1255,39 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
       <div className="portfolio-container">
         <div className={`portfolio-layout ${portfolioVideos.length + portfolioPics.length <= 1 ? "single-media" : ""}`}>
-          {/* Mobile Header */}
-          <div className="business-header business-header-mobile">
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  <div className="business-name">{business.business_name}</div>
 
-                  {(business.membership_tier === "Verified" ||
-                    business.Bidi_Plus) && (
-                    <div
-                      className="verified-check-container"
-                      onClick={handleCheckClick}
-                    >
-                      <div style={{ marginLeft: "4px", marginBottom: "14px" }}>
-                        <VerifiedIcon />
-                      </div>
-                      <span className="verified-tooltip">
-                        This business is verified by Bidi. You will have a 100%
-                        money back guarantee if you pay through Bidi.
+          {/* Mobile Swiper */}
+          <div className="portfolio-images-mobile">
+            {/* Fixed Business Header Overlay */}
+            <div className="business-header-overlay">
+              <div className="business-header-content">
+                <div className="business-header-top">
+                  <div className="business-name-overlay">{business.business_name}</div>
+                  {(business.membership_tier === "Verified" || business.Bidi_Plus) && (
+                    <div className="verified-check-container-overlay" onClick={handleCheckClick}>
+                      <VerifiedIcon />
+                      <span className="verified-tooltip-overlay">
+                        This business is verified by Bidi. You will have a 100% money back guarantee if you pay through Bidi.
                       </span>
                     </div>
                   )}
-                  {averageRating && (
-                    <span className="vendor-rating-portfolio">
-                      <div className="star-icon" style={{ width: "18px", height: "18px", marginBottom: "8px" }}>
-                        <svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M18.3065 4.67953L20.6532 9.37287C20.9732 10.0262 21.8265 10.6529 22.5465 10.7729L26.7999 11.4795C29.5199 11.9329 30.1599 13.9062 28.1999 15.8529L24.8932 19.1595C24.3332 19.7195 24.0265 20.7995 24.1999 21.5729L25.1465 25.6662C25.8932 28.9062 24.1732 30.1595 21.3065 28.4662L17.3199 26.1062C16.5999 25.6795 15.4132 25.6795 14.6799 26.1062L10.6932 28.4662C7.83988 30.1595 6.10655 28.8929 6.85321 25.6662L7.79988 21.5729C7.97321 20.7995 7.66655 19.7195 7.10655 19.1595L3.79988 15.8529C1.85321 13.9062 2.47988 11.9329 5.19988 11.4795L9.45321 10.7729C10.1599 10.6529 11.0132 10.0262 11.3332 9.37287L13.6799 4.67953C14.9599 2.13286 17.0399 2.13286 18.3065 4.67953Z" fill="#FFC500" stroke="#FFC500" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                      {averageRating}
-                    </span>
-                  )}
                 </div>
-                <p className="business-description">
+                {averageRating && (
+                  <div className="rating-overlay">
+                    <div className="star-icon-overlay">
+                      <svg width="16" height="16" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18.3065 4.67953L20.6532 9.37287C20.9732 10.0262 21.8265 10.6529 22.5465 10.7729L26.7999 11.4795C29.5199 11.9329 30.1599 13.9062 28.1999 15.8529L24.8932 19.1595C24.3332 19.7195 24.0265 20.7995 24.1999 21.5729L25.1465 25.6662C25.8932 28.9062 24.1732 30.1595 21.3065 28.4662L17.3199 26.1062C16.5999 25.6795 15.4132 25.6795 14.6799 26.1062L10.6932 28.4662C7.83988 30.1595 6.10655 28.8929 6.85321 25.6662L7.79988 21.5729C7.97321 20.7995 7.66655 19.7195 7.10655 19.1595L3.79988 15.8529C1.85321 13.9062 2.47988 11.9329 5.19988 11.4795L9.45321 10.7729C10.1599 10.6529 11.0132 10.0262 11.3332 9.37287L13.6799 4.67953C14.9599 2.13286 17.0399 2.13286 18.3065 4.67953Z" fill="#FFC500" stroke="#FFC500" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <span className="rating-text-portfolio">{averageRating}</span>
+                  </div>
+                )}
+                <p className="business-description-overlay">
                   {business.business_description || "No description available"}
                 </p>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    width: "100%",
-                  }}
-                >
-                  {isOwner && (
-                    <button
-                      className="edit-icon"
-                      onClick={() =>
-                        openEditModal({
-                          business_name: business.business_name,
-                          business_description: business.business_description,
-                        }, 'business_info')}
-                    >
-                      ✎
-                    </button>
-                  )}
-                </div>
               </div>
-          {/* Mobile Swiper */}
-          <div className="portfolio-images-mobile">
+            </div>
+            
             <Slider {...settings}>
               {[...portfolioVideos, ...portfolioPics].map((item, index) => {
                 const isVideo = portfolioVideos.includes(item);

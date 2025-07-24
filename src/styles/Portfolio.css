@@ -79,11 +79,10 @@
 }
 .business-header-mobile {
   display: none;
-
 }
 @media (max-width: 768px) {
   .business-header-mobile {
-    display: block;
+    display: none; /* Hidden since we're using overlay instead */
   }
 
   .business-header-desktop {
@@ -286,11 +285,12 @@
 
   /* Portfolio images mobile swiper */
   .portfolio-images-mobile {
-    height: 60vh; /* Changed from 100vw to 60vh */
+    height: 80vh; /* Increased height for Instagram-like layout */
   }
 
   .portfolio-slide {
-    height: 60vh; /* Changed from 100vw to 60vh */
+    height: 80vh; /* Increased height for Instagram-like layout */
+    position: relative;
   }
 
   .portfolio-slide .portfolio-image {
@@ -335,11 +335,12 @@
   }
 
   .portfolio-images-mobile {
-    height: 60vh; /* Changed from 100vw to 60vh */
+    height: 75vh; /* Slightly smaller on very small screens */
   }
 
   .portfolio-slide {
-    height: 60vh; /* Changed from 100vw to 60vh */
+    height: 75vh;
+    position: relative;
   }
 
   /* Adjust business info for smaller screens */
@@ -2268,4 +2269,142 @@
 
 .consultation-button svg {
   font-size: 20px;
+}
+
+/* Instagram-like Business Header Overlay Styles */
+@media (max-width: 768px) {
+  .portfolio-images-mobile {
+    height: 90vh; /* Increased height for Instagram-like layout */
+  }
+
+  .portfolio-slide {
+    height: 90vh; /* Increased height for Instagram-like layout */
+    position: relative;
+  }
+
+  .portfolio-images-mobile {
+    position: relative;
+  }
+
+  .business-header-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.4), transparent);
+    padding: 16px 16px 20px;
+    color: white;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .business-header-content {
+    pointer-events: auto;
+  }
+
+  .business-header-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .business-header-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .business-name-overlay {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  .verified-check-container-overlay {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+
+  .verified-tooltip-overlay {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    margin-top: 8px;
+    text-align: center;
+    text-wrap: balance;
+    width: 200px;
+  }
+
+  .verified-check-container-overlay:hover .verified-tooltip-overlay {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .rating-overlay {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .star-icon-overlay {
+    display: flex;
+    align-items: center;
+  }
+
+  .rating-text-portfolio {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  .business-description-overlay {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    line-height: 1.4;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 480px) {
+  .portfolio-images-mobile {
+    height: 80vh; /* Slightly smaller on very small screens */
+  }
+
+  .portfolio-slide {
+    height: 80vh;
+  }
+
+  .business-name-overlay {
+    font-size: 20px;
+  }
+
+  .business-description-overlay {
+    font-size: 13px;
+  }
+
+  .rating-text-portfolio {
+    font-size: 14px;
+  }
 }
