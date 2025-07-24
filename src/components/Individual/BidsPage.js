@@ -163,15 +163,21 @@ export default function BidsPage({ onOpenChat }) {
     const loadingSkeleton = useMemo(() => <BidsPageSkeleton />, []);
 
     const getDate = (request) => {
+        const formatDateWithTimezone = (dateString) => {
+            if (!dateString) return null;
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
+        };
+
         const startDate = request.start_date || request.service_date;
         if (request.date_flexibility === 'specific') {
-            return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
+            return startDate ? formatDateWithTimezone(startDate) : 'Date not specified';
         } else if (request.date_flexibility === 'range') {
-            return `${new Date(startDate).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
+            return `${formatDateWithTimezone(startDate)} - ${formatDateWithTimezone(request.end_date)}`;
         } else if (request.date_flexibility === 'flexible') {
             return `Flexible within ${request.date_timeframe}`;
         }
-        return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
+        return startDate ? formatDateWithTimezone(startDate) : 'Date not specified';
     };
 
     // Helper: Group bids by status for the current request

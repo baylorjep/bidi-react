@@ -324,7 +324,7 @@ const EditBid = () => {
                 type="date"
                 value={bidExpirationDate}
                 onChange={(e) => setBidExpirationDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
+                min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]}
               />
               <label className="custom-label" htmlFor="bidExpirationDate">Bid Expiration Date</label>
             </div>
@@ -377,7 +377,7 @@ const EditBid = () => {
                   type="date"
                   value={discountDeadline}
                   onChange={e => setDiscountDeadline(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]}
                   required
                 />
                 <label className="custom-label" htmlFor="discountDeadline">Discount Deadline</label>

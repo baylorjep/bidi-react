@@ -76,6 +76,25 @@ const formats = [
   'link', 'image'
 ];
 
+// Robust helper to parse various date formats as local date
+function parseLocalDate(dateString) {
+  if (!dateString || typeof dateString !== 'string') return null;
+  // If ISO string, let Date handle it
+  if (dateString.includes('T')) {
+    const d = new Date(dateString);
+    return isNaN(d) ? null : d;
+  }
+  // Handle 'YYYY-MM-DD' and 'YYYY-MM-DD HH:mm:ss'
+  const datePart = dateString.split(' ')[0];
+  const [year, month, day] = datePart.split('-');
+  if (!year || !month || !day) {
+    console.warn('parseLocalDate: Malformed date string:', dateString);
+    return null;
+  }
+  const d = new Date(Number(year), Number(month) - 1, Number(day));
+  return isNaN(d) ? null : d;
+}
+
 function SlidingBidModal({ isOpen, onClose, requestId }) {
     const [requestDetails, setRequestDetails] = useState(null);
     const [requestType, setRequestType] = useState('');
@@ -450,7 +469,7 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
             const htmlContent = `<p>A new bid has been placed on your request.</p>
                                   <p><strong>Bid Amount:</strong> ${bidAmount}</p>
                                   <p><strong>Description:</strong> ${bidDescription}</p>
-                                  <p><strong>Expires:</strong> ${new Date(bidExpirationDate).toLocaleDateString()}</p>`;
+                                  <p><strong>Expires:</strong> ${parseLocalDate(bidExpirationDate) ? parseLocalDate(bidExpirationDate).toLocaleDateString() : 'Date not specified'}</p>`;
 
             await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent);
             setSuccess('Bid successfully placed!');

@@ -218,10 +218,16 @@ const WeddingPlanningRequest = ({ request, filteredPhotos, onPhotoClick, getPubl
     };
 
     const formatDateInfo = () => {
+        const formatDateWithTimezone = (dateString) => {
+            if (!dateString) return null;
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
+        };
+
         if (request.date_flexibility === 'specific' && request.start_date) {
-            return new Date(request.start_date).toLocaleDateString();
+            return formatDateWithTimezone(request.start_date);
         } else if (request.date_flexibility === 'range' && request.start_date && request.end_date) {
-            return `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
+            return `${formatDateWithTimezone(request.start_date)} - ${formatDateWithTimezone(request.end_date)}`;
         } else if (request.date_flexibility === 'flexible' && request.date_timeframe) {
             const timeframes = {
                 '3months': 'Within 3 months',
@@ -682,7 +688,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                         <InfoField label="Location" value={request.location} />
                         <InfoField 
                             label="Event Date" 
-                            value={request.start_date ? new Date(request.start_date).toLocaleDateString() : null} 
+                            value={request.start_date ? new Date(request.start_date).toLocaleDateString('en-US', { timeZone: 'UTC' }) : null} 
                         />
                         <InfoField label="Service Type" value={request.service_type} />
                         <InfoField label="Number of People" value={request.num_people} />
@@ -797,10 +803,16 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                 );
             case 'photography_requests':
                 const formatPhotographyDate = () => {
+                    const formatDateWithTimezone = (dateString) => {
+                        if (!dateString) return null;
+                        const date = new Date(dateString);
+                        return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
+                    };
+
                     if (request.date_flexibility === 'specific' && request.start_date) {
-                        return new Date(request.start_date).toLocaleDateString();
+                        return formatDateWithTimezone(request.start_date);
                     } else if (request.date_flexibility === 'range' && request.start_date && request.end_date) {
-                        return `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
+                        return `${formatDateWithTimezone(request.start_date)} - ${formatDateWithTimezone(request.end_date)}`;
                     } else if (request.date_flexibility === 'flexible' && request.date_timeframe) {
                         const timeframes = {
                             '3months': 'Within 3 months',
@@ -1038,10 +1050,16 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                 );
             case 'dj_requests':
                 const formatDjDate = () => {
+                    const formatDateWithTimezone = (dateString) => {
+                        if (!dateString) return null;
+                        const date = new Date(dateString);
+                        return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
+                    };
+
                     if (request.date_flexibility === 'specific' && request.start_date) {
-                        return new Date(request.start_date).toLocaleDateString();
+                        return formatDateWithTimezone(request.start_date);
                     } else if (request.date_flexibility === 'range' && request.start_date && request.end_date) {
-                        return `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
+                        return `${formatDateWithTimezone(request.start_date)} - ${formatDateWithTimezone(request.end_date)}`;
                     } else if (request.date_flexibility === 'flexible' && request.date_timeframe) {
                         const timeframes = {
                             '3months': 'Within 3 months',
@@ -1226,10 +1244,16 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                 );
             case 'florist_requests':
                 const formatFloristDate = () => {
+                    const formatDateWithTimezone = (dateString) => {
+                        if (!dateString) return null;
+                        const date = new Date(dateString);
+                        return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
+                    };
+
                     if (request.date_flexibility === 'specific' && request.start_date) {
-                        return new Date(request.start_date).toLocaleDateString();
+                        return formatDateWithTimezone(request.start_date);
                     } else if (request.date_flexibility === 'range' && request.start_date && request.end_date) {
-                        return `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
+                        return `${formatDateWithTimezone(request.start_date)} - ${formatDateWithTimezone(request.end_date)}`;
                     } else if (request.date_flexibility === 'flexible' && request.date_timeframe) {
                         const timeframes = {
                             '3months': 'Within 3 months',
@@ -1490,10 +1514,16 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                 );
             case 'catering_requests':
                 const formatCateringDate = () => {
+                    const formatDateWithTimezone = (dateString) => {
+                        if (!dateString) return null;
+                        const date = new Date(dateString);
+                        return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
+                    };
+
                     if (request.date_flexibility === 'specific' && request.start_date) {
-                        return new Date(request.start_date).toLocaleDateString();
+                        return formatDateWithTimezone(request.start_date);
                     } else if (request.date_flexibility === 'range' && request.start_date && request.end_date) {
-                        return `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
+                        return `${formatDateWithTimezone(request.start_date)} - ${formatDateWithTimezone(request.end_date)}`;
                     } else if (request.date_flexibility === 'flexible' && request.date_timeframe) {
                         const timeframes = {
                             '3months': 'Within 3 months',
@@ -1685,10 +1715,16 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                 );
             case 'videography_requests':
                 const formatVideographyDate = () => {
+                    const formatDateWithTimezone = (dateString) => {
+                        if (!dateString) return null;
+                        const date = new Date(dateString);
+                        return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
+                    };
+
                     if (request.date_flexibility === 'specific' && request.start_date) {
-                        return new Date(request.start_date).toLocaleDateString();
+                        return formatDateWithTimezone(request.start_date);
                     } else if (request.date_flexibility === 'range' && request.start_date && request.end_date) {
-                        return `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`;
+                        return `${formatDateWithTimezone(request.start_date)} - ${formatDateWithTimezone(request.end_date)}`;
                     } else if (request.date_flexibility === 'flexible' && request.date_timeframe) {
                         const timeframes = {
                             '3months': 'Within 3 months',
@@ -1963,16 +1999,28 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                 );
             default:
                 const formatDefaultDate = () => {
+                    const formatDateWithTimezone = (dateString) => {
+                        if (!dateString) return null;
+                        const date = new Date(dateString);
+                        return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
+                    };
+
                     if (request.service_date) {
-                        return new Date(request.service_date).toLocaleDateString();
+                        return formatDateWithTimezone(request.service_date);
                     } else if (request.start_date) {
-                        return new Date(request.start_date).toLocaleDateString();
+                        return formatDateWithTimezone(request.start_date);
                     }
                     return null;
                 };
 
                 const formatDefaultEndDate = () => {
-                    return request.end_date ? new Date(request.end_date).toLocaleDateString() : null;
+                    const formatDateWithTimezone = (dateString) => {
+                        if (!dateString) return null;
+                        const date = new Date(dateString);
+                        return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
+                    };
+                    
+                    return request.end_date ? formatDateWithTimezone(request.end_date) : null;
                 };
 
                 const formatDefaultBudget = () => {

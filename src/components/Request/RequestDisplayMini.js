@@ -115,10 +115,30 @@ function RequestDisplayMini({
         return title;
     };
 
+    // Robust helper to parse various date formats as local date
+    function parseLocalDate(dateString) {
+      if (!dateString || typeof dateString !== 'string') return null;
+      // If ISO string, let Date handle it
+      if (dateString.includes('T')) {
+        const d = new Date(dateString);
+        return isNaN(d) ? null : d;
+      }
+      // Handle 'YYYY-MM-DD' and 'YYYY-MM-DD HH:mm:ss'
+      const datePart = dateString.split(' ')[0];
+      const [year, month, day] = datePart.split('-');
+      if (!year || !month || !day) {
+        console.warn('parseLocalDate: Malformed date string:', dateString);
+        return null;
+      }
+      const d = new Date(Number(year), Number(month) - 1, Number(day));
+      return isNaN(d) ? null : d;
+    }
+
     const getDate = () => {
         // For beauty requests, use start_date
         if (request.table_name === 'beauty_requests') {
-            return request.start_date ? new Date(request.start_date).toLocaleDateString() : 'Date not specified';
+            const parsed = parseLocalDate(request.start_date);
+            return parsed ? parsed.toLocaleDateString() : 'Date not specified';
         }
 
         // Try all possible date field names
@@ -127,19 +147,23 @@ function RequestDisplayMini({
             : request.service_date || request.date || request.event_date || request.start_date;
 
         if (request.date_flexibility === 'specific') {
-            return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
+            const parsed = parseLocalDate(startDate);
+            return parsed ? parsed.toLocaleDateString() : 'Date not specified';
         } else if (request.date_flexibility === 'range') {
             const endDate = request.end_date || request.event_end_date;
-            return startDate && endDate 
-                ? `${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`
-                : startDate 
-                    ? new Date(startDate).toLocaleDateString()
+            const parsedStart = parseLocalDate(startDate);
+            const parsedEnd = parseLocalDate(endDate);
+            return parsedStart && parsedEnd 
+                ? `${parsedStart.toLocaleDateString()} - ${parsedEnd.toLocaleDateString()}`
+                : parsedStart 
+                    ? parsedStart.toLocaleDateString()
                     : 'Date not specified';
         } else if (request.date_flexibility === 'flexible') {
             return `Flexible within ${request.date_timeframe || request.timeframe || 'specified timeframe'}`;
         }
         // Handle legacy requests without date_flexibility
-        return startDate ? new Date(startDate).toLocaleDateString() : 'Date not specified';
+        const parsed = parseLocalDate(startDate);
+        return parsed ? parsed.toLocaleDateString() : 'Date not specified';
     };
 
     const isVendorSelected = () => {

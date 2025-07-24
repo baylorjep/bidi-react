@@ -72,12 +72,20 @@ function EditRequest() {
                     return;
                 }
 
-                // Format dates for input field
+                // Format dates for input field with timezone handling
+                const formatDateWithTimezone = (dateString) => {
+                    if (!dateString) return null;
+                    const date = new Date(dateString);
+                    // Add timezone offset to get the correct local date
+                    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+                    return new Date(date.getTime() + userTimezoneOffset).toISOString().split('T')[0];
+                };
+
                 const formattedData = {
                     ...data[0],
-                    service_date: data[0].service_date?.split('T')[0],
-                    end_date: data[0].end_date?.split('T')[0],
-                    start_date: data[0].start_date?.split('T')[0],
+                    service_date: formatDateWithTimezone(data[0].service_date),
+                    end_date: formatDateWithTimezone(data[0].end_date),
+                    start_date: formatDateWithTimezone(data[0].start_date),
                 };
                 
                 // Parse JSON strings if they exist
@@ -243,12 +251,20 @@ function EditRequest() {
             updateData.specific_time_needed = formData.specific_time_needed === 'yes';
         }
 
-        // Handle date fields
+        // Handle date fields with timezone correction
+        const formatDateForUpdate = (dateString) => {
+            if (!dateString) return null;
+            const date = new Date(dateString);
+            // Remove timezone offset to store in UTC
+            const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+            return new Date(date.getTime() - userTimezoneOffset).toISOString().split('T')[0];
+        };
+
         if (updateData.start_date) {
-            updateData.start_date = new Date(updateData.start_date).toISOString().split('T')[0];
+            updateData.start_date = formatDateForUpdate(updateData.start_date);
         }
         if (updateData.end_date) {
-            updateData.end_date = new Date(updateData.end_date).toISOString().split('T')[0];
+            updateData.end_date = formatDateForUpdate(updateData.end_date);
         }
 
         const { error } = await supabase
