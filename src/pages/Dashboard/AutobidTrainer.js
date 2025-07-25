@@ -803,52 +803,42 @@ const AutobidTrainer = () => {
           const nextCategoryTrainingCompleted = nextCategoryProgress?.training_completed || false;
           
           if (nextCategoryCompletedScenarios >= TOTAL_STEPS && !nextCategoryTrainingCompleted) {
-            // Next category needs AI testing - show category completion to move to it
-    setShowSampleBid(false);
-    setShowCompletion(true);
+            setShowSampleBid(false);
+            setShowCompletion(true);
           } else if (nextCategoryCompletedScenarios < TOTAL_STEPS) {
-            // Next category needs manual training - show category completion to move to it
             setShowSampleBid(false);
             setShowCompletion(true);
           } else {
-            // All categories complete - show final completion
             setShowSampleBid(false);
             setShowCompletion(true);
           }
         } else {
-          // No more categories - show final completion
           setShowSampleBid(false);
           setShowCompletion(true);
         }
       } else {
-        // Continue with next AI sample bid
-        const nextIndex = currentSampleBidIndex + 1;
-        if (nextIndex < currentSampleBidData.length) {
-          setCurrentSampleBidIndex(nextIndex);
-        } else {
-          // Generate new AI sample bid data
-          setIsLoadingSampleBid(true);
-          try {
-            const newSampleData = await getSampleBidData(currentCategory);
-            if (newSampleData && newSampleData.length > 0) {
-              setCurrentSampleBidData(newSampleData);
-              setCurrentSampleBidIndex(0);
-              console.log('Generated new AI sample bid data:', newSampleData.length, 'samples');
-            } else {
-              // No new sample data generated, show error
-              console.error('No new sample bid data generated');
-              setShowSampleBid(false);
-              // Show error or fallback screen
-              alert('Unable to generate more AI sample bids. Please try again or contact support.');
-            }
-          } catch (error) {
-            console.error('Error generating new sample bid data:', error);
+        // Always generate a new AI sample bid after feedback
+        setIsLoadingSampleBid(true);
+        try {
+          const newSampleData = await getSampleBidData(currentCategory);
+          if (newSampleData && newSampleData.length > 0) {
+            setCurrentSampleBidData(newSampleData);
+            setCurrentSampleBidIndex(0);
+            setSampleBidApproved(null);
+            setFeedbackText('');
+            console.log('Generated new AI sample bid data:', newSampleData.length, 'samples');
+          } else {
+            // No new sample data generated, show error
+            console.error('No new sample bid data generated');
             setShowSampleBid(false);
-            // Show error or fallback screen
-            alert('Error generating AI sample bid. Please try again or contact support.');
-          } finally {
-            setIsLoadingSampleBid(false);
+            alert('Unable to generate more AI sample bids. Please try again or contact support.');
           }
+        } catch (error) {
+          console.error('Error generating new sample bid data:', error);
+          setShowSampleBid(false);
+          alert('Error generating AI sample bid. Please try again or contact support.');
+        } finally {
+          setIsLoadingSampleBid(false);
         }
       }
     } catch (error) {
