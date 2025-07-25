@@ -183,7 +183,7 @@ const AutobidTrainer = () => {
   };
 
   // Dynamic sample bid data based on business category - now using real API
-  const getSampleBidData = async (category) => {
+  const getSampleBidData = async (category, currentUsedIdsOverride = null) => {
     // Prevent duplicate calls
     if (isGeneratingBid) {
       console.log('Already generating bid, skipping duplicate call');
@@ -212,8 +212,8 @@ const AutobidTrainer = () => {
         throw new Error('No training requests found for category: ' + category);
       }
 
-      // Get the current used request IDs from state
-      const currentUsedIds = Array.from(usedAIRequestIds);
+      // Get the current used request IDs from state or use override
+      const currentUsedIds = currentUsedIdsOverride || Array.from(usedAIRequestIds);
       console.log('Current used request IDs:', currentUsedIds);
       console.log('All available requests:', allRequests.map(req => ({ id: req.id, date: req.request_data?.date || 'unknown' })));
       
@@ -224,6 +224,7 @@ const AutobidTrainer = () => {
         // Use an available request
         selectedRequest = availableRequest;
         console.log('Using available request:', selectedRequest.id, 'with date:', selectedRequest.request_data?.date || 'unknown');
+        console.log('Available requests count:', allRequests.filter(req => !currentUsedIds.includes(req.id)).length);
         
         // Update state to mark this request as used (immediate update to prevent race condition)
         const newUsedIds = new Set([...currentUsedIds, selectedRequest.id]);
@@ -273,7 +274,7 @@ const AutobidTrainer = () => {
       const sampleBidData = [{
         requestId: selectedRequest.id,
         requestData: selectedRequest.request_data,
-    generatedBid: {
+        generatedBid: {
           amount: sampleBid.amount,
           description: sampleBid.description,
           breakdown: sampleBid.breakdown,
@@ -471,7 +472,7 @@ const AutobidTrainer = () => {
               // Load sample bid data
               setIsLoadingSampleBid(true);
               try {
-                const sampleData = await getSampleBidData(userCategories[0]);
+                const sampleData = await getSampleBidData(userCategories[0], usedRequestIds);
                 if (sampleData && sampleData.length > 0) {
                   setCurrentSampleBidData(sampleData);
                   console.log('Resumed sample bid data loaded:', sampleData.length, 'samples');
@@ -820,7 +821,19 @@ const AutobidTrainer = () => {
         // Always generate a new AI sample bid after feedback
         setIsLoadingSampleBid(true);
         try {
-          const newSampleData = await getSampleBidData(currentCategory);
+          // Get the current bid's request ID to exclude it from the next generation
+          const currentBid = currentSampleBidData[currentSampleBidIndex];
+          const currentRequestId = currentBid?.requestId;
+          
+          console.log('Current bid request ID:', currentRequestId);
+          console.log('Current used IDs before update:', Array.from(usedAIRequestIds));
+          
+          // Create updated used IDs list including the current request
+          const updatedUsedIds = new Set([...Array.from(usedAIRequestIds), currentRequestId]);
+          
+          console.log('Updated used IDs for next generation:', Array.from(updatedUsedIds));
+          
+          const newSampleData = await getSampleBidData(currentCategory, updatedUsedIds);
           if (newSampleData && newSampleData.length > 0) {
             setCurrentSampleBidData(newSampleData);
             setCurrentSampleBidIndex(0);
