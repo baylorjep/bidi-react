@@ -446,6 +446,7 @@ const AutobidTrainer = () => {
                 setShowSampleBid(true);
               
               // Initialize available requests for AI testing (excluding already used ones)
+              let usedRequestIds = new Set();
               try {
                 const { data: allRequests, error } = await supabase
           .from('autobid_training_requests')
@@ -457,7 +458,7 @@ const AutobidTrainer = () => {
         if (error) throw error;
 
                 // Get the IDs of requests that have already been used for AI testing
-                const usedRequestIds = new Set(aiResponses.map(response => response.request_id));
+                usedRequestIds = new Set(aiResponses.map(response => response.request_id));
                 
                 // Filter out already used requests
                 const availableRequests = allRequests?.filter(req => !usedRequestIds.has(req.id)) || [];
