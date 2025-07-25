@@ -100,16 +100,26 @@ const TrainingVideos = () => {
             {/* Search and Filter Section */}
             <div className="training-controls">
                 <div className="search-container">
-                    <i className="fas fa-search search-icon"></i>
-                    <input
-                        type="text"
-                        placeholder="Search training videos..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="search-input"
-                    />
+                    <div className="search-input-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input
+                            type="text"
+                            placeholder="Search training videos..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="search-input"
+                            style={{ paddingRight: '36px' }}
+                        />
+                        <i
+                            className="fas fa-search search-icon"
+                            style={{
+                                position: 'absolute',
+                                right: '12px',
+                                color: '#888',
+                                pointerEvents: 'none'
+                            }}
+                        ></i>
+                    </div>
                 </div>
-                
                 <div className="category-filters">
                     {videoCategories.map(category => (
                         <button

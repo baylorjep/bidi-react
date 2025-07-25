@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import "../../styles/BusinessBids.css";
 import WithdrawConfirmationModal from "./WithdrawConfirmationModal";
-import BidDisplayMini from "./BidDisplayMini";
+import BidDisplayRow from "./BidDisplayRow";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import ChatInterface from "../Messaging/ChatInterface";
 import MessagingView from "../Messaging/MessagingView";
@@ -14,21 +14,35 @@ const BusinessBids = ({ setActiveSection }) => {
   const [requests, setRequests] = useState([]);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [selectedBidId, setSelectedBidId] = useState(null);
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("all");
   const [isFullScreen, setIsFullScreen] = useState(window.innerWidth > 1200);
   const [showChatModal, setShowChatModal] = useState(false);
   const [selectedChat, setSelectedChat] = useState(null);
   const [user, setUser] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc"); // 'desc' = newest first, 'asc' = oldest first
+  const [sortType, setSortType] = useState('date'); // 'date', 'amount', 'eventDate', 'bidDate', 'status'
   const filteredBids = bids
     .filter((bid) => 
-      activeTab === "approved" 
-        ? bid.status === "approved" || bid.status === "accepted"
-        : activeTab === "pending"
-          ? bid.status === "pending" || bid.status === "interested"
-          : bid.status === activeTab
+      activeTab === "all"
+        ? true
+        : activeTab === "approved" 
+          ? bid.status === "approved" || bid.status === "accepted"
+          : activeTab === "pending"
+            ? bid.status === "pending" || bid.status === "interested"
+            : bid.status === activeTab
     )
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    .filter((bid) => {
+      if (!searchQuery) return true;
+      const request = requests.find((req) => req.id === bid.request_id);
+      const title = request?.title || request?.service_title || request?.event_title || "";
+      const clientName = `${request?.user_first_name || ''} ${request?.user_last_name || ''}`.toLowerCase();
+      return (
+        title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        clientName.includes(searchQuery.toLowerCase())
+      );
+    });
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -228,9 +242,13 @@ const pendingBids = bids.filter((bid) =>
     }
   };
 
+  const handleEditBid = (requestId, bidId) => {
+    navigate(`/edit-bid/${requestId}/${bidId}`);
+  };
+
   const renderTabSelector = () => (
     <div className="status-tabs">
-      {["pending", "approved", "denied"].map((status) => (
+      {["all", "pending", "approved", "denied"].map((status) => (
         <button
           key={status}
           className={`tab-button ${status} ${
@@ -239,23 +257,43 @@ const pendingBids = bids.filter((bid) =>
           onClick={() => setActiveTab(status)}
         >
           {status.charAt(0).toUpperCase() + status.slice(1)} (
-          {status === "approved" 
-            ? bids.filter((bid) => bid.status === "approved" || bid.status === "accepted").length
-            : bids.filter((bid) => bid.status === status).length})
+          {status === "all"
+            ? bids.length
+            : status === "approved" 
+              ? bids.filter((bid) => bid.status === "approved" || bid.status === "accepted").length
+              : bids.filter((bid) => bid.status === status).length})
         </button>
       ))}
     </div>
   );
 
-  const renderMobileBids = () => (
-    <div className="bids-grid-container">
-      {filteredBids.length > 0 ? (
-        <div className="request-grid">
-          {filteredBids.map((bid) => {
+  const renderBidsTable = () => (
+    <div className="bids-table-container">
+      {/* Table Header */}
+      <div className="bids-table-header" style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '16px 20px',
+        background: '#f8f9fa',
+        borderBottom: '2px solid #ececf0',
+        fontWeight: 600,
+        fontSize: '0.9rem',
+        color: '#6b6b7a'
+      }}>
+        <div style={{ flex: 2 }}>Request</div>
+        <div style={{ flex: 1, textAlign: 'center' }}>Bid Amount</div>
+        <div style={{ flex: 1, textAlign: 'center' }}>Status</div>
+        <div style={{ flex: 1, textAlign: 'center' }}>Actions</div>
+      </div>
+
+      {/* Table Body */}
+      <div className="bids-table-body">
+        {filteredBids.length > 0 ? (
+          filteredBids.map((bid) => {
             const request = requests.find((req) => req.id === bid.request_id);
             return (
               request && (
-                <BidDisplayMini
+                <BidDisplayRow
                   key={bid.id}
                   bid={bid}
                   request={request}
@@ -263,14 +301,23 @@ const pendingBids = bids.filter((bid) =>
                     navigate(`/edit-bid/${requestId}/${bidId}`)
                   }
                   openWithdrawModal={openWithdrawModal}
+                  onContractUpload={handleContractUpload}
+                  onMessageClick={() => handleMessageClick(request.user_id || request.profile_id, `I'm interested in your request for ${request.title}`)}
                 />
               )
             );
-          })}
-        </div>
-      ) : (
-        <p className="no-bids-text">No {activeTab.toLowerCase()} bids.</p>
-      )}
+          })
+        ) : (
+          <div style={{
+            padding: '40px 20px',
+            textAlign: 'center',
+            color: '#6b6b7a',
+            fontSize: '1.1rem'
+          }}>
+            No {activeTab.toLowerCase()} bids.
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -290,7 +337,7 @@ const pendingBids = bids.filter((bid) =>
               const request = requests.find((req) => req.id === bid.request_id);
               return (
                 request && (
-                  <BidDisplayMini
+                  <BidDisplayRow
                     key={bid.id}
                     bid={bid}
                     request={request}
@@ -313,7 +360,7 @@ const pendingBids = bids.filter((bid) =>
   const renderBidCard = (bid) => {
     const expirationStatus = getExpirationStatus(bid.expiration_date);
     return (
-      <BidDisplayMini
+      <BidDisplayRow
         key={bid.id}
         bid={{
           ...bid,
@@ -368,6 +415,27 @@ const pendingBids = bids.filter((bid) =>
     }
   };
 
+  // Placeholder handler functions for BidDisplayRow props
+  const handleContractView = (bid) => {
+    // TODO: Implement contract view logic
+    console.log('View contract for bid:', bid);
+  };
+
+  const handleFollowUp = (bid) => {
+    // TODO: Implement follow-up logic
+    console.log('Follow up for bid:', bid);
+  };
+
+  const handleMessage = (bid) => {
+    // TODO: Implement message logic
+    console.log('Message for bid:', bid);
+  };
+
+  const handleViewRequest = (bid) => {
+    // TODO: Implement view request logic
+    console.log('View request for bid:', bid);
+  };
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
@@ -378,47 +446,251 @@ const pendingBids = bids.filter((bid) =>
         Your Bids
       </h1>
       <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>View and manage your bids for client requests</p>
-      {/* Always Render Tab Selector */}
-      <div className="bids-status-container">{renderTabSelector()}</div>
+      {/* Tab Selector */}
+      {renderTabSelector()}
 
-      {/* Render Bids */}
-      <div className="bids-grid-container">
-        {filteredBids.length > 0 ? (
-          <div className="request-grid">
-            {filteredBids.map((bid) => {
-              const request = requests.find((req) => req.id === bid.request_id);
-              return (
-                request && (
-                  <BidDisplayMini
-                    key={bid.id}
-                    bid={bid}
-                    request={request}
-                    onEditBid={(requestId, bidId) =>
-                      navigate(`/edit-bid/${requestId}/${bidId}`)
-                    }
-                    openWithdrawModal={openWithdrawModal}
-                    onContractUpload={handleContractUpload}
-                    onMessageClick={() => handleMessageClick(request.user_id || request.profile_id, `I'm interested in your request for ${request.title}`)}
-                  />
-                )
-              );
-            })}
-          </div>
-        ) : (
-          <p className="no-bids-text">No {activeTab.toLowerCase()} bids.</p>
-        )}
+      {/* Search and Sort Controls */}
+      <div className="bids-controls" style={{ 
+        display: 'flex', 
+        gap: '16px', 
+        marginBottom: '24px',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        padding: '0 1rem'
+      }}>
+        {/* Search Bar */}
+        <div style={{ flex: 1, minWidth: '250px' }}>
+          <input
+            type="text"
+            placeholder="Search bids by request title or client name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              fontSize: '14px',
+              background: '#fff'
+            }}
+          />
+        </div>
+
+        {/* Sort Type Dropdown */}
+        <select
+          value={sortType}
+          onChange={e => setSortType(e.target.value)}
+          style={{
+            padding: '12px 16px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            background: '#fff',
+            fontSize: '14px',
+            fontWeight: '500',
+            minWidth: '140px',
+            cursor: 'pointer'
+          }}
+        >
+          <option value="date">Date</option>
+          <option value="amount">Bid Amount</option>
+          <option value="status">Status</option>
+        </select>
+
+        {/* Sort Toggle */}
+        <button
+          onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+          style={{
+            padding: '12px 16px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            background: '#fff',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '14px',
+            fontWeight: '500'
+          }}
+        >
+          <i className={`fas fa-sort-${sortOrder === 'desc' ? 'down' : 'up'}`}></i>
+          {sortOrder === 'desc' 
+            ? (sortType === 'date' ? 'Newest First' : sortType === 'amount' ? 'High to Low' : 'Most Viewed')
+            : (sortType === 'date' ? 'Oldest First' : sortType === 'amount' ? 'Low to High' : 'Least Viewed')
+          }
+        </button>
       </div>
 
-      {/* Withdraw Confirmation Modal */}
-      {showWithdrawModal && (
-        <WithdrawConfirmationModal
-          show={showWithdrawModal}
-          onClose={closeWithdrawModal}
-          onConfirm={confirmWithdraw}
-        />
+      {/* Bids Table */}
+      {filteredBids.length > 0 ? (
+        <div className="bids-table-container">
+          {/* Table Header */}
+          <div className="bids-table-header" style={{
+            display: 'flex',
+            padding: '16px 20px',
+            background: '#f8f9fa',
+            borderBottom: '1px solid #e2e8f0',
+            fontWeight: '600',
+            fontSize: '14px',
+            color: '#374151',
+            userSelect: 'none'
+          }}>
+            <div style={{ flex: 2 }}>Request</div>
+            <div
+              style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}
+              onClick={() => {
+                if (sortType === 'eventDate') {
+                  setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+                } else {
+                  setSortType('eventDate');
+                  setSortOrder('desc');
+                }
+              }}
+            >
+              Event Date
+              {sortType === 'eventDate' && (
+                <span style={{ marginLeft: 4 }}>{sortOrder === 'desc' ? '▼' : '▲'}</span>
+              )}
+            </div>
+            <div
+              style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}
+              onClick={() => {
+                if (sortType === 'bidDate') {
+                  setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+                } else {
+                  setSortType('bidDate');
+                  setSortOrder('desc');
+                }
+              }}
+            >
+              Bid Date
+              {sortType === 'bidDate' && (
+                <span style={{ marginLeft: 4 }}>{sortOrder === 'desc' ? '▼' : '▲'}</span>
+              )}
+            </div>
+            <div
+              style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}
+              onClick={() => {
+                if (sortType === 'amount') {
+                  setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+                } else {
+                  setSortType('amount');
+                  setSortOrder('desc');
+                }
+              }}
+            >
+              Bid Amount
+              {sortType === 'amount' && (
+                <span style={{ marginLeft: 4 }}>{sortOrder === 'desc' ? '▼' : '▲'}</span>
+              )}
+            </div>
+            <div
+              style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}
+              onClick={() => {
+                if (sortType === 'status') {
+                  setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+                } else {
+                  setSortType('status');
+                  setSortOrder('desc');
+                }
+              }}
+            >
+              Status
+              {sortType === 'status' && (
+                <span style={{ marginLeft: 4 }}>{sortOrder === 'desc' ? '▼' : '▲'}</span>
+              )}
+            </div>
+            <div style={{ flex: 1, textAlign: 'center' }}>Actions</div>
+          </div>
+
+          {/* Bids Rows */}
+          {filteredBids
+            .slice() // copy before sort
+            .sort((a, b) => {
+              let aValue, bValue;
+              if (sortType === 'eventDate') {
+                const getEventDate = (req) => req?.start_date || req?.date_preference || req?.event_date || req?.created_at || null;
+                aValue = getEventDate(requests.find((req) => req.id === a.request_id));
+                bValue = getEventDate(requests.find((req) => req.id === b.request_id));
+                aValue = aValue ? new Date(aValue) : new Date(0);
+                bValue = bValue ? new Date(bValue) : new Date(0);
+              } else if (sortType === 'bidDate') {
+                aValue = a.created_at ? new Date(a.created_at) : new Date(0);
+                bValue = b.created_at ? new Date(b.created_at) : new Date(0);
+              } else if (sortType === 'amount') {
+                aValue = parseFloat(a.bid_amount) || 0;
+                bValue = parseFloat(b.bid_amount) || 0;
+              } else if (sortType === 'status') {
+                // Status sorting: viewed first, then by status type, then by date
+                const getStatusPriority = (bid) => {
+                  const statusOrder = { 'approved': 1, 'accepted': 1, 'interested': 2, 'pending': 3, 'denied': 4 };
+                  const viewedPriority = bid.viewed ? 0 : 1;
+                  const statusPriority = statusOrder[bid.status] || 5;
+                  return viewedPriority * 10 + statusPriority;
+                };
+                aValue = getStatusPriority(a);
+                bValue = getStatusPriority(b);
+                // If status priority is the same, sort by date
+                if (aValue === bValue) {
+                  aValue = a.created_at ? new Date(a.created_at) : new Date(0);
+                  bValue = b.created_at ? new Date(b.created_at) : new Date(0);
+                }
+              } else {
+                // default to bid date
+                aValue = a.created_at ? new Date(a.created_at) : new Date(0);
+                bValue = b.created_at ? new Date(b.created_at) : new Date(0);
+              }
+              if (sortOrder === 'desc') {
+                return bValue - aValue;
+              } else {
+                return aValue - bValue;
+              }
+            })
+            .map((bid) => {
+              const request = requests.find((req) => req.id === bid.request_id);
+              return (
+                <BidDisplayRow
+                  key={bid.id}
+                  bid={bid}
+                  request={request}
+                  bidDate={bid.created_at}
+                  onEditBid={handleEditBid}
+                  openWithdrawModal={openWithdrawModal}
+                  onContractUpload={handleContractUpload}
+                  onContractView={handleContractView}
+                  onFollowUp={handleFollowUp}
+                  onMessage={handleMessage}
+                  onViewRequest={handleViewRequest}
+                />
+              );
+            })}
+        </div>
+      ) : (
+        <div className="no-bids" style={{
+          textAlign: 'center',
+          padding: '60px 20px',
+          color: '#6b7280'
+        }}>
+          <i className="fas fa-inbox" style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }}></i>
+          <h3 style={{ marginBottom: '8px', color: '#374151' }}>No bids found</h3>
+          <p>
+            {searchQuery 
+              ? `No bids match "${searchQuery}"` 
+              : activeTab === 'all' 
+                ? 'You haven\'t placed any bids yet.' 
+                : `No ${activeTab} bids found.`
+            }
+          </p>
+        </div>
       )}
 
-      {/* Chat Interface Modal */}
+      {/* Modals */}
+      <WithdrawConfirmationModal
+        show={showWithdrawModal}
+        onHide={() => setShowWithdrawModal(false)}
+        onConfirm={confirmWithdraw}
+        bidToWithdraw={selectedBidId}
+      />
+
       {showChatModal && selectedChat && (
         <div className="chat-modal-overlay" onClick={() => setShowChatModal(false)}>
           <div className="chat-modal" onClick={e => e.stopPropagation()}>

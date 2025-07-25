@@ -81,6 +81,11 @@ function OpenRequests({ onMessageClick }) {
   const [isSlidingModalOpen, setIsSlidingModalOpen] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState(null);
   const [showStripeModal, setShowStripeModal] = useState(false);
+  
+  // New state for bid readiness assessment
+  const [bidCounts, setBidCounts] = useState({});
+  const [userSubmittedBids, setUserSubmittedBids] = useState(new Set());
+  const [allBidsUnfiltered, setAllBidsUnfiltered] = useState([]);
 
   // Add this new function to fetch user's bids
   const fetchUserBids = async (userId) => {
@@ -95,7 +100,135 @@ function OpenRequests({ onMessageClick }) {
     }
 
     // Create a Set of request_ids that the user has already bid on
-    return new Set(bids.map((bid) => bid.request_id));
+    const bidSet = new Set(bids.map((bid) => bid.request_id));
+    setUserSubmittedBids(bidSet);
+    return bidSet;
+  };
+
+  // New function to fetch bid counts for requests
+  const fetchBidCounts = async () => {
+    console.log('=== fetchBidCounts called ===');
+    try {
+      console.log('Fetching bid counts...');
+      
+      // First, let's check if there are any bids at all
+      const { data: allBids, error: allBidsError } = await supabase
+        .from("bids")
+        .select("id, request_id, user_id, category, hidden")
+        .limit(10);
+
+      if (allBidsError) {
+        console.error("Error fetching all bids:", allBidsError);
+      } else {
+        console.log('Sample of all bids in database:', allBids);
+        console.log('Total bids in database:', allBids?.length || 0);
+      }
+      
+      // Also check total count
+      const { count: totalBidCount, error: countError } = await supabase
+        .from("bids")
+        .select("*", { count: 'exact', head: true });
+
+      if (countError) {
+        console.error("Error counting bids:", countError);
+      } else {
+        console.log('Total bids in database (count):', totalBidCount);
+      }
+      
+      // First, let's get ALL bids without any filtering to see what's there
+      const { data: allBidsUnfiltered, error: allBidsUnfilteredError } = await supabase
+        .from("bids")
+        .select("request_id, id, user_id, category, hidden")
+        .limit(50);
+
+      if (allBidsUnfilteredError) {
+        console.error("Error fetching all bids (unfiltered):", allBidsUnfilteredError);
+      } else {
+        console.log('All bids (unfiltered):', allBidsUnfiltered);
+        console.log('Total unfiltered bids:', allBidsUnfiltered?.length || 0);
+        setAllBidsUnfiltered(allBidsUnfiltered || []);
+      }
+
+      const { data: bidCountsData, error } = await supabase
+        .from("bids")
+        .select("request_id, id, user_id, category, hidden")
+        .not("hidden", "eq", true);
+
+      if (error) {
+        console.error("Error fetching bid counts:", error);
+        return;
+      }
+
+      console.log('Raw bid data (not hidden):', bidCountsData);
+      console.log('Total bids found:', bidCountsData?.length || 0);
+
+      const counts = {};
+      bidCountsData.forEach(bid => {
+        const requestId = bid.request_id;
+        if (requestId) {
+          counts[requestId] = (counts[requestId] || 0) + 1;
+        }
+      });
+
+      console.log('Processed bid counts:', counts);
+      console.log('Unique request IDs with bids:', Object.keys(counts));
+      setBidCounts(counts);
+    } catch (error) {
+      console.error("Error in fetchBidCounts:", error);
+    }
+  };
+
+  // Helper function to calculate request urgency
+  const calculateRequestUrgency = (request) => {
+    if (!request.start_date) return null;
+    
+    const eventDate = new Date(request.start_date);
+    const now = new Date();
+    const daysUntilEvent = Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilEvent <= 7) return 'urgent';
+    if (daysUntilEvent <= 30) return 'soon';
+    return 'normal';
+  };
+
+  // Helper function to assess budget match
+  const assessBudgetMatch = (request, businessProfile) => {
+    if (!request.price_range || !businessProfile?.average_bid_amount) return null;
+    
+    const budget = parseFloat(request.price_range.replace(/[^0-9]/g, ''));
+    const avgBid = parseFloat(businessProfile.average_bid_amount);
+    
+    if (budget >= avgBid * 1.5) return 'high';
+    if (budget >= avgBid * 0.8) return 'medium';
+    return 'low';
+  };
+
+  // Helper function to assess service match
+  const assessServiceMatch = (request, businessCategories) => {
+    if (!request.service_category || !businessCategories) return null;
+    
+    const requestCategory = request.service_category.toLowerCase();
+    const hasExactMatch = businessCategories.some(cat => 
+      cat.toLowerCase() === requestCategory
+    );
+    
+    if (hasExactMatch) return 'perfect';
+    
+    // Check for related categories
+    const relatedCategories = {
+      'photography': ['videography'],
+      'videography': ['photography'],
+      'beauty': ['hair and makeup artist'],
+      'hair and makeup artist': ['beauty']
+    };
+    
+    const hasRelatedMatch = businessCategories.some(cat => {
+      const related = relatedCategories[cat.toLowerCase()] || [];
+      return related.includes(requestCategory);
+    });
+    
+    if (hasRelatedMatch) return 'good';
+    return 'partial';
   };
 
   useEffect(() => {
@@ -189,11 +322,9 @@ function OpenRequests({ onMessageClick }) {
     if (businessCategories.length === 0 && !isAdmin) return;
 
     const fetchRequests = async () => {
-      setIsLoading(true);
       try {
-        console.log('Business Categories:', businessCategories);
-        console.log('Is Admin:', isAdmin);
-
+        console.log('Fetching requests for business ID:', businessId);
+        
         const validCategories = [
           "photography",
           "videography",
@@ -204,10 +335,50 @@ function OpenRequests({ onMessageClick }) {
           "beauty",
           "wedding planner/coordinator"
         ];
+        
+        // Get all requests from different tables
+        const [
+          { data: regularRequests, error: regularError },
+          { data: photoRequests, error: photoError },
+          { data: djRequests, error: djError },
+          { data: cateringRequests, error: cateringError },
+          { data: beautyRequests, error: beautyError },
+          { data: videoRequests, error: videoError },
+          { data: floristRequests, error: floristError },
+          { data: weddingPlanningRequests, error: weddingPlanningError }
+        ] = await Promise.all([
+          supabase.from('requests').select('*').eq('user_id', businessId),
+          supabase.from('photography_requests').select('*').eq('profile_id', businessId),
+          supabase.from('dj_requests').select('*').eq('user_id', businessId),
+          supabase.from('catering_requests').select('*').eq('user_id', businessId),
+          supabase.from('beauty_requests').select('*').eq('user_id', businessId),
+          supabase.from('videography_requests').select('*').eq('user_id', businessId),
+          supabase.from('florist_requests').select('*').eq('user_id', businessId),
+          supabase.from('wedding_planning_requests').select('*').eq('user_id', businessId)
+        ]);
+
+        // Log the results for debugging
+        console.log('Regular requests:', regularRequests?.length || 0);
+        console.log('Photo requests:', photoRequests?.length || 0);
+        console.log('DJ requests:', djRequests?.length || 0);
+        console.log('Catering requests:', cateringRequests?.length || 0);
+        console.log('Beauty requests:', beautyRequests?.length || 0);
+        console.log('Video requests:', videoRequests?.length || 0);
+        console.log('Florist requests:', floristRequests?.length || 0);
+        console.log('Wedding planning requests:', weddingPlanningRequests?.length || 0);
+
+        // Sample request IDs for debugging
+        if (photoRequests?.length > 0) {
+          console.log('Sample photo request IDs:', photoRequests.slice(0, 3).map(r => r.id));
+        }
+        if (cateringRequests?.length > 0) {
+          console.log('Sample catering request IDs:', cateringRequests.slice(0, 3).map(r => r.id));
+        }
 
         // If user is admin, fetch all requests
         if (isAdmin) {
           console.log('Fetching as admin');
+          
           const [
             photoData,
             djData,
@@ -309,6 +480,8 @@ function OpenRequests({ onMessageClick }) {
           ];
 
           console.log('All Requests:', allRequests);
+          console.log('Total requests fetched:', allRequests.length);
+          console.log('Sample request IDs:', allRequests.slice(0, 5).map(r => ({ id: r.id, type: r.service_category, title: r.service_title })));
           setOpenRequests(allRequests);
           setOpenPhotoRequests([]);
           return;
@@ -450,7 +623,24 @@ function OpenRequests({ onMessageClick }) {
     };
 
     fetchRequests();
-  }, [businessCategories, isAdmin]);
+    
+    // Fetch vendor interests and bid counts after requests are loaded
+    console.log('About to call fetchBidCounts, businessId:', businessId);
+    if (businessId) {
+      console.log('Calling fetchBidCounts...');
+      fetchBidCounts();
+    } else {
+      console.log('No businessId, skipping fetchBidCounts');
+    }
+  }, [businessCategories, isAdmin, businessId]);
+
+  // Add debugging to see when the component mounts and what the values are
+  useEffect(() => {
+    console.log('=== OpenRequests useEffect triggered ===');
+    console.log('businessCategories:', businessCategories);
+    console.log('isAdmin:', isAdmin);
+    console.log('businessId:', businessId);
+  }, [businessCategories, isAdmin, businessId]);
 
   const isDatePassed = (request) => {
     // If date is flexible or a range, don't hide
@@ -873,25 +1063,41 @@ function OpenRequests({ onMessageClick }) {
                 ? filterRequestsByHidden(openPhotoRequests)
                 : filterRequestsByHidden(openRequests);
             })()
-              .filter((request) => !userBids.has(request.id))
+              .filter((request) => !userSubmittedBids.has(request.id))
               .filter(meetsMinimumPrice)
               .filter(request => !isDatePassed(request))
               .filter(request => isAdmin || hasMatchingCategory(request.service_category, businessCategories))
               .sort(sortByNewAndDate),
             activeTab
-          ).map((request) => (
-            <RequestDisplayMini
-              key={request.id}
-              request={request}
-              isPhotoRequest={request.service_category === "photography"}
-              onHide={() => hideRequest(request.id, getTableName(request))}
-              onShow={() => showRequest(request.id, getTableName(request))}
-              isHidden={Array.isArray(request.hidden_by_vendor) ? request.hidden_by_vendor.includes(businessId) : false}
-              currentVendorId={businessId}
-              onMessageClick={onMessageClick}
-              onViewMore={handleViewMore}
-            />
-          ))}
+          ).map((request) => {
+            const bidCount = bidCounts[request.id] || 0;
+            console.log(`Request ${request.id} (${request.event_title || request.title}) - bid count: ${bidCount}`);
+            
+            // If bid count is 0, let's check if this request ID exists in the unfiltered bids
+            if (bidCount === 0 && allBidsUnfiltered) {
+              const matchingBids = allBidsUnfiltered.filter(bid => bid.request_id === request.id);
+              console.log(`Request ${request.id} - found ${matchingBids.length} bids in unfiltered data:`, matchingBids);
+            }
+            
+            return (
+              <RequestDisplayMini
+                key={request.id}
+                request={request}
+                isPhotoRequest={request.service_category === "photography"}
+                onHide={() => hideRequest(request.id, getTableName(request))}
+                onShow={() => showRequest(request.id, getTableName(request))}
+                isHidden={Array.isArray(request.hidden_by_vendor) ? request.hidden_by_vendor.includes(businessId) : false}
+                currentVendorId={businessId}
+                onMessageClick={onMessageClick}
+                onViewMore={handleViewMore}
+
+                hasSubmittedBid={userSubmittedBids.has(request.id)}
+                requestUrgency={calculateRequestUrgency(request)}
+                budgetMatch={assessBudgetMatch(request, { average_bid_amount: minimumPrice })}
+                serviceMatch={assessServiceMatch(request, businessCategories)}
+              />
+            );
+          })}
         </div>
       </div>
 

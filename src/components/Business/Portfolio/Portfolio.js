@@ -1263,7 +1263,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
               <div className="business-header-content">
                 <div className="business-header-top">
                   <div className="business-name-overlay">{business.business_name}</div>
-                  {(business.membership_tier === "Verified" || business.Bidi_Plus) && (
+                  {(business.is_verified || business.Bidi_Plus) && (
                     <div className="verified-check-container-overlay" onClick={handleCheckClick}>
                       <VerifiedIcon />
                       <span className="verified-tooltip-overlay">
@@ -1464,7 +1464,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 >
                   <div className="business-name">{business.business_name}</div>
 
-                  {(business.membership_tier === "Verified" ||
+                  {(business.is_verified ||
                     business.Bidi_Plus) && (
                     <div
                       className="verified-check-container"

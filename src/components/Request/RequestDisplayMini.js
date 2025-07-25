@@ -10,8 +10,14 @@ function RequestDisplayMini({
     isHidden = false, 
     onShow,
     currentVendorId = null,
-    onMessageClick = null, // Add this prop
-    onViewMore = null // Add this prop
+    onMessageClick = null,
+    onViewMore = null,
+    isClientRequested = false,
+    hasSubmittedBid = false,
+    requestUrgency = null,
+    budgetMatch = null,
+    locationMatch = null,
+    serviceMatch = null
 }) {
     const [timeLeft, setTimeLeft] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -19,9 +25,7 @@ function RequestDisplayMini({
     // Helper to parse created_at as UTC if needed
     const parseUTCDate = (dateString) => {
         if (!dateString) return null;
-        // If already ISO, just use it
         if (dateString.includes('T')) return new Date(dateString);
-        // Convert 'YYYY-MM-DD HH:mm:ss.ssssss' to 'YYYY-MM-DDTHH:mm:ss.sssZ'
         return new Date(dateString.replace(' ', 'T').replace(/([.\d]+)$/, '$1Z'));
     };
 
@@ -35,7 +39,6 @@ function RequestDisplayMini({
 
     const checkPromotion = (createdAt) => {
         if (!createdAt) return null;
-
         const now = Date.now();
         const created = parseUTCDate(createdAt)?.getTime();
         if (!created) return null;
@@ -43,17 +46,16 @@ function RequestDisplayMini({
 
         if (minutesSinceCreation < 30) {
             return {
-                message: "⚡Save 2%",
+                message: "Save 2%",
                 endTime: new Date(created + (30 * 60 * 1000))
             };
         }
         if (minutesSinceCreation < 60) {
             return {
-                message: "⏳Save 1%",
+                message: "Save 1%",
                 endTime: new Date(created + (60 * 60 * 1000))
             };
         }
-
         return null;
     };
 
@@ -70,10 +72,9 @@ function RequestDisplayMini({
                 const timeRemaining = promotion.endTime.getTime() - nowUTC;
                 const minutesSinceCreation = (nowUTC - createdUTC) / (1000 * 60);
 
-                // Only cap if created_at is in the future (negative minutesSinceCreation)
-                if (promotion.message === "⚡Save 2%" && minutesSinceCreation < 0) {
+                if (promotion.message === "Save 2%" && minutesSinceCreation < 0) {
                     setTimeLeft("30:00");
-                } else if (promotion.message === "⏳Save 1%" && minutesSinceCreation < 0) {
+                } else if (promotion.message === "Save 1%" && minutesSinceCreation < 0) {
                     setTimeLeft("60:00");
                 } else if (timeRemaining > 0) {
                     const totalSeconds = Math.floor(timeRemaining / 1000);
@@ -96,34 +97,25 @@ function RequestDisplayMini({
     };
 
     const getTitle = () => {
-        // First check if it's a photo request (legacy check)
         if (isPhotoRequest) {
             return request.event_title || 'Untitled Event';
         }
-
-        // Check all possible title fields in order of preference
         const title = request.event_title || 
                      request.title || 
                      request.service_title || 
                      `${request.event_type || 'Untitled'} Event`;
-
-        // If we have a title but it's too short, add the event type
         if (title.length < 3 && request.event_type) {
             return `${request.event_type} Event`;
         }
-
         return title;
     };
 
-    // Robust helper to parse various date formats as local date
     function parseLocalDate(dateString) {
       if (!dateString || typeof dateString !== 'string') return null;
-      // If ISO string, let Date handle it
       if (dateString.includes('T')) {
         const d = new Date(dateString);
         return isNaN(d) ? null : d;
       }
-      // Handle 'YYYY-MM-DD' and 'YYYY-MM-DD HH:mm:ss'
       const datePart = dateString.split(' ')[0];
       const [year, month, day] = datePart.split('-');
       if (!year || !month || !day) {
@@ -135,13 +127,11 @@ function RequestDisplayMini({
     }
 
     const getDate = () => {
-        // For beauty requests, use start_date
         if (request.table_name === 'beauty_requests') {
             const parsed = parseLocalDate(request.start_date);
             return parsed ? parsed.toLocaleDateString() : 'Date not specified';
         }
 
-        // Try all possible date field names
         const startDate = isPhotoRequest 
             ? request.start_date 
             : request.service_date || request.date || request.event_date || request.start_date;
@@ -161,7 +151,6 @@ function RequestDisplayMini({
         } else if (request.date_flexibility === 'flexible') {
             return `Flexible within ${request.date_timeframe || request.timeframe || 'specified timeframe'}`;
         }
-        // Handle legacy requests without date_flexibility
         const parsed = parseLocalDate(startDate);
         return parsed ? parsed.toLocaleDateString() : 'Date not specified';
     };
@@ -174,111 +163,498 @@ function RequestDisplayMini({
         return vendorIds.includes(currentVendorId);
     };
 
-    return (
-        <div className={`request-display-mini text-center mb-4 
-            ${isVendorSelected() ? 'selected-vendor' : ''}
-            ${isHidden ? 'hidden-request' : ''}`}
-        >
-            <div className="header-container">
-                {isVendorSelected() && (
-                    <div className="selected-badge">
-                        <span>⭐ Client Requested You</span>
-                        <span className="commission-badge">
-                            1% Off Commission
-                        </span>
-                    </div>
-                )}
-                <button 
-                    onClick={isHidden ? onShow : onHide} 
-                    className="hide-button"
-                    title={isHidden ? "Show this request" : "Hide this request"}
-                >
-                    {isHidden ? (
-                        <i className="fas fa-eye"></i>
-                    ) : (
-                        <i className="fas fa-times"></i>
-                    )}
-                </button>
-            </div>
+    // Get bid opportunity score (0-100)
 
-            <div className="request-content p-3">
-                <div className="title-section">
-                    <h2 className="request-title">{getTitle()}</h2>
-                    <div style={{display: 'flex', gap: '10px'}}>
+    const getCategoryIcon = (category) => {
+        const iconMap = {
+            'photography': 'fa-solid fa-camera',
+            'videography': 'fa-solid fa-video',
+            'dj': 'fa-solid fa-music',
+            'catering': 'fa-solid fa-utensils',
+            'beauty': 'fa-solid fa-spa',
+            'florist': 'fa-solid fa-leaf',
+            'wedding_planning': 'fa-solid fa-ring',
+            'regular': 'fa-solid fa-star'
+        };
+        return iconMap[category] || iconMap.regular;
+    };
+
+    return (
+        <div className="request-card" style={{
+            background: 'white',
+            borderRadius: '16px',
+            border: hasSubmittedBid ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+            overflow: 'hidden',
+            transition: 'all 0.2s ease',
+            position: 'relative',
+            cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.12)';
+        }}
+        onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+        }}
+        onClick={() => onViewMore && onViewMore(request.id)}
+        >
+            {/* Header */}
+            <div style={{
+                background: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)',
+                padding: '16px 20px',
+                borderRadius: '16px'
+            }}>
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}>
+                        <div style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '12px',
+                            background: 'linear-gradient(135deg, #a328f4 0%, #ff008a 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '20px'
+                        }}>
+                            <i className={getCategoryIcon(request.service_category || request.type)}></i>
+                        </div>
+                        <div>
+                            <div style={{
+                                fontSize: '16px',
+                                fontWeight: '600',
+                                color: '#374151',
+                                marginBottom: '4px'
+                            }}>
+                                {getTitle()}
+                            </div>
+                            <div style={{
+                                fontSize: '14px',
+                                color: '#6b7280'
+                            }}>
+                                {request.event_type || request.service_category || 'Service Request'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}>
                         {isNew(request.created_at) && (
-                            <div className="request-status">New</div>
+                            <div style={{
+                                background: 'linear-gradient(135deg, #ff008a 0%, #ec4899 100%)',
+                                color: 'white',
+                                padding: '4px 8px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: '600'
+                            }}>
+                                NEW
+                            </div>
                         )}
                         {checkPromotion(request.created_at) && (
-                            <div className="promotion-status fade-in">
+                            <div style={{
+                                background: '#f59e0b',
+                                color: 'white',
+                                padding: '4px 8px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: '600'
+                            }}>
                                 {checkPromotion(request.created_at).message}
                                 {timeLeft && <span> ({timeLeft})</span>}
+                            </div>
+                        )}
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                isHidden ? onShow() : onHide();
+                            }}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#6b7280',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                borderRadius: '4px',
+                                fontSize: '16px'
+                            }}
+                        >
+                            {isHidden ? '👁️' : '✕'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main content */}
+            <div style={{ padding: '20px' }}>
+
+
+                {/* Key indicators */}
+                <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    marginBottom: '16px',
+                    flexWrap: 'wrap'
+                }}>
+                    {/* Competition indicator */}
+
+
+                    {/* Client requested */}
+                    {isClientRequested && (
+                        <div style={{
+                            background: '#fef3c7',
+                            color: '#d97706',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            Client Requested
+                        </div>
+                    )}
+
+                    {/* Urgency */}
+                    {requestUrgency === 'urgent' && (
+                        <div style={{
+                            background: '#fee2e2',
+                            color: '#dc2626',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                            </svg>
+                            Urgent
+                        </div>
+                    )}
+
+                    {/* Perfect match */}
+                    {serviceMatch === 'perfect' && (
+                        <div style={{
+                            background: '#d1fae5',
+                            color: '#059669',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            Perfect Match
+                        </div>
+                    )}
+
+                    {/* High budget */}
+                    {budgetMatch === 'high' && (
+                        <div style={{
+                            background: '#fde7fa', // lighter background to go with the text
+                            color: '#f247d1',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                            </svg>
+                            High Budget
+                        </div>
+                    )}
+                </div>
+
+                {/* Event details with big icons */}
+                <div style={{
+                    background: '#f9fafb',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    marginBottom: '16px'
+                }}>
+                    <div style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#374151',
+                        marginBottom: '12px'
+                    }}>
+                        Event Details
+                    </div>
+                                        <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                        gap: '20px'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '16px',
+                            background: 'white',
+                            borderRadius: '12px',
+                            border: '1px solid #e5e7eb'
+                        }}>
+                            <div style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '10px',
+                                background: 'linear-gradient(135deg, #a328f4 0%, #8b5cf6 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontSize: '20px'
+                            }}>
+                                <i className="fas fa-calendar"></i>
+                            </div>
+                            <div style={{
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: '#374151',
+                                textAlign: 'center'
+                            }}>
+                                Date
+                            </div>
+                            <div style={{
+                                fontSize: '12px',
+                                color: '#6b7280',
+                                textAlign: 'center'
+                            }}>
+                                {getDate()}
+                            </div>
+                        </div>
+                        
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '16px',
+                            background: 'white',
+                            borderRadius: '12px',
+                            border: '1px solid #e5e7eb'
+                        }}>
+                            <div style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '10px',
+                                background: 'linear-gradient(135deg, #ff008a 0%, #ec4899 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontSize: '20px'
+                            }}>
+                                <i className="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div style={{
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: '#374151',
+                                textAlign: 'center'
+                            }}>
+                                Location
+                            </div>
+                            <div style={{
+                                fontSize: '12px',
+                                color: '#6b7280',
+                                textAlign: 'center'
+                            }}>
+                                {request.location || 'TBD'}
+                            </div>
+                        </div>
+                        
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '16px',
+                            background: 'white',
+                            borderRadius: '12px',
+                            border: '1px solid #e5e7eb'
+                        }}>
+                            <div style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '10px',
+                                background: 'linear-gradient(135deg, #c026d3 0%, #a855f7 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontSize: '20px'
+                            }}>
+                                <i className="fas fa-dollar-sign"></i>
+                            </div>
+                            <div style={{
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: '#374151',
+                                textAlign: 'center'
+                            }}>
+                                Budget
+                            </div>
+                            <div style={{
+                                fontSize: '12px',
+                                color: '#6b7280',
+                                textAlign: 'center'
+                            }}>
+                                {request.price_range || request.budget_range}
+                            </div>
+                        </div>
+                        
+                        {request.description && (
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '10px',
+                                padding: '16px',
+                                background: 'white',
+                                borderRadius: '12px',
+                                border: '1px solid #e5e7eb'
+                            }}>
+                                <div style={{
+                                    width: '48px',
+                                    height: '48px',
+                                    borderRadius: '10px',
+                                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    fontSize: '20px'
+                                }}>
+                                    <i className="fas fa-file-alt"></i>
+                                </div>
+                                <div style={{
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    color: '#374151',
+                                    textAlign: 'center'
+                                }}>
+                                    Description
+                                </div>
+                                <div style={{
+                                    fontSize: '12px',
+                                    color: '#6b7280',
+                                    textAlign: 'center'
+                                }}>
+                                    {request.description.length > 50 
+                                        ? request.description.substring(0, 50) + '...' 
+                                        : request.description}
+                                </div>
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="details-grid">
-                    <div className="detail-item">
-                        <span className="detail-label">
-                            <i className="fas fa-calendar-alt" style={{ color: '#9633eb', marginRight: '8px' }}></i>
-                            Event Type
-                        </span>
-                        <span className="detail-value detail-chip">
-                            {request.event_type || 'Not specified'}
-                        </span>
-                    </div>
-                    <div className="detail-item">
-                        <span className="detail-label">
-                            <i className="fas fa-map-marker-alt" style={{ color: '#9633eb', marginRight: '8px' }}></i>
-                            Location
-                        </span>
-                        <span className="detail-value detail-chip">
-                            {request.location || 'Not specified'}
-                        </span>
-                    </div>
-                    <div className="detail-item">
-                        <span className="detail-label">
-                            <i className="fas fa-clock" style={{ color: '#9633eb', marginRight: '8px' }}></i>
-                            Date of Service
-                        </span>
-                        <span className="detail-value-long detail-chip">
-                            {getDate()}
-                        </span>
-                    </div>
-                    <div className="detail-item">
-                        <span className="detail-label">
-                            <i className="fas fa-dollar-sign" style={{ color: '#9633eb', marginRight: '8px' }}></i>
-                            Budget
-                        </span>
-                        <span className="detail-value detail-chip">
-                            ${request.price_range || request.budget_range}
-                        </span>
-                    </div>
-                </div>
-
-                {!hideBidButton && (
-                    <div className="buttons-container" style={{
-                        gridTemplateColumns: currentVendorId && isVendorSelected() ? "1fr 1fr" : "minmax(auto, 400px)",
-                    }}>
+                {/* Action buttons */}
+                <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    justifyContent: 'center'
+                }}>
+                    <button 
+                        style={{
+                            background: hasSubmittedBid ? '#a328f4' : '#ff008a',
+                            color: 'white',
+                            border: 'none',
+                            padding: '10px 20px',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            transition: 'all 0.2s ease',
+                            flex: 1,
+                            justifyContent: 'center'
+                        }}
+                        onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
+                        onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                    >
+                        {hasSubmittedBid ? 'View My Bid' : 'View Details'}
+                    </button>
+                    
+                    {isClientRequested && (
                         <button 
-                            className="submit-bid-button" 
-                            onClick={() => onViewMore && onViewMore(request.id)}
+                            style={{
+                                background: '#a328f4',
+                                color: 'white',
+                                border: 'none',
+                                padding: '10px 16px',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onMessageClick && onMessageClick(request.user_id);
+                            }}
+                            onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
+                            onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
                         >
-                            <i className="fas fa-eye"></i>
-                            <span>View More</span>
+
+                                Message
                         </button>
-                        {currentVendorId && isVendorSelected() && (
-                            <button 
-                                className="message-button" 
-                                onClick={() => onMessageClick && onMessageClick(request.user_id)}
-                            >
-                                <i className="fas fa-comment-dots"></i>
-                                <span>Message</span>
-                            </button>
-                        )}
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
+
+            {/* Submitted bid indicator */}
+            {hasSubmittedBid && (
+                <div style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    background: '#3b82f6',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    zIndex: 10
+                }}>
+                    💼 Bid Submitted
+                </div>
+            )}
 
             {selectedPhoto && (
                 <div className="modal-overlay" onClick={handleCloseModal}>

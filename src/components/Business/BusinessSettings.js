@@ -17,8 +17,12 @@ import { useGoogleBusinessReviews } from '../../hooks/useGoogleBusinessReviews.j
 import { formatBusinessName } from '../../utils/formatBusinessName';
 import FetchReviewsButton from '../GoogleBusiness/FetchReviewsButton.js';
 import { updateConsultationHours } from '../../utils/calendarUtils';
+import BusinessSettingsSidebar from './BusinessSettingsSidebar';
+import AdminDashboard from '../admin/AdminDashboard';
+import ChangePlanModal from './ChangePlanModal';
+import Select from 'react-select';
 
-const BusinessSettings = ({ connectedAccountId, setActiveSection }) => {
+const BusinessSettings = ({ connectedAccountId }) => {
   const [isVerified, setIsVerified] = useState(false);
   // const [isVerificationPending, setIsVerificationPending] = useState(false);
   const [currentMinPrice, setCurrentMinPrice] = useState(null);
@@ -132,26 +136,29 @@ const dayNumberToName = {
   4: 'Thursday', 5: 'Friday', 6: 'Saturday'
 };
 
-const fetchPartnershipData = async () => {
-  try {
-    const { data, error } = await supabase
-      .from("partners")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
+  const fetchPartnershipData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("partners")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
 
-    if (error) throw error;
-    setPartnershipData(data);
-  } catch (error) {
-    console.error("Error fetching partnership data:", error);
-  }
-};
+      if (error && error.code !== "PGRST116") {
+        console.error("Error fetching partnership data:", error);
+        return;
+      }
+      setPartnershipData(data || null);
+    } catch (error) {
+      console.error("Error fetching partnership data:", error);
+    }
+  };
 
-useEffect(() => {
-  if (showCouponModal) {
-    fetchPartnershipData();
-  }
-}, [showCouponModal]);
+  useEffect(() => {
+    if (user?.id) {
+      fetchPartnershipData();
+    }
+  }, [user?.id]);
 
 // Add this useEffect to debug the state
 useEffect(() => {
@@ -223,166 +230,122 @@ useEffect(() => {
     console.log("New Coupon Code:", newCouponCode);
   }, [activeCoupon, newCouponCode]);
 
-  useEffect(() => {
-    const fetchSetupProgress = async () => {
-      setIsLoading(true);
-      try {
-        const {
-          data: { user: currentUser },
-        } = await supabase.auth.getUser();
-        if (!currentUser) {
-          setIsLoading(false);
-          return;
-        }
-        setUser(currentUser);
-
-        // Step 1: Fetch the business profile using the user ID
-        const { data: profile, error: profileError } = await supabase
-          .from("business_profiles")
-          .select("*")
-          .eq("id", currentUser.id)
-          .single();
-
-        if (profileError) {
-          console.error("Error fetching business profile:", profileError);
-          setIsLoading(false);
-          return;
-        }
-
-        setIsAdmin(!!profile.is_admin);
-        setDefaultExpirationDays(profile.default_expiration_days || "");
-        
-        // Set autobid enabled status
-        setAutobidEnabled(!!profile.autobid_enabled);
-        
-        // Set selected categories from profile
-        if (profile.business_category) {
-          const categories = Array.isArray(profile.business_category) 
-            ? profile.business_category 
-            : [profile.business_category];
-          setSelectedCategories(categories);
-          setCurrentCategories(categories);
-        }
-
-        // Step 2: Use the business_id from the profile to fetch related data
-        const { data: existingCoupon, error: couponError } = await supabase
-          .from("coupons")
-          .select("*")
-          .eq("business_id", profile.id)
-          .eq("valid", true)
-          .single();
-
-        if (couponError && couponError.code !== "PGRST116") {
-          console.error("Error fetching affiliate coupon:", couponError);
-        }
-
-        // Step 3: Update the setup progress state
-        const newSetupProgress = {
-          paymentAccount: !!profile.stripe_account_id,
-          downPayment: !!profile.down_payment_type,
-          minimumPrice: !!profile.minimum_price,
-          affiliateCoupon: !!existingCoupon,
-          verification: profile.verified_at,
-          story: !!profile.story,
-          bidTemplate: !!profile.bid_template,
-          calendar: isCalendarConnected,
-          defaultExpiration: !!profile.default_expiration_days,
-        };
-
-        setSetupProgress(newSetupProgress);
-
-        // Send notifications for incomplete important items
-        if (!newSetupProgress.paymentAccount) {
-          sendNotification(
-            currentUser.id,
-            notificationTypes.SETUP_REMINDER,
-            'Complete your payment account setup to start receiving payments'
-          );
-        }
-        if (!newSetupProgress.verification) {
-          sendNotification(
-            currentUser.id,
-            notificationTypes.SETUP_REMINDER,
-            'Get verified to build trust with potential clients'
-          );
-        }
-        if (!newSetupProgress.story) {
-          sendNotification(
-            currentUser.id,
-            notificationTypes.SETUP_REMINDER,
-            'Set up your profile to showcase your work and attract more clients'
-          );
-        }
-
-        // Step 4: Update other states
-        setIsVerified(!!profile.verified_at);
-        setActiveCoupon(existingCoupon || null);
-        setProfileDetails(profile);
-        setCurrentMinPrice(profile.minimum_price || null);
-        setMinimumPrice(profile.minimum_price || "");
-
-        if (profile.down_payment_type) {
-          setPaymentType(profile.down_payment_type);
-          setDownPaymentNumber(
-            profile.down_payment_type === "flat fee" ? profile.amount : ""
-          );
-          setPercentage(
-            profile.down_payment_type === "percentage"
-              ? profile.amount * 100
-              : ""
-          );
-        }
-
-        if (profile.bid_template) {
-          setBidTemplate(profile.bid_template);
-          setSetupProgress((prev) => ({ ...prev, bidTemplate: true }));
-        }
-
-        if (profile.contract_template) {
-          setContractTemplate(profile.contract_template);
-        }
-
-        // Set consultation hours if they exist
-        if (profile.consultation_hours) {
-          // Handle both old and new formats
-          let consultationHoursData;
-          
-          if (profile.consultation_hours.consultation_hours) {
-            // New format with nested consultation_hours
-            consultationHoursData = {
-              ...profile.consultation_hours.consultation_hours,
-              daysAvailable: Array.isArray(profile.consultation_hours.consultation_hours.daysAvailable) 
-                ? profile.consultation_hours.consultation_hours.daysAvailable.map(dayNum => dayNumberToName[dayNum] || dayNum)
-                : Object.entries(profile.consultation_hours.consultation_hours.daysAvailable || {})
-                    .filter(([_, value]) => value)
-                    .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
-            };
-            setTimezone(profile.consultation_hours.timezone || "America/Denver");
-          } else {
-            // Old format - convert day numbers to names if needed
-            const daysAvailable = Array.isArray(profile.consultation_hours.daysAvailable) 
-              ? profile.consultation_hours.daysAvailable.map(day => 
-                  typeof day === 'number' ? dayNumberToName[day] : day
-                )
-              : Object.entries(profile.consultation_hours.daysAvailable || {})
-                  .filter(([_, value]) => value)
-                  .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1));
-            
-            consultationHoursData = {
-              ...profile.consultation_hours,
-              daysAvailable
-            };
-          }
-          
-          setConsultationHours(consultationHoursData);
-        }
-      } catch (error) {
-        console.error("Error fetching setup progress:", error);
-      } finally {
+  // Move fetchSetupProgress to top level
+  const fetchSetupProgress = async () => {
+    setIsLoading(true);
+    try {
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
+      if (!currentUser) {
         setIsLoading(false);
+        return;
       }
-    };
+      setUser(currentUser);
 
+      // Step 1: Fetch the business profile using the user ID
+      const { data: profile, error: profileError } = await supabase
+        .from("business_profiles")
+        .select("*")
+        .eq("id", currentUser.id)
+        .single();
+
+      if (profileError) {
+        console.error("Error fetching business profile:", profileError);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsAdmin(!!profile.is_admin);
+      setDefaultExpirationDays(profile.default_expiration_days || "");
+      setAutobidEnabled(!!profile.autobid_enabled);
+      if (profile.business_category) {
+        const categories = Array.isArray(profile.business_category)
+          ? profile.business_category
+          : [profile.business_category];
+        setSelectedCategories(categories);
+        setCurrentCategories(categories);
+      }
+      const { data: existingCoupon, error: couponError } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("business_id", profile.id)
+        .eq("valid", true)
+        .single();
+      if (couponError && couponError.code !== "PGRST116") {
+        console.error("Error fetching affiliate coupon:", couponError);
+      }
+      const newSetupProgress = {
+        paymentAccount: !!profile.stripe_account_id,
+        downPayment: !!profile.down_payment_type,
+        minimumPrice: !!profile.minimum_price,
+        affiliateCoupon: !!existingCoupon,
+        verification: profile.verified_at,
+        story: !!profile.story,
+        bidTemplate: !!profile.bid_template,
+        calendar: isCalendarConnected,
+        defaultExpiration: !!profile.default_expiration_days,
+      };
+      setSetupProgress(newSetupProgress);
+      setIsVerified(!!profile.verified_at);
+      setActiveCoupon(existingCoupon || null);
+      setProfileDetails(profile);
+      setCurrentMinPrice(profile.minimum_price || null);
+      setMinimumPrice(profile.minimum_price || "");
+      if (profile.down_payment_type) {
+        setPaymentType(profile.down_payment_type);
+        setDownPaymentNumber(
+          profile.down_payment_type === "flat fee" ? profile.amount : ""
+        );
+        setPercentage(
+          profile.down_payment_type === "percentage"
+            ? profile.amount * 100
+            : ""
+        );
+      }
+      if (profile.bid_template) {
+        setBidTemplate(profile.bid_template);
+        setSetupProgress((prev) => ({ ...prev, bidTemplate: true }));
+      }
+      if (profile.contract_template) {
+        setContractTemplate(profile.contract_template);
+      }
+      if (profile.consultation_hours) {
+        let consultationHoursData;
+        if (profile.consultation_hours.consultation_hours) {
+          consultationHoursData = {
+            ...profile.consultation_hours.consultation_hours,
+            daysAvailable: Array.isArray(profile.consultation_hours.consultation_hours.daysAvailable)
+              ? profile.consultation_hours.consultation_hours.daysAvailable.map(dayNum => dayNumberToName[dayNum] || dayNum)
+              : Object.entries(profile.consultation_hours.consultation_hours.daysAvailable || {})
+                  .filter(([_, value]) => value)
+                  .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
+          };
+          setTimezone(profile.consultation_hours.timezone || "America/Denver");
+        } else {
+          const daysAvailable = Array.isArray(profile.consultation_hours.daysAvailable)
+            ? profile.consultation_hours.daysAvailable.map(day =>
+                typeof day === 'number' ? dayNumberToName[day] : day
+              )
+            : Object.entries(profile.consultation_hours.daysAvailable || {})
+                .filter(([_, value]) => value)
+                .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1));
+          consultationHoursData = {
+            ...profile.consultation_hours,
+            daysAvailable
+          };
+        }
+        setConsultationHours(consultationHoursData);
+      }
+    } catch (error) {
+      console.error("Error fetching setup progress:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // In useEffect, just call fetchSetupProgress
+  useEffect(() => {
     fetchSetupProgress();
   }, [isCalendarConnected]);
 
@@ -583,24 +546,21 @@ useEffect(() => {
     }
 
     if (!paymentType) {
-      alert("Please select a down payment type (Percentage or Flat Fee).");
-      return;
+      return; // Don't show error, just return silently
     }
 
     if (
       paymentType === "percentage" &&
       (percentage === "" || percentage <= 0)
     ) {
-      alert("Please enter a valid percentage amount.");
-      return;
+      return; // Don't show error if value is empty, just return silently
     }
 
     if (
       paymentType === "flat fee" &&
       (downPaymentNumber === "" || downPaymentNumber <= 0)
     ) {
-      alert("Please enter a valid flat fee amount.");
-      return;
+      return; // Don't show error if value is empty, just return silently
     }
 
     let downPaymentAmount = 0;
@@ -805,7 +765,7 @@ useEffect(() => {
   };
 
   // Add this new function to handle category updates
-  const handleCategorySubmit = async () => {
+  const handleCategorySubmit = async (categoriesToSave) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -816,23 +776,22 @@ useEffect(() => {
     }
 
     // If "other" is selected and there's a custom category, add it to the array
-    let categoriesToSave = [...selectedCategories];
-    if (selectedCategories.includes('other') && customCategory.trim()) {
-      categoriesToSave = categoriesToSave.filter(cat => cat !== 'other');
-      categoriesToSave.push(customCategory.trim());
+    let finalCategoriesToSave = [...categoriesToSave];
+    if (categoriesToSave.includes('other') && customCategory.trim()) {
+      finalCategoriesToSave = finalCategoriesToSave.filter(cat => cat !== 'other');
+      finalCategoriesToSave.push(customCategory.trim());
     }
 
     const { error } = await supabase
       .from("business_profiles")
-      .update({ business_category: categoriesToSave })
+      .update({ business_category: finalCategoriesToSave })
       .eq("id", user.id);
 
     if (error) {
       console.error("Error updating business categories:", error);
       alert("An error occurred while updating your business categories.");
     } else {
-      setShowCategoryModal(false);
-      setCurrentCategories(categoriesToSave);
+      setCurrentCategories(finalCategoriesToSave);
       setCustomCategory(""); // Reset custom category
     }
   };
@@ -876,7 +835,7 @@ useEffect(() => {
     { key: 'defaultExpiration', label: 'Default Bid Expiration', important: false },
   ];
 
-  const isBidiVerified = profileDetails && profileDetails.membership_tier === 'Verified';
+  const isBidiVerified = profileDetails && profileDetails.is_verified;
 
   const handleFetchReviews = async () => {
     if (!googleBusinessProfile.accountId || !googleBusinessProfile.locationId) {
@@ -1440,1209 +1399,765 @@ useEffect(() => {
     }
   }, [user?.id]);
 
-  if (isLoading) {
-    return <LoadingSpinner color="#9633eb" size={50} />;
-  }
+  const [activeSection, setActiveSection] = useState('profile');
+  const [profileEdit, setProfileEdit] = useState({
+    business_name: '',
+    phone: '',
+    categories: [],
+  });
+  const [profileChanged, setProfileChanged] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
 
-  const styles = {
-    settingsCard: {
-      background: '#fff',
-      borderRadius: '12px',
-      padding: '24px',
-      marginBottom: '24px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-    },
-    settingsCardHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '16px'
-    },
-    settingsCardHeaderH3: {
-      margin: 0,
-      fontSize: '18px',
-      color: '#333'
-    },
-    settingsEditButton: {
-      background: 'none',
-      border: 'none',
-      color: '#A328F4',
-      cursor: 'pointer',
-      fontSize: '14px',
-      padding: '4px 8px',
-      borderRadius: '4px'
-    },
-    consultationHoursDisplay: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '16px'
-    },
-    timeRange: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    timeLabel: {
-      fontWeight: 500,
-      color: '#666'
-    },
-    timeValue: {
-      color: '#333'
-    },
-    daysList: {
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: '8px',
-      marginTop: '8px'
-    },
-    dayTag: {
-      padding: '4px 12px',
-      borderRadius: '16px',
-      fontSize: '13px'
-    },
-    dayTagAvailable: {
-      background: '#e8f5e9',
-      color: '#2e7d32'
-    },
-    dayTagUnavailable: {
-      background: '#f5f5f5',
-      color: '#757575'
-    },
-    daysCheckboxes: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-      gap: '12px',
-      marginTop: '8px'
-    },
-    dayCheckbox: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      cursor: 'pointer'
-    },
-    modalOverlay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    },
-    modalContent: {
-      background: 'white',
-      borderRadius: '12px',
-      padding: '24px',
-      width: '90%',
-      maxWidth: '500px',
-      maxHeight: '90vh',
-      overflowY: 'auto'
-    },
-    modalHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '24px'
-    },
-    modalHeaderH2: {
-      margin: 0,
-      fontSize: '20px',
-      color: '#333'
-    },
-    modalClose: {
-      background: 'none',
-      border: 'none',
-      fontSize: '24px',
-      color: '#666',
-      cursor: 'pointer',
-      padding: '4px'
-    },
-    modalBody: {
-      marginBottom: '24px'
-    },
-    formGroup: {
-      marginBottom: '20px'
-    },
-    formGroupLabel: {
-      display: 'block',
-      marginBottom: '8px',
-      fontWeight: 500,
-      color: '#333'
-    },
-    formGroupInput: {
-      width: '100%',
-      padding: '8px 12px',
-      border: '1px solid #ddd',
-      borderRadius: '6px',
-      fontSize: '14px'
-    },
-    modalFooter: {
-      display: 'flex',
-      justifyContent: 'flex-end',
-      gap: '12px'
-    },
-    modalCancel: {
-      padding: '8px 16px',
-      border: '1px solid #ddd',
-      borderRadius: '6px',
-      background: 'white',
-      color: '#666',
-      cursor: 'pointer'
-    },
-    modalSave: {
-      padding: '8px 16px',
-      border: 'none',
-      borderRadius: '6px',
-      background: '#A328F4',
-      color: 'white',
-      cursor: 'pointer'
+  // Add this for the Change Plan modal
+  const [showChangePlanModal, setShowChangePlanModal] = useState(false);
+  // Payments save state
+  const [paymentsChanged, setPaymentsChanged] = useState(false);
+  const [paymentsSaving, setPaymentsSaving] = useState(false);
+  const [paymentsSaved, setPaymentsSaved] = useState(false);
+
+  useEffect(() => {
+    if (profileDetails) {
+      setProfileEdit({
+        business_name: profileDetails.business_name || '',
+        phone: profileDetails.phone || '',
+        categories: selectedCategories || [],
+      });
+      setProfileChanged(false);
+      setProfileSaved(false);
     }
+  }, [profileDetails, selectedCategories]);
+
+  const handleProfileEditChange = (field, value) => {
+    setProfileEdit(prev => ({ ...prev, [field]: value }));
+    setProfileChanged(true);
+    setProfileSaved(false);
+  };
+
+  const handleProfileSave = async () => {
+    setProfileSaving(true);
+    setProfileSaved(false);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      alert('User not found. Please log in again.');
+      setProfileSaving(false);
+      return;
+    }
+    const updates = {
+      business_name: profileEdit.business_name,
+      phone: profileEdit.phone,
+      business_category: profileEdit.categories,
+    };
+    const { error } = await supabase
+      .from('business_profiles')
+      .update(updates)
+      .eq('id', user.id);
+    if (error) {
+      alert('Failed to save profile changes.');
+    } else {
+      setProfileChanged(false);
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2000);
+    }
+    setProfileSaving(false);
+  };
+
+  const handlePaymentsSave = async () => {
+    setPaymentsSaving(true);
+    setPaymentsSaved(false);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      alert('User not found. Please log in again.');
+      setPaymentsSaving(false);
+      return;
+    }
+
+    const updates = {};
+    
+    // Add down payment if type is selected
+    if (paymentType) {
+      let downPaymentAmount = 0;
+      if (paymentType === "percentage") {
+        downPaymentAmount = parseFloat(percentage) / 100;
+      } else if (paymentType === "flat fee") {
+        downPaymentAmount = parseFloat(downPaymentNumber);
+      }
+      if (downPaymentAmount > 0) {
+        updates.down_payment_type = paymentType;
+        updates.amount = downPaymentAmount;
+      }
+    }
+
+    // Add minimum price if set
+    if (minimumPrice && minimumPrice > 0) {
+      updates.minimum_price = parseFloat(minimumPrice);
+    }
+
+    // Add default expiration if set
+    if (defaultExpirationDays && defaultExpirationDays > 0) {
+      updates.default_expiration_days = parseInt(defaultExpirationDays);
+    }
+
+    const { error } = await supabase
+      .from('business_profiles')
+      .update(updates)
+      .eq('id', user.id);
+    
+    if (error) {
+      alert('Failed to save payment settings.');
+    } else {
+      setPaymentsChanged(false);
+      setPaymentsSaved(true);
+      setTimeout(() => setPaymentsSaved(false), 2000);
+    }
+    setPaymentsSaving(false);
+  };
+
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+
+  // Add Instagram banner component
+  const InstagramBanner = () => {
+    if (!showSupportBanner) return null;
+
+    return (
+      <div style={{
+        backgroundColor: '#f3eafe',
+        borderBottom: '1px solid #e9ecef',
+        padding: isDesktop ? '12px 35px 12px 20px' : '10px 20px 10px 15px',
+        position: 'relative',
+        textAlign: 'center',
+        fontFamily: 'Outfit',
+        width: '100%',
+        zIndex: 1000,
+        boxSizing: 'border-box',
+        marginBottom: isDesktop ? '20px' : '15px'
+      }}>
+        <button
+          onClick={handleDismissBanner}
+          style={{
+            position: 'absolute',
+            right: isDesktop ? '10px' : '8px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: isDesktop ? '18px' : '16px',
+            color: '#666',
+            padding: '5px',
+            width: '30px',
+            height: '30px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          aria-label="Close banner"
+        >
+          ×
+        </button>
+        <p style={{ 
+          margin: 0,
+          fontSize: isDesktop ? '14px' : '13px',
+          color: '#495057',
+          lineHeight: '1.4',
+          paddingRight: isDesktop ? '40px' : '35px'
+        }}>
+          📸 Join our Instagram group for vendors! 
+          <a 
+            href="https://ig.me/j/Abb0JL3q_V3kfBS9/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#9633eb',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              padding: 0,
+              margin: '0 5px',
+              font: 'inherit',
+              fontWeight: '600'
+            }}
+          >
+            Click here to join
+          </a>
+          and connect with other vendors in your area.
+        </p>
+      </div>
+    );
   };
 
   return (
-    <div className="business-settings-container">
-      <h1 style={{ fontFamily: "Outfit", fontWeight: "bold" }}>
-        Business Settings
-      </h1>
-      <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>Manage your business profile, payment settings, and preferences</p>
-      
-      {/* Instagram Support Banner */}
-      {showSupportBanner && (
-        <div className="support-banner mb-4" style={{
-          background: 'linear-gradient(135deg, #F247D1 0%, #764ba2 100%)',
-          color: 'white',
-          padding: '16px 20px',
-          borderRadius: '12px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <i className="fab fa-instagram" style={{ fontSize: '24px' }}></i>
-            <div>
-              <div style={{ fontWeight: '600', fontSize: '16px', marginBottom: '4px' }}>
-                Join Our Instagram Support Group
-              </div>
-              <div style={{ fontSize: '14px', opacity: 0.9 }}>
-                Connect with other vendors and get support from the Bidi team
-              </div>
-            </div>
+    <div className="business-settings-layout" style={{ display: 'flex', minHeight: '100vh', background: '#f8f9fa', position: 'relative' }}>
+      {/* Sidebar (desktop) */}
+      {isDesktop && (
+        <div style={{ minWidth: 220, borderRight: '1px solid #eee', background: '#fff', padding: '32px 0' }}>
+          <BusinessSettingsSidebar
+            activeSection={activeSection}
+            setActiveSection={setActiveSection}
+            isAdmin={isAdmin}
+          />
+        </div>
+      )}
+      {/* Sidebar (mobile modal/drawer) */}
+      {!isDesktop && showMobileSidebar && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(30,20,60,0.13)',
+            zIndex: 12000,
+            display: 'flex',
+          }}
+          onClick={() => setShowMobileSidebar(false)}
+        >
+          <div
+            style={{
+              width: 260,
+              maxWidth: '80vw',
+              height: '100%',
+              background: '#fff',
+              boxShadow: '2px 0 16px rgba(80,60,120,0.13)',
+              padding: '32px 0',
+              position: 'relative',
+              zIndex: 12001,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888', fontWeight: 700, zIndex: 12002 }}
+              onClick={() => setShowMobileSidebar(false)}
+            >
+              &times;
+            </button>
+            <BusinessSettingsSidebar
+              activeSection={activeSection}
+              setActiveSection={section => {
+                setActiveSection(section);
+                setShowMobileSidebar(false);
+              }}
+              isAdmin={isAdmin}
+            />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <a 
-              href="https://www.instagram.com/bidiweddings/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                padding: '8px 16px',
-                borderRadius: '20px',
-                textDecoration: 'none',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.3)'}
-              onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
+        </div>
+      )}
+      {/* Content */}
+      <div className="business-settings-content" style={{ flex: 1, padding: isDesktop ? '0px 40px' : '24px 0 0 0', width: '100vw', minHeight: '100vh' }}>
+        {/* Instagram Banner */}
+        <InstagramBanner />
+        {/* Mobile: Show Menu button at top of content */}
+        {!isDesktop && (
+          <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', padding: '0 20px 18px 20px' }}>
+            <button
+              className="mobile-menu-btn"
+              style={{ background: '#fff', border: '1.5px solid #ececf0', borderRadius: 8, padding: '8px 16px', fontWeight: 700, fontSize: 18, boxShadow: '0 2px 8px rgba(80,60,120,0.08)', display: 'flex', alignItems: 'center', gap: 8 }}
+              onClick={() => setShowMobileSidebar(true)}
             >
-              Join Group
-            </a>
-            <button 
-              onClick={handleDismissBanner}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'white',
-                fontSize: '20px',
-                cursor: 'pointer',
-                opacity: 0.7,
-                padding: '4px'
-              }}
-              onMouseOver={(e) => e.target.style.opacity = '1'}
-              onMouseOut={(e) => e.target.style.opacity = '0.7'}
-            >
-              ×
+              <i className="fas fa-bars" style={{ fontSize: 20 }}></i> Menu
             </button>
           </div>
-        </div>
-      )}
-      
-      {/* Setup Progress Checklist */}
-      {Object.values(setupProgress).some(v => !v) && (
-        <div className="setup-checklist">
-          <div className="checklist-header-business-settings">
-            <h3>Complete Your Setup</h3>
-            <p>Finish these steps to get your business profile fully set up and ready to go!</p>
-          </div>
-          {steps.map((step, idx) => {
-            const complete = !!setupProgress[step.key];
-            const getActionButton = () => {
-              switch(step.key) {
-                case 'paymentAccount':
-                  return (
-                    <button 
-                      className={`checklist-action${complete ? ' complete' : ''}`}
-                      onClick={connectedAccountId ? handleOpenStripeDashboard : handleStripeOnboarding}
-                    >
-                      {complete ? 'Edit Payment' : 'Connect Payment'}
-                    </button>
-                  );
-                case 'downPayment':
-                  return (
-                    <button 
-                      className={`checklist-action${complete ? ' complete' : ''}`}
-                      onClick={() => setShowDownPaymentModal(true)}
-                    >
-                      {complete ? 'Edit Down Payment' : 'Set Down Payment'}
-                    </button>
-                  );
-                case 'minimumPrice':
-                  return (
-                    <button 
-                      className={`checklist-action${complete ? ' complete' : ''}`}
-                      onClick={() => setShowMinPriceModal(true)}
-                    >
-                      {complete ? 'Edit Min Price' : 'Set Min Price'}
-                    </button>
-                  );
-                case 'affiliateCoupon':
-                  return (
-                    <button 
-                      className={`checklist-action${complete ? ' complete' : ''}`}
-                      onClick={() => setShowCouponModal(true)}
-                    >
-                      {complete ? 'Edit Coupon' : 'Create Coupon'}
-                    </button>
-                  );
-                case 'bidTemplate':
-                  return (
-                    <button 
-                      className={`checklist-action${complete ? ' complete' : ''}`}
-                      onClick={() => setShowBidTemplateModal(true)}
-                    >
-                      {complete ? 'Edit Template' : 'Create Template'}
-                    </button>
-                  );
-                case 'verification':
-                  return (
-                    <button 
-                      className={`checklist-action${complete ? ' complete' : ''}`}
-                      onClick={() => navigate("/verification-application")}
-                    >
-                      {complete ? 'View Status' : 'Apply for Verification'}
-                    </button>
-                  );
-                case 'story':
-                  return (
-                    <button 
-                      className={`checklist-action${complete ? ' complete' : ''}`}
-                      onClick={() => handlePortfolioClick(profileDetails?.id, profileDetails?.business_name)}
-                    >
-                      {complete ? 'Edit Profile' : 'Complete Profile'}
-                    </button>
-                  );
-                case 'calendar':
-                  return (
-                    <button 
-                      className={`checklist-action${complete ? ' complete' : ''}`}
-                      onClick={() => setShowGoogleCalendarModal(true)}
-                    >
-                      {complete ? 'Edit Calendar' : 'Connect Calendar'}
-                    </button>
-                  );
-                case 'defaultExpiration':
-                  return (
-                    <button 
-                      className={`checklist-action${complete ? ' complete' : ''}`}
-                      onClick={() => setShowDefaultExpirationModal(v => !v)}
-                    >
-                      {complete ? 'Edit' : 'Add'}
-                    </button>
-                  );
-                default:
-                  return null;
-              }
-            };
-
-            return (
-              <div key={step.key} className={`checklist-item${complete ? ' complete' : ''}${step.important ? ' important' : ''}`}>
-                <div className="checklist-circle">
-                  {complete ? (
-                    <i className="fas fa-check-circle"></i>
-                  ) : step.important ? (
-                    <i className="fas fa-exclamation-circle"></i>
+        )}
+        {isLoading ? (
+          <LoadingSpinner color="#9633eb" size={50} />
+        ) : (
+          <>
+            {activeSection === 'profile' && (
+              <div className="settings-section">
+                <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Profile</span>
+                  <button
+                    className="btn-primary-business-settings"
+                    onClick={handleProfileSave}
+                    disabled={!profileChanged || profileSaving}
+                    style={{ minWidth: 120 }}
+                  >
+                    {profileSaving ? 'Saving...' : profileSaved ? 'Saved!' : 'Save'}
+                  </button>
+                </div>
+                <div className="settings-section-content">
+                  {/* Current Plan */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Current Plan</div>
+                      <div className="settings-desc">Your current Bidi pricing plan.</div>
+                    </div>
+                    <div className="settings-control">
+                      <span style={{ fontWeight: 600, fontSize: '1.08rem', marginRight: 16 }}>
+                        {profileDetails?.membership_tier === 'pro' ? 'Pro' : profileDetails?.membership_tier === 'free' ? 'Basic' : (profileDetails?.membership_tier || 'Basic')}
+                      </span>
+                      <button
+                        className="btn-primary-business-settings"
+                        onClick={() => setShowChangePlanModal(true)}
+                        style={{ minWidth: 120 }}
+                      >
+                        Change Plan
+                      </button>
+                    </div>
+                  </div>
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Business Name</div>
+                      <div className="settings-desc">Your public business name as shown to clients.</div>
+                    </div>
+                    <div className="settings-control">
+                      <input
+                        type="text"
+                        value={profileEdit.business_name}
+                        onChange={e => handleProfileEditChange('business_name', e.target.value)}
+                        placeholder="Business Name"
+                        style={{ width: 260 }}
+                      />
+                    </div>
+                  </div>
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Phone Number</div>
+                      <div className="settings-desc">Your business contact phone number.</div>
+                    </div>
+                    <div className="settings-control">
+                      <input
+                        type="text"
+                        value={profileEdit.phone}
+                        onChange={e => handleProfileEditChange('phone', e.target.value)}
+                        placeholder="Phone Number"
+                        style={{ width: 180 }}
+                      />
+                    </div>
+                  </div>
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Email</div>
+                      <div className="settings-desc">Your account email address.</div>
+                    </div>
+                    <div className="settings-control">{user?.email}</div>
+                  </div>
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Categories</div>
+                      <div className="settings-desc">Select your business categories to help clients find you.</div>
+                    </div>
+                    <div className="settings-control" >
+                      <Select
+                        isMulti
+                        isSearchable
+                        options={businessCategories.map(cat => ({ value: cat.id, label: cat.label }))}
+                        value={businessCategories.filter(cat => profileEdit.categories.includes(cat.id)).map(cat => ({ value: cat.id, label: cat.label }))}
+                        onChange={selected => {
+                          const newCategories = selected ? selected.map(opt => opt.value) : [];
+                          handleProfileEditChange('categories', newCategories);
+                        }}
+                        placeholder="Select categories..."
+                        styles={{
+                          control: (base) => ({ ...base, minHeight: 44, borderRadius: 8, borderColor: '#ececf0', boxShadow: 'none', fontSize: '1.05rem', background: '#f9f9fb' }),
+                          menu: (base) => ({ ...base, zIndex: 9999, borderRadius: 8 }),
+                          multiValue: (base) => ({ ...base, background: '#f3eafe', borderRadius: 6, fontWeight: 500 }),
+                          multiValueLabel: (base) => ({ ...base, color: '#9633eb', fontWeight: 500 }),
+                          option: (base, state) => ({ ...base, background: state.isSelected ? '#f3eafe' : state.isFocused ? '#f8f3ff' : '#fff', color: '#23232a', fontWeight: state.isSelected ? 600 : 500, borderRadius: 6 }),
+                        }}
+                        menuPortalTarget={document.body}
+                      />
+                    </div>
+                  </div>
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Bidi Verified</div>
+                      <div className="settings-desc">Get verified to build trust with potential clients.</div>
+                    </div>
+                    <div className="settings-control">
+                      {isBidiVerified
+                        ? <><i className="fas fa-check-circle text-success" aria-label="Verified"></i>Verified</>
+                        : <><i className="fas fa-exclamation-circle text-muted" aria-label="Not Verified"></i>Not Verified</>}
+                      {!isBidiVerified && (
+                        <button
+                          className="btn-primary flex-fill"
+                          onClick={() => navigate("/verification-application")}
+                        >
+                          Apply to be Bidi Verified
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {/* Calendar */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Google Calendar</div>
+                      <div className="settings-desc">Sync your availability and prevent double bookings by connecting your calendar.</div>
+                    </div>
+                    <div className="settings-control" style={{ flexDirection: 'column', alignItems: 'flex-end' }}>
+                      {isCalendarConnected ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <div className="settings-calendar-group">
+                            <div className="settings-calendar-row">
+                              <label>Start:</label>
+                              <input
+                                type="time"
+                                value={consultationHours.startTime}
+                                onChange={e => setConsultationHours(prev => ({ ...prev, startTime: e.target.value }))}
+                                onBlur={handleConsultationHoursSubmit}
+                              />
+                              <label>End:</label>
+                              <input
+                                type="time"
+                                value={consultationHours.endTime}
+                                onChange={e => setConsultationHours(prev => ({ ...prev, endTime: e.target.value }))}
+                                onBlur={handleConsultationHoursSubmit}
+                              />
+                            </div>
+                            <div className="settings-calendar-row settings-calendar-days">
+                              <label>Days:</label>
+                              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                                <label key={day} className="settings-category-checkbox">
+                                  <input
+                                    type="checkbox"
+                                    checked={consultationHours.daysAvailable.includes(day)}
+                                    onChange={e => {
+                                      let newDays;
+                                      if (e.target.checked) {
+                                        newDays = [...consultationHours.daysAvailable, day];
+                                      } else {
+                                        newDays = consultationHours.daysAvailable.filter(d => d !== day);
+                                      }
+                                      setConsultationHours(prev => ({ ...prev, daysAvailable: newDays }));
+                                      setTimeout(handleConsultationHoursSubmit, 100);
+                                    }}
+                                  />
+                                  {day.slice(0, 3)}
+                                </label>
+                              ))}
+                            </div>
+                            <div className="settings-calendar-row">
+                              <label>Timezone:</label>
+                              <select
+                                value={timezone}
+                                onChange={e => setTimezone(e.target.value)}
+                                onBlur={handleConsultationHoursSubmit}
+                              >
+                                <option value="America/Denver">Mountain Time (MT)</option>
+                                <option value="America/New_York">Eastern Time (ET)</option>
+                                <option value="America/Chicago">Central Time (CT)</option>
+                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                                <option value="America/Anchorage">Alaska Time (AKT)</option>
+                                <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#10b981', fontSize: '0.9rem' }}>
+                              <i className="fas fa-check-circle" aria-label="Connected"></i>
+                              Calendar Connected
+                            </span>
+                            <button
+                              className="btn-danger-business-settings"
+                              onClick={disconnectCalendar}
+                              style={{ minWidth: 120 }}
+                            >
+                              Disconnect
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <button
+                            className="btn-primary"
+                            onClick={connectCalendar}
+                            style={{ marginTop: 8 }}
+                          >
+                            Connect Google Calendar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Templates */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Bid Template</div>
+                      <div className="settings-desc">Create a reusable bid template to save time when responding to requests.</div>
+                    </div>
+                    <div className="settings-control" style={{ width: '100%' }}>
+                      <ReactQuill
+                        theme="snow"
+                        value={bidTemplate}
+                        onChange={content => {
+                          setBidTemplate(content);
+                        }}
+                        onBlur={handleBidTemplateSubmit}
+                        modules={modules}
+                        formats={formats}
+                        style={{ height: "120px", marginBottom: "10px", width: '100%' }}
+                      />
+                      {bidTemplateError && (
+                        <div className="alert alert-warning" role="alert">{bidTemplateError.split("\n").map((line, index) => (<div key={index}>{line}</div>))}</div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Partnership Link */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Partnership Link</div>
+                      <div className="settings-desc">Share your partnership link to connect with potential clients and grow your business.</div>
+                    </div>
+                    <div className="settings-control" style={{ flexDirection: 'column', alignItems: 'flex-end' }}>
+                      {partnershipData ? (
+                        <>
+                          <input
+                            type="text"
+                            value={`https://savewithbidi.com/partnership/${partnershipData.id}`}
+                            readOnly
+                            style={{ width: 300, marginRight: 8 }}
+                          />
+                          <button
+                            className={`btn-success ${isCopied ? 'copied' : ''}`}
+                            onClick={() => {
+                              navigator.clipboard.writeText(`https://savewithbidi.com/partnership/${partnershipData.id}`);
+                              setIsCopied(true);
+                              setTimeout(() => setIsCopied(false), 2000);
+                            }}
+                          >
+                            {isCopied ? '✓ Copied!' : 'Copy Link'}
+                          </button>
+                        </>
+                      ) : (
+                        <button className="btn-primary-business-settings" onClick={handleGeneratePartnershipLink}>
+                          Generate Partnership Link
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {activeSection === 'payments' && (
+              <div className="settings-section">
+                <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Payments</span>
+                  <button
+                    className="btn-primary-business-settings"
+                    onClick={handlePaymentsSave}
+                    disabled={!paymentsChanged || paymentsSaving}
+                    style={{ minWidth: 120 }}
+                  >
+                    {paymentsSaving ? 'Saving...' : paymentsSaved ? 'Saved!' : 'Save'}
+                  </button>
+                </div>
+                <div className="settings-section-content">
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Payment Account</div>
+                      <div className="settings-desc">Connect your payment account to receive payouts from Bidi.</div>
+                    </div>
+                    <div className="settings-control" style={{ gap: 16 }}>
+                      {connectedAccountId ? (
+                        <>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <i className="fas fa-check-circle text-success" aria-label="Connected"></i>Connected
+                          </span>
+                          <button
+                            className="btn-primary-business-settings"
+                            onClick={handleOpenStripeDashboard}
+                          >
+                            View
+                          </button>
+                          <button
+                            className="btn-danger-business-settings"
+                            onClick={handleResetStripeAccount}
+                          >
+                            Disconnect
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="btn-primary-business-settings"
+                          style={{ fontWeight: "bold", color: "#9633eb", minWidth: 140 }}
+                          onClick={handleStripeOnboarding}
+                          disabled={accountCreatePending}
+                        >
+                          Connect
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Down Payment</div>
+                      <div className="settings-desc">Specify if you require a percentage or flat fee up front for bookings.</div>
+                    </div>
+                    <div className="settings-control">
+                      <select
+                        value={paymentType}
+                        onChange={e => {
+                          setPaymentType(e.target.value);
+                          setPercentage("");
+                          setDownPaymentNumber("");
+                          setPaymentsChanged(true);
+                          setPaymentsSaved(false);
+                        }}
+                      >
+                        <option value="">Select Type</option>
+                        <option value="percentage">Percentage</option>
+                        <option value="flat fee">Flat Fee</option>
+                      </select>
+                      {paymentType === "percentage" && (
+                        <input
+                          type="number"
+                          value={percentage}
+                          min={0}
+                          max={100}
+                          onChange={e => {
+                            handleChangeDownPaymentPercentage(e);
+                            setPaymentsChanged(true);
+                            setPaymentsSaved(false);
+                          }}
+                          placeholder="Enter Percentage"
+                        />
+                      )}
+                      {paymentType === "flat fee" && (
+                        <input
+                          type="number"
+                          value={downPaymentNumber}
+                          onChange={e => {
+                            handleChangeDownPaymentNumber(e);
+                            setPaymentsChanged(true);
+                            setPaymentsSaved(false);
+                          }}
+                          placeholder="Enter Flat Fee"
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Minimum Price</div>
+                      <div className="settings-desc">You will only see requests with budgets above this amount.</div>
+                    </div>
+                    <div className="settings-control">
+                      <input
+                        type="number"
+                        value={minimumPrice}
+                        onChange={e => {
+                          setMinimumPrice(e.target.value);
+                          setPaymentsChanged(true);
+                          setPaymentsSaved(false);
+                        }}
+                        placeholder="Enter minimum price"
+                      />
+                    </div>
+                  </div>
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Default Bid Expiration</div>
+                      <div className="settings-desc">Number of days before a bid expires by default.</div>
+                    </div>
+                    <div className="settings-control">
+                      <input
+                        type="number"
+                        min={1}
+                        value={defaultExpirationDays}
+                        onChange={e => {
+                          setDefaultExpirationDays(e.target.value);
+                          setPaymentsChanged(true);
+                          setPaymentsSaved(false);
+                        }}
+                        placeholder="Enter days"
+                        style={{ width: 120 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {activeSection === 'ai' && (
+              <div className="settings-section">
+                <div className="settings-section-title">AI Bid Trainer</div>
+                <div className="settings-section-content">
+                  {autobidEnabled ? (
+                    <div className="settings-row">
+                      <div>
+                        <div className="settings-label">AI Bid Trainer</div>
+                        <div className="settings-desc">Help our AI learn your pricing strategy by providing sample bids for training scenarios.</div>
+                      </div>
+                      <div className="settings-control">
+                        {trainingLoading ? (
+                          <button className="btn-secondary flex-fill" disabled>
+                            <i className="fas fa-spinner fa-spin me-2"></i>
+                            Loading...
+                          </button>
+                        ) : trainingCompleted ? (
+                          <div className="d-flex gap-2">
+                            <button
+                              className="btn-success flex-fill"
+                              disabled
+                            >
+                              <i className="fas fa-check me-2"></i>
+                              Training Complete
+                            </button>
+                            <button
+                              className="btn-outline-primary"
+                              onClick={() => navigate('/autobid-trainer')}
+                              title="Retrain AI with new scenarios"
+                            >
+                              <i className="fas fa-redo"></i>
+                            </button>
+                          </div>
+                        ) : trainingInProgress ? (
+                          <button
+                            className="btn-warning flex-fill pulse"
+                            onClick={() => navigate('/autobid-trainer')}
+                          >
+                            <i className="fas fa-play me-2"></i>
+                            Resume Training
+                          </button>
+                        ) : (
+                          <button
+                            className="btn-primary flex-fill pulse"
+                            onClick={() => navigate('/autobid-trainer')}
+                          >
+                            <i className="fas fa-graduation-cap me-2"></i>
+                            Start Training
+                          </button>
+                        )}
+                        <small className="text-muted d-block mt-2">
+                          {trainingCompleted
+                            ? "Your AI has been trained! Use the refresh button to retrain with new scenarios."
+                            : trainingInProgress
+                            ? "Continue where you left off to complete your AI training."
+                            : "Help our AI learn your pricing strategy by providing sample bids for training scenarios."
+                          }
+                        </small>
+                      </div>
+                    </div>
                   ) : (
-                    <i className="far fa-circle"></i>
+                    <div className="settings-row">
+                      <div className="settings-label">AI Bid Trainer is not enabled for your account.</div>
+                    </div>
                   )}
                 </div>
-                <div className="checklist-content">
-                  <div className="checklist-label">
-                    <div className="checklist-label-header">
-                      {step.label}
-                      {step.important && <span className="important-badge">Important</span>}
-                    </div>
-                    {step.important && step.description && (
-                      <div className="checklist-description">{step.description}</div>
-                    )}
-                  </div>
-                  <div className="checklist-status">
-                    {complete ? 'Complete' : 'Incomplete'}
-                  </div>
+              </div>
+            )}
+            {activeSection === 'admin' && isAdmin && (
+              <div className="settings-section">
+                <div className="settings-section-title">Admin</div>
+                <div className="settings-section-content">
+                  <AdminDashboard />
                 </div>
-                {getActionButton()}
               </div>
-            );
-          })}
-        </div>
-      )}
-      {/* Sectioned Cards */}
-      <div className="row justify-content-center align-items-stretch">
-        {/* Admin Dashboard Section (if admin) */}
-        {isAdmin && (
-          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-            <div className="card mb-4 h-100">
-              <div className="card-header d-flex align-items-center">
-                <img src={bidiLogo} className="admin-logo me-2" alt="Admin" />
-                <span>Admin Dashboard</span>
-              </div>
-              <div className="card-body">
-                <button
-                  className="btn-primary flex-fill"
-                  onClick={() => setActiveSection("admin")}
-                >
-                  <img src={bidiLogo} className="admin-logo me-2" alt="Admin" />
-                  Admin Dashboard
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {/* Payments Section */}
-        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-          <div className="card mb-4 h-100">
-            <div className="card-header d-flex align-items-center">
-              <i className="fas fa-dollar-sign me-2"></i>
-              <span>Payments</span>
-              { !setupProgress.paymentAccount && <span className="badge-new ms-2" title="Set up your payment account to get paid!">New</span> }
-            </div>
-            <div className="card-body">
-              <div className="info-row">
-                <span className="info-label">Status:</span>
-                <span className="info-value">
-                  {connectedAccountId ? <><i className="fas fa-check-circle text-success" aria-label="Connected"></i>Connected</> : <><i className="fas fa-exclamation-circle text-muted" aria-label="Not Connected"></i>Not Connected</>}
-                </span>
-              </div>
-              <button
-                style={{ fontWeight: "bold", color: "#9633eb" }}
-                className={`btn-primary flex-fill${!setupProgress.paymentAccount ? ' pulse' : ''}`}
-                onClick={connectedAccountId ? handleOpenStripeDashboard : handleStripeOnboarding}
-                disabled={accountCreatePending}
-              >
-                {connectedAccountId ? 'Edit' : 'Connect Your Payment Account'}
-              </button>
-              <small className="text-muted d-block mt-2">
-                {connectedAccountId
-                  ? 'Connect your payment account to receive payouts from Bidi.'
-                  : 'This is how we pay you for your work. You will never pay us.'}
-              </small>
-              {stripeError && (
-                <div className="alert alert-danger mt-3">
-                  An error occurred. <button className="btn-link" onClick={handleResetStripeAccount}>Reset Stripe Connection</button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        {/* Profile Section */}
-        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-          <div className="card mb-4 h-100">
-            <div className="card-header d-flex align-items-center">
-              <i className="fas fa-user me-2"></i>
-              <span>Profile</span>
-              { !setupProgress.story && <span className="badge-new ms-2" title="Complete your profile story">New</span> }
-            </div>
-            <div className="card-body">
-              <button
-                className={`btn-primary flex-fill${!setupProgress.story ? ' pulse' : ''}`}
-                onClick={() => handlePortfolioClick(profileDetails?.id, profileDetails?.business_name)}
-              >
-                <i className="fas fa-user-edit me-2"></i>
-                {setupProgress.story ? "Edit Profile" : "Complete Profile"}
-              </button>
-              <small className="text-muted d-block mt-2">Tell your story and showcase your work to attract more clients.</small>
-              <div className="info-row info-row-spaced">
-                <span className="info-label">Bidi Verified:</span>
-                <span className="info-value">
-                  {isBidiVerified
-                    ? <><i className="fas fa-check-circle text-success" aria-label="Verified"></i>Verified</>
-                    : <><i className="fas fa-exclamation-circle text-muted" aria-label="Not Verified"></i>Not Verified</>}
-                </span>
-              </div>
-              {!isBidiVerified && (
-                <button
-                  className="btn-primary flex-fill mt-3"
-                  onClick={() => navigate("/verification-application")}
-                >
-                  Apply to be Bidi Verified
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-        {/* Templates Section */}
-        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-          <div className="card mb-4 h-100">
-            <div className="card-header d-flex align-items-center">
-              <i className="fas fa-file-alt me-2"></i>
-              <span>Templates</span>
-              { !setupProgress.bidTemplate && <span className="badge-new ms-2" title="Create your bid template">New</span> }
-            </div>
-            <div className="card-body">
-              <div className="info-row">
-                <span className="info-label">Bid Template:</span>
-                <span className="info-value">
-                  {bidTemplate ? <span className="text-success">Template Set</span> : <span className="text-muted">No Template</span>}
-                </span>
-              </div>
-              <button
-                className={`btn-primary flex-fill${!setupProgress.bidTemplate ? ' pulse' : ''}`}
-                onClick={() => setShowBidTemplateModal(v => !v)}
-              >
-                {setupProgress.bidTemplate ? 'Edit' : 'Add'}
-              </button>
-              <small className="text-muted d-block mt-2">Create a reusable bid template to save time when responding to requests.</small>
-              {isDesktop && showBidTemplateModal && (
-                <div className="card-modal-content">
-                  <div className="mb-3">
-                    <label htmlFor="bidTemplate" className="form-label">Your bid template:</label>
-                    {bidTemplateError && (
-                      <div className="alert alert-warning" role="alert">{bidTemplateError.split("\n").map((line, index) => (<div key={index}>{line}</div>))}</div>
-                    )}
-                    <ReactQuill theme="snow" value={bidTemplate} onChange={handleBidTemplateChange} modules={modules} formats={formats} style={{ height: "300px", marginBottom: "50px" }} />
-                  </div>
-                  <div>
-                    <button className="btn-danger me-2" onClick={() => { setShowBidTemplateModal(false); setBidTemplateError(""); }}>Close</button>
-                    <button className="btn-success" onClick={handleBidTemplateSubmit}>Save</button>
-                  </div>
-                </div>
-              )}
-              <div className="info-row">
-                <span className="info-label">Contract Template:</span>
-                <span className="info-value">
-                  {contractTemplate ? <span className="text-success">Template Set</span> : <span className="text-muted">No Template</span>}
-                </span>
-              </div>
-              <button
-                className={`btn-primary flex-fill mt-3${!contractTemplate ? ' pulse' : ''}`}
-                onClick={() => setActiveSection("contract-template")}
-              >
-                {contractTemplate ? 'Edit' : 'Add'}
-              </button>
-              <small className="text-muted d-block mt-2">Set up your contract template for faster bookings.</small>
-            </div>
-          </div>
-        </div>
-        {/* Down Payment Section */}
-        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-          <div className="card mb-4 h-100">
-            <div className="card-header d-flex align-items-center">
-              <i className="fas fa-dollar-sign me-2"></i>
-              <span>Down Payment</span>
-              { !setupProgress.downPayment && <span className="badge-new ms-2" title="Set your down payment policy">New</span> }
-            </div>
-            <div className="card-body">
-              <div className="info-row">
-                <span className="info-label">Down Payment:</span>
-                <span className="info-value">
-                  {paymentType
-                    ? paymentType === 'percentage'
-                      ? `${percentage || (profileDetails && profileDetails.amount ? profileDetails.amount * 100 : '')}%`
-                      : `$${downPaymentNumber || (profileDetails && profileDetails.amount ? profileDetails.amount : '')}`
-                    : <span className="text-muted">Not Set</span>}
-                </span>
-              </div>
-              <button
-                className={`btn-primary flex-fill${!setupProgress.downPayment ? ' pulse' : ''}`}
-                onClick={() => setShowDownPaymentModal(v => !v)}
-              >
-                {setupProgress.downPayment ? 'Edit' : 'Add'}
-              </button>
-              <small className="text-muted d-block mt-2">Specify if you require a percentage or flat fee up front for bookings.</small>
-            </div>
-          </div>
-        </div>
-        {/* Minimum Price Section */}
-        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-          <div className="card mb-4 h-100">
-            <div className="card-header d-flex align-items-center">
-              <i className="fas fa-tag me-2"></i>
-              <span>Minimum Price</span>
-              { !setupProgress.minimumPrice && <span className="badge-new ms-2" title="Set your minimum price to filter requests">New</span> }
-            </div>
-            <div className="card-body">
-              <div className="info-row">
-                <span className="info-label">Minimum Price:</span>
-                <span className="info-value">
-                  {currentMinPrice !== null ? `$${currentMinPrice}` : <span className="text-muted">Not Set</span>}
-                </span>
-              </div>
-              <button
-                className={`btn-primary flex-fill${!setupProgress.minimumPrice ? ' pulse' : ''}`}
-                onClick={() => setShowMinPriceModal(v => !v)}
-              >
-                {setupProgress.minimumPrice ? 'Edit' : 'Add'}
-              </button>
-              <small className="text-muted d-block mt-2">You will only see requests with budgets above this amount.</small>
-            </div>
-          </div>
-        </div>
-        {/* Partnership Link Section */}
-        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-          <div className="card mb-4 h-100">
-            <div className="card-header d-flex align-items-center">
-              <i className="fas fa-link me-2"></i>
-              <span>Partnership Link</span>
-              { !activeCoupon && <span className="badge-new ms-2" title="Create your partnership link">New</span> }
-            </div>
-            <div className="card-body">
-              <div className="info-row">
-                <span className="info-label">Status:</span>
-                <span className="info-value">
-                  {activeCoupon ? 
-                    <span className="text-success">Active</span> : 
-                    <span className="text-muted">No Partnership Link</span>
-                  }
-                </span>
-              </div>
-              <button
-                className="btn-primary flex-fill"
-                onClick={() => setShowCouponModal(true)}
-              >
-                {activeCoupon ? 'View Partnership Link' : 'Create Partnership Link'}
-              </button>
-              <small className="text-muted d-block mt-2">
-                {activeCoupon ? 
-                  "Share your partnership link to connect with potential clients and grow your business." :
-                  "Create a partnership link to start connecting with potential clients and grow your business."
-                }
-              </small>
-            </div>
-          </div>
-        </div>
-        {/* Categories Section */}
-        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-          <div className="card mb-4 h-100">
-            <div className="card-header d-flex align-items-center">
-              <i className="fas fa-tags me-2"></i>
-              <span>Business Categories</span>
-              {/* No setupProgress for categories, but you can add a badge if not set */}
-              { (!currentCategories || currentCategories.length === 0) && <span className="badge-new ms-2" title="Add your business categories">New</span> }
-            </div>
-            <div className="card-body">
-              <div className="info-row">
-                <span className="info-label">Categories:</span>
-                <span className="info-value">
-                  {currentCategories && currentCategories.length > 0
-                    ? currentCategories.map(categoryId => {
-                        const category = businessCategories.find(c => c.id === categoryId);
-                        return category ? category.label : categoryId;
-                      }).join(', ')
-                    : <span className="text-muted">Not Set</span>}
-                </span>
-              </div>
-              <button
-                className={`btn-primary flex-fill${(!currentCategories || currentCategories.length === 0) ? ' pulse' : ''}`}
-                onClick={() => setShowCategoryModal(v => !v)}
-              >
-                {currentCategories && currentCategories.length > 0 ? 'Edit' : 'Add'}
-              </button>
-              <small className="text-muted d-block mt-2">Select your business categories to help clients find you.</small>
-            </div>
-          </div>
-        </div>
-        {/* Calendar Section */}
-        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-          <div className="card mb-4 h-100">
-            <div className="card-header d-flex align-items-center">
-              <i className="fas fa-calendar me-2" style={{ color: "#9633eb" }}></i>
-              <span>Google Calendar</span>
-              {/* No setupProgress for calendar, but show badge if not connected */}
-              { !isCalendarConnected && <span className="badge-new ms-2" title="Connect your Google Calendar">New</span> }
-            </div>
-            <div className="card-body">
-              <div className="info-row">
-                <span className="info-label">Google Calendar:</span>
-                <span className="info-value">
-                  {isCalendarConnected ? <span className="text-success">Connected</span> : <span className="text-muted">Not Connected</span>}
-                </span>
-              </div>
-              <button
-                className={`btn-primary flex-fill${!isCalendarConnected ? ' pulse' : ''}`}
-                onClick={() => setShowGoogleCalendarModal(v => !v)}
-                disabled={isCalendarLoading}
-              >
-                {isCalendarConnected ? 'Edit' : 'Add'}
-              </button>
-              <small className="text-muted d-block mt-2">Sync your availability and prevent double bookings by connecting your calendar.</small>
-            </div>
-          </div>
-        </div>
-        {/* Default Expiration Section */}
-        <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-          <div className="card mb-4 h-100">
-            <div className="card-header d-flex align-items-center">
-              <i className="fas fa-clock me-2"></i>
-              <span>Default Bid Expiration</span>
-            </div>
-            <div className="card-body">
-              <div className="info-row">
-                <span className="info-label">Default Expiration:</span>
-                <span className="info-value">
-                  {defaultExpirationDays ? `${defaultExpirationDays} days` : <span className="text-muted">Not Set</span>}
-                </span>
-              </div>
-              <button
-                className="btn-primary flex-fill"
-                onClick={() => setShowDefaultExpirationModal(v => !v)}
-              >
-                {defaultExpirationDays ? 'Edit' : 'Add'}
-              </button>
-              <small className="text-muted d-block mt-2">Set the default number of days until a bid expires when you create new bids.</small>
-            </div>
-          </div>
-        </div>
-        {/* AI Bid Trainer Section */}
-        {user && autobidEnabled && (
-          <div className="col-lg-5 col-md-6 col-sm-12 d-flex flex-column">
-            <div className="card mb-4 h-100">
-              <div className="card-header d-flex align-items-center">
-                <i className="fas fa-robot me-2" style={{ color: "#9633eb" }}></i>
-                <span>AI Bid Trainer</span>
-                <span className="badge-new ms-2" title="Train our AI to generate better bids for your business">New</span>
-              </div>
-              <div className="card-body">
-                <div className="info-row">
-                  <span className="info-label">Status:</span>
-                  <span className="info-value">
-                    {trainingLoading ? (
-                      <span className="text-muted">Loading...</span>
-                    ) : trainingCompleted ? (
-                      <span className="text-success">
-                        <i className="fas fa-check-circle me-1"></i>
-                        Completed
-                      </span>
-                    ) : trainingInProgress ? (
-                      <span className="text-warning">
-                        <i className="fas fa-clock me-1"></i>
-                        In Progress
-                      </span>
-                    ) : (
-                      <span className="text-muted">Not Started</span>
-                    )}
-                  </span>
-                </div>
-                {trainingLoading ? (
-                  <button className="btn-secondary flex-fill" disabled>
-                    <i className="fas fa-spinner fa-spin me-2"></i>
-                    Loading...
-                  </button>
-                ) : trainingCompleted ? (
-                  <div className="d-flex gap-2">
-                    <button
-                      className="btn-success flex-fill"
-                      disabled
-                    >
-                      <i className="fas fa-check me-2"></i>
-                      Training Complete
-                    </button>
-                    <button
-                      className="btn-outline-primary"
-                      onClick={() => navigate('/autobid-trainer')}
-                      title="Retrain AI with new scenarios"
-                    >
-                      <i className="fas fa-redo"></i>
-                    </button>
-                  </div>
-                ) : trainingInProgress ? (
-                  <button
-                    className="btn-warning flex-fill pulse"
-                    onClick={() => navigate('/autobid-trainer')}
-                  >
-                    <i className="fas fa-play me-2"></i>
-                    Resume Training
-                  </button>
-                ) : (
-                  <button
-                    className="btn-primary flex-fill pulse"
-                    onClick={() => navigate('/autobid-trainer')}
-                  >
-                    <i className="fas fa-graduation-cap me-2"></i>
-                    Start Training
-                  </button>
-                )}
-                <small className="text-muted d-block mt-2">
-                  {trainingCompleted 
-                    ? "Your AI has been trained! Use the refresh button to retrain with new scenarios."
-                    : trainingInProgress
-                    ? "Continue where you left off to complete your AI training."
-                    : "Help our AI learn your pricing strategy by providing sample bids for training scenarios."
-                  }
-                </small>
-              </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
       </div>
-      {/* Move modals outside of mobile-only condition */}
-      {/* Down Payment Modal */}
-      <Modal show={showDownPaymentModal} onHide={() => setShowDownPaymentModal(false)} centered size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title className="text-center">Enter What You Charge For a Down Payment</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div style={{ textAlign: "center", marginBottom: "20px", wordBreak: "break-word" }}>
-            Do you charge a percentage or a flat fee up front?
-          </div>
-          <div style={{ display: "flex", flexDirection: "row", justifyContent: "center", gap: "20px", marginBottom: "20px" }}>
-            <button style={{ width: "50%", maxHeight: "48px" }} className={`btn-${paymentType === "percentage" ? "secondary" : "primary"}`} onClick={() => handlePaymentTypeChange("percentage")}>Percentage</button>
-            <button style={{ width: "50%", maxHeight: "48px" }} className={`btn-${paymentType === "flat fee" ? "secondary" : "primary"}`} onClick={() => handlePaymentTypeChange("flat fee")}>Flat Fee</button>
-          </div>
-          {paymentType === "percentage" && (
-            <div>
-              <input type="number" value={percentage} onChange={handleChangeDownPaymentPercentage} placeholder="Enter Percentage" className="form-control" min="0" max="100" />
-            </div>
-          )}
-          {paymentType === "flat fee" && (
-            <div>
-              <input type="number" value={downPaymentNumber} onChange={handleChangeDownPaymentNumber} placeholder="Enter Flat Fee" className="form-control" />
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <button className="btn-danger" onClick={() => setShowDownPaymentModal(false)}>Close</button>
-          <button className="btn-success" onClick={handleDownPaymentSubmit}>Submit</button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Minimum Price Modal */}
-      <Modal show={showMinPriceModal} onHide={() => setShowMinPriceModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Set Minimum Price</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-3">
-            <label htmlFor="minimumPrice" className="form-label">Enter your minimum price:</label>
-            <input type="number" className="form-control" id="minimumPrice" value={minimumPrice} onChange={(e) => setMinimumPrice(e.target.value)} placeholder="Enter amount" min="0" />
-          </div>
-          <p className="text-muted">You will only see requests with budgets above this amount.</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <div style={{ display: "flex", flexDirection: "row", gap: "20px", justifyContent: "center", marginTop: 20 }}>   
-            <button className="btn-danger" onClick={() => setShowMinPriceModal(false)}>Close</button>
-            <button className="btn-success" onClick={handleMinPriceSubmit}>Save</button>
-          </div>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Partnership Link Modal */}
-      <Modal show={showCouponModal} onHide={() => setShowCouponModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Your Partnership Link</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="text-center">
-            {partnershipData ? (
-              <>
-                <h4>Share this link with potential clients:</h4>
-                <div className="p-3 mb-3 bg-light rounded">
-                  https://savewithbidi.com/partnership/{partnershipData.id}
-                </div>
-                <p>When clients use your partnership link:</p>
-                <ul className="text-start">
-                  <li>They'll see your business name and logo</li>
-                  <li>They can easily request your services</li>
-                  <li>You'll be notified of new requests</li>
-                </ul>
-              </>
-            ) : (
-              <>
-                <h4>Create Your Partnership Link</h4>
-                <p className="mb-4">Generate a unique partnership link to start connecting with potential clients.</p>
-                <button 
-                  className="btn-primary"
-                  onClick={handleGeneratePartnershipLink}
-                >
-                  Generate Partnership Link
-                </button>
-              </>
-            )}
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <button className="btn-danger" onClick={() => setShowCouponModal(false)}>Close</button>
-          {partnershipData && (
-            <button 
-              className={`btn-success ${isCopied ? 'copied' : ''}`}
-              onClick={() => {
-                navigator.clipboard.writeText(`https://savewithbidi.com/partnership/${partnershipData.id}`);
-                setIsCopied(true);
-                setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
-              }}
-            >
-              {isCopied ? '✓ Copied!' : 'Copy Link'}
-            </button>
-          )}
-        </Modal.Footer>
-      </Modal>
-
-      {/* Bid Template Modal */}
-      <Modal show={showBidTemplateModal} onHide={() => { setShowBidTemplateModal(false); setBidTemplateError(""); }} centered size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Bid Template</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-3">
-            <label htmlFor="bidTemplate" className="form-label">Your bid template:</label>
-            {bidTemplateError && (
-              <div className="alert alert-warning" role="alert">{bidTemplateError.split("\n").map((line, index) => (<div key={index}>{line}</div>))}</div>
-            )}
-            <ReactQuill theme="snow" value={bidTemplate} onChange={handleBidTemplateChange} modules={modules} formats={formats} style={{ height: "300px", marginBottom: "50px" }} />
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <button className="btn-danger" onClick={() => { setShowBidTemplateModal(false); setBidTemplateError(""); }}>Close</button>
-          <button className="btn-success" onClick={handleBidTemplateSubmit}>Save</button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Calendar Modal */}
-      <Modal 
-        show={showGoogleCalendarModal} 
-        onHide={() => setShowGoogleCalendarModal(false)} 
-        centered 
-        dialogClassName="calendar-modal-mobile"
-        style={{ margin: '10px' }}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>{isCalendarConnected ? "Manage Google Calendar" : "Connect Google Calendar"}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-          {calendarError && (
-            <div className="alert alert-danger" role="alert">{calendarError}</div>
-          )}
-          {isCalendarLoading ? (
-            <div className="text-center"><LoadingSpinner color="#9633eb" size={30} /></div>
-          ) : isCalendarConnected ? (
-            <div className="calendar-settings">
-              <div className="consultation-hours-section">
-                <h4 className="section-title" style={{marginBottom:"0px"}}>Consultation Hours</h4>
-                <div className="status-badge connected">
-                  <i className="fas fa-check-circle me-2"></i>
-                  Google Calendar Connected
-                </div>
-                <p className="text-muted mb-3">Set your available hours for consultations.</p>
-                
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <div className="form-group">
-                      <label className="form-label">Start Time</label>
-                      <input
-                        type="time"
-                        className="form-control"
-                        value={consultationHours.startTime}
-                        onChange={(e) => setConsultationHours(prev => ({ ...prev, startTime: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="form-group">
-                      <label className="form-label">End Time</label>
-                      <input
-                        type="time"
-                        className="form-control"
-                        value={consultationHours.endTime}
-                        onChange={(e) => setConsultationHours(prev => ({ ...prev, endTime: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-group mt-3">
-                  <label className="form-label">Available Days</label>
-                  <div className="days-grid">
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                      <label key={day} className="day-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={consultationHours.daysAvailable.includes(day)}
-                          onChange={(e) => {
-                            setConsultationHours(prev => ({
-                              ...prev,
-                              daysAvailable: e.target.checked
-                                ? [...prev.daysAvailable, day]
-                                : prev.daysAvailable.filter(d => d !== day)
-                            }));
-                          }}
-                        />
-                        <span className="day-label">{" "}{day}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="form-group mt-3">
-                  <label className="form-label">Timezone</label>
-                  <select 
-                    className="form-control"
-                    value={timezone}
-                    onChange={(e) => setTimezone(e.target.value)}
-                  >
-                    <option value="America/Denver">Mountain Time (MT)</option>
-                    <option value="America/New_York">Eastern Time (ET)</option>
-                    <option value="America/Chicago">Central Time (CT)</option>
-                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                    <option value="America/Anchorage">Alaska Time (AKT)</option>
-                    <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
-                  </select>
-                  <small className="text-muted">Select your local timezone for consultation hours</small>
-                </div>
-              </div>
-
-              <div className="calendar-actions">
-                <button 
-                  className="btn btn-danger me-2" 
-                  onClick={async () => { 
-                    try { 
-                      await disconnectCalendar(); 
-                      setShowGoogleCalendarModal(false); 
-                    } catch (error) {} 
-                  }}
-                >
-                  <i className="fas fa-unlink me-2"></i>
-                  Disconnect Calendar
-                </button>
-                <button 
-                  className="btn btn-success" 
-                  onClick={handleConsultationHoursSubmit}
-                >
-                  <i className="fas fa-save me-2"></i>
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="calendar-connect">
-              <div className="connect-content text-center">
-                <i className="fas fa-calendar-plus fa-3x mb-3" style={{ color: "#9633eb" }}></i>
-                <h4>Connect Your Google Calendar</h4>
-                <p className="text-muted mb-4">Sync your calendar to manage consultations and prevent double bookings.</p>
-                
-                <div className="benefits-list mb-4">
-                  <div className="benefit-item">
-                    <i className="fas fa-sync text-success"></i>
-                    <span>Automatically sync your availability</span>
-                  </div>
-                  <div className="benefit-item">
-                    <i className="fas fa-calendar-check text-success"></i>
-                    <span>Prevent double bookings</span>
-                  </div>
-                  <div className="benefit-item">
-                    <i className="fas fa-clock text-success"></i>
-                    <span>Manage your consultation schedule</span>
-                  </div>
-                </div>
-
-                <button 
-                  className="btn btn-primary btn-lg"
-                  style={{ backgroundColor: "#9633eb", borderColor: "#9633eb" }}
-                  onClick={async () => { 
-                    try { 
-                      await connectCalendar(); 
-                    } catch (error) {} 
-                  }}
-                >
-                  <i className="fab fa-google me-2"></i>
-                  Connect Google Calendar
-                </button>
-              </div>
-            </div>
-          )}
-        </Modal.Body>
-      </Modal>
-
-      {/* Calendar Success Modal */}
-      <Modal show={showCalendarSuccess} onHide={() => { setShowCalendarSuccess(false); sessionStorage.removeItem('calendarSuccessShown'); }} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Success!</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Google Calendar connected successfully!
-        </Modal.Body>
-        <Modal.Footer>
-          <button className="btn-success" onClick={() => { setShowCalendarSuccess(false); sessionStorage.removeItem('calendarSuccessShown'); }}>Close</button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Categories Modal */}
-      <Modal show={showCategoryModal} onHide={() => { setShowCategoryModal(false); setSelectedCategories(currentCategories); setCustomCategory(""); }} centered size="lg" dialogClassName="category-modal">
-        <Modal.Header closeButton>
-          <Modal.Title>Manage Business Categories</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
-          <div className="mb-3">
-            <label className="form-label">Select your business categories:</label>
-            {currentCategories.length > 0 && (
-              <div className="current-categories mb-3">
-                <h6>Current Categories:</h6>
-                <div className="d-flex flex-wrap gap-2">
-                  {currentCategories.map(categoryId => {
-                    const category = businessCategories.find(c => c.id === categoryId);
-                    return category ? (
-                      <span key={categoryId} className="badge ">{category.label}</span>
-                    ) : (
-                      <span key={categoryId} className="badge ">{categoryId}</span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            <div className="category-grid" style={{ 
-              display: "grid", 
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", 
-              gap: "10px",
-              maxHeight: "40vh",
-              overflowY: "auto"
-            }}>
-              {businessCategories.map((category) => (
-                <div key={category.id} className="category-item" onClick={() => {
-                  if (selectedCategories.includes(category.id)) {
-                    setSelectedCategories(selectedCategories.filter(id => id !== category.id));
-                    if (category.id === 'other') { setCustomCategory(""); }
-                  } else {
-                    setSelectedCategories([...selectedCategories, category.id]);
-                  }
-                }} style={{ cursor: 'pointer' }}>
-                  <div className="form-check">
-                    <input className="form-check-input" type="checkbox" id={category.id} checked={selectedCategories.includes(category.id)} onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedCategories([...selectedCategories, category.id]);
-                      } else {
-                        setSelectedCategories(selectedCategories.filter(id => id !== category.id));
-                        if (category.id === 'other') { setCustomCategory(""); }
-                      }
-                    }} />
-                    <label className="form-check-label" htmlFor={category.id}>{category.label}</label>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {selectedCategories.includes('other') && (
-              <div className="mt-3">
-                <label htmlFor="customCategory" className="form-label">Please specify your business category:</label>
-                <input type="text" className="form-control" id="customCategory" value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Enter your business category" />
-              </div>
-            )}
-          </div>
-        </Modal.Body>
-        <Modal.Footer style={{ borderTop: "1px solid #dee2e6" }}>
-          <div style={{ display: "flex", flexDirection: "row", gap: "20px", justifyContent: "center", width: "100%" }}>
-            <button className="btn-danger" onClick={() => { setShowCategoryModal(false); setSelectedCategories(currentCategories); setCustomCategory(""); }}>Cancel</button>
-            <button className="btn-success" onClick={handleCategorySubmit} disabled={selectedCategories.length === 0 || (selectedCategories.includes('other') && !customCategory.trim())}>Save Changes</button>
-          </div>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Default Expiration Modal */}
-      <Modal show={showDefaultExpirationModal} onHide={() => setShowDefaultExpirationModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Set Default Bid Expiration</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-3">
-            <label htmlFor="defaultExpiration" className="form-label">Enter default number of days until bid expiration:</label>
-            <input type="number" className="form-control" id="defaultExpiration" value={defaultExpirationDays} onChange={(e) => setDefaultExpirationDays(e.target.value)} placeholder="Enter number of days" min="1" />
-          </div>
-          <p className="text-muted">This will be the default number of days until a bid expires when you create new bids.</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <button className="btn-danger" onClick={() => setShowDefaultExpirationModal(false)}>Close</button>
-          <button className="btn-success" onClick={handleDefaultExpirationSubmit}>Save</button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Google Business Profile Section */}
-      {renderGoogleBusinessSection()}
-
-      {/* Google Business Profile Modal */}
-      <Modal show={showGoogleBusinessModal} onHide={() => setShowGoogleBusinessModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Google Business Profile</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="google-business-modal-content">
-            {googleBusinessProfile.isConnected ? (
-              <>
-                <div className="business-info">
-                  <p><strong>Business Name:</strong> {googleBusinessProfile.businessName}</p>
-                  <p><strong>Location:</strong> {googleBusinessProfile.location}</p>
-                  <div className="reviews-summary">
-                    <p><strong>Reviews Status:</strong> {googleReviewsStatus}</p>
-                    {averageRating && (
-                      <p><strong>Average Rating:</strong> {averageRating.toFixed(1)} ({totalReviews} reviews)</p>
-                    )}
-                  </div>
-                </div>
-                <div className="action-buttons">
-                  <button
-                    className="btn btn-secondary"
-                    onClick={handleFetchReviews}
-                    disabled={isProcessing}
-                  >
-                    <i className="fas fa-sync"></i> Refresh Reviews
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={handleDisconnectGoogleBusiness}
-                    disabled={isProcessing}
-                  >
-                    <i className="fas fa-unlink"></i> Disconnect
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="disconnected-content">
-                <p>Connect your Google Business Profile to display reviews and build trust with potential clients.</p>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleConnectGoogleBusiness}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin"></i> Processing...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-link"></i> Connect Google Business Profile
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-            {googleBusinessProfile.error && (
-              <div className="error-message">
-                <i className="fas fa-exclamation-circle"></i>
-                {googleBusinessProfile.error}
-              </div>
-            )}
-          </div>
-        </Modal.Body>
-      </Modal>
+      <ChangePlanModal
+        isOpen={showChangePlanModal}
+        onClose={() => setShowChangePlanModal(false)}
+        currentPlan={profileDetails?.membership_tier}
+        onPlanChange={fetchSetupProgress}
+      />
     </div>
   );
 };

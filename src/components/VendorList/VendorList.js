@@ -596,7 +596,7 @@ const VendorList = ({
             name: v.business_name,
             photos: v.photo_count,
             videos: v.video_count,
-            verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true,
+            verified: v.is_verified || v.Bidi_Plus,
             specializations: v.specializations,
             location: v.business_address,
             hasReviews: v.average_rating !== null,
@@ -655,8 +655,8 @@ const VendorList = ({
             // Third priority: Has reviews AND is verified
             const aHasReviews = a.average_rating !== null;
             const bHasReviews = b.average_rating !== null;
-            const aIsVerified = a.membership_tier === 'Verified' || a.Bidi_Plus === true;
-            const bIsVerified = b.membership_tier === 'Verified' || b.Bidi_Plus === true;
+            const aIsVerified = a.is_verified || a.Bidi_Plus;
+            const bIsVerified = b.is_verified || b.Bidi_Plus;
 
             const aHasReviewsAndVerified = aHasReviews && aIsVerified;
             const bHasReviewsAndVerified = bHasReviews && bIsVerified;
@@ -716,7 +716,7 @@ const VendorList = ({
             name: v.business_name,
             photos: v.photo_count,
             videos: v.video_count,
-            verified: v.membership_tier === 'Verified' || v.Bidi_Plus === true,
+            verified: v.is_verified || v.Bidi_Plus,
             specializations: v.specializations,
             location: v.business_address,
             hasReviews: v.average_rating !== null,
@@ -1243,7 +1243,7 @@ const VendorList = ({
                             </h2>
 
                             <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'left'}}>
-                                {(vendor.membership_tier === 'Verified' || vendor.Bidi_Plus) && (
+                                {(vendor.is_verified || vendor.Bidi_Plus) && (
                                     <div className="verified-check-container" onClick={handleCheckClick}>
                                         <img style={{marginLeft:'4px', marginBottom:'4px'}} src={Verified} alt="Verified" />
                                         <span className="verified-tooltip">

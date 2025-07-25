@@ -55,7 +55,6 @@
 /* Main Dashboard */
 .dashboard-main {
   transition: margin-left 0.3s ease, width 0.3s ease;
-  padding: 20px;
   min-height: 100vh;
   position: relative;
   background: #f8f9fa;
