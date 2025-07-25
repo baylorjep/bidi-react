@@ -1079,6 +1079,11 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       ? business.business_category[0] 
       : business.business_category;
     
+    // Handle case where category is undefined or null
+    if (!category) {
+      return `${business.business_name} | Vendor Portfolio & Reviews`;
+    }
+    
     // Format the category name to be more natural
     let formattedCategory = category;
     if (category.toLowerCase().includes('photography')) {
@@ -1112,6 +1117,12 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     const category = Array.isArray(business.business_category) 
       ? business.business_category[0] 
       : business.business_category;
+    
+    // Handle case where category is undefined or null
+    if (!category) {
+      return `Discover ${business.business_name}'s services, portfolio, and ${reviews.length} verified reviews. View their work, packages, and contact them directly on Bidi.`;
+    }
+    
     return `Discover ${business.business_name}'s ${category} services, portfolio, and ${reviews.length} verified reviews. View their work, packages, and contact them directly on Bidi.`;
   };
 
