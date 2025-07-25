@@ -462,6 +462,7 @@ const PricingSetup = () => {
         base_price: sanitizedData.base_price
       });
 
+      // Only include fields that actually exist in the database schema
       const pricingRule = {
         business_id: user.id,
         category: currentCategory,
@@ -471,6 +472,7 @@ const PricingSetup = () => {
         per_person_rate: sanitizedData.per_person_rate,
         travel_fee_per_mile: sanitizedData.travel_fee_per_mile,
         bid_aggressiveness: sanitizedData.bid_aggressiveness,
+        accept_unknowns: sanitizedData.accept_unknowns || true,
         blocklist_keywords: sanitizedData.blocklist_keywords || [],
         default_message: sanitizedData.default_message,
         additional_comments: sanitizedData.additional_comments,
@@ -502,12 +504,6 @@ const PricingSetup = () => {
         hair_only_rate: sanitizedData.hair_only_rate,
         makeup_only_rate: sanitizedData.makeup_only_rate,
         travel_fee: sanitizedData.travel_fee,
-        base_category_rates: sanitizedData.base_category_rates || {},
-        travel_config: sanitizedData.travel_config || {},
-        platform_markup: sanitizedData.platform_markup,
-        consultation_required: sanitizedData.consultation_required || false,
-        dealbreakers: sanitizedData.dealbreakers || [],
-        style_preferences: sanitizedData.style_preferences || [],
         created_at: new Date().toISOString()
       };
 
