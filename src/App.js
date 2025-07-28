@@ -547,7 +547,27 @@ function AppContent() {
 }
 
 function App() {
-  subscribeToPush();
+  // Only request notification permission after user interaction
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      // Remove the event listeners after first interaction
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+      
+      // Request notification permission after user interaction
+      subscribeToPush();
+    };
+
+    // Add event listeners for user interaction
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('keydown', handleUserInteraction);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+    };
+  }, []);
   
   return (
     <HelmetProvider>

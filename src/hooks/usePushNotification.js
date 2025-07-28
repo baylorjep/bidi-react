@@ -33,11 +33,20 @@ export const subscribeToPush = async () => {
       return;
     }
 
-    const permission = await Notification.requestPermission();
-    console.log("Permission result:", permission);
-    if (permission !== "granted") {
-      console.log("Notification permission not granted");
+    // Check if permission is already granted
+    if (Notification.permission === 'granted') {
+      console.log('Notification permission already granted');
+    } else if (Notification.permission === 'denied') {
+      console.log('Notification permission denied by user');
       return;
+    } else {
+      // Only request permission if not already determined
+      const permission = await Notification.requestPermission();
+      console.log("Permission result:", permission);
+      if (permission !== "granted") {
+        console.log("Notification permission not granted");
+        return;
+      }
     }
 
     try {
