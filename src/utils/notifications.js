@@ -19,6 +19,33 @@ export const sendNotification = async (userId, type, message) => {
   return true;
 };
 
+// Function to clear notifications for a user
+export const clearNotifications = async (userId, notificationIds = null) => {
+  try {
+    let query = supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', userId);
+
+    // If specific notification IDs are provided, only delete those
+    if (notificationIds) {
+      query = query.in('id', Array.isArray(notificationIds) ? notificationIds : [notificationIds]);
+    }
+
+    const { error } = await query;
+
+    if (error) {
+      console.error('Error clearing notifications:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error clearing notifications:', error);
+    return false;
+  }
+};
+
 export const notificationTypes = {
   NEW_REQUEST: 'new_request',
   SETUP_REMINDER: 'setup_reminder',

@@ -14,6 +14,7 @@ export default function StripeOnboarding() {
   const [error, setError] = useState(false);
   const [connectedAccountId, setConnectedAccountId] = useState();
   const [email, setEmail] = useState(""); // Will be set from Supabase auth
+  const [isLoading, setIsLoading] = useState(false);
   const stripeConnectInstance = useStripeConnect(connectedAccountId);
   const navigate = useNavigate();
 
@@ -31,6 +32,7 @@ export default function StripeOnboarding() {
   }, []);
 
   const createAccount = async () => {
+    setIsLoading(true);
     setAccountCreatePending(true);
     setError(false);
 
@@ -75,79 +77,95 @@ export default function StripeOnboarding() {
     } catch (err) {
       console.error("Error during account creation:", err);
       setError(true);
+    } finally {
+      setIsLoading(false);
       setAccountCreatePending(false);
     }
   };
 
   return (
-    <div className="container px-5 d-flex align-items-center justify-content-center">
-      <div className="col-lg-6">
-        <div className="mb-5 text-center">
-          <h1 className="OnboardingPageHeader">Set Up Your Payment Account</h1>
-          <p>
-            To receive payments for the jobs you win, you’ll need to set up a payment account. Bidi will never charge you to talk to users or place bids — a small service fee is only deducted after you’ve been paid.
-            <br />
-            You can skip this step for now and set it up later from your dashboard.
-          </p>
-        </div>
-
-        {/* If no connected account */}
-        {!accountCreatePending && !connectedAccountId && (
-          <div>
-            <button
-              className="btn btn-secondary btn-lg w-100 mb-3"
-              onClick={createAccount}
-            >
-              Set Up Payment Account with {email}
-            </button>
-            <button
-              className="btn btn-outline-secondary btn-lg w-100"
-              onClick={() => navigate("/dashboard")}
-            >
-              Skip for Now
-            </button>
-          </div>
-        )}
-
-        {/* Account creation pending */}
-        {accountCreatePending && (
-          <div className="text-center">
-            <p>Creating your Stripe connected account...</p>
-          </div>
-        )}
-
-        {/* Stripe onboarding flow */}
-        {stripeConnectInstance && (
-          <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
-            <ConnectAccountOnboarding
-              onExit={() => setOnboardingExited(true)}
-            />
-          </ConnectComponentsProvider>
-        )}
-
-        {/* Onboarding completion */}
-        {(connectedAccountId || onboardingExited) && (
-          <div className="text-center mt-4">
-            {onboardingExited && (
-              <p>Onboarding complete! You're ready to go.</p>
-            )}
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate("/dashboard")}
-            >
-              Proceed to Dashboard
-            </button>
-          </div>
-        )}
-
-        {/* Error message */}
-        {error && (
-          <div className="text-center mt-4">
-            <p className="text-danger">
-              Something went wrong! Please try again.
+    <div className="hide-footer d-flex align-items-center justify-content-center min-vh-100">
+      <div className="container px-5">
+        <div className="col-lg-6 mx-auto">
+          <div className="mb-5 text-center">
+            <h1 className="OnboardingPageHeader">Set Up Your Payment Account</h1>
+            <p>
+              To receive payments for the jobs you win, you'll need to set up a payment account. Bidi will never charge you to talk to users or place bids — a small service fee is only deducted after you've been paid.
+              <br />
+              You can skip this step for now and set it up later from your dashboard.
             </p>
           </div>
-        )}
+
+          {/* If no connected account */}
+          {!accountCreatePending && !connectedAccountId && (
+            <div>
+              <button
+                className="btn btn-secondary btn-lg w-100 mb-3"
+                onClick={createAccount}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Setting up account...
+                  </>
+                ) : (
+                  `Set Up Payment Account with ${email}`
+                )}
+              </button>
+              <button
+                className="btn btn-outline-secondary btn-lg w-100"
+                onClick={() => navigate("/dashboard")}
+                disabled={isLoading}
+              >
+                Skip for Now
+              </button>
+            </div>
+          )}
+
+          {/* Account creation pending */}
+          {accountCreatePending && (
+            <div className="text-center">
+              <div className="spinner-border text-secondary mb-3" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p>Creating your Stripe connected account...</p>
+            </div>
+          )}
+
+          {/* Stripe onboarding flow */}
+          {stripeConnectInstance && (
+            <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
+              <ConnectAccountOnboarding
+                onExit={() => setOnboardingExited(true)}
+              />
+            </ConnectComponentsProvider>
+          )}
+
+          {/* Onboarding completion */}
+          {(connectedAccountId || onboardingExited) && (
+            <div className="text-center mt-4">
+              {onboardingExited && (
+                <p>Onboarding complete! You're ready to go.</p>
+              )}
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate("/dashboard")}
+              >
+                Proceed to Dashboard
+              </button>
+            </div>
+          )}
+
+          {/* Error message */}
+          {error && (
+            <div className="text-center mt-4">
+              <p className="text-danger">
+                Something went wrong! Please try again.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

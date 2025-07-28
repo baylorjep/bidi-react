@@ -1437,6 +1437,17 @@ progress {
     --bs-gutter-y: 3rem;
   }
 }
+
+/* Hide footer on specific pages */
+.hide-footer + footer {
+  display: none;
+}
+
+.hide-footer {
+  background-color: white;
+  position: relative;
+  z-index: 1;
+}
 @media (min-width: 1200px) {
   .col-xl {
     flex: 1 0 0%;
@@ -3694,7 +3705,7 @@ background: linear-gradient(246deg, rgba(255, 0, 138, 0.79) 15.35%, #A328F4 85.5
   border-top: 0;
   border-right: 0.3em solid transparent;
   border-bottom: 0.3em solid;
-  border-left: 0.3em solid transparent;
+  border-left: 0.3em solid;
 }
 .dropup .dropdown-toggle:empty::after {
   margin-left: 0;
