@@ -432,7 +432,8 @@ useEffect(() => {
 
       const data = await response.json();
       if (response.ok) {
-        window.location.href = data.url;
+        // Open Stripe dashboard in a new tab instead of redirecting current page
+        window.open(data.url, '_blank');
         setStripeError(false);
         setStripeErrorMessage('');
       } else {
