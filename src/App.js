@@ -553,19 +553,25 @@ function App() {
       // Remove the event listeners after first interaction
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener('touchend', handleUserInteraction);
       
       // Request notification permission after user interaction
       subscribeToPush();
     };
 
-    // Add event listeners for user interaction
+    // Add event listeners for user interaction (desktop + mobile)
     document.addEventListener('click', handleUserInteraction);
     document.addEventListener('keydown', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+    document.addEventListener('touchend', handleUserInteraction);
 
     // Cleanup function
     return () => {
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener('touchend', handleUserInteraction);
     };
   }, []);
   
