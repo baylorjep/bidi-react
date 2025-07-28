@@ -218,13 +218,29 @@ const AutobidTrainer = () => {
       console.log('All available requests:', allRequests.map(req => ({ id: req.id, date: req.request_data?.date || 'unknown' })));
       
       // Find the first request that hasn't been used yet
-      const availableRequest = allRequests.find(req => !currentUsedIds.includes(req.id));
+      let availableRequest;
+      try {
+        availableRequest = allRequests.find(req => !currentUsedIds.includes(req.id));
+      } catch (error) {
+        console.error('Error in find operation:', error);
+        console.error('currentUsedIds type:', typeof currentUsedIds);
+        console.error('currentUsedIds value:', currentUsedIds);
+        console.error('currentUsedIds is Array:', Array.isArray(currentUsedIds));
+        throw error;
+      }
       
       if (availableRequest) {
         // Use an available request
         selectedRequest = availableRequest;
         console.log('Using available request:', selectedRequest.id, 'with date:', selectedRequest.request_data?.date || 'unknown');
-        console.log('Available requests count:', allRequests.filter(req => !currentUsedIds.includes(req.id)).length);
+        try {
+          console.log('Available requests count:', allRequests.filter(req => !currentUsedIds.includes(req.id)).length);
+        } catch (error) {
+          console.error('Error in filter operation:', error);
+          console.error('currentUsedIds type:', typeof currentUsedIds);
+          console.error('currentUsedIds value:', currentUsedIds);
+          console.error('currentUsedIds is Array:', Array.isArray(currentUsedIds));
+        }
         
         // Update state to mark this request as used (immediate update to prevent race condition)
         const newUsedIds = new Set([...currentUsedIds, selectedRequest.id]);
@@ -765,6 +781,7 @@ const AutobidTrainer = () => {
           scenarios_approved: updatedScenariosApproved,
           consecutive_approvals: newConsecutiveApprovals,
           training_completed: newConsecutiveApprovals >= 2
+          // Don't update total_scenarios_completed - it should remain at 5 from the manual training
         })
         .eq('business_id', user.id)
         .eq('category', currentCategory);
@@ -893,7 +910,7 @@ const AutobidTrainer = () => {
     // Generate fresh AI sample bid data
     setIsLoadingSampleBid(true);
     try {
-      const sampleData = await getSampleBidData(currentCategory);
+      const sampleData = await getSampleBidData(currentCategory, new Set());
       if (sampleData && sampleData.length > 0) {
         setCurrentSampleBidData(sampleData);
         setCurrentSampleBidIndex(0);
