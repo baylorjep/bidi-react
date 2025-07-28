@@ -213,7 +213,7 @@ const AutobidTrainer = () => {
       }
 
       // Get the current used request IDs from state or use override
-      const currentUsedIds = currentUsedIdsOverride || Array.from(usedAIRequestIds);
+      const currentUsedIds = currentUsedIdsOverride ? Array.from(currentUsedIdsOverride) : Array.from(usedAIRequestIds);
       console.log('Current used request IDs:', currentUsedIds);
       console.log('All available requests:', allRequests.map(req => ({ id: req.id, date: req.request_data?.date || 'unknown' })));
       
