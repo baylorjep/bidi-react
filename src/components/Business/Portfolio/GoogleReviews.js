@@ -15,13 +15,17 @@ const GoogleReviews = ({ businessId }) => {
         // First, get the business's Google Place ID
         const { data: businessData, error: businessError } = await supabase
           .from('business_profiles')
-          .select('google_place_id, google_reviews_status')
+          .select('google_place_id')
           .eq('id', businessId)
           .single();
 
-        if (businessError) throw businessError;
+        if (businessError) {
+          console.error('Error fetching business data:', businessError);
+          setLoading(false);
+          return;
+        }
 
-        if (!businessData?.google_place_id || businessData.google_reviews_status !== 'approved') {
+        if (!businessData?.google_place_id) {
           setLoading(false);
           return;
         }

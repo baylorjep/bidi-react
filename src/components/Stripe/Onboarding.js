@@ -30,25 +30,6 @@ export default function Onboarding({ setActiveSection }) {
     fetchEmail();
   }, []);
 
-  // Add new function to verify account status
-  const verifyStripeAccount = async (accountId) => {
-    try {
-      const response = await fetch("https://bidi-express.vercel.app/verify-account", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ accountId }),
-      });
-
-      const data = await response.json();
-      return data.isValid;
-    } catch (error) {
-      console.error("Error verifying Stripe account:", error);
-      return false;
-    }
-  };
-
   const createAccount = async () => {
     setAccountCreatePending(true);
     setError(false);
@@ -82,44 +63,25 @@ export default function Onboarding({ setActiveSection }) {
     setOnboardingExited(true);
     
     if (connectedAccountId) {
-      // Verify the account is properly set up
-      const isValid = await verifyStripeAccount(connectedAccountId);
-      
-      if (isValid) {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            // Store the connected account ID only after verification
-            const { error: supabaseError } = await supabase
-              .from("business_profiles")
-              .update({ stripe_account_id: connectedAccountId })
-              .eq("id", user.id);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Store the connected account ID
+          const { error: supabaseError } = await supabase
+            .from("business_profiles")
+            .update({ stripe_account_id: connectedAccountId })
+            .eq("id", user.id);
 
-            if (supabaseError) {
-              console.error("Failed to store connected account ID:", supabaseError);
-              setError(true);
-            }
+          if (supabaseError) {
+            console.error("Failed to store connected account ID:", supabaseError);
+            setError(true);
+          } else {
+            console.log("Stripe account successfully connected:", connectedAccountId);
           }
-        } catch (err) {
-          console.error("Error saving account ID:", err);
-          setError(true);
         }
-      } else {
-        // If account is not valid, show error and clean up
+      } catch (err) {
+        console.error("Error saving account ID:", err);
         setError(true);
-        setConnectedAccountId(null);
-        // Optionally delete the incomplete account
-        try {
-          await fetch("https://bidi-express.vercel.app/delete-account", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ accountId: connectedAccountId }),
-          });
-        } catch (err) {
-          console.error("Error deleting incomplete account:", err);
-        }
       }
     }
   };

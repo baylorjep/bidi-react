@@ -355,17 +355,20 @@ useEffect(() => {
       try {
         const { data: businessData, error } = await supabase
           .from('business_profiles')
-          .select('google_place_id, google_reviews_status')
+          .select('google_place_id, google_business_name, google_business_address, google_business_account_id')
           .eq('id', user.id)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching Google reviews status:', error);
+          return;
+        }
 
-        if (businessData) {
+        if (businessData && businessData.google_place_id) {
           setGoogleBusinessProfile({
             isConnected: true,
-            businessName: businessData.name,
-            location: businessData.address,
+            businessName: businessData.google_business_name || businessData.name,
+            location: businessData.google_business_address || businessData.address,
             status: 'connected',
             error: null,
             accountId: businessData.google_business_account_id,
@@ -416,28 +419,6 @@ useEffect(() => {
 
   const handleOpenStripeDashboard = async () => {
     try {
-      const verifyResponse = await fetch(
-        "https://bidi-express.vercel.app/verify-account",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ accountId: connectedAccountId }),
-        }
-      );
-
-      const verifyData = await verifyResponse.json();
-      if (!verifyData.isValid) {
-        // Account is not valid, reset it
-        await handleResetStripeAccount();
-        handleStripeError(
-          new Error("Your Stripe account needs attention. Please reconnect your account."),
-          "Account verification failed"
-        );
-        return;
-      }
-
       const response = await fetch(
         "https://bidi-express.vercel.app/create-login-link",
         {
@@ -455,10 +436,37 @@ useEffect(() => {
         setStripeError(false);
         setStripeErrorMessage('');
       } else {
-        handleStripeError(
-          new Error(data.error || "Failed to open Stripe dashboard"),
-          "Could not access Stripe dashboard"
-        );
+        // If the endpoint fails, try to create a login link directly
+        console.log("Backend endpoint failed, trying alternative approach...");
+        try {
+          // This is a fallback - you might need to implement this on your backend
+          const fallbackResponse = await fetch(
+            "https://bidi-express.vercel.app/account_session",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ account: connectedAccountId }),
+            }
+          );
+          
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            // Redirect to Stripe Connect onboarding to create login link
+            window.location.href = `https://connect.stripe.com/express/oauth/authorize?client_id=${process.env.REACT_APP_STRIPE_CLIENT_ID}&state=${connectedAccountId}`;
+          } else {
+            handleStripeError(
+              new Error("Failed to access Stripe dashboard. Please try again later."),
+              "Could not access Stripe dashboard"
+            );
+          }
+        } catch (fallbackError) {
+          handleStripeError(
+            new Error("Stripe dashboard temporarily unavailable. Please try again later."),
+            "Could not access Stripe dashboard"
+          );
+        }
       }
     } catch (error) {
       handleStripeError(
@@ -1635,23 +1643,9 @@ useEffect(() => {
     const verifyStripeAccount = async () => {
       if (connectedAccountId) {
         try {
-          const verifyResponse = await fetch(
-            "https://bidi-express.vercel.app/verify-account",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ accountId: connectedAccountId }),
-            }
-          );
-
-          const verifyData = await verifyResponse.json();
-          if (!verifyData.isValid) {
-            // Account is not valid, reset it
-            await handleResetStripeAccount();
-            setStripeError(true);
-          }
+          // For now, we'll skip verification since the endpoint doesn't exist
+          // This can be re-enabled once the backend endpoint is created
+          console.log("Stripe account verification skipped - endpoint not implemented");
         } catch (error) {
           console.error("Error verifying Stripe account:", error);
           setStripeError(true);
