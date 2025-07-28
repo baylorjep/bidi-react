@@ -5,30 +5,49 @@ import {
   ConnectComponentsProvider,
 } from "@stripe/react-connect-js";
 import { supabase } from "../../supabaseClient";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
-import "../../App.css"; // Assuming you have general styles in this file
+import { useNavigate } from "react-router-dom";
+import "../../App.css";
 
 export default function Onboarding({ setActiveSection }) {
   const [accountCreatePending, setAccountCreatePending] = useState(false);
   const [onboardingExited, setOnboardingExited] = useState(false);
   const [error, setError] = useState(false);
   const [connectedAccountId, setConnectedAccountId] = useState();
-  const [email, setEmail] = useState(""); // Will be set from Supabase auth
+  const [email, setEmail] = useState("");
   const stripeConnectInstance = useStripeConnect(connectedAccountId);
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
 
   // Fetch email when component loads
   useEffect(() => {
     const fetchEmail = async () => {
       const {
         data: { user },
-      } = await supabase.auth.getUser(); // Fetch authenticated user's data
+      } = await supabase.auth.getUser();
       if (user) {
-        setEmail(user.email); // Set email from Supabase auth
+        setEmail(user.email);
       }
     };
     fetchEmail();
   }, []);
+
+  // Add new function to verify account status
+  const verifyStripeAccount = async (accountId) => {
+    try {
+      const response = await fetch("https://bidi-express.vercel.app/verify-account", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ accountId }),
+      });
+
+      const data = await response.json();
+      return data.isValid;
+    } catch (error) {
+      console.error("Error verifying Stripe account:", error);
+      return false;
+    }
+  };
 
   const createAccount = async () => {
     setAccountCreatePending(true);
@@ -40,7 +59,7 @@ export default function Onboarding({ setActiveSection }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }), // Send the email dynamically
+        body: JSON.stringify({ email }),
       });
 
       const json = await response.json();
@@ -48,29 +67,6 @@ export default function Onboarding({ setActiveSection }) {
 
       if (json.account) {
         setConnectedAccountId(json.account);
-
-        // Fetch the user's ID directly from Supabase auth
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (user) {
-          const userId = user.id;
-
-          // Step 1: Store the connected account ID in business_profiles
-          const { error: supabaseError } = await supabase
-            .from("business_profiles")
-            .update({ stripe_account_id: json.account })
-            .eq("id", userId);
-
-          if (supabaseError) {
-            console.error(
-              "Failed to store connected account ID to Account:",
-              supabaseError
-            );
-            setError(true);
-          }
-        }
       } else if (json.error) {
         setError(true);
       }
@@ -78,6 +74,53 @@ export default function Onboarding({ setActiveSection }) {
       console.error("Error during account creation:", err);
       setError(true);
       setAccountCreatePending(false);
+    }
+  };
+
+  // Handle onboarding completion
+  const handleOnboardingExit = async () => {
+    setOnboardingExited(true);
+    
+    if (connectedAccountId) {
+      // Verify the account is properly set up
+      const isValid = await verifyStripeAccount(connectedAccountId);
+      
+      if (isValid) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            // Store the connected account ID only after verification
+            const { error: supabaseError } = await supabase
+              .from("business_profiles")
+              .update({ stripe_account_id: connectedAccountId })
+              .eq("id", user.id);
+
+            if (supabaseError) {
+              console.error("Failed to store connected account ID:", supabaseError);
+              setError(true);
+            }
+          }
+        } catch (err) {
+          console.error("Error saving account ID:", err);
+          setError(true);
+        }
+      } else {
+        // If account is not valid, show error and clean up
+        setError(true);
+        setConnectedAccountId(null);
+        // Optionally delete the incomplete account
+        try {
+          await fetch("https://bidi-express.vercel.app/delete-account", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ accountId: connectedAccountId }),
+          });
+        } catch (err) {
+          console.error("Error deleting incomplete account:", err);
+        }
+      }
     }
   };
 
@@ -89,15 +132,19 @@ export default function Onboarding({ setActiveSection }) {
           <h1 className="dashboard-title color: black">Stripe Onboarding</h1>
           {!connectedAccountId && (
             <p>
-            To receive payments for the jobs you win, you'll need to set up a payment account. Bidi will never charge you to talk to users or place bids — a small service fee is only deducted after you've been paid.
-            <br />
-            You can skip this step for now and set it up later from your dashboard.
-          </p>
+              To receive payments for the jobs you win, you'll need to set up a payment account. Bidi will never charge you to talk to users or place bids — a small service fee is only deducted after you've been paid.
+              <br />
+              You can skip this step for now and set it up later from your dashboard.
+            </p>
           )}
           {connectedAccountId && !stripeConnectInstance && (
             <h2>Add your information to start accepting payments</h2>
           )}
-          {error && <p className="text-danger">Something went wrong!</p>}
+          {error && (
+            <p className="text-danger">
+              Something went wrong with the account setup. Please try again or contact support if the issue persists.
+            </p>
+          )}
         </div>
 
         {!accountCreatePending && !connectedAccountId && (
@@ -117,19 +164,19 @@ export default function Onboarding({ setActiveSection }) {
         {stripeConnectInstance && (
           <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
             <ConnectAccountOnboarding
-              onExit={() => setOnboardingExited(true)}
+              onExit={handleOnboardingExit}
             />
           </ConnectComponentsProvider>
         )}
 
         {(connectedAccountId || onboardingExited) && (
           <div className="mt-4 text-center">
-            {onboardingExited && (
+            {onboardingExited && !error && (
               <p>Onboarding complete! You're ready to go.</p>
             )}
           </div>
         )}
-        {/* Return to Dashboard button */}
+        
         <div className="mt-4 text-center">
           <button
             className="btn-primary"

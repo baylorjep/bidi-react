@@ -40,6 +40,7 @@ const BusinessSettings = ({ connectedAccountId }) => {
   const [percentage, setPercentage] = useState("");
   const navigate = useNavigate();
   const [stripeError, setStripeError] = useState(false);
+  const [stripeErrorMessage, setStripeErrorMessage] = useState('');
   const [accountCreatePending, setAccountCreatePending] = useState(false);
   const [setupProgress, setSetupProgress] = useState({
     paymentAccount: false,
@@ -401,8 +402,42 @@ useEffect(() => {
     }
   };
 
+  const handleStripeError = (error, defaultMessage) => {
+    console.error(error);
+    setStripeError(true);
+    setStripeErrorMessage(error.message || defaultMessage);
+    
+    // Clear error after 5 seconds
+    setTimeout(() => {
+      setStripeError(false);
+      setStripeErrorMessage('');
+    }, 5000);
+  };
+
   const handleOpenStripeDashboard = async () => {
     try {
+      const verifyResponse = await fetch(
+        "https://bidi-express.vercel.app/verify-account",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ accountId: connectedAccountId }),
+        }
+      );
+
+      const verifyData = await verifyResponse.json();
+      if (!verifyData.isValid) {
+        // Account is not valid, reset it
+        await handleResetStripeAccount();
+        handleStripeError(
+          new Error("Your Stripe account needs attention. Please reconnect your account."),
+          "Account verification failed"
+        );
+        return;
+      }
+
       const response = await fetch(
         "https://bidi-express.vercel.app/create-login-link",
         {
@@ -416,14 +451,20 @@ useEffect(() => {
 
       const data = await response.json();
       if (response.ok) {
-        window.location.href = data.url; // Redirect to the Stripe dashboard
-        setStripeError(false); // Clear the error state if successful
+        window.location.href = data.url;
+        setStripeError(false);
+        setStripeErrorMessage('');
       } else {
-        setStripeError(true); // Set the error state if an error occurs
+        handleStripeError(
+          new Error(data.error || "Failed to open Stripe dashboard"),
+          "Could not access Stripe dashboard"
+        );
       }
     } catch (error) {
-      console.error("Error opening Stripe dashboard:", error);
-      setStripeError(true); // Set the error state if an error occurs
+      handleStripeError(
+        error,
+        "An error occurred while connecting to Stripe"
+      );
     }
   };
 
@@ -1589,6 +1630,38 @@ useEffect(() => {
     );
   };
 
+  // Add this after the other useEffect hooks
+  useEffect(() => {
+    const verifyStripeAccount = async () => {
+      if (connectedAccountId) {
+        try {
+          const verifyResponse = await fetch(
+            "https://bidi-express.vercel.app/verify-account",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ accountId: connectedAccountId }),
+            }
+          );
+
+          const verifyData = await verifyResponse.json();
+          if (!verifyData.isValid) {
+            // Account is not valid, reset it
+            await handleResetStripeAccount();
+            setStripeError(true);
+          }
+        } catch (error) {
+          console.error("Error verifying Stripe account:", error);
+          setStripeError(true);
+        }
+      }
+    };
+
+    verifyStripeAccount();
+  }, [connectedAccountId]); // Only run when connectedAccountId changes
+
   return (
     <div className="business-settings-layout" style={{ display: 'flex', minHeight: '100vh', background: '#f8f9fa', position: 'relative' }}>
       {/* Sidebar (desktop) */}
@@ -1975,7 +2048,7 @@ useEffect(() => {
                       ) : (
                         <button
                           className="btn-primary-business-settings"
-                          style={{ fontWeight: "bold", color: "#9633eb", minWidth: 140 }}
+                          style={{ fontWeight: "bold", minWidth: 140 }}
                           onClick={handleStripeOnboarding}
                           disabled={accountCreatePending}
                         >
@@ -2158,6 +2231,14 @@ useEffect(() => {
         currentPlan={profileDetails?.membership_tier}
         onPlanChange={fetchSetupProgress}
       />
+      {stripeError && (
+        <div className="alert alert-danger mt-3">
+          {stripeErrorMessage || "An error occurred."} {" "}
+          <button className="btn-link" onClick={handleResetStripeAccount}>
+            Reset Stripe Connection
+          </button>
+        </div>
+      )}
     </div>
   );
 };
