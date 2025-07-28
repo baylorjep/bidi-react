@@ -432,10 +432,54 @@ useEffect(() => {
 
       const data = await response.json();
       if (response.ok) {
-        // Open Stripe dashboard in a new tab instead of redirecting current page
-        window.open(data.url, '_blank');
-        setStripeError(false);
-        setStripeErrorMessage('');
+        // Open Stripe dashboard in a new tab with popup blocker handling
+        const newWindow = window.open(data.url, '_blank');
+        
+        // Check if popup was blocked
+        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+          // Popup was blocked, show user-friendly message
+          setStripeError(true);
+          setStripeErrorMessage('Popup blocked! Please allow popups for this site and try again, or click the link below to open your Stripe dashboard.');
+          
+          // Add a fallback link that users can click
+          setTimeout(() => {
+            const fallbackLink = document.createElement('a');
+            fallbackLink.href = data.url;
+            fallbackLink.target = '_blank';
+            fallbackLink.textContent = 'Open Stripe Dashboard';
+            fallbackLink.className = 'btn btn-primary mt-2';
+            fallbackLink.style.display = 'block';
+            fallbackLink.style.marginTop = '10px';
+            
+            // Find the error message container and add the link
+            const errorContainer = document.querySelector('.alert-danger');
+            if (errorContainer) {
+              errorContainer.appendChild(fallbackLink);
+            }
+          }, 100);
+        } else {
+          setStripeError(false);
+          setStripeErrorMessage('');
+          
+          // Show a brief success message
+          const successMessage = document.createElement('div');
+          successMessage.className = 'alert alert-success mt-2';
+          successMessage.style.fontSize = '0.9rem';
+          successMessage.innerHTML = '✅ Stripe dashboard opened in new tab!';
+          
+          // Find the button container and add the success message
+          const buttonContainer = document.querySelector('.settings-control');
+          if (buttonContainer) {
+            buttonContainer.appendChild(successMessage);
+            
+            // Remove the success message after 3 seconds
+            setTimeout(() => {
+              if (successMessage.parentNode) {
+                successMessage.parentNode.removeChild(successMessage);
+              }
+            }, 3000);
+          }
+        }
       } else {
         // If the endpoint fails, try to create a login link directly
         console.log("Backend endpoint failed, trying alternative approach...");
