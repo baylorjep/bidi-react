@@ -141,6 +141,7 @@ import UtahDJCosts from "./components/Article/UtahDJCosts";
 import RelatedArticles from "./components/Article/RelatedArticles";
 import WeddingVibeQuiz from "./pages/WeddingVibeQuiz";
 import { subscribeToPush } from './hooks/usePushNotification';
+import NotificationPermissionPrompt from './components/NotificationPermissionPrompt';
 import WeddingPlannerDashboard from "./components/WeddingPlanner/WeddingPlannerDashboard";
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import VendorSelection from "./components/Request/VendorSelection";
@@ -542,6 +543,7 @@ function AppContent() {
         pauseOnHover
       />
       <PWAInstallPrompt />
+      <NotificationPermissionPrompt />
     </div>
   );
 }
@@ -556,7 +558,17 @@ function App() {
       document.removeEventListener('touchstart', handleUserInteraction);
       document.removeEventListener('touchend', handleUserInteraction);
       
-      // Request notification permission after user interaction
+      // Check if we're on mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // On mobile, don't automatically request notification permission
+        // Instead, show a user-friendly message about enabling notifications
+        console.log('Mobile device detected - notification permission will be requested when user explicitly enables it');
+        return;
+      }
+      
+      // Request notification permission after user interaction (desktop only)
       subscribeToPush();
     };
 

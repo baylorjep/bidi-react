@@ -33,6 +33,14 @@ export const subscribeToPush = async () => {
       return;
     }
 
+    // Check if we're on mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      console.log('Mobile device detected - notification setup may be limited');
+      // On mobile, we'll still try but with lower expectations
+    }
+
     // Check if permission is already granted
     if (Notification.permission === 'granted') {
       console.log('Notification permission already granted');
@@ -41,10 +49,15 @@ export const subscribeToPush = async () => {
       return;
     } else {
       // Only request permission if not already determined
-      const permission = await Notification.requestPermission();
-      console.log("Permission result:", permission);
-      if (permission !== "granted") {
-        console.log("Notification permission not granted");
+      try {
+        const permission = await Notification.requestPermission();
+        console.log("Permission result:", permission);
+        if (permission !== "granted") {
+          console.log("Notification permission not granted");
+          return;
+        }
+      } catch (error) {
+        console.log('Error requesting notification permission:', error);
         return;
       }
     }
