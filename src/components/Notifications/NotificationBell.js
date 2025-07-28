@@ -251,22 +251,6 @@ const NotificationBell = () => {
     }
   };
 
-  const clearNotification = async (notificationId, event) => {
-    // Stop the click event from triggering the markAsRead function
-    event.stopPropagation();
-
-    const { error } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('id', notificationId);
-
-    if (error) {
-      console.error('Error clearing notification:', error);
-    } else {
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-    }
-  };
-
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'new_request':
@@ -288,13 +272,10 @@ const NotificationBell = () => {
       <button
         className="notification-bell-button"
         onClick={() => setShowDropdown(!showDropdown)}
-        aria-label="Notifications"
       >
-        <i className="fas fa-bell" aria-hidden="true"></i>
+        <i className="fas fa-bell"></i>
         {totalNotificationCount > 0 && (
-          <span className="notification-badge" aria-label={`${totalNotificationCount} unread notifications`}>
-            {totalNotificationCount}
-          </span>
+          <span className="notification-badge">{totalNotificationCount}</span>
         )}
       </button>
 
@@ -365,13 +346,6 @@ const NotificationBell = () => {
                           {new Date(notification.created_at).toLocaleDateString()}
                         </small>
                       </div>
-                      <button 
-                        className="delete-notification"
-                        onClick={(e) => clearNotification(notification.id, e)}
-                        title="Delete notification"
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
                     </div>
                   ))}
                 </>
