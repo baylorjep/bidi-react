@@ -9,6 +9,12 @@ const NotificationPermissionPrompt = () => {
     const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     setIsMobile(mobileCheck);
 
+    // Check if Notification API is available (not available on iOS Safari)
+    if (typeof Notification === 'undefined') {
+      console.log('Notification API is not available on this browser');
+      return;
+    }
+
     // Show prompt on mobile if notification permission hasn't been determined
     if (mobileCheck && Notification.permission === 'default') {
       setShowPrompt(true);
@@ -17,6 +23,12 @@ const NotificationPermissionPrompt = () => {
 
   const handleEnableNotifications = async () => {
     try {
+      // Check if Notification API is available before using it
+      if (typeof Notification === 'undefined') {
+        console.log('Notification API is not available on this browser');
+        return;
+      }
+
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         console.log('Notification permission granted on mobile');

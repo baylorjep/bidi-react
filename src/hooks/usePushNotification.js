@@ -33,6 +33,12 @@ export const subscribeToPush = async () => {
       return;
     }
 
+    // Check if Notification API is available (not available on iOS Safari)
+    if (typeof Notification === 'undefined') {
+      console.log('Notification API is not available on this browser');
+      return;
+    }
+
     // Check if we're on mobile
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
