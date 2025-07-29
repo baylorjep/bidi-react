@@ -77,6 +77,55 @@ const PaymentSuccess = () => {
         }
     };
 
+    // New function to handle sending payment receipt emails
+    const handlePaymentEmails = async (paymentInfo) => {
+        try {
+            // Get current user
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                console.error('No authenticated user found');
+                return;
+            }
+
+            // Get user email
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                .select('email')
+                .eq('id', user.id)
+                .single();
+
+            if (userError) {
+                console.error('Error fetching user email:', userError);
+                return;
+            }
+
+            // Get business email
+            const { data: businessData, error: businessError } = await supabase
+                .from('business_profiles')
+                .select('email')
+                .eq('id', paymentInfo.businessId)
+                .single();
+
+            if (businessError) {
+                console.error('Error fetching business email:', businessError);
+                return;
+            }
+
+            // Send emails
+            await sendEmailReceipts({
+                customerEmail: userData.email,
+                businessEmail: businessData.email,
+                amount: paymentInfo.amount,
+                paymentType: paymentInfo.paymentType,
+                businessName: paymentInfo.businessName,
+                date: new Date().toISOString(),
+                bidId: paymentInfo.bidId
+            });
+        } catch (error) {
+            console.error('Error handling payment emails:', error);
+        }
+    };
+
     useEffect(() => {
         const getPaymentData = async () => {
             try {
@@ -110,10 +159,10 @@ const PaymentSuccess = () => {
                     // Update bid status and close request if bidId is present
                     if (bidId) {
                         try {
-                            // First, get the bid to find the request_id
+                            // First, get the bid to find the request_id and business_id
                             const { data: bidData, error: bidError } = await supabase
                                 .from('bids')
-                                .select('request_id')
+                                .select('request_id, business_id')
                                 .eq('id', bidId)
                                 .single();
 
@@ -136,35 +185,19 @@ const PaymentSuccess = () => {
                                 } else {
                                     console.log('Successfully updated bid status to paid');
                                     
-                                    // Get user emails for receipts
-                                    const { data: userData, error: userError } = await supabase
-                                        .from('users')
-                                        .select('email')
-                                        .eq('id', user.id)
-                                        .single();
+                                    // Send payment receipt emails
+                                    await handlePaymentEmails({
+                                        amount: parseFloat(amount),
+                                        paymentType,
+                                        businessName,
+                                        bidId,
+                                        businessId: bidData.business_id
+                                    });
 
-                                    const { data: businessData, error: businessError } = await supabase
-                                        .from('business_profiles')
-                                        .select('email')
-                                        .eq('id', bidData.business_id)
-                                        .single();
-
-                                    if (!userError && !businessError) {
-                                        await sendEmailReceipts({
-                                            customerEmail: userData.email,
-                                            businessEmail: businessData.email,
-                                            amount: amount,
-                                            paymentType: paymentType,
-                                            businessName: businessName,
-                                            date: new Date().toISOString(),
-                                            bidId: bidId
-                                        });
+                                    // Close the request if this is a full payment
+                                    if (paymentType === 'full' && bidData.request_id) {
+                                        await closeRequest(bidData.request_id);
                                     }
-                                }
-
-                                // Close the request if this is a full payment
-                                if (paymentType === 'full' && bidData.request_id) {
-                                    await closeRequest(bidData.request_id);
                                 }
                             }
                         } catch (error) {
@@ -185,10 +218,10 @@ const PaymentSuccess = () => {
                         // Update bid status and close request if bidId is present in state data
                         if (stateData.bid_id) {
                             try {
-                                // First, get the bid to find the request_id
+                                // First, get the bid to find the request_id and business_id
                                 const { data: bidData, error: bidError } = await supabase
                                     .from('bids')
-                                    .select('request_id')
+                                    .select('request_id, business_id')
                                     .eq('id', stateData.bid_id)
                                     .single();
 
@@ -211,35 +244,19 @@ const PaymentSuccess = () => {
                                     } else {
                                         console.log('Successfully updated bid status to paid');
                                         
-                                        // Get user emails for receipts
-                                        const { data: userData, error: userError } = await supabase
-                                            .from('users')
-                                            .select('email')
-                                            .eq('id', user.id)
-                                            .single();
+                                        // Send payment receipt emails
+                                        await handlePaymentEmails({
+                                            amount: parseFloat(stateData.amount),
+                                            paymentType: stateData.payment_type,
+                                            businessName: stateData.business_name,
+                                            bidId: stateData.bid_id,
+                                            businessId: bidData.business_id
+                                        });
 
-                                        const { data: businessData, error: businessError } = await supabase
-                                            .from('business_profiles')
-                                            .select('email')
-                                            .eq('id', stateData.bid_id) // This should be stateData.business_id
-                                            .single();
-
-                                        if (!userError && !businessError) {
-                                            await sendEmailReceipts({
-                                                customerEmail: userData.email,
-                                                businessEmail: businessData.email,
-                                                amount: stateData.amount,
-                                                paymentType: stateData.payment_type,
-                                                businessName: stateData.business_name,
-                                                date: new Date().toISOString(),
-                                                bidId: stateData.bid_id
-                                            });
+                                        // Close the request if this is a full payment
+                                        if (stateData.payment_type === 'full' && bidData.request_id) {
+                                            await closeRequest(bidData.request_id);
                                         }
-                                    }
-
-                                    // Close the request if this is a full payment
-                                    if (stateData.payment_type === 'full' && bidData.request_id) {
-                                        await closeRequest(bidData.request_id);
                                     }
                                 }
                             } catch (error) {
