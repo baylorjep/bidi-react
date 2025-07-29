@@ -238,7 +238,7 @@ function AppContent() {
       <div className="content-wrapper">
         <Routes>
           <Route path="/" element={<Homepage />} />
-          <Route path="/corporate" element={<CorporateHomepage />} />
+          <Route path="/corporate-homepage" element={<CorporateHomepage />} />
           <Route path="/wedding-planner-homepage" element={<WeddingPlannerHomepage />} />
           <Route path="/partnership/:partnerName" element={<PartnershipLanding />} />
           <Route path="/for-vendors" element={<VendorHomepage />} />

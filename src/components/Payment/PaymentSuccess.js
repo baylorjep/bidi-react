@@ -5,7 +5,7 @@ import { supabase } from '../../supabaseClient';
 import '../../styles/PaymentSuccess.css';
 
 // Base64 encoded Bidi logo
-const BIDI_LOGO_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNy4yLWMwMDAgNzkuMWI2NWE3OWI0LCAyMDIyLzA2LzEzLTIyOjAxOjAxICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdEV2dD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlRXZlbnQjIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgMjQuMCAoTWFjaW50b3NoKSIgeG1wOkNyZWF0ZURhdGU9IjIwMjQtMDItMTNUMTU6NDc6NDctMDg6MDAiIHhtcDpNZXRhZGF0YURhdGU9IjIwMjQtMDItMTNUMTU6NDc6NDctMDg6MDAiIHhtcDpNb2RpZnlEYXRlPSIyMDI0LTAyLTEzVDE1OjQ3OjQ3LTA4OjAwIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjY5ZDM4ZjM5LTM4ZTAtNDZiZC1hMzA2LTNmYzM5ZjM5ZjM5ZiIgeG1wTU06RG9jdW1lbnRJRD0iYWRvYmU6ZG9jaWQ6cGhvdG9zaG9wOjY5ZDM4ZjM5LTM4ZTAtNDZiZC1hMzA2LTNmYzM5ZjM5ZjM5ZiIgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSJ4bXAuZGlkOjY5ZDM4ZjM5LTM4ZTAtNDZiZC1hMzA2LTNmYzM5ZjM5ZjM5ZiIgZGM6Zm9ybWF0PSJpbWFnZS9wbmciIHBob3Rvc2hvcDpDb2xvck1vZGU9IjMiPiA8eG1wTU06SGlzdG9yeT4gPHJkZjpTZXE+IDxyZGY6bGkgc3RFdnQ6YWN0aW9uPSJjcmVhdGVkIiBzdEV2dDppbnN0YW5jZUlEPSJ4bXAuaWlkOjY5ZDM4ZjM5LTM4ZTAtNDZiZC1hMzA2LTNmYzM5ZjM5ZjM5ZiIgc3RFdnQ6d2hlbj0iMjAyNC0wMi0xM1QxNTo0Nzo0Ny0wODowMCIgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWRvYmUgUGhvdG9zaG9wIDI0LjAgKE1hY2ludG9zaCkiLz4gPC9yZGY6U2VxPiA8L3htcE1NOkhpc3Rvcnk+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+';
+const BIDI_LOGO_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78i iglkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNy4yLWMwMDAgNzkuMWI2NWE3OWI0LCAyMDIyLzA2LzEzLTIyOjAxOjAxICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpypmY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdEV2dD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlRXZlbnQjIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgMjQuMCAoTWFjaW50b3NoKSIgeG1wOkNyZWF0ZURhdGU9IjIwMjQtMDItMTNUMTU6NDc6NDctMDg6MDAiIHhtcDpNZXRhZGF0YURhdGU9IjIwMjQtMDItMTNUMTU6NDc6NDctMDg6MDAiIHhtcDpNb2RpZnlEYXRlPSIyMDI0LTAyLTEzVDE1OjQ3OjQ3LTA4OjAwIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjY5ZDM4ZjM5LTM4ZTAtNDZiZC1hMzA2LTNmYzM5ZjM5ZjM5ZiIgeG1wTU06RG9jdW1lbnRJRD0iYWRvYmU6ZG9jaWQ6cGhvdG9zaG9wOjY5ZDM4ZjM5LTM4ZTAtNDZiZC1hMzA2LTNmYzM5ZjM5ZjM5ZiIgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSJ4bXAuZGlkOjY5ZDM4ZjM5LTM4ZTAtNDZiZC1hMzA2LTNmYzM5ZjM5ZjM5ZiIgZGM6Zm9ybWF0PSJpbWFnZS9wbmciIHBob3Rvc2hvcDpDb2xvck1vZGU9IjMiPiA8eG1wTU06SGlzdG9yeT4gPHJkZjpTZXE+IDxyZGY6bGkgc3RFdnQ6YWN0aW9uPSJjcmVhdGVkIiBzdEV2dDppbnN0YW5jZUlEPSJ4bXAuaWlkOjY5ZDM4ZjM5LTM4ZTAtNDZiZC1hMzA2LTNmYzM5ZjM5ZjM5ZiIgc3RFdnQ6d2hlbj0iMjAyNC0wMi0xM1QxNTo0Nzo0Ny0wODowMCIgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWRvYmUgUGhvdG9zaG9wIDI0LjAgKE1hY2ludG9zaCkiLz4gPC9yZGY6U2VxPiA8L3htcE1NOkhpc3Rvcnk+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+';
 
 const PaymentSuccess = () => {
     const location = useLocation();
@@ -53,6 +53,27 @@ const PaymentSuccess = () => {
             }
         } catch (error) {
             console.error('Error closing request:', error);
+        }
+    };
+
+    // New function to send email receipts
+    const sendEmailReceipts = async (paymentInfo) => {
+        try {
+            const response = await fetch('https://bidi-express.vercel.app/send-payment-receipts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(paymentInfo)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to send email receipts');
+            }
+
+            console.log('Email receipts sent successfully');
+        } catch (error) {
+            console.error('Error sending email receipts:', error);
         }
     };
 
@@ -114,6 +135,31 @@ const PaymentSuccess = () => {
                                     console.error('Error updating bid status:', updateBidError);
                                 } else {
                                     console.log('Successfully updated bid status to paid');
+                                    
+                                    // Get user emails for receipts
+                                    const { data: userData, error: userError } = await supabase
+                                        .from('users')
+                                        .select('email')
+                                        .eq('id', user.id)
+                                        .single();
+
+                                    const { data: businessData, error: businessError } = await supabase
+                                        .from('business_profiles')
+                                        .select('email')
+                                        .eq('id', bidData.business_id)
+                                        .single();
+
+                                    if (!userError && !businessError) {
+                                        await sendEmailReceipts({
+                                            customerEmail: userData.email,
+                                            businessEmail: businessData.email,
+                                            amount: amount,
+                                            paymentType: paymentType,
+                                            businessName: businessName,
+                                            date: new Date().toISOString(),
+                                            bidId: bidId
+                                        });
+                                    }
                                 }
 
                                 // Close the request if this is a full payment
@@ -164,6 +210,31 @@ const PaymentSuccess = () => {
                                         console.error('Error updating bid status:', updateBidError);
                                     } else {
                                         console.log('Successfully updated bid status to paid');
+                                        
+                                        // Get user emails for receipts
+                                        const { data: userData, error: userError } = await supabase
+                                            .from('users')
+                                            .select('email')
+                                            .eq('id', user.id)
+                                            .single();
+
+                                        const { data: businessData, error: businessError } = await supabase
+                                            .from('business_profiles')
+                                            .select('email')
+                                            .eq('id', stateData.bid_id) // This should be stateData.business_id
+                                            .single();
+
+                                        if (!userError && !businessError) {
+                                            await sendEmailReceipts({
+                                                customerEmail: userData.email,
+                                                businessEmail: businessData.email,
+                                                amount: stateData.amount,
+                                                paymentType: stateData.payment_type,
+                                                businessName: stateData.business_name,
+                                                date: new Date().toISOString(),
+                                                bidId: stateData.bid_id
+                                            });
+                                        }
                                     }
 
                                     // Close the request if this is a full payment

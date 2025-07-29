@@ -375,41 +375,31 @@ function AdminDashboard() {
 
     // Add test email sending function
     const handleSendTestEmail = async () => {
-        // Filter for businesses with 'admin' in their business_category
-        const adminBusinesses = businesses.filter(biz => Array.isArray(biz.business_category) && biz.business_category.includes('admin'));
-        if (adminBusinesses.length === 0) {
-            alert('No admin category business found.');
-            return;
-        }
-        const category = 'Photography';
-        // Use fake request info for all
-        const budget = '$2,000 - $3,000';
-        const location = 'Salt Lake City, UT';
-        const date = '09/15/2024';
-        const businessPayload = adminBusinesses.map(biz => ({
-            email: biz.email,
-            businessName: biz.business_name,
-            budget,
-            location,
-            date
-        }));
+        const testData = {
+            customerEmail: 'savewithbidi@gmail.com',
+            businessEmail: 'savewithbidi@gmail.com',
+            amount: 2500.00,
+            paymentType: 'full',
+            businessName: 'Test Photography Business',
+            date: new Date().toISOString(),
+            bidId: 'test-bid-123'
+        };
+
         try {
-            const response = await fetch('https://bidi-express.vercel.app/api/send-resend-email', {
+            const response = await fetch('https://bidi-express.vercel.app/send-payment-receipts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    category,
-                    businesses: businessPayload
-                })
+                body: JSON.stringify(testData)
             });
+
             if (response.ok) {
-                alert('Test email(s) sent successfully!');
+                alert('Test payment receipt emails sent successfully!');
             } else {
                 const errorData = await response.json();
-                alert('Failed to send test email(s): ' + (errorData.message || response.statusText));
+                alert('Failed to send test emails: ' + (errorData.message || response.statusText));
             }
         } catch (error) {
-            alert('Error sending test email(s): ' + error.message);
+            alert('Error sending test emails: ' + error.message);
         }
     };
 
@@ -517,7 +507,7 @@ function AdminDashboard() {
                 style={{ margin: '16px 0', background: '#A328F4', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '6px', fontWeight: 600, fontSize: '16px', cursor: 'pointer' }}
                 onClick={handleSendTestEmail}
             >
-                Send Test Business Notification Email
+                Send Test Payment Receipt Emails
             </button>
             <div className="admin-dashboard-content">
                 <h2 className="admin-dashboard-title">Admin Dashboard</h2>
