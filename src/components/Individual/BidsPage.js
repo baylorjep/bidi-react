@@ -651,11 +651,6 @@ export default function BidsPage({ onOpenChat }) {
     const handleDownPayNow = (bid) => {
         console.log('BidsPage: handleDownPayNow called with bid:', bid);
         try {
-            if (!bid.business_profiles.stripe_account_id) {
-                toast.error('This business is not yet set up to receive payments. Please contact them directly.');
-                return;
-            }
-
             const downPayment = calculateDownPayment(bid);
             if (!downPayment) {
                 console.error('Down payment calculation returned null. Business profile:', bid.business_profiles);
@@ -665,23 +660,26 @@ export default function BidsPage({ onOpenChat }) {
 
             // Add line items to the payment data
             let lineItems = [];
-            if (bid.message) {
-                lineItems.push({
-                    description: bid.message,
-                    quantity: 1,
-                    rate: downPayment.amount
-                });
-            }
+            const description = bid.bid_description || bid.message || 'Service payment';
+            lineItems.push({
+                description: description,
+                quantity: 1,
+                rate: downPayment.amount
+            });
+
+            // Use Bidi's Stripe account if business doesn't have one
+            const stripeAccountId = bid.business_profiles?.stripe_account_id || 'acct_1RqCsQJwWKKQQDV2';
+            const isUsingBidiStripe = !bid.business_profiles?.stripe_account_id;
 
             const paymentData = {
                 bid_id: bid.id,
                 amount: downPayment.amount,
-                stripe_account_id: bid.business_profiles.stripe_account_id || 'acct_1RqCsQJwWKKQQDV2', // Fallback to Bidi's account
+                stripe_account_id: stripeAccountId,
                 payment_type: 'down_payment',
-                business_name: bid.business_profiles.business_name,
-                description: `Down payment for ${bid.message || 'service'}`,
+                business_name: bid.business_profiles?.business_name || 'Unknown Business',
+                description: isUsingBidiStripe ? `${description} (Processed by Bidi)` : description,
                 lineItems: lineItems,
-                taxRate: 0 // Add tax rate if needed
+                taxRate: 0
             };
             console.log('BidsPage: Navigating to checkout with down payment data:', paymentData);
             navigate('/checkout', { state: { paymentData } });
