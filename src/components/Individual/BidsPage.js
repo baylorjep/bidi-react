@@ -1779,17 +1779,6 @@ export default function BidsPage({ onOpenChat }) {
                         <p className="section-description">
                             Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
                         </p>
-                        <div style={{ 
-                            textAlign: 'center', 
-                            marginBottom: '20px', 
-                            padding: '10px', 
-                            backgroundColor: '#f8f9fa', 
-                            borderRadius: '8px',
-                            color: '#FF008A',
-                            fontWeight: 'bold'
-                        }}>
-                            Get 5% off everything when you book through Bidi! Limited time offer.
-                        </div>
 
                         <div className="bids-container">
                             {/* Show bids grouped by status as accordions */}

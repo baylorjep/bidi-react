@@ -51,7 +51,9 @@ const PaymentCard = ({
   const updateLineItem = (id, field, value) => {
     setPaymentLineItems(paymentLineItems.map(item => {
       if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
+        // If updating description, strip HTML tags
+        const sanitizedValue = field === 'description' ? value.replace(/<[^>]*>/g, '') : value;
+        const updatedItem = { ...item, [field]: sanitizedValue };
         if (field === 'quantity' || field === 'rate') {
           const quantity = field === 'quantity' ? parseFloat(value) || 0 : item.quantity;
           const rate = field === 'rate' ? parseFloat(value) || 0 : item.rate;

@@ -29,12 +29,14 @@ const EmbeddedCheckoutForm = () => {
     console.log('Payment data:', paymentData);
     const createCheckoutSession = async () => {
       try {
-        // Create detailed description with line items
+        // Create detailed description with line items and strip HTML tags
         let detailedDescription = paymentData.business_name;
         if (paymentData.lineItems && paymentData.lineItems.length > 0) {
           detailedDescription += '\n';
           paymentData.lineItems.forEach((item, index) => {
-            detailedDescription += `• ${item.description} (${item.quantity}×$${item.rate})\n`;
+            // Strip HTML tags from description
+            const sanitizedDescription = item.description.replace(/<[^>]*>/g, '');
+            detailedDescription += `• ${sanitizedDescription} (${item.quantity}×$${item.rate})\n`;
           });
           if (paymentData.taxRate > 0) {
             detailedDescription += `• Tax (${paymentData.taxRate}%)`;
