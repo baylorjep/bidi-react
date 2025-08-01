@@ -123,8 +123,8 @@ const EmbeddedCheckoutForm = () => {
           {errorMessage}
         </div>
       ) : clientSecret ? (
-        <div style={{ padding: '20px', backgroundColor: 'white', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center', fontSize: '20px', fontFamily:'Outfit' }}>Checkout</div>
+        <div style={{ padding: '20px', backgroundColor: 'white' }}>
+          <div style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center', fontSize: '20px', fontFamily:'Outfit', marginBottom:'20px' }}>Checkout</div>
           <EmbeddedCheckoutProvider
             stripe={stripePromise}
             options={{ clientSecret }}
