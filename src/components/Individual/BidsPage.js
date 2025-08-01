@@ -658,16 +658,30 @@ export default function BidsPage({ onOpenChat }) {
 
             const downPayment = calculateDownPayment(bid);
             if (!downPayment) {
-                throw new Error('Down payment calculation failed');
+                console.error('Down payment calculation returned null. Business profile:', bid.business_profiles);
+                toast.error('Unable to calculate down payment. Please contact support.');
+                return;
+            }
+
+            // Add line items to the payment data
+            let lineItems = [];
+            if (bid.message) {
+                lineItems.push({
+                    description: bid.message,
+                    quantity: 1,
+                    rate: downPayment.amount
+                });
             }
 
             const paymentData = {
                 bid_id: bid.id,
                 amount: downPayment.amount,
-                stripe_account_id: bid.business_profiles.stripe_account_id,
+                stripe_account_id: bid.business_profiles.stripe_account_id || 'acct_1RqCsQJwWKKQQDV2', // Fallback to Bidi's account
                 payment_type: 'down_payment',
                 business_name: bid.business_profiles.business_name,
-                description: `Down payment for ${bid.message || 'service'}`
+                description: `Down payment for ${bid.message || 'service'}`,
+                lineItems: lineItems,
+                taxRate: 0 // Add tax rate if needed
             };
             console.log('BidsPage: Navigating to checkout with down payment data:', paymentData);
             navigate('/checkout', { state: { paymentData } });
