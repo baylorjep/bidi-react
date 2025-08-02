@@ -21,6 +21,7 @@ import BusinessSettingsSidebar from './BusinessSettingsSidebar';
 import AdminDashboard from '../admin/AdminDashboard';
 import ChangePlanModal from './ChangePlanModal';
 import Select from 'react-select';
+import StripeDashboardSummary from '../Stripe/StripeDashboardSummary';
 
 const BusinessSettings = ({ connectedAccountId }) => {
   const [isVerified, setIsVerified] = useState(false);
@@ -2096,6 +2097,14 @@ useEffect(() => {
                       )}
                     </div>
                   </div>
+                  
+                  {/* Stripe Dashboard Summary */}
+                  {connectedAccountId && (
+                    <div className="settings-row">
+                      <StripeDashboardSummary accountId={connectedAccountId} />
+                    </div>
+                  )}
+
                   <div className="settings-row">
                     <div>
                       <div className="settings-label">Down Payment</div>
