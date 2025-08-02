@@ -219,7 +219,8 @@ function AppContent() {
     }
     
     // Check if the first path segment matches any dashboard pattern
-    return dashboardPatterns.includes(pathSegment);
+    // Also check if the path starts with any of the patterns
+    return dashboardPatterns.some(pattern => location.pathname.startsWith(`/${pattern}`));
   };
 
   // Debug logging for App.js
