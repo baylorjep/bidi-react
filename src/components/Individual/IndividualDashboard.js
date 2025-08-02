@@ -67,6 +67,9 @@ const IndividualDashboard = () => {
   useEffect(() => {
     if (params.activeSection) {
       setActiveSection(params.activeSection);
+    } else {
+      // If no section specified in URL, default to bids
+      setActiveSection("bids");
     }
   }, [params.activeSection]);
 
@@ -606,55 +609,60 @@ const IndividualDashboard = () => {
 
         {/* Main Dashboard */}
         <main className="dashboard-main">
-          {activeSection === "bids" ? (
-            <BidsPage onOpenChat={handleOpenChat} />
-          ) : activeSection === "messages" ? (
-            isMobile ? (
-              selectedChat ? (
-                <MessagingView
-                  currentUserId={user?.id}
-                  businessId={selectedChat.id}
-                  businessName={selectedChat.name}
-                  profileImage={selectedChat.profileImage}
-                  onBack={handleBackFromChat}
-                />
-              ) : (
-                <MobileChatList 
-                  currentUserId={user?.id} 
-                  userType="individual"
-                  onChatSelect={handleChatSelect}
-                />
-              )
-            ) : (
-              <ChatInterface 
-                currentUserId={user?.id}
-                userType="individual"
-                initialChat={selectedChat}
-              />
-            )
-          ) : activeSection === "request" ? (
-            location.state?.showRequestFlow ? (
-              <MasterRequestFlow 
-                selectedCategories={location.state.selectedCategories}
-                onComplete={() => {
-                  navigate("/individual-dashboard", { 
-                    state: { 
-                      activeSection: "request",
-                      showRequestFlow: false
-                    }
-                  });
-                }}
-              />
-            ) : (
-              <RequestCategories />
-            )
-          ) : activeSection === "vendors" ? (
-            <VendorListWithFilters showAds={false} />
-          ) : activeSection === "profile" ? (
-            <Settings currentDashboard="individual" />
-          ) : (
-            <div>An error occurred</div>
-          )}
+          {(() => {
+            console.log('Current activeSection:', activeSection);
+            switch(activeSection) {
+              case "bids":
+                return <BidsPage onOpenChat={handleOpenChat} />;
+              case "messages":
+                return isMobile ? (
+                  selectedChat ? (
+                    <MessagingView
+                      currentUserId={user?.id}
+                      businessId={selectedChat.id}
+                      businessName={selectedChat.name}
+                      profileImage={selectedChat.profileImage}
+                      onBack={handleBackFromChat}
+                    />
+                  ) : (
+                    <MobileChatList 
+                      currentUserId={user?.id} 
+                      userType="individual"
+                      onChatSelect={handleChatSelect}
+                    />
+                  )
+                ) : (
+                  <ChatInterface 
+                    currentUserId={user?.id}
+                    userType="individual"
+                    initialChat={selectedChat}
+                  />
+                );
+              case "request":
+                return location.state?.showRequestFlow ? (
+                  <MasterRequestFlow 
+                    selectedCategories={location.state.selectedCategories}
+                    onComplete={() => {
+                      navigate("/individual-dashboard", { 
+                        state: { 
+                          activeSection: "request",
+                          showRequestFlow: false
+                        }
+                      });
+                    }}
+                  />
+                ) : (
+                  <RequestCategories />
+                );
+              case "vendors":
+                return <VendorListWithFilters showAds={false} />;
+              case "profile":
+                return <Settings currentDashboard="individual" />;
+              default:
+                console.error('Invalid activeSection:', activeSection);
+                return <BidsPage onOpenChat={handleOpenChat} />;
+            }
+          })()}}
         </main>
 
         {/* Bottom Navigation Bar */}
