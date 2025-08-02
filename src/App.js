@@ -529,7 +529,7 @@ function AppContent() {
           <Route path="*" element={<ErrorPage />} />
         </Routes>
       </div>
-      {(!user || !isDashboardRoute()) && !location.pathname.includes('signin') && !location.pathname.includes('createaccount') && !location.pathname.includes('pricing') && <Footer />}
+      {(!user || !isDashboardRoute()) && !location.pathname.includes('signin') && !location.pathname.includes('createaccount') && !location.pathname.includes('pricing') && !location.pathname.includes('request-password-reset') && <Footer />}
       <ToastContainer
         position="top-right"
         autoClose={5000}

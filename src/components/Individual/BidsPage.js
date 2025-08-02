@@ -98,29 +98,45 @@ const BidsPageSkeleton = () => (
       </p>
       
       <div className="bids-container-bids-page">
-        <div className="bids-section bids-section-pending" style={{ marginBottom: 24 }}>
-          <div className="bids-section-header" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}>
-            <span style={{ marginRight: 8 }}>▶</span>
-            <h4 style={{ margin: 0 }}>Pending Bids (3)</h4>
-          </div>
-          <div className="bids-grid">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <BidCardSkeleton key={index} />
-            ))}
-          </div>
+        {/* Status Tabs Skeleton */}
+        <div className="status-tabs" style={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '24px',
+          overflowX: 'auto',
+          padding: '8px 0'
+        }}>
+          {["All", "Pending", "Interested", "Approved", "Paid", "Denied", "Expired"].map((status) => (
+            <div
+              key={status}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '20px',
+                background: '#f8f9fa',
+                width: status === 'All' ? '80px' : '120px',
+                height: '36px',
+                animation: 'pulse 1.5s infinite'
+              }}
+            />
+          ))}
         </div>
-        
-        <div className="bids-section bids-section-interested" style={{ marginBottom: 24 }}>
-          <div className="bids-section-header" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}>
-            <span style={{ marginRight: 8 }}>▶</span>
-            <h4 style={{ margin: 0 }}>Interested Bids (2)</h4>
-          </div>
-          <div className="bids-grid">
-            {Array.from({ length: 2 }).map((_, index) => (
-              <BidCardSkeleton key={index} />
-            ))}
-          </div>
+
+        {/* Bids Grid Skeleton */}
+        <div className="bids-grid">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <BidCardSkeleton key={index} />
+          ))}
         </div>
+
+        <style>
+          {`
+            @keyframes pulse {
+              0% { opacity: 0.6; }
+              50% { opacity: 0.8; }
+              100% { opacity: 0.6; }
+            }
+          `}
+        </style>
       </div>
     </div>
   </div>

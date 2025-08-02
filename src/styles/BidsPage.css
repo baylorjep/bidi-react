@@ -370,9 +370,10 @@
 .bids-page .bids-section {
     background: white;
     flex: 0;
-    padding: 12px;
+    padding: 20px;
     margin-bottom: 0 !important;
     min-height: 100vh;
+    border-radius: 16px;
 }
 
 .bids-page .bids-section.active {

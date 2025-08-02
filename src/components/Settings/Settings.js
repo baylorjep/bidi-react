@@ -226,8 +226,8 @@ function Settings({ currentDashboard }) {
         </div>
 
         <div className="form-actions-settings">
-          <button type="submit" className="btn-primary">Save Changes</button>
-          <button type="button" className="btn-secondary" style={{width:'130px',borderRadius:'30px'}} onClick={handleLogout}>
+          <button type="submit" className="btn-primary" style={{maxWidth:'100px'}}>Save Changes</button>
+          <button type="button" className="btn-secondary" style={{width:'130px',borderRadius:'30px', display:'flex', alignItems:'center', justifyContent:'center' }} onClick={handleLogout}>
             Log Out
           </button>
         </div>

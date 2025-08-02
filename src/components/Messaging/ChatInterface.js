@@ -30,7 +30,7 @@ const ChatInterfaceSkeleton = () => (
     <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>
       Chat with your clients and vendors
     </p>
-    <div className="chat-app">
+    <div className="chat-app" style={{ minHeight: "100vh" }}>
       <aside className="chat-sidebar">
         <header>
           <span>Your Chats</span>
@@ -273,7 +273,21 @@ export default function ChatInterface({ initialChat }) {
         </header>
 
         <ul>
-          {chats.map((c) => (
+          {chats.length === 0 ? (
+            <div style={{
+              padding: "2rem",
+              textAlign: "center",
+              color: "var(--bidi-muted)"
+            }}>
+              <div style={{ marginBottom: "1rem" }}>
+                No messages yet
+              </div>
+              <div style={{ fontSize: "0.9rem" }}>
+                Browse vendors to start conversations and get quotes
+              </div>
+            </div>
+          ) : (
+            chats.map((c) => (
             <li
               key={c.business_id}
               className={activeBusiness === c.business_id ? "active" : ""}
@@ -298,12 +312,47 @@ export default function ChatInterface({ initialChat }) {
                 </div>
               </div>
             </li>
-          ))}
+          )))}
         </ul>
       </aside>
 
       <main className="chat-main">
-        {activeBusiness ? (
+        {chats.length === 0 ? (
+          <div style={{ 
+            display: "flex", 
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100%",
+            padding: "2rem",
+            color: "var(--bidi-muted)",
+            textAlign: "center"
+          }}>
+            <div style={{ fontSize: "1.2rem", marginBottom: "1rem" }}>
+              Welcome to Messages!
+            </div>
+            <div style={{ marginBottom: "2rem" }}>
+              Find and connect with vendors to start your first conversation
+            </div>
+            <button
+              onClick={() => {
+                const event = new CustomEvent('navigateToVendors');
+                window.dispatchEvent(event);
+              }}
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "var(--bidi-primary)",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "1rem"
+              }}
+            >
+              Browse Vendors
+            </button>
+          </div>
+        ) : activeBusiness ? (
           <MessagingView
             currentUserId={currentUserId}
             businessId={activeBusiness}

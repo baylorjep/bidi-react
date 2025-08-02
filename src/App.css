@@ -11053,11 +11053,6 @@ background: linear-gradient(246deg, rgba(255, 0, 138, 0.79) 15.35%, #A328F4 85.5
   -webkit-text-fill-color: transparent;
 }
 
-aside,
-section {
-  padding-top: 5rem;
-
-}
 
 .app-badge {
   height: 3rem;

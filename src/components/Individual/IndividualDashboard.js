@@ -134,11 +134,7 @@ const IndividualDashboard = () => {
             phone: profile.phone || "",
           });
           setIsVerified(!!profile.is_verified);
-          
-          // Check if user has seen the wedding planner intro
-          if (!profile.has_seen_wedding_planner_intro) {
-            setShowWeddingPlannerModal(true);
-          }
+
         }
 
         // Set profile picture
@@ -417,9 +413,16 @@ const IndividualDashboard = () => {
       }
     };
 
+    const handleNavigateToVendors = () => {
+      handleSectionChange("vendors");
+    };
+
     window.addEventListener('popstate', handleBackButton);
+    window.addEventListener('navigateToVendors', handleNavigateToVendors);
+    
     return () => {
       window.removeEventListener('popstate', handleBackButton);
+      window.removeEventListener('navigateToVendors', handleNavigateToVendors);
     };
   }, [activeSection]);
 
