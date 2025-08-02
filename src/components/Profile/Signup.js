@@ -235,7 +235,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
                 <meta name="keywords" content="sign up, create account, wedding vendors, Bidi" />
             </Helmet>
             
-            <div className="pricing-container" style={{ backgroundColor: 'white' , borderRadius: '20px', padding: '40px'}}>
+            <div className="pricing-container" style={{ backgroundColor: 'white' , borderRadius: '20px', padding: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection:'column' }}>
                 <div className="pricing-header">
                     <h1 className="pricing-title landing-page-title heading-reset">
                         Create Your Account

@@ -90,17 +90,6 @@ function RequestCategories() {
         <div className="request-form-subheader">
           Please select one or more services
         </div>
-        <div style={{ 
-          textAlign: 'center', 
-          marginBottom: '20px', 
-          padding: '10px', 
-          backgroundColor: '#f8f9fa', 
-          borderRadius: '8px',
-          color: '#FF008A',
-          fontWeight: 'bold'
-        }}>
-          Get 5% off everything when you book through Bidi! Limited time offer.
-        </div>
 
         <div className="request-categories-grid">
           {categories.map((category) => (

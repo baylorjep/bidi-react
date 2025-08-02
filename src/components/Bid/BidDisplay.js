@@ -157,12 +157,25 @@ function BidDisplay({
       showPending
     });
     
+    if (bid.status === 'paid') {
+      return bid.payment_type === 'down_payment' ? 'down_payment_paid' : 'paid';
+    }
     if (showExpired) return 'expired';
     if (showApproved || bid.status === 'approved' || bid.status === 'accepted') return 'approved';
     if (showPaymentOptions) return 'payment';
     if (showInterested) return 'interested';
     if (showPending) return 'pending';
     return 'default';
+  };
+
+  // Calculate remaining amount if this was a down payment
+  const getRemainingAmount = () => {
+    if (bid.status === 'paid' && bid.payment_type === 'down_payment' && bid.payment_amount) {
+      const totalAmount = bid.amount || 0;
+      const paidAmount = bid.payment_amount || 0;
+      return totalAmount - paidAmount;
+    }
+    return 0;
   };
 
   const bidStatus = getBidStatus();
@@ -271,30 +284,83 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
     bid.business_profiles.profile_image || "/images/default.jpg"; // Default image if none
 
   // Status-based rendering functions
+  const renderPaymentInfo = () => {
+    if (bid.status === 'paid') {
+      if (bid.payment_type === 'down_payment') {
+        const remainingAmount = bid.remaining_amount || (bid.bid_amount - bid.payment_amount);
+        return (
+          <div className="payment-info">
+            <div className="payment-status down-payment">
+              <CheckCircleIcon style={{ color: '#28a745' }} />
+              <span>Down Payment Paid (${bid.payment_amount?.toFixed(2)})</span>
+            </div>
+            <div className="remaining-amount-down-payment">
+              <span>Remaining Balance: ${remainingAmount?.toFixed(2)}</span>
+              <span className="due-date">Due at event</span>
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <div className="payment-info">
+            <div className="payment-status fully-paid">
+              <CheckCircleIcon style={{ color: '#28a745' }} />
+              <span>Fully Paid (${bid.payment_amount?.toFixed(2)})</span>
+            </div>
+          </div>
+        );
+      }
+    }
+    return null;
+  };
+
   const renderStatusBadge = () => {
     const statusConfig = {
       approved: { text: 'Approved', className: 'status-badge-approved', icon: <CheckCircleIcon /> },
       pending: { text: 'Pending', className: 'status-badge-pending', icon: <AccessTimeIcon /> },
       interested: { text: 'Interested', className: 'status-badge-interested', icon: <FavoriteIcon /> },
       payment: { text: 'Payment Required', className: 'status-badge-payment', icon: <ThumbUpIcon /> },
-      expired: { text: 'Expired', className: 'status-badge-expired', icon: <AccessTimeIcon /> }
+      expired: { text: 'Expired', className: 'status-badge-expired', icon: <AccessTimeIcon /> },
+      paid: { text: bid.payment_type === 'down_payment' ? 'Down Payment Paid' : 'Fully Paid', 
+             className: bid.payment_type === 'down_payment' ? 'status-badge-down-payment' : 'status-badge-paid', 
+             icon: <CheckCircleIcon /> }
     };
 
     const config = statusConfig[bidStatus];
     if (!config) return null;
 
+    const remainingAmount = getRemainingAmount();
+
     return (
       <div className={`bid-status-badge ${config.className}`}>
         {config.icon}
-        <span>{config.text}</span>
+        <span>
+          {config.text}
+          {remainingAmount > 0 && (
+            <span className="remaining-amount">
+              {` (Remaining: $${remainingAmount.toFixed(2)})`}
+            </span>
+          )}
+        </span>
       </div>
     );
   };
 
   const renderStatusActions = () => {
-    console.log('renderStatusActions called with bidStatus:', bidStatus);
-    console.log('onPayNow function:', onPayNow);
+    console.log('renderStatusActions called with:', {
+      bidStatus,
+      onPayNow,
+      showPaymentOptions,
+      isDownPaymentPaid: bid.status === 'paid' && bid.payment_type === 'down_payment',
+      isFullyPaid: bid.status === 'paid' && bid.payment_type !== 'down_payment',
+      remainingAmount: bid.status === 'paid' && bid.payment_type === 'down_payment' ? bid.bid_amount - bid.payment_amount : bid.bid_amount
+    });
     
+    // Calculate remaining amount if this is a down payment
+    const remainingAmount = bid.status === 'paid' && bid.payment_type === 'down_payment' 
+      ? bid.bid_amount - bid.payment_amount 
+      : bid.bid_amount;
+
     switch (bidStatus) {
       case 'expired':
         return (
@@ -306,30 +372,49 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
         );
       
       case 'approved':
+      case 'payment':
+      case 'paid':
+      case 'down_payment_paid':
         const downPaymentText = downPayment ? `Pay Down Payment (${downPayment.display})` : 'Pay Down Payment';
+        const isDownPaymentPaid = bid.status === 'paid' && bid.payment_type === 'down_payment';
+        const isFullyPaid = bid.status === 'paid' && bid.payment_type !== 'down_payment';
+
         return (
           <div className="bid-status-actions">
-            <button className="bid-card-btn bid-card-btn-primary" onClick={() => {
-              console.log('BidDisplay: Pay in Full button clicked');
-              console.log('BidDisplay: onPayNow function:', onPayNow);
-              if (onPayNow) {
-                onPayNow('full');
-              } else {
-                console.error('BidDisplay: onPayNow is not defined');
-              }
-            }}>
-              Pay in Full (${bid.bid_amount})
-            </button>
-            <button className="bid-card-btn bid-card-btn-secondary" onClick={() => {
-              console.log('BidDisplay: Pay Down Payment button clicked');
-              console.log('BidDisplay: onPayNow function:', onPayNow);
-              if (onPayNow) {
-                onPayNow('downpayment');
-              } else {
-                console.error('BidDisplay: onPayNow is not defined');
-              }
-            }}>
-              {downPaymentText}
+            {!isFullyPaid && (
+              <button 
+                className="bid-card-btn bid-card-btn-primary" 
+                onClick={() => {
+                  console.log('BidDisplay: Pay in Full button clicked');
+                  if (onPayNow) {
+                    onPayNow('full');
+                  } else {
+                    console.error('BidDisplay: onPayNow is not defined');
+                  }
+                }}
+              >
+                {isDownPaymentPaid 
+                  ? `Pay Remaining Balance ($${remainingAmount?.toFixed(2)})` 
+                  : `Pay in Full ($${bid.bid_amount})`}
+              </button>
+            )}
+            {!isDownPaymentPaid && !isFullyPaid && (
+              <button 
+                className="bid-card-btn bid-card-btn-secondary" 
+                onClick={() => {
+                  console.log('BidDisplay: Pay Down Payment button clicked');
+                  if (onPayNow) {
+                    onPayNow('downpayment');
+                  } else {
+                    console.error('BidDisplay: onPayNow is not defined');
+                  }
+                }}
+              >
+                {downPaymentText}
+              </button>
+            )}
+            <button className="bid-card-btn bid-card-btn-secondary" onClick={handleProfileClick}>
+              View Profile
             </button>
           </div>
         );
@@ -351,19 +436,6 @@ const daysLeft = discountDeadline ? Math.ceil((discountDeadline - now) / (1000 *
           <div className="bid-status-actions">
             <button className="bid-card-btn bid-card-btn-primary" onClick={() => handleAction(handleApprove, bid.id)}>
               Approve Bid
-            </button>
-            <button className="bid-card-btn bid-card-btn-secondary" onClick={handleProfileClick}>
-              View Profile
-            </button>
-          </div>
-        );
-      
-      case 'payment':
-        const paymentDownPaymentText = downPayment ? `Pay Down Payment (${downPayment.display})` : 'Pay Down Payment';
-        return (
-          <div className="bid-status-actions">
-            <button className="bid-card-btn bid-card-btn-primary" onClick={() => onPayNow && onPayNow('full')}>
-              Complete Payment (${bid.bid_amount})
             </button>
             <button className="bid-card-btn bid-card-btn-secondary" onClick={handleProfileClick}>
               View Profile
@@ -1801,6 +1873,29 @@ useEffect(() => {
           </div>
         </div>
       </div>
+
+      {/* Payment Status */}
+      {bid.status === 'paid' && (
+        <div className="payment-info">
+          {bid.payment_type === 'down_payment' ? (
+            <>
+              <div className="payment-status down-payment">
+                <CheckCircleIcon />
+                <span>Down Payment Paid (${bid.payment_amount?.toFixed(2)})</span>
+              </div>
+              <div className="remaining-amount-down-payment">
+                <span>Remaining Balance: ${(bid.bid_amount - bid.payment_amount)?.toFixed(2)}</span>
+                <span className="due-date">Due at event</span>
+              </div>
+            </>
+          ) : (
+            <div className="payment-status fully-paid">
+              <CheckCircleIcon />
+              <span>Fully Paid (${bid.payment_amount?.toFixed(2)})</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Price Breakdown - Moved below profile row */}
       <div className="bid-card-price-section">

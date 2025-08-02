@@ -156,8 +156,8 @@ const SignIn = ({ onSuccess }) => {
                 <meta name="description" content="Sign in to Bidi for a smart bidding platform that connects you with top professionals. Request services with ease and simplify your search today." />
             </Helmet>
 
-            <div className="pricing-container">
-                <div className="pricing-header">
+            <div className="pricing-container" style={{ height: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection:'column' }}>
+                <div className="pricing-header" style={{ marginBottom:'20px' }}>
                     <h1 className="pricing-title landing-page-title heading-reset">
                         Welcome Back to Bidi
                     </h1>

@@ -176,7 +176,8 @@ const PaymentSuccess = () => {
                                         status: 'paid',
                                         paid_at: new Date().toISOString(),
                                         payment_amount: parseFloat(amount),
-                                        payment_type: paymentType
+                                        payment_type: paymentType,
+                                        payment_status: paymentType === 'full' ? 'fully_paid' : 'down_payment_paid'
                                     })
                                     .eq('id', bidId);
 
@@ -235,7 +236,8 @@ const PaymentSuccess = () => {
                                             status: 'paid',
                                             paid_at: new Date().toISOString(),
                                             payment_amount: parseFloat(stateData.amount),
-                                            payment_type: stateData.payment_type
+                                            payment_type: stateData.payment_type,
+                                            payment_status: stateData.payment_type === 'full' ? 'fully_paid' : 'down_payment_paid'
                                         })
                                         .eq('id', stateData.bid_id);
 
