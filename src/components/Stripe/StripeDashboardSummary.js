@@ -8,11 +8,12 @@ const StripeDashboardSummary = ({ accountId }) => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('https://bidi-express.vercel.app/stripe-dashboard', {
+      const response = await fetch('https://bidi-express.vercel.app/api/stripe/dashboard', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Important for auth cookies
         body: JSON.stringify({ accountId }),
       });
 
