@@ -5,20 +5,20 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.dashboard-header {
+.dashboard-header-stripe-dashboard {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
 }
 
-.dashboard-header h3 {
+.dashboard-header-stripe-dashboard h3 {
   margin: 0;
   color: #32325d;
   font-size: 1.4rem;
 }
 
-.refresh-button {
+.refresh-button-stripe-dashboard {
   padding: 6px 12px;
   font-size: 0.9rem;
 }
@@ -30,101 +30,101 @@
   margin-bottom: 24px;
 }
 
-.dashboard-card {
+.dashboard-card-stripe-dashboard {
   background: #f8f9fa;
   border-radius: 8px;
   padding: 20px;
 }
 
-.balance-card {
+.balance-card-stripe-dashboard {
   background: linear-gradient(135deg, #32325d 0%, #1a1f71 100%);
   color: white;
 }
 
-.balance-card h4 {
+.balance-card-stripe-dashboard h4 {
   color: rgba(255, 255, 255, 0.8);
   margin: 0 0 12px 0;
   font-size: 1rem;
 }
 
-.balance-amount {
+.balance-amount-stripe-dashboard {
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 8px;
 }
 
-.pending-balance {
+.pending-balance-stripe-dashboard {
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.8);
 }
 
-.status-card h4 {
+.status-card-stripe-dashboard h4 {
   color: #32325d;
   margin: 0 0 16px 0;
   font-size: 1rem;
 }
 
-.status-items {
+.status-items-stripe-dashboard {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.status-item {
+.status-item-stripe-dashboard {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.status {
+.status-stripe-dashboard {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.85rem;
   font-weight: 500;
 }
 
-.status.active {
+.status-stripe-dashboard      .active {
   background: #cbf4c9;
   color: #0d6832;
 }
 
-.status.inactive {
+.status-stripe-dashboard .inactive {
   background: #f8d7da;
   color: #721c24;
 }
 
-.status.succeeded {
+.status-stripe-dashboard .succeeded {
   background: #cbf4c9;
   color: #0d6832;
 }
 
-.status.pending {
+.status-stripe-dashboard .pending {
   background: #fff3cd;
   color: #856404;
 }
 
-.status.failed {
+.status-stripe-dashboard .failed {
   background: #f8d7da;
   color: #721c24;
 }
 
-.dashboard-section {
+.dashboard-section-stripe-dashboard {
   margin-bottom: 24px;
 }
 
-.dashboard-section h4 {
+.dashboard-section-stripe-dashboard h4 {
   color: #32325d;
   margin: 0 0 16px 0;
   font-size: 1.1rem;
 }
 
-.transactions-list {
+.transactions-list-stripe-dashboard {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.transaction-item {
+.transaction-item-stripe-dashboard {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -134,27 +134,27 @@
   transition: background-color 0.2s;
 }
 
-.transaction-item:hover {
+.transaction-item-stripe-dashboard:hover {
   background: #f1f3f5;
 }
 
-.transaction-amount {
+.transaction-amount-stripe-dashboard {
   font-weight: 600;
   color: #32325d;
 }
 
-.transaction-details {
+.transaction-details-stripe-dashboard  {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.transaction-date {
+.transaction-date-stripe-dashboard {
   color: #6b7280;
   font-size: 0.9rem;
 }
 
-.no-data {
+.no-data-stripe-dashboard {
   text-align: center;
   padding: 24px;
   color: #6b7280;
@@ -163,13 +163,13 @@
   font-size: 0.9rem;
 }
 
-.stripe-dashboard-loading {
+.stripe-dashboard-loading-stripe-dashboard {
   text-align: center;
   padding: 40px;
   color: #6b7280;
 }
 
-.loading-spinner {
+.loading-spinner-stripe-dashboard {
   border: 3px solid #f3f3f3;
   border-top: 3px solid #32325d;
   border-radius: 50%;
@@ -184,7 +184,7 @@
   100% { transform: rotate(360deg); }
 }
 
-.stripe-dashboard-error {
+.stripe-dashboard-error-stripe-dashboard {
   color: #721c24;
   background: #f8d7da;
   padding: 16px;
@@ -194,21 +194,21 @@
 }
 
 @media (max-width: 768px) {
-  .stripe-dashboard-summary {
+  .stripe-dashboard-summary-stripe-dashboard {
     padding: 16px;
   }
 
-  .dashboard-grid {
+  .dashboard-grid-stripe-dashboard {
     grid-template-columns: 1fr;
   }
 
-  .transaction-item {
+  .transaction-item-stripe-dashboard {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
 
-  .transaction-details {
+  .transaction-details-stripe-dashboard {
     width: 100%;
     justify-content: space-between;
   }
