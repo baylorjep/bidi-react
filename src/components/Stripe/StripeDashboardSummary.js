@@ -1,5 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
 import './StripeDashboardSummary.css';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const StripeDashboardSummary = ({ accountId }) => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -63,6 +84,60 @@ const StripeDashboardSummary = ({ accountId }) => {
   const availableBalance = balance?.available?.[0]?.amount || 0;
   const pendingBalance = balance?.pending?.[0]?.amount || 0;
 
+  // Process payment data for the graph
+  const processPaymentData = () => {
+    if (!charges) return null;
+
+    // Group payments by date
+    const paymentsByDate = charges.reduce((acc, charge) => {
+      const date = new Date(charge.created * 1000).toLocaleDateString();
+      acc[date] = (acc[date] || 0) + charge.amount / 100;
+      return acc;
+    }, {});
+
+    // Sort dates and prepare data for chart
+    const sortedDates = Object.keys(paymentsByDate).sort((a, b) => new Date(a) - new Date(b));
+    
+    return {
+      labels: sortedDates,
+      datasets: [
+        {
+          label: 'Payments',
+          data: sortedDates.map(date => paymentsByDate[date]),
+          borderColor: '#32325d',
+          backgroundColor: 'rgba(50, 50, 93, 0.1)',
+          fill: true,
+          tension: 0.4
+        }
+      ]
+    };
+  };
+
+  const chartData = processPaymentData();
+  
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => `$${context.parsed.y.toFixed(2)}`
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: (value) => `$${value}`
+        }
+      }
+    }
+  };
+
   return (
     <div className="stripe-dashboard-summary-stripe-dashboard">
       <div className="dashboard-header-stripe-dashboard">
@@ -71,7 +146,7 @@ const StripeDashboardSummary = ({ accountId }) => {
           className="btn btn-secondary btn-sm refresh-button-stripe-dashboard"
           onClick={fetchDashboardData}
         >
-          Refresh
+          <i className="fas fa-sync-alt"></i>
         </button>
       </div>
 
@@ -106,6 +181,16 @@ const StripeDashboardSummary = ({ accountId }) => {
           </div>
         </div>
       </div>
+
+      {/* Payment Graph */}
+      {chartData && (
+        <div className="dashboard-section-stripe-dashboard">
+          <h4>Payment History</h4>
+          <div className="chart-container-stripe-dashboard">
+            <Line data={chartData} options={chartOptions} />
+          </div>
+        </div>
+      )}
 
       <div className="dashboard-section-stripe-dashboard">
         <h4>Recent Payouts</h4>
