@@ -22,6 +22,14 @@
 .refresh-button-stripe-dashboard {
   padding: 6px 12px;
   font-size: 0.9rem;
+  background-color: #FF69B4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
 }
 
 .dashboard-grid-stripe-dashboard {
@@ -120,6 +128,39 @@
 }
 
 /* Chart Container Styles */
+.chart-header-stripe-dashboard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.time-range-selector-stripe-dashboard {
+  display: flex;
+  gap: 8px;
+}
+
+.time-range-button-stripe-dashboard {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.time-range-button-stripe-dashboard:hover {
+  background: #e9ecef;
+}
+
+.time-range-button-stripe-dashboard.active {
+  background: #FF69B4;
+  color: white;
+  border-color: #FF69B4;
+}
+
 .chart-container-stripe-dashboard {
   height: 300px;
   margin: 20px 0;
@@ -211,6 +252,23 @@
 
   .dashboard-grid-stripe-dashboard {
     grid-template-columns: 1fr;
+  }
+
+  .chart-header-stripe-dashboard {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .time-range-selector-stripe-dashboard {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .time-range-button-stripe-dashboard {
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .chart-container-stripe-dashboard {

@@ -26,6 +26,7 @@ const StripeDashboardSummary = ({ accountId }) => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [timeRange, setTimeRange] = useState('week'); // week, month, 6months, year
 
   const fetchDashboardData = async () => {
     try {
@@ -88,24 +89,60 @@ const StripeDashboardSummary = ({ accountId }) => {
   const processPaymentData = () => {
     if (!charges) return null;
 
-    // Group payments by date
+    // Get the start date based on selected time range
+    const getStartDate = () => {
+      const now = new Date();
+      switch (timeRange) {
+        case 'week':
+          return new Date(now.setDate(now.getDate() - 7));
+        case 'month':
+          return new Date(now.setMonth(now.getMonth() - 1));
+        case '6months':
+          return new Date(now.setMonth(now.getMonth() - 6));
+        case 'year':
+          return new Date(now.setFullYear(now.getFullYear() - 1));
+        default:
+          return new Date(now.setDate(now.getDate() - 7));
+      }
+    };
+
+    const startDate = getStartDate();
+    
+    // Filter and group payments by date
     const paymentsByDate = charges.reduce((acc, charge) => {
-      const date = new Date(charge.created * 1000).toLocaleDateString();
-      acc[date] = (acc[date] || 0) + charge.amount / 100;
+      const chargeDate = new Date(charge.created * 1000);
+      if (chargeDate >= startDate) {
+        const dateStr = chargeDate.toLocaleDateString();
+        acc[dateStr] = (acc[dateStr] || 0) + charge.amount / 100;
+      }
       return acc;
     }, {});
 
-    // Sort dates and prepare data for chart
-    const sortedDates = Object.keys(paymentsByDate).sort((a, b) => new Date(a) - new Date(b));
+    // Fill in missing dates with zero values
+    const fillMissingDates = () => {
+      const dates = {};
+      const currentDate = new Date(startDate);
+      const endDate = new Date();
+
+      while (currentDate <= endDate) {
+        const dateStr = currentDate.toLocaleDateString();
+        dates[dateStr] = paymentsByDate[dateStr] || 0;
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      return dates;
+    };
+
+    const filledDates = fillMissingDates();
+    const sortedDates = Object.keys(filledDates).sort((a, b) => new Date(a) - new Date(b));
     
     return {
       labels: sortedDates,
       datasets: [
         {
           label: 'Payments',
-          data: sortedDates.map(date => paymentsByDate[date]),
-          borderColor: '#32325d',
-          backgroundColor: 'rgba(50, 50, 93, 0.1)',
+          data: sortedDates.map(date => filledDates[date]),
+          borderColor: '#FF69B4',
+          backgroundColor: 'rgba(255, 105, 180, 0.1)',
           fill: true,
           tension: 0.4
         }
@@ -143,7 +180,7 @@ const StripeDashboardSummary = ({ accountId }) => {
       <div className="dashboard-header-stripe-dashboard">
         <h3>Payment Dashboard</h3>
         <button 
-          className="btn btn-secondary btn-sm refresh-button-stripe-dashboard"
+          className="refresh-button-stripe-dashboard"
           onClick={fetchDashboardData}
         >
           <i className="fas fa-sync-alt"></i>
@@ -185,7 +222,35 @@ const StripeDashboardSummary = ({ accountId }) => {
       {/* Payment Graph */}
       {chartData && (
         <div className="dashboard-section-stripe-dashboard">
-          <h4>Payment History</h4>
+          <div className="chart-header-stripe-dashboard">
+            <h4>Payment History</h4>
+            <div className="time-range-selector-stripe-dashboard">
+              <button 
+                className={`time-range-button-stripe-dashboard ${timeRange === 'week' ? 'active' : ''}`}
+                onClick={() => setTimeRange('week')}
+              >
+                Week
+              </button>
+              <button 
+                className={`time-range-button-stripe-dashboard ${timeRange === 'month' ? 'active' : ''}`}
+                onClick={() => setTimeRange('month')}
+              >
+                Month
+              </button>
+              <button 
+                className={`time-range-button-stripe-dashboard ${timeRange === '6months' ? 'active' : ''}`}
+                onClick={() => setTimeRange('6months')}
+              >
+                6 Months
+              </button>
+              <button 
+                className={`time-range-button-stripe-dashboard ${timeRange === 'year' ? 'active' : ''}`}
+                onClick={() => setTimeRange('year')}
+              >
+                Year
+              </button>
+            </div>
+          </div>
           <div className="chart-container-stripe-dashboard">
             <Line data={chartData} options={chartOptions} />
           </div>
