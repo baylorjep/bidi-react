@@ -11,7 +11,7 @@ import './EnhancedStripeOnboarding.css';
 const ONBOARDING_STEPS = [
   {
     id: 'intro',
-    title: 'Welcome to Stripe Setup',
+    title: 'Welcome',
     description: 'Get ready to accept payments for your services',
   },
   {
@@ -204,13 +204,14 @@ export default function EnhancedStripeOnboarding() {
               </div>
             )}
 
+            <div>
             {!accountCreatePending && !connectedAccountId && (
               <button 
                 className="btn-primary-stripe-onboarding"
                 onClick={createAccount}
                 disabled={isLoading}
               >
-                {isLoading ? 'Connecting...' : `Connect ${email} with Stripe`}
+                {isLoading ? 'Connecting...' : `Connect`}
               </button>
             )}
 
@@ -220,6 +221,10 @@ export default function EnhancedStripeOnboarding() {
                 <p>Creating your Stripe connected account...</p>
               </div>
             )}
+
+            </div>
+
+
           </div>
         );
 
