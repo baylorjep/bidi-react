@@ -192,8 +192,8 @@ const [showAiBidModal, setShowAiBidModal] = useState(false);
   };
 
   // Function to fetch AI-generated bids
-  const fetchAiGeneratedBids = async () => {
-    if (!user?.id) return;
+  const fetchAiGeneratedBids = async (userId) => {
+    if (!userId) return;
     
     try {
       setAiBidsLoading(true);
@@ -204,7 +204,7 @@ const [showAiBidModal, setShowAiBidModal] = useState(false);
           *,
           requests!inner(*)
         `)
-        .eq('business_id', user.id)
+        .eq('business_id', userId)
         .eq('is_autobid', true)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -1605,7 +1605,7 @@ useEffect(() => {
   // Add effect to fetch AI-generated bids when AI section is active
   useEffect(() => {
     if (user?.id && activeSection === 'ai' && autobidEnabled) {
-      fetchAiGeneratedBids();
+      fetchAiGeneratedBids(user.id);
     }
   }, [user?.id, activeSection, autobidEnabled]);
 
@@ -2422,7 +2422,7 @@ useEffect(() => {
                                 </span>
                                 <button
                                   className="btn btn-sm btn-outline-primary"
-                                  onClick={fetchAiGeneratedBids}
+                                  onClick={() => fetchAiGeneratedBids(user?.id)}
                                 >
                                   <i className="fas fa-refresh"></i>
                                 </button>
@@ -2537,7 +2537,7 @@ useEffect(() => {
                   <h6>Recent AI-Generated Bids</h6>
                   <button
                     className="btn btn-sm btn-outline-primary"
-                    onClick={fetchAiGeneratedBids}
+                    onClick={() => fetchAiGeneratedBids(user?.id)}
                   >
                     <i className="fas fa-refresh"></i> Refresh
                   </button>
