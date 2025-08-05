@@ -126,7 +126,7 @@ const [trainingInProgress, setTrainingInProgress] = useState(false);
 
   // Add autobid enabled state
 const [autobidEnabled, setAutobidEnabled] = useState(false);
-const [autobidStatus, setAutobidStatus] = useState('paused'); // 'live' or 'paused'
+const [autobidStatus, setAutobidStatus] = useState(null); // null, 'live', or 'paused'
 
   // Function to enable autobid
   const handleEnableAutobid = async () => {
@@ -165,6 +165,12 @@ const [autobidStatus, setAutobidStatus] = useState('paused'); // 'live' or 'paus
         return;
       }
 
+      // Only allow toggling if status is already 'live' or 'paused'
+      if (autobidStatus === null) {
+        alert('Please complete AI training first before activating autobid.');
+        return;
+      }
+
       const newStatus = autobidStatus === 'live' ? 'paused' : 'live';
       
       const { error } = await supabase
@@ -183,6 +189,32 @@ const [autobidStatus, setAutobidStatus] = useState('paused'); // 'live' or 'paus
     } catch (error) {
       console.error('Error updating autobid status:', error);
       alert('An error occurred while updating autobid status. Please try again.');
+    }
+  };
+
+  // Function to activate autobid when training is completed
+  const activateAutobidAfterTraining = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('User not found when activating autobid');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('business_profiles')
+        .update({ autobid_status: 'live' })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error activating autobid after training:', error);
+        return;
+      }
+
+      setAutobidStatus('live');
+      console.log('Autobid activated after training completion');
+    } catch (error) {
+      console.error('Error activating autobid after training:', error);
     }
   };
 
@@ -320,7 +352,7 @@ useEffect(() => {
       setIsAdmin(!!profile.is_admin);
       setDefaultExpirationDays(profile.default_expiration_days || "");
       setAutobidEnabled(!!profile.autobid_enabled);
-      setAutobidStatus(profile.autobid_status || 'paused');
+      setAutobidStatus(profile.autobid_status || null);
       if (profile.business_category) {
         const categories = Array.isArray(profile.business_category)
           ? profile.business_category
@@ -2267,21 +2299,39 @@ useEffect(() => {
                           <div className="settings-desc">Control whether your AI autobidder is actively responding to requests or paused.</div>
                         </div>
                         <div className="settings-control">
-                          <div className="d-flex align-items-center gap-3">
-                            <span className={`badge ${autobidStatus === 'live' ? 'bg-success' : 'bg-warning'}`}>
-                              <i className={`fas ${autobidStatus === 'live' ? 'fa-play' : 'fa-pause'} me-1`}></i>
-                              {autobidStatus === 'live' ? 'Live' : 'Paused'}
-                            </span>
-                            <button
-                              className={`btn ${autobidStatus === 'live' ? 'btn-warning' : 'btn-success'}`}
-                              onClick={handleToggleAutobidStatus}
-                            >
-                              <i className={`fas ${autobidStatus === 'live' ? 'fa-pause' : 'fa-play'} me-2`}></i>
-                              {autobidStatus === 'live' ? 'Pause' : 'Activate'}
-                            </button>
-                          </div>
+                          {autobidStatus === null ? (
+                            <div className="d-flex align-items-center gap-3">
+                              <span className="badge bg-secondary">
+                                <i className="fas fa-clock me-1"></i>
+                                Not Ready
+                              </span>
+                              <button
+                                className="btn btn-secondary"
+                                disabled
+                              >
+                                <i className="fas fa-lock me-2"></i>
+                                Complete Training First
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="d-flex align-items-center gap-3">
+                              <span className={`badge ${autobidStatus === 'live' ? 'bg-success' : 'bg-warning'}`}>
+                                <i className={`fas ${autobidStatus === 'live' ? 'fa-play' : 'fa-pause'} me-1`}></i>
+                                {autobidStatus === 'live' ? 'Live' : 'Paused'}
+                              </span>
+                              <button
+                                className={`btn ${autobidStatus === 'live' ? 'btn-warning' : 'btn-success'}`}
+                                onClick={handleToggleAutobidStatus}
+                              >
+                                <i className={`fas ${autobidStatus === 'live' ? 'fa-pause' : 'fa-play'} me-2`}></i>
+                                {autobidStatus === 'live' ? 'Pause' : 'Activate'}
+                              </button>
+                            </div>
+                          )}
                           <small className="text-muted d-block mt-2">
-                            {autobidStatus === 'live' 
+                            {autobidStatus === null
+                              ? "Complete AI training to activate your autobidder and start responding to requests automatically."
+                              : autobidStatus === 'live' 
                               ? "Your AI autobidder is actively responding to requests and generating bids automatically."
                               : "Your AI autobidder is paused and will not respond to new requests until activated."
                             }
