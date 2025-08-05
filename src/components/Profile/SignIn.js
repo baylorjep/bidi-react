@@ -77,7 +77,10 @@ const SignIn = ({ onSuccess }) => {
                 password,
             });
 
-            if (error) throw error;
+            if (error) {
+                setError(error.message);
+                return;
+            }
 
             if (data.user) {
                 // Check if user has an individual profile
@@ -173,16 +176,17 @@ const SignIn = ({ onSuccess }) => {
                         width: '100%',
                         padding: '40px'
                     }}>
-                        {errorMessage && (
+                        {(error || errorMessage) && (
                             <div style={{
                                 color: '#dc3545',
                                 marginBottom: '20px',
                                 textAlign: 'center',
                                 padding: '10px',
                                 borderRadius: '8px',
-                                backgroundColor: '#fff'
+                                backgroundColor: '#fff3f3',
+                                border: '1px solid #dc3545'
                             }}>
-                                {errorMessage}
+                                {error === 'Invalid login credentials' ? 'Incorrect email or password' : (error || errorMessage)}
                             </div>
                         )}
 
