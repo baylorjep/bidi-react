@@ -32,7 +32,7 @@ export const useStripeConnect = (connectedAccountId) => {
           publishableKey: process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY,
           fetchClientSecret,
           appearance: {
-            overlays: "dialog",
+            overlays: "inline",
             variables: {
               colorPrimary: "#9a4aff",
             },
