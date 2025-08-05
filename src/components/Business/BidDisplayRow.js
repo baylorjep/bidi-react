@@ -423,6 +423,22 @@ const BidDisplayRow = ({
               Interested!
             </div>
           )}
+          {bid.is_ai_generated && (
+            <div style={{
+              background: "#10b981",
+              color: "white",
+              padding: "4px 8px",
+              borderRadius: "12px",
+              fontSize: "0.75rem",
+              fontWeight: "600",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
+            }}>
+              <i className="fas fa-robot" style={{ fontSize: '0.7rem' }}></i>
+              AI Generated
+            </div>
+          )}
         </div>
         <div style={{ fontSize: '0.9rem', color: '#6b6b7a' }}>
           {request?.event_type && `${request.event_type} • `}

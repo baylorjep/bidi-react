@@ -281,6 +281,18 @@
   color: white;
 }
 
+.tab-button.ai_generated {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 2px solid #0ea5e9;
+}
+
+.tab-button.ai_generated.active {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
 .tab-button:not(.active):hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);

@@ -28,6 +28,8 @@ const BusinessBids = ({ setActiveSection }) => {
       switch (activeTab) {
         case "all":
           return true;
+        case "ai_generated":
+          return bid.is_ai_generated === true;
         case "approved":
           return (bid.status === "approved" || bid.status === "accepted") && bid.status !== "paid";
         case "pending":
@@ -268,6 +270,8 @@ const BusinessBids = ({ setActiveSection }) => {
       switch (status) {
         case 'all':
           return bids.length;
+        case 'ai_generated':
+          return bids.filter((bid) => bid.is_ai_generated === true).length;
         case 'fully_paid':
           return fullyPaidBids.length;
         case 'down_payment':
@@ -281,8 +285,8 @@ const BusinessBids = ({ setActiveSection }) => {
 
     return (
       <div className="status-tabs">
-        {["all", "pending", "approved", "fully_paid", "down_payment", "denied"].map((status) => {
-          const displayText = status.split('_')
+        {["all", "ai_generated", "pending", "approved", "fully_paid", "down_payment", "denied"].map((status) => {
+          const displayText = status === 'ai_generated' ? 'AI Generated' : status.split('_')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
           
