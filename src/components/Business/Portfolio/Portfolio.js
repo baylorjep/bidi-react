@@ -1076,8 +1076,8 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const getSeoTitle = () => {
     if (!business) return 'Vendor Portfolio | Bidi';
     
-    // If user is viewing their own portfolio, show a simple title
-    if (isOwner) {
+    // Check if current user is viewing their own portfolio
+    if (user && user.id === businessId) {
       return `${business.business_name} - Portfolio`;
     }
     
