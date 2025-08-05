@@ -662,10 +662,76 @@ function MasterRequestFlow() {
     });
   };
 
+  // Helper to trigger autobids for a specific request
+  const triggerAutobids = async (requestId, category) => {
+    try {
+      console.log(`Triggering autobids for ${category} request: ${requestId}`);
+      
+      // Show natural loading message that doesn't reveal AI
+      const loadingMessages = [
+        `Finding ${category} professionals in your area...`,
+        `Connecting with ${category} businesses...`,
+        `Searching for ${category} services...`,
+        `Locating ${category} vendors...`
+      ];
+      
+      const randomMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+      toast.info(randomMessage, { autoClose: 3000 });
+      
+      const response = await fetch('https://bidi-express.vercel.app/trigger-autobid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          request_id: requestId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log(`Autobid trigger result for ${category}:`, result);
+      
+      // Show success message that feels natural
+      if (result.statistics && result.statistics.successful_bids > 0) {
+        const successMessages = [
+          `Great! Found ${result.statistics.successful_bids} ${category} options for you.`,
+          `Perfect! ${result.statistics.successful_bids} ${category} professionals are reviewing your request.`,
+          `Excellent! ${result.statistics.successful_bids} ${category} businesses are preparing their responses.`
+        ];
+        const randomSuccess = successMessages[Math.floor(Math.random() * successMessages.length)];
+        toast.success(randomSuccess, { autoClose: 4000 });
+      }
+      
+      // Log statistics for monitoring
+      if (result.statistics) {
+        console.log(`Autobid Statistics for ${category}:`, {
+          total_businesses_processed: result.statistics.total_businesses_processed,
+          successful_bids: result.statistics.successful_bids,
+          failed_bids: result.statistics.failed_bids
+        });
+      }
+
+      return result;
+    } catch (error) {
+      console.error(`Error triggering autobids for ${category} request ${requestId}:`, error);
+      // Show natural error message
+      toast.warning(`We're having trouble connecting with ${category} businesses right now. Don't worry - your request is still active and businesses can still find it.`, { autoClose: 5000 });
+      // Don't throw the error - we don't want autobid failures to break the request submission
+      return null;
+    }
+  };
+
+
+
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
       let submissionSuccess = false;
+      
+      // Show natural submission progress
+      toast.info('Submitting your request...', { autoClose: 2000 });
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setIsAuthModalOpen(true);
@@ -745,6 +811,9 @@ function MasterRequestFlow() {
           console.error('Photography request error:', photographyRequestError);
           throw photographyRequestError;
         }
+
+        // Trigger autobids for photography request
+        await triggerAutobids(newPhotographyRequest.id, 'photography');
 
         // Handle photo uploads if any
         if (request.photos && request.photos.length > 0) {
@@ -969,6 +1038,9 @@ function MasterRequestFlow() {
           throw videographyRequestError;
         }
 
+        // Trigger autobids for videography request
+        await triggerAutobids(newVideographyRequest.id, 'videography');
+
         console.log('Videography request inserted successfully:', newVideographyRequest);
 
         // Update request IDs state immediately
@@ -1162,6 +1234,9 @@ function MasterRequestFlow() {
           .single();
 
         if (floristRequestError) throw floristRequestError;
+
+        // Trigger autobids for florist request
+        await triggerAutobids(newFloristRequest.id, 'florist');
 
         // Handle photo uploads for florist
         if (request.photos && request.photos.length > 0) {
@@ -1362,6 +1437,9 @@ function MasterRequestFlow() {
 
         if (beautyRequestError) throw beautyRequestError;
 
+        // Trigger autobids for beauty request
+        await triggerAutobids(newBeautyRequest.id, 'beauty');
+
         // Handle photo uploads for beauty
         if (request.photos && request.photos.length > 0) {
           console.log(`Processing ${request.photos.length} photos for Beauty`);
@@ -1508,6 +1586,9 @@ function MasterRequestFlow() {
           throw djRequestError;
         }
 
+        // Trigger autobids for DJ request
+        await triggerAutobids(newDjRequest.id, 'dj');
+
         console.log('DJ request inserted successfully:', newDjRequest);
         submissionSuccess = true;
         setRequestIds(prev => ({ ...prev, dj: newDjRequest.id }));
@@ -1612,6 +1693,9 @@ function MasterRequestFlow() {
           console.error('Error inserting catering request:', cateringError);
           throw cateringError;
         }
+
+        // Trigger autobids for catering request
+        await triggerAutobids(newCateringRequest.id, 'catering');
 
         console.log('Successfully inserted catering request:', newCateringRequest);
         submissionSuccess = true;
@@ -1719,6 +1803,9 @@ function MasterRequestFlow() {
           .single();
 
         if (weddingPlanningRequestError) throw weddingPlanningRequestError;
+
+        // Trigger autobids for wedding planning request
+        await triggerAutobids(newWeddingPlanningRequest.id, 'weddingplanning');
 
         // Handle photo uploads for wedding planning
         if (request.photos && request.photos.length > 0) {
