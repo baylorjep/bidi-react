@@ -100,7 +100,13 @@ export default function Onboarding({ setActiveSection }) {
             </p>
           )}
           {connectedAccountId && !stripeConnectInstance && (
-            <h2>Add your information to start accepting payments</h2>
+            <div>
+              <h2>Add your information to start accepting payments</h2>
+              <p className="text-muted">
+                Some steps may redirect to Stripe's secure servers for identity verification and bank account setup. 
+                This is required for security and compliance reasons.
+              </p>
+            </div>
           )}
           {error && (
             <p className="text-danger">
@@ -123,10 +129,30 @@ export default function Onboarding({ setActiveSection }) {
           </div>
         )}
 
+        {connectedAccountId && !stripeConnectInstance && (
+          <div className="mt-4 text-center">
+            <div className="spinner-border text-secondary mb-3" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading onboarding form...</p>
+          </div>
+        )}
+
         {stripeConnectInstance && (
           <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
             <ConnectAccountOnboarding
               onExit={handleOnboardingExit}
+              onExit={(event) => {
+                console.log('Onboarding exit event:', event);
+                handleOnboardingExit();
+              }}
+              onReady={() => {
+                console.log('Onboarding component ready');
+              }}
+              onError={(error) => {
+                console.error('Onboarding error:', error);
+                setError(true);
+              }}
             />
           </ConnectComponentsProvider>
         )}

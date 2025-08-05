@@ -36,6 +36,19 @@ export const useStripeConnect = (connectedAccountId) => {
             variables: {
               colorPrimary: "#9a4aff",
             },
+            rules: {
+              ".Tab": {
+                border: "1px solid #e0e0e0",
+                borderRadius: "8px",
+              },
+              ".Tab:hover": {
+                backgroundColor: "#f8f9fa",
+              },
+              ".Tab--selected": {
+                backgroundColor: "#f3eafe",
+                borderColor: "#9a4aff",
+              },
+            },
           },
         })
       );
