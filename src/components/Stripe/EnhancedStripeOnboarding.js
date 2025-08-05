@@ -100,14 +100,13 @@ export default function EnhancedStripeOnboarding() {
           const { error: supabaseError } = await supabase
             .from('business_profiles')
             .update({ 
-              stripe_account_id: json.account,
               stripe_setup_progress: 'verification'
             })
             .eq('id', user.id);
 
           if (supabaseError) {
-            console.error('Failed to store connected account ID:', supabaseError);
-            setError('Failed to save account information. Please try again.');
+            console.error('Failed to save progress:', supabaseError);
+            setError('Failed to save progress. Please try again.');
           } else {
             setCurrentStep('verification');
           }
@@ -133,12 +132,15 @@ export default function EnhancedStripeOnboarding() {
         await supabase
           .from('business_profiles')
           .update({ 
+            stripe_account_id: connectedAccountId,
             stripe_setup_progress: 'completed',
             stripe_onboarding_completed: true
           })
           .eq('id', user.id);
+        setSavedProgress('completed');
+        setCurrentStep('banking');
       }
-      navigate('/dashboard');
+      setTimeout(() => navigate('/dashboard'), 1500); // Give time to see completion state
     } else {
       // Save progress
       await saveProgress(currentStep);
@@ -253,9 +255,10 @@ export default function EnhancedStripeOnboarding() {
         {ONBOARDING_STEPS.map((step) => (
           <div 
             key={step.id}
-            className={`progress-step ${currentStep === step.id ? 'active' : ''} 
+            className={`progress-step-stripe-onboarding ${currentStep === step.id ? 'active' : ''} 
                        ${ONBOARDING_STEPS.findIndex(s => s.id === currentStep) > 
-                         ONBOARDING_STEPS.findIndex(s => s.id === step.id) ? 'completed' : ''}`}
+                         ONBOARDING_STEPS.findIndex(s => s.id === step.id) ? 'completed' : ''}
+                       ${savedProgress === 'completed' && step.id === 'banking' ? 'completed' : ''}`}
           >
             <div className="step-indicator-stripe-onboarding"></div>
             <div className="step-details-stripe-onboarding">
