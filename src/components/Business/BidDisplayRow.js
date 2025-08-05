@@ -141,7 +141,26 @@ const BidDisplayRow = ({
   };
 
   const getStatusDisplay = () => {
-    if (bid.status === 'pending') {
+    if (bid.status === 'paid') {
+      if (bid.payment_type === 'down_payment') {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <span style={{ color: '#8b5cf6', fontWeight: 700 }}>Down Payment Paid</span>
+            <span style={{ color: '#666', fontSize: '0.9em' }}>
+              ${bid.payment_amount?.toFixed(2)} paid
+              <br />
+              ${(bid.bid_amount - bid.payment_amount)?.toFixed(2)} remaining
+            </span>
+          </div>
+        );
+      } else {
+        return (
+          <span style={{ color: '#10b981', fontWeight: 700 }}>
+            Fully Paid (${bid.payment_amount?.toFixed(2)})
+          </span>
+        );
+      }
+    } else if (bid.status === 'pending') {
       return bid.viewed ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <FaEye style={{ color: '#9633eb' }} />
@@ -337,21 +356,21 @@ const BidDisplayRow = ({
         <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
           <button
             onClick={() => onEditBid(bid.request_id, bid.id)}
-            style={{ background: '#9633eb', color: 'white', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
-          >Edit</button>
-          {(bid.status === "approved" || bid.status === "accepted" || bid.status === "interested") && onMessageClick && (
+            style={{ display:'flex', alignItems:'center', justifyContent:'center', background: '#9633eb', color: 'white', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
+          >            <FaEdit style={{ fontSize: '1rem' }} /></button>
+          {(bid.status === "approved" || bid.status === "accepted" || bid.status === "interested" || bid.status === "paid") && onMessageClick && (
             <button
               onClick={() => onMessageClick(
                 request.profile_id || request.user_id,
                 bid.status === "interested" ? `I'm interested in your request for ${getTitle()}` : null
               )}
-              style={{ background: bid.status === "interested" ? "#ff4d8d" : "#28a745", color: 'white', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
-            >Message</button>
+              style={{ display:'flex', alignItems:'center', justifyContent:'center', background: bid.status === "interested" ? "#ff4d8d" : "#28a745", color: 'white', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
+            >            <FaComments style={{ fontSize: '1rem' }} /></button>
           )}
           <button
             onClick={() => openWithdrawModal(bid.id)}
-            style={{ background: '#dc3545', color: 'white', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
-          >Withdraw</button>
+            style={{ display:'flex', alignItems:'center', justifyContent:'center', background: '#dc3545', color: 'white', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
+          >            <FaTrash style={{ fontSize: '1rem' }} /></button>
         </div>
         {/* Contract/Follow-up/Other actions can be added here as needed */}
       </div>
@@ -467,17 +486,16 @@ const BidDisplayRow = ({
             title="View/Edit Bid"
           >
             <FaEdit style={{ fontSize: '0.8rem' }} />
-            Edit
           </button>
 
-          {(bid.status === "approved" || bid.status === "accepted" || bid.status === "interested") && onMessageClick && (
+          {(bid.status === "approved" || bid.status === "accepted" || bid.status === "interested" || bid.status === "paid") && onMessageClick && (
             <button
               onClick={() => onMessageClick(
                 request.profile_id || request.user_id,
                 bid.status === "interested" ? `I'm interested in your request for ${getTitle()}` : null
               )}
               style={{
-                background: bid.status === "interested" ? "#ff4d8d" : "#28a745",
+                background: bid.status === "interested" ? "#ff4d8d" : bid.status === "paid" ? "#10b981" : "#28a745",
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
@@ -492,7 +510,6 @@ const BidDisplayRow = ({
               title="Message Client"
             >
               <FaComments style={{ fontSize: '0.8rem' }} />
-              Message
             </button>
           )}
 
@@ -513,7 +530,6 @@ const BidDisplayRow = ({
             title="Withdraw Bid"
           >
             <FaTrash style={{ fontSize: '0.8rem' }} />
-            Withdraw
           </button>
         </div>
 

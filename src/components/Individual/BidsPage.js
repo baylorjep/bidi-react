@@ -97,30 +97,46 @@ const BidsPageSkeleton = () => (
         Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
       </p>
       
-      <div className="bids-container">
-        <div className="bids-section bids-section-pending" style={{ marginBottom: 24 }}>
-          <div className="bids-section-header" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}>
-            <span style={{ marginRight: 8 }}>▶</span>
-            <h4 style={{ margin: 0 }}>Pending Bids (3)</h4>
-          </div>
-          <div className="bids-grid">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <BidCardSkeleton key={index} />
-            ))}
-          </div>
+      <div className="bids-container-bids-page">
+        {/* Status Tabs Skeleton */}
+        <div className="status-tabs" style={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '24px',
+          overflowX: 'auto',
+          padding: '8px 0'
+        }}>
+          {["All", "Pending", "Interested", "Approved", "Paid", "Denied", "Expired"].map((status) => (
+            <div
+              key={status}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '20px',
+                background: '#f8f9fa',
+                width: status === 'All' ? '80px' : '120px',
+                height: '36px',
+                animation: 'pulse 1.5s infinite'
+              }}
+            />
+          ))}
         </div>
-        
-        <div className="bids-section bids-section-interested" style={{ marginBottom: 24 }}>
-          <div className="bids-section-header" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}>
-            <span style={{ marginRight: 8 }}>▶</span>
-            <h4 style={{ margin: 0 }}>Interested Bids (2)</h4>
-          </div>
-          <div className="bids-grid">
-            {Array.from({ length: 2 }).map((_, index) => (
-              <BidCardSkeleton key={index} />
-            ))}
-          </div>
+
+        {/* Bids Grid Skeleton */}
+        <div className="bids-grid">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <BidCardSkeleton key={index} />
+          ))}
         </div>
+
+        <style>
+          {`
+            @keyframes pulse {
+              0% { opacity: 0.6; }
+              50% { opacity: 0.8; }
+              100% { opacity: 0.6; }
+            }
+          `}
+        </style>
       </div>
     </div>
   </div>
@@ -138,8 +154,8 @@ export default function BidsPage({ onOpenChat }) {
     const [bidNotes, setBidNotes] = useState('');
     const [bidInterestRating, setBidInterestRating] = useState(0);
     
-    // Accordion state for bid status sections
-    const [openBidSections, setOpenBidSections] = useState({});
+    // Tab state for bid status sections
+    const [activeTab, setActiveTab] = useState('all');
 
     const [couponCode, setCouponCode] = useState('');
     const [couponError, setError] = useState(null);
@@ -207,20 +223,13 @@ export default function BidsPage({ onOpenChat }) {
         };
         
         return {
+            paid: sortBids(requestBids.filter(bid => bid.status === 'paid' && !bid.isExpired)),
             approved: sortBids(requestBids.filter(bid => (bid.status === 'approved' || bid.status === 'accepted') && !bid.isExpired)),
             interested: sortBids(requestBids.filter(bid => bid.status === 'interested' && !bid.isExpired)),
             pending: sortBids(requestBids.filter(bid => bid.status === 'pending' && !bid.isExpired)),
             denied: sortBids(requestBids.filter(bid => bid.status === 'denied' && !bid.isExpired)),
             expired: sortBids(requestBids.filter(bid => bid.isExpired)),
         };
-    };
-
-    // Helper: Toggle accordion section
-    const toggleBidSection = (statusKey) => {
-        setOpenBidSections(prev => ({
-            ...prev,
-            [statusKey]: !prev[statusKey]
-        }));
     };
 
     // Helper: Get count of new bids for a status
@@ -651,23 +660,35 @@ export default function BidsPage({ onOpenChat }) {
     const handleDownPayNow = (bid) => {
         console.log('BidsPage: handleDownPayNow called with bid:', bid);
         try {
-            if (!bid.business_profiles.stripe_account_id) {
-                toast.error('This business is not yet set up to receive payments. Please contact them directly.');
+            const downPayment = calculateDownPayment(bid);
+            if (!downPayment) {
+                console.error('Down payment calculation returned null. Business profile:', bid.business_profiles);
+                toast.error('Unable to calculate down payment. Please contact support.');
                 return;
             }
 
-            const downPayment = calculateDownPayment(bid);
-            if (!downPayment) {
-                throw new Error('Down payment calculation failed');
-            }
+            // Add line items to the payment data
+            let lineItems = [];
+            const description = bid.bid_description || bid.message || 'Service payment';
+            lineItems.push({
+                description: description,
+                quantity: 1,
+                rate: downPayment.amount
+            });
+
+            // Use Bidi's Stripe account if business doesn't have one
+            const stripeAccountId = bid.business_profiles?.stripe_account_id || 'acct_1RqCsQJwWKKQQDV2';
+            const isUsingBidiStripe = !bid.business_profiles?.stripe_account_id;
 
             const paymentData = {
                 bid_id: bid.id,
                 amount: downPayment.amount,
-                stripe_account_id: bid.business_profiles.stripe_account_id,
+                stripe_account_id: stripeAccountId,
                 payment_type: 'down_payment',
-                business_name: bid.business_profiles.business_name,
-                description: `Down payment for ${bid.message || 'service'}`
+                business_name: bid.business_profiles?.business_name || 'Unknown Business',
+                description: isUsingBidiStripe ? `${description} (Processed by Bidi)` : description,
+                lineItems: lineItems,
+                taxRate: 0
             };
             console.log('BidsPage: Navigating to checkout with down payment data:', paymentData);
             navigate('/checkout', { state: { paymentData } });
@@ -1308,6 +1329,21 @@ export default function BidsPage({ onOpenChat }) {
                     }
                 }
             };
+        } else if (bid.status === 'paid' && bid.payment_type === 'down_payment') {
+            statusProps = {
+                showPaymentOptions: true,
+                downPayment: calculateDownPayment(bid),
+                onPayNow: (paymentType) => {
+                    if (paymentType === 'downpayment') {
+                        handleDownPayNow(bid);
+                    } else {
+                        handlePayNow(bid);
+                    }
+                },
+                showPending: false,
+                showNotInterested: false,
+                showInterested: false
+            };
         } else {
             // pending status
             statusProps = {
@@ -1481,61 +1517,77 @@ export default function BidsPage({ onOpenChat }) {
                         </h2>
                     </div>
                     <div className="mobile-bids-content">
-                        <div className="bids-container">
-                            {/* Show bids grouped by status as accordions */}
-                            {(() => {
-                                const bidsByStatus = getBidsByStatus();
-                                const statusOrder = [
-                                    { key: 'approved', label: 'Approved' },
-                                    { key: 'interested', label: 'Interested' },
-                                    { key: 'pending', label: 'Pending' },
-                                    { key: 'denied', label: 'Not Interested' },
-                                    { key: 'expired', label: 'Expired' }
-                                ];
-                                return statusOrder.map(({ key, label }) => {
-                                    if (!bidsByStatus[key] || bidsByStatus[key].length === 0) return null;
-                                    const isOpen = openBidSections[key] || false;
-                                    const newBidsInSection = bidsByStatus[key].filter(bid => !bid.viewed).length;
-                                    return (
-                                        <div key={key} className={`bids-section bids-section-${key}`} style={{ marginBottom: 24 }}>
-                                            <div
-                                                className="bids-section-header"
-                                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
-                                                onClick={() => toggleBidSection(key)}
-                                            >
-                                                <span style={{ marginRight: 8 }}>
-                                                    {isOpen ? '▼' : '▶'}
-                                                </span>
-                                                <h4 style={{ margin: 0 }}>
-                                                    {label} Bids ({bidsByStatus[key].length})
-                                                    {newBidsInSection > 0 && (
-                                                        <span 
-                                                            style={{ 
-                                                                marginLeft: 8, 
-                                                                background: '#ec4899', 
-                                                                color: 'white', 
-                                                                borderRadius: '50%', 
-                                                                padding: '2px 6px', 
-                                                                fontSize: '12px',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        >
-                                                            {newBidsInSection}
-                                                        </span>
-                                                    )}
-                                                </h4>
-                                            </div>
-                                            {isOpen && (
-                                                <div className="bids-grid">
-                                                    {bidsByStatus[key].map(bid => renderBidCard(bid))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                });
-                            })()}
-                            {renderNoBidsMessage()}
-                        </div>
+                    <div className="bids-container-bids-page">
+    <div className="status-tabs" style={{
+        display: 'flex',
+        gap: '8px',
+        marginBottom: '24px',
+        overflowX: 'auto',
+        padding: '8px 0'
+    }}>
+        {["all", "pending", "interested", "approved", "paid", "denied", "expired"].map((status) => {
+            const bidsByStatus = getBidsByStatus();
+            const count = status === 'all' 
+                ? Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0)
+                : (bidsByStatus[status]?.length || 0);
+            
+            const displayText = status.split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+            
+            const newBidsCount = status !== 'all' ? getNewBidsCount(status) : 0;
+            
+            return (
+                <button
+                    key={status}
+                    className={`tab-button ${status} ${activeTab === status ? "active" : ""}`}
+                    onClick={() => setActiveTab(status)}
+                    style={{
+                        padding: '8px 16px',
+                        borderRadius: '20px',
+                        border: 'none',
+                        background: activeTab === status ? '#9633eb' : '#f8f9fa',
+                        color: activeTab === status ? 'white' : '#666',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                        whiteSpace: 'nowrap',
+                        position: 'relative',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    {displayText} ({count})
+                    {newBidsCount > 0 && (
+                        <span style={{
+                            position: 'absolute',
+                            top: '-8px',
+                            right: '-8px',
+                            background: '#ec4899',
+                            color: 'white',
+                            borderRadius: '50%',
+                            padding: '2px 6px',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                        }}>
+                            {newBidsCount}
+                        </span>
+                    )}
+                </button>
+            );
+        })}
+    </div>
+    <div className="bids-grid">
+        {(() => {
+            const bidsByStatus = getBidsByStatus();
+            if (activeTab === 'all') {
+                return Object.values(bidsByStatus)
+                    .flat()
+                    .map(bid => renderBidCard(bid));
+            }
+            return (bidsByStatus[activeTab] || []).map(bid => renderBidCard(bid));
+        })()}
+        {renderNoBidsMessage()}
+    </div>
+</div>
                     </div>
                 </div>
             </>
@@ -1767,72 +1819,77 @@ export default function BidsPage({ onOpenChat }) {
                         <p className="section-description">
                             Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
                         </p>
-                        <div style={{ 
-                            textAlign: 'center', 
-                            marginBottom: '20px', 
-                            padding: '10px', 
-                            backgroundColor: '#f8f9fa', 
-                            borderRadius: '8px',
-                            color: '#FF008A',
-                            fontWeight: 'bold'
-                        }}>
-                            Get 5% off everything when you book through Bidi! Limited time offer.
-                        </div>
 
-                        <div className="bids-container">
-                            {/* Show bids grouped by status as accordions */}
-                            {(() => {
-                                const bidsByStatus = getBidsByStatus();
-                                const statusOrder = [
-                                    { key: 'approved', label: 'Approved' },
-                                    { key: 'interested', label: 'Interested' },
-                                    { key: 'pending', label: 'Pending' },
-                                    { key: 'denied', label: 'Not Interested' },
-                                    { key: 'expired', label: 'Expired' }
-                                ];
-                                return statusOrder.map(({ key, label }) => {
-                                    if (!bidsByStatus[key] || bidsByStatus[key].length === 0) return null;
-                                    const isOpen = openBidSections[key] || false;
-                                    const newBidsInSection = bidsByStatus[key].filter(bid => !bid.viewed).length;
+                        <div className="bids-container-bids-page">
+                            <div className="status-tabs" style={{
+                                display: 'flex',
+                                gap: '8px',
+                                marginBottom: '24px',
+                                overflowX: 'auto',
+                                padding: '8px 0'
+                            }}>
+                                {["all", "pending", "interested", "approved", "paid", "denied", "expired"].map((status) => {
+                                    const bidsByStatus = getBidsByStatus();
+                                    const count = status === 'all' 
+                                        ? Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0)
+                                        : (bidsByStatus[status]?.length || 0);
+                                    
+                                    const displayText = status.split('_')
+                                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                        .join(' ');
+                                    
+                                    const newBidsCount = status !== 'all' ? getNewBidsCount(status) : 0;
+                                    
                                     return (
-                                        <div key={key} className={`bids-section bids-section-${key}`} style={{ marginBottom: 24 }}>
-                                            <div
-                                                className="bids-section-header"
-                                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
-                                                onClick={() => toggleBidSection(key)}
-                                            >
-                                                <span style={{ marginRight: 8 }}>
-                                                    {isOpen ? '▼' : '▶'}
+                                        <button
+                                            key={status}
+                                            className={`tab-button ${status} ${activeTab === status ? "active" : ""}`}
+                                            onClick={() => setActiveTab(status)}
+                                            style={{
+                                                padding: '8px 16px',
+                                                borderRadius: '20px',
+                                                border: 'none',
+                                                background: activeTab === status ? '#9633eb' : '#f8f9fa',
+                                                color: activeTab === status ? 'white' : '#666',
+                                                cursor: 'pointer',
+                                                fontWeight: '500',
+                                                whiteSpace: 'nowrap',
+                                                position: 'relative',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            {displayText} ({count})
+                                            {newBidsCount > 0 && (
+                                                <span style={{
+                                                    position: 'absolute',
+                                                    top: '-8px',
+                                                    right: '-8px',
+                                                    background: '#ec4899',
+                                                    color: 'white',
+                                                    borderRadius: '50%',
+                                                    padding: '2px 6px',
+                                                    fontSize: '12px',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    {newBidsCount}
                                                 </span>
-                                                <h4 style={{ margin: 0 }}>
-                                                    {label} Bids ({bidsByStatus[key].length})
-                                                    {newBidsInSection > 0 && (
-                                                        <span 
-                                                            style={{ 
-                                                                marginLeft: 8, 
-                                                                background: '#ec4899', 
-                                                                color: 'white', 
-                                                                borderRadius: '50%', 
-                                                                padding: '2px 6px', 
-                                                                fontSize: '12px',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        >
-                                                            {newBidsInSection}
-                                                        </span>
-                                                    )}
-                                                </h4>
-                                            </div>
-                                            {isOpen && (
-                                                <div className="bids-grid">
-                                                    {bidsByStatus[key].map(bid => renderBidCard(bid))}
-                                                </div>
                                             )}
-                                        </div>
+                                        </button>
                                     );
-                                });
-                            })()}
-                            {renderNoBidsMessage()}
+                                })}
+                            </div>
+                            <div className="bids-grid">
+                                {(() => {
+                                    const bidsByStatus = getBidsByStatus();
+                                    if (activeTab === 'all') {
+                                        return Object.values(bidsByStatus)
+                                            .flat()
+                                            .map(bid => renderBidCard(bid));
+                                    }
+                                    return (bidsByStatus[activeTab] || []).map(bid => renderBidCard(bid));
+                                })()}
+                                {renderNoBidsMessage()}
+                            </div>
                         </div>
                     </div>
                 )}

@@ -29,19 +29,22 @@ const EmbeddedCheckoutForm = () => {
     console.log('Payment data:', paymentData);
     const createCheckoutSession = async () => {
       try {
-        // Create detailed description with line items
+        // Create detailed description with line items and strip HTML tags
         let detailedDescription = paymentData.business_name;
         if (paymentData.lineItems && paymentData.lineItems.length > 0) {
           detailedDescription += '\n';
           paymentData.lineItems.forEach((item, index) => {
-            detailedDescription += `• ${item.description} (${item.quantity}×$${item.rate})\n`;
+            // Strip HTML tags from description
+            const sanitizedDescription = item.description.replace(/<[^>]*>/g, '');
+            detailedDescription += `• ${sanitizedDescription} (${item.quantity}×$${item.rate})\n`;
           });
           if (paymentData.taxRate > 0) {
             detailedDescription += `• Tax (${paymentData.taxRate}%)`;
           }
         }
 
-        const response = await fetch("https://bidi-express.vercel.app/create-checkout-session", {
+        // First try with the business's Stripe account
+        let response = await fetch("https://bidi-express.vercel.app/create-checkout-session", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -53,20 +56,41 @@ const EmbeddedCheckoutForm = () => {
             serviceName: detailedDescription,
             successUrl: `${window.location.origin}/payment-success?amount=${paymentData.amount}&payment_type=${paymentData.payment_type}&business_name=${encodeURIComponent(paymentData.business_name)}&bid_id=${paymentData.bid_id}`,
             cancelUrl: `${window.location.origin}/bids`,
-
           }),
         });
-    
+
+        // If there's an error with the business's Stripe, try with Bidi's Stripe
         if (!response.ok) {
           const errorText = await response.text();
+          let errorData;
           try {
-            const errorData = JSON.parse(errorText);
-            if (errorData.error && errorData.error.includes('capabilities')) {
-              throw new Error('This business has not completed their payment setup. Please contact them directly.');
-            }
-            throw new Error(errorData.error || 'Failed to create checkout session');
+            errorData = JSON.parse(errorText);
           } catch (e) {
-            throw new Error(e.message || errorText);
+            errorData = { error: errorText };
+          }
+
+          if (errorData.error && (errorData.error.includes('capabilities') || !response.ok)) {
+            console.log('Falling back to Bidi Stripe account');
+            response = await fetch("https://bidi-express.vercel.app/create-checkout-session", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                connectedAccountId: 'acct_1RqCsQJwWKKQQDV2', // Bidi's Stripe account ID
+                amount: Math.round(paymentData.amount * 100),
+                applicationFeeAmount: 0, // No application fee when using Bidi's account
+                serviceName: `${detailedDescription} (Processed by Bidi)`,
+                successUrl: `${window.location.origin}/payment-success?amount=${paymentData.amount}&payment_type=${paymentData.payment_type}&business_name=${encodeURIComponent(paymentData.business_name)}&bid_id=${paymentData.bid_id}`,
+                cancelUrl: `${window.location.origin}/bids`,
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to process payment with both business and Bidi accounts');
+            }
+          } else {
+            throw new Error(errorData.error || 'Failed to create checkout session');
           }
         }
     
@@ -99,7 +123,8 @@ const EmbeddedCheckoutForm = () => {
           {errorMessage}
         </div>
       ) : clientSecret ? (
-        <div style={{ padding: '20px' }}>
+        <div style={{ padding: '20px', backgroundColor: 'white' }}>
+          <div style={{ fontWeight: 'bold', display:'flex',justifyContent:'center',alignItems:'center', fontSize: '20px', fontFamily:'Outfit', marginBottom:'20px' }}>Checkout</div>
           <EmbeddedCheckoutProvider
             stripe={stripePromise}
             options={{ clientSecret }}

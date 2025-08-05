@@ -57,7 +57,7 @@ function CreateAccount() {
                 <meta name="description" content="Join Bidi - Create your account as a couple planning a wedding or as a wedding vendor." />
             </Helmet>
             
-            <div className="pricing-container">
+            <div className="pricing-container" style={{height:'70vh', display:'flex', justifyContent:'center', alignItems:'center', flexDirection:'column'}}>
                 <div className="pricing-header">
                     <h1 className="pricing-title landing-page-title heading-reset">
                         Create an Account
@@ -76,7 +76,6 @@ function CreateAccount() {
                         fontWeight: 'bold',
                         color: '#666',
                         position: 'relative',
-                        background: '#fff',
                         padding: '0 20px'
                     }}>
                         OR
@@ -87,7 +86,7 @@ function CreateAccount() {
                             Offer my skills to others
                         </button>
                     </div>
-                    <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#666', position: 'relative', background: '#fff', padding: '0 20px', fontFamily: 'Inter' }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#666', position: 'relative', padding: '0 20px', fontFamily: 'Inter' }}>
                         <div>
                             Trying to log in? <a href='/signin' style={{ color: '#000',}}>Click here</a>
                         </div>

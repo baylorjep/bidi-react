@@ -201,26 +201,26 @@ function AppContent() {
 
   // Function to check if current route is a dashboard
   const isDashboardRoute = () => {
-    const dashboardRoutes = [
-      '/individual-dashboard',
-      '/business-dashboard',
-      '/wedding-planner/',
-      '/messages',
-      '/messages/'
+    // Get the first segment of the path (e.g., /individual-dashboard/something -> individual-dashboard)
+    const pathSegment = location.pathname.split('/')[1];
+    
+    // Define dashboard route patterns
+    const dashboardPatterns = [
+      'individual-dashboard',
+      'business-dashboard',
+      'wedding-planner',
+      'messages',
+      'bids'
     ];
     
-    // Check exact matches first
-    if (dashboardRoutes.some(route => location.pathname === route)) {
-      return true;
-    }
-    
-    // Check if path starts with any dashboard route (for dynamic routes like /messages/:businessId)
-    // But exclude the wedding planner homepage
+    // Special cases to exclude
     if (location.pathname === '/wedding-planner-homepage') {
       return false;
     }
     
-    return dashboardRoutes.some(route => location.pathname.startsWith(route));
+    // Check if the first path segment matches any dashboard pattern
+    // Also check if the path starts with any of the patterns
+    return dashboardPatterns.some(pattern => location.pathname.startsWith(`/${pattern}`));
   };
 
   // Debug logging for App.js
@@ -530,7 +530,7 @@ function AppContent() {
           <Route path="*" element={<ErrorPage />} />
         </Routes>
       </div>
-      {(!user || !isDashboardRoute()) && <Footer />}
+      {(!user || !isDashboardRoute()) && !location.pathname.includes('signin') && !location.pathname.includes('createaccount') && !location.pathname.includes('pricing') && !location.pathname.includes('request-password-reset') && <Footer />}
       <ToastContainer
         position="top-right"
         autoClose={5000}

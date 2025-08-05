@@ -1286,10 +1286,6 @@
   flex-direction: column;
 }
 
-.sidebar-link-text {
-  margin-left: 12px;
-}
-
 .settings-section {
   background: #fff;
   border-radius: 14px;
@@ -1407,6 +1403,7 @@ hr {
   .settings-section {
     padding: 18px 8px;
     max-width: 100%;
+    margin-bottom: 80px;
   }
   .info-label {
     min-width: 100px;
@@ -1681,7 +1678,7 @@ input[readonly] {
 @media (max-width: 768px) {
   .settings-section {
     padding: 24px 16px !important;
-    margin-bottom: 24px !important;
+    margin-bottom: 100px !important;
     border-radius: 12px !important;
     margin-left: 8px !important;
     margin-right: 8px !important;
@@ -1898,19 +1895,6 @@ input[readonly] {
     width: auto !important;
     padding: 8px 16px !important;
     font-size: 0.9rem !important;
-  }
-
-  /* Partnership link mobile optimization */
-  .settings-row .settings-control {
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    gap: 12px !important;
-  }
-
-  .settings-row .settings-control input[type="text"] {
-    flex: 1 !important;
-    width: auto !important;
   }
 
   /* Payment type selector mobile optimization */

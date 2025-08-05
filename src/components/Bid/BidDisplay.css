@@ -1606,6 +1606,60 @@
   box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
 }
 
+.status-badge-paid {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.status-badge-down-payment {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.payment-info {
+  margin: 12px 0;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.payment-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.payment-status.down-payment {
+  color: #8b5cf6;
+}
+
+.payment-status.fully-paid {
+  color: #10b981;
+}
+
+.remaining-amount-down-payment {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding: 12px;
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  font-size: 0.95em;
+}
+
+.remaining-amount-down-payment .due-date {
+  font-size: 0.9em;
+  color: #6c757d;
+  font-style: italic;
+}
+
 /* Status message styling */
 .bid-status-message {
   background: #f8fafc;

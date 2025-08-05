@@ -484,9 +484,20 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
 
     // Drag functionality
     const handleTouchStart = (e) => {
+        // Only initiate drag if touching the header area or handle
+        const target = e.target;
+        const headerArea = target.closest('.sbm-drag-header');
+        if (!headerArea && !target.classList.contains('sbm-drag-handle')) return;
+        
+        // Don't initiate drag if clicking the close button
+        if (target.classList.contains('sbm-close-btn')) return;
+        
         setIsDragging(true);
         setDragStartY(e.touches[0].clientY);
         setCurrentTranslateY(0);
+        
+        // Prevent default to avoid scrolling while dragging
+        e.preventDefault();
     };
 
     const handleTouchMove = (e) => {
@@ -494,30 +505,66 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
         
         const currentY = e.touches[0].clientY;
         const diff = currentY - dragStartY;
+        const modalHeight = window.innerHeight;
+        const threshold = modalHeight * 0.3; // 30% threshold for momentum
         
+        // Add smooth damping effect
         if (diff > 0) { // Only allow downward drag
-            setCurrentTranslateY(diff);
+            let dampedDiff;
+            if (diff > threshold) {
+                // Add extra resistance after threshold
+                const extraDiff = diff - threshold;
+                dampedDiff = threshold + (extraDiff * 0.5);
+            } else {
+                dampedDiff = diff;
+            }
+            dampedDiff = Math.min(dampedDiff, modalHeight);
+            setCurrentTranslateY(dampedDiff);
         }
+        
+        // Prevent scrolling while dragging
+        e.preventDefault();
     };
 
     const handleTouchEnd = () => {
         if (!isDragging) return;
         
         setIsDragging(false);
+        const modalHeight = window.innerHeight;
+        const threshold = modalHeight * 0.3; // 30% threshold for momentum
         
-        if (currentTranslateY > 100) { // If dragged down more than 100px, close
-            setCurrentTranslateY(0); // Reset before closing
-            onClose();
+        const modal = document.querySelector('.sbm-modal');
+        modal.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'; // Bouncy effect
+        
+        if (currentTranslateY > threshold) {
+            // Use momentum to complete the closing animation
+            const finalTranslate = modalHeight * 1.1; // Slightly overshoot
+            setCurrentTranslateY(finalTranslate);
+            setTimeout(() => {
+                onClose();
+            }, 500);
         } else {
+            // Snap back with a slight bounce
             setCurrentTranslateY(0);
         }
     };
 
     const handleMouseDown = (e) => {
         if (!isMobile) return;
+        // Only initiate drag if clicking the header area or handle
+        const target = e.target;
+        const headerArea = target.closest('.sbm-drag-header');
+        if (!headerArea && !target.classList.contains('sbm-drag-handle')) return;
+        
+        // Don't initiate drag if clicking the close button
+        if (target.classList.contains('sbm-close-btn')) return;
+
         setIsDragging(true);
         setDragStartY(e.clientY);
         setCurrentTranslateY(0);
+        
+        // Prevent text selection while dragging
+        e.preventDefault();
     };
 
     const handleMouseMove = (e) => {
@@ -525,9 +572,20 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
         
         const currentY = e.clientY;
         const diff = currentY - dragStartY;
+        const modalHeight = window.innerHeight;
+        const threshold = modalHeight * 0.3; // 30% threshold for momentum
         
         if (diff > 0) {
-            setCurrentTranslateY(diff);
+            let dampedDiff;
+            if (diff > threshold) {
+                // Add extra resistance after threshold
+                const extraDiff = diff - threshold;
+                dampedDiff = threshold + (extraDiff * 0.5);
+            } else {
+                dampedDiff = diff;
+            }
+            dampedDiff = Math.min(dampedDiff, modalHeight);
+            setCurrentTranslateY(dampedDiff);
         }
     };
 
@@ -535,11 +593,21 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
         if (!isDragging) return;
         
         setIsDragging(false);
+        const modalHeight = window.innerHeight;
+        const threshold = modalHeight * 0.3; // 30% threshold for momentum
         
-        if (currentTranslateY > 100) {
-            setCurrentTranslateY(0); // Reset before closing
-            onClose();
+        const modal = document.querySelector('.sbm-modal');
+        modal.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'; // Bouncy effect
+        
+        if (currentTranslateY > threshold) {
+            // Use momentum to complete the closing animation
+            const finalTranslate = modalHeight * 1.1; // Slightly overshoot
+            setCurrentTranslateY(finalTranslate);
+            setTimeout(() => {
+                onClose();
+            }, 500);
         } else {
+            // Snap back with a slight bounce
             setCurrentTranslateY(0);
         }
     };
@@ -591,7 +659,7 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                     transform: isMobile 
                         ? `translateY(${isOpen ? 0 : '100%'}) translateY(${currentTranslateY}px)`
                         : `translateX(-50%) translateY(${isOpen ? 0 : '-100%'})`,
-                    ...(isDragging ? { transition: 'none' } : {})
+                    transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
@@ -601,19 +669,29 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
             >
-                {/* Drag Handle */}
+                {/* Draggable Header Area */}
                 {isMobile && (
-                    <div className="sbm-drag-handle" />
+                    <div className="sbm-drag-header">
+                        <div className="sbm-drag-handle" />
+                        {/* Close Button */}
+                        <button
+                            onClick={onClose}
+                            className="sbm-close-btn"
+                            aria-label="Close"
+                        >
+                            ×
+                        </button>
+                    </div>
                 )}
-
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="sbm-close-btn"
-                    aria-label="Close"
-                >
-                    ×
-                </button>
+                {!isMobile && (
+                    <button
+                        onClick={onClose}
+                        className="sbm-close-btn"
+                        aria-label="Close"
+                    >
+                        ×
+                    </button>
+                )}
 
                 {/* Content */}
                 <div className="sbm-content">

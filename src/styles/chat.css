@@ -57,6 +57,7 @@
   color: var(--bidi-text-dark);
   gap: 1rem;
   padding: 1rem;
+  min-height: 100vh;
 }
 
 /* Sidebar */

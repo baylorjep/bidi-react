@@ -24,15 +24,24 @@ const BusinessBids = ({ setActiveSection }) => {
   const [sortOrder, setSortOrder] = useState("desc"); // 'desc' = newest first, 'asc' = oldest first
   const [sortType, setSortType] = useState('date'); // 'date', 'amount', 'eventDate', 'bidDate', 'status'
   const filteredBids = bids
-    .filter((bid) => 
-      activeTab === "all"
-        ? true
-        : activeTab === "approved" 
-          ? bid.status === "approved" || bid.status === "accepted"
-          : activeTab === "pending"
-            ? bid.status === "pending" || bid.status === "interested"
-            : bid.status === activeTab
-    )
+    .filter((bid) => {
+      switch (activeTab) {
+        case "all":
+          return true;
+        case "approved":
+          return (bid.status === "approved" || bid.status === "accepted") && bid.status !== "paid";
+        case "pending":
+          return bid.status === "pending" || bid.status === "interested";
+        case "fully_paid":
+          return bid.status === "paid" && bid.payment_type === "full";
+        case "down_payment":
+          return bid.status === "paid" && bid.payment_type === "down_payment";
+        case "denied":
+          return bid.status === "denied";
+        default:
+          return bid.status === activeTab;
+      }
+    })
     .filter((bid) => {
       if (!searchQuery) return true;
       const request = requests.find((req) => req.id === bid.request_id);
@@ -225,12 +234,20 @@ const BusinessBids = ({ setActiveSection }) => {
   };
 
   // Group bids by status
-const pendingBids = bids.filter((bid) =>
-  bid.status === "pending" || bid.status === "interested"
-);
+  const pendingBids = bids.filter((bid) =>
+    bid.status === "pending" || bid.status === "interested"
+  );
 
-  const approvedBids = bids.filter((bid) => bid.status === "approved" || bid.status === "accepted");
+  const approvedBids = bids.filter((bid) => 
+    (bid.status === "approved" || bid.status === "accepted") && bid.status !== "paid"
+  );
   const deniedBids = bids.filter((bid) => bid.status === "denied");
+  const fullyPaidBids = bids.filter((bid) => 
+    bid.status === "paid" && bid.payment_type === "full"
+  );
+  const downPaymentPaidBids = bids.filter((bid) => 
+    bid.status === "paid" && bid.payment_type === "down_payment"
+  );
 
   // Function to format date
   const formatDate = (dateString) => {
@@ -246,26 +263,42 @@ const pendingBids = bids.filter((bid) =>
     navigate(`/edit-bid/${requestId}/${bidId}`);
   };
 
-  const renderTabSelector = () => (
-    <div className="status-tabs">
-      {["all", "pending", "approved", "denied"].map((status) => (
-        <button
-          key={status}
-          className={`tab-button ${status} ${
-            activeTab === status ? "active" : ""
-          }`}
-          onClick={() => setActiveTab(status)}
-        >
-          {status.charAt(0).toUpperCase() + status.slice(1)} (
-          {status === "all"
-            ? bids.length
-            : status === "approved" 
-              ? bids.filter((bid) => bid.status === "approved" || bid.status === "accepted").length
-              : bids.filter((bid) => bid.status === status).length})
-        </button>
-      ))}
-    </div>
-  );
+  const renderTabSelector = () => {
+    const getTabCount = (status) => {
+      switch (status) {
+        case 'all':
+          return bids.length;
+        case 'fully_paid':
+          return fullyPaidBids.length;
+        case 'down_payment':
+          return downPaymentPaidBids.length;
+        case 'approved':
+          return bids.filter((bid) => bid.status === "approved" || bid.status === "accepted").length;
+        default:
+          return bids.filter((bid) => bid.status === status).length;
+      }
+    };
+
+    return (
+      <div className="status-tabs">
+        {["all", "pending", "approved", "fully_paid", "down_payment", "denied"].map((status) => {
+          const displayText = status.split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          
+          return (
+            <button
+              key={status}
+              className={`tab-button ${status} ${activeTab === status ? "active" : ""}`}
+              onClick={() => setActiveTab(status)}
+            >
+              {displayText} ({getTabCount(status)})
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   const renderBidsTable = () => (
     <div className="bids-table-container">
@@ -345,6 +378,7 @@ const pendingBids = bids.filter((bid) =>
                       navigate(`/edit-bid/${requestId}/${bidId}`)
                     }
                     openWithdrawModal={openWithdrawModal}
+                    onMessageClick={(userId, preset) => handleMessageClick(userId, preset)}
                   />
                 )
               );
@@ -369,6 +403,7 @@ const pendingBids = bids.filter((bid) =>
         request={requests.find((req) => req.id === bid.request_id)}
         onEditBid={(requestId, bidId) => navigate(`/edit-bid/${requestId}/${bidId}`)}
         openWithdrawModal={openWithdrawModal}
+        onMessageClick={(userId, preset) => handleMessageClick(userId, preset)}
       />
     );
   };
@@ -621,12 +656,26 @@ const pendingBids = bids.filter((bid) =>
                 bValue = parseFloat(b.bid_amount) || 0;
               } else if (sortType === 'status') {
                 // Status sorting: viewed first, then by status type, then by date
-                const getStatusPriority = (bid) => {
-                  const statusOrder = { 'approved': 1, 'accepted': 1, 'interested': 2, 'pending': 3, 'denied': 4 };
-                  const viewedPriority = bid.viewed ? 0 : 1;
-                  const statusPriority = statusOrder[bid.status] || 5;
-                  return viewedPriority * 10 + statusPriority;
-                };
+                                  const getStatusPriority = (bid) => {
+                    // Highest priority for paid bids
+                    if (bid.status === 'paid') {
+                      if (bid.payment_type === 'full') return 1;  // Fully paid
+                      if (bid.payment_type === 'down_payment') return 2;  // Down payment paid
+                    }
+                    
+                    const statusOrder = {
+                      'approved': 3,
+                      'accepted': 3,
+                      'interested': 4,
+                      'pending': 5,
+                      'denied': 6
+                    };
+                    
+                    // Combine viewed status and bid status for priority
+                    const viewedPriority = bid.viewed ? 0 : 1;
+                    const statusPriority = statusOrder[bid.status] || 7;
+                    return viewedPriority * 10 + statusPriority;
+                  };
                 aValue = getStatusPriority(a);
                 bValue = getStatusPriority(b);
                 // If status priority is the same, sort by date
@@ -658,7 +707,7 @@ const pendingBids = bids.filter((bid) =>
                   onContractUpload={handleContractUpload}
                   onContractView={handleContractView}
                   onFollowUp={handleFollowUp}
-                  onMessage={handleMessage}
+                  onMessageClick={(userId, preset) => handleMessageClick(userId, preset)}
                   onViewRequest={handleViewRequest}
                 />
               );

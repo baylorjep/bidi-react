@@ -301,7 +301,7 @@ function Navbar() {
                   {(!user || (userRole !== "business" && userRole !== "individual")) && (
                     <Link 
                       className="dropdown-item" 
-                      to="/corporate"
+                      to="/corporate-homepage"
                       onClick={closeMenu}
                     >
                       Corporate Events
