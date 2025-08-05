@@ -246,7 +246,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
   const [showCalendarReconnectModal, setShowCalendarReconnectModal] = useState(false);
-  const [user, setUser] = useState(null);
   const descriptionRef = useRef(null);
   const { connectCalendar } = useGoogleCalendar();
   const {
@@ -587,15 +586,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       }, 0);
     }
   }, [bidData?.description]);
-
-  // Fetch current user
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    fetchUser();
-  }, []);
 
   const handleProfilePicEdit = () => {
     openEditModal({
@@ -1086,8 +1076,8 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const getSeoTitle = () => {
     if (!business) return 'Vendor Portfolio | Bidi';
     
-    // Check if current user is viewing their own portfolio
-    if (user && user.id === businessId) {
+    // If the current user is the business owner, show a simple portfolio title
+    if (isOwner) {
       return `${business.business_name} - Portfolio`;
     }
     
@@ -1125,11 +1115,18 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       formattedCategory = category.charAt(0).toUpperCase() + category.slice(1).replace(/\s+/g, ' ');
     }
     
+    // For potential customers, keep the SEO-friendly question format
     return `Is ${business.business_name} a Good ${formattedCategory}? | Reviews & Portfolio`;
   };
 
   const getSeoDescription = () => {
     if (!business) return 'View vendor portfolio and reviews on Bidi';
+    
+    // If the current user is the business owner, show a simple description
+    if (isOwner) {
+      return `Manage your business portfolio, reviews, and services on Bidi.`;
+    }
+    
     const category = Array.isArray(business.business_category) 
       ? business.business_category[0] 
       : business.business_category;
