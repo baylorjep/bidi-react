@@ -58,12 +58,34 @@ export default function EnhancedStripeOnboarding() {
         
         if (profile?.stripe_setup_progress) {
           setSavedProgress(profile.stripe_setup_progress);
-          setCurrentStep(profile.stripe_setup_progress);
+          // If they're returning and were in verification step, restart from account creation
+          // since Stripe Connect session needs to be fresh
+          if (profile.stripe_setup_progress === 'verification') {
+            setCurrentStep('account');
+          } else {
+            setCurrentStep(profile.stripe_setup_progress);
+          }
         }
       }
     };
     fetchUserData();
-  }, []);
+
+    // Add warning when trying to leave during onboarding
+    const handleBeforeUnload = (e) => {
+      if (currentStep !== 'intro' && savedProgress !== 'completed') {
+        const message = 'You haven\'t completed the Stripe setup process. Your progress will be saved, but you\'ll need to return later to finish setting up your payment account.';
+        e.preventDefault();
+        e.returnValue = message;
+        return message;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [currentStep, savedProgress]);
 
   const saveProgress = async (step) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -188,11 +210,19 @@ export default function EnhancedStripeOnboarding() {
         return (
           <div className="onboarding-step-stripe-onboarding">
             <h2>Connect Your Account</h2>
-            <p className="mb-4">
-              To receive payments for the jobs you win, you'll need to set up a payment account.
-              Bidi will never charge you to talk to users or place bids — a small service fee is
-              only deducted after you've been paid.
-            </p>
+            {savedProgress === 'verification' ? (
+              <p className="mb-4">
+                Welcome back! For security reasons, we need to restart the Stripe verification process.
+                Your progress is saved, and you'll be able to complete the setup from where you left off
+                once reconnected.
+              </p>
+            ) : (
+              <p className="mb-4">
+                To receive payments for the jobs you win, you'll need to set up a payment account.
+                Bidi will never charge you to talk to users or place bids — a small service fee is
+                only deducted after you've been paid.
+              </p>
+            )}
             
             {error && (
               <div className="error-message-stripe-onboarding">
@@ -283,7 +313,7 @@ export default function EnhancedStripeOnboarding() {
             setup guide
           </a>{' '}
           or{' '}
-          <a href="/contact" target="_blank" rel="noopener noreferrer">
+          <a href="/about" target="_blank" rel="noopener noreferrer">
             contact support
           </a>.
         </p>
