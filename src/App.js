@@ -104,7 +104,7 @@ import HomepageES from "./components/HomepageES";
 import ContactFormES from "./components/ContactFormES";
 
 // Stripe imports
-import Onboarding from "./components/Stripe/Onboarding";
+import EnhancedStripeOnboarding from "./components/Stripe/EnhancedStripeOnboarding";
 import EmbeddedCheckoutForm from "./components/Stripe/EmbeddedCheckoutForm";
 import PaymentCancelled from "./components/Stripe/PaymentCancelled";
 import SuccessPayment from "./components/Stripe/SuccessfulPayment";
@@ -410,7 +410,11 @@ function AppContent() {
           <Route path="/inicio" element={<HomepageES />} />
           <Route path="/contactenos" element={<ContactFormES />} />
           {/* Stripe Routes */}
-          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/stripe-setup" element={
+            <PrivateRoute>
+              <EnhancedStripeOnboarding />
+            </PrivateRoute>
+          } />
           <Route path="/checkout" element={<EmbeddedCheckoutForm />} />
           <Route path="/payment-cancelled" element={<PaymentCancelled />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
@@ -528,7 +532,13 @@ function AppContent() {
           <Route path="*" element={<ErrorPage />} />
         </Routes>
       </div>
-      {(!user || !isDashboardRoute()) && !location.pathname.includes('signin') && !location.pathname.includes('createaccount') && !location.pathname.includes('pricing') && !location.pathname.includes('request-password-reset') && <Footer />}
+      {(!user || !isDashboardRoute()) && 
+        !location.pathname.includes('signin') && 
+        !location.pathname.includes('createaccount') && 
+        !location.pathname.includes('pricing') && 
+        !location.pathname.includes('request-password-reset') && 
+        !location.pathname.includes('stripe-setup') && 
+        <Footer />}
       <ToastContainer
         position="top-right"
         autoClose={5000}

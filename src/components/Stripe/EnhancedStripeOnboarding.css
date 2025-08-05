@@ -1,0 +1,384 @@
+.enhanced-stripe-onboarding {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Progress Bar */
+.progress-bar-stripe-onboarding {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  position: relative;
+  flex-wrap: wrap;
+  padding: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .progress-bar-stripe-onboarding {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 1rem 0.5rem;
+    margin-bottom: 1rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  .progress-bar-stripe-onboarding::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+
+  .progress-bar-stripe-onboarding::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e0e0e0;
+    z-index: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .progress-bar-stripe-onboarding::before {
+    top: calc(16px + 0.5rem); /* Half of 32px circle height + top padding */
+  }
+}
+
+@media (min-width: 769px) {
+  .progress-bar-stripe-onboarding::before {
+    content: '';
+    position: absolute;
+    top: calc(20px + 0.5rem); /* Half of 40px circle height + top padding */
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e0e0e0;
+    z-index: 1;
+  }
+}
+
+.progress-step-stripe-onboarding {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  text-align: center;
+  padding: 0 1rem;
+  min-width: 200px;
+}
+
+@media (max-width: 768px) {
+  .progress-step-stripe-onboarding {
+    flex: 0 0 auto;
+    min-width: 150px;
+    padding: 0 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 530px) {
+  .progress-step-stripe-onboarding {
+    min-width: 100px;
+    padding: 0 0.25rem;
+  }
+}
+
+.step-indicator-stripe-onboarding {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #e0e0e0;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .step-indicator-stripe-onboarding {
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 0.5rem;
+  }
+}
+
+@media (max-width: 530px) {
+  .step-indicator-stripe-onboarding {
+    width: 24px;
+    height: 24px;
+    margin: 0 auto 0.25rem;
+    border-width: 1px;
+  }
+}
+
+.progress-step-stripe-onboarding.active .step-indicator-stripe-onboarding {
+  border-color: #FF69B4;
+  background: #FF69B4;
+}
+
+.progress-step-stripe-onboarding.completed .step-indicator-stripe-onboarding {
+  background: #4CAF50;
+  border-color: #4CAF50;
+}
+
+.step-details-stripe-onboarding {
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .step-details-stripe-onboarding {
+    max-width: 120px;
+    margin: 0 auto;
+  }
+  
+  .step-details-stripe-onboarding h4 {
+    font-size: 0.875rem;
+    white-space: normal;
+  }
+  
+  .step-details-stripe-onboarding p {
+    font-size: 0.75rem;
+    display: none; /* Hide description on mobile to save space */
+  }
+}
+
+@media (max-width: 530px) {
+  .step-details-stripe-onboarding {
+    max-width: 80px;
+  }
+  
+  .step-details-stripe-onboarding h4 {
+    font-size: 12px;
+    line-height: 1.2;
+    text-align: center;
+    font-weight: 600;
+  }
+  
+  .progress-bar-stripe-onboarding::before {
+    top: calc(28px); /* Half of 24px circle height + top padding */
+  }
+}
+
+@media screen and (max-width: 400px) {
+    .step-details-stripe-onboarding h4 {
+        font-size: 10px;
+    }
+    
+    
+}
+
+@media screen and (max-width: 300px) {
+    .step-details-stripe-onboarding h4 {
+        font-size: 8px;
+    }
+    
+    
+}
+
+
+
+.step-details-stripe-onboarding p {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+/* Main Content */
+.onboarding-content-stripe-onboarding {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  flex-grow: 1;
+}
+
+@media (max-width: 768px) {
+  .onboarding-content-stripe-onboarding {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+}
+
+.onboarding-step-stripe-onboarding {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 20px;
+  height: 100%;
+}
+
+.setup-info-stripe-onboarding {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+@media (max-width: 768px) {
+  .setup-info-stripe-onboarding {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+}
+
+.info-card-stripe-onboarding {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .info-card-stripe-onboarding {
+    padding: 1rem;
+  }
+}
+
+.info-card-stripe-onboarding h3 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.info-card-stripe-onboarding ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.info-card-stripe-onboarding li {
+  margin-bottom: 0.5rem;
+  color: #555;
+}
+
+/* Buttons */
+.btn-primary-stripe-onboarding {
+  background: #FF69B4;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: auto;
+  min-width: 200px;
+}
+
+@media (max-width: 768px) {
+  .btn-primary-stripe-onboarding {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+.btn-primary-stripe-onboarding:hover {
+  background: #ff4aa6;
+}
+
+.btn-primary-stripe-onboarding:disabled {
+  background: #ffa7d6;
+  cursor: not-allowed;
+}
+
+.btn-secondary-stripe-onboarding {
+  background: transparent;
+  color: #FF69B4;
+  border: 2px solid #FF69B4;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: auto;
+  min-width: 200px;
+}
+
+@media (max-width: 768px) {
+  .btn-secondary-stripe-onboarding {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+.btn-secondary-stripe-onboarding:hover {
+  background: #fff0f7;
+}
+
+/* Loading State */
+.loading-state-stripe-onboarding {
+  text-align: center;
+  padding: 2rem;
+}
+
+.spinner-stripe-onboarding {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #FF69B4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Message */
+.error-message-stripe-onboarding {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 1rem 0;
+  color: #ff4d4f;
+}
+
+/* Help Section */
+.help-section-stripe-onboarding {
+  text-align: center;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-top: auto;
+}
+
+@media (max-width: 768px) {
+  .help-section-stripe-onboarding {
+    padding: 1rem;
+    text-align: left;
+  }
+}
+
+.help-section-stripe-onboarding h3 {
+  margin: 0 0 1rem;
+  color: #333;
+}
+
+.help-section-stripe-onboarding a {
+  color: #FF69B4;
+  text-decoration: none;
+}
+
+.help-section-stripe-onboarding a:hover {
+  text-decoration: underline;
+}
