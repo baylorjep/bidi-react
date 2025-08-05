@@ -124,11 +124,11 @@ const [trainingCompleted, setTrainingCompleted] = useState(false);
 const [trainingLoading, setTrainingLoading] = useState(true);
 const [trainingInProgress, setTrainingInProgress] = useState(false);
 
-  // Add autobid enabled state
+// Add autobid enabled state
 const [autobidEnabled, setAutobidEnabled] = useState(false);
 const [autobidPaused, setAutobidPaused] = useState(false);
 
-  // Add AI bid management state
+// Add AI bid management state
 const [aiGeneratedBids, setAiGeneratedBids] = useState([]);
 const [aiBidsLoading, setAiBidsLoading] = useState(false);
 const [selectedAiBid, setSelectedAiBid] = useState(null);
@@ -200,10 +200,7 @@ const [showAiBidModal, setShowAiBidModal] = useState(false);
       
       const { data: bids, error } = await supabase
         .from('bids')
-        .select(`
-          *,
-          requests!inner(*)
-        `)
+        .select('*')
         .eq('business_id', userId)
         .eq('is_autobid', true)
         .order('created_at', { ascending: false })
@@ -245,12 +242,14 @@ const dayNumberToName = {
   4: 'Thursday', 5: 'Friday', 6: 'Saturday'
 };
 
-  const fetchPartnershipData = async () => {
+  const fetchPartnershipData = async (userId) => {
+    if (!userId) return;
+    
     try {
       const { data, error } = await supabase
         .from("partners")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .single();
 
       if (error && error.code !== "PGRST116") {
@@ -264,10 +263,10 @@ const dayNumberToName = {
   };
 
   useEffect(() => {
-    if (user?.id) {
-      fetchPartnershipData();
+    if (user?.id && !isLoading) {
+      fetchPartnershipData(user.id);
     }
-  }, [user?.id]);
+  }, [user?.id, isLoading]);
 
 // Add this useEffect to debug the state
 useEffect(() => {
@@ -1521,8 +1520,8 @@ useEffect(() => {
   };
 
   // Add function to check training completion status
-  const checkTrainingCompletion = async () => {
-    if (!user?.id) return;
+  const checkTrainingCompletion = async (userId) => {
+    if (!userId) return;
     
     try {
       setTrainingLoading(true);
@@ -1531,7 +1530,7 @@ useEffect(() => {
       const { data: businessProfile } = await supabase
         .from('business_profiles')
         .select('business_category')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
 
       let userCategories = [];
@@ -1552,7 +1551,7 @@ useEffect(() => {
       const { data: progressData, error } = await supabase
         .from('autobid_training_progress')
         .select('category, training_completed, consecutive_approvals, total_scenarios_completed')
-        .eq('business_id', user.id)
+        .eq('business_id', userId)
         .in('category', userCategories);
 
       if (error && error.code !== 'PGRST116') {
@@ -1597,17 +1596,17 @@ useEffect(() => {
 
   // Add effect to check training completion when user is loaded
   useEffect(() => {
-    if (user?.id) {
-      checkTrainingCompletion();
+    if (user?.id && !isLoading) {
+      checkTrainingCompletion(user.id);
     }
-  }, [user?.id]);
+  }, [user?.id, isLoading]);
 
   // Add effect to fetch AI-generated bids when AI section is active
   useEffect(() => {
-    if (user?.id && activeSection === 'ai' && autobidEnabled) {
+    if (user?.id && activeSection === 'ai' && autobidEnabled && !isLoading) {
       fetchAiGeneratedBids(user.id);
     }
-  }, [user?.id, activeSection, autobidEnabled]);
+  }, [user?.id, activeSection, autobidEnabled, isLoading]);
 
   const [activeSection, setActiveSection] = useState('profile');
   const [profileEdit, setProfileEdit] = useState({
@@ -2441,7 +2440,7 @@ useEffect(() => {
                                     </div>
                                     <div className="ai-bid-details">
                                       <span className="ai-bid-request">
-                                        {bid.requests?.event_title || 'Request'}
+                                        Request #{bid.request_id}
                                       </span>
                                       <span className="ai-bid-date">
                                         {new Date(bid.created_at).toLocaleDateString()}
@@ -2555,7 +2554,7 @@ useEffect(() => {
                       </div>
                       <div className="ai-bid-modal-details">
                         <div className="ai-bid-modal-request">
-                          <strong>Request:</strong> {bid.requests?.event_title || 'Unknown Request'}
+                          <strong>Request:</strong> Request #{bid.request_id}
                         </div>
                         <div className="ai-bid-modal-description">
                           <strong>Description:</strong> {bid.bid_description || 'No description provided'}
