@@ -43,43 +43,23 @@ export default function EnhancedStripeOnboarding() {
   const stripeConnectInstance = useStripeConnect(connectedAccountId);
   const navigate = useNavigate();
 
-  // Fetch email and saved progress when component loads
+  // Fetch email on mount
   useEffect(() => {
     const fetchUserData = async () => {
+      console.log('Fetching initial user data');
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setEmail(user.email);
-        // Check for saved progress
-        const { data: profile } = await supabase
-          .from('business_profiles')
-          .select('stripe_setup_progress')
-          .eq('id', user.id)
-          .single();
-        
-        // Always start from intro if no progress or incomplete
-        setCurrentStep('intro');
-        setSavedProgress(null);
       }
     };
     fetchUserData();
+  }, []);
 
-    // Add warning when trying to leave during onboarding
-    const handleBeforeUnload = async (e) => {
+  // Handle beforeunload warning
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
       if (currentStep !== 'intro' && savedProgress !== 'completed') {
         const message = 'If you leave now, you\'ll need to restart the Stripe setup process from the beginning when you return.';
-        
-        // Reset progress in Supabase
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase
-            .from('business_profiles')
-            .update({ 
-              stripe_setup_progress: null,
-              stripe_account_id: null
-            })
-            .eq('id', user.id);
-        }
-
         e.preventDefault();
         e.returnValue = message;
         return message;
@@ -87,9 +67,27 @@ export default function EnhancedStripeOnboarding() {
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [currentStep, savedProgress]);
 
+  // Reset progress when component unmounts if not completed
+  useEffect(() => {
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (currentStep !== 'intro' && savedProgress !== 'completed') {
+        const resetProgress = async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase
+              .from('business_profiles')
+              .update({ 
+                stripe_setup_progress: null,
+                stripe_account_id: null
+              })
+              .eq('id', user.id);
+          }
+        };
+        resetProgress();
+      }
     };
   }, [currentStep, savedProgress]);
 
@@ -206,7 +204,10 @@ export default function EnhancedStripeOnboarding() {
             </div>
             <button 
               className="btn-primary-stripe-onboarding"
-              onClick={() => setCurrentStep('account')}
+              onClick={() => {
+                console.log('Moving to account step');
+                setCurrentStep('account');
+              }}
             >
               Get Started
             </button>
