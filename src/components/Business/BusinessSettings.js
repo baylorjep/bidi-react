@@ -126,6 +126,13 @@ const [trainingInProgress, setTrainingInProgress] = useState(false);
 
   // Add autobid enabled state
 const [autobidEnabled, setAutobidEnabled] = useState(false);
+const [autobidPaused, setAutobidPaused] = useState(false);
+
+  // Add AI bid management state
+const [aiGeneratedBids, setAiGeneratedBids] = useState([]);
+const [aiBidsLoading, setAiBidsLoading] = useState(false);
+const [selectedAiBid, setSelectedAiBid] = useState(null);
+const [showAiBidModal, setShowAiBidModal] = useState(false);
 
   // Function to enable autobid
   const handleEnableAutobid = async () => {
@@ -153,6 +160,78 @@ const [autobidEnabled, setAutobidEnabled] = useState(false);
       console.error('Error enabling autobid:', error);
       alert('An error occurred while enabling autobid. Please try again.');
     }
+  };
+
+  // Function to pause/resume autobid
+  const handleToggleAutobidPause = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('User not found. Please log in again.');
+        return;
+      }
+
+      const newPausedState = !autobidPaused;
+      const { error } = await supabase
+        .from('business_profiles')
+        .update({ autobid_paused: newPausedState })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error updating autobid pause state:', error);
+        alert('Failed to update autobid status. Please try again.');
+        return;
+      }
+
+      setAutobidPaused(newPausedState);
+      alert(`Autobid has been ${newPausedState ? 'paused' : 'resumed'}!`);
+    } catch (error) {
+      console.error('Error toggling autobid pause:', error);
+      alert('An error occurred while updating autobid status. Please try again.');
+    }
+  };
+
+  // Function to fetch AI-generated bids
+  const fetchAiGeneratedBids = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setAiBidsLoading(true);
+      
+      const { data: bids, error } = await supabase
+        .from('bids')
+        .select(`
+          *,
+          requests!inner(*)
+        `)
+        .eq('business_id', user.id)
+        .eq('is_autobid', true)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error('Error fetching AI-generated bids:', error);
+        return;
+      }
+
+      setAiGeneratedBids(bids || []);
+    } catch (error) {
+      console.error('Error fetching AI-generated bids:', error);
+    } finally {
+      setAiBidsLoading(false);
+    }
+  };
+
+  // Function to handle AI bid selection
+  const handleAiBidSelect = (bid) => {
+    setSelectedAiBid(bid);
+    setShowAiBidModal(true);
+  };
+
+  // Function to close AI bid modal
+  const handleCloseAiBidModal = () => {
+    setShowAiBidModal(false);
+    setSelectedAiBid(null);
   };
 
 // Day conversion utilities
@@ -289,6 +368,7 @@ useEffect(() => {
       setIsAdmin(!!profile.is_admin);
       setDefaultExpirationDays(profile.default_expiration_days || "");
       setAutobidEnabled(!!profile.autobid_enabled);
+      setAutobidPaused(!!profile.autobid_paused);
       if (profile.business_category) {
         const categories = Array.isArray(profile.business_category)
           ? profile.business_category
@@ -1522,6 +1602,13 @@ useEffect(() => {
     }
   }, [user?.id]);
 
+  // Add effect to fetch AI-generated bids when AI section is active
+  useEffect(() => {
+    if (user?.id && activeSection === 'ai' && autobidEnabled) {
+      fetchAiGeneratedBids();
+    }
+  }, [user?.id, activeSection, autobidEnabled]);
+
   const [activeSection, setActiveSection] = useState('profile');
   const [profileEdit, setProfileEdit] = useState({
     business_name: '',
@@ -2227,61 +2314,162 @@ useEffect(() => {
                 <div className="settings-section-title">AI Bid Trainer</div>
                 <div className="settings-section-content">
                   {autobidEnabled ? (
-                    <div className="settings-row">
-                      <div>
-                        <div className="settings-label">AI Bid Trainer</div>
-                        <div className="settings-desc">Help our AI learn your pricing strategy by providing sample bids for training scenarios.</div>
-                      </div>
-                      <div className="settings-control">
-                        {trainingLoading ? (
-                          <button className="btn-secondary flex-fill" disabled>
-                            <i className="fas fa-spinner fa-spin me-2"></i>
-                            Loading...
-                          </button>
-                        ) : trainingCompleted ? (
-                          <div className="d-flex gap-2">
-                            <button
-                              className="btn-success flex-fill"
-                              disabled
-                            >
-                              <i className="fas fa-check me-2"></i>
-                              Training Complete
-                            </button>
-                            <button
-                              className="btn-outline-primary"
-                              onClick={() => navigate('/autobid-trainer')}
-                              title="Retrain AI with new scenarios"
-                            >
-                              <i className="fas fa-redo"></i>
-                            </button>
+                    <>
+                      {/* Autobid Status Control */}
+                      <div className="settings-row">
+                        <div>
+                          <div className="settings-label">Autobid Status</div>
+                          <div className="settings-desc">
+                            {autobidPaused 
+                              ? "Your autobid is currently paused and won't generate new bids automatically."
+                              : "Your autobid is active and will automatically generate bids for new requests."
+                            }
                           </div>
-                        ) : trainingInProgress ? (
+                        </div>
+                        <div className="settings-control">
                           <button
-                            className="btn-warning flex-fill pulse"
-                            onClick={() => navigate('/autobid-trainer')}
+                            className={`btn ${autobidPaused ? 'btn-success' : 'btn-warning'} flex-fill`}
+                            onClick={handleToggleAutobidPause}
                           >
-                            <i className="fas fa-play me-2"></i>
-                            Resume Training
+                            <i className={`fas ${autobidPaused ? 'fa-play' : 'fa-pause'} me-2`}></i>
+                            {autobidPaused ? 'Resume Autobid' : 'Pause Autobid'}
                           </button>
-                        ) : (
-                          <button
-                            className="btn-primary flex-fill pulse"
-                            onClick={() => navigate('/autobid-trainer')}
-                          >
-                            <i className="fas fa-graduation-cap me-2"></i>
-                            Start Training
-                          </button>
-                        )}
-                        <small className="text-muted d-block mt-2">
-                          {trainingCompleted
-                            ? "Your AI has been trained! Use the refresh button to retrain with new scenarios."
-                            : trainingInProgress
-                            ? "Continue where you left off to complete your AI training."
-                            : "Help our AI learn your pricing strategy by providing sample bids for training scenarios."
-                          }
-                        </small>
+                          <small className="text-muted d-block mt-2">
+                            {autobidPaused 
+                              ? "Click to resume automatic bid generation."
+                              : "Click to pause automatic bid generation temporarily."
+                            }
+                          </small>
+                        </div>
                       </div>
-                    </div>
+
+                      {/* AI Training Section */}
+                      <div className="settings-row">
+                        <div>
+                          <div className="settings-label">AI Training</div>
+                          <div className="settings-desc">Help our AI learn your pricing strategy by providing sample bids for training scenarios.</div>
+                        </div>
+                        <div className="settings-control">
+                          {trainingLoading ? (
+                            <button className="btn-secondary flex-fill" disabled>
+                              <i className="fas fa-spinner fa-spin me-2"></i>
+                              Loading...
+                            </button>
+                          ) : trainingCompleted ? (
+                            <div className="d-flex gap-2">
+                              <button
+                                className="btn-success flex-fill"
+                                disabled
+                              >
+                                <i className="fas fa-check me-2"></i>
+                                Training Complete
+                              </button>
+                              <button
+                                className="btn-outline-primary"
+                                onClick={() => navigate('/autobid-trainer')}
+                                title="Retrain AI with new scenarios"
+                              >
+                                <i className="fas fa-redo"></i>
+                              </button>
+                            </div>
+                          ) : trainingInProgress ? (
+                            <button
+                              className="btn-warning flex-fill pulse"
+                              onClick={() => navigate('/autobid-trainer')}
+                            >
+                              <i className="fas fa-play me-2"></i>
+                              Resume Training
+                            </button>
+                          ) : (
+                            <button
+                              className="btn-primary flex-fill pulse"
+                              onClick={() => navigate('/autobid-trainer')}
+                            >
+                              <i className="fas fa-graduation-cap me-2"></i>
+                              Start Training
+                            </button>
+                          )}
+                          <small className="text-muted d-block mt-2">
+                            {trainingCompleted
+                              ? "Your AI has been trained! Use the refresh button to retrain with new scenarios."
+                              : trainingInProgress
+                              ? "Continue where you left off to complete your AI training."
+                              : "Help our AI learn your pricing strategy by providing sample bids for training scenarios."
+                            }
+                          </small>
+                        </div>
+                      </div>
+
+                      {/* AI Generated Bids Management */}
+                      <div className="settings-row">
+                        <div>
+                          <div className="settings-label">AI Generated Bids</div>
+                          <div className="settings-desc">
+                            Review and manage bids that were automatically generated by your AI while you were away.
+                          </div>
+                        </div>
+                        <div className="settings-control">
+                          {aiBidsLoading ? (
+                            <div className="text-center">
+                              <i className="fas fa-spinner fa-spin me-2"></i>
+                              Loading AI bids...
+                            </div>
+                          ) : aiGeneratedBids.length > 0 ? (
+                            <div className="ai-bids-container">
+                              <div className="ai-bids-header">
+                                <span className="ai-bids-count">
+                                  {aiGeneratedBids.length} AI-generated bid{aiGeneratedBids.length !== 1 ? 's' : ''}
+                                </span>
+                                <button
+                                  className="btn btn-sm btn-outline-primary"
+                                  onClick={fetchAiGeneratedBids}
+                                >
+                                  <i className="fas fa-refresh"></i>
+                                </button>
+                              </div>
+                              <div className="ai-bids-list">
+                                {aiGeneratedBids.slice(0, 5).map((bid) => (
+                                  <div key={bid.id} className="ai-bid-item" onClick={() => handleAiBidSelect(bid)}>
+                                    <div className="ai-bid-header">
+                                      <span className="ai-bid-amount">${bid.bid_amount}</span>
+                                      <span className="ai-bid-status">
+                                        {bid.status === 'pending' && <i className="fas fa-clock text-warning"></i>}
+                                        {bid.status === 'approved' && <i className="fas fa-check text-success"></i>}
+                                        {bid.status === 'rejected' && <i className="fas fa-times text-danger"></i>}
+                                        {bid.status}
+                                      </span>
+                                    </div>
+                                    <div className="ai-bid-details">
+                                      <span className="ai-bid-request">
+                                        {bid.requests?.event_title || 'Request'}
+                                      </span>
+                                      <span className="ai-bid-date">
+                                        {new Date(bid.created_at).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                                {aiGeneratedBids.length > 5 && (
+                                  <div className="ai-bids-more">
+                                    <button
+                                      className="btn btn-sm btn-outline-secondary"
+                                      onClick={() => setShowAiBidModal(true)}
+                                    >
+                                      View all {aiGeneratedBids.length} bids
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-center text-muted">
+                              <i className="fas fa-robot me-2"></i>
+                              No AI-generated bids yet
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     <div className="settings-row">
                       <div>
@@ -2322,6 +2510,103 @@ useEffect(() => {
         currentPlan={profileDetails?.membership_tier}
         onPlanChange={fetchSetupProgress}
       />
+
+      {/* AI Bid Management Modal */}
+      {showAiBidModal && (
+        <Modal
+          show={showAiBidModal}
+          onHide={handleCloseAiBidModal}
+          size="lg"
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <i className="fas fa-robot me-2"></i>
+              AI Generated Bids
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {aiBidsLoading ? (
+              <div className="text-center py-4">
+                <i className="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                <p>Loading AI-generated bids...</p>
+              </div>
+            ) : (
+              <div className="ai-bids-modal-content">
+                <div className="ai-bids-modal-header">
+                  <h6>Recent AI-Generated Bids</h6>
+                  <button
+                    className="btn btn-sm btn-outline-primary"
+                    onClick={fetchAiGeneratedBids}
+                  >
+                    <i className="fas fa-refresh"></i> Refresh
+                  </button>
+                </div>
+                <div className="ai-bids-modal-list">
+                  {aiGeneratedBids.map((bid) => (
+                    <div key={bid.id} className="ai-bid-modal-item">
+                      <div className="ai-bid-modal-header">
+                        <div className="ai-bid-modal-amount">${bid.bid_amount}</div>
+                        <div className="ai-bid-modal-status">
+                          <span className={`badge ${bid.status === 'pending' ? 'bg-warning' : bid.status === 'approved' ? 'bg-success' : 'bg-danger'}`}>
+                            {bid.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ai-bid-modal-details">
+                        <div className="ai-bid-modal-request">
+                          <strong>Request:</strong> {bid.requests?.event_title || 'Unknown Request'}
+                        </div>
+                        <div className="ai-bid-modal-description">
+                          <strong>Description:</strong> {bid.bid_description || 'No description provided'}
+                        </div>
+                        <div className="ai-bid-modal-date">
+                          <strong>Generated:</strong> {new Date(bid.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="ai-bid-modal-actions">
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => {
+                            // Navigate to bid management page or open bid editor
+                            navigate(`/business/bids/${bid.id}`);
+                            handleCloseAiBidModal();
+                          }}
+                        >
+                          <i className="fas fa-edit"></i> Edit Bid
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={() => {
+                            // Navigate to request details
+                            navigate(`/business/requests/${bid.request_id}`);
+                            handleCloseAiBidModal();
+                          }}
+                        >
+                          <i className="fas fa-eye"></i> View Request
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {aiGeneratedBids.length === 0 && (
+                  <div className="text-center py-4 text-muted">
+                    <i className="fas fa-robot fa-2x mb-3"></i>
+                    <p>No AI-generated bids found.</p>
+                    <small>AI-generated bids will appear here once your autobid system starts working.</small>
+                  </div>
+                )}
+              </div>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <button className="btn btn-secondary" onClick={handleCloseAiBidModal}>
+              Close
+            </button>
+          </Modal.Footer>
+        </Modal>
+      )}
+
       {stripeError && (
         <div className="alert alert-danger mt-3">
           {stripeErrorMessage || "An error occurred."} {" "}
