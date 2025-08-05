@@ -1075,6 +1075,12 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   // Add SEO title and description
   const getSeoTitle = () => {
     if (!business) return 'Vendor Portfolio | Bidi';
+    
+    // If user is viewing their own portfolio, show a simple title
+    if (isOwner) {
+      return `${business.business_name} - Portfolio`;
+    }
+    
     const category = Array.isArray(business.business_category) 
       ? business.business_category[0] 
       : business.business_category;

@@ -268,14 +268,7 @@ const dayNumberToName = {
     }
   }, [user?.id, isLoading]);
 
-// Add this useEffect to debug the state
-useEffect(() => {
-  console.log('Calendar state:', {
-    isCalendarConnected,
-    calendarError,
-    isCalendarLoading
-  });
-}, [isCalendarConnected, calendarError, isCalendarLoading]);
+
 
 // Add isDesktop state and effect at the top of the component
 const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
