@@ -114,6 +114,11 @@
     height: 32px;
     margin: 0 auto 0.5rem;
   }
+  
+  .step-indicator-stripe-onboarding .checkmark {
+    width: 14px;
+    height: 14px;
+  }
 }
 
 @media (max-width: 530px) {
@@ -122,6 +127,11 @@
     height: 24px;
     margin: 0 auto 0.25rem;
     border-width: 1px;
+  }
+  
+  .step-indicator-stripe-onboarding .checkmark {
+    width: 12px;
+    height: 12px;
   }
 }
 
@@ -133,6 +143,20 @@
 .progress-step-stripe-onboarding.completed .step-indicator-stripe-onboarding {
   background: #4CAF50;
   border-color: #4CAF50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-indicator-stripe-onboarding .checkmark {
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s ease;
+}
+
+.progress-step-stripe-onboarding.completed .step-indicator-stripe-onboarding .checkmark {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .step-details-stripe-onboarding {
@@ -296,6 +320,8 @@
 .btn-primary-stripe-onboarding:disabled {
   background: #ffa7d6;
   cursor: not-allowed;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 .btn-secondary-stripe-onboarding {

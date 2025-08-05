@@ -56,24 +56,30 @@ export default function EnhancedStripeOnboarding() {
           .eq('id', user.id)
           .single();
         
-        if (profile?.stripe_setup_progress) {
-          setSavedProgress(profile.stripe_setup_progress);
-          // If they're returning and were in verification step, restart from account creation
-          // since Stripe Connect session needs to be fresh
-          if (profile.stripe_setup_progress === 'verification') {
-            setCurrentStep('account');
-          } else {
-            setCurrentStep(profile.stripe_setup_progress);
-          }
-        }
+        // Always start from intro if no progress or incomplete
+        setCurrentStep('intro');
+        setSavedProgress(null);
       }
     };
     fetchUserData();
 
     // Add warning when trying to leave during onboarding
-    const handleBeforeUnload = (e) => {
+    const handleBeforeUnload = async (e) => {
       if (currentStep !== 'intro' && savedProgress !== 'completed') {
-        const message = 'You haven\'t completed the Stripe setup process. Your progress will be saved, but you\'ll need to return later to finish setting up your payment account.';
+        const message = 'If you leave now, you\'ll need to restart the Stripe setup process from the beginning when you return.';
+        
+        // Reset progress in Supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase
+            .from('business_profiles')
+            .update({ 
+              stripe_setup_progress: null,
+              stripe_account_id: null
+            })
+            .eq('id', user.id);
+        }
+
         e.preventDefault();
         e.returnValue = message;
         return message;
@@ -98,9 +104,14 @@ export default function EnhancedStripeOnboarding() {
   };
 
   const createAccount = async () => {
+    if (isLoading || accountCreatePending) {
+      return; // Prevent multiple simultaneous calls
+    }
+
     setIsLoading(true);
     setAccountCreatePending(true);
     setError(null);
+    setConnectedAccountId(null); // Reset any existing account ID
 
     try {
       const response = await fetch('https://bidi-express.vercel.app/account', {
@@ -115,7 +126,6 @@ export default function EnhancedStripeOnboarding() {
       const json = await response.json();
       
       if (json.account) {
-        setConnectedAccountId(json.account);
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
@@ -129,9 +139,14 @@ export default function EnhancedStripeOnboarding() {
           if (supabaseError) {
             console.error('Failed to save progress:', supabaseError);
             setError('Failed to save progress. Please try again.');
-          } else {
-            setCurrentStep('verification');
+            setIsLoading(false);
+            setAccountCreatePending(false);
+            return;
           }
+
+          // Only set these after successful database update
+          setConnectedAccountId(json.account);
+          setCurrentStep('verification');
         }
       } else if (json.error) {
         setError(json.error.message || 'Failed to create Stripe account');
@@ -195,14 +210,6 @@ export default function EnhancedStripeOnboarding() {
             >
               Get Started
             </button>
-            {savedProgress && savedProgress !== 'intro' && (
-              <button 
-                className="btn-secondary-stripe-onboarding mt-3"
-                onClick={() => setCurrentStep(savedProgress)}
-              >
-                Continue Previous Setup
-              </button>
-            )}
           </div>
         );
 
@@ -237,15 +244,13 @@ export default function EnhancedStripeOnboarding() {
             )}
 
             <div>
-            {!accountCreatePending && !connectedAccountId && (
-              <button 
-                className="btn-primary-stripe-onboarding"
-                onClick={createAccount}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Connecting...' : `Connect`}
-              </button>
-            )}
+            <button 
+              className="btn-primary-stripe-onboarding"
+              onClick={createAccount}
+              disabled={isLoading || accountCreatePending}
+            >
+              {isLoading || accountCreatePending ? 'Connecting...' : 'Connect'}
+            </button>
 
             {accountCreatePending && (
               <div className="loading-state-stripe-onboarding">
@@ -290,7 +295,22 @@ export default function EnhancedStripeOnboarding() {
                          ONBOARDING_STEPS.findIndex(s => s.id === step.id) ? 'completed' : ''}
                        ${savedProgress === 'completed' && step.id === 'banking' ? 'completed' : ''}`}
           >
-            <div className="step-indicator-stripe-onboarding"></div>
+            <div className="step-indicator-stripe-onboarding">
+              {ONBOARDING_STEPS.findIndex(s => s.id === currentStep) > 
+                ONBOARDING_STEPS.findIndex(s => s.id === step.id) || 
+                (savedProgress === 'completed' && step.id === 'banking') ? (
+                <svg 
+                  className="checkmark" 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  width="16"
+                  height="16"
+                >
+                  <path d="M9.55 18.2L3.65 12.3a.996.996 0 0 1 0-1.41c.39-.39 1.02-.39 1.41 0l4.49 4.49 8.99-8.99c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41L9.55 18.2z"/>
+                </svg>
+              ) : null}
+            </div>
             <div className="step-details-stripe-onboarding">
               <h4>{step.title}</h4>
               <p>{step.description}</p>
