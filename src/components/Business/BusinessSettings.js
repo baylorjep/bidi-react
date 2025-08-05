@@ -123,8 +123,36 @@ const [trainingCompleted, setTrainingCompleted] = useState(false);
 const [trainingLoading, setTrainingLoading] = useState(true);
 const [trainingInProgress, setTrainingInProgress] = useState(false);
 
-// Add autobid enabled state
+  // Add autobid enabled state
 const [autobidEnabled, setAutobidEnabled] = useState(false);
+
+  // Function to enable autobid
+  const handleEnableAutobid = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('User not found. Please log in again.');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('business_profiles')
+        .update({ autobid_enabled: true })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error enabling autobid:', error);
+        alert('Failed to enable autobid. Please try again.');
+        return;
+      }
+
+      setAutobidEnabled(true);
+      alert('Autobid has been enabled for your account!');
+    } catch (error) {
+      console.error('Error enabling autobid:', error);
+      alert('An error occurred while enabling autobid. Please try again.');
+    }
+  };
 
 // Day conversion utilities
 const dayNameToNumber = {
@@ -2247,7 +2275,22 @@ useEffect(() => {
                     </div>
                   ) : (
                     <div className="settings-row">
-                      <div className="settings-label">AI Bid Trainer is not enabled for your account.</div>
+                      <div>
+                        <div className="settings-label">AI Bid Trainer</div>
+                        <div className="settings-desc">AI Bid Trainer is not enabled for your account. Enable it to start training your AI with sample bids.</div>
+                      </div>
+                      <div className="settings-control">
+                        <button
+                          className="btn-primary flex-fill"
+                          onClick={handleEnableAutobid}
+                        >
+                          <i className="fas fa-toggle-on me-2"></i>
+                          Enable Autobid
+                        </button>
+                        <small className="text-muted d-block mt-2">
+                          Enable autobid to access the AI training features and help our AI learn your pricing strategy.
+                        </small>
+                      </div>
                     </div>
                   )}
                 </div>
