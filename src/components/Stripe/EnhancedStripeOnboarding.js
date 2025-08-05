@@ -85,9 +85,9 @@ export default function EnhancedStripeOnboarding() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         },
-        body: JSON.stringify({ email }),
-        credentials: 'include', // Include auth cookies [[memory:5148770]]
+        body: JSON.stringify({ email })
       });
 
       const json = await response.json();
@@ -196,7 +196,7 @@ export default function EnhancedStripeOnboarding() {
               <div className="error-message-stripe-onboarding">
                 <p>{error}</p>
                 <button 
-                  className="btn-secondary mt-2"
+                  className="btn-secondary-stripe-onboarding mt-2"
                   onClick={() => setError(null)}
                 >
                   Try Again
