@@ -246,6 +246,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
   const [showCalendarReconnectModal, setShowCalendarReconnectModal] = useState(false);
+  const [user, setUser] = useState(null);
   const descriptionRef = useRef(null);
   const { connectCalendar } = useGoogleCalendar();
   const {
@@ -586,6 +587,15 @@ const Portfolio = ({ businessId: propBusinessId }) => {
       }, 0);
     }
   }, [bidData?.description]);
+
+  // Fetch current user
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    fetchUser();
+  }, []);
 
   const handleProfilePicEdit = () => {
     openEditModal({
