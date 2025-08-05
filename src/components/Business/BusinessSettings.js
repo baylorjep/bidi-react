@@ -523,7 +523,7 @@ useEffect(() => {
   };
 
   const handleStripeOnboarding = async () => {
-    navigate('/onboarding');
+    navigate('/stripe-setup');
   };
 
   const handleGeneratePartnershipLink = async () => {

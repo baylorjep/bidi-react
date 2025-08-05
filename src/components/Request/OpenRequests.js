@@ -1117,7 +1117,7 @@ function OpenRequests({ onMessageClick }) {
           <p className="text-center">
             To place bids and get paid for jobs you win, you'll need to set up a payment account. Bidi won't charge you to talk to users or bid — a small fee is only deducted after you've been paid.
           </p>
-          <Button className="btn-secondary" onClick={() => navigate("/onboarding")}>Set Up Account</Button>
+          <Button className="btn-secondary" onClick={() => navigate("/stripe-setup")}>Set Up Account</Button>
         </Modal.Body>
       </Modal>
     </div>
