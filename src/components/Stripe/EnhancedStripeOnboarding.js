@@ -55,6 +55,11 @@ export default function EnhancedStripeOnboarding() {
     fetchUserData();
   }, []);
 
+  // Debug connectedAccountId changes
+  useEffect(() => {
+    console.log('connectedAccountId changed to:', connectedAccountId);
+  }, [connectedAccountId]);
+
   // Handle beforeunload warning
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -136,9 +141,11 @@ export default function EnhancedStripeOnboarding() {
       console.log('Account creation response:', json);
       
       if (json.accountId) {
+        console.log('Account ID received from backend:', json.accountId);
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
+          console.log('User found, updating progress...');
           const { error: supabaseError } = await supabase
             .from('business_profiles')
             .update({ 
@@ -155,12 +162,21 @@ export default function EnhancedStripeOnboarding() {
           }
 
           // Only set these after successful database update
+          console.log('Setting connectedAccountId to:', json.accountId);
           setConnectedAccountId(json.accountId);
           setCurrentStep('verification');
           console.log('Connected account ID set to:', json.accountId);
+          console.log('Current step set to verification');
+        } else {
+          console.error('No user found after account creation');
+          setError('User authentication error. Please try again.');
         }
       } else if (json.error) {
+        console.error('Backend returned error:', json.error);
         setError(json.error.message || 'Failed to create Stripe account');
+      } else {
+        console.error('Unexpected response format:', json);
+        setError('Unexpected response from server');
       }
     } catch (err) {
       console.error('Error during account creation:', err);
@@ -174,6 +190,7 @@ export default function EnhancedStripeOnboarding() {
   const handleOnboardingExit = async (exitData) => {
     console.log('Onboarding exit event:', exitData);
     console.log('Current connectedAccountId:', connectedAccountId);
+    console.log('Current step:', currentStep);
     setOnboardingExited(true);
     
     // Check if onboarding was completed successfully
@@ -182,6 +199,7 @@ export default function EnhancedStripeOnboarding() {
                        (exitData && Object.keys(exitData).length === 0); // Sometimes Stripe sends empty object on success
     
     console.log('Is completed:', isCompleted);
+    console.log('Has connectedAccountId:', !!connectedAccountId);
     
     if (isCompleted && connectedAccountId) {
       console.log('Saving completed account to database:', connectedAccountId);
@@ -207,9 +225,13 @@ export default function EnhancedStripeOnboarding() {
           // Navigate to dashboard after successful completion
           setTimeout(() => navigate('/dashboard'), 1500);
         }
+      } else {
+        console.error('No user found during completion');
+        setError('User authentication error during completion');
       }
     } else {
       console.log('Onboarding not completed or no account ID, saving progress');
+      console.log('Reason - isCompleted:', isCompleted, 'connectedAccountId:', connectedAccountId);
       // Save progress for incomplete onboarding
       await saveProgress(currentStep);
     }
