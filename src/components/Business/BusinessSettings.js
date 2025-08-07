@@ -43,6 +43,12 @@ const BusinessSettings = ({ connectedAccountId }) => {
   const [stripeError, setStripeError] = useState(false);
   const [stripeErrorMessage, setStripeErrorMessage] = useState('');
   const [accountCreatePending, setAccountCreatePending] = useState(false);
+  const [stripeAccountStatus, setStripeAccountStatus] = useState('disconnected'); // 'disconnected', 'pending', 'connected', 'under_review'
+  const [stripeProgressDetails, setStripeProgressDetails] = useState({
+    identityVerified: false,
+    bankingDetails: false,
+    accountActive: false
+  });
   const [setupProgress, setSetupProgress] = useState({
     paymentAccount: false,
     downPayment: false,
@@ -508,6 +514,37 @@ useEffect(() => {
       setStripeError(false);
       setStripeErrorMessage('');
     }, 5000);
+  };
+
+  const fetchStripeAccountStatus = async () => {
+    if (!connectedAccountId) return;
+
+    try {
+      const response = await fetch('https://bidi-express.vercel.app/account-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ accountId: connectedAccountId })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStripeAccountStatus(data.status);
+        setStripeProgressDetails({
+          identityVerified: data.progress?.identityVerified || false,
+          bankingDetails: data.progress?.bankingDetails || false,
+          accountActive: data.progress?.accountActive || false
+        });
+      } else {
+        console.error('Failed to fetch account status');
+        setStripeAccountStatus('unknown');
+      }
+    } catch (error) {
+      console.error('Error fetching account status:', error);
+      setStripeAccountStatus('unknown');
+    }
   };
 
   const handleOpenStripeDashboard = async () => {
@@ -1781,17 +1818,42 @@ useEffect(() => {
     const verifyStripeAccount = async () => {
       if (connectedAccountId) {
         try {
-          // For now, we'll skip verification since the endpoint doesn't exist
-          // This can be re-enabled once the backend endpoint is created
-          console.log("Stripe account verification skipped - endpoint not implemented");
+          const response = await fetch('https://bidi-express.vercel.app/verify-account', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            },
+            body: JSON.stringify({ accountId: connectedAccountId })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            // Update status based on verification result
+            if (data.isValid) {
+              setStripeError(false);
+              setStripeAccountStatus('connected');
+            } else {
+              setStripeError(true);
+              setStripeErrorMessage('Account verification failed. Please complete your Stripe setup.');
+              setStripeAccountStatus('pending');
+            }
+          } else {
+            console.error('Failed to verify Stripe account');
+            setStripeError(true);
+            setStripeErrorMessage('Unable to verify account status. Please try again.');
+            setStripeAccountStatus('unknown');
+          }
         } catch (error) {
           console.error("Error verifying Stripe account:", error);
           setStripeError(true);
+          setStripeErrorMessage('Network error during verification. Please try again.');
         }
       }
     };
 
     verifyStripeAccount();
+    fetchStripeAccountStatus();
   }, [connectedAccountId]); // Only run when connectedAccountId changes
 
   return (
@@ -2162,14 +2224,36 @@ useEffect(() => {
                       {connectedAccountId ? (
                         <>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <i className="fas fa-check-circle text-success" aria-label="Connected"></i>Connected
+                            {stripeAccountStatus === 'connected' ? (
+                              <>
+                                <i className="fas fa-check-circle text-success" aria-label="Connected"></i>
+                                Connected
+                              </>
+                            ) : stripeAccountStatus === 'under_review' ? (
+                              <>
+                                <i className="fas fa-clock text-warning" aria-label="Under Review"></i>
+                                Under Review
+                              </>
+                            ) : stripeAccountStatus === 'pending' ? (
+                              <>
+                                <i className="fas fa-exclamation-triangle text-warning" aria-label="Pending"></i>
+                                Setup Incomplete
+                              </>
+                            ) : (
+                              <>
+                                <i className="fas fa-question-circle text-muted" aria-label="Unknown"></i>
+                                Status Unknown
+                              </>
+                            )}
                           </span>
-                          <button
-                            className="btn-primary-business-settings"
-                            onClick={handleOpenStripeDashboard}
-                          >
-                            View
-                          </button>
+                          {stripeAccountStatus === 'connected' && (
+                            <button
+                              className="btn-primary-business-settings"
+                              onClick={handleOpenStripeDashboard}
+                            >
+                              View
+                            </button>
+                          )}
                           <button
                             className="btn-danger-business-settings"
                             onClick={handleResetStripeAccount}
@@ -2190,8 +2274,44 @@ useEffect(() => {
                     </div>
                   </div>
                   
+                  {/* Stripe Error Display */}
+                  {stripeError && (
+                    <div className="settings-row">
+                      <div className="alert alert-warning" style={{ margin: 0 }}>
+                        <i className="fas fa-exclamation-triangle"></i>
+                        {stripeErrorMessage}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Stripe Progress Tracking */}
+                  {connectedAccountId && stripeAccountStatus !== 'connected' && (
+                    <div className="settings-row">
+                      <div>
+                        <div className="settings-label">Setup Progress</div>
+                        <div className="settings-desc">Complete these steps to activate your payment account.</div>
+                      </div>
+                      <div className="settings-control">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <i className={`fas ${stripeProgressDetails.identityVerified ? 'fa-check-circle text-success' : 'fa-circle text-muted'}`}></i>
+                            <span>Identity Verification</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <i className={`fas ${stripeProgressDetails.bankingDetails ? 'fa-check-circle text-success' : 'fa-circle text-muted'}`}></i>
+                            <span>Banking Details</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <i className={`fas ${stripeProgressDetails.accountActive ? 'fa-check-circle text-success' : 'fa-circle text-muted'}`}></i>
+                            <span>Account Activation</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Stripe Dashboard Summary */}
-                  {connectedAccountId && (
+                  {connectedAccountId && stripeAccountStatus === 'connected' && (
                     <div className="settings-row">
                       <StripeDashboardSummary accountId={connectedAccountId} />
                     </div>
