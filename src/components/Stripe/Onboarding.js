@@ -35,19 +35,29 @@ export default function Onboarding({ setActiveSection }) {
     setError(false);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError(true);
+        setAccountCreatePending(false);
+        return;
+      }
+
       const response = await fetch("https://bidi-express.vercel.app/account", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ 
+          email,
+          userId: user.id 
+        }),
       });
 
       const json = await response.json();
       setAccountCreatePending(false);
 
-      if (json.account) {
-        setConnectedAccountId(json.account);
+      if (json.accountId) {
+        setConnectedAccountId(json.accountId);
       } else if (json.error) {
         setError(true);
       }

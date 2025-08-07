@@ -112,18 +112,30 @@ export default function EnhancedStripeOnboarding() {
     setConnectedAccountId(null); // Reset any existing account ID
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError('User not authenticated. Please log in again.');
+        setIsLoading(false);
+        setAccountCreatePending(false);
+        return;
+      }
+
       const response = await fetch('https://bidi-express.vercel.app/account', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ 
+          email,
+          userId: user.id 
+        })
       });
 
       const json = await response.json();
+      console.log('Account creation response:', json);
       
-      if (json.account) {
+      if (json.accountId) {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
@@ -143,8 +155,9 @@ export default function EnhancedStripeOnboarding() {
           }
 
           // Only set these after successful database update
-          setConnectedAccountId(json.account);
+          setConnectedAccountId(json.accountId);
           setCurrentStep('verification');
+          console.log('Connected account ID set to:', json.accountId);
         }
       } else if (json.error) {
         setError(json.error.message || 'Failed to create Stripe account');
@@ -160,6 +173,7 @@ export default function EnhancedStripeOnboarding() {
 
   const handleOnboardingExit = async (exitData) => {
     console.log('Onboarding exit event:', exitData);
+    console.log('Current connectedAccountId:', connectedAccountId);
     setOnboardingExited(true);
     
     // Check if onboarding was completed successfully
@@ -167,10 +181,13 @@ export default function EnhancedStripeOnboarding() {
                        exitData?.type === 'account_updated' ||
                        (exitData && Object.keys(exitData).length === 0); // Sometimes Stripe sends empty object on success
     
+    console.log('Is completed:', isCompleted);
+    
     if (isCompleted && connectedAccountId) {
+      console.log('Saving completed account to database:', connectedAccountId);
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('business_profiles')
           .update({ 
             stripe_account_id: connectedAccountId,
@@ -178,16 +195,23 @@ export default function EnhancedStripeOnboarding() {
             stripe_onboarding_completed: true
           })
           .eq('id', user.id);
-        setSavedProgress('completed');
-        setCurrentStep('banking');
-        
-        // Navigate to dashboard after successful completion
-        setTimeout(() => navigate('/dashboard'), 1500);
+          
+        if (updateError) {
+          console.error('Failed to save account ID to database:', updateError);
+          setError('Failed to save account. Please contact support.');
+        } else {
+          console.log('Successfully saved account ID to database');
+          setSavedProgress('completed');
+          setCurrentStep('banking');
+          
+          // Navigate to dashboard after successful completion
+          setTimeout(() => navigate('/dashboard'), 1500);
+        }
       }
     } else {
+      console.log('Onboarding not completed or no account ID, saving progress');
       // Save progress for incomplete onboarding
       await saveProgress(currentStep);
-      console.log('Onboarding not completed, saving progress');
     }
   };
 
