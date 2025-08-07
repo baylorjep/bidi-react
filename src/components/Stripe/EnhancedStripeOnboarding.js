@@ -159,9 +159,15 @@ export default function EnhancedStripeOnboarding() {
   };
 
   const handleOnboardingExit = async (exitData) => {
+    console.log('Onboarding exit event:', exitData);
     setOnboardingExited(true);
     
-    if (exitData?.status === 'completed') {
+    // Check if onboarding was completed successfully
+    const isCompleted = exitData?.status === 'completed' || 
+                       exitData?.type === 'account_updated' ||
+                       (exitData && Object.keys(exitData).length === 0); // Sometimes Stripe sends empty object on success
+    
+    if (isCompleted && connectedAccountId) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
@@ -174,11 +180,14 @@ export default function EnhancedStripeOnboarding() {
           .eq('id', user.id);
         setSavedProgress('completed');
         setCurrentStep('banking');
+        
+        // Navigate to dashboard after successful completion
+        setTimeout(() => navigate('/dashboard'), 1500);
       }
-      setTimeout(() => navigate('/dashboard'), 1500); // Give time to see completion state
     } else {
-      // Save progress
+      // Save progress for incomplete onboarding
       await saveProgress(currentStep);
+      console.log('Onboarding not completed, saving progress');
     }
   };
 
@@ -273,9 +282,46 @@ export default function EnhancedStripeOnboarding() {
               <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
                 <ConnectAccountOnboarding
                   onExit={handleOnboardingExit}
+                  onReady={() => {
+                    console.log('Stripe onboarding component ready');
+                  }}
+                  onError={(error) => {
+                    console.error('Stripe onboarding error:', error);
+                    setError('An error occurred during onboarding. Please try again.');
+                  }}
                 />
               </ConnectComponentsProvider>
             )}
+            
+            {/* Manual completion button in case automatic detection fails */}
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <p style={{ color: '#666', marginBottom: '1rem' }}>
+                If you've completed the verification but are still seeing this page, click the button below:
+              </p>
+              <button 
+                className="btn-secondary-stripe-onboarding"
+                onClick={() => handleOnboardingExit({ status: 'completed' })}
+              >
+                I've Completed Verification
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'banking':
+        return (
+          <div className="onboarding-step-stripe-onboarding">
+            <div className="completion-message-stripe-onboarding">
+              <div className="success-icon-stripe-onboarding">
+                <i className="fas fa-check-circle"></i>
+              </div>
+              <h2>Setup Complete!</h2>
+              <p>Your Stripe account has been successfully connected and verified.</p>
+              <p>You can now receive payments for your services through Bidi.</p>
+              <div className="redirecting-message-stripe-onboarding">
+                <p>Redirecting to your dashboard...</p>
+              </div>
+            </div>
           </div>
         );
 

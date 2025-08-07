@@ -408,3 +408,62 @@
 .help-section-stripe-onboarding a:hover {
   text-decoration: underline;
 }
+
+/* Completion Message Styles */
+.completion-message-stripe-onboarding {
+  text-align: center;
+  padding: 3rem 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.success-icon-stripe-onboarding {
+  font-size: 4rem;
+  color: #28a745;
+  margin-bottom: 1.5rem;
+}
+
+.completion-message-stripe-onboarding h2 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.completion-message-stripe-onboarding p {
+  color: #666;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.redirecting-message-stripe-onboarding {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.redirecting-message-stripe-onboarding p {
+  color: #007bff;
+  margin: 0;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .completion-message-stripe-onboarding {
+    padding: 2rem 1rem;
+  }
+  
+  .success-icon-stripe-onboarding {
+    font-size: 3rem;
+  }
+  
+  .completion-message-stripe-onboarding h2 {
+    font-size: 1.5rem;
+  }
+  
+  .completion-message-stripe-onboarding p {
+    font-size: 1rem;
+  }
+}
