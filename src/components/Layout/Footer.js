@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import '../../App.css';
-import logo from '../../assets/images/Bidi Logo.png';
+import logo from '../../assets/images/Bidi-Logo.svg';
 import BYU from '../../assets/images/BYU.png'
 import Sandbox from '../../assets/images/Sandbox.png';
 import Facebook from '../../assets/images/Icons/footer-1-icon-facebook.svg'
@@ -16,7 +16,7 @@ const Footer = () => {
             <div className='footer-container'>
 
                 <div className='footer-left'>
-                    <div className='bidi-logo'>Bidi</div>
+                    <div className='bidi-logo'><img src={logo} alt="Bidi Logo" style={{width:'150px', height:'150px'}}/></div>
                     <div className='bidi-description-footer'>A bidding platform where you request services, and businesses come to you. Stop searching and start finding with Bidi.</div>
                 </div>
 

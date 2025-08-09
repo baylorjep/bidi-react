@@ -11,7 +11,7 @@ function Navbar() {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [profilePhoto, setProfilePhoto] = useState(null);
-  const [weddingPlannerDropdownOpen, setWeddingPlannerDropdownOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const navbarRef = useRef(null);
   const location = useLocation();
@@ -103,16 +103,12 @@ function Navbar() {
   };
 
   const closeMenu = () => {
-    const navbarCollapse = document.getElementById("navbarResponsive");
-    if (navbarCollapse) {
-      navbarCollapse.classList.remove("show");
-    }
-    setWeddingPlannerDropdownOpen(false);
+    setMenuOpen(false);
   };
 
-  const toggleWeddingPlannerDropdown = (e) => {
+  const toggleMenu = (e) => {
     e.preventDefault();
-    setWeddingPlannerDropdownOpen(!weddingPlannerDropdownOpen);
+    setMenuOpen(!menuOpen);
   };
 
   useEffect(() => {
@@ -159,37 +155,31 @@ function Navbar() {
           <img src={logo} alt="Bidi Logo" className="bidi-img-logo mobile-logo" />
         </Link>
 
-        {/* Mobile Auth Buttons - Only visible on mobile */}
-        {!user && (
-          <div className="d-lg-none mobile-auth-buttons">
-            <Link
-              style={{ textDecoration: "none" }}
-              className="btn-nav-primary"
-              to="/signin"
+        {/* Desktop CTAs - Always visible */}
+        <div className="navbar-ctas d-none d-lg-flex">
+          {(!userRole || userRole === "individual" || userRole === "both") && (
+            <Link 
+              className="nav-cta-link" 
+              to="/request-categories"
             >
-              <span className="btn-text">
-                <span className="small">Log In</span>
-              </span>
+              <button className="bids-button">
+                <i className="bi bi-clipboard-check me-1"></i> Get Bids from Pros
+              </button>
             </Link>
-            <Link
-              className="btn-nav-secondary"
-              style={{ textDecoration: "none" }}
-              to="/createaccount"
-            >
-              <span className="btn-text-secondary">
-                <span className="small">Sign Up</span>
-              </span>
-            </Link>
-          </div>
-        )}
+          )}
+          
+          <Link className="nav-cta-link" to="/vendors">
+            <button className="search-button">
+              <i className="bi bi-search me-1"></i> Browse Vendors
+            </button>
+          </Link>
+        </div>
 
         <button
           className={`navbar-toggler ${user ? 'profile-toggler' : ''}`}
           type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarResponsive"
-          aria-controls="navbarResponsive"
-          aria-expanded="false"
+          onClick={toggleMenu}
+          aria-expanded={menuOpen}
           aria-label="Toggle navigation"
         >
           {user ? (
@@ -203,181 +193,174 @@ function Navbar() {
           )}
         </button>
 
-        <div className="collapse navbar-collapse" id="navbarResponsive">
-          <ul className="navbar-nav ms-auto me-4 my-3 my-lg-0">
-            {(!userRole ||
-              userRole === "individual" ||
-              userRole === "both") && (
-              <li className="nav-item d-flex align-items-center mb-2 mb-lg-0 me-lg-3">
-                <Link 
-                  className="nav-link p-0 w-100" 
-                  to="/request-categories"
-                  onClick={closeMenu}
-                >
-                  <button className="bids-button w-100">
-                    <i className="bi bi-clipboard-check me-1"></i> Get Bids from Pros
-                  </button>
-                </Link>
-              </li>
-            )}
-            
-            <li className="nav-item d-flex align-items-center mb-2 mb-lg-0">
-              <VendorSearch />
-            </li>
+        {/* Beautiful Popout Menu */}
+        {menuOpen && (
+          <div className="menu-overlay" onClick={closeMenu}>
+            <div className="menu-popout" onClick={(e) => e.stopPropagation()}>
+              <div className="menu-header">
+                <h3>Menu</h3>
+                <button className="menu-close" onClick={closeMenu}>
+                  <i className="bi bi-x-lg"></i>
+                </button>
+              </div>
+              
+              <div className="menu-content">
+                {/* Mobile CTAs */}
+                <div className="menu-section d-lg-none">
+                  <div className="menu-ctas">
+                    {(!userRole || userRole === "individual" || userRole === "both") && (
+                      <Link 
+                        className="menu-cta-item" 
+                        to="/request-categories"
+                        onClick={closeMenu}
+                      >
+                        <button className="bids-button w-100">
+                          <i className="bi bi-clipboard-check me-2"></i> Get Bids from Pros
+                        </button>
+                      </Link>
+                    )}
+                    
+                    <Link className="menu-cta-item" to="/vendors" onClick={closeMenu}>
+                      <button className="search-button w-100">
+                        <i className="bi bi-search me-2"></i> Browse Vendors
+                      </button>
+                    </Link>
+                  </div>
+                </div>
 
-            {/* Wedding Planner Homepage Link with New Tag */}
-            <li className="nav-item me-lg-3">
-              <Link 
-                className="nav-link position-relative" 
-                to="/wedding-planner-homepage"
-                onClick={closeMenu}
-              >
-                Wedding Planner
-                <span className="new-tag">New</span>
-              </Link>
-            </li>
+                {/* Main Navigation */}
+                <div className="menu-section">
+                  <Link 
+                    className="menu-item" 
+                    to="/wedding-planner-homepage"
+                    onClick={closeMenu}
+                  >
+                    <i className="bi bi-heart me-3"></i>
+                    <span>Wedding Planner</span>
+                    <span className="new-tag">New</span>
+                  </Link>
 
-            {/* Main Dropdown */}
-            <li className="nav-item dropdown me-lg-3">
-              <button
-                className={`nav-link custom-dropdown-toggle ${weddingPlannerDropdownOpen ? 'active' : ''}`}
-                onClick={toggleWeddingPlannerDropdown}
-                style={{ background: 'none', border: 'none', color: 'inherit' }}
-              >
-                More
-                <i className="bi bi-chevron-down ms-1"></i>
-              </button>
-              {weddingPlannerDropdownOpen && (
-                <div className="dropdown-menu show">
+                  {/* Dashboard Links */}
                   {userRole === "individual" && (
                     <Link 
-                      className="dropdown-item" 
+                      className="menu-item" 
                       to="/individual-dashboard"
                       onClick={closeMenu}
                     >
-                      My Dashboard
+                      <i className="bi bi-person me-3"></i>
+                      <span>My Dashboard</span>
                     </Link>
                   )}
 
                   {userRole === "business" && (
                     <Link 
-                      className="dropdown-item" 
+                      className="menu-item" 
                       to="/business-dashboard"
                       onClick={closeMenu}
                     >
-                      Business Dashboard
+                      <i className="bi bi-briefcase me-3"></i>
+                      <span>Business Dashboard</span>
                     </Link>
                   )}
 
                   {userRole === "both" && (
                     <Link 
-                      className="dropdown-item" 
+                      className="menu-item" 
                       to="/wedding-planner-dashboard"
                       onClick={closeMenu}
                     >
-                      Wedding Dashboard
+                      <i className="bi bi-calendar-event me-3"></i>
+                      <span>Wedding Dashboard</span>
                     </Link>
                   )}
 
                   {user && (userRole === "individual" || userRole === "both") && (
                     <Link 
-                      className="dropdown-item" 
+                      className="menu-item" 
                       to="/wedding-planner/overview"
                       onClick={closeMenu}
                     >
-                      Wedding Planning Tool
+                      <i className="bi bi-list-check me-3"></i>
+                      <span>Wedding Planning Tool</span>
                     </Link>
                   )}
+
                   {(!user || (userRole !== "business" && userRole !== "individual")) && (
                     <Link 
-                      className="dropdown-item" 
+                      className="menu-item" 
                       to="/for-vendors"
                       onClick={closeMenu}
                     >
-                      For Vendors
+                      <i className="bi bi-shop me-3"></i>
+                      <span>For Vendors</span>
                     </Link>
                   )}
 
                   {(!user || (userRole !== "business" && userRole !== "individual")) && (
                     <Link 
-                      className="dropdown-item" 
+                      className="menu-item" 
                       to="/corporate-homepage"
                       onClick={closeMenu}
                     >
-                      Corporate Events
+                      <i className="bi bi-building me-3"></i>
+                      <span>Corporate Events</span>
                     </Link>
                   )}
 
                   <Link 
-                    className="dropdown-item" 
+                    className="menu-item" 
                     to="/articles"
                     onClick={closeMenu}
                   >
-                    Wedding Guides
+                    <i className="bi bi-book me-3"></i>
+                    <span>Wedding Guides</span>
                   </Link>
 
-
-
                   <Link 
-                    className="dropdown-item" 
+                    className="menu-item" 
                     to="/about"
                     onClick={closeMenu}
                   >
-                    About & Contact
+                    <i className="bi bi-info-circle me-3"></i>
+                    <span>About & Contact</span>
                   </Link>
                 </div>
-              )}
-            </li>
 
-            {user && (
-              <li className="nav-item d-lg-none">
-                <button 
-                  className="btn-nav-primary w-100" 
-                  onClick={() => {
-                    handleSignOut();
-                    closeMenu();
-                  }}
-                >
-                  <span className="btn-text">
-                    <span className="small">Log Out</span>
-                  </span>
-                </button>
-              </li>
-            )}
-          </ul>
-
-          {/* Desktop Auth Buttons - Only visible on desktop */}
-          <div className="d-none d-lg-flex auth-buttons">
-            {user ? (
-              <button className="btn-nav-primary" onClick={handleSignOut}>
-                <span className="btn-text">
-                  <span className="small">Log Out</span>
-                </span>
-              </button>
-            ) : (
-              <>
-                <Link
-                  style={{ textDecoration: "none" }}
-                  className="btn-nav-primary"
-                  to="/signin"
-                >
-                  <span className="btn-text">
-                    <span className="small">Log In</span>
-                  </span>
-                </Link>
-                <Link
-                  className="btn-nav-secondary"
-                  style={{ textDecoration: "none" }}
-                  to="/createaccount"
-                >
-                  <span className="btn-text-secondary">
-                    <span className="small">Sign Up</span>
-                  </span>
-                </Link>
-              </>
-            )}
+                {/* Auth Section */}
+                <div className="menu-section menu-auth">
+                  {!user ? (
+                    <>
+                      <Link
+                        className="menu-auth-btn primary"
+                        to="/signin"
+                        onClick={closeMenu}
+                      >
+                        Log In
+                      </Link>
+                      <Link
+                        className="menu-auth-btn secondary"
+                        to="/createaccount"
+                        onClick={closeMenu}
+                      >
+                        Sign Up
+                      </Link>
+                    </>
+                  ) : (
+                    <button
+                      className="menu-auth-btn primary"
+                      onClick={() => {
+                        handleSignOut();
+                        closeMenu();
+                      }}
+                    >
+                      Log Out
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </nav>
   );

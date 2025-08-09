@@ -420,6 +420,7 @@ button,
 [type=reset],
 [type=submit] {
   -webkit-appearance: button;
+  appearance: button;
 }
 button:not(:disabled),
 [type=button]:not(:disabled),
@@ -478,6 +479,7 @@ legend + * {
 [type=search] {
   outline-offset: -2px;
   -webkit-appearance: textfield;
+  appearance: textfield;
 }
 
 /* rtl:raw:
@@ -499,6 +501,7 @@ legend + * {
 ::file-selector-button {
   font: inherit;
   -webkit-appearance: button;
+  appearance: button;
 }
 
 output {
@@ -4317,9 +4320,6 @@ background: linear-gradient(246deg, rgba(255, 0, 138, 0.79) 15.35%, #A328F4 85.5
   .navbar-expand-lg .navbar-collapse {
     display: flex !important;
     flex-basis: auto;
-  }
-  .navbar-expand-lg .navbar-toggler {
-    display: none;
   }
   .navbar-expand-lg .offcanvas {
     position: static;
@@ -12417,6 +12417,7 @@ line-height: normal;
   border-radius: 181px;
   justify-content: center;
   align-items: center;
+  min-width: 144px;
 }
 
 .review-name {
@@ -16871,3 +16872,26 @@ label {
   }
 }
 
+
+/* Responsive tweaks for Homepage top search bar */
+.tw-no-scrollbar::-webkit-scrollbar { display: none; }
+.tw-no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.search-bar-inner {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Default compact widths */
+.search-field { min-width: 140px; }
+.search-field input { min-width: 0; }
+
+/* Make the first field (Vendors) a bit wider */
+.search-bar-inner .search-field:first-child { min-width: 180px; }
+
+@media (min-width: 640px) {
+  .search-bar { border-radius: 9999px; }
+  .search-bar-inner { gap: 0; }
+  .search-field { min-width: 160px; }
+  .search-bar-inner .search-field:first-child { min-width: 200px; }
+}
