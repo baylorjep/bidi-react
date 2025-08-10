@@ -5,6 +5,7 @@ import '../../styles/BidsPage.css';
 import BidDisplay from '../Bid/BidDisplay';
 import RequestDisplay from '../Request/RequestDisplay';
 import PhotoRequestDisplay from '../Request/PhotoRequestDisplay';  // Add this import
+import RequestModal from '../Request/RequestModal';
 import { useNavigate } from 'react-router-dom';
 import bidiCheck from '../../assets/images/Bidi-Favicon.png';
 // Import Swiper
@@ -78,10 +79,7 @@ const BidCardSkeleton = () => (
 
 const BidsPageSkeleton = () => (
   <div className="bids-page">
-    <h1 className="section-title">Your Service Requests</h1>
-    <p className="section-description">
-      View all your service requests and manage the bids you've received.
-    </p>
+
     
     <div className="requests-list-container">
       <div className="requests-list-bids-page">
@@ -156,6 +154,9 @@ export default function BidsPage({ onOpenChat }) {
     
     // Tab state for bid status sections
     const [activeTab, setActiveTab] = useState('all');
+    
+    // Sorting state
+    const [sortBy, setSortBy] = useState('recommended'); // 'recommended', 'high-price', 'low-price'
 
     const [couponCode, setCouponCode] = useState('');
     const [couponError, setError] = useState(null);
@@ -173,7 +174,10 @@ export default function BidsPage({ onOpenChat }) {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [currentUserId, setCurrentUserId] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editRequestData, setEditRequestData] = useState(null);
     const navigate = useNavigate();
+    const [bidDisplayModalOpen, setBidDisplayModalOpen] = useState(false); // New state to track BidDisplay modal
 
     // Memoize the loading skeleton at the top level to avoid conditional hook calls
     const loadingSkeleton = useMemo(() => <BidsPageSkeleton />, []);
@@ -203,22 +207,85 @@ export default function BidsPage({ onOpenChat }) {
         
         const requestBids = bids.filter(bid => bid.request_id === currentRequest.id);
         
-        // Sort bids by interest rating first (highest to lowest), then by creation date (newest first)
+        // Calculate recommendation score for a bid
+        const calculateRecommendationScore = (bid) => {
+            let score = 0;
+            
+            // Bidi verification bonus (highest priority)
+            if (bid.business_profiles?.is_verified) {
+                score += 1000;
+            }
+            
+            // Interest rating bonus
+            const interestRating = bid.interest_rating || 0;
+            score += interestRating * 100;
+            
+            // Viewed status bonus (new bids get priority)
+            if (!bid.viewed) {
+                score += 50;
+            }
+            
+            // Business membership tier bonus
+            const membershipTier = bid.business_profiles?.membership_tier;
+            if (membershipTier === 'premium') {
+                score += 200;
+            } else if (membershipTier === 'standard') {
+                score += 100;
+            }
+            
+            return score;
+        };
+        
+        // Sort bids based on selected sorting option
         const sortBids = (bids) => {
             return bids.sort((a, b) => {
-                // First sort by viewed status (new bids first)
-                if (!a.viewed && b.viewed) return -1;
-                if (a.viewed && !b.viewed) return 1;
-                
-                // If both have same viewed status, sort by interest rating (highest first)
-                const ratingA = a.interest_rating || 0;
-                const ratingB = b.interest_rating || 0;
-                if (ratingA !== ratingB) {
-                    return ratingB - ratingA;
+                switch (sortBy) {
+                    case 'recommended':
+                        // Sort by recommendation score (highest first)
+                        const scoreA = calculateRecommendationScore(a);
+                        const scoreB = calculateRecommendationScore(b);
+                        if (scoreA !== scoreB) {
+                            return scoreB - scoreA;
+                        }
+                        // If scores are equal, sort by creation date (newest first)
+                        return new Date(b.created_at) - new Date(a.created_at);
+                        
+                    case 'high-price':
+                        // Sort by bid amount (highest first)
+                        const amountA = parseFloat(a.bid_amount || 0);
+                        const amountB = parseFloat(b.bid_amount || 0);
+                        if (amountA !== amountB) {
+                            return amountB - amountA;
+                        }
+                        // If amounts are equal, sort by creation date (newest first)
+                        return new Date(b.created_at) - new Date(a.created_at);
+                        
+                    case 'low-price':
+                        // Sort by bid amount (lowest first)
+                        const amountLowA = parseFloat(a.bid_amount || 0);
+                        const amountLowB = parseFloat(b.bid_amount || 0);
+                        if (amountLowA !== amountLowB) {
+                            return amountLowA - amountLowB;
+                        }
+                        // If amounts are equal, sort by creation date (newest first)
+                        return new Date(b.created_at) - new Date(a.created_at);
+                        
+                    default:
+                        // Default sorting (original logic)
+                        // First sort by viewed status (new bids first)
+                        if (!a.viewed && b.viewed) return -1;
+                        if (a.viewed && !b.viewed) return 1;
+                        
+                        // If both have same viewed status, sort by interest rating (highest first)
+                        const ratingA = a.interest_rating || 0;
+                        const ratingB = b.interest_rating || 0;
+                        if (ratingA !== ratingB) {
+                            return ratingB - ratingA;
+                        }
+                        
+                        // If ratings are equal, sort by creation date (newest first)
+                        return new Date(b.created_at) - new Date(a.created_at);
                 }
-                
-                // If ratings are equal, sort by creation date (newest first)
-                return new Date(b.created_at) - new Date(a.created_at);
             });
         };
         
@@ -290,6 +357,63 @@ export default function BidsPage({ onOpenChat }) {
             loadBids();
         }
     }, [user, currentRequestIndex, requests]);
+
+    // Reload bids when sorting changes
+    useEffect(() => {
+        if (user && requests.length > 0 && bids.length > 0) {
+            // Re-sort existing bids without fetching from database
+            const sortedBids = [...bids].sort((a, b) => {
+                switch (sortBy) {
+                    case 'recommended':
+                        const scoreA = (a.business_profiles?.is_verified ? 1000 : 0) + 
+                                     ((a.interest_rating || 0) * 100) + 
+                                     (!a.viewed ? 50 : 0) +
+                                     (a.business_profiles?.membership_tier === 'premium' ? 200 : 
+                                      a.business_profiles?.membership_tier === 'standard' ? 100 : 0);
+                        const scoreB = (b.business_profiles?.is_verified ? 1000 : 0) + 
+                                     ((b.interest_rating || 0) * 100) + 
+                                     (!b.viewed ? 50 : 0) +
+                                     (b.business_profiles?.membership_tier === 'premium' ? 200 : 
+                                      b.business_profiles?.membership_tier === 'standard' ? 100 : 0);
+                        if (scoreA !== scoreB) {
+                            return scoreB - scoreA;
+                        }
+                        break;
+                        
+                    case 'high-price':
+                        const amountA = parseFloat(a.bid_amount || 0);
+                        const amountB = parseFloat(b.bid_amount || 0);
+                        if (amountA !== amountB) {
+                            return amountB - amountA;
+                        }
+                        break;
+                        
+                    case 'low-price':
+                        const amountLowA = parseFloat(a.bid_amount || 0);
+                        const amountLowB = parseFloat(b.bid_amount || 0);
+                        if (amountLowA !== amountLowB) {
+                            return amountLowA - amountLowB;
+                        }
+                        break;
+                        
+                    default:
+                        if (!a.viewed && b.viewed) return -1;
+                        if (a.viewed && !b.viewed) return 1;
+                        
+                        const ratingA = a.interest_rating || 0;
+                        const ratingB = b.interest_rating || 0;
+                        if (ratingA !== ratingB) {
+                            return ratingB - ratingA;
+                        }
+                        break;
+                }
+                
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+            
+            setBids(sortedBids);
+        }
+    }, [sortBy]);
 
     const loadRequests = async (userId) => {
         try {
@@ -537,7 +661,8 @@ export default function BidsPage({ onOpenChat }) {
                         membership_tier,
                         down_payment_type,
                         amount,
-                        stripe_account_id
+                        stripe_account_id,
+                        is_verified
                     )
                 `)
                 .in('request_id', requestIds)
@@ -609,20 +734,57 @@ export default function BidsPage({ onOpenChat }) {
                     isExpired: bid.expiration_date ? new Date(bid.expiration_date) < now : false
                 }));
 
-                // Sort bids by interest rating first (highest to lowest), then by creation date (newest first)
+                // Sort bids using the new sorting system
                 const sortedBids = bidsWithExpiration.sort((a, b) => {
-                    // First sort by viewed status (new bids first)
-                    if (!a.viewed && b.viewed) return -1;
-                    if (a.viewed && !b.viewed) return 1;
-                    
-                    // If both have same viewed status, sort by interest rating (highest first)
-                    const ratingA = a.interest_rating || 0;
-                    const ratingB = b.interest_rating || 0;
-                    if (ratingA !== ratingB) {
-                        return ratingB - ratingA;
+                    // Use the same sorting logic as in getBidsByStatus
+                    switch (sortBy) {
+                        case 'recommended':
+                            // Calculate recommendation scores
+                            const scoreA = (a.business_profiles?.is_verified ? 1000 : 0) + 
+                                         ((a.interest_rating || 0) * 100) + 
+                                         (!a.viewed ? 50 : 0) +
+                                         (a.business_profiles?.membership_tier === 'premium' ? 200 : 
+                                          a.business_profiles?.membership_tier === 'standard' ? 100 : 0);
+                            const scoreB = (b.business_profiles?.is_verified ? 1000 : 0) + 
+                                         ((b.interest_rating || 0) * 100) + 
+                                         (!b.viewed ? 50 : 0) +
+                                         (b.business_profiles?.membership_tier === 'premium' ? 200 : 
+                                          b.business_profiles?.membership_tier === 'standard' ? 100 : 0);
+                            if (scoreA !== scoreB) {
+                                return scoreB - scoreA;
+                            }
+                            break;
+                            
+                        case 'high-price':
+                            const amountA = parseFloat(a.bid_amount || 0);
+                            const amountB = parseFloat(b.bid_amount || 0);
+                            if (amountA !== amountB) {
+                                return amountB - amountA;
+                            }
+                            break;
+                            
+                        case 'low-price':
+                            const amountLowA = parseFloat(a.bid_amount || 0);
+                            const amountLowB = parseFloat(b.bid_amount || 0);
+                            if (amountLowA !== amountLowB) {
+                                return amountLowA - amountLowB;
+                            }
+                            break;
+                            
+                        default:
+                            // Default sorting (original logic)
+                            if (!a.viewed && b.viewed) return -1;
+                            if (a.viewed && !b.viewed) return 1;
+                            
+                            const ratingA = a.interest_rating || 0;
+                            const ratingB = b.interest_rating || 0;
+                            if (ratingA !== ratingB) {
+                                return ratingB - ratingA;
+                            }
+                            break;
                     }
                     
-                    // If ratings are equal, sort by creation date (newest first)
+                    // If all else is equal, sort by creation date (newest first)
                     return new Date(b.created_at) - new Date(a.created_at);
                 });
 
@@ -1148,8 +1310,36 @@ export default function BidsPage({ onOpenChat }) {
     };
 
     const handleEdit = (request) => {
-        // Use navigate with state to pass the full request object
-        navigate(`/edit-request/${request.table_name || 'requests'}/${request.id}`, { state: { request } });
+        // Map request types to the categories that RequestModal expects
+        const getCategoryFromType = (requestType) => {
+            const categoryMap = {
+                'photography': 'photographer',
+                'videography': 'videographer',
+                'catering': 'caterer',
+                'dj': 'dj',
+                'florist': 'florist',
+                'beauty': 'beauty',
+                'wedding_planning': 'planner',
+                'venue': 'venue',
+                'other': 'photographer' // Default fallback for regular requests
+            };
+            return categoryMap[requestType] || 'photographer';
+        };
+
+        // Open the RequestModal in edit mode instead of navigating to a separate page
+        setEditRequestData({
+            isEditMode: true,
+            existingRequestData: request,
+            selectedVendors: [getCategoryFromType(request.type || 'other')],
+            searchFormData: {
+                eventType: request.event_type || request.service_category || 'Wedding',
+                date: request.service_date || request.start_date || request.eventDate,
+                time: request.service_time || request.start_time || request.eventTime,
+                location: request.location,
+                guestCount: request.guest_count || request.guestCount
+            }
+        });
+        setIsEditModalOpen(true);
     };
 
     const toggleRequestStatus = async (request) => {
@@ -1254,14 +1444,19 @@ export default function BidsPage({ onOpenChat }) {
                 business_profiles: {
                     ...bid.business_profiles,
                     profile_image: profileImage
-                }
+                },
+                // Ensure payment information is properly passed
+                payment_type: bid.payment_type || null,
+                payment_amount: bid.payment_amount || null,
+                down_payment: bid.down_payment || null
             },
             showActions: !bid.isExpired, // Hide actions for expired bids
             onViewCoupon: handleViewCoupon,
             onMessage: onOpenChat,
             currentUserId: currentUserId,
             onProfileClick: () => handlePortfolioClick(bid.business_profiles.id, bid.business_profiles.business_name),
-            isNew: !bid.viewed // Add isNew prop for new bids
+            isNew: !bid.viewed, // Add isNew prop for new bids
+            onMobileModalToggle: handleBidDisplayModalToggle // Add callback for modal state changes
         };
 
         // Determine which props to show based on bid status
@@ -1365,35 +1560,7 @@ export default function BidsPage({ onOpenChat }) {
         }
 
         return (
-            <div key={bid.id} className="bid-display-wrapper">
-                <div className="bid-client-controls">
-                    <div className="bid-interest-rating">
-                        <span className="interest-label">Your Interest:</span>
-                        <div className="star-rating">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                    key={star}
-                                    className={`star-btn ${star <= (bid.interest_rating || 0) ? 'filled' : 'empty'}`}
-                                    onClick={() => handleBidRating(bid.id, star)}
-                                    title={getInterestLevelText(star)}
-                                >
-                                    <i className="fas fa-star"></i>
-                                </button>
-                            ))}
-                        </div>
-                        <span className="rating-text">
-                            {getInterestLevelText(bid.interest_rating || 0)}
-                        </span>
-                    </div>
-                    <button
-                        className="bid-notes-btn"
-                        onClick={() => openBidNotes(bid)}
-                        title={bid.client_notes ? "View and edit notes" : "Add notes"}
-                    >
-                        <i className="fas fa-sticky-note"></i>
-                        {bid.client_notes ? 'Show Notes' : 'Add Notes'}
-                    </button>
-                </div>
+            <div key={bid.id}>
                 <BidDisplay
                     {...commonBidProps}
                     {...statusProps}
@@ -1507,87 +1674,160 @@ export default function BidsPage({ onOpenChat }) {
                     onClick={handleCloseMobileBids}
                 />
                 <div className={`mobile-bids-view ${showMobileBids ? 'active' : ''}`}>
-                    <div className="mobile-bids-header">
-                        <button className="mobile-back-button" onClick={handleCloseMobileBids}>
-                            <i className="fas fa-arrow-left"></i>
-                            <span>Back</span>
-                        </button>
-                        <h2 className="mobile-bids-title">
-                            {selectedRequest.event_title || selectedRequest.title || 'Selected Request'}
-                        </h2>
-                    </div>
+                    {/* Only show header when BidDisplay modal is not open */}
+                    {!bidDisplayModalOpen && (
+                        <div className="mobile-bids-header">
+                            <button className="mobile-back-button" onClick={handleCloseMobileBids}>
+                                <i className="fas fa-arrow-left"></i>
+                                <span>Back</span>
+                            </button>
+                            <h2 className="mobile-bids-title">
+                                {selectedRequest.event_title || selectedRequest.title || 'Selected Request'}
+                                <span style={{
+                                    fontSize: '14px',
+                                    fontWeight: '400',
+                                    color: '#666',
+                                    display: 'block',
+                                    marginTop: '4px'
+                                }}>
+                                    {sortBy === 'recommended' && '⭐ Sorted by recommendation'}
+                                    {sortBy === 'high-price' && '💰 Sorted by highest price'}
+                                    {sortBy === 'low-price' && '💸 Sorted by lowest price'}
+                                </span>
+                            </h2>
+                        </div>
+                    )}
                     <div className="mobile-bids-content">
                     <div className="bids-container-bids-page">
-    <div className="status-tabs" style={{
-        display: 'flex',
-        gap: '8px',
-        marginBottom: '24px',
-        overflowX: 'auto',
-        padding: '8px 0'
-    }}>
-        {["all", "pending", "interested", "approved", "paid", "denied", "expired"].map((status) => {
-            const bidsByStatus = getBidsByStatus();
-            const count = status === 'all' 
-                ? Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0)
-                : (bidsByStatus[status]?.length || 0);
-            
-            const displayText = status.split('_')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-            
-            const newBidsCount = status !== 'all' ? getNewBidsCount(status) : 0;
-            
-            return (
-                <button
-                    key={status}
-                    className={`tab-button ${status} ${activeTab === status ? "active" : ""}`}
-                    onClick={() => setActiveTab(status)}
-                    style={{
-                        padding: '8px 16px',
-                        borderRadius: '20px',
-                        border: 'none',
-                        background: activeTab === status ? '#9633eb' : '#f8f9fa',
-                        color: activeTab === status ? 'white' : '#666',
-                        cursor: 'pointer',
-                        fontWeight: '500',
-                        whiteSpace: 'nowrap',
-                        position: 'relative',
-                        transition: 'all 0.2s ease'
-                    }}
-                >
-                    {displayText} ({count})
-                    {newBidsCount > 0 && (
-                        <span style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            right: '-8px',
-                            background: '#ec4899',
-                            color: 'white',
-                            borderRadius: '50%',
-                            padding: '2px 6px',
-                            fontSize: '12px',
-                            fontWeight: 'bold'
-                        }}>
-                            {newBidsCount}
-                        </span>
-                    )}
-                </button>
-            );
-        })}
-    </div>
-    <div className="bids-grid">
-        {(() => {
-            const bidsByStatus = getBidsByStatus();
-            if (activeTab === 'all') {
-                return Object.values(bidsByStatus)
-                    .flat()
-                    .map(bid => renderBidCard(bid));
-            }
-            return (bidsByStatus[activeTab] || []).map(bid => renderBidCard(bid));
-        })()}
-        {renderNoBidsMessage()}
-    </div>
-</div>
+                        {/* Only show sorting controls and tabs when BidDisplay modal is not open */}
+                        {!bidDisplayModalOpen && (
+                            <>
+                                {/* Mobile Sorting Controls */}
+                                <div className="mobile-sorting-controls" style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '12px',
+                                    marginBottom: '16px',
+                                    padding: '0 16px'
+                                }}>
+                                    <span style={{
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                        color: '#666',
+                                        textAlign: 'center'
+                                    }}>
+                                        Sort by:
+                                    </span>
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: '8px',
+                                        justifyContent: 'center',
+                                        flexWrap: 'wrap'
+                                    }}>
+                                        {[
+                                            { key: 'recommended', label: 'Recommended', icon: '⭐' },
+                                            { key: 'high-price', label: 'High Price', icon: '💰' },
+                                            { key: 'low-price', label: 'Low Price', icon: '💸' }
+                                        ].map((option) => (
+                                            <button
+                                                key={option.key}
+                                                onClick={() => setSortBy(option.key)}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    borderRadius: '20px',
+                                                    border: '1px solid',
+                                                    background: sortBy === option.key ? '#9633eb' : 'white',
+                                                    color: sortBy === option.key ? 'white' : '#9633eb',
+                                                    borderColor: '#9633eb',
+                                                    cursor: 'pointer',
+                                                    fontSize: '13px',
+                                                    fontWeight: '500',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    transition: 'all 0.2s ease',
+                                                    minWidth: 'fit-content'
+                                                }}
+                                            >
+                                                <span>{option.icon}</span>
+                                                {option.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                <div className="status-tabs" style={{
+                                    display: 'flex',
+                                    gap: '8px',
+                                    marginBottom: '24px',
+                                    overflowX: 'auto',
+                                    padding: '8px 0'
+                                }}>
+                                    {["all", "pending", "interested", "approved", "paid", "denied", "expired"].map((status) => {
+                                        const bidsByStatus = getBidsByStatus();
+                                        const count = status === 'all' 
+                                            ? Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0)
+                                            : (bidsByStatus[status]?.length || 0);
+                                        
+                                        const displayText = status.split('_')
+                                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                            .join(' ');
+                                        
+                                        const newBidsCount = status !== 'all' ? getNewBidsCount(status) : 0;
+                                        
+                                        return (
+                                            <button
+                                                key={status}
+                                                className={`tab-button ${status} ${activeTab === status ? "active" : ""}`}
+                                                onClick={() => setActiveTab(status)}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    borderRadius: '20px',
+                                                    border: 'none',
+                                                    background: activeTab === status ? '#9633eb' : '#f8f9fa',
+                                                    color: activeTab === status ? 'white' : '#666',
+                                                    cursor: 'pointer',
+                                                    fontWeight: '500',
+                                                    whiteSpace: 'nowrap',
+                                                    position: 'relative',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                            >
+                                                {displayText} ({count})
+                                                {newBidsCount > 0 && (
+                                                    <span style={{
+                                                        position: 'absolute',
+                                                        top: '-8px',
+                                                        right: '-8px',
+                                                        background: '#ec4899',
+                                                        color: 'white',
+                                                        borderRadius: '50%',
+                                                        padding: '2px 6px',
+                                                        fontSize: '12px',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        {newBidsCount}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
+                        <div className="tw-flex tw-flex-col tw-gap-0">
+                            {(() => {
+                                const bidsByStatus = getBidsByStatus();
+                                if (activeTab === 'all') {
+                                    return Object.values(bidsByStatus)
+                                        .flat()
+                                        .map(bid => renderBidCard(bid));
+                                }
+                                return (bidsByStatus[activeTab] || []).map(bid => renderBidCard(bid));
+                            })()}
+                            {renderNoBidsMessage()}
+                        </div>
+                    </div>
                     </div>
                 </div>
             </>
@@ -1617,6 +1857,10 @@ export default function BidsPage({ onOpenChat }) {
         }, 300);
     };
 
+    const handleBidDisplayModalToggle = (isOpen) => {
+        setBidDisplayModalOpen(isOpen);
+    };
+
     if (loading) {
         return loadingSkeleton;
     }
@@ -1629,15 +1873,6 @@ export default function BidsPage({ onOpenChat }) {
                 <meta name="keywords" content="bids, wedding vendors, Bidi, manage bids" />
             </Helmet>
             <div className="bids-page">
-                <div>
-                </div>
-                <h1 className="section-title">Your Service Requests</h1>
- 
-                <p className="section-description">
-                    View all your service requests and manage the bids you've received.
-                </p>
-
-                
                 <style>
                     {`
                         .request-actions {
@@ -1678,6 +1913,42 @@ export default function BidsPage({ onOpenChat }) {
                         }
                         .btn-toggle:hover {
                             background-color: #e9ecef;
+                        }
+                        
+                        /* Sorting Controls Styles */
+                        .sorting-controls {
+                            background: #f8f9fa;
+                            padding: 16px;
+                            border-radius: 12px;
+                            border: 1px solid #e9ecef;
+                        }
+                        
+                        .sorting-controls button {
+                            transition: all 0.2s ease;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        }
+                        
+                        .sorting-controls button:hover {
+                            transform: translateY(-1px);
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+                        }
+                        
+                        .mobile-sorting-controls {
+                            background: #f8f9fa;
+                            padding: 16px;
+                            border-radius: 12px;
+                            border: 1px solid #e9ecef;
+                            margin: 0 16px 16px 16px;
+                        }
+                        
+                        .mobile-sorting-controls button {
+                            transition: all 0.2s ease;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        }
+                        
+                        .mobile-sorting-controls button:hover {
+                            transform: translateY(-1px);
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
                         }
                     `}
                 </style>
@@ -1815,12 +2086,68 @@ export default function BidsPage({ onOpenChat }) {
                     <div className={`bids-section ${currentRequestIndex >= 0 ? 'active' : ''}`}>
                         <h2 className="section-title">
                             Bids for {requests[currentRequestIndex]?.event_title || requests[currentRequestIndex]?.title || 'Selected Request'}
+                            <span style={{
+                                fontSize: '16px',
+                                fontWeight: '400',
+                                color: '#666',
+                                marginLeft: '12px'
+                            }}>
+                                {sortBy === 'recommended' && '⭐ Sorted by recommendation'}
+                                {sortBy === 'high-price' && '💰 Sorted by highest price'}
+                                {sortBy === 'low-price' && '💸 Sorted by lowest price'}
+                            </span>
                         </h2>
                         <p className="section-description">
                             Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
                         </p>
 
                         <div className="bids-container-bids-page">
+                            {/* Sorting Controls */}
+                            <div className="sorting-controls" style={{
+                                display: 'flex',
+                                gap: '12px',
+                                marginBottom: '16px',
+                                alignItems: 'center',
+                                flexWrap: 'wrap'
+                            }}>
+                                <span style={{
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    color: '#666',
+                                    marginRight: '8px'
+                                }}>
+                                    Sort by:
+                                </span>
+                                {[
+                                    { key: 'recommended', label: 'Recommended', icon: '⭐' },
+                                    { key: 'high-price', label: 'High Price', icon: '💰' },
+                                    { key: 'low-price', label: 'Low Price', icon: '💸' }
+                                ].map((option) => (
+                                    <button
+                                        key={option.key}
+                                        onClick={() => setSortBy(option.key)}
+                                        style={{
+                                            padding: '6px 12px',
+                                            borderRadius: '16px',
+                                            border: '1px solid',
+                                            background: sortBy === option.key ? '#9633eb' : 'white',
+                                            color: sortBy === option.key ? 'white' : '#9633eb',
+                                            borderColor: '#9633eb',
+                                            cursor: 'pointer',
+                                            fontSize: '13px',
+                                            fontWeight: '500',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                    >
+                                        <span>{option.icon}</span>
+                                        {option.label}
+                                    </button>
+                                ))}
+                            </div>
+                            
                             <div className="status-tabs" style={{
                                 display: 'flex',
                                 gap: '8px',
@@ -1878,7 +2205,7 @@ export default function BidsPage({ onOpenChat }) {
                                     );
                                 })}
                             </div>
-                            <div className="bids-grid">
+                            <div className="tw-flex tw-flex-col tw-gap-0">
                                 {(() => {
                                     const bidsByStatus = getBidsByStatus();
                                     if (activeTab === 'all') {
@@ -2157,6 +2484,21 @@ export default function BidsPage({ onOpenChat }) {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Edit Request Modal */}
+            {isEditModalOpen && editRequestData && (
+                <RequestModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setEditRequestData(null);
+                    }}
+                    selectedVendors={editRequestData.selectedVendors}
+                    searchFormData={editRequestData.searchFormData}
+                    isEditMode={editRequestData.isEditMode}
+                    existingRequestData={editRequestData.existingRequestData}
+                />
             )}
         </>
     );

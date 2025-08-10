@@ -334,12 +334,14 @@ const BusinessBids = ({ setActiveSection }) => {
                   key={bid.id}
                   bid={bid}
                   request={request}
-                  onEditBid={(requestId, bidId) =>
-                    navigate(`/edit-bid/${requestId}/${bidId}`)
-                  }
+                  bidDate={bid.created_at}
+                  onEditBid={handleEditBid}
                   openWithdrawModal={openWithdrawModal}
                   onContractUpload={handleContractUpload}
-                  onMessageClick={() => handleMessageClick(request.user_id || request.profile_id, `I'm interested in your request for ${request.title}`)}
+                  onContractView={handleContractView}
+                  onFollowUp={handleFollowUp}
+                  onMessageClick={(userId, preset) => handleMessageClick(userId, preset)}
+                  onViewRequest={handleViewRequest}
                 />
               )
             );
@@ -378,11 +380,14 @@ const BusinessBids = ({ setActiveSection }) => {
                     key={bid.id}
                     bid={bid}
                     request={request}
-                    onEditBid={(requestId, bidId) =>
-                      navigate(`/edit-bid/${requestId}/${bidId}`)
-                    }
+                    bidDate={bid.created_at}
+                    onEditBid={handleEditBid}
                     openWithdrawModal={openWithdrawModal}
+                    onContractUpload={handleContractUpload}
+                    onContractView={handleContractView}
+                    onFollowUp={handleFollowUp}
                     onMessageClick={(userId, preset) => handleMessageClick(userId, preset)}
+                    onViewRequest={handleViewRequest}
                   />
                 )
               );
@@ -405,9 +410,14 @@ const BusinessBids = ({ setActiveSection }) => {
           expirationStatus: expirationStatus
         }}
         request={requests.find((req) => req.id === bid.request_id)}
-        onEditBid={(requestId, bidId) => navigate(`/edit-bid/${requestId}/${bidId}`)}
+        bidDate={bid.created_at}
+        onEditBid={handleEditBid}
         openWithdrawModal={openWithdrawModal}
+        onContractUpload={handleContractUpload}
+        onContractView={handleContractView}
+        onFollowUp={handleFollowUp}
         onMessageClick={(userId, preset) => handleMessageClick(userId, preset)}
+        onViewRequest={handleViewRequest}
       />
     );
   };
@@ -454,25 +464,61 @@ const BusinessBids = ({ setActiveSection }) => {
     }
   };
 
-  // Placeholder handler functions for BidDisplayRow props
+  // Contract view handler
   const handleContractView = (bid) => {
-    // TODO: Implement contract view logic
-    console.log('View contract for bid:', bid);
+    if (bid.contract_url) {
+      window.open(bid.contract_url, '_blank');
+    } else {
+      console.warn('No contract URL available for bid:', bid.id);
+    }
   };
 
-  const handleFollowUp = (bid) => {
-    // TODO: Implement follow-up logic
-    console.log('Follow up for bid:', bid);
+  const handleFollowUp = async (bid) => {
+    try {
+      // Mark the bid as followed up in the database
+      const { error } = await supabase
+        .from('bids')
+        .update({ followed_up: true })
+        .eq('id', bid.id);
+
+      if (error) throw error;
+
+      // Update local state to reflect the change
+      setBids(prevBids => 
+        prevBids.map(b => 
+          b.id === bid.id ? { ...b, followed_up: true } : b
+        )
+      );
+
+      // Find the request to get the correct user ID
+      const request = requests.find(req => req.id === bid.request_id);
+      if (request) {
+        handleMessageClick(
+          request.user_id || request.profile_id, 
+          "Hi! I wanted to follow up about your request. Are you still looking for services?"
+        );
+      }
+    } catch (error) {
+      console.error('Error sending follow-up:', error);
+    }
   };
 
   const handleMessage = (bid) => {
-    // TODO: Implement message logic
-    console.log('Message for bid:', bid);
+    // Find the request to get the correct user ID
+    const request = requests.find(req => req.id === bid.request_id);
+    if (request) {
+      handleMessageClick(request.user_id || request.profile_id);
+    }
   };
 
   const handleViewRequest = (bid) => {
-    // TODO: Implement view request logic
-    console.log('View request for bid:', bid);
+    // Navigate to request details
+    navigate(`/requests/${bid.request_id}`, {
+      state: {
+        requestId: bid.request_id,
+        userId: bid.user_id
+      }
+    });
   };
 
   if (isLoading) {

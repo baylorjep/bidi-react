@@ -302,7 +302,7 @@ function Navbar() {
                       to="/corporate-homepage"
                       onClick={closeMenu}
                     >
-                      <i className="bi bi-building me-3"></i>
+                      <i className="bi bi-briefcase me-3"></i>
                       <span>Corporate Events</span>
                     </Link>
                   )}

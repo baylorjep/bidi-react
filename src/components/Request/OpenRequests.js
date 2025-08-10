@@ -86,6 +86,14 @@ function OpenRequests({ onMessageClick }) {
   const [bidCounts, setBidCounts] = useState({});
   const [userSubmittedBids, setUserSubmittedBids] = useState(new Set());
   const [allBidsUnfiltered, setAllBidsUnfiltered] = useState([]);
+  
+  // Sorting state
+  const [sortBy, setSortBy] = useState("newest");
+  const [sortOrder, setSortOrder] = useState("desc");
+  
+  // Mobile responsive state
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isSmallMobile, setIsSmallMobile] = useState(window.innerWidth <= 480);
 
   // Add this new function to fetch user's bids
   const fetchUserBids = async (userId) => {
@@ -671,6 +679,90 @@ function OpenRequests({ onMessageClick }) {
     return new Date(b.created_at) - new Date(a.created_at);
   };
 
+  // Enhanced sorting functions
+  const sortRequests = (requests, sortBy, sortOrder) => {
+    const sorted = [...requests].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case "newest":
+          comparison = new Date(b.created_at) - new Date(a.created_at);
+          break;
+        case "oldest":
+          comparison = new Date(a.created_at) - new Date(b.created_at);
+          break;
+        case "budget_high":
+          const budgetA = parseBudget(a.price_range || a.budget_range || '0');
+          const budgetB = parseBudget(b.price_range || b.budget_range || '0');
+          comparison = budgetB - budgetA;
+          break;
+        case "budget_low":
+          const budgetA2 = parseBudget(a.price_range || a.budget_range || '0');
+          const budgetB2 = parseBudget(b.price_range || b.budget_range || '0');
+          comparison = budgetA2 - budgetB2;
+          break;
+        case "event_date_nearest":
+          const dateA = new Date(a.start_date || a.event_date || '2099-12-31');
+          const dateB = new Date(b.start_date || b.event_date || '2099-12-31');
+          comparison = dateA - dateB;
+          break;
+        case "event_date_farthest":
+          const dateA2 = new Date(a.start_date || a.event_date || '1970-01-01');
+          const dateB2 = new Date(b.start_date || b.event_date || '1970-01-01');
+          comparison = dateB2 - dateA2;
+          break;
+        case "location":
+          const locationA = (a.venue_city || a.location || '').toLowerCase();
+          const locationB = (b.venue_city || b.location || '').toLowerCase();
+          comparison = locationA.localeCompare(locationB);
+          break;
+        case "urgency":
+          const urgencyA = calculateRequestUrgency(a);
+          const urgencyB = calculateRequestUrgency(b);
+          const urgencyOrder = { 'urgent': 3, 'soon': 2, 'normal': 1, null: 0 };
+          comparison = (urgencyOrder[urgencyB] || 0) - (urgencyOrder[urgencyA] || 0);
+          break;
+        case "bids":
+          const bidsA = bidCounts[a.id] || 0;
+          const bidsB = bidCounts[b.id] || 0;
+          comparison = bidsA - bidsB;
+          break;
+        default:
+          return sortByNewAndDate(a, b);
+      }
+      
+      return sortOrder === "desc" ? comparison : -comparison;
+    });
+    
+    return sorted;
+  };
+
+  // Helper function to filter requests by search term
+  const filterRequestsBySearch = (requests, searchTerm) => {
+    if (!searchTerm.trim()) return requests;
+    
+    const term = searchTerm.toLowerCase();
+    return requests.filter(request => {
+      const title = (request.service_title || request.title || request.event_title || '').toLowerCase();
+      const location = (request.venue_city || request.location || '').toLowerCase();
+      const description = (request.description || request.special_requests || '').toLowerCase();
+      const category = (request.service_category || '').toLowerCase();
+      
+      return title.includes(term) || 
+             location.includes(term) || 
+             description.includes(term) ||
+             category.includes(term);
+    });
+  };
+
+  // Helper function to parse budget from string
+  const parseBudget = (budgetString) => {
+    if (!budgetString) return 0;
+    const matches = budgetString.toString().match(/\d+/g);
+    if (!matches) return 0;
+    return parseInt(matches[0]) || 0;
+  };
+
   // Helper to update hidden_by_vendor in the DB
   async function updateHiddenByVendor(requestId, tableName, businessId, hide) {
     console.log('updateHiddenByVendor called with:', {
@@ -943,6 +1035,17 @@ function OpenRequests({ onMessageClick }) {
     getUser();
   }, []);
 
+  // Handle window resize for mobile responsiveness
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsSmallMobile(window.innerWidth <= 480);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const meetsMinimumPrice = (request) => {
     // Extract price/budget from request
     const budget = parseFloat(request.price_range || request.budget_range || '0');
@@ -989,43 +1092,88 @@ function OpenRequests({ onMessageClick }) {
   }
 
   return (
-    <div className="requests-main-container">
-      <h1 style={{ fontFamily: "Outfit", fontWeight: "bold" }}>
+    <>
+      <style>
+        {`
+          .category-tabs::-webkit-scrollbar {
+            display: none;
+          }
+          .requests-main-container {
+            -webkit-overflow-scrolling: touch;
+          }
+        `}
+      </style>
+      <div className="requests-main-container" style={{
+      padding: isMobile ? '10px' : '20px',
+      maxWidth: '100%',
+      overflow: 'hidden'
+    }}>
+      <h1 style={{ 
+        fontFamily: "Outfit", 
+        fontWeight: "bold",
+        fontSize: isSmallMobile ? '1.5rem' : '2rem',
+        margin: isSmallMobile ? '10px 0 20px 0' : '20px 0',
+        textAlign: 'center'
+      }}>
         Open Requests
       </h1>
-      <div style={{ display: "flex", justifyContent: "center", width: "100%", marginBottom: "20px" }}>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        width: "100%", 
+        marginBottom: isSmallMobile ? "15px" : "20px",
+        padding: "0 10px"
+      }}>
         <button
           className="toggle-hidden-button"
           onClick={() => setShowHidden((prev) => !prev)}
+          style={{
+            padding: isSmallMobile ? '8px 16px' : '10px 20px',
+            fontSize: isSmallMobile ? '13px' : '14px',
+            touchAction: 'manipulation'
+          }}
         >
-          {showHidden ? "Show Active Requests" : "Show Hidden Requests"}
+          {showHidden ? 
+            (isSmallMobile ? "Show Active" : "Show Active Requests") : 
+            (isSmallMobile ? "Show Hidden" : "Show Hidden Requests")
+          }
         </button>
       </div>
 
       {/* Only show category tabs if user is not admin */}
       {!isAdmin && (
-        <div className="category-tabs" style={{ 
-          display: 'flex', 
-          gap: '10px', 
-          marginBottom: '20px',
-          overflowX: 'auto',
-          padding: '0 10px'
-        }}>
+        <div 
+          className="category-tabs" 
+          style={{ 
+            display: 'flex', 
+            gap: '8px', 
+            marginBottom: '20px',
+            overflowX: 'auto',
+            padding: '0 15px',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            scrollBehavior: 'smooth'
+          }}
+        >
           <button
             className={`category-tab ${activeTab === 'all' ? 'active' : ''}`}
             onClick={() => setActiveTab('all')}
             style={{
-              padding: '8px 16px',
+              padding: '6px 12px',
               border: 'none',
-              borderRadius: '20px',
+              borderRadius: '18px',
               backgroundColor: activeTab === 'all' ? '#9633eb' : '#f0f0f0',
               color: activeTab === 'all' ? 'white' : '#333',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              fontSize: '13px',
+              fontWeight: '500',
+              minWidth: 'fit-content',
+              touchAction: 'manipulation'
             }}
           >
-            All Requests
+            All
           </button>
           {businessCategories.map(category => (
             <button
@@ -1033,14 +1181,18 @@ function OpenRequests({ onMessageClick }) {
               className={`category-tab ${activeTab === category ? 'active' : ''}`}
               onClick={() => setActiveTab(category)}
               style={{
-                padding: '8px 16px',
+                padding: '6px 12px',
                 border: 'none',
-                borderRadius: '20px',
+                borderRadius: '18px',
                 backgroundColor: activeTab === category ? '#9633eb' : '#f0f0f0',
                 color: activeTab === category ? 'white' : '#333',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                fontSize: '13px',
+                fontWeight: '500',
+                minWidth: 'fit-content',
+                touchAction: 'manipulation'
               }}
             >
               {getCategoryDisplayName(category)}
@@ -1049,26 +1201,172 @@ function OpenRequests({ onMessageClick }) {
         </div>
       )}
 
-      <div className="request-grid-container">
-        <div className="request-grid">
+      {/* Search and Sorting Controls */}
+      <div className="search-and-sort-container" style={{
+        display: 'flex',
+        gap: '15px',
+        marginBottom: '20px',
+        flexDirection: 'column'
+      }}>
+        {/* Search Bar */}
+        <div style={{ width: '100%' }}>
+          <SearchBar
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            placeholder="Search requests..."
+          />
+        </div>
+      </div>
+
+      {/* Sorting Controls */}
+      <div className="sorting-controls" style={{
+        display: 'flex',
+        alignItems: 'stretch',
+        gap: '10px',
+        marginBottom: '20px',
+        padding: '12px 15px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '10px',
+        border: '1px solid #e5e7eb',
+        flexWrap: 'wrap',
+        '@media (max-width: 768px)': {
+          padding: '10px 12px',
+          gap: '8px'
+        }
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px',
+          flex: '1',
+          minWidth: '200px'
+        }}>
+          <span style={{ 
+            fontWeight: '600', 
+            color: '#374151',
+            fontSize: '13px',
+            whiteSpace: 'nowrap',
+            display: !isSmallMobile ? 'block' : 'none'
+          }}>
+            Sort:
+          </span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{
+              padding: '8px 10px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              backgroundColor: 'white',
+              fontSize: '13px',
+              cursor: 'pointer',
+              flex: '1',
+              minWidth: '140px',
+              maxWidth: '200px'
+            }}
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="budget_high">Highest Budget</option>
+            <option value="budget_low">Lowest Budget</option>
+            <option value="event_date_nearest">Event Date (Nearest)</option>
+            <option value="event_date_farthest">Event Date (Farthest)</option>
+            <option value="location">Location (A-Z)</option>
+            <option value="urgency">Most Urgent</option>
+            <option value="bids">Fewest Bids</option>
+          </select>
+        </div>
+        
+        <button
+          onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+          style={{
+            padding: '8px 10px',
+            border: '1px solid #d1d5db',
+            borderRadius: '6px',
+            backgroundColor: 'white',
+            cursor: 'pointer',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            minWidth: '60px',
+            justifyContent: 'center'
+          }}
+          title={`Currently sorting ${sortOrder === 'desc' ? 'descending' : 'ascending'}`}
+        >
+          <i className={`fas ${sortOrder === 'desc' ? 'fa-sort-amount-down' : 'fa-sort-amount-up'}`} 
+             style={{ fontSize: '12px' }}></i>
+          <span style={{ display: !isSmallMobile ? 'inline' : 'none' }}>
+            {sortOrder === 'desc' ? 'Desc' : 'Asc'}
+          </span>
+        </button>
+        
+        <div style={{ 
+          fontSize: '11px', 
+          color: '#6b7280',
+          whiteSpace: 'nowrap',
+          alignSelf: 'center',
+          minWidth: 'fit-content'
+        }}>
+          {(() => {
+            const totalRequests = filterRequestsBySearch(
+              filterRequestsByCategory(
+                (() => {
+                  const hasPhotoVideoCategory = businessCategories.some(cat => 
+                    ["photography", "videography"].includes(normalizeCategory(cat))
+                  );
+                  return hasPhotoVideoCategory
+                    ? filterRequestsByHidden(openPhotoRequests)
+                    : filterRequestsByHidden(openRequests);
+                })()
+                  .filter((request) => !userSubmittedBids.has(request.id))
+                  .filter(meetsMinimumPrice)
+                  .filter(request => !isDatePassed(request))
+                  .filter(request => isAdmin || hasMatchingCategory(request.service_category, businessCategories)),
+                activeTab
+              ),
+              searchTerm
+            ).length;
+            return `${totalRequests} request${totalRequests !== 1 ? 's' : ''}${searchTerm ? ' (filtered)' : ''}`;
+          })()}
+        </div>
+      </div>
+
+      <div className="request-list-container" style={{
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: isMobile ? '0 5px' : '0 10px'
+      }}>
+        <div className="request-list" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: isSmallMobile ? '6px' : '8px'
+        }}>
           {error && <p>Error: {error}</p>}
-          {filterRequestsByCategory(
-            (() => {
-              // Check if user has photo/video categories
-              const hasPhotoVideoCategory = businessCategories.some(cat => 
-                ["photography", "videography"].includes(normalizeCategory(cat))
-              );
-              
-              return hasPhotoVideoCategory
-                ? filterRequestsByHidden(openPhotoRequests)
-                : filterRequestsByHidden(openRequests);
-            })()
-              .filter((request) => !userSubmittedBids.has(request.id))
-              .filter(meetsMinimumPrice)
-              .filter(request => !isDatePassed(request))
-              .filter(request => isAdmin || hasMatchingCategory(request.service_category, businessCategories))
-              .sort(sortByNewAndDate),
-            activeTab
+          {sortRequests(
+            filterRequestsBySearch(
+              filterRequestsByCategory(
+                (() => {
+                  // Check if user has photo/video categories
+                  const hasPhotoVideoCategory = businessCategories.some(cat => 
+                    ["photography", "videography"].includes(normalizeCategory(cat))
+                  );
+                  
+                  return hasPhotoVideoCategory
+                    ? filterRequestsByHidden(openPhotoRequests)
+                    : filterRequestsByHidden(openRequests);
+                })()
+                  .filter((request) => !userSubmittedBids.has(request.id))
+                  .filter(meetsMinimumPrice)
+                  .filter(request => !isDatePassed(request))
+                  .filter(request => isAdmin || hasMatchingCategory(request.service_category, businessCategories)),
+                activeTab
+              ),
+              searchTerm
+            ),
+            sortBy,
+            sortOrder
           ).map((request) => {
             const bidCount = bidCounts[request.id] || 0;
             console.log(`Request ${request.id} (${request.event_title || request.title}) - bid count: ${bidCount}`);
@@ -1120,7 +1418,8 @@ function OpenRequests({ onMessageClick }) {
           <Button className="btn-secondary" onClick={() => navigate("/stripe-setup")}>Set Up Account</Button>
         </Modal.Body>
       </Modal>
-    </div>
+      </div>
+    </>
   );
 }
 

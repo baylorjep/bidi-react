@@ -82,7 +82,7 @@ const animations = `
 }
 
 /* Vendor waterfall hover effects - only on desktop */
-@media (min-width: 1050px) {
+@media (min-width: 1351px) {
     .vendor-waterfall-item:hover .vendor-waterfall-item-overlay {
         opacity: 1 !important;
     }
@@ -500,13 +500,20 @@ function VendorManagerDemo() {
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
     const [screenSize, setScreenSize] = useState('large');
     const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+    const [searchFormData, setSearchFormData] = useState({
+        eventType: '',
+        date: '',
+        time: '',
+        location: '',
+        guestCount: ''
+    });
 
     // Handle responsive sizing with JavaScript
     useEffect(() => {
         const handleResize = () => {
             const width = window.innerWidth;
             setWindowWidth(width);
-            if (width < 1050) {
+            if (width <= 1350) {
                 setScreenSize('mobile');
             } else {
                 setScreenSize('desktop');
@@ -517,6 +524,18 @@ function VendorManagerDemo() {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isVendorDropdownOpen && !event.target.closest('.vendor-dropdown')) {
+                setIsVendorDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isVendorDropdownOpen]);
 
     // Dynamic styles based on screen size (no longer needed since we use fixed desktop styles)
     const getResponsiveStyles = () => {
@@ -594,7 +613,7 @@ function VendorManagerDemo() {
                                      windowWidth <= 768 ? '2.75rem' : '3rem') : '4rem'
                             }}
                         >
-                        Get Quotes & Book Vendors<br></br><span className='tw-text-pink-500 tw-italic' style={{ color: colors.primary }}>in Minutes</span>
+                        Get Quotes & Book Vendors<br></br><span className='tw-text-pink-500 tw-italic'>in Minutes</span>
                     </h1>
                     <h2 
                         className='tw-text-gray-600 tw-mt-2 tw-px-2' 
@@ -607,7 +626,8 @@ function VendorManagerDemo() {
                         }}
                     >Simply Post Your Needs, and Get Bids Instantly <svg className="tw-inline tw-ml-1" width="20" height="20" viewBox="0 0 24 24" fill={colors.primary} xmlns="http://www.w3.org/2000/svg"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></h2>
                         <div className="tw-flex tw-items-center tw-justify-center tw-flex-col tw-p-4 sm:tw-p-6 md:tw-p-10 tw-text-center tw-w-full" style={{
-                            animation: 'fadeInUp 1.2s ease-out 0.3s both'
+                            animation: 'fadeInUp 1.2s ease-out 0.3s both',
+                            overflow: 'visible'
                         }}>
                             {/* Mobile: Single Button */}
                             {screenSize === 'mobile' ? (
@@ -641,18 +661,43 @@ function VendorManagerDemo() {
                                     background: colors.white,
                                     position: 'relative',
                                         zIndex: 1,
-                                        padding: '16px'
+                                        padding: '16px',
+                                        overflow: 'visible'
                                     }} 
                                     className="search-bar tw-flex tw-items-center tw-w-full tw-rounded-full tw-shadow-md">
-                                    <div className="search-bar-inner tw-flex tw-w-full tw-items-center tw-overflow-hidden tw-gap-0">  
+                                    <div className="search-bar-inner tw-flex tw-w-full tw-items-center tw-gap-0" style={{ overflow: 'visible' }}>  
 
                                         <div style={{ 
                                             borderRight: `1px solid ${colors.primary}`,
                                             paddingLeft: '12px',
                                             paddingRight: '12px'
                                         }} className="search-field tw-flex tw-flex-col tw-flex-1 tw-min-w-0">
+                                            <div className="tw-text-sm tw-text-gray-600 tw-mb-2 tw-text-left tw-truncate">Event Type</div>
+                                            <select 
+                                                value={searchFormData.eventType}
+                                                onChange={(e) => setSearchFormData({...searchFormData, eventType: e.target.value})}
+                                                className="tw-text-sm tw-bg-transparent focus:tw-outline-none tw-border-none tw-appearance-none tw-w-full tw-text-left tw-min-w-0"
+                                                style={{ color: colors.gray[600] }}
+                                            >
+                                                <option value="">Select Event Type</option>
+                                                <option value="Wedding">Wedding</option>
+                                                <option value="Corporate Event">Corporate Event</option>
+                                                <option value="Birthday Party">Birthday Party</option>
+                                                <option value="Anniversary">Anniversary</option>
+                                                <option value="Baby Shower">Baby Shower</option>
+                                                <option value="Graduation">Graduation</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+
+                                        <div style={{ 
+                                            borderRight: `1px solid ${colors.primary}`,
+                                            paddingLeft: '12px',
+                                            paddingRight: '12px',
+                                            overflow: 'visible'
+                                        }} className="search-field tw-flex tw-flex-col tw-flex-1 tw-min-w-0">
                                             <div className="tw-text-sm tw-text-gray-600 tw-mb-2 tw-text-left tw-truncate">Vendors</div>
-                                        <div className="tw-relative">
+                                        <div ref={dropdownRef} className="tw-relative vendor-dropdown" style={{ overflow: 'visible' }}>
                                             <button
                                                 onClick={() => setIsVendorDropdownOpen(!isVendorDropdownOpen)}
                                                     className="tw-flex tw-items-center tw-justify-between tw-w-full tw-text-sm tw-text-gray-600 tw-bg-transparent focus:tw-outline-none tw-border-none tw-truncate"
@@ -667,7 +712,20 @@ function VendorManagerDemo() {
                                             </button>
                                             
                                             {isVendorDropdownOpen && (
-                                                <div className="tw-absolute tw-left-0 tw-right-0 tw-mt-1 tw-rounded-lg tw-shadow-lg tw-border tw-border-gray-200 tw-z-50" style={{ backgroundColor: colors.white }}>
+                                                <div 
+                                                    className="tw-absolute tw-left-0 tw-right-0 tw-mt-1 tw-rounded-lg tw-shadow-lg tw-border tw-border-gray-200 tw-max-h-[200px] tw-overflow-y-auto" 
+                                                    style={{ 
+                                                        backgroundColor: colors.white,
+                                                        zIndex: 9999,
+                                                        position: 'absolute',
+                                                        top: '100%',
+                                                        left: 0,
+                                                        right: 0,
+                                                        minWidth: '200px',
+                                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                                                        border: '1px solid #e5e7eb'
+                                                    }}
+                                                >
                                                     <div className="tw-p-2">
                                                         {vendorOptions.map((option) => (
                                                                 <label key={option.value} className="tw-flex tw-items-center tw-p-2 tw-rounded tw-cursor-pointer hover:tw-bg-gray-50">
@@ -700,6 +758,8 @@ function VendorManagerDemo() {
                                             <div className="tw-text-sm tw-text-gray-600 tw-mb-2 tw-text-left tw-truncate">Event Date</div>
                                         <input 
                                             type="date" 
+                                            value={searchFormData.date}
+                                            onChange={(e) => setSearchFormData({...searchFormData, date: e.target.value})}
                                                 className="tw-text-sm tw-bg-transparent focus:tw-outline-none tw-border-none tw-appearance-none tw-w-full tw-text-left tw-min-w-0"
                                             style={{ color: colors.gray[600] }}
                                             placeholder="Add Date"
@@ -714,6 +774,8 @@ function VendorManagerDemo() {
                                             <div className="tw-text-sm tw-text-gray-600 tw-mb-2 tw-text-left tw-truncate">Start Time</div>
                                         <input 
                                             type="time"
+                                            value={searchFormData.time}
+                                            onChange={(e) => setSearchFormData({...searchFormData, time: e.target.value})}
                                                 className="tw-text-sm tw-bg-transparent focus:tw-outline-none tw-border-none tw-appearance-none tw-w-full tw-text-left tw-min-w-0"
                                             style={{ color: colors.gray[600] }}
                                             placeholder="hh : mm XM"
@@ -728,9 +790,11 @@ function VendorManagerDemo() {
                                             <div className="tw-text-sm tw-text-gray-600 tw-mb-2 tw-text-left tw-truncate">Location</div>
                                         <input 
                                             type="text"
+                                            value={searchFormData.location}
+                                            onChange={(e) => setSearchFormData({...searchFormData, location: e.target.value})}
                                                 className="tw-text-sm tw-bg-transparent focus:tw-outline-none tw-border-none tw-w-full tw-text-left tw-min-w-0"
                                             style={{ color: colors.gray[600] }}
-                                            placeholder="Address"
+                                            placeholder="Address, City, State, or Zip Code"
                                         />
                                     </div>
                                 
@@ -741,7 +805,9 @@ function VendorManagerDemo() {
                                         }} className="search-field tw-flex tw-flex-col tw-flex-1 tw-min-w-0">
                                             <div className="tw-text-sm tw-text-gray-600 tw-mb-2 tw-text-left tw-truncate">Event Size</div>
                                         <input 
-                                            type="text"
+                                            type="number"
+                                            value={searchFormData.guestCount}
+                                            onChange={(e) => setSearchFormData({...searchFormData, guestCount: e.target.value})}
                                                 className="tw-text-sm tw-bg-transparent focus:tw-outline-none tw-border-none tw-w-full tw-text-left tw-min-w-0"
                                             style={{ color: colors.gray[600] }}
                                             placeholder="# of Guests"
@@ -766,6 +832,52 @@ function VendorManagerDemo() {
                             )}
                     </div>
                     </div>
+                    
+                    {/* Dashboard Button for signed-in users */}
+                    {user && role && (
+                        <div className="tw-mt-6 tw-flex tw-items-center tw-justify-center">
+                            <Link 
+                                to={
+                                    role === 'individual' ? "/individual-dashboard" :
+                                    role === 'business' ? "/business-dashboard" :
+                                    role === 'both' ? "/wedding-planner-dashboard" :
+                                    "/signin"
+                                }
+                                onClick={() => {
+                                    if (role === 'individual') posthog.capture('client_dashboard');
+                                    else if (role === 'business') posthog.capture('vendor_dashboard');
+                                    else if (role === 'both') posthog.capture('planner_dashboard');
+                                }}
+                                style={{ textDecoration: 'none' }}
+                            >
+                                <button 
+                                    className="tw-py-3 tw-px-6 tw-rounded-full tw-font-semibold tw-text-sm tw-border tw-transition-all tw-duration-300 hover:tw-scale-105 tw-shadow-sm"
+                                    style={{
+                                        backgroundColor: 'transparent',
+                                        color: colors.primary,
+                                        border: `2px solid ${colors.primary}`,
+                                        fontFamily: 'Outfit'
+                                    }}
+                                >
+                                    <svg 
+                                        width="16" 
+                                        height="16" 
+                                        viewBox="0 0 24 24" 
+                                        fill="none" 
+                                        stroke={colors.primary}
+                                        strokeWidth="2"
+                                        className="tw-inline tw-mr-2"
+                                    >
+                                        <rect x="3" y="3" width="7" height="7"/>
+                                        <rect x="14" y="3" width="7" height="7"/>
+                                        <rect x="14" y="14" width="7" height="7"/>
+                                        <rect x="3" y="14" width="7" height="7"/>
+                                    </svg>
+                                    Looking for your dashboard? Click here
+                                </button>
+                            </Link>
+                        </div>
+                    )}
                     </div>
                     
                     {/* Our Vendors - Positioned at bottom */}
@@ -925,16 +1037,10 @@ function VendorManagerDemo() {
             </div>
 
                         {/* Combined How It Works + Demo Section */}
-                        <div ref={howToRef} className={`how-to-use-section fade-in-section ${howToVisible ? 'is-visible' : ''}`}>
-                <div className='how-to-text'>
+                        <div ref={howToRef} className={`fade-in-section ${howToVisible ? 'is-visible' : ''}`}>
+                <div className='tw-flex tw-flex-col tw-items-center tw-justify-center tw-text-center'>
                     <div className='how-to-sub-title'>Simple and hassle-free.</div>
                     <div className='how-to-title'>How It Works</div>
-                    <div className='how-to-description'>
-                        {screenSize === 'mobile' 
-                            ? 'Follow the simple 5-step process below, then try the phone demo.'
-                            : 'Click through the phone to see how you make a request, receive bids, compare them, approve your favorite, and book — all in minutes.'
-                        }
-                    </div>
                     
                     {/* Mobile Compact Timeline */}
                     {screenSize === 'mobile' ? (
@@ -988,53 +1094,57 @@ function VendorManagerDemo() {
                             </div>
                         </div>
                     ) : (
-                        /* Desktop Vertical Layout */
-                        <>
-                    {/* Step 1 */}
-                    <div className='how-to-number'>1</div>
-                    <div className='step-container'>
-                        <div className='step-title'>Make a Request</div>
-                        <div className='step-sub-title'>
-                            Tell us what you need, your date, and budget.
-                        </div>
-                    </div>
-
-                    {/* Step 2 */}
-                    <div className='how-to-number'>2</div>
-                    <div className='step-container'>
-                        <div className='step-title'>Get Bids</div>
-                        <div className='step-sub-title'>
-                            Pros send tailored bids to match your request.
-                        </div>
-                    </div>
-
-                    {/* Step 3 */}
-                    <div className='how-to-number'>3</div>
-                    <div className='step-container'>
-                        <div className='step-title'>Compare Bids</div>
-                        <div className='step-sub-title'>
-                            Review pricing, packages, and ratings in one place.
-                        </div>
-                    </div>
-
-                    {/* Step 4 */}
-                    <div className='how-to-number'>4</div>
-                    <div className='step-container'>
-                        <div className='step-title'>Approve a Bid</div>
-                        <div className='step-sub-title'>
-                            Choose your favorite vendor with a tap.
-                        </div>
-                    </div>
-                            
-                    {/* Step 5 */}
-                    <div className='how-to-number'>5</div>
-                    <div className='step-container'>
-                        <div className='step-title'>Book</div>
-                        <div className='step-sub-title'>
-                            Finalize date and time to lock it in.
-                        </div>
-                    </div>
-                        </>
+                        /* Desktop Horizontal Layout */
+                                                 <div className="tw-mt-8 tw-mb-8 tw-flex tw-flex-col tw-items-center tw-justify-center tw-text-center">
+                             <div className="tw-flex tw-justify-center tw-items-center tw-px-4 tw-max-w-6xl tw-mx-auto tw-relative">
+                                 {[
+                                     { number: 1, title: 'Make a Request', subtitle: 'Tell us what you need, your date, and budget.' },
+                                     { number: 2, title: 'Get Bids', subtitle: 'Pros send tailored bids to match your request.' },
+                                     { number: 3, title: 'Compare Bids', subtitle: 'Review pricing, packages, and ratings in one place.' },
+                                     { number: 4, title: 'Approve a Bid', subtitle: 'Choose your favorite vendor with a tap.' },
+                                     { number: 5, title: 'Book', subtitle: 'Finalize date and time to lock it in.' }
+                                 ].map((step, index) => (
+                                     <div key={step.number} className="tw-flex tw-flex-col tw-items-center tw-text-center tw-relative" style={{ minWidth: '180px' }}>
+                                         {/* Circle */}
+                                         <div 
+                                             className="tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-white tw-font-bold tw-mb-4 tw-shadow-lg tw-relative tw-z-10"
+                                             style={{ 
+                                                 backgroundColor: colors.primary,
+                                                 width: '64px',
+                                                 height: '64px',
+                                                 fontSize: '24px'
+                                             }}
+                                         >
+                                             {step.number}
+                                         </div>
+                                        
+                                         
+                                         {/* Title */}
+                                         <div 
+                                             className="tw-font-bold tw-text-gray-900 tw-mb-2"
+                                             style={{
+                                                 fontSize: '18px',
+                                                 fontFamily: 'Outfit'
+                                             }}
+                                         >
+                                             {step.title}
+                                         </div>
+                                         
+                                         {/* Subtitle */}
+                                         <div 
+                                             className="tw-text-gray-600 tw-text-center tw-leading-relaxed"
+                                             style={{
+                                                 fontSize: '14px',
+                                                 fontFamily: 'Outfit',
+                                                 maxWidth: '160px'
+                                             }}
+                                         >
+                                             {step.subtitle}
+                                         </div>
+                                     </div>
+                                 ))}
+                             </div>
+                         </div>
                     )}
                 </div>
 
@@ -1047,11 +1157,11 @@ function VendorManagerDemo() {
                     </div>
                     
                     <div className='demo-footer'>
-                        <div className='demo-cta'>
+                        <div className='demo-cta' style={{marginTop:'0px'}}>
                             <h3>Ready to try it?</h3>
                             <p>Create your first request and start getting bids today.</p>
                             <Link to="/request-categories" style={{textDecoration:'none'}}>
-                                <button className='demo-cta-button'>Start Planning Now</button>
+                                <button className='tw-bg-pink-500 tw-text-white tw-rounded-full tw-px-4 tw-py-2 tw-font-bold tw-shadow-md tw-transition-all tw-duration-300 tw-hover:tw-scale-105 tw-border-none'>Start Planning Now</button>
                             </Link>
                         </div>
                     </div>
@@ -1139,6 +1249,8 @@ function VendorManagerDemo() {
             <RequestModal 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
+                selectedVendors={selectedVendors}
+                searchFormData={searchFormData}
             />
         )}
 
@@ -1151,7 +1263,8 @@ function VendorManagerDemo() {
                 toggleVendor={toggleVendor}
                 vendorOptions={vendorOptions}
                 colors={colors}
-                onSubmit={() => {
+                onSubmit={(mobileFormData) => {
+                    setSearchFormData(mobileFormData);
                     setIsMobileSearchOpen(false);
                     setIsModalOpen(true);
                 }}
@@ -1164,6 +1277,7 @@ function VendorManagerDemo() {
 // Mobile Search Modal Component
 function MobileSearchModal({ isOpen, onClose, selectedVendors, toggleVendor, vendorOptions, colors, onSubmit }) {
     const [formData, setFormData] = useState({
+        eventType: '',
         date: '',
         time: '',
         location: '',
@@ -1194,6 +1308,27 @@ function MobileSearchModal({ isOpen, onClose, selectedVendors, toggleVendor, ven
                 {/* Content */}
                 <div className="tw-p-4 tw-overflow-y-auto tw-max-h-[calc(90vh-120px)]">
                     <div className="tw-space-y-6">
+                        {/* Event Type */}
+                        <div>
+                            <label className="tw-block tw-text-lg tw-font-medium tw-text-gray-900 tw-mb-3">
+                                What type of event is this?
+                            </label>
+                            <select 
+                                value={formData.eventType}
+                                onChange={(e) => setFormData({...formData, eventType: e.target.value})}
+                                className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-pink-500 focus:tw-border-transparent"
+                            >
+                                <option value="">Select Event Type</option>
+                                <option value="Wedding">Wedding</option>
+                                <option value="Corporate Event">Corporate Event</option>
+                                <option value="Birthday Party">Birthday Party</option>
+                                <option value="Anniversary">Anniversary</option>
+                                <option value="Baby Shower">Baby Shower</option>
+                                <option value="Graduation">Graduation</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
                         {/* Vendor Services */}
                         <div>
                             <label className="tw-block tw-text-lg tw-font-medium tw-text-gray-900 tw-mb-3">
@@ -1275,7 +1410,7 @@ function MobileSearchModal({ isOpen, onClose, selectedVendors, toggleVendor, ven
                 {/* Footer */}
                 <div className="tw-p-4 tw-border-t tw-border-gray-200 tw-bg-gray-50">
                     <button 
-                        onClick={onSubmit}
+                        onClick={() => onSubmit(formData)}
                         disabled={selectedVendors.length === 0}
                         className="tw-w-full tw-py-4 tw-px-6 tw-rounded-lg tw-font-semibold tw-text-lg tw-transition-colors tw-disabled:opacity-50 tw-disabled:cursor-not-allowed tw-border-none"
                         style={{
@@ -1306,7 +1441,7 @@ function PhoneHowItWorks() {
     width: 320,
     height: 640,
     borderRadius: 36,
-    border: `10px solid ${colors.gray?.[200] || '#e5e7eb'}`,
+    border: `10px solid black`,
     background: colors.white,
     boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
     position: 'relative',
@@ -1320,7 +1455,7 @@ function PhoneHowItWorks() {
     transform: 'translateX(-50%)',
     width: 180,
     height: 26,
-    background: colors.gray?.[200] || '#e5e7eb',
+    background: 'black',
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     zIndex: 2,

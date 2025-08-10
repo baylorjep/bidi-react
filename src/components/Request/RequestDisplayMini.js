@@ -21,6 +21,10 @@ function RequestDisplayMini({
 }) {
     const [timeLeft, setTimeLeft] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
+    
+    // Mobile responsive state
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [isSmallMobile, setIsSmallMobile] = useState(window.innerWidth <= 480);
 
     // Helper to parse created_at as UTC if needed
     const parseUTCDate = (dateString) => {
@@ -91,6 +95,17 @@ function RequestDisplayMini({
 
         return () => clearInterval(timer);
     }, [request.created_at]);
+
+    // Handle window resize for mobile responsiveness
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+            setIsSmallMobile(window.innerWidth <= 480);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleCloseModal = () => {
         setSelectedPhoto(null);
@@ -180,479 +195,460 @@ function RequestDisplayMini({
     };
 
     return (
-        <div className="request-card" style={{
+        <>
+            <style>
+                {`
+                    .request-row {
+                        -webkit-tap-highlight-color: transparent;
+                        -webkit-touch-callout: none;
+                        -webkit-user-select: none;
+                        -khtml-user-select: none;
+                        -moz-user-select: none;
+                        -ms-user-select: none;
+                        user-select: none;
+                    }
+                    
+                    @media (max-width: 768px) {
+                        .request-row {
+                            transition: transform 0.1s ease;
+                        }
+                        .request-row:active {
+                            transform: scale(0.98);
+                        }
+                    }
+                `}
+            </style>
+            <div className="request-row" style={{
             background: 'white',
-            borderRadius: '16px',
+            borderRadius: isSmallMobile ? '6px' : '8px',
             border: hasSubmittedBid ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
             overflow: 'hidden',
             transition: 'all 0.2s ease',
             position: 'relative',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            marginBottom: isSmallMobile ? '6px' : '8px',
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'stretch' : 'center',
+            padding: isMobile ? '12px 15px' : '16px 20px',
+            minHeight: isMobile ? 'auto' : '80px',
+            gap: isMobile ? '12px' : '0'
         }}
         onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.12)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+            e.currentTarget.style.backgroundColor = '#fafafa';
         }}
         onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.05)';
+            e.currentTarget.style.backgroundColor = 'white';
         }}
         onClick={() => onViewMore && onViewMore(request.id)}
         >
-            {/* Header */}
+            {/* Row Layout */}
+            
+            {/* Icon and Title Section */}
             <div style={{
-                background: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)',
-                padding: '16px 20px',
-                borderRadius: '16px'
+                display: 'flex',
+                alignItems: 'center',
+                gap: isMobile ? '12px' : '16px',
+                flex: isMobile ? 'none' : '1',
+                minWidth: isMobile ? 'auto' : '250px',
+                width: isMobile ? '100%' : 'auto'
             }}>
                 <div style={{
+                    width: isSmallMobile ? '36px' : '40px',
+                    height: isSmallMobile ? '36px' : '40px',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #a328f4 0%, #ff008a 100%)',
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: isSmallMobile ? '14px' : '16px',
+                    flexShrink: 0
                 }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px'
-                    }}>
-                        <div style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '12px',
-                            background: 'linear-gradient(135deg, #a328f4 0%, #ff008a 100%)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            fontSize: '20px'
-                        }}>
                             <i className={getCategoryIcon(request.service_category || request.type)}></i>
                         </div>
-                        <div>
-                            <div style={{
-                                fontSize: '16px',
-                                fontWeight: '600',
-                                color: '#374151',
-                                marginBottom: '4px'
-                            }}>
-                                {getTitle()}
-                            </div>
-                            <div style={{
-                                fontSize: '14px',
-                                color: '#6b7280'
-                            }}>
-                                {request.event_type || request.service_category || 'Service Request'}
-                            </div>
-                        </div>
-                    </div>
-                    
+                <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}>
-                        {isNew(request.created_at) && (
-                            <div style={{
-                                background: 'linear-gradient(135deg, #ff008a 0%, #ec4899 100%)',
-                                color: 'white',
-                                padding: '4px 8px',
-                                borderRadius: '12px',
-                                fontSize: '11px',
-                                fontWeight: '600'
-                            }}>
-                                NEW
-                            </div>
-                        )}
-                        {checkPromotion(request.created_at) && (
-                            <div style={{
-                                background: '#f59e0b',
-                                color: 'white',
-                                padding: '4px 8px',
-                                borderRadius: '12px',
-                                fontSize: '11px',
-                                fontWeight: '600'
-                            }}>
-                                {checkPromotion(request.created_at).message}
-                                {timeLeft && <span> ({timeLeft})</span>}
-                            </div>
-                        )}
-                        <button 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                isHidden ? onShow() : onHide();
-                            }}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#6b7280',
-                                cursor: 'pointer',
-                                padding: '4px',
-                                borderRadius: '4px',
-                                fontSize: '16px'
-                            }}
-                        >
-                            {isHidden ? '👁️' : '✕'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Main content */}
-            <div style={{ padding: '20px' }}>
-
-
-                {/* Key indicators */}
-                <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    marginBottom: '16px',
-                    flexWrap: 'wrap'
-                }}>
-                    {/* Competition indicator */}
-
-
-                    {/* Client requested */}
-                    {isClientRequested && (
-                        <div style={{
-                            background: '#fef3c7',
-                            color: '#d97706',
-                            padding: '6px 12px',
-                            borderRadius: '20px',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                        }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                            </svg>
-                            Client Requested
-                        </div>
-                    )}
-
-                    {/* Urgency */}
-                    {requestUrgency === 'urgent' && (
-                        <div style={{
-                            background: '#fee2e2',
-                            color: '#dc2626',
-                            padding: '6px 12px',
-                            borderRadius: '20px',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                        }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                            </svg>
-                            Urgent
-                        </div>
-                    )}
-
-                    {/* Perfect match */}
-                    {serviceMatch === 'perfect' && (
-                        <div style={{
-                            background: '#d1fae5',
-                            color: '#059669',
-                            padding: '6px 12px',
-                            borderRadius: '20px',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                        }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                            </svg>
-                            Perfect Match
-                        </div>
-                    )}
-
-                    {/* High budget */}
-                    {budgetMatch === 'high' && (
-                        <div style={{
-                            background: '#fde7fa', // lighter background to go with the text
-                            color: '#f247d1',
-                            padding: '6px 12px',
-                            borderRadius: '20px',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                        }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
-                            </svg>
-                            High Budget
-                        </div>
-                    )}
-                </div>
-
-                {/* Event details with big icons */}
-                <div style={{
-                    background: '#f9fafb',
-                    padding: '16px',
-                    borderRadius: '12px',
-                    marginBottom: '16px'
-                }}>
-                    <div style={{
-                        fontSize: '16px',
+                        fontSize: isSmallMobile ? '15px' : '16px',
                         fontWeight: '600',
                         color: '#374151',
-                        marginBottom: '12px'
+                        marginBottom: '4px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: isMobile ? 'normal' : 'nowrap',
+                        lineHeight: isMobile ? '1.3' : 'normal'
                     }}>
-                        Event Details
+                        {getTitle()}
                     </div>
-                                        <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                        gap: '20px'
+                    <div style={{
+                        fontSize: isSmallMobile ? '13px' : '14px',
+                        color: '#6b7280',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
                     }}>
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '10px',
-                            padding: '16px',
-                            background: 'white',
-                            borderRadius: '12px',
-                            border: '1px solid #e5e7eb'
-                        }}>
-                            <div style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '10px',
-                                background: 'linear-gradient(135deg, #a328f4 0%, #8b5cf6 100%)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'white',
-                                fontSize: '20px'
-                            }}>
-                                <i className="fas fa-calendar"></i>
-                            </div>
-                            <div style={{
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                color: '#374151',
-                                textAlign: 'center'
-                            }}>
-                                Date
-                            </div>
-                            <div style={{
-                                fontSize: '12px',
-                                color: '#6b7280',
-                                textAlign: 'center'
-                            }}>
-                                {getDate()}
-                            </div>
-                        </div>
-                        
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '10px',
-                            padding: '16px',
-                            background: 'white',
-                            borderRadius: '12px',
-                            border: '1px solid #e5e7eb'
-                        }}>
-                            <div style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '10px',
-                                background: 'linear-gradient(135deg, #ff008a 0%, #ec4899 100%)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'white',
-                                fontSize: '20px'
-                            }}>
-                                <i className="fas fa-map-marker-alt"></i>
-                            </div>
-                            <div style={{
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                color: '#374151',
-                                textAlign: 'center'
-                            }}>
-                                Location
-                            </div>
-                            <div style={{
-                                fontSize: '12px',
-                                color: '#6b7280',
-                                textAlign: 'center'
-                            }}>
-                                {request.location || 'TBD'}
-                            </div>
-                        </div>
-                        
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '10px',
-                            padding: '16px',
-                            background: 'white',
-                            borderRadius: '12px',
-                            border: '1px solid #e5e7eb'
-                        }}>
-                            <div style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '10px',
-                                background: 'linear-gradient(135deg, #c026d3 0%, #a855f7 100%)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'white',
-                                fontSize: '20px'
-                            }}>
-                                <i className="fas fa-dollar-sign"></i>
-                            </div>
-                            <div style={{
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                color: '#374151',
-                                textAlign: 'center'
-                            }}>
-                                Budget
-                            </div>
-                            <div style={{
-                                fontSize: '12px',
-                                color: '#6b7280',
-                                textAlign: 'center'
-                            }}>
-                                {request.price_range || request.budget_range}
-                            </div>
-                        </div>
-                        
-                        {request.description && (
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '10px',
-                                padding: '16px',
-                                background: 'white',
-                                borderRadius: '12px',
-                                border: '1px solid #e5e7eb'
-                            }}>
-                                <div style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    borderRadius: '10px',
-                                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    fontSize: '20px'
-                                }}>
-                                    <i className="fas fa-file-alt"></i>
-                                </div>
-                                <div style={{
-                                    fontSize: '14px',
-                                    fontWeight: '600',
-                                    color: '#374151',
-                                    textAlign: 'center'
-                                }}>
-                                    Description
-                                </div>
-                                <div style={{
-                                    fontSize: '12px',
-                                    color: '#6b7280',
-                                    textAlign: 'center'
-                                }}>
-                                    {request.description.length > 50 
-                                        ? request.description.substring(0, 50) + '...' 
-                                        : request.description}
-                                </div>
-                            </div>
-                        )}
+                        {request.event_type || request.service_category || 'Service Request'}
                     </div>
                 </div>
-
-                {/* Action buttons */}
+                    </div>
+                    
+{/* Info Section - Responsive Layout */}
+            {isMobile ? (
+                /* Mobile: Stacked compact info */
                 <div style={{
                     display: 'flex',
+                    flexDirection: 'column',
                     gap: '8px',
-                    justifyContent: 'center'
+                    width: '100%'
                 }}>
-                    <button 
-                        style={{
-                            background: hasSubmittedBid ? '#a328f4' : '#ff008a',
-                            color: 'white',
-                            border: 'none',
-                            padding: '10px 20px',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '8px'
+                    }}>
+                        <div style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            transition: 'all 0.2s ease',
-                            flex: 1,
-                            justifyContent: 'center'
-                        }}
-                        onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
-                        onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                            flex: '1',
+                            minWidth: '0'
+                        }}>
+                            <i className="fas fa-calendar" style={{ color: '#6b7280', fontSize: '12px' }}></i>
+                            <span style={{
+                                fontSize: '13px',
+                                color: '#374151',
+                                fontWeight: '500',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                            }}>
+                                {getDate()}
+                            </span>
+                        </div>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            flex: '1',
+                            minWidth: '0'
+                        }}>
+                            <i className="fas fa-dollar-sign" style={{ color: '#6b7280', fontSize: '12px' }}></i>
+                            <span style={{
+                                fontSize: '13px',
+                                color: '#374151',
+                                fontWeight: '500',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                            }}>
+                                {request.price_range || request.budget_range || 'TBD'}
+                            </span>
+                        </div>
+                    </div>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                    }}>
+                        <i className="fas fa-map-marker-alt" style={{ color: '#6b7280', fontSize: '12px' }}></i>
+                        <span style={{
+                            fontSize: '13px',
+                            color: '#374151',
+                            fontWeight: '500',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}>
+                            {request.location || 'TBD'}
+                        </span>
+                    </div>
+                </div>
+            ) : (
+                /* Desktop: Horizontal layout */
+                <>
+                    {/* Date Section */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        minWidth: '140px',
+                        padding: '0 16px'
+                    }}>
+                        <i className="fas fa-calendar" style={{ color: '#6b7280', fontSize: '14px' }}></i>
+                        <div style={{
+                            fontSize: '14px',
+                            color: '#374151',
+                            fontWeight: '500'
+                        }}>
+                            {getDate()}
+                        </div>
+                    </div>
+
+                    {/* Location Section */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        minWidth: '120px',
+                        padding: '0 16px'
+                    }}>
+                        <i className="fas fa-map-marker-alt" style={{ color: '#6b7280', fontSize: '14px' }}></i>
+                        <div style={{
+                            fontSize: '14px',
+                            color: '#374151',
+                            fontWeight: '500',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}>
+                            {request.location || 'TBD'}
+                        </div>
+                    </div>
+
+                    {/* Budget Section */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        minWidth: '120px',
+                        padding: '0 16px'
+                    }}>
+                        <i className="fas fa-dollar-sign" style={{ color: '#6b7280', fontSize: '14px' }}></i>
+                        <div style={{
+                            fontSize: '14px',
+                            color: '#374151',
+                            fontWeight: '500'
+                        }}>
+                            {request.price_range || request.budget_range || 'TBD'}
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Status Badges */}
+            <div style={{
+                display: 'flex',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                gap: '4px',
+                flexWrap: 'wrap',
+                minWidth: isMobile ? 'auto' : '120px',
+                padding: isMobile ? '0' : '0 16px',
+                width: isMobile ? '100%' : 'auto'
+            }}>
+                {isNew(request.created_at) && (
+                    <div style={{
+                        background: 'linear-gradient(135deg, #ff008a 0%, #ec4899 100%)',
+                        color: 'white',
+                        padding: isSmallMobile ? '2px 6px' : '3px 8px',
+                        borderRadius: isSmallMobile ? '8px' : '12px',
+                        fontSize: isSmallMobile ? '9px' : '10px',
+                        fontWeight: '600'
+                    }}>
+                        NEW
+                    </div>
+                )}
+                {checkPromotion(request.created_at) && (
+                    <div style={{
+                        background: '#f59e0b',
+                        color: 'white',
+                        padding: isSmallMobile ? '2px 6px' : '3px 8px',
+                        borderRadius: isSmallMobile ? '8px' : '12px',
+                        fontSize: isSmallMobile ? '9px' : '10px',
+                        fontWeight: '600'
+                    }}>
+                        {checkPromotion(request.created_at).message}
+                    </div>
+                )}
+                {isClientRequested && (
+                    <div style={{
+                        background: '#fef3c7',
+                        color: '#d97706',
+                        padding: isSmallMobile ? '2px 6px' : '3px 8px',
+                        borderRadius: isSmallMobile ? '8px' : '12px',
+                        fontSize: isSmallMobile ? '9px' : '10px',
+                        fontWeight: '600'
+                    }}>
+                        REQUESTED
+                    </div>
+                )}
+                {requestUrgency === 'urgent' && (
+                    <div style={{
+                        background: '#fee2e2',
+                        color: '#dc2626',
+                        padding: isSmallMobile ? '2px 6px' : '3px 8px',
+                        borderRadius: isSmallMobile ? '8px' : '12px',
+                        fontSize: isSmallMobile ? '9px' : '10px',
+                        fontWeight: '600'
+                    }}>
+                        URGENT
+                    </div>
+                )}
+                {serviceMatch === 'perfect' && (
+                    <div style={{
+                        background: '#d1fae5',
+                        color: '#059669',
+                        padding: isSmallMobile ? '2px 6px' : '3px 8px',
+                        borderRadius: isSmallMobile ? '8px' : '12px',
+                        fontSize: isSmallMobile ? '9px' : '10px',
+                        fontWeight: '600'
+                    }}>
+                        PERFECT
+                    </div>
+                )}
+                {budgetMatch === 'high' && (
+                    <div style={{
+                        background: '#fde7fa',
+                        color: '#f247d1',
+                        padding: isSmallMobile ? '2px 6px' : '3px 8px',
+                        borderRadius: isSmallMobile ? '8px' : '12px',
+                        fontSize: isSmallMobile ? '9px' : '10px',
+                        fontWeight: '600'
+                    }}>
+                        HIGH $
+                    </div>
+                )}
+                </div>
+
+            {/* Actions Section */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: isMobile ? '6px' : '8px',
+                minWidth: isMobile ? 'auto' : '150px',
+                justifyContent: isMobile ? 'center' : 'flex-end',
+                width: isMobile ? '100%' : 'auto'
+            }}>
+                <button 
+                    style={{
+                        background: hasSubmittedBid ? '#a328f4' : '#ff008a',
+                        color: 'white',
+                        border: 'none',
+                        padding: isSmallMobile ? '6px 12px' : '8px 16px',
+                        borderRadius: '6px',
+                        fontSize: isSmallMobile ? '12px' : '13px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        whiteSpace: 'nowrap',
+                        touchAction: 'manipulation',
+                        flex: isMobile ? '1' : 'none'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.target.style.opacity = '1'}
                     >
-                        {hasSubmittedBid ? 'View My Bid' : 'View Details'}
+                    {hasSubmittedBid ? 'View Bid' : 'View Details'}
                     </button>
                     
-                    {isClientRequested && (
-                        <button 
-                            style={{
-                                background: '#a328f4',
-                                color: 'white',
-                                border: 'none',
-                                padding: '10px 16px',
-                                borderRadius: '8px',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                transition: 'all 0.2s ease'
-                            }}
+                {isClientRequested && (
+                    <button 
+                        style={{
+                            background: '#a328f4',
+                            color: 'white',
+                            border: 'none',
+                            padding: isSmallMobile ? '6px 10px' : '8px 12px',
+                            borderRadius: '6px',
+                            fontSize: isSmallMobile ? '12px' : '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            touchAction: 'manipulation'
+                        }}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onMessageClick && onMessageClick(request.user_id);
                             }}
-                            onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
-                            onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                        onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+                        onMouseLeave={(e) => e.target.style.opacity = '1'}
                         >
-
                                 Message
                         </button>
                     )}
-                </div>
+                
+                {/* Hide/Show button - only show on desktop in actions section */}
+                {!isMobile && (
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            isHidden ? onShow() : onHide();
+                        }}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#6b7280',
+                            cursor: 'pointer',
+                            padding: '6px',
+                            borderRadius: '4px',
+                            fontSize: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            touchAction: 'manipulation',
+                            minWidth: '36px',
+                            minHeight: '36px'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                    >
+                        {isHidden ? '👁️' : '✕'}
+                    </button>
+                )}
             </div>
 
-            {/* Submitted bid indicator */}
+            {/* Mobile Hide/Show button - positioned in top right corner */}
+            {isMobile && (
+                <button 
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        isHidden ? onShow() : onHide();
+                    }}
+                    style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'rgba(255, 255, 255, 0.9)',
+                        border: '1px solid #e5e7eb',
+                        color: '#6b7280',
+                        cursor: 'pointer',
+                        padding: '6px',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        touchAction: 'manipulation',
+                        minWidth: '32px',
+                        minHeight: '32px',
+                        zIndex: 20,
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(243, 244, 246, 0.9)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)'}
+                >
+                    {isHidden ? '👁️' : '✕'}
+                </button>
+            )}
+
+            {/* Submitted bid indicator for row layout */}
             {hasSubmittedBid && (
                 <div style={{
                     position: 'absolute',
-                    top: '12px',
-                    right: '12px',
+                    top: isSmallMobile ? '6px' : '8px',
+                    left: isSmallMobile ? '6px' : '8px',
                     background: '#3b82f6',
                     color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '12px',
-                    fontSize: '11px',
+                    padding: isSmallMobile ? '1px 4px' : '2px 6px',
+                    borderRadius: isSmallMobile ? '6px' : '8px',
+                    fontSize: isSmallMobile ? '9px' : '10px',
                     fontWeight: '600',
                     zIndex: 10
                 }}>
-                    💼 Bid Submitted
+                    💼 {isSmallMobile ? '' : 'BID'}
                 </div>
             )}
 
@@ -667,7 +663,8 @@ function RequestDisplayMini({
                     </div>
                 </div>
             )}
-        </div>
+            </div>
+        </>
     );
 }
 

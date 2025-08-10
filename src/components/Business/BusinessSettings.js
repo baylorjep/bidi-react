@@ -1129,7 +1129,7 @@ useEffect(() => {
                     value={googleMapsUrl}
                     onChange={(e) => setGoogleMapsUrl(e.target.value)}
                     placeholder="https://maps.app.goo.gl/..."
-                    className="form-control"
+                    className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500 tw-disabled:bg-gray-100 tw-disabled:text-gray-500 tw-disabled:cursor-not-allowed"
                     disabled={isProcessing}
                   />
                   {googleReviewsError && (
@@ -1904,7 +1904,7 @@ useEffect(() => {
                         value={profileEdit.business_name}
                         onChange={e => handleProfileEditChange('business_name', e.target.value)}
                         placeholder="Business Name"
-                        style={{ width: 260 }}
+                        className="tw-w-64 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                       />
                     </div>
                   </div>
@@ -1919,7 +1919,7 @@ useEffect(() => {
                         value={profileEdit.phone}
                         onChange={e => handleProfileEditChange('phone', e.target.value)}
                         placeholder="Phone Number"
-                        style={{ width: 180 }}
+                        className="tw-w-44 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                       />
                     </div>
                   </div>
@@ -1993,6 +1993,7 @@ useEffect(() => {
                                 value={consultationHours.startTime}
                                 onChange={e => setConsultationHours(prev => ({ ...prev, startTime: e.target.value }))}
                                 onBlur={handleConsultationHoursSubmit}
+                                className="tw-px-2 tw-py-1 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                               />
                               <label>End:</label>
                               <input
@@ -2000,6 +2001,7 @@ useEffect(() => {
                                 value={consultationHours.endTime}
                                 onChange={e => setConsultationHours(prev => ({ ...prev, endTime: e.target.value }))}
                                 onBlur={handleConsultationHoursSubmit}
+                                className="tw-px-2 tw-py-1 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                               />
                             </div>
                             <div className="settings-calendar-row settings-calendar-days">
@@ -2019,6 +2021,7 @@ useEffect(() => {
                                       setConsultationHours(prev => ({ ...prev, daysAvailable: newDays }));
                                       setTimeout(handleConsultationHoursSubmit, 100);
                                     }}
+                                    className="tw-w-4 tw-h-4 tw-text-blue-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-blue-500 tw-focus:ring-2"
                                   />
                                   {day.slice(0, 3)}
                                 </label>
@@ -2030,6 +2033,7 @@ useEffect(() => {
                                 value={timezone}
                                 onChange={e => setTimezone(e.target.value)}
                                 onBlur={handleConsultationHoursSubmit}
+                                className="tw-px-2 tw-py-1 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500 tw-bg-white"
                               >
                                 <option value="America/Denver">Mountain Time (MT)</option>
                                 <option value="America/New_York">Eastern Time (ET)</option>
@@ -2103,7 +2107,7 @@ useEffect(() => {
                             type="text"
                             value={`https://savewithbidi.com/partnership/${partnershipData.id}`}
                             readOnly
-                            style={{ width: 300, marginRight: 8 }}
+                            className="tw-w-80 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-bg-gray-50 tw-text-gray-600 tw-mr-2"
                           />
                           <button
                             className={`btn-success ${isCopied ? 'copied' : ''}`}
@@ -2210,6 +2214,7 @@ useEffect(() => {
                           setPaymentsChanged(true);
                           setPaymentsSaved(false);
                         }}
+                        className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500 tw-bg-white tw-mb-2"
                       >
                         <option value="">Select Type</option>
                         <option value="percentage">Percentage</option>
@@ -2227,6 +2232,7 @@ useEffect(() => {
                             setPaymentsSaved(false);
                           }}
                           placeholder="Enter Percentage"
+                          className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                         />
                       )}
                       {paymentType === "flat fee" && (
@@ -2239,6 +2245,7 @@ useEffect(() => {
                             setPaymentsSaved(false);
                           }}
                           placeholder="Enter Flat Fee"
+                          className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                         />
                       )}
                     </div>
@@ -2258,6 +2265,7 @@ useEffect(() => {
                           setPaymentsSaved(false);
                         }}
                         placeholder="Enter minimum price"
+                        className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                       />
                     </div>
                   </div>
@@ -2277,7 +2285,7 @@ useEffect(() => {
                           setPaymentsSaved(false);
                         }}
                         placeholder="Enter days"
-                        style={{ width: 120 }}
+                        className="tw-w-32 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                       />
                     </div>
                   </div>

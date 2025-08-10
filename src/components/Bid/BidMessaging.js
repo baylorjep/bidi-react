@@ -139,18 +139,42 @@ const BidMessaging = ({
     socket.emit("join", currentUserId);
 
     const handleReceive = (msg) => {
+      console.log('Received message via socket:', msg);
+      
+      // Handle both field naming conventions
+      const senderId = msg.senderId || msg.sender_id;
+      const receiverId = msg.receiverId || msg.receiver_id;
+      const createdAt = msg.createdAt || msg.created_at;
+      
       if (
-        (msg.senderId === otherUserId && msg.receiverId === currentUserId) ||
-        (msg.senderId === currentUserId && msg.receiverId === otherUserId)
+        (senderId === otherUserId && receiverId === currentUserId) ||
+        (senderId === currentUserId && receiverId === otherUserId)
       ) {
+        // Format the message to match our display format
+        const formattedMsg = {
+          id: msg.id,
+          senderId: senderId,
+          receiverId: receiverId,
+          message: msg.message,
+          createdAt: createdAt,
+          seen: msg.seen || false,
+          type: msg.type || 'text',
+          isBidMessage: msg.is_bid_message || false,
+          isVirtual: msg.is_virtual || false,
+          // Add payment-specific fields if they exist
+          payment_amount: msg.payment_amount,
+          payment_data: msg.payment_data,
+          payment_status: msg.payment_status
+        };
+        
         setMessages((prev) => {
           const exists = prev.some(m =>
-            m.senderId === msg.senderId &&
-            m.receiverId === msg.receiverId &&
-            m.message === msg.message &&
-            Math.abs(new Date(m.createdAt) - new Date(msg.createdAt)) < 1000
+            m.senderId === formattedMsg.senderId &&
+            m.receiverId === formattedMsg.receiverId &&
+            m.message === formattedMsg.message &&
+            Math.abs(new Date(m.createdAt) - new Date(formattedMsg.createdAt)) < 1000
           );
-          return exists ? prev : [...prev, msg];
+          return exists ? prev : [...prev, formattedMsg];
         });
       }
     };
@@ -191,10 +215,14 @@ const BidMessaging = ({
           .single();
         
         console.log('Business profile check:', { data, error });
+        console.log('Current user ID:', currentUserId);
         setIsCurrentUserBusiness(!!data);
         setStripeAccountId(data?.stripe_account_id || null);
+        console.log('Is business user:', !!data, 'Stripe account ID:', data?.stripe_account_id);
       } catch (error) {
         console.error('Error checking business profile:', error);
+        setIsCurrentUserBusiness(false);
+        setStripeAccountId(null);
       }
     };
 
@@ -238,9 +266,9 @@ const BidMessaging = ({
     setNewMessage(e.target.value);
     
     if (e.target.value.trim()) {
-      socket.emit("typing", { senderId: currentUserId, receiverId: otherUserId });
+      socket.emit("typing", { sender_id: currentUserId, receiver_id: otherUserId });
     } else {
-      socket.emit("stop_typing", { senderId: currentUserId, receiverId: otherUserId });
+      socket.emit("stop_typing", { sender_id: currentUserId, receiver_id: otherUserId });
     }
 
     // Clear typing timeout
@@ -250,7 +278,7 @@ const BidMessaging = ({
 
     // Set new timeout
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("stop_typing", { senderId: currentUserId, receiverId: otherUserId });
+      socket.emit("stop_typing", { sender_id: currentUserId, receiver_id: otherUserId });
     }, 1000);
   };
 
@@ -306,8 +334,8 @@ const BidMessaging = ({
     }
 
     const messageData = {
-      senderId: currentUserId,
-      receiverId: otherUserId,
+      sender_id: currentUserId,
+      receiver_id: otherUserId,
       message: JSON.stringify({
         type: 'payment_request',
         amount: total,
@@ -334,11 +362,12 @@ const BidMessaging = ({
         taxRate: modalTaxRate,
         stripe_account_id: stripeAccountId,
         business_name: businessName,
-        description: 'Service Payment'
+          description: 'Service Payment'
       },
       seen: false
     };
 
+    console.log('Sending payment request message:', messageData);
     socket.emit("send_message", messageData);
     setShowPaymentModal(false);
   };
@@ -388,8 +417,8 @@ const BidMessaging = ({
   
     if (imageUrl) {
       socket.emit("send_message", {
-        senderId: currentUserId,
-        receiverId: otherUserId,
+        sender_id: currentUserId,
+        receiver_id: otherUserId,
         message: imageUrl,
         type: "image",
         seen: false,
@@ -398,8 +427,8 @@ const BidMessaging = ({
   
     if (newMessage.trim()) {
       socket.emit("send_message", {
-        senderId: currentUserId,
-        receiverId: otherUserId,
+        sender_id: currentUserId,
+        receiver_id: otherUserId,
         message: newMessage.trim(),
         type: "text",
         seen: false,
@@ -410,7 +439,7 @@ const BidMessaging = ({
     setNewMessage("");
     setPreviewImageUrl(null);
     setPendingFile(null);
-    socket.emit("stop_typing", { senderId: currentUserId, receiverId: otherUserId });
+    socket.emit("stop_typing", { sender_id: currentUserId, receiver_id: otherUserId });
   };
 
   // Handle message expansion
@@ -512,17 +541,28 @@ const BidMessaging = ({
                       style={{ maxWidth: "200px", borderRadius: "8px", cursor: "pointer" }}
                     />
                   ) : msg.type === 'payment_request' ? (
-                    <PaymentCard
-                      amount={msg.payment_amount || JSON.parse(msg.message).amount}
-                      businessName={businessName}
-                      stripeAccountId={msg.payment_data?.stripe_account_id || JSON.parse(msg.message).paymentData.stripe_account_id}
-                      description={msg.payment_data?.description || JSON.parse(msg.message).description}
-                      lineItems={msg.payment_data?.lineItems || JSON.parse(msg.message).paymentData.lineItems}
-                      subtotal={msg.payment_data?.subtotal || JSON.parse(msg.message).paymentData.subtotal}
-                      tax={msg.payment_data?.tax || JSON.parse(msg.message).paymentData.tax}
-                      taxRate={msg.payment_data?.taxRate || JSON.parse(msg.message).paymentData.taxRate}
-                      paymentStatus={msg.payment_status}
-                    />
+                    (() => {
+                      console.log('Rendering payment request message:', msg);
+                      try {
+                        const parsedMessage = typeof msg.message === 'string' ? JSON.parse(msg.message) : msg.message;
+                        return (
+                          <PaymentCard
+                            amount={msg.payment_amount || parsedMessage.amount}
+                            businessName={businessName}
+                            stripeAccountId={msg.payment_data?.stripe_account_id || parsedMessage.paymentData?.stripe_account_id}
+                            description={msg.payment_data?.description || parsedMessage.description}
+                            lineItems={msg.payment_data?.lineItems || parsedMessage.paymentData?.lineItems}
+                            subtotal={msg.payment_data?.subtotal || parsedMessage.paymentData?.subtotal}
+                            tax={msg.payment_data?.tax || parsedMessage.paymentData?.tax}
+                            taxRate={msg.payment_data?.taxRate || parsedMessage.paymentData?.taxRate}
+                            paymentStatus={msg.payment_status}
+                          />
+                        );
+                      } catch (error) {
+                        console.error('Error parsing payment request message:', error, msg);
+                        return <div>Error displaying payment request</div>;
+                      }
+                    })()
                   ) : (
                     <div>
                       {shouldTruncateMessage(msg.message) && !expandedMessages.has(msg.id) ? (
@@ -607,15 +647,22 @@ const BidMessaging = ({
                 onChange={handleFileUpload}
               />
             </label>
-            {isCurrentUserBusiness && stripeAccountId && (
-              <button 
-                className="chat-payment-btn"
-                onClick={() => setShowPaymentModal(true)}
-                title="Send Payment Request"
-              >
-                <FaCreditCard />
-              </button>
-            )}
+            {(() => {
+              console.log('Payment button visibility check:', { 
+                isCurrentUserBusiness, 
+                stripeAccountId, 
+                shouldShow: isCurrentUserBusiness && stripeAccountId 
+              });
+              return isCurrentUserBusiness && stripeAccountId ? (
+                <button 
+                  className="chat-payment-btn"
+                  onClick={() => setShowPaymentModal(true)}
+                  title="Send Payment Request"
+                >
+                  <FaCreditCard />
+                </button>
+              ) : null;
+            })()}
           </div>
 
           <div className="chat-input-wrapper">

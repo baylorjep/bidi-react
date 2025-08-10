@@ -451,8 +451,8 @@
 /* Mobile Responsive for Table */
 @media (max-width: 768px) {
   .bids-table-container {
-    margin: 1rem 0;
     border-radius: 8px;
+    margin-bottom: 80px;
   }
 
   .bids-table-header {

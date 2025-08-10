@@ -216,7 +216,6 @@
   border-radius: 8px;
   cursor: pointer;
   align-self: flex-end;
-  margin-bottom:2px;
 }
 
 .chat-send-btn:hover {

@@ -95,7 +95,7 @@ function parseLocalDate(dateString) {
   return isNaN(d) ? null : d;
 }
 
-function SlidingBidModal({ isOpen, onClose, requestId }) {
+function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId = null }) {
     const [requestDetails, setRequestDetails] = useState(null);
     const [requestType, setRequestType] = useState('');
     const [bidAmount, setBidAmount] = useState('');
@@ -125,6 +125,7 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
     const [currentTranslateY, setCurrentTranslateY] = useState(0);
     const modalRef = useRef(null);
     const [isToolboxOpen, setIsToolboxOpen] = useState(true);
+    const [originalBidData, setOriginalBidData] = useState(null);
 
     // New state for itemized quotes
     const [lineItems, setLineItems] = useState([
@@ -143,14 +144,18 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
         if (isOpen && requestId) {
             fetchRequestDetails();
             fetchStripeStatus();
-            fetchBidTemplate();
+            if (editMode && bidId) {
+                fetchExistingBidData();
+            } else {
+                fetchBidTemplate();
+            }
             fetchBusinessProfile();
             fetchBidStats();
             // Reset drag state when modal opens
             setCurrentTranslateY(0);
             setIsDragging(false);
         }
-    }, [isOpen, requestId]);
+    }, [isOpen, requestId, editMode, bidId]);
 
     const fetchRequestDetails = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -238,6 +243,36 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                 console.log('User has Stripe setup or Bidi Plus');
                 setShowModal(false);
             }
+        }
+    };
+
+    const fetchExistingBidData = async () => {
+        try {
+            const { data: bidData, error } = await supabase
+                .from("bids")
+                .select("*")
+                .eq("id", bidId)
+                .single();
+
+            if (error) throw error;
+
+            setOriginalBidData(bidData);
+            setBidAmount(bidData.bid_amount);
+            setBidDescription(bidData.bid_description);
+            setBidExpirationDate(bidData.expiration_date || '');
+            setDiscountType(bidData.discount_type || '');
+            setDiscountValue(bidData.discount_value || '');
+            setDiscountDeadline(bidData.discount_deadline || '');
+
+            // Handle itemized quote data if it exists
+            if (bidData.line_items && bidData.line_items.length > 0) {
+                setUseItemizedQuote(true);
+                setLineItems(bidData.line_items);
+                setTaxRate(bidData.tax_rate || 0);
+            }
+        } catch (error) {
+            console.error("Error fetching bid data:", error);
+            setError("Failed to load bid data");
         }
     };
 
@@ -402,9 +437,10 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
         console.log('Submit button clicked');
         console.log('connectedAccountId:', connectedAccountId);
         console.log('Bidi_Plus:', Bidi_Plus);
+        console.log('editMode:', editMode);
 
-        // Check if user needs to set up Stripe account
-        if (!connectedAccountId && !Bidi_Plus) {
+        // Check if user needs to set up Stripe account (only for new bids)
+        if (!editMode && !connectedAccountId && !Bidi_Plus) {
             console.log('User needs Stripe setup - showing modal in handleSubmit');
             setShowModal(true);
             return;
@@ -440,16 +476,20 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
 
             // Prepare bid data with itemized quote information
             const bidData = {
-                request_id: requestId,
-                user_id: user.id,
                 bid_amount: parseFloat(bidAmount).toFixed(2),
                 bid_description: bidDescription,
-                category: category,
                 ...(bidExpirationDate && { expiration_date: bidExpirationDate }),
                 discount_type: discountType || null,
                 discount_value: discountType ? discountValue : null,
                 discount_deadline: discountType ? discountDeadline : null,
             };
+
+            // Only add these fields for new bids
+            if (!editMode) {
+                bidData.request_id = requestId;
+                bidData.user_id = user.id;
+                bidData.category = category;
+            }
 
             // Add itemized quote data if enabled
             if (useItemizedQuote) {
@@ -457,26 +497,49 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                 bidData.subtotal = calculateSubtotal();
                 bidData.tax = calculateTax();
                 bidData.tax_rate = taxRate;
+            } else {
+                // Clear itemized quote data if not using it
+                bidData.line_items = null;
+                bidData.subtotal = null;
+                bidData.tax = null;
+                bidData.tax_rate = null;
             }
 
-            const { error: insertError } = await supabase
-                .from('bids')
-                .insert([bidData]);
+            if (editMode && bidId) {
+                // Update existing bid
+                bidData.last_edited_at = new Date().toISOString();
+                
+                const { error: updateError } = await supabase
+                    .from('bids')
+                    .update(bidData)
+                    .eq('id', bidId);
 
-            if (insertError) throw insertError;
+                if (updateError) throw updateError;
+                
+                setSuccess('Bid updated successfully!');
+                onClose();
+                navigate('/business-dashboard/bids');
+            } else {
+                // Create new bid
+                const { error: insertError } = await supabase
+                    .from('bids')
+                    .insert([bidData]);
 
-            const subject = 'New Bid Received';
-            const htmlContent = `<p>A new bid has been placed on your request.</p>
-                                  <p><strong>Bid Amount:</strong> ${bidAmount}</p>
-                                  <p><strong>Description:</strong> ${bidDescription}</p>
-                                  <p><strong>Expires:</strong> ${parseLocalDate(bidExpirationDate) ? parseLocalDate(bidExpirationDate).toLocaleDateString() : 'Date not specified'}</p>`;
+                if (insertError) throw insertError;
 
-            await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent);
-            setSuccess('Bid successfully placed!');
-            onClose();
-            navigate('/bid-success');
+                const subject = 'New Bid Received';
+                const htmlContent = `<p>A new bid has been placed on your request.</p>
+                                      <p><strong>Bid Amount:</strong> ${bidAmount}</p>
+                                      <p><strong>Description:</strong> ${bidDescription}</p>
+                                      <p><strong>Expires:</strong> ${parseLocalDate(bidExpirationDate) ? parseLocalDate(bidExpirationDate).toLocaleDateString() : 'Date not specified'}</p>`;
+
+                await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent);
+                setSuccess('Bid successfully placed!');
+                onClose();
+                navigate('/bid-success');
+            }
         } catch (err) {
-            setError(`Error placing bid: ${err.message}`);
+            setError(`Error ${editMode ? 'updating' : 'placing'} bid: ${err.message}`);
         }
 
         setIsLoading(false);
@@ -706,10 +769,10 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
 
                     {/* Bid Form */}
                     <form onSubmit={handleSubmit} style={{ maxWidth:'900px', marginLeft:'auto', marginRight:'auto' }}>
-                        <div className="sbm-form-section-title">Bid</div>
+                        <div className="sbm-form-section-title">{editMode ? 'Edit Bid' : 'Bid'}</div>
                         
-                        {/* Bid Statistics */}
-                        {bidStats.min !== null && (
+                        {/* Bid Statistics - only show for new bids */}
+                        {!editMode && bidStats.min !== null && (
                             <div className="sbm-bid-stats">
                                 <div className="sbm-bid-stats-title">Current Bid Statistics</div>
                                 <div className="sbm-bid-stats-grid">
@@ -1007,7 +1070,7 @@ function SlidingBidModal({ isOpen, onClose, requestId }) {
                                 disabled={isLoading}
                                 className="sbm-btn sbm-btn-submit"
                             >
-                                {isLoading ? 'Submitting...' : 'Submit'}
+                                {isLoading ? (editMode ? 'Updating...' : 'Submitting...') : (editMode ? 'Update Bid' : 'Submit')}
                             </button>
                         </div>
                     </form>

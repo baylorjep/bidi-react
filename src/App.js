@@ -69,7 +69,7 @@ import ProfilePage from "./components/Profile/Profile";
 // Individual Imports
 
 import MyRequests from "./components/Individual/MyRequests";
-import EditRequest from "./components/Individual/EditRequest";
+
 import IndividualDashboard from "./components/Individual/IndividualDashboard";
 //
 // Business Imports
@@ -345,7 +345,6 @@ function AppContent() {
           
           {/* Individual Routes */}
           <Route path="/my-requests" element={<MyRequests />} />
-          <Route path="/edit-request/:type/:id" element={<EditRequest />} />
           {/* Test API Routes */}
           <Route path="/test-email" element={<TestEmail />} />
           {/* Business Routes */}
@@ -538,6 +537,8 @@ function AppContent() {
         !location.pathname.includes('pricing') && 
         !location.pathname.includes('request-password-reset') && 
         !location.pathname.includes('stripe-setup') && 
+        !location.pathname.includes('portfolio') && 
+        !location.pathname.includes('request-categories') && 
         <Footer />}
       <ToastContainer
         position="top-right"

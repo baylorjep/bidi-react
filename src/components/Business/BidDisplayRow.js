@@ -19,7 +19,10 @@ const BidDisplayRow = ({
   onEditBid, 
   openWithdrawModal, 
   onContractUpload,
-  onMessageClick
+  onContractView,
+  onFollowUp,
+  onMessageClick,
+  onViewRequest
 }) => {
   const navigate = useNavigate();
   const [signature, setSignature] = useState("");
@@ -273,23 +276,28 @@ const BidDisplayRow = ({
 
   const handleFollowUp = async () => {
     try {
-      const { error } = await supabase
-        .from('bids')
-        .update({ followed_up: true })
-        .eq('id', bid.id);
-
-      if (error) throw error;
-
-      if (onMessageClick) {
-        onMessageClick(
-          request.profile_id || request.user_id,
-          "Hi! I wanted to follow up about your request. Are you still looking for services?"
-        );
+      // Use the parent component's handler if provided, otherwise handle locally
+      if (onFollowUp) {
+        await onFollowUp(bid);
       } else {
-        console.error('onMessageClick prop is not provided');
-        toast.error('Messaging functionality is not available');
-      }
+        // Fallback to local handling
+        const { error } = await supabase
+          .from('bids')
+          .update({ followed_up: true })
+          .eq('id', bid.id);
 
+        if (error) throw error;
+
+        if (onMessageClick) {
+          onMessageClick(
+            request.profile_id || request.user_id,
+            "Hi! I wanted to follow up about your request. Are you still looking for services?"
+          );
+        } else {
+          console.error('onMessageClick prop is not provided');
+          toast.error('Messaging functionality is not available');
+        }
+      }
     } catch (error) {
       console.error('Error sending follow-up:', error);
       toast.error('Failed to send follow-up');
@@ -588,7 +596,7 @@ const BidDisplayRow = ({
             ) : (
               <>
                 <button
-                  onClick={() => window.open(bid.contract_url, '_blank')}
+                  onClick={() => onContractView ? onContractView(bid) : window.open(bid.contract_url, '_blank')}
                   style={{
                     background: '#28a745',
                     color: 'white',

@@ -194,7 +194,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
             }
 
             if (onSuccess) {
-                onSuccess();
+                onSuccess(user);
                 return;
             }
         }

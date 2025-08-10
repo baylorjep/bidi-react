@@ -12221,7 +12221,6 @@ line-height: normal;
   line-height: normal;
   text-align: center;
   margin-top: 40px;
-  margin-bottom: 20px;
 }
 
 .how-to-sub-title {
@@ -12232,7 +12231,7 @@ font-style: normal;
 font-weight: 400;
 line-height: normal;
 text-align: center;
-margin-top: 80px;
+margin-top: 40px;
 }
 
 .how-to-description {
@@ -12243,7 +12242,6 @@ margin-top: 80px;
   font-weight: 400;
   line-height: 1.6;
   text-align: center;
-  margin: 20px 0 40px 0;
   max-width: 500px;
 }
 
