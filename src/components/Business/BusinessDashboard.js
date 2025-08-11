@@ -473,8 +473,6 @@ const BusinessDashSidebar = () => {
   return (
     <div className="business-dashboard text-left">
       <div className="dashboard-container">
-        {/* Notification Bell - moved outside sidebar */}
-        <NotificationBell />
         
         <aside 
           className={`sidebar ${isSidebarVisible ? 'visible' : 'hidden'}`}

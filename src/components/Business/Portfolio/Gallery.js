@@ -11,8 +11,10 @@ import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
-const Gallery = () => {
-  const { businessId, businessName } = useParams();
+const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, isModal = false, onModalClose = null, onBackToPortfolio = null }) => {
+  const { businessId: paramBusinessId, businessName: paramBusinessName } = useParams();
+  const businessId = propBusinessId || paramBusinessId;
+  const businessName = propBusinessName || paramBusinessName;
   const [portfolioMedia, setPortfolioMedia] = useState({});
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -1178,7 +1180,13 @@ const Gallery = () => {
 
   const handleViewGallery = () => {
     handleCloseModal();
-    navigate(-1);
+    if (isModal && onBackToPortfolio) {
+      onBackToPortfolio();
+    } else if (isModal && onModalClose) {
+      onModalClose();
+    } else {
+      navigate(-1);
+    }
   };
 
   if (loading) {

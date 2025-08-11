@@ -5,8 +5,10 @@ import { formatMessageText } from '../../utils/formatMessageText';
 import ChatIcon from '@mui/icons-material/Chat';
 import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
-import { FaCreditCard, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaCreditCard, FaPlus, FaTrash, FaCheckCircle, FaCreditCard as FaPay } from 'react-icons/fa';
 import PaymentCard from '../Messaging/PaymentCard';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import './BidMessaging.css';
 
 const BidMessaging = ({ 
@@ -17,6 +19,7 @@ const BidMessaging = ({
   businessName,
   profileImage 
 }) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -38,8 +41,71 @@ const BidMessaging = ({
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const [pendingFile, setPendingFile] = useState(null);
 
+  // Bid acceptance state
+  const [showBidAcceptancePrompt, setShowBidAcceptancePrompt] = useState(false);
+  const [isAcceptingBid, setIsAcceptingBid] = useState(false);
+
   // Get the other user's ID (the one we're chatting with)
   const otherUserId = currentUserId === bid.user_id ? bid.business_profiles?.id : bid.user_id;
+
+  // Check if current user is the individual (not the business)
+  const isCurrentUserIndividual = currentUserId === bid.user_id;
+
+  // Debug initial state
+  useEffect(() => {
+    console.log('🚀 BID MESSAGING COMPONENT LOADED:', {
+      bid: {
+        id: bid.id,
+        status: bid.status,
+        amount: bid.bid_amount,
+        userId: bid.user_id,
+        businessId: bid.business_profiles?.id,
+        businessName: bid.business_profiles?.business_name
+      },
+      currentUserId,
+      isCurrentUserIndividual,
+      businessName,
+      profileImage
+    });
+  }, []);
+
+  // Check if bid acceptance prompt should be shown
+  useEffect(() => {
+    console.log('🔍 BID ACCEPTANCE PROMPT DEBUG:', {
+      messagesLength: messages.length,
+      isCurrentUserIndividual,
+      bidStatus: bid.status,
+      currentUserId,
+      bidUserId: bid.user_id,
+      bidBusinessId: bid.business_profiles?.id,
+      showPrompt: showBidAcceptancePrompt,
+      allConditions: {
+        hasEnoughMessages: messages.length >= 4,
+        isIndividual: isCurrentUserIndividual,
+        notAccepted: bid.status !== 'accepted',
+        notPaid: bid.status !== 'paid',
+        notApproved: bid.status !== 'approved'
+      }
+    });
+    
+    if (messages.length >= 4 && 
+        isCurrentUserIndividual && 
+        bid.status !== 'accepted' && 
+        bid.status !== 'paid' && 
+        bid.status !== 'approved') {
+      console.log('✅ SHOWING bid acceptance prompt!');
+      setShowBidAcceptancePrompt(true);
+    } else {
+      console.log('❌ HIDING bid acceptance prompt because:', {
+        reason: messages.length < 4 ? 'Not enough messages' :
+                !isCurrentUserIndividual ? 'Not an individual user' :
+                bid.status === 'accepted' ? 'Bid already accepted' :
+                bid.status === 'paid' ? 'Bid already paid' :
+                bid.status === 'approved' ? 'Bid already approved' : 'Unknown reason'
+      });
+      setShowBidAcceptancePrompt(false);
+    }
+  }, [messages.length, isCurrentUserIndividual, bid.status, currentUserId, bid.user_id, bid.business_profiles?.id]);
 
   // Fetch messages related to this bid
   useEffect(() => {
@@ -293,6 +359,82 @@ const BidMessaging = ({
 
   const calculateTotal = () => {
     return calculateSubtotal() + calculateTax();
+  };
+
+  // Bid acceptance functions
+  const handleAcceptBid = async () => {
+    if (!bid || isAcceptingBid) return;
+    
+    console.log('Accepting bid:', {
+      bidId: bid.id,
+      bidStatus: bid.status,
+      bidAmount: bid.bid_amount,
+      businessName: bid.business_profiles?.business_name
+    });
+    
+    setIsAcceptingBid(true);
+    try {
+      // Update the bid status to accepted
+      const { error } = await supabase
+        .from('bids')
+        .update({ 
+          status: 'accepted',
+          accepted_at: new Date().toISOString()
+        })
+        .eq('id', bid.id);
+
+      if (error) {
+        console.error('Error accepting bid:', error);
+        toast.error('Failed to accept bid. Please try again.');
+        return;
+      }
+
+      // Update local bid status
+      bid.status = 'accepted';
+      setShowBidAcceptancePrompt(false);
+      
+      toast.success('Bid accepted successfully! You can now proceed to payment.');
+      
+      // Navigate to checkout for payment
+      handlePayNow();
+      
+    } catch (error) {
+      console.error('Error accepting bid:', error);
+      toast.error('Failed to accept bid. Please try again.');
+    } finally {
+      setIsAcceptingBid(false);
+    }
+  };
+
+  const handlePayNow = () => {
+    console.log('Navigating to payment for bid:', {
+      bidId: bid.id,
+      bidAmount: bid.bid_amount,
+      stripeAccountId: bid.business_profiles?.stripe_account_id,
+      businessName: bid.business_profiles?.business_name
+    });
+    
+    try {
+      if (!bid.business_profiles?.stripe_account_id) {
+        toast.error('This business is not yet set up to receive payments. Please contact them directly.');
+        return;
+      }
+
+      const paymentData = {
+        bid_id: bid.id,
+        amount: bid.bid_amount,
+        stripe_account_id: bid.business_profiles.stripe_account_id,
+        payment_type: 'full',
+        business_name: bid.business_profiles.business_name,
+        description: bid.bid_description || bid.message || 'Service payment'
+      };
+      
+      console.log('Payment data prepared:', paymentData);
+      navigate('/checkout', { state: { paymentData } });
+    } catch (error) {
+      console.error('Error preparing payment:', error);
+      toast.error('There was an error processing your payment. Please try again.');
+    }
   };
 
   const addLineItem = () => {
@@ -633,6 +775,46 @@ const BidMessaging = ({
             </>
           )}
         </div>
+
+        {/* Bid Acceptance Prompt */}
+        {showBidAcceptancePrompt && isCurrentUserIndividual && (
+          <div className="bid-acceptance-prompt">
+            <div className="bid-acceptance-content">
+              <div className="bid-acceptance-icon">
+                <FaCheckCircle />
+              </div>
+              <div className="bid-acceptance-text">
+                <h4>Ready to move forward?</h4>
+                <p>You've had a great conversation with {businessName}. Ready to accept their bid for ${bid.bid_amount}?</p>
+              </div>
+            </div>
+            <div className="bid-acceptance-actions">
+              <button 
+                className="accept-bid-btn"
+                onClick={handleAcceptBid}
+                disabled={isAcceptingBid}
+              >
+                {isAcceptingBid ? (
+                  <>
+                    <div className="loading-spinner-small"></div>
+                    Accepting...
+                  </>
+                ) : (
+                  <>
+                    <FaCheckCircle />
+                    Accept Bid & Pay
+                  </>
+                )}
+              </button>
+              <button 
+                className="dismiss-prompt-btn"
+                onClick={() => setShowBidAcceptancePrompt(false)}
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Input */}
         <div className="chat-footer">

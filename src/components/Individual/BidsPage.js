@@ -3,6 +3,10 @@ import { supabase } from '../../supabaseClient';
 import { formatBusinessName } from '../../utils/formatBusinessName';
 import '../../styles/BidsPage.css';
 import BidDisplay from '../Bid/BidDisplay';
+import BidDetailModal from '../Bid/BidDetailModal';
+import BidMessaging from '../Bid/BidMessaging';
+import PortfolioModal from '../Business/Portfolio/PortfolioModal';
+import GalleryModal from '../Business/Portfolio/GalleryModal';
 import RequestDisplay from '../Request/RequestDisplay';
 import PhotoRequestDisplay from '../Request/PhotoRequestDisplay';  // Add this import
 import RequestModal from '../Request/RequestModal';
@@ -178,6 +182,21 @@ export default function BidsPage({ onOpenChat }) {
     const [editRequestData, setEditRequestData] = useState(null);
     const navigate = useNavigate();
     const [bidDisplayModalOpen, setBidDisplayModalOpen] = useState(false); // New state to track BidDisplay modal
+    const [showBidDetailModal, setShowBidDetailModal] = useState(false);
+    const [selectedBidForDetail, setSelectedBidForDetail] = useState(null);
+    const [showBidMessagingFromDetail, setShowBidMessagingFromDetail] = useState(false);
+    const [selectedBidForMessagingFromDetail, setSelectedBidForMessagingFromDetail] = useState(null);
+    const [showBidMessagingFromList, setShowBidMessagingFromList] = useState(false);
+    const [selectedBidForMessagingFromList, setSelectedBidForMessagingFromList] = useState(null);
+    const [showPortfolioModal, setShowPortfolioModal] = useState(false);
+    const [selectedBusinessForPortfolio, setSelectedBusinessForPortfolio] = useState(null);
+    const [showGalleryModal, setShowGalleryModal] = useState(false);
+    const [selectedBusinessForGallery, setSelectedBusinessForGallery] = useState(null);
+
+    // Add new state for better UX
+    const [selectedRequestId, setSelectedRequestId] = useState(null);
+    const [showRequestSummary, setShowRequestSummary] = useState(true);
+    const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
     // Memoize the loading skeleton at the top level to avoid conditional hook calls
     const loadingSkeleton = useMemo(() => <BidsPageSkeleton />, []);
@@ -1456,7 +1475,10 @@ export default function BidsPage({ onOpenChat }) {
             currentUserId: currentUserId,
             onProfileClick: () => handlePortfolioClick(bid.business_profiles.id, bid.business_profiles.business_name),
             isNew: !bid.viewed, // Add isNew prop for new bids
-            onMobileModalToggle: handleBidDisplayModalToggle // Add callback for modal state changes
+            onMobileModalToggle: handleBidDisplayModalToggle, // Add callback for modal state changes
+            onOpenBidDetail: handleOpenBidDetail, // Add callback for opening bid detail modal
+            onOpenBidMessaging: handleOpenBidMessagingFromList, // Add callback for opening bid messaging modal
+            onOpenPortfolio: handleOpenPortfolio // Add callback for opening portfolio modal
         };
 
         // Determine which props to show based on bid status
@@ -1839,13 +1861,22 @@ export default function BidsPage({ onOpenChat }) {
         navigate(`/portfolio/${businessId}/${formattedName}`);
     };
 
+    // Enhanced request selection with better visual feedback
     const handleRequestClick = (request, index) => {
+        setSelectedRequestId(request.id);
+        setCurrentRequestIndex(index);
+        
         if (window.innerWidth <= 1024) {
             setSelectedRequest(request);
-            setCurrentRequestIndex(index);
             setShowMobileBids(true);
-        } else {
-            setCurrentRequestIndex(index);
+        }
+        
+        // Scroll to bids section on desktop
+        if (window.innerWidth > 1024) {
+            const bidsSection = document.querySelector('.bids-section');
+            if (bidsSection) {
+                bidsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
     };
 
@@ -1859,6 +1890,269 @@ export default function BidsPage({ onOpenChat }) {
 
     const handleBidDisplayModalToggle = (isOpen) => {
         setBidDisplayModalOpen(isOpen);
+    };
+
+    const handleOpenBidDetail = (bid) => {
+        setSelectedBidForDetail(bid);
+        setShowBidDetailModal(true);
+    };
+
+    const handleCloseBidDetail = () => {
+        setShowBidDetailModal(false);
+        setSelectedBidForDetail(null);
+    };
+
+    const handleOpenBidMessaging = (bid) => {
+        setSelectedBidForMessagingFromDetail(bid);
+        setShowBidMessagingFromDetail(true);
+    };
+
+    const handleCloseBidMessaging = () => {
+        setShowBidMessagingFromDetail(false);
+        setSelectedBidForMessagingFromDetail(null);
+    };
+
+    const handleOpenBidMessagingFromList = (bid) => {
+        setSelectedBidForMessagingFromList(bid);
+        setShowBidMessagingFromList(true);
+    };
+
+    const handleCloseBidMessagingFromList = () => {
+        setShowBidMessagingFromList(false);
+        setSelectedBidForMessagingFromList(null);
+    };
+
+    const handleOpenPortfolio = (business) => {
+        setSelectedBusinessForPortfolio(business);
+        setShowPortfolioModal(true);
+    };
+
+    const handleClosePortfolio = () => {
+        setShowPortfolioModal(false);
+        setSelectedBusinessForPortfolio(null);
+    };
+
+    const handleOpenGallery = (business) => {
+        setSelectedBusinessForGallery(business);
+        setShowGalleryModal(true);
+    };
+
+    const handleCloseGallery = () => {
+        setShowGalleryModal(false);
+        setSelectedBusinessForGallery(null);
+    };
+
+    const handleBackToPortfolio = () => {
+        // Close gallery modal
+        setShowGalleryModal(false);
+        setSelectedBusinessForGallery(null);
+        
+        // Reopen portfolio modal with the same business
+        if (selectedBusinessForGallery) {
+            setSelectedBusinessForPortfolio(selectedBusinessForGallery);
+            setShowPortfolioModal(true);
+        }
+    };
+
+    // Enhanced request card with better visual feedback
+    const renderRequestCard = (request, index) => {
+        const isSelected = selectedRequestId === request.id;
+        const hasBids = bids.some(bid => bid.request_id === request.id);
+        const bidCount = bids.filter(bid => bid.request_id === request.id).length;
+        
+        return (
+            <div 
+                key={request.id} 
+                className={`request-card ${isSelected ? 'selected' : ''} ${hasBids ? 'has-bids' : ''}`}
+                onClick={() => handleRequestClick(request, index)}
+            >
+                <div className="request-header">
+                    <div className="request-category">
+                        <div className="category-icon-wrapper">
+                            <i className={`${getCategoryIcon(request.type)} category-icon`}></i>
+                            {hasBids && (
+                                <div className="bid-count-badge">
+                                    {bidCount}
+                                </div>
+                            )}
+                        </div>
+                        <div className="category-info">
+                            <h4 className="category-name">
+                                {formatCategoryType(request.type)}
+                            </h4>
+                            <div className="request-status-container">
+                                {isNew(request.created_at) && (
+                                    <span className="status-badge new">New</span>
+                                )}
+                                <span className={`status-badge ${(request.status === "open" || request.status === "pending" || request.open) ? 'open' : 'closed'}`}>
+                                    {(request.status === "open" || request.status === "pending" || request.open) ? 'Active' : 'Closed'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="request-actions">
+                        <button
+                            className="action-btn secondary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(request);
+                            }}
+                            title="Edit Request"
+                        >
+                            <i className="fas fa-edit"></i>
+                        </button>
+                        <button
+                            className="action-btn secondary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                toggleRequestStatus(request);
+                            }}
+                            title={`${(request.status === "open" || request.status === "pending" || request.open) ? 'Close' : 'Open'} Request`}
+                        >
+                            <i className={`fas ${(request.status === "open" || request.status === "pending" || request.open) ? 'fa-lock' : 'fa-unlock'}`}></i>
+                        </button>
+                    </div>
+                </div>
+
+                {hasBids && (
+                    <div className="request-bids-summary">
+                        <div className="bids-status-summary">
+                            {(() => {
+                                const requestBids = bids.filter(bid => bid.request_id === request.id);
+                                const pendingCount = requestBids.filter(bid => bid.status === 'pending').length;
+                                const approvedCount = requestBids.filter(bid => bid.status === 'approved' || bid.status === 'accepted').length;
+                                const interestedCount = requestBids.filter(bid => bid.status === 'interested').length;
+                                
+                                return (
+                                    <>
+                                        {pendingCount > 0 && (
+                                            <span className="status-indicator pending">
+                                                {pendingCount} Pending
+                                            </span>
+                                        )}
+                                        {approvedCount > 0 && (
+                                            <span className="status-indicator approved">
+                                                {approvedCount} Approved
+                                            </span>
+                                        )}
+                                        {interestedCount > 0 && (
+                                            <span className="status-indicator interested">
+                                                {interestedCount} Interested
+                                            </span>
+                                        )}
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Enhanced bids section with better organization
+    const renderBidsSection = () => {
+        if (!requests[currentRequestIndex]) return null;
+        
+        const currentRequest = requests[currentRequestIndex];
+        const bidsByStatus = getBidsByStatus();
+        const totalBids = Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0);
+        
+        return (
+            <div className="bids-section active">
+                <div className="bids-header">
+                    <div className="request-summary">
+                        <h2 className="section-title">
+                            {currentRequest.event_title || currentRequest.title || 'Selected Request'}
+                        </h2>
+                        <div className="request-meta">
+                            <span className="meta-item">
+                                <i className="fas fa-calendar-alt"></i>
+                                {getDate(currentRequest)}
+                            </span>
+                            <span className="meta-item">
+                                <i className="fas fa-dollar-sign"></i>
+                                ${currentRequest.price_range}
+                            </span>
+                            <span className="meta-item">
+                                <i className="fas fa-eye"></i>
+                                {currentRequest.viewCount || 0} vendors viewed
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div className="bids-overview">
+                        <div className="sorting-controls">
+                            <span className="sort-label">Sort by:</span>
+                            {[
+                                { key: 'recommended', label: 'Recommended', icon: '⭐' },
+                                { key: 'high-price', label: 'High Price', icon: '💰' },
+                                { key: 'low-price', label: 'Low Price', icon: '💸' }
+                            ].map((option) => (
+                                <button
+                                    key={option.key}
+                                    className={`sort-btn ${sortBy === option.key ? 'active' : ''}`}
+                                    onClick={() => setSortBy(option.key)}
+                                >
+                                    <span>{option.icon}</span>
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                                        <div className="bids-container">
+                            {/* Status Tabs with Helpful Tooltips */}
+                            <div className="status-tabs">
+                                {[
+                                    { key: 'all', label: 'All', description: 'View all bids for this request' },
+                                    { key: 'pending', label: 'Pending', description: 'Bids awaiting your review' },
+                                    { key: 'approved', label: 'Approved', description: 'Bids you\'ve accepted' },
+                                    { key: 'paid', label: 'Paid', description: 'Bids with completed payments' },
+                                    { key: 'denied', label: 'Denied', description: 'Bids you\'ve rejected' },
+                                    { key: 'expired', label: 'Expired', description: 'Bids that have expired' }
+                                ].map(({ key, label, description }) => {
+                                    const count = key === 'all' 
+                                        ? totalBids
+                                        : (bidsByStatus[key]?.length || 0);
+                                    
+                                    const newBidsCount = key !== 'all' ? getNewBidsCount(key) : 0;
+                                    
+                                    return (
+                                        <button
+                                            key={key}
+                                            className={`tab-button ${key} ${activeTab === key ? "active" : ""}`}
+                                            onClick={() => setActiveTab(key)}
+                                            title={description}
+                                        >
+                                            <span className="tab-text">{label}</span>
+                                            <span className="tab-count">({count})</span>
+                                            {newBidsCount > 0 && (
+                                                <span className="new-bids-badge">
+                                                    {newBidsCount}
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                    <div className="bids-content">
+                        {(() => {
+                            if (activeTab === 'all') {
+                                return Object.values(bidsByStatus)
+                                    .flat()
+                                    .map(bid => renderBidCard(bid));
+                            }
+                            return (bidsByStatus[activeTab] || []).map(bid => renderBidCard(bid));
+                        })()}
+                        {renderNoBidsMessage()}
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     if (loading) {
@@ -1875,205 +2169,785 @@ export default function BidsPage({ onOpenChat }) {
             <div className="bids-page">
                 <style>
                     {`
+                        /* Enhanced Visual Hierarchy */
+                        .requests-header {
+                            text-align: center;
+                            margin-bottom: 32px;
+                            padding: 24px;
+                            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                            border-radius: 16px;
+                            border: 1px solid #dee2e6;
+                        }
+                        
+                        .requests-title {
+                            font-size: 28px;
+                            font-weight: 700;
+                            color: #2c3e50;
+                            margin-bottom: 8px;
+                        }
+                        
+                        .requests-subtitle {
+                            font-size: 16px;
+                            color: #6c757d;
+                            margin: 0;
+                        }
+                        
+                        /* Enhanced Request Cards */
+                        .request-card {
+                            background: white;
+                            border: 2px solid #e9ecef;
+                            border-radius: 16px;
+                            padding: 24px;
+                            margin-bottom: 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            position: relative;
+                            overflow: hidden;
+                        }
+                        
+                        .request-card:hover {
+                            border-color: #9633eb;
+                            transform: translateY(-2px);
+                            box-shadow: 0 8px 25px rgba(150, 51, 235, 0.15);
+                        }
+                        
+                        .request-card.selected {
+                            border-color: #9633eb;
+                            background: linear-gradient(135deg, #f8f5ff 0%, #f0ebff 100%);
+                            box-shadow: 0 8px 25px rgba(150, 51, 235, 0.2);
+                        }
+                        
+                        .request-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                            margin-bottom: 20px;
+                        }
+                        
+                        .request-category {
+                            display: flex;
+                            align-items: center;
+                            gap: 16px;
+                        }
+                        
+                        
+                        .bid-count-badge {
+                            position: absolute;
+                            top: -8px;
+                            right: -8px;
+                            background: #ec4899;
+                            color: white;
+                            border-radius: 50%;
+                            width: 24px;
+                            height: 24px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 12px;
+                            font-weight: bold;
+                        }
+                        
+                        .category-info {
+                            flex: 1;
+                            margin:0px
+                        }
+                        
+                        .category-name {
+                            font-size: 20px;
+                            font-weight: 600;
+                            color: #2c3e50;
+                            margin: 0 0 8px 0;
+                        }
+                        
+                        .request-status-container {
+                            display: flex;
+                            gap: 8px;
+                            flex-wrap: wrap;
+                        }
+                        
+                        .status-badge {
+                            padding: 6px 12px;
+                            border-radius: 20px;
+                            font-size: 12px;
+                            font-weight: 600;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                        }
+                        
+                        .status-badge.new {
+                            background: #28a745;
+                            color: white;
+                        }
+                        
+                        .status-badge.open {
+                            background: #17a2b8;
+                            color: white;
+                        }
+                        
+                        .status-badge.closed {
+                            background: #6c757d;
+                            color: white;
+                        }
+                        
                         .request-actions {
                             display: flex;
                             gap: 8px;
-                            margin-top: 12px;
                         }
-                        .btn-view-bids, .btn-edit, .btn-toggle {
-                            padding: 8px 16px;
-                            border-radius: 20px;
+                        
+                        .action-btn {
+                            padding: 10px 16px;
+                            border-radius: 12px;
                             border: none;
                             cursor: pointer;
                             display: flex;
                             align-items: center;
-                            gap: 6px;
+                            gap: 8px;
                             font-size: 14px;
+                            font-weight: 500;
                             transition: all 0.2s ease;
+                            min-width: fit-content;
                         }
-                        .btn-view-bids {
-                            background-color: #9633eb;
+                        
+                        .action-btn.primary {
+                            background: linear-gradient(135deg, #9633eb 0%, #7a29c0 100%);
                             color: white;
                         }
-                        .btn-view-bids:hover {
-                            background-color: #7a29c0;
-                        }
-                        .btn-edit {
-                            background-color: #f8f9fa;
-                            color: #666;
-                            border: 1px solid #ddd;
-                        }
-                        .btn-edit:hover {
-                            background-color: #e9ecef;
-                        }
-                        .btn-toggle {
-                            background-color: #f8f9fa;
-                            color: #666;
-                            border: 1px solid #ddd;
-                        }
-                        .btn-toggle:hover {
-                            background-color: #e9ecef;
+                        
+                        .action-btn.primary:hover {
+                            transform: translateY(-1px);
+                            box-shadow: 0 4px 12px rgba(150, 51, 235, 0.3);
                         }
                         
-                        /* Sorting Controls Styles */
+                        .action-btn.secondary {
+                            background: #f8f9fa;
+                            color: #6c757d;
+                            border: 1px solid #dee2e6;
+                        }
+                        
+                        .action-btn.secondary:hover {
+                            background: #e9ecef;
+                            border-color: #adb5bd;
+                        }
+                        
+                        .request-details {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                            gap: 16px;
+                            margin-bottom: 20px;
+                        }
+                        
+                        .detail-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            padding: 16px;
+                            background: #f8f9fa;
+                            border-radius: 12px;
+                            border: 1px solid #e9ecef;
+                        }
+                        
+                        .detail-item i {
+                            color: #9633eb;
+                            font-size: 18px;
+                            width: 20px;
+                            text-align: center;
+                        }
+                        
+                        .detail-label {
+                            font-weight: 600;
+                            color: #495057;
+                            font-size: 14px;
+                        }
+                        
+                        .detail-value {
+                            margin-left: auto;
+                            font-weight: 500;
+                            color: #2c3e50;
+                        }
+                        
+                        .view-count {
+                            font-size: 18px;
+                            font-weight: 700;
+                            color: #9633eb;
+                            display: block;
+                        }
+                        
+                        .view-label {
+                            font-size: 12px;
+                            color: #6c757d;
+                        }
+                        
+                        .request-bids-summary {
+                            border-top: 1px solid #e9ecef;
+                            padding-top: 16px;
+                        }
+                        
+                        .bids-status-summary {
+                            display: flex;
+                            gap: 8px;
+                            flex-wrap: wrap;
+                        }
+                        
+                        .status-indicator {
+                            padding: 6px 12px;
+                            border-radius: 20px;
+                            font-size: 12px;
+                            font-weight: 600;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                        }
+                        
+                        .status-indicator.pending {
+                            background: #ffc107;
+                            color: #212529;
+                        }
+                        
+                        .status-indicator.approved {
+                            background: #28a745;
+                            color: white;
+                        }
+                        
+                        .status-indicator.interested {
+                            background: #17a2b8;
+                            color: white;
+                        }
+                        
+                        /* Enhanced Bids Section */
+                        .bids-section {
+                            background: white;
+                            border-radius: 20px;
+                            padding: 32px;
+                            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+                            border: 1px solid #e9ecef;
+                        }
+                        
+                        .bids-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                            margin-bottom: 32px;
+                            padding-bottom: 24px;
+                            border-bottom: 2px solid #f8f9fa;
+                        }
+                        
+                        .request-summary {
+                            flex: 1;
+                        }
+                        
+                        .section-title {
+                            font-size: 32px;
+                            font-weight: 700;
+                            color: #2c3e50;
+                            margin: 0 0 16px 0;
+                        }
+                        
+                        .request-meta {
+                            display: flex;
+                            gap: 24px;
+                            flex-wrap: wrap;
+                        }
+                        
+                        .meta-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            color: #6c757d;
+                            font-size: 14px;
+                        }
+                        
+                        .meta-item i {
+                            color: #9633eb;
+                        }
+                        
+                        .bids-overview {
+                            text-align: right;
+                        }
+                        
+                        .total-bids {
+                            margin-bottom: 20px;
+                        }
+                        
+                        .bids-count {
+                            display: block;
+                            font-size: 36px;
+                            font-weight: 700;
+                            color: #9633eb;
+                            line-height: 1;
+                        }
+                        
+                        .bids-label {
+                            font-size: 14px;
+                            color: #6c757d;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                        }
+                        
                         .sorting-controls {
-                            background: #f8f9fa;
-                            padding: 16px;
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            flex-wrap: wrap;
+                        }
+                        
+                        .sort-label {
+                            font-size: 14px;
+                            font-weight: 600;
+                            color: #495057;
+                        }
+                        
+                        .sort-btn {
+                            padding: 8px 16px;
+                            border-radius: 20px;
+                            border: 2px solid #9633eb;
+                            background: white;
+                            color: #9633eb;
+                            cursor: pointer;
+                            font-size: 13px;
+                            font-weight: 600;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                            transition: all 0.2s ease;
+                        }
+                        
+                        .sort-btn:hover {
+                            transform: translateY(-1px);
+                            box-shadow: 0 4px 12px rgba(150, 51, 235, 0.2);
+                        }
+                        
+                        .sort-btn.active {
+                            background: #9633eb;
+                            color: white;
+                        }
+                        
+                        /* Enhanced Status Tabs */
+                        .status-tabs {
+                            display: flex;
+                            gap: 12px;
+                            margin-bottom: 32px;
+                            overflow-x: auto;
+                            padding: 8px 0;
+                            border-bottom: 2px solid #f8f9fa;
+                        }
+                        
+                        .tab-button {
+                            padding: 12px 20px;
+                            border-radius: 25px;
+                            border: 2px solid #e9ecef;
+                            background: white;
+                            color: #6c757d;
+                            cursor: pointer;
+                            font-weight: 600;
+                            white-space: nowrap;
+                            position: relative;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        }
+                        
+                        .tab-button:hover {
+                            border-color: #9633eb;
+                            color: #9633eb;
+                            transform: translateY(-1px);
+                        }
+                        
+                        .tab-button.active {
+                            background: linear-gradient(135deg, #9633eb 0%, #7a29c0 100%);
+                            color: white;
+                            border-color: #9633eb;
+                            box-shadow: 0 4px 15px rgba(150, 51, 235, 0.3);
+                        }
+                        
+                        .tab-count {
+                            background: rgba(255, 255, 255, 0.2);
+                            padding: 2px 8px;
                             border-radius: 12px;
+                            font-size: 12px;
+                            font-weight: 700;
+                        }
+                        
+                        .new-bids-badge {
+                            position: absolute;
+                            top: -8px;
+                            right: -8px;
+                            background: #ec4899;
+                            color: white;
+                            border-radius: 50%;
+                            padding: 4px 8px;
+                            font-size: 11px;
+                            font-weight: bold;
+                            min-width: 20px;
+                            text-align: center;
+                        }
+                        
+                        /* Responsive Design */
+                        @media (max-width: 1024px) {
+                            .bids-header {
+                                flex-direction: column;
+                                gap: 24px;
+                            }
+                            
+                            .bids-overview {
+                                text-align: left;
+                            }
+                            
+                            .request-meta {
+                                gap: 16px;
+                            }
+                        }
+                        
+                        @media (max-width: 768px) {
+                            .request-details {
+                                grid-template-columns: 1fr;
+                            }
+                            
+                            .request-header {
+                                flex-direction: column;
+                                gap: 16px;
+                            }
+                            
+                            .request-actions {
+                                justify-content: center;
+                            }
+                        }
+                        
+                        /* Animation for new bids */
+                        @keyframes pulse {
+                            0% { transform: scale(1); }
+                            50% { transform: scale(1.05); }
+                            100% { transform: scale(1); }
+                        }
+                        
+                        .new-bids-badge {
+                            animation: pulse 2s infinite;
+                        }
+                        
+                        /* Enhanced focus states for accessibility */
+                        .request-card:focus,
+                        .action-btn:focus,
+                        .tab-button:focus,
+                        .sort-btn:focus {
+                            outline: 2px solid #9633eb;
+                            outline-offset: 2px;
+                        }
+                        
+                        /* Loading states */
+                        .skeleton-request-card {
+                            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+                            background-size: 200% 100%;
+                            animation: loading 1.5s infinite;
+                        }
+                        
+                        @keyframes loading {
+                            0% { background-position: 200% 0; }
+                            100% { background-position: -200% 0; }
+                        }
+                        
+                        /* Empty State Styling */
+                        .empty-state {
+                            text-align: center;
+                            padding: 60px 20px;
+                            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                            border-radius: 20px;
+                            margin: 40px 0;
+                            border: 2px dashed #dee2e6;
+                        }
+                        
+                        .empty-state-icon {
+                            width: 80px;
+                            height: 80px;
+                            background: linear-gradient(135deg, #9633eb 0%, #7a29c0 100%);
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin: 0 auto 24px;
+                            color: white;
+                            font-size: 32px;
+                        }
+                        
+                        .empty-state-title {
+                            font-size: 28px;
+                            font-weight: 700;
+                            color: #2c3e50;
+                            margin: 0 0 16px 0;
+                        }
+                        
+                        .empty-state-description {
+                            font-size: 16px;
+                            color: #6c757d;
+                            margin: 0 0 32px 0;
+                            max-width: 500px;
+                            margin-left: auto;
+                            margin-right: auto;
+                        }
+                        
+                        .empty-state-features {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 12px;
+                            margin-bottom: 32px;
+                            max-width: 400px;
+                            margin-left: auto;
+                            margin-right: auto;
+                        }
+                        
+                        .feature-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            color: #495057;
+                            font-size: 14px;
+                        }
+                        
+                        .feature-item i {
+                            color: #28a745;
+                            font-size: 16px;
+                        }
+                        
+                        .empty-state-cta {
+                            padding: 16px 32px;
+                            font-size: 18px;
+                            font-weight: 700;
+                            background: linear-gradient(135deg, #9633eb 0%, #7a29c0 100%);
+                            color: white;
+                            border: none;
+                            border-radius: 50px;
+                            cursor: pointer;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 12px;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 15px rgba(150, 51, 235, 0.3);
+                        }
+                        
+                        .empty-state-cta:hover {
+                            transform: translateY(-2px);
+                            box-shadow: 0 8px 25px rgba(150, 51, 235, 0.4);
+                        }
+                        
+                        /* Enhanced Mobile Experience */
+                        .mobile-bids-view {
+                            background: white;
+                            border-radius: 20px 20px 0 0;
+                            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+                        }
+                        
+                        .mobile-bids-header {
+                            padding: 24px;
+                            border-bottom: 2px solid #f8f9fa;
+                            background: linear-gradient(135deg, #f8f5ff 0%, #f0ebff 100%);
+                        }
+                        
+                        .mobile-back-button {
+                            background: none;
+                            border: none;
+                            color: #9633eb;
+                            font-size: 16px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            margin-bottom: 16px;
+                            padding: 0;
+                        }
+                        
+                        .mobile-bids-title {
+                            font-size: 24px;
+                            font-weight: 700;
+                            color: #2c3e50;
+                            margin: 0;
+                        }
+                        
+                        /* Quick Actions Bar */
+                        .quick-actions {
+                            display: flex;
+                            gap: 12px;
+                            margin-bottom: 24px;
+                            padding: 16px;
+                            background: #f8f9fa;
+                            border-radius: 16px;
                             border: 1px solid #e9ecef;
                         }
                         
-                        .sorting-controls button {
+                        .quick-action-btn {
+                            padding: 8px 16px;
+                            border-radius: 20px;
+                            border: 1px solid #dee2e6;
+                            background: white;
+                            color: #495057;
+                            cursor: pointer;
+                            font-size: 13px;
+                            font-weight: 500;
                             transition: all 0.2s ease;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
                         }
                         
-                        .sorting-controls button:hover {
-                            transform: translateY(-1px);
-                            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+                        .quick-action-btn:hover {
+                            border-color: #9633eb;
+                            color: #9633eb;
+                            background: #f8f5ff;
                         }
                         
-                        .mobile-sorting-controls {
-                            background: #f8f9fa;
-                            padding: 16px;
-                            border-radius: 12px;
+                        .quick-action-btn.active {
+                            background: #9633eb;
+                            color: white;
+                            border-color: #9633eb;
+                        }
+                        
+                        .quick-actions-divider {
+                            width: 1px;
+                            height: 24px;
+                            background: #dee2e6;
+                            margin: 0 8px;
+                        }
+                        
+                        /* Enhanced Request List Layout */
+                        .requests-list-bids-page {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+                            gap: 24px;
+                            margin-top: 24px;
+                        }
+                        
+                        @media (max-width: 768px) {
+                            .requests-list-bids-page {
+                                grid-template-columns: 1fr;
+                                gap: 16px;
+                            }
+                        }
+                        
+                        /* Enhanced Loading States */
+                        .skeleton-request-card {
+                            background: white;
                             border: 1px solid #e9ecef;
-                            margin: 0 16px 16px 16px;
+                            border-radius: 16px;
+                            padding: 24px;
+                            margin-bottom: 20px;
                         }
                         
-                        .mobile-sorting-controls button {
-                            transition: all 0.2s ease;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        .skeleton-category-icon {
+                            width: 60px;
+                            height: 60px;
+                            background: #e9ecef;
+                            border-radius: 16px;
+                            animation: pulse 1.5s infinite;
                         }
                         
-                        .mobile-sorting-controls button:hover {
-                            transform: translateY(-1px);
-                            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+                        .skeleton-category-name {
+                            width: 120px;
+                            height: 20px;
+                            background: #e9ecef;
+                            border-radius: 4px;
+                            margin-bottom: 8px;
+                            animation: pulse 1.5s infinite;
+                        }
+                        
+                        .skeleton-status-badge {
+                            width: 60px;
+                            height: 16px;
+                            background: #e9ecef;
+                            border-radius: 20px;
+                            animation: pulse 1.5s infinite;
+                        }
+                        
+                        .skeleton-action-btn {
+                            width: 40px;
+                            height: 40px;
+                            background: #e9ecef;
+                            border-radius: 12px;
+                            animation: pulse 1.5s infinite;
+                        }
+                        
+                        .skeleton-detail-icon {
+                            width: 20px;
+                            height: 20px;
+                            background: #e9ecef;
+                            border-radius: 4px;
+                            animation: pulse 1.5s infinite;
+                        }
+                        
+                        .skeleton-detail-label {
+                            width: 60px;
+                            height: 16px;
+                            background: #e9ecef;
+                            border-radius: 4px;
+                            animation: pulse 1.5s infinite;
+                        }
+                        
+                        .skeleton-detail-value {
+                            width: 80px;
+                            height: 16px;
+                            background: #e9ecef;
+                            border-radius: 4px;
+                            animation: pulse 1.5s infinite;
                         }
                     `}
                 </style>
                 
                 {requests.length > 0 ? (
                     <div className="requests-list-container">
-                        <div className="requests-list-bids-page">
-                            {requests.map((request, index) => (
-                                <div 
-                                    key={request.id} 
-                                    className={`request-card ${currentRequestIndex === index ? 'active' : ''}`}
-                                    onClick={() => handleRequestClick(request, index)}
+                        <div className="requests-header">
+                            <h2 className="requests-title">Your Service Requests</h2>
+                            <p className="requests-subtitle">
+                                Select a request to view and manage bids from vendors
+                            </p>
+                            
+                            {/* Quick Actions Bar */}
+                            <div className="quick-actions" style={{display:'flex', justifyContent:'center', alignItems:'center', gap:'10px'}}>
+                                <button 
+                                    className="quick-action-btn"
+                                    onClick={() => navigate('/request-categories')}
+                                    title="Create New Request"
                                 >
-                                    <div className="request-header">
-                                        <div className="request-category">
-                                            <div className="category-icon">
-                                                <i className={`${getCategoryIcon(request.type)}`}></i>
-                                            </div>
-                                            <div className="category-info">
-                                                <span className="category-name">
-                                                    {formatCategoryType(request.type)}
-                                                </span>
-                                                <div className="request-status-container">
-                                                    {isNew(request.created_at) && (
-                                                        <div className="request-status new">New</div>
-                                                    )}
-                                                    <div className={`request-status ${(request.status === "open" || request.status === "pending" || request.open) ? 'open' : 'closed'}`}>
-                                                        {(request.status === "open" || request.status === "pending" || request.open) ? 'Open' : 'Closed'}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                    </div>
-                                    <div className="request-actions">
-                                        <button
-                                            className="btn-view-bids"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRequestClick(request, index);
-                                            }}
-                                        >
-                                            <i className="fas fa-eye"></i>
-                                            View Bids
-                                        </button>
-                                        <button
-                                            className="btn-edit"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleEdit(request);
-                                            }}
-                                        >
-                                            <i className="fas fa-edit"></i>
-                                            Edit
-                                        </button>
-                                        <button
-                                            className="btn-toggle"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                toggleRequestStatus(request);
-                                            }}
-                                        >
-                                            <i className={`fas ${(request.status === "open" || request.status === "pending" || request.open) ? 'fa-lock' : 'fa-unlock'}`}></i>
-                                            {(request.status === "open" || request.status === "pending" || request.open) ? "Close" : "Reopen"}
-                                        </button>
-                                    </div>
-                                    <div className="request-details">
-                                        <div className="detail-item">
-                                            <i className="fas fa-calendar"></i>
-                                            <span className="detail-label">Date:</span>
-                                            <span className="detail-value">{getDate(request)}</span>
-                                        </div>
-                                        <div className="detail-item">
-                                            <i className="fas fa-dollar-sign"></i>
-                                            <span className="detail-label">Budget:</span>
-                                            <span className="detail-value">${request.price_range}</span>
-                                        </div>
-                                        <div className="detail-item">
-                                            <i className="fas fa-eye"></i>
-                                            <span className="detail-label">Views:</span>
-                                            <div className="detail-value" style={{ 
-                                                display: 'flex', 
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                textAlign: 'center'
-                                            }}>
-                                                <span>{getViewCountText(request).count}</span>
-                                                <span style={{ fontSize: '0.9em', color: '#666' }}>{getViewCountText(request).category}</span>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                                    <i className="fas fa-plus"></i>
+                                    New Request
+                                </button>
+                                <button 
+                                    className="quick-action-btn"
+                                    onClick={() => window.location.reload()}
+                                    title="Refresh Page"
+                                >
+                                    <i className="fas fa-sync-alt"></i>
+                                    Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div className="requests-list-bids-page">
+                            {requests.map((request, index) => renderRequestCard(request, index))}
                         </div>
                     </div>
                 ) : (
-                    <div className="no-requests" style={{
-                        textAlign: 'center',
-                        padding: '40px 20px',
-                        background: '#f8f9fa',
-                        borderRadius: '8px',
-                        margin: '20px 0'
-                    }}>
-                        <h3 style={{ marginBottom: '15px', color: '#333' }}>No Active Requests Yet</h3>
-                        <p style={{ marginBottom: '20px', color: '#666' }}>
+                    <div className="empty-state">
+                        <div className="empty-state-icon">
+                            <i className="fas fa-clipboard-list"></i>
+                        </div>
+                        <h3 className="empty-state-title">No Active Requests Yet</h3>
+                        <p className="empty-state-description">
                             Start your journey by creating your first service request. 
                             Get matched with the perfect vendors for your event!
                         </p>
+                        <div className="empty-state-features">
+                            <div className="feature-item">
+                                <i className="fas fa-check-circle"></i>
+                                <span>Get multiple quotes from verified vendors</span>
+                            </div>
+                            <div className="feature-item">
+                                <i className="fas fa-check-circle"></i>
+                                <span>Compare prices and services easily</span>
+                            </div>
+                            <div className="feature-item">
+                                <i className="fas fa-check-circle"></i>
+                                <span>Secure payment processing</span>
+                            </div>
+                        </div>
                         <button 
                             onClick={() => navigate('/request-categories')}
-                            className="btn-primary"
-                            style={{
-                                padding: '12px 24px',
-                                fontSize: '16px',
-                                fontWeight: 'bold',
-                                backgroundColor: '#9633eb',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '40px',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '8px'
-                            }}
+                            className="empty-state-cta"
                         >
                             <i className="fas fa-plus"></i>
                             Create Your First Request
@@ -2082,144 +2956,7 @@ export default function BidsPage({ onOpenChat }) {
                 )}
 
                 {/* Desktop bids section */}
-                {window.innerWidth > 1024 && currentRequestIndex >= 0 && (
-                    <div className={`bids-section ${currentRequestIndex >= 0 ? 'active' : ''}`}>
-                        <h2 className="section-title">
-                            Bids for {requests[currentRequestIndex]?.event_title || requests[currentRequestIndex]?.title || 'Selected Request'}
-                            <span style={{
-                                fontSize: '16px',
-                                fontWeight: '400',
-                                color: '#666',
-                                marginLeft: '12px'
-                            }}>
-                                {sortBy === 'recommended' && '⭐ Sorted by recommendation'}
-                                {sortBy === 'high-price' && '💰 Sorted by highest price'}
-                                {sortBy === 'low-price' && '💸 Sorted by lowest price'}
-                            </span>
-                        </h2>
-                        <p className="section-description">
-                            Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
-                        </p>
-
-                        <div className="bids-container-bids-page">
-                            {/* Sorting Controls */}
-                            <div className="sorting-controls" style={{
-                                display: 'flex',
-                                gap: '12px',
-                                marginBottom: '16px',
-                                alignItems: 'center',
-                                flexWrap: 'wrap'
-                            }}>
-                                <span style={{
-                                    fontSize: '14px',
-                                    fontWeight: '500',
-                                    color: '#666',
-                                    marginRight: '8px'
-                                }}>
-                                    Sort by:
-                                </span>
-                                {[
-                                    { key: 'recommended', label: 'Recommended', icon: '⭐' },
-                                    { key: 'high-price', label: 'High Price', icon: '💰' },
-                                    { key: 'low-price', label: 'Low Price', icon: '💸' }
-                                ].map((option) => (
-                                    <button
-                                        key={option.key}
-                                        onClick={() => setSortBy(option.key)}
-                                        style={{
-                                            padding: '6px 12px',
-                                            borderRadius: '16px',
-                                            border: '1px solid',
-                                            background: sortBy === option.key ? '#9633eb' : 'white',
-                                            color: sortBy === option.key ? 'white' : '#9633eb',
-                                            borderColor: '#9633eb',
-                                            cursor: 'pointer',
-                                            fontSize: '13px',
-                                            fontWeight: '500',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            transition: 'all 0.2s ease'
-                                        }}
-                                    >
-                                        <span>{option.icon}</span>
-                                        {option.label}
-                                    </button>
-                                ))}
-                            </div>
-                            
-                            <div className="status-tabs" style={{
-                                display: 'flex',
-                                gap: '8px',
-                                marginBottom: '24px',
-                                overflowX: 'auto',
-                                padding: '8px 0'
-                            }}>
-                                {["all", "pending", "interested", "approved", "paid", "denied", "expired"].map((status) => {
-                                    const bidsByStatus = getBidsByStatus();
-                                    const count = status === 'all' 
-                                        ? Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0)
-                                        : (bidsByStatus[status]?.length || 0);
-                                    
-                                    const displayText = status.split('_')
-                                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                                        .join(' ');
-                                    
-                                    const newBidsCount = status !== 'all' ? getNewBidsCount(status) : 0;
-                                    
-                                    return (
-                                        <button
-                                            key={status}
-                                            className={`tab-button ${status} ${activeTab === status ? "active" : ""}`}
-                                            onClick={() => setActiveTab(status)}
-                                            style={{
-                                                padding: '8px 16px',
-                                                borderRadius: '20px',
-                                                border: 'none',
-                                                background: activeTab === status ? '#9633eb' : '#f8f9fa',
-                                                color: activeTab === status ? 'white' : '#666',
-                                                cursor: 'pointer',
-                                                fontWeight: '500',
-                                                whiteSpace: 'nowrap',
-                                                position: 'relative',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            {displayText} ({count})
-                                            {newBidsCount > 0 && (
-                                                <span style={{
-                                                    position: 'absolute',
-                                                    top: '-8px',
-                                                    right: '-8px',
-                                                    background: '#ec4899',
-                                                    color: 'white',
-                                                    borderRadius: '50%',
-                                                    padding: '2px 6px',
-                                                    fontSize: '12px',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    {newBidsCount}
-                                                </span>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <div className="tw-flex tw-flex-col tw-gap-0">
-                                {(() => {
-                                    const bidsByStatus = getBidsByStatus();
-                                    if (activeTab === 'all') {
-                                        return Object.values(bidsByStatus)
-                                            .flat()
-                                            .map(bid => renderBidCard(bid));
-                                    }
-                                    return (bidsByStatus[activeTab] || []).map(bid => renderBidCard(bid));
-                                })()}
-                                {renderNoBidsMessage()}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {window.innerWidth > 1024 && currentRequestIndex >= 0 && renderBidsSection()}
 
                 {/* Mobile bids view */}
                 {window.innerWidth <= 1024 && renderMobileBidsView()}
@@ -2498,6 +3235,75 @@ export default function BidsPage({ onOpenChat }) {
                     searchFormData={editRequestData.searchFormData}
                     isEditMode={editRequestData.isEditMode}
                     existingRequestData={editRequestData.existingRequestData}
+                />
+            )}
+
+            {/* Bid Detail Modal - Rendered at top level to overlay entire page */}
+            {showBidDetailModal && selectedBidForDetail && (
+                <BidDetailModal
+                    isOpen={showBidDetailModal}
+                    onClose={handleCloseBidDetail}
+                    bid={selectedBidForDetail}
+                    currentUserId={currentUserId}
+                    onPayClick={() => handlePayNow(selectedBidForDetail)}
+                    onMessageClick={() => {
+                        handleCloseBidDetail();
+                        handleOpenBidMessaging(selectedBidForDetail);
+                    }}
+                    onConsultationClick={() => {
+                        handleCloseBidDetail();
+                        // Handle consultation scheduling
+                    }}
+                    onApprove={(bidId) => handleAcceptBidClick(selectedBidForDetail)}
+                    onDeny={(bidId) => handleMoveToNotInterested(selectedBidForDetail)}
+                    showActions={!selectedBidForDetail.isExpired}
+                    onOpenPortfolio={handleOpenPortfolio}
+                />
+            )}
+
+            {/* Bid Messaging Modal from Detail - Rendered at top level to overlay entire page */}
+            {showBidMessagingFromDetail && selectedBidForMessagingFromDetail && (
+                <BidMessaging
+                    bid={selectedBidForMessagingFromDetail}
+                    currentUserId={currentUserId}
+                    onClose={handleCloseBidMessaging}
+                    isOpen={showBidMessagingFromDetail}
+                    businessName={selectedBidForMessagingFromDetail.business_profiles?.business_name}
+                    profileImage={selectedBidForMessagingFromDetail.business_profiles?.profile_image || '/images/default.jpg'}
+                />
+            )}
+
+            {/* Bid Messaging Modal from List - Rendered at top level to overlay entire page */}
+            {showBidMessagingFromList && selectedBidForMessagingFromList && (
+                <BidMessaging
+                    bid={selectedBidForMessagingFromList}
+                    currentUserId={currentUserId}
+                    onClose={handleCloseBidMessagingFromList}
+                    isOpen={showBidMessagingFromList}
+                    businessName={selectedBidForMessagingFromList.business_profiles?.business_name}
+                    profileImage={selectedBidForMessagingFromList.business_profiles?.profile_image || '/images/default.jpg'}
+                />
+            )}
+
+            {/* Portfolio Modal - Rendered at top level to overlay entire page */}
+            {showPortfolioModal && selectedBusinessForPortfolio && (
+                <PortfolioModal
+                    isOpen={showPortfolioModal}
+                    onClose={handleClosePortfolio}
+                    businessId={selectedBusinessForPortfolio.id}
+                    businessName={selectedBusinessForPortfolio.business_name}
+                    onOpenGallery={handleOpenGallery}
+                />
+            )}
+
+            {/* Gallery Modal - Rendered at top level to overlay entire page */}
+            {showGalleryModal && selectedBusinessForGallery && (
+                <GalleryModal
+                    isOpen={showGalleryModal}
+                    onClose={handleCloseGallery}
+                    businessId={selectedBusinessForGallery.id}
+                    businessName={selectedBusinessForGallery.business_name}
+                    onBackToPortfolio={handleBackToPortfolio}
                 />
             )}
         </>

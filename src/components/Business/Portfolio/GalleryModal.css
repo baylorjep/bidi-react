@@ -1,0 +1,133 @@
+/* Gallery Modal Styles */
+
+.gallery-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 9998;
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.gallery-modal-container {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.gallery-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  background: white;
+  position: relative;
+  z-index: 10;
+}
+
+.gallery-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.gallery-modal-close {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 18px;
+}
+
+.gallery-modal-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.gallery-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Override Gallery styles for modal context */
+.gallery-modal-content .gallery-container-main {
+  padding: 0;
+  margin: 0;
+  max-width: 100%;
+  margin-top: 0;
+}
+
+/* Hide the gallery header since we have our own modal header */
+.gallery-modal-content .gallery-header-container {
+  display: none;
+}
+
+/* Adjust the back button functionality in modal context */
+.gallery-modal-content .back-button {
+  display: none;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .gallery-modal-backdrop {
+    padding: 0;
+  }
+  
+  .gallery-modal-container {
+    border-radius: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+  }
+  
+  .gallery-modal-header {
+    padding: 16px 20px;
+  }
+  
+  .gallery-modal-title {
+    font-size: 18px;
+  }
+}
+
+/* Custom scrollbar for the modal content */
+.gallery-modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.gallery-modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.gallery-modal-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.gallery-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

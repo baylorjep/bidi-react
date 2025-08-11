@@ -4,7 +4,6 @@
 
 .bids-page {
     padding: 20px;
-    max-width: 1400px;
     margin: 0 auto;
     font-family: Outfit, sans-serif;
     display: grid;
@@ -115,6 +114,7 @@
     flex-direction: column;
     position: sticky;
     top: 20px;
+    margin-bottom: 20px;
 }
 
 /* Requests List Styles */
@@ -123,6 +123,8 @@
     flex-direction: column;
     gap: 16px;
     min-width: 350px;
+    margin-right: 20px;
+    margin-bottom: 100px;
 }
 
 @media screen and (max-width: 768px) {
@@ -209,8 +211,8 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    min-width: 0;
-    flex: 1;
+    text-align: left;
+    align-items: flex-start;
 }
 
 .bids-page .category-name {
@@ -307,7 +309,6 @@
     padding-top: 0;
     border-top: none;
     flex-shrink: 0;
-    width: 100%;
 }
 
 .bids-page .request-actions button {

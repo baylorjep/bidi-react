@@ -395,7 +395,8 @@ const BidDisplayRow = ({
         borderBottom: '1px solid #ececf0',
         background: bid.status === "interested" ? "linear-gradient(to right, #fff, #faf5ff)" : "#fff",
         transition: "all 0.3s ease",
-        position: 'relative'
+        position: 'relative',
+        flexDirection: 'row'
       }}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}

@@ -37,13 +37,15 @@ function BidDisplay({
   onMobileBack = null,
   mobileViewMode = 'list', // 'list' or 'detail'
   hideMobileHeader = false, // New prop to hide mobile header from BidsPage
-  onMobileModalToggle = null // Callback to notify parent of modal state changes
+  onMobileModalToggle = null, // Callback to notify parent of modal state changes
+  onOpenBidDetail = null, // Callback to open bid detail modal at parent level
+  onOpenBidMessaging = null, // Callback to open bid messaging modal at parent level
+  onOpenPortfolio = null // Callback to open portfolio modal at parent level
 }) {
   const navigate = useNavigate();
   const [showConsultationModal, setShowConsultationModal] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showBidDetailModal, setShowBidDetailModal] = useState(false);
   const [modalLineItems, setModalLineItems] = useState([{ id: 1, description: '', quantity: 1, rate: 0, amount: 0 }]);
   const [modalTaxRate, setModalTaxRate] = useState(0);
   const [useTemplate, setUseTemplate] = useState(false);
@@ -58,19 +60,11 @@ function BidDisplay({
   const [reviewCount, setReviewCount] = useState(0);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   
-  // Chat integration state
-  const [chatMessages, setChatMessages] = useState([]);
-  const [isLoadingChat, setIsLoadingChat] = useState(false);
-  const [newMessage, setNewMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [isChatExpanded, setIsChatExpanded] = useState(false); // New state for chat collapse/expand
-  const typingTimeoutRef = useRef(null);
-  
-  // File upload and payment state
-  const [previewImageUrl, setPreviewImageUrl] = useState(null);
-  const [pendingFile, setPendingFile] = useState(null);
+  // Image modal state
   const [showImageModal, setShowImageModal] = useState(false);
   const [modalImageSrc, setModalImageSrc] = useState("");
+  
+  // Description expansion state removed - now opens messaging modal
 
   const {
     business_profiles,
@@ -90,9 +84,11 @@ function BidDisplay({
     return window.innerWidth <= 768 || isMobile;
   };
 
-  // Handle mobile row click
-  const handleMobileRowClick = () => {
-    handleMobileModalOpen();
+  // Handle row click to open bid detail modal
+  const handleRowClick = () => {
+    if (onOpenBidDetail) {
+      onOpenBidDetail(bid);
+    }
   };
 
   // Handle mobile back navigation
@@ -100,14 +96,10 @@ function BidDisplay({
     handleMobileModalClose();
   };
 
-  // Toggle chat expansion
-  const toggleChatExpansion = () => {
-    setIsChatExpanded(!isChatExpanded);
-  };
+  // Chat expansion now handled by BidMessaging component
 
   // Enhanced modal close handler
   const handleModalClose = () => {
-    setShowBidDetailModal(false);
     setShowPaymentModal(false);
     setShowImageModal(false);
     setShowConsultationModal(false);
@@ -138,7 +130,7 @@ function BidDisplay({
       }
     };
 
-    if (mobileDetailView || showBidDetailModal) {
+    if (mobileDetailView) {
       document.addEventListener('keydown', handleEscape);
       document.addEventListener('click', handleClickOutside);
     }
@@ -147,7 +139,7 @@ function BidDisplay({
       document.removeEventListener('keydown', handleEscape);
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [mobileDetailView, showBidDetailModal]);
+  }, [mobileDetailView]);
 
   // Cleanup body scroll on unmount
   useEffect(() => {
@@ -171,19 +163,12 @@ function BidDisplay({
     }
   }, [business_profiles?.id]);
 
-  // Refresh reviews when bid detail modal opens
+  // Refresh reviews when mobile detail view opens
   useEffect(() => {
-    if ((showBidDetailModal || mobileDetailView) && business_profiles?.id) {
+    if (mobileDetailView && business_profiles?.id) {
       loadReviews();
     }
-  }, [showBidDetailModal, mobileDetailView, business_profiles?.id]);
-
-  // Load chat history when modal opens
-  useEffect(() => {
-    if (showBidDetailModal || mobileDetailView) {
-      loadChatHistory();
-    }
-  }, [showBidDetailModal, mobileDetailView]);
+  }, [mobileDetailView, business_profiles?.id]);
 
   // Load reviews from database
   const loadReviews = async () => {
@@ -355,57 +340,7 @@ function BidDisplay({
     }
   };
 
-  // Socket connection for real-time messaging
-  useEffect(() => {
-    if (!currentUserId || !business_profiles?.id) return;
-
-    const handleReceive = (msg) => {
-      if (
-        (msg.senderId === business_profiles.id && msg.receiverId === currentUserId) ||
-        (msg.senderId === currentUserId && msg.receiverId === business_profiles.id)
-      ) {
-        setChatMessages((prev) => {
-          const exists = prev.some(m =>
-            m.sender_id === msg.senderId &&
-            m.receiver_id === msg.receiverId &&
-            m.message === msg.message &&
-            Math.abs(new Date(m.created_at) - new Date(msg.createdAt)) < 1000
-          );
-          return exists ? prev : [...prev, {
-            id: msg.id,
-            sender_id: msg.senderId,
-            receiver_id: msg.receiverId,
-            message: msg.message,
-            created_at: msg.createdAt,
-            seen: msg.seen || false,
-            type: msg.type || 'text'
-          }];
-        });
-      }
-    };
-
-    const handleTyping = (fromId) => {
-      if (fromId === business_profiles.id) {
-        setIsTyping(true);
-      }
-    };
-
-    const handleStopTyping = (fromId) => {
-      if (fromId === business_profiles.id) {
-        setIsTyping(false);
-      }
-    };
-
-    socket.on("receive_message", handleReceive);
-    socket.on("typing", handleTyping);
-    socket.on("stop_typing", handleStopTyping);
-
-    return () => {
-      socket.off("receive_message", handleReceive);
-      socket.off("typing", handleTyping);
-      socket.off("stop_typing", handleStopTyping);
-    };
-  }, [currentUserId, business_profiles?.id]);
+  // Removed socket connection - now handled by BidMessaging component
 
   // Signature state for client
   const [clientSignature, setClientSignature] = useState(null);
@@ -417,6 +352,42 @@ function BidDisplay({
   const [pdfData, setPdfData] = useState(null);
   const [placingSignature, setPlacingSignature] = useState(false);
   const pdfWrapperRef = useRef(null);
+
+  // State to track if down payment has been made
+  const [downPaymentMade, setDownPaymentMade] = useState(false);
+  const [downPaymentAmount, setDownPaymentAmount] = useState(0);
+
+  // Check if down payment has been made
+  useEffect(() => {
+    const checkDownPaymentStatus = async () => {
+      if (!bid.id || !business_profiles?.amount) return;
+      
+      try {
+        // Check if there's a payment record for this bid
+        const { data: paymentRecords, error } = await supabase
+          .from('bids')
+          .select('down_payment, payment_paid_at, remaining')
+          .eq('id', bid.id);
+        
+        if (error) {
+          console.error('Error checking payment status:', error);
+          return;
+        }
+        
+        if (paymentRecords && paymentRecords.length > 0) {
+          const record = paymentRecords[0];
+          if (record.down_payment && record.payment_paid_at) {
+            setDownPaymentMade(true);
+            setDownPaymentAmount(parseFloat(record.down_payment) || 0);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking down payment status:', error);
+      }
+    };
+    
+    checkDownPaymentStatus();
+  }, [bid.id, business_profiles?.amount]);
 
   // Get profile image
   const profileImage = business_profiles?.profile_image || 'https://via.placeholder.com/60x60?text=Profile';
@@ -440,15 +411,40 @@ function BidDisplay({
 
   const getBidStatus = () => {
     if (showExpired) return 'expired';
+    if (status === 'denied') return 'denied';
     if (showApproved || status === 'approved' || status === 'accepted' || status === 'interested') return 'approved';
     if (showPaymentOptions) return 'payment';
-    if (showPending) return 'pending';
+    if (showPending || status === 'pending') return 'pending';
     return 'default';
   };
 
+  const getDownPaymentAmount = () => {
+    if (!business_profiles?.amount || !business_profiles?.down_payment_type) return 0;
+    
+    if (business_profiles.down_payment_type === 'percentage') {
+      // Calculate down payment as percentage of total bid amount
+      const percentage = parseFloat(business_profiles.amount*100) || 0;
+      const totalBidAmount = parseFloat(bid_amount) || 0;
+      return (totalBidAmount * percentage) / 100;
+    } else {
+      // Fixed amount
+      return parseFloat(business_profiles.amount) || 0;
+    }
+  };
+
   const getRemainingAmount = () => {
-    if (payment_type === 'down_payment' && payment_amount) {
-      return bid_amount - payment_amount;
+    // Check if business has down payment configured
+    if (business_profiles?.amount && business_profiles?.down_payment_type) {
+      const totalBidAmount = parseFloat(bid_amount) || 0;
+      
+      if (downPaymentMade) {
+        // If down payment has been made, calculate remaining from actual payment
+        return totalBidAmount - downPaymentAmount;
+      } else {
+        // Show potential remaining amount if no down payment made yet
+        const downPaymentAmount = getDownPaymentAmount();
+        return totalBidAmount - downPaymentAmount;
+      }
     }
     return bid_amount;
   };
@@ -499,162 +495,56 @@ function BidDisplay({
     </div>
   );
 
-  const handleRowClick = () => {
-    setShowBidDetailModal(true);
+  // Description helper functions
+  const shouldTruncateDescription = (description) => {
+    if (!description) return false;
+    // Strip HTML tags for length calculation
+    const textContent = description.replace(/<[^>]*>/g, '');
+    return textContent.length > 150; // Truncate after 150 characters
   };
 
-  // Load chat history when modal opens
-  const loadChatHistory = async () => {
-    if (!currentUserId || !business_profiles?.id) return;
+  const getTruncatedDescription = (description) => {
+    if (!description) return '';
+    // Strip HTML tags for length calculation
+    const textContent = description.replace(/<[^>]*>/g, '');
+    if (textContent.length <= 150) return description;
     
-    setIsLoadingChat(true);
-    try {
-      const { data: messages, error } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${business_profiles.id}),and(sender_id.eq.${business_profiles.id},receiver_id.eq.${currentUserId})`)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error loading chat history:', error);
-        return;
-      }
-
-      setChatMessages(messages || []);
-    } catch (error) {
-      console.error('Error loading chat history:', error);
-    } finally {
-      setIsLoadingChat(false);
-    }
-  };
-
-  const handleSendMessage = async (message) => {
-    if (!currentUserId || !business_profiles?.id || (!message.trim() && !pendingFile)) return;
+    // Find the last complete word within 150 characters
+    const truncatedText = textContent.substring(0, 150).split(' ').slice(0, -1).join(' ');
     
-    let imageUrl = null;
+    // Find the position of this truncated text in the original HTML
+    let currentPos = 0;
+    let textPos = 0;
+    let result = '';
     
-    if (pendingFile && previewImageUrl) {
-      try {
-        const cleanFileName = pendingFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-        const fileName = `${Date.now()}_${cleanFileName}`;
-        const { error: uploadError } = await supabase.storage
-          .from('chat-images')
-          .upload(fileName, pendingFile);
-
-        if (uploadError) {
-          console.error("Image upload failed:", uploadError);
-          toast.error('Failed to upload image');
-          return;
+    while (currentPos < description.length && textPos < truncatedText.length) {
+      if (description[currentPos] === '<') {
+        // Skip HTML tag
+        while (currentPos < description.length && description[currentPos] !== '>') {
+          result += description[currentPos];
+          currentPos++;
         }
-
-        const { publicUrl } = supabase
-          .storage
-          .from('chat-images')
-          .getPublicUrl(fileName).data;
-
-        imageUrl = publicUrl;
-      } catch (err) {
-        console.error("Image send failed:", err);
-        toast.error('Failed to upload image');
-        return;
-      }
-    }
-
-    if (imageUrl) {
-      const newMsg = {
-        sender_id: currentUserId,
-        receiver_id: business_profiles.id,
-        message: imageUrl,
-        type: 'image',
-        created_at: new Date().toISOString()
-      };
-
-      // Add message to local state immediately for optimistic update
-      setChatMessages(prev => [...prev, newMsg]);
-
-      // Save to database
-      const { error } = await supabase
-        .from('messages')
-        .insert([newMsg]);
-
-      if (error) {
-        console.error('Error sending image:', error);
-        setChatMessages(prev => prev.filter(msg => msg !== newMsg));
-        toast.error('Failed to send image');
+        if (currentPos < description.length) {
+          result += description[currentPos];
+          currentPos++;
+        }
       } else {
-        // Emit to socket for real-time delivery
-        socket.emit("send_message", {
-          senderId: currentUserId,
-          receiverId: business_profiles.id,
-          message: imageUrl,
-          type: "image",
-          seen: false,
-        });
-      }
-    }
-
-    if (message && message.trim()) {
-      const newMsg = {
-        sender_id: currentUserId,
-        receiver_id: business_profiles.id,
-        message: message.trim(),
-        type: 'text',
-        created_at: new Date().toISOString()
-      };
-
-      // Add message to local state immediately for optimistic update
-      setChatMessages(prev => [...prev, newMsg]);
-      setNewMessage('');
-
-      // Save to database
-      const { error } = await supabase
-        .from('messages')
-        .insert([newMsg]);
-
-      if (error) {
-        console.error('Error sending message:', error);
-        // Remove from local state if database save failed
-        setChatMessages(prev => prev.filter(msg => msg !== newMsg));
-        toast.error('Failed to send message');
-      } else {
-        // Emit to socket for real-time delivery
-        socket.emit("send_message", {
-          senderId: currentUserId,
-          receiverId: business_profiles.id,
-          message: message.trim(),
-          type: "text",
-          seen: false,
-        });
+        result += description[currentPos];
+        textPos++;
+        currentPos++;
       }
     }
     
-    // Cleanup
-    setPreviewImageUrl(null);
-    setPendingFile(null);
-    
-    // Stop typing indicator
-    socket.emit("stop_typing", { senderId: currentUserId, receiverId: business_profiles.id });
+    return result + '...';
   };
 
-  // Scroll to bottom of chat when messages change
-  useEffect(() => {
-    const messagesContainer = document.querySelector('.bid-detail-modal .chat-body');
-    if (messagesContainer) {
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-  }, [chatMessages]);
+  // Description expansion toggle removed - now opens messaging modal instead
 
-  // File upload handler
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-  
-    setPendingFile(file);
-    const localPreview = URL.createObjectURL(file);
-    setPreviewImageUrl(localPreview);
+  // Remove the handleRowClick function since we're not using the detail modal anymore
 
-    e.target.value = null;
-  };
+  // Chat history loading now handled by BidMessaging component
+
+  // Message handling now done by BidMessaging component
 
   // Payment request functions
   const calculateSubtotal = () => {
@@ -695,85 +585,7 @@ function BidDisplay({
     }));
   };
 
-  const handleSendPaymentRequest = (paymentData) => {
-    if (!stripeAccountId) {
-      console.error('No Stripe account ID found for business');
-      toast.error('Business does not have payment processing set up');
-      return;
-    }
-
-    const total = calculateTotal();
-    if (total <= 0) {
-      toast.error('Please add at least one line item with a valid amount');
-      return;
-    }
-
-    const messageData = {
-      senderId: currentUserId,
-      receiverId: business_profiles.id,
-      message: JSON.stringify({
-        type: 'payment_request',
-        amount: total,
-        description: 'Service Payment',
-        paymentData: {
-          amount: total,
-          stripe_account_id: stripeAccountId,
-          payment_type: 'custom',
-          business_name: business_profiles.business_name,
-          description: 'Service Payment',
-          lineItems: modalLineItems.filter(item => item.amount > 0),
-          subtotal: calculateSubtotal(),
-          tax: calculateTax(),
-          taxRate: modalTaxRate
-        }
-      }),
-      type: 'payment_request',
-      payment_amount: total,
-      payment_status: 'pending',
-      payment_data: {
-        lineItems: modalLineItems.filter(item => item.amount > 0),
-        subtotal: calculateSubtotal(),
-        tax: calculateTax(),
-        taxRate: modalTaxRate,
-        stripe_account_id: stripeAccountId,
-        business_name: business_profiles.business_name,
-        description: 'Service Payment'
-      },
-      seen: false
-    };
-
-    // Add message to local state immediately for optimistic update
-    const newMsg = {
-      id: Date.now(),
-      sender_id: currentUserId,
-      receiver_id: business_profiles.id,
-      message: messageData.message,
-      type: 'payment_request',
-      created_at: new Date().toISOString(),
-      payment_amount: total,
-      payment_status: 'pending',
-      payment_data: messageData.payment_data
-    };
-
-    setChatMessages(prev => [...prev, newMsg]);
-
-    // Save to database
-    supabase
-      .from('messages')
-      .insert([newMsg])
-      .then(({ error }) => {
-        if (error) {
-          console.error('Error sending payment request:', error);
-          setChatMessages(prev => prev.filter(msg => msg !== newMsg));
-          toast.error('Failed to send payment request');
-        } else {
-          // Emit to socket for real-time delivery
-          socket.emit("send_message", messageData);
-          setShowPaymentModal(false);
-          toast.success('Payment request sent successfully');
-        }
-      });
-  };
+  // Payment request handling is now done by BidMessaging component
 
   const handleDenyClick = () => {
     console.log('handleDenyClick called');
@@ -789,11 +601,18 @@ function BidDisplay({
 
   const handleProfileClick = (e) => {
     e.stopPropagation(); // Prevent row click
-    navigate(`/portfolio/${business_profiles.id}/${business_profiles.business_name}`);
+    if (onOpenPortfolio) {
+      onOpenPortfolio(business_profiles);
+    } else {
+      navigate(`/portfolio/${business_profiles.id}/${business_profiles.business_name}`);
+    }
   };
 
-  const handleMessageClick = () => {
-    navigate(`/messaging/${bid.id}`);
+  const handleMessageClick = (e) => {
+    e.stopPropagation(); // Prevent row click
+    if (onOpenBidMessaging) {
+      onOpenBidMessaging(bid);
+    }
   };
 
   const handleConsultationClick = () => {
@@ -831,6 +650,13 @@ function BidDisplay({
             <span>Pending</span>
           </div>
         );
+      case 'denied':
+        return (
+          <div className="bid-row-status denied">
+            <CancelIcon />
+            <span>Denied</span>
+          </div>
+        );
       case 'expired':
         return (
           <div className="bid-row-status expired">
@@ -850,19 +676,31 @@ function BidDisplay({
       case 'approved':
         return (
           <div className="bid-row-actions">
-            {down_payment && (
-              <button
-                className="bid-row-btn bid-row-btn-primary"
-                onClick={() => setShowPaymentModal(true)}
-              >
-                Pay Down Payment
-              </button>
-            )}
             <button
-              className="bid-row-btn bid-row-btn-success"
-              onClick={() => setShowContractModal(true)}
+              className="bid-row-btn bid-row-btn-pay"
+              onClick={handlePaymentClick}
             >
-              Sign Contract
+              Pay
+            </button>
+            <button
+              className="bid-row-btn bid-row-btn-secondary"
+              onClick={handleMessageClick}
+            >
+              <ChatIcon />
+            </button>
+            {business_profiles?.google_calendar_connected && (
+            <button
+              className="bid-row-btn bid-row-btn-secondary"
+              onClick={handleConsultationClick}
+            >
+              Schedule Consultation
+            </button>
+            )}
+             <button
+              className="bid-row-btn bid-row-btn-secondary"
+              onClick={() => handlePending && handlePending(bid.id)}
+            >
+              Move Back to Pending
             </button>
           </div>
         );
@@ -871,11 +709,25 @@ function BidDisplay({
         return (
           <div className="bid-row-actions">
             <button
-              className="bid-row-btn bid-row-btn-primary"
-              onClick={() => setShowPaymentModal(true)}
+              className="bid-row-btn bid-row-btn-pay"
+              onClick={handlePaymentClick}
             >
-              Pay Now
+              Pay
             </button>
+            <button
+              className="bid-row-btn bid-row-btn-secondary"
+              onClick={handleMessageClick}
+            >
+              <ChatIcon />
+            </button>
+            {business_profiles?.google_calendar_connected && (
+            <button
+              className="bid-row-btn bid-row-btn-secondary"
+              onClick={handleConsultationClick}
+            >
+              Schedule Consultation
+            </button>
+            )}
           </div>
         );
         
@@ -885,19 +737,62 @@ function BidDisplay({
             <button
               className="bid-row-btn bid-row-btn-success"
               onClick={() => handleApprove && handleApprove(bid.id)}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              Approve
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </button>
+            
             <button
               className="bid-row-btn bid-row-btn-danger"
               onClick={handleDenyClick}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              Deny
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                <path d="M15 9L9 15M9 9L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button
+              className="bid-row-btn bid-row-btn-secondary"
+              onClick={handleMessageClick}
+            >
+              <ChatIcon />
+            </button>
+            <button className="bid-row-btn bid-row-btn-secondary" onClick={handleProfileClick}>
+              View Profile
+            </button>
+          </div>
+        );
+
+      case 'denied':
+        return (
+          <div className="bid-row-actions">
+            <button
+              className="bid-row-btn bid-row-btn-secondary"
+              onClick={() => handlePending && handlePending(bid.id)}
+            >
+              Move Back to Pending
             </button>
           </div>
         );
         
       default:
+        // For 'interested', 'accepted', or any other status that should show payment options
+        if (status === 'interested' || status === 'accepted' || status === 'approved') {
+          return (
+            <div className="bid-row-actions">
+              <button
+                className="bid-row-btn bid-row-btn-pay"
+                onClick={() => setShowPaymentModal(true)}
+              >
+                Pay
+              </button>
+            </div>
+          );
+        }
+        
         return (
           <div className="bid-row-actions">
             <button
@@ -905,14 +800,16 @@ function BidDisplay({
               onClick={handleMessageClick}
             >
               <ChatIcon />
-              Message
+              
             </button>
+            {business_profiles?.google_calendar_connected && (
             <button
               className="bid-row-btn bid-row-btn-primary"
               onClick={handleConsultationClick}
             >
               Schedule Consultation
             </button>
+            )}
           </div>
         );
     }
@@ -929,17 +826,7 @@ function BidDisplay({
     );
   };
 
-  const renderPaymentInfo = () => {
-    if (!payment_amount || payment_type !== 'down_payment') return null;
-    
-    return (
-      <div className="bid-row-payment-info">
-        <span className="payment-label">Down Payment:</span>
-        <span className="payment-amount">${payment_amount}</span>
-        <span className="payment-remaining">Remaining: ${getRemainingAmount()}</span>
-      </div>
-    );
-  };
+
 
   // Mobile swipe-to-close functionality
   const [touchStart, setTouchStart] = useState(null);
@@ -985,9 +872,8 @@ function BidDisplay({
       if (onMobileModalToggle) {
         onMobileModalToggle(true);
       }
-    } else {
-      setShowBidDetailModal(true);
     }
+    // No desktop modal needed anymore
   };
 
   const handleMobileModalClose = () => {
@@ -1006,9 +892,7 @@ function BidDisplay({
         onMobileModalToggle(false);
       }
     }
-    if (showBidDetailModal) {
-      setShowBidDetailModal(false);
-    }
+    // No desktop modal to close anymore
   };
 
   return (
@@ -1068,206 +952,106 @@ function BidDisplay({
             {/* Action Buttons */}
             <div className="mobile-bid-detail-section">
               <div className="mobile-action-buttons" style={{display: 'flex', flexDirection: 'row', gap: '10px'}}>
-                {getBidStatus() === 'approved' && (
-                  <>
-                    {down_payment && (
-                      <button
-                        className="mobile-action-btn primary"
-                        onClick={() => setShowPaymentModal(true)}
-                      >
-                        Pay Down Payment
-                      </button>
-                    )}
-                  </>
-                )}
-                
-                {getBidStatus() === 'payment' && (
-                  <button
-                    className="mobile-action-btn primary"
-                    onClick={() => setShowPaymentModal(true)}
-                  >
-                    Pay Now
-                  </button>
-                )}
-                
                 {getBidStatus() === 'pending' && (
                   <>
                     <button
                       className="mobile-action-btn success"
                       onClick={() => handleApprove && handleApprove(bid.id)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                     >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                       Approve
                     </button>
                     <button
                       className="mobile-action-btn danger"
                       onClick={handleDenyClick}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                     >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M15 9L9 15M9 9L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                       Deny
                     </button>
                   </>
                 )}
+
+                {getBidStatus() === 'denied' && (
+                  <button
+                    className="mobile-action-btn secondary"
+                    onClick={() => handlePending && handlePending(bid.id)}
+                  >
+                    Move Back to Pending
+                  </button>
+                )}
                 
-                {getBidStatus() === 'default' && (
-                  <>
+                {/* Payment button moved above for better organization */}
+                
+                {/* Message button - Always show for communication */}
                     <button
-                      className="mobile-action-btn secondary"
+                      className="mobile-action-btn primary"
                       onClick={handleMessageClick}
                     >
                       <ChatIcon />
-                      Message
+                      
                     </button>
-                    <button
-                      className="mobile-action-btn primary"
-                      onClick={handleConsultationClick}
-                    >
-                      Schedule Consultation
-                    </button>
-                  </>
+
+                                {/* Pay button for approved/accepted/interested bids */}
+                {(getBidStatus() === 'approved' || status === 'approved' || status === 'accepted' || status === 'interested') && (
+                  <button
+                    className="mobile-action-btn pay"
+                    onClick={handlePaymentClick}
+                  >
+                    Pay
+                  </button>
+                )}
+
+                {/* Consultation button for approved bids - only if Google Calendar is connected */}
+                {(getBidStatus() === 'approved' || status === 'approved' || status === 'accepted') && business_profiles?.google_calendar_connected && (
+                  <button
+                    className="mobile-action-btn secondary"
+                    onClick={handleConsultationClick}
+                  >
+                    Schedule Consultation
+                  </button>
                 )}
               </div>
             </div>
             
-            {/* Chat Section */}
-            <div className="mobile-bid-detail-section">
-              <div className="mobile-chat-header" onClick={toggleChatExpansion}>
-                <h4 className="mobile-section-title">Chat with Vendor</h4>
-                <div className={`mobile-chat-chevron ${isChatExpanded ? 'expanded' : ''}`}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+            {/* Payment Information - Only show for accepted, approved, or interested bids */}
+            {(status === 'accepted' || status === 'approved' || status === 'interested') && business_profiles?.amount && business_profiles?.down_payment_type && (
+              <div className="mobile-bid-detail-section">
+                <h4 className="mobile-section-title">Payment Information</h4>
+                <div className="mobile-payment-details">
+                  <div className="mobile-payment-item">
+                    <span>Down Payment Required:</span>
+                    <span className="mobile-payment-amount">
+                      {business_profiles.down_payment_type === 'percentage' 
+                        ? `${business_profiles.amount}% ($${getDownPaymentAmount().toFixed(2)})`
+                        : `$${business_profiles.amount}`
+                      }
+                    </span>
+                  </div>
+                  <div className="mobile-payment-item">
+                    <span>Remaining Balance:</span>
+                    <span className="mobile-payment-remaining">${getRemainingAmount()}</span>
+                  </div>
                 </div>
               </div>
-              
-              {isChatExpanded && (
-                <div className="mobile-chat-container">
-                  <div className="mobile-chat-body">
-                    {isLoadingChat ? (
-                      <div className="mobile-loading-chat">Loading chat...</div>
-                    ) : (
-                      <>
-                        {/* Bid description as first message */}
-                        <div className="mobile-message received">
-                          <div className="mobile-message-content">
-                            {description ? (
-                              <div 
-                                dangerouslySetInnerHTML={{ __html: description }}
-                                className="mobile-message-text"
-                              />
-                            ) : (
-                              "Thank you for your request! I'd love to help with your event. Here's what I'm offering:"
-                            )}
-                          </div>
-                        </div>
-                        
-                        {/* Existing chat messages */}
-                        {chatMessages.map((msg, index) => (
-                          <div
-                            key={index}
-                            className={`mobile-message ${msg.sender_id === currentUserId ? "sent" : "received"}`}
-                          >
-                            <div className="mobile-message-content">
-                              {msg.type === 'image' ? (
-                                <img 
-                                  src={msg.message} 
-                                  alt="Chat image" 
-                                  className="mobile-message-image"
-                                  onClick={() => {
-                                    setModalImageSrc(msg.message);
-                                    setShowImageModal(true);
-                                  }}
-                                />
-                              ) : msg.type === 'payment_request' ? (
-                                <div className="mobile-payment-request">
-                                  <div className="mobile-payment-request-header">
-                                    <FaCreditCard />
-                                    <span>Payment Request</span>
-                                  </div>
-                                  <div className="mobile-payment-request-amount">
-                                    ${msg.payment_amount || JSON.parse(msg.message).amount}
-                                  </div>
-                                </div>
-                              ) : (
-                                msg.message
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                    {isTyping && (
-                      <div className="mobile-typing-indicator">
-                        <span className="dot"></span>
-                        <span className="dot"></span>
-                        <span className="dot"></span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Mobile Message Input */}
-                  <div className="mobile-chat-input">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      style={{ display: "none" }}
-                      id="mobile-file-upload"
-                      onChange={handleFileUpload}
-                    />
-                    <label htmlFor="mobile-file-upload" className="mobile-file-upload">
-                      <FaPlus />
-                    </label>
-                    
-                    <input
-                      type="text"
-                      placeholder="Type a message..."
-                      value={newMessage}
-                      onChange={(e) => {
-                        setNewMessage(e.target.value);
-                        if (currentUserId && business_profiles?.id) {
-                          socket.emit("typing", { senderId: currentUserId, receiverId: business_profiles.id });
-                          
-                          if (typingTimeoutRef.current) {
-                            clearTimeout(typingTimeoutRef.current);
-                          }
-                          
-                          typingTimeoutRef.current = setTimeout(() => {
-                            socket.emit("stop_typing", { senderId: currentUserId, receiverId: business_profiles.id });
-                          }, 1000);
-                        }
-                      }}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && newMessage.trim()) {
-                          handleSendMessage(newMessage.trim());
-                        }
-                      }}
-                      className="mobile-message-input"
-                    />
-                    
-                    <button
-                      onClick={() => {
-                        if (newMessage.trim()) {
-                          handleSendMessage(newMessage.trim());
-                        }
-                      }}
-                      disabled={!newMessage.trim()}
-                      className="mobile-send-button"
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
+            
+            {/* Chat handled by separate messaging modal */}
 
 
-          </div>
-        </div>
+                                  </div>
+                                  </div>
       )}
 
       {/* Desktop Bid Row */}
       {!mobileDetailView && (
-        <div className="bid-row" onClick={handleMobileRowClick}>
+        <div className="bid-row" onClick={handleRowClick}>
           {/* New Tag */}
           {isNew && (
             <div className="bid-new-tag">
@@ -1277,186 +1061,30 @@ function BidDisplay({
           
           {/* Main Row Content */}
           <div className="bid-row-content">
-            {/* Left side - Business info */}
-            <div className="bid-row-left">
-              <div className="bid-row-profile">
-                <img
-                  src={profileImage}
-                  alt={`${business_profiles.business_name} profile`}
-                  className="bid-row-profile-img"
-                  onClick={handleProfileClick}
-                />
-                <div className="bid-row-info">
-                  <div className="bid-row-name">
-                    {business_profiles.business_name}
-                    {business_profiles.is_verified && (
-                      <div className="verified-check-container" style={{ display: 'inline-block', marginLeft: '8px', position:'unset'}}>
-                        <img src={Verified} alt="Verified" style={{ width: '16px', height: '16px', marginBottom: '4px' }} />
-                        <span className="verified-tooltip">
-                          This business is verified by Bidi. You will have a 100% money back guarantee if you pay through Bidi.
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {averageRating > 0 && (
-                    <div className="bid-row-rating">
-                      <img src={StarIcon} alt="Star" className="star-icon" />
-                      <span>
-                        {isLoadingReviews ? (
-                          <span style={{ color: '#9ca3af' }}>Loading...</span>
-                        ) : (
-                          `${averageRating} (${reviewCount} review${reviewCount !== 1 ? 's' : ''})`
-                        )}
-                      </span>
-                    </div>
-                  )}
-                  <div className="bid-row-time">{getTimeSinceCreated()}</div>
-                </div>
-              </div>
-              
-              <div className="bid-row-description">
-                {description ? (
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: description }}
-                    style={{ 
-                      lineHeight: '1.4',
-                      fontSize: '14px'
-                    }}
-                  />
-                ) : (
-                  <span style={{ color: '#6b7280', fontStyle: 'italic' }}>
-                    No description provided
-                  </span>
-                )}
-              </div>
-              
-              {renderPaymentInfo()}
-            </div>
-            
-            {/* Right side - Status and pricing */}
-            <div className="bid-row-right">
-              <div className="bid-row-status-section">
-                {renderStatusBadge()}
-                {renderExpirationInfo()}
-              </div>
-              
-              <div className="bid-row-price">
-                <span className="price-amount">${bid_amount}</span>
-                {tax_rate > 0 && (
-                  <span className="tax-info">+ {tax_rate}% tax</span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bid Detail Modal - Desktop Only */}
-      {showBidDetailModal && !mobileDetailView && (
-        <div className="bid-detail-modal-overlay" onClick={handleModalClose}>
-          <div className="bid-detail-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="bid-detail-modal-header">
-              <div className="bid-detail-header-left">
-                <div className="bid-amount-display">
-                  <span className="bid-amount-number">${bid_amount}</span>
-                </div>
-                <h3 style={{ marginBottom: '0px', paddingBottom: '0px', fontFamily:"Outfit", fontWeight: "600" }}>Bid Details</h3>
-              </div>
-              <div className="bid-detail-header-right">
-                {showActions && status === 'pending' && (
-                  <div className="bid-detail-header-actions">
-                    <button
-                      className="bid-row-btn bid-row-btn-success"
-                      onClick={() => handleApprove && handleApprove(bid.id)}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      className="bid-row-btn bid-row-btn-danger"
-                      onClick={handleDenyClick}
-                    >
-                      Deny
-                    </button>
-                  </div>
-                )}
-                
-                {/* Show payment options for approved/accepted bids or bids with payment info */}
-                {showActions && (status === 'approved' || status === 'accepted' || payment_type || payment_amount) && (
-                  <div className="bid-detail-header-actions">
-                    {payment_type === 'down_payment' && payment_amount ? (
-                      <>
-                        <button
-                          className="bid-row-btn bid-row-btn-primary"
-                          onClick={() => setShowPaymentModal(true)}
-                          style={{ marginRight: '8px' }}
-                        >
-                          Pay Down Payment (${payment_amount})
-                        </button>
-                        <button
-                          className="bid-row-btn bid-row-btn-success"
-                          onClick={() => setShowPaymentModal(true)}
-                        >
-                          Pay Full Amount (${bid_amount})
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        className="bid-row-btn bid-row-btn-success"
-                        onClick={() => setShowPaymentModal(true)}
-                      >
-                        Pay Full Amount (${bid_amount})
-                      </button>
-                    )}
-                  </div>
-                )}
-                
-                {/* Always show payment options if we have payment info, regardless of status */}
-                {showActions && !status && (payment_type || payment_amount) && (
-                  <div className="bid-detail-header-actions">
-                    <button
-                      className="bid-row-btn bid-row-btn-success"
-                      onClick={() => setShowPaymentModal(true)}
-                    >
-                      Payment Options
-                    </button>
-                  </div>
-                )}
-                
-                <button 
-                  className="bid-detail-modal-close"
-                  onClick={handleModalClose}
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-            
-            <div className="bid-detail-modal-content">
-              {/* Business Profile Section */}
-              <div className="bid-detail-section">
-                <h4>Business Information</h4>
-                <div className="business-profile-detail">
+            {/* Top Row - Business Info + Status & Price */}
+            <div className="bid-row-header">
+              <div className="bid-row-left">
+                <div className="bid-row-profile">
                   <img
                     src={profileImage}
                     alt={`${business_profiles.business_name} profile`}
-                    className="business-profile-img"
+                    className="bid-row-profile-img"
                     onClick={handleProfileClick}
                   />
-                  <div className="business-info">
-                    <h5 style={{ marginBottom: '0px', paddingBottom: '0px' }}>
+                  <div className="bid-row-info">
+                    <div className="bid-row-name">
                       {business_profiles.business_name}
-                      {/* Debug: {JSON.stringify({ is_verified: business_profiles.is_verified, business_id: business_profiles.id })} */}
                       {business_profiles.is_verified && (
-                        <div className="verified-check-container" style={{ display: 'inline-block', marginLeft: '8px' }}> 
+                        <div className="verified-check-container" style={{ display: 'inline-block', marginLeft: '8px', position:'unset'}}>
                           <img src={Verified} alt="Verified" style={{ width: '16px', height: '16px', marginBottom: '4px' }} />
                           <span className="verified-tooltip">
                             This business is verified by Bidi. You will have a 100% money back guarantee if you pay through Bidi.
                           </span>
                         </div>
                       )}
-                    </h5>
+                    </div>
                     {averageRating > 0 && (
-                      <div className="business-rating">
+                      <div className="bid-row-rating">
                         <img src={StarIcon} alt="Star" className="star-icon" />
                         <span>
                           {isLoadingReviews ? (
@@ -1467,258 +1095,74 @@ function BidDisplay({
                         </span>
                       </div>
                     )}
-                  </div>
-                  <div className="business-profile-actions">
-                    <button
-                      className="bid-row-btn bid-row-btn-secondary"
-                      onClick={handleProfileClick}
-                    >
-                      View Profile
-                    </button>
+                    <div className="bid-row-time">{getTimeSinceCreated()}</div>
                   </div>
                 </div>
               </div>
-
-
-
-              {/* Payment Information */}
-              {payment_amount && payment_type === 'down_payment' && (
-                <div className="bid-detail-section">
-                  <h4>Payment Information</h4>
-                  <div className="payment-details">
-                    <div className="payment-item">
-                      <span>Down Payment Required:</span>
-                      <span className="payment-amount">${payment_amount}</span>
-                    </div>
-                    <div className="payment-item">
-                      <span>Remaining Balance:</span>
-                      <span className="payment-remaining">${getRemainingAmount()}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-
-
-              {/* Messenger Section */}
-              <div className="bid-detail-section">
-                <div className="chat-header" onClick={toggleChatExpansion}>
-                  <h4>Chat with Vendor</h4>
-                  <div className={`chat-chevron ${isChatExpanded ? 'expanded' : ''}`}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
+              
+              {/* Right side - Status and pricing in top right */}
+              <div className="bid-row-right-mobile">
+                <div className="bid-row-status-section">
+                  {renderStatusBadge()}
+                  {renderExpirationInfo()}
                 </div>
                 
-                {isChatExpanded && (
-                  <>
-                    <div className="chat-window" style={{ height: '400px', overflowY: 'auto' }}>
-                      <div className="chat-body" style={{ height: '400px', overflowY: 'auto' }}>
-                        {isLoadingChat ? (
-                          <div style={{ textAlign: 'center', color: '#6b7280', padding: '20px' }}>
-                            Loading chat...
-                          </div>
-                        ) : (
-                          <>
-                            {/* Always show bid description as first message */}
-                            <div className="message-bubble received">
-                              <div>
-                                {description ? (
-                                  <div 
-                                    dangerouslySetInnerHTML={{ __html: description }}
-                                    style={{ 
-                                      lineHeight: '1.5',
-                                      fontSize: '14px'
-                                    }}
-                                  />
-                                ) : (
-                                  "Thank you for your request! I'd love to help with your event. Here's what I'm offering:"
-                                )}
-                              </div>
-                              <div className="message-time">
-                                {new Date().toLocaleTimeString('en-US', {
-                                  hour: 'numeric',
-                                  minute: '2-digit',
-                                  hour12: true,
-                                  timeZone: 'America/Denver'
-                                })}
-                              </div>
-                            </div>
-                            
-                            {/* Show existing chat messages after bid description */}
-                            {chatMessages.map((msg, index) => (
-                              <div
-                                key={index}
-                                className={`message-bubble ${msg.sender_id === currentUserId ? "sent" : "received"}`}
-                              >
-                                <div>
-                                  {msg.type === 'image' ? (
-                                    <img 
-                                      src={msg.message} 
-                                      alt="Chat image" 
-                                      className="chat-image"
-                                      onClick={() => {
-                                        setModalImageSrc(msg.message);
-                                        setShowImageModal(true);
-                                      }}
-                                      style={{ 
-                                        maxWidth: '200px', 
-                                        maxHeight: '200px', 
-                                        cursor: 'pointer',
-                                        borderRadius: '8px'
-                                      }} 
-                                    />
-                                  ) : msg.type === 'payment_request' ? (
-                                    <div className="payment-request-message">
-                                          <div className="payment-request-header">
-                                            <FaCreditCard />
-                                            <span>Payment Request</span>
-                                          </div>
-                                          <div className="payment-request-amount">
-                                            ${msg.payment_amount || JSON.parse(msg.message).amount}
-                                          </div>
-                                          <div className="payment-request-description">
-                                            {msg.payment_data?.description || JSON.parse(msg.message).description}
-                                          </div>
-                                          {msg.payment_data?.lineItems && (
-                                            <div className="payment-request-line-items">
-                                              {msg.payment_data.lineItems.map((item, idx) => (
-                                                <div key={idx} className="payment-line-item">
-                                                  <span>{item.description}</span>
-                                                  <span>${item.amount}</span>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          )}
-                                          {msg.payment_data?.tax > 0 && (
-                                            <div className="payment-request-tax">
-                                              Tax ({msg.payment_data.taxRate}%): ${msg.payment_data.tax}
-                                            </div>
-                                          )}
-                                          <div className="payment-request-total">
-                                            Total: ${msg.payment_amount || JSON.parse(msg.message).amount}
-                                          </div>
-                                      </div>
-                                  ) : (
-                                    msg.message
-                                  )}
-                                </div>
-                                <div className="message-time">
-                                  {new Date(msg.created_at).toLocaleTimeString('en-US', {
-                                    hour: 'numeric',
-                                    minute: '2-digit',
-                                    hour12: true,
-                                    timeZone: 'America/Denver'
-                                  })}
-                                  {msg.sender_id === currentUserId && (
-                                    <span className="seen-indicator">
-                                      {msg.seen ? "✓✓" : "✓"}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </>
-                        )}
-                        {isTyping && (
-                          <div className="typing-indicator">
-                            <span className="dot"></span>
-                            <span className="dot"></span>
-                            <span className="dot"></span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Message Input */}
-                    <footer className="chat-footer" style={{ marginTop: 16, marginBottom: '0px' }}>
-                  <div className="chat-upload-container">
-                    <label htmlFor="file-upload" className="chat-upload-btn">
-                      <span>＋</span>
-                      <input
-                        id="file-upload"
-                        type="file"
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={handleFileUpload}
-                      />
-                    </label>
-                    {stripeAccountId && (
-                      <button 
-                        className="chat-payment-btn"
-                        onClick={() => setShowPaymentModal(true)}
-                        title="Send Payment Request"
-                      >
-                        <FaCreditCard />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="chat-input-wrapper">
-                    {previewImageUrl && (
-                      <div className="inline-image-preview">
-                        <img src={previewImageUrl} alt="Preview" />
-                        <button className="inline-remove-button" onClick={() => {
-                          setPreviewImageUrl(null);
-                          setPendingFile(null);
-                        }}>×</button>
-                      </div>
-                    )}
-                    <textarea
-                      className="chat-input"
-                      placeholder="Add a message…"
-                      value={newMessage}
-                      onChange={(e) => {
-                        setNewMessage(e.target.value);
-                        // Auto-resize the textarea
-                        e.target.style.height = 'auto';
-                        e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-                        
-                        // Emit typing indicator
-                        if (currentUserId && business_profiles?.id) {
-                          socket.emit("typing", { senderId: currentUserId, receiverId: business_profiles.id });
-                          
-                          if (typingTimeoutRef.current) {
-                            clearTimeout(typingTimeoutRef.current);
-                          }
-                          
-                          typingTimeoutRef.current = setTimeout(() => {
-                            socket.emit("stop_typing", { senderId: currentUserId, receiverId: business_profiles.id });
-                          }, 1500);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage(newMessage);
-                          // Reset textarea height after sending
-                          e.target.style.height = 'auto';
-                        }
-                      }}
-                      rows={1}
-                      style={{ resize: 'none', overflow: 'hidden' }}
-                    />
-                  </div>
-
-                  <button 
-                    className="chat-send-btn" 
-                    onClick={() => {
-                      if (newMessage.trim() || pendingFile) {
-                        handleSendMessage(newMessage);
-                      }
-                    }}
-                  >
-                    Send
-                  </button>
-                </footer>
-                  </>
-                )}
+                <div className="bid-row-price">
+                  <span className="price-amount">${bid_amount}</span>
+                  {tax_rate > 0 && (
+                    <span className="tax-info">+ {tax_rate}% tax</span>
+                  )}
+                </div>
               </div>
             </div>
+
+            {/* Description Row */}
+            <div className="bid-row-description">
+              {description ? (
+                <div>
+                  <div 
+                    dangerouslySetInnerHTML={{ 
+                      __html: shouldTruncateDescription(description) 
+                        ? getTruncatedDescription(description) 
+                        : description 
+                    }}
+                    style={{ 
+                      lineHeight: '1.4',
+                      fontSize: '14px'
+                    }}
+                  />
+                  {shouldTruncateDescription(description) && (
+                    <button 
+                      className="description-toggle-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMessageClick(e);
+                      }}
+                    >
+                      View more
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <span style={{ color: '#6b7280', fontStyle: 'italic' }}>
+                  No description provided
+                </span>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            {showActions && (
+              <div className="bid-row-actions">
+                {renderActionButtons()}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+                        </div>
+                      )}
+
+
+
+
 
 
 
@@ -1755,20 +1199,37 @@ function BidDisplay({
             </div>
             <div className="payment-modal-content">
               <div className="payment-options">
-                {payment_type === 'down_payment' && payment_amount ? (
+                {business_profiles?.amount && business_profiles?.down_payment_type ? (
                   <>
-                    <div className="payment-option">
-                      <h4>Down Payment</h4>
-                      <p className="payment-amount">${payment_amount}</p>
-                      <p className="payment-description">Secure your booking with a partial payment</p>
+                                 <div className="payment-option">
+               <h4>Down Payment</h4>
+               <p className="payment-amount">
+                 {business_profiles.down_payment_type === 'percentage' 
+                   ? `${business_profiles.amount*100}% ($${getDownPaymentAmount().toFixed(2)})`
+                   : `$${business_profiles.amount}`
+                 }
+               </p>
+               <p className="payment-description">
+                 {downPaymentMade
+                   ? "Down payment has already been made"
+                   : "Secure your booking with a partial payment"
+                 }
+               </p>
                       <button 
                         className="payment-option-btn primary"
+                        style={{backgroundColor: '#9633eb'}}
+                        disabled={downPaymentMade}
                         onClick={() => {
-                          toast.info(`Processing down payment of $${payment_amount}...`);
-                          setShowPaymentModal(false);
+                          if (!downPaymentMade) {
+                            toast.info(`Processing down payment of ${business_profiles.down_payment_type === 'percentage' 
+                              ? `${business_profiles.amount}% ($${getDownPaymentAmount().toFixed(2)})`
+                              : `$${business_profiles.amount}`
+                            }...`);
+                            setShowPaymentModal(false);
+                          }
                         }}
                       >
-                        Pay Down Payment
+                        {downPaymentMade ? "Already Paid" : "Pay Down Payment"}
                       </button>
                     </div>
                     <div className="payment-option">
@@ -1777,6 +1238,7 @@ function BidDisplay({
                       <p className="payment-description">Pay the complete amount upfront</p>
                       <button 
                         className="payment-option-btn success"
+                        style={{backgroundColor: '#ec4899'}}
                         onClick={() => {
                           toast.info(`Processing full payment of $${bid_amount}...`);
                           setShowPaymentModal(false);

@@ -19,6 +19,13 @@ function RequestDisplayMini({
     locationMatch = null,
     serviceMatch = null
 }) {
+    // Debug: Log the request object to see what we're receiving
+    console.log('RequestDisplayMini received request:', {
+        id: request.id,
+        bid_count: request.bid_count,
+        bid_count_type: typeof request.bid_count,
+        title: request.event_title || request.title
+    });
     const [timeLeft, setTimeLeft] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     
@@ -288,9 +295,31 @@ function RequestDisplayMini({
                         color: '#6b7280',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        marginBottom: '2px'
                     }}>
                         {request.event_type || request.service_category || 'Service Request'}
+                    </div>
+                    <div style={{
+                        fontSize: isSmallMobile ? '11px' : '12px',
+                        color: '#9ca3af',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                    }}>
+                        <i className="fas fa-gavel" style={{ fontSize: '10px' }}></i>
+                        <span>
+                            {/* Debug: Log what we're about to display */}
+                            {(() => {
+                                console.log('About to display bid count for request', request.id, ':', {
+                                    bid_count: request.bid_count,
+                                    bid_count_type: typeof request.bid_count,
+                                    fallback: request.bid_count || 0
+                                });
+                                return request.bid_count || 0;
+                            })()} 
+                            bid{request.bid_count !== 1 ? 's' : ''}
+                        </span>
                     </div>
                 </div>
                     </div>

@@ -206,7 +206,7 @@ const MediaItem = ({ item, index, onImageClick }) => {
     );
 };
 
-const Portfolio = ({ businessId: propBusinessId }) => {
+const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null }) => {
   const { businessId: paramBusinessId } = useParams();
   const businessId = propBusinessId || paramBusinessId;
   const navigate = useNavigate();
@@ -1072,6 +1072,14 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     });
   };
 
+  const handleGalleryClick = () => {
+    if (onOpenGallery) {
+      onOpenGallery(business);
+    } else {
+      navigate(`/portfolio/${businessId}/${business.business_name}/gallery`);
+    }
+  };
+
   // Add SEO title and description
   const getSeoTitle = () => {
     if (!business) return 'Vendor Portfolio | Bidi';
@@ -1350,7 +1358,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
               <div className="mobile-gallery-button-container">
                 <button
                   className="see-all-button mobile"
-                  onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
+                  onClick={handleGalleryClick}
                 >
                   View Gallery
                 </button>
@@ -1450,7 +1458,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 {portfolioVideos.length + portfolioPics.length > 0 && (
                   <button
                     className="see-all-button"
-                    onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
+                    onClick={handleGalleryClick}
                   >
                     View Gallery
                   </button>
@@ -1463,7 +1471,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
               <div className="portfolio-grid">
                 <button
                   className="see-all-button"
-                  onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
+                  onClick={handleGalleryClick}
                 >
                   View Gallery
                 </button>

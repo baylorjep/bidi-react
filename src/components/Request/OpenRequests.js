@@ -119,68 +119,38 @@ function OpenRequests({ onMessageClick }) {
     try {
       console.log('Fetching bid counts...');
       
-      // First, let's check if there are any bids at all
-      const { data: allBids, error: allBidsError } = await supabase
+      // Get ALL bids without any filtering to see what's there
+      const { data: allBidsData, error: allBidsError } = await supabase
         .from("bids")
-        .select("id, request_id, user_id, category, hidden")
-        .limit(10);
+        .select("request_id, id, user_id, category");
 
       if (allBidsError) {
         console.error("Error fetching all bids:", allBidsError);
-      } else {
-        console.log('Sample of all bids in database:', allBids);
-        console.log('Total bids in database:', allBids?.length || 0);
-      }
-      
-      // Also check total count
-      const { count: totalBidCount, error: countError } = await supabase
-        .from("bids")
-        .select("*", { count: 'exact', head: true });
-
-      if (countError) {
-        console.error("Error counting bids:", countError);
-      } else {
-        console.log('Total bids in database (count):', totalBidCount);
-      }
-      
-      // First, let's get ALL bids without any filtering to see what's there
-      const { data: allBidsUnfiltered, error: allBidsUnfilteredError } = await supabase
-        .from("bids")
-        .select("request_id, id, user_id, category, hidden")
-        .limit(50);
-
-      if (allBidsUnfilteredError) {
-        console.error("Error fetching all bids (unfiltered):", allBidsUnfilteredError);
-      } else {
-        console.log('All bids (unfiltered):', allBidsUnfiltered);
-        console.log('Total unfiltered bids:', allBidsUnfiltered?.length || 0);
-        setAllBidsUnfiltered(allBidsUnfiltered || []);
-      }
-
-      const { data: bidCountsData, error } = await supabase
-        .from("bids")
-        .select("request_id, id, user_id, category, hidden")
-        .not("hidden", "eq", true);
-
-      if (error) {
-        console.error("Error fetching bid counts:", error);
         return;
       }
 
-      console.log('Raw bid data (not hidden):', bidCountsData);
-      console.log('Total bids found:', bidCountsData?.length || 0);
+      console.log('All bids data:', allBidsData);
+      console.log('Total bids found:', allBidsData?.length || 0);
 
+      // Process the bid counts
       const counts = {};
-      bidCountsData.forEach(bid => {
-        const requestId = bid.request_id;
-        if (requestId) {
-          counts[requestId] = (counts[requestId] || 0) + 1;
-        }
-      });
+      if (allBidsData && allBidsData.length > 0) {
+        allBidsData.forEach(bid => {
+          const requestId = bid.request_id;
+          if (requestId) {
+            // Log the data types for debugging
+            console.log(`Bid ${bid.id}: request_id = ${requestId} (type: ${typeof requestId})`);
+            counts[requestId] = (counts[requestId] || 0) + 1;
+          }
+        });
+      }
 
       console.log('Processed bid counts:', counts);
       console.log('Unique request IDs with bids:', Object.keys(counts));
+      console.log('Sample counts:', Object.entries(counts).slice(0, 5));
+      
       setBidCounts(counts);
+      setAllBidsUnfiltered(allBidsData || []);
     } catch (error) {
       console.error("Error in fetchBidCounts:", error);
     }
@@ -490,6 +460,20 @@ function OpenRequests({ onMessageClick }) {
           console.log('All Requests:', allRequests);
           console.log('Total requests fetched:', allRequests.length);
           console.log('Sample request IDs:', allRequests.slice(0, 5).map(r => ({ id: r.id, type: r.service_category, title: r.service_title })));
+          
+          // Debug: Show the actual request IDs and their types
+          if (allRequests.length > 0) {
+            console.log('=== REQUEST ID DEBUGGING ===');
+            allRequests.slice(0, 10).forEach((req, index) => {
+              console.log(`Request ${index + 1}:`, {
+                id: req.id,
+                id_type: typeof req.id,
+                service_category: req.service_category,
+                title: req.service_title || req.event_title
+              });
+            });
+          }
+          
           setOpenRequests(allRequests);
           setOpenPhotoRequests([]);
           return;
@@ -613,6 +597,20 @@ function OpenRequests({ onMessageClick }) {
         // Combine all requests
         const allRequests = [...photoVideoRequests, ...otherRequests];
         
+        // Debug: Show the actual request IDs and their types for non-admin users
+        if (allRequests.length > 0) {
+          console.log('=== NON-ADMIN REQUEST ID DEBUGGING ===');
+          allRequests.slice(0, 10).forEach((req, index) => {
+            console.log(`Request ${index + 1}:`, {
+              id: req.id,
+              id_type: typeof req.id,
+              service_category: req.service_category,
+              title: req.service_title || req.event_title,
+              table_name: req.table_name
+            });
+          });
+        }
+        
         // Set the appropriate state based on whether we have photo/video categories
         if (photoVideoCategories.length > 0) {
           setOpenPhotoRequests(allRequests);
@@ -630,16 +628,13 @@ function OpenRequests({ onMessageClick }) {
       }
     };
 
-    fetchRequests();
-    
-    // Fetch vendor interests and bid counts after requests are loaded
-    console.log('About to call fetchBidCounts, businessId:', businessId);
-    if (businessId) {
+    // Fetch requests first, then bid counts to ensure proper order
+    fetchRequests().then(() => {
+      // Always fetch bid counts - they're needed for all users including admins
+      console.log('About to call fetchBidCounts, businessId:', businessId);
       console.log('Calling fetchBidCounts...');
       fetchBidCounts();
-    } else {
-      console.log('No businessId, skipping fetchBidCounts');
-    }
+    });
   }, [businessCategories, isAdmin, businessId]);
 
   // Add debugging to see when the component mounts and what the values are
@@ -1370,17 +1365,35 @@ function OpenRequests({ onMessageClick }) {
           ).map((request) => {
             const bidCount = bidCounts[request.id] || 0;
             console.log(`Request ${request.id} (${request.event_title || request.title}) - bid count: ${bidCount}`);
+            console.log('Current bidCounts state:', bidCounts);
+            console.log('Request ID:', request.id, 'Type:', typeof request.id);
             
             // If bid count is 0, let's check if this request ID exists in the unfiltered bids
             if (bidCount === 0 && allBidsUnfiltered) {
               const matchingBids = allBidsUnfiltered.filter(bid => bid.request_id === request.id);
               console.log(`Request ${request.id} - found ${matchingBids.length} bids in unfiltered data:`, matchingBids);
+              
+              // Also check with string comparison
+              const matchingBidsString = allBidsUnfiltered.filter(bid => String(bid.request_id) === String(request.id));
+              console.log(`Request ${request.id} - found ${matchingBidsString.length} bids with string comparison:`, matchingBidsString);
+              
+              // Show sample bid request_ids for comparison
+              if (allBidsUnfiltered.length > 0) {
+                console.log('Sample bid request_ids:', allBidsUnfiltered.slice(0, 5).map(bid => ({
+                  bid_id: bid.id,
+                  request_id: bid.request_id,
+                  request_id_type: typeof bid.request_id
+                })));
+              }
             }
             
             return (
               <RequestDisplayMini
                 key={request.id}
-                request={request}
+                request={{
+                  ...request,
+                  bid_count: bidCount
+                }}
                 isPhotoRequest={request.service_category === "photography"}
                 onHide={() => hideRequest(request.id, getTableName(request))}
                 onShow={() => showRequest(request.id, getTableName(request))}
