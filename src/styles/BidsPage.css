@@ -2427,6 +2427,37 @@
   transform: translateY(-1px);
 }
 
+/* Payment Summary Styles */
+.payment-summary {
+  margin-bottom: 16px;
+}
+
+.payment-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.payment-breakdown span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.payment-breakdown .remaining-amount {
+  font-weight: 600;
+  color: #dc2626;
+  font-size: 16px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
 .cancel-btn {
   padding: 10px 20px;
   border: 1px solid #d1d5db;

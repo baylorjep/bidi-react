@@ -99,36 +99,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
+  color: #6b7280;
+  transition: all 0.2s;
 }
 
 .bdm-back-btn:hover,
 .bdm-close-btn:hover {
   background: #f3f4f6;
+  color: #374151;
 }
 
-.bdm-back-btn {
-  color: #6b7280;
+.bdm-back-btn svg,
+.bdm-close-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
-.bdm-close-btn {
-  color: #9ca3af;
-}
-
-/* Status Badge */
+/* Status Badges */
 .bdm-status-badge {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 12px;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .bdm-status-badge.approved {
-  background: #d1fae5;
-  color: #065f46;
+  background: #dcfce7;
+  color: #166534;
 }
 
 .bdm-status-badge.pending {
@@ -142,23 +144,27 @@
 }
 
 .bdm-status-badge svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 /* Content */
 .bdm-content {
   flex: 1;
   overflow-y: auto;
-  padding: 0 16px 16px;
+  padding: 16px;
 }
 
 .bdm-section {
   margin-bottom: 24px;
 }
 
+.bdm-section:last-child {
+  margin-bottom: 0;
+}
+
 .bdm-section h4 {
-  margin: 0 0 12px;
+  margin: 0 0 12px 0;
   font-size: 16px;
   font-weight: 600;
   color: #111827;
@@ -168,37 +174,34 @@
 .bdm-business-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: #f9fafb;
-  border-radius: 12px;
+  gap: 16px;
 }
 
 .bdm-business-avatar {
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid #e5e7eb;
 }
 
 .bdm-business-avatar-clickable {
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s;
 }
 
 .bdm-business-avatar-clickable:hover {
+  border-color: #3b82f6;
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .bdm-business-info {
   flex: 1;
-  min-width: 0;
 }
 
 .bdm-business-name {
-  margin: 0 0 4px;
-  font-size: 16px;
+  margin: 0 0 4px 0;
+  font-size: 18px;
   font-weight: 600;
   color: #111827;
   display: flex;
@@ -210,17 +213,18 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  padding: 2px 6px;
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #0ea5e9;
 }
 
 .bdm-verified-badge img {
-  width: 16px;
-  height: 16px;
-}
-
-.bdm-verified-badge span {
-  font-size: 12px;
-  color: #059669;
-  font-weight: 500;
+  width: 12px;
+  height: 12px;
 }
 
 .bdm-business-time {
@@ -230,99 +234,146 @@
 
 .bdm-bid-amount {
   text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 .bdm-amount {
   font-size: 24px;
   font-weight: 700;
+  color: #059669;
+}
+
+/* Payment Status Indicator */
+.bdm-payment-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #dcfce7;
+  border: 1px solid #16a34a;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #166534;
+}
+
+.bdm-payment-status-indicator svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Payment Status Section */
+.bdm-payment-status {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.bdm-payment-status-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bdm-payment-status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bdm-payment-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.bdm-payment-amount {
+  font-size: 16px;
+  font-weight: 600;
   color: #111827;
+}
+
+.bdm-payment-amount.paid {
+  color: #059669;
+}
+
+.bdm-payment-date {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.bdm-payment-remaining {
+  font-size: 16px;
+  font-weight: 600;
+  color: #dc2626;
 }
 
 /* Description */
 .bdm-description {
-  color: #374151;
   line-height: 1.6;
-}
-
-.bdm-description p {
-  margin: 0 0 12px;
-}
-
-.bdm-description p:last-child {
-  margin-bottom: 0;
+  color: #374151;
 }
 
 /* Breakdown */
 .bdm-breakdown {
   background: #f9fafb;
-  border-radius: 12px;
-  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .bdm-line-item {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-}
-
-.bdm-line-item:not(.bdm-total):not(.bdm-subtotal):not(.bdm-tax) {
+  align-items: center;
+  padding: 12px 16px;
   border-bottom: 1px solid #e5e7eb;
 }
 
 .bdm-line-item:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .bdm-line-item-description {
-  flex: 1;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .bdm-item-name {
-  display: block;
   font-weight: 500;
   color: #111827;
-  margin-bottom: 2px;
 }
 
 .bdm-item-details {
-  font-size: 14px;
+  font-size: 12px;
   color: #6b7280;
 }
 
 .bdm-line-item-amount {
   font-weight: 600;
   color: #111827;
-  white-space: nowrap;
-  margin-left: 16px;
 }
 
-/* Special line item styles */
 .bdm-subtotal {
-  border-top: 1px solid #d1d5db;
-  margin-top: 8px;
-  padding-top: 12px;
+  background: #f3f4f6;
+  font-weight: 600;
 }
 
 .bdm-tax {
-  margin-bottom: 8px;
+  background: #f3f4f6;
+  font-weight: 600;
 }
 
 .bdm-total {
-  border-top: 2px solid #111827;
-  margin-top: 8px;
-  padding-top: 12px;
+  background: #e5e7eb;
   font-weight: 700;
-}
-
-.bdm-total .bdm-item-name,
-.bdm-total .bdm-line-item-amount {
   font-size: 18px;
-  font-weight: 700;
-  color: #111827;
+  color: #059669;
 }
 
 /* Actions */
@@ -330,35 +381,33 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 16px;
+  padding-top: 16px;
   border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
-  margin: 0 -16px -16px;
 }
 
 .bdm-btn {
-  flex: 1;
-  min-width: 120px;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  transition: all 0.2s ease;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  justify-content: center;
+  min-width: 120px;
 }
 
 .bdm-btn:hover {
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.bdm-btn svg {
-  width: 16px;
-  height: 16px;
+.bdm-btn:active {
+  transform: translateY(0);
 }
 
 .bdm-btn-success {
@@ -380,12 +429,12 @@
 }
 
 .bdm-btn-pay {
-  background: #ec4899;
+  background: #3b82f6;
   color: white;
 }
 
 .bdm-btn-pay:hover {
-  background: #db2777;
+  background: #2563eb;
 }
 
 .bdm-btn-secondary {
@@ -396,30 +445,57 @@
 
 .bdm-btn-secondary:hover {
   background: #e5e7eb;
+  border-color: #9ca3af;
 }
 
-/* Mobile specific adjustments */
+.bdm-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Mobile specific styles */
 @media (max-width: 768px) {
+  .bdm-content {
+    padding: 16px;
+  }
+  
   .bdm-actions {
     flex-direction: column;
   }
   
   .bdm-btn {
     width: 100%;
-    min-height: 48px;
   }
   
   .bdm-business-profile {
-    padding: 12px;
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
   }
   
-  .bdm-amount {
-    font-size: 20px;
+  .bdm-bid-amount {
+    text-align: center;
+    align-items: center;
+  }
+  
+  .bdm-payment-status-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
 }
 
-/* Smooth scrolling */
-.bdm-content {
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+/* Desktop specific styles */
+@media (min-width: 769px) {
+  .bdm-content {
+    padding: 24px;
+  }
+  
+  .bdm-actions {
+    justify-content: flex-start;
+  }
+  
+  .bdm-btn {
+    min-width: 140px;
+  }
 }

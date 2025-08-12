@@ -96,6 +96,10 @@ function parseLocalDate(dateString) {
 }
 
 function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId = null }) {
+    console.log('=== SlidingBidModal rendered ===');
+    console.log('requestId prop:', requestId);
+    console.log('requestId type:', typeof requestId);
+    
     const [requestDetails, setRequestDetails] = useState(null);
     const [requestType, setRequestType] = useState('');
     const [bidAmount, setBidAmount] = useState('');
@@ -140,8 +144,17 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Monitor requestType changes
+    useEffect(() => {
+        console.log('=== requestType state changed ===');
+        console.log('New requestType value:', requestType);
+        console.log('New requestType type:', typeof requestType);
+    }, [requestType]);
+
     useEffect(() => {
         if (isOpen && requestId) {
+            console.log('=== Modal opened, fetching details ===');
+            console.log('Current requestType state:', requestType);
             fetchRequestDetails();
             fetchStripeStatus();
             if (editMode && bidId) {
@@ -158,6 +171,10 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
     }, [isOpen, requestId, editMode, bidId]);
 
     const fetchRequestDetails = async () => {
+        console.log('=== fetchRequestDetails called ===');
+        console.log('requestId:', requestId);
+        console.log('requestId type:', typeof requestId);
+        
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
@@ -176,6 +193,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
         let foundData = null;
 
         for (const table of requestTables) {
+            console.log(`Checking table: ${table.name}`);
             const { data, error } = await supabase
                 .from(table.name)
                 .select('*')
@@ -183,13 +201,18 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                 .single();
 
             if (data && !error) {
+                console.log(`Found request in table: ${table.name}`);
+                console.log('Request data:', data);
                 foundTable = table.name;
                 foundData = data;
                 break;
+            } else if (error) {
+                console.log(`Error checking ${table.name}:`, error);
             }
         }
 
         if (foundTable && foundData) {
+            console.log(`Setting requestType to: ${foundTable}`);
             setRequestDetails({ ...foundData, table_name: foundTable });
             setRequestType(foundTable);
 
@@ -204,6 +227,9 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                     setServicePhotos(photos);
                 }
             }
+        } else {
+            console.log('No request found in any table');
+            console.log('requestId searched for:', requestId);
         }
     };
 
@@ -472,7 +498,14 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                 'wedding_planning_requests': 'Wedding Planning'
             };
 
+            console.log('=== Category Mapping Debug ===');
+            console.log('requestType:', requestType);
+            console.log('requestType type:', typeof requestType);
+            console.log('categoryMap keys:', Object.keys(categoryMap));
+            console.log('categoryMap[requestType]:', categoryMap[requestType]);
+
             const category = categoryMap[requestType] || 'General';
+            console.log('Final category:', category);
 
             // Prepare bid data with itemized quote information
             const bidData = {
@@ -489,6 +522,12 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                 bidData.request_id = requestId;
                 bidData.user_id = user.id;
                 bidData.category = category;
+                
+                console.log('=== Creating new bid ===');
+                console.log('bidData.request_id:', bidData.request_id);
+                console.log('bidData.user_id:', bidData.user_id);
+                console.log('bidData.category:', bidData.category);
+                console.log('Full bidData:', bidData);
             }
 
             // Add itemized quote data if enabled

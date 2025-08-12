@@ -20,12 +20,12 @@ function RequestDisplayMini({
     serviceMatch = null
 }) {
     // Debug: Log the request object to see what we're receiving
-    console.log('RequestDisplayMini received request:', {
-        id: request.id,
-        bid_count: request.bid_count,
-        bid_count_type: typeof request.bid_count,
-        title: request.event_title || request.title
-    });
+    // console.log('RequestDisplayMini received request:', {
+    //     id: request.id,
+    //     bid_count: request.bid_count,
+    //     bid_count_type: typeof request.bid_count,
+    //     title: request.event_title || request.title
+    // });
     const [timeLeft, setTimeLeft] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     
@@ -259,9 +259,9 @@ function RequestDisplayMini({
                 display: 'flex',
                 alignItems: 'center',
                 gap: isMobile ? '12px' : '16px',
-                flex: isMobile ? 'none' : '1',
-                minWidth: isMobile ? 'auto' : '250px',
-                width: isMobile ? '100%' : 'auto'
+                flex: isMobile ? 'none' : '0 0 280px',
+                minWidth: isMobile ? 'auto' : '280px',
+                width: isMobile ? '100%' : '280px'
             }}>
                 <div style={{
                     width: isSmallMobile ? '36px' : '40px',
@@ -285,8 +285,9 @@ function RequestDisplayMini({
                         marginBottom: '4px',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        whiteSpace: isMobile ? 'normal' : 'nowrap',
-                        lineHeight: isMobile ? '1.3' : 'normal'
+                        whiteSpace: 'normal',
+                        lineHeight: '1.3',
+                        wordWrap: 'break-word'
                     }}>
                         {getTitle()}
                     </div>
@@ -295,8 +296,10 @@ function RequestDisplayMini({
                         color: '#6b7280',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        marginBottom: '2px'
+                        whiteSpace: 'normal',
+                        marginBottom: '2px',
+                        lineHeight: '1.2',
+                        wordWrap: 'break-word'
                     }}>
                         {request.event_type || request.service_category || 'Service Request'}
                     </div>
@@ -309,15 +312,7 @@ function RequestDisplayMini({
                     }}>
                         <i className="fas fa-gavel" style={{ fontSize: '10px' }}></i>
                         <span>
-                            {/* Debug: Log what we're about to display */}
-                            {(() => {
-                                console.log('About to display bid count for request', request.id, ':', {
-                                    bid_count: request.bid_count,
-                                    bid_count_type: typeof request.bid_count,
-                                    fallback: request.bid_count || 0
-                                });
-                                return request.bid_count || 0;
-                            })()} 
+                            {request.bid_count || 0} 
                             bid{request.bid_count !== 1 ? 's' : ''}
                         </span>
                     </div>
@@ -354,7 +349,9 @@ function RequestDisplayMini({
                                 fontWeight: '500',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
+                                whiteSpace: 'normal',
+                                wordWrap: 'break-word',
+                                lineHeight: '1.2'
                             }}>
                                 {getDate()}
                             </span>
@@ -373,7 +370,9 @@ function RequestDisplayMini({
                                 fontWeight: '500',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
+                                whiteSpace: 'normal',
+                                wordWrap: 'break-word',
+                                lineHeight: '1.2'
                             }}>
                                 {request.price_range || request.budget_range || 'TBD'}
                             </span>
@@ -391,28 +390,36 @@ function RequestDisplayMini({
                             fontWeight: '500',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
+                            whiteSpace: 'normal',
+                            wordWrap: 'break-word',
+                            lineHeight: '1.2'
                         }}>
                             {request.location || 'TBD'}
                         </span>
                     </div>
                 </div>
             ) : (
-                /* Desktop: Horizontal layout */
+                /* Desktop: Horizontal layout with fixed widths */
                 <>
                     {/* Date Section */}
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        minWidth: '140px',
+                        flex: '0 0 160px',
+                        minWidth: '160px',
+                        maxWidth: '160px',
                         padding: '0 16px'
                     }}>
                         <i className="fas fa-calendar" style={{ color: '#6b7280', fontSize: '14px' }}></i>
                         <div style={{
                             fontSize: '14px',
                             color: '#374151',
-                            fontWeight: '500'
+                            fontWeight: '500',
+                            whiteSpace: 'normal',
+                            wordWrap: 'break-word',
+                            lineHeight: '1.2',
+                            overflow: 'hidden'
                         }}>
                             {getDate()}
                         </div>
@@ -423,7 +430,9 @@ function RequestDisplayMini({
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        minWidth: '120px',
+                        flex: '0 0 140px',
+                        minWidth: '140px',
+                        maxWidth: '140px',
                         padding: '0 16px'
                     }}>
                         <i className="fas fa-map-marker-alt" style={{ color: '#6b7280', fontSize: '14px' }}></i>
@@ -433,7 +442,9 @@ function RequestDisplayMini({
                             fontWeight: '500',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
+                            whiteSpace: 'normal',
+                            wordWrap: 'break-word',
+                            lineHeight: '1.2'
                         }}>
                             {request.location || 'TBD'}
                         </div>
@@ -444,14 +455,20 @@ function RequestDisplayMini({
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        minWidth: '120px',
+                        flex: '0 0 140px',
+                        minWidth: '140px',
+                        maxWidth: '140px',
                         padding: '0 16px'
                     }}>
                         <i className="fas fa-dollar-sign" style={{ color: '#6b7280', fontSize: '14px' }}></i>
                         <div style={{
                             fontSize: '14px',
                             color: '#374151',
-                            fontWeight: '500'
+                            fontWeight: '500',
+                            whiteSpace: 'normal',
+                            wordWrap: 'break-word',
+                            lineHeight: '1.2',
+                            overflow: 'hidden'
                         }}>
                             {request.price_range || request.budget_range || 'TBD'}
                         </div>
@@ -465,9 +482,11 @@ function RequestDisplayMini({
                 alignItems: isMobile ? 'flex-start' : 'center',
                 gap: '4px',
                 flexWrap: 'wrap',
-                minWidth: isMobile ? 'auto' : '120px',
+                flex: isMobile ? 'none' : '0 0 140px',
+                minWidth: isMobile ? 'auto' : '140px',
+                maxWidth: isMobile ? 'auto' : '140px',
                 padding: isMobile ? '0' : '0 16px',
-                width: isMobile ? '100%' : 'auto'
+                width: isMobile ? '100%' : '140px'
             }}>
                 {isNew(request.created_at) && (
                     <div style={{
@@ -548,9 +567,11 @@ function RequestDisplayMini({
                 display: 'flex',
                 alignItems: 'center',
                 gap: isMobile ? '6px' : '8px',
-                minWidth: isMobile ? 'auto' : '150px',
+                flex: isMobile ? 'none' : '0 0 180px',
+                minWidth: isMobile ? 'auto' : '180px',
+                maxWidth: isMobile ? 'auto' : '180px',
                 justifyContent: isMobile ? 'center' : 'flex-end',
-                width: isMobile ? '100%' : 'auto'
+                width: isMobile ? '100%' : '180px'
             }}>
                 <button 
                     style={{

@@ -28,6 +28,11 @@ const BidDetailModal = ({
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const navigate = useNavigate();
 
+  // Payment status state
+  const [downPaymentMade, setDownPaymentMade] = useState(false);
+  const [downPaymentAmount, setDownPaymentAmount] = useState(0);
+  const [downPaymentDate, setDownPaymentDate] = useState(null);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
@@ -48,9 +53,46 @@ const BidDetailModal = ({
     };
   }, [isOpen]);
 
+  // Check payment status when bid changes
+  useEffect(() => {
+    if (bid) {
+      // Check if down payment has been made
+      const hasDownPayment = bid.payment_amount && parseFloat(bid.payment_amount) > 0 &&
+        (bid.payment_type === 'down_payment' || bid.payment_status === 'down_payment_paid' || bid.status === 'paid');
+      
+      if (hasDownPayment) {
+        setDownPaymentMade(true);
+        setDownPaymentAmount(parseFloat(bid.payment_amount));
+        if (bid.paid_at) {
+          setDownPaymentDate(new Date(bid.paid_at));
+        }
+      } else {
+        setDownPaymentMade(false);
+        setDownPaymentAmount(0);
+        setDownPaymentDate(null);
+      }
+    }
+  }, [bid]);
+
   if (!bid || !isOpen) return null;
 
   const { business_profiles, bid_amount, bid_description, status, created_at, line_items, subtotal, tax, tax_rate } = bid;
+
+  // Calculate remaining amount
+  const getRemainingAmount = () => {
+    if (downPaymentMade && downPaymentAmount > 0) {
+      return Math.max(0, bid_amount - downPaymentAmount);
+    }
+    return bid_amount;
+  };
+
+  // Get database remaining amount if available
+  const getDatabaseRemainingAmount = () => {
+    if (bid.remaining_amount !== null && bid.remaining_amount !== undefined) {
+      return parseFloat(bid.remaining_amount);
+    }
+    return getRemainingAmount();
+  };
 
   // Calculate time since created
   const getTimeSinceCreated = () => {
@@ -242,7 +284,45 @@ const BidDetailModal = ({
               </div>
               <div className="bdm-bid-amount">
                 <span className="bdm-amount">${bid_amount}</span>
+                {downPaymentMade && (
+                  <div className="bdm-payment-status-indicator">
+                    <CheckCircleIcon />
+                    <span>Down Payment Paid</span>
+                  </div>
+                )}
               </div>
+            </div>
+          </div>
+
+          {/* Payment Status Section */}
+          <div className="bdm-section">
+            <h4>Payment Status</h4>
+            <div className="bdm-payment-status">
+              {downPaymentMade ? (
+                <div className="bdm-payment-status-row">
+                  <div className="bdm-payment-status-item">
+                    <span className="bdm-payment-label">Down Payment Made:</span>
+                    <span className="bdm-payment-amount paid">${downPaymentAmount.toFixed(2)}</span>
+                  </div>
+                  {downPaymentDate && (
+                    <div className="bdm-payment-status-item">
+                      <span className="bdm-payment-label">Paid On:</span>
+                      <span className="bdm-payment-date">{downPaymentDate.toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  <div className="bdm-payment-status-item">
+                    <span className="bdm-payment-label">Remaining Balance:</span>
+                    <span className="bdm-payment-remaining">${getDatabaseRemainingAmount().toFixed(2)}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="bdm-payment-status-row">
+                  <div className="bdm-payment-status-item">
+                    <span className="bdm-payment-label">Payment Required:</span>
+                    <span className="bdm-payment-amount">${bid_amount}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -339,7 +419,7 @@ const BidDetailModal = ({
                   onClick={() => onPayClick && onPayClick()}
                 >
                   <FaCreditCard />
-                  Pay
+                  {downPaymentMade ? 'Pay Remaining' : 'Pay'}
                 </button>
               )}
               

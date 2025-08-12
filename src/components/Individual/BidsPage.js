@@ -316,13 +316,73 @@ export default function BidsPage({ onOpenChat }) {
             });
         };
         
+        // Debug logging for payment status
+        const paidBids = requestBids.filter(bid => {
+            // Check multiple indicators of payment
+            const hasPaymentStatus = bid.status === 'paid' || 
+                                   bid.payment_status === 'down_payment_paid' || 
+                                   bid.payment_status === 'fully_paid' ||
+                                   bid.payment_status === 'paid';
+            
+            const hasPaymentAmount = bid.payment_amount && parseFloat(bid.payment_amount) > 0;
+            
+            // Also check for legacy fields that might exist
+            const hasLegacyPayment = bid.down_payment && parseFloat(bid.down_payment) > 0;
+            
+            return hasPaymentStatus || hasPaymentAmount || hasLegacyPayment;
+        });
+        
+        console.log('Payment status debug:', {
+            totalBids: requestBids.length,
+            paidBids: paidBids.length,
+            paidBidsDetails: paidBids.map(bid => ({
+                id: bid.id,
+                status: bid.status,
+                payment_status: bid.payment_status,
+                payment_type: bid.payment_type,
+                payment_amount: bid.payment_amount,
+                paid_at: bid.paid_at,
+                isExpired: bid.isExpired
+            }))
+        });
+        
+        // Log all bids to see their current status
+        console.log('All bids status:', requestBids.map(bid => ({
+            id: bid.id,
+            status: bid.status,
+            payment_status: bid.payment_status,
+            payment_type: bid.payment_type,
+            payment_amount: bid.payment_amount,
+            isExpired: bid.isExpired,
+            expiration_date: bid.expiration_date
+        })));
+
         return {
-            paid: sortBids(requestBids.filter(bid => bid.status === 'paid' && !bid.isExpired)),
+            // Paid bids should always be visible regardless of expiration status
+            paid: sortBids(paidBids),
+            
+            // Other statuses should only show non-expired bids
             approved: sortBids(requestBids.filter(bid => (bid.status === 'approved' || bid.status === 'accepted') && !bid.isExpired)),
             interested: sortBids(requestBids.filter(bid => bid.status === 'interested' && !bid.isExpired)),
             pending: sortBids(requestBids.filter(bid => bid.status === 'pending' && !bid.isExpired)),
             denied: sortBids(requestBids.filter(bid => bid.status === 'denied' && !bid.isExpired)),
-            expired: sortBids(requestBids.filter(bid => bid.isExpired)),
+            
+            // Expired bids should exclude any that are already paid
+            expired: sortBids(requestBids.filter(bid => {
+                if (!bid.isExpired) return false;
+                
+                // Check if this bid has any payment indicators
+                const hasPaymentStatus = bid.status === 'paid' || 
+                                       bid.payment_status === 'down_payment_paid' || 
+                                       bid.payment_status === 'fully_paid' ||
+                                       bid.payment_status === 'paid';
+                
+                const hasPaymentAmount = bid.payment_amount && parseFloat(bid.payment_amount) > 0;
+                const hasLegacyPayment = bid.down_payment && parseFloat(bid.down_payment) > 0;
+                
+                // Only show as expired if it has no payment indicators
+                return !hasPaymentStatus && !hasPaymentAmount && !hasLegacyPayment;
+            })),
         };
     };
 
@@ -701,6 +761,19 @@ export default function BidsPage({ onOpenChat }) {
             }
 
             if (bidsData) {
+                // Debug: Log the first bid to see what fields are available
+                if (bidsData.length > 0) {
+                    console.log('Sample bid data:', {
+                        id: bidsData[0].id,
+                        status: bidsData[0].status,
+                        payment_status: bidsData[0].payment_status,
+                        payment_type: bidsData[0].payment_type,
+                        payment_amount: bidsData[0].payment_amount,
+                        paid_at: bidsData[0].paid_at,
+                        remaining_amount: bidsData[0].remaining_amount
+                    });
+                }
+                
                 // Filter out hidden bids but keep expired ones
                 const validBids = bidsData.filter(bid => {
                     if (bid.hidden) return false; // Skip hidden bids
@@ -825,19 +898,30 @@ export default function BidsPage({ onOpenChat }) {
     const handlePayNow = (bid) => {
         console.log('BidsPage: handlePayNow called with bid:', bid);
         try {
+            // Calculate the amount to pay (remaining amount if down payment was made)
+            const remainingAmount = calculateRemainingAmount(bid);
+            const amountToPay = remainingAmount.type === 'remaining' ? remainingAmount.amount : bid.bid_amount;
+            const paymentType = remainingAmount.type === 'remaining' ? 'remaining' : 'full';
+            
             // Use Bidi's Stripe account if business doesn't have one
             const stripeAccountId = bid.business_profiles?.stripe_account_id || 'acct_1RqCsQJwWKKQQDV2';
             const isUsingBidiStripe = !bid.business_profiles?.stripe_account_id;
 
             const paymentData = {
                 bid_id: bid.id,
-                amount: bid.bid_amount,
+                amount: amountToPay,
                 stripe_account_id: stripeAccountId,
-                payment_type: 'full',
+                payment_type: paymentType,
                 business_name: bid.business_profiles?.business_name || 'Unknown Business',
                 description: isUsingBidiStripe ? 'Service payment (Processed by Bidi)' : (bid.message || 'Service payment'),
                 lineItems: bid.line_items || [],
-                taxRate: bid.tax_rate || 0
+                taxRate: bid.tax_rate || 0,
+                // Add payment context for remaining payments
+                payment_context: remainingAmount.type === 'remaining' ? {
+                    total_bid_amount: bid.bid_amount,
+                    already_paid: remainingAmount.alreadyPaid,
+                    remaining_amount: remainingAmount.amount
+                } : null
             };
             console.log('BidsPage: Navigating to checkout with payment data:', paymentData);
             navigate('/checkout', { state: { paymentData } });
@@ -1172,6 +1256,43 @@ export default function BidsPage({ onOpenChat }) {
             return {
                 amount: bid.business_profiles.amount,
                 display: `$${bid.business_profiles.amount.toFixed(2)}`
+            };
+        }
+    };
+
+    const calculateRemainingAmount = (bid) => {
+        // Check if bid has any payment made
+        const hasPayment = bid.status === 'paid' || 
+                          bid.payment_status === 'down_payment_paid' || 
+                          bid.payment_status === 'fully_paid' ||
+                          (bid.payment_amount && parseFloat(bid.payment_amount) > 0) ||
+                          (bid.down_payment && parseFloat(bid.down_payment) > 0);
+        
+        if (!hasPayment) {
+            // No payment made, calculate potential remaining after down payment
+            const downPayment = calculateDownPayment(bid);
+            if (downPayment) {
+                return {
+                    amount: bid.bid_amount - downPayment.amount,
+                    display: `$${(bid.bid_amount - downPayment.amount).toFixed(2)}`,
+                    type: 'potential'
+                };
+            }
+            return {
+                amount: bid.bid_amount,
+                display: `$${bid.bid_amount}`,
+                type: 'full'
+            };
+        } else {
+            // Payment has been made, calculate actual remaining
+            const totalPaid = parseFloat(bid.payment_amount || bid.down_payment || 0);
+            const remaining = bid.bid_amount - totalPaid;
+            
+            return {
+                amount: Math.max(0, remaining),
+                display: `$${Math.max(0, remaining).toFixed(2)}`,
+                type: 'remaining',
+                alreadyPaid: totalPaid
             };
         }
     };
@@ -2126,6 +2247,7 @@ export default function BidsPage({ onOpenChat }) {
                                     {[
                                         { key: 'all', label: 'All Bids', description: 'View all bids for this request' },
                                         { key: 'pending', label: 'Pending', description: 'Bids awaiting your review' },
+                                        { key: 'interested', label: 'Interested', description: 'Bids you\'re interested in' },
                                         { key: 'approved', label: 'Approved', description: 'Bids you\'ve accepted' },
                                         { key: 'paid', label: 'Paid', description: 'Bids with completed payments' },
                                         { key: 'denied', label: 'Denied', description: 'Bids you\'ve rejected' },
@@ -3343,36 +3465,93 @@ export default function BidsPage({ onOpenChat }) {
                                 ×
                             </button>
                         </div>
-                        <div className="payment-modal-content">
+                                                <div className="payment-modal-content">
                             <div className="payment-options">
-                                {selectedBidForPayment.business_profiles?.amount && selectedBidForPayment.business_profiles?.down_payment_type ? (
-                                    <>
-                                        <div className="payment-option">
-                                            <h4>Down Payment</h4>
-                                            <p className="payment-amount">
-                                                {selectedBidForPayment.business_profiles.down_payment_type === 'percentage' 
-                                                    ? `${selectedBidForPayment.business_profiles.amount*100}% ($${calculateDownPayment(selectedBidForPayment)?.amount?.toFixed(2) || '0.00'})`
-                                                    : `$${selectedBidForPayment.business_profiles.amount || '0.00'}`
-                                                }
-                                            </p>
-                                            <p className="payment-description">
-                                                Secure your booking with a partial payment
-                                            </p>
-                                            <button 
-                                                className="payment-option-btn primary"
-                                                onClick={() => {
-                                                    toast.info('Preparing payment...');
-                                                    handleDownPayNow(selectedBidForPayment);
-                                                    handleClosePaymentModal();
-                                                }}
-                                            >
-                                                Pay Down Payment
-                                            </button>
-                                        </div>
+                                {(() => {
+                                    const remainingAmount = calculateRemainingAmount(selectedBidForPayment);
+                                    const hasDownPayment = selectedBidForPayment.business_profiles?.amount && selectedBidForPayment.business_profiles?.down_payment_type;
+                                    
+                                    // If down payment has already been made, show remaining amount
+                                    if (remainingAmount.type === 'remaining' && remainingAmount.alreadyPaid > 0) {
+                                        return (
+                                            <div className="payment-option">
+                                                <h4>Pay Remaining Balance</h4>
+                                                <div className="payment-summary">
+                                                    <p className="payment-amount">{remainingAmount.display}</p>
+                                                    <p className="payment-breakdown">
+                                                        <span>Total Bid: ${selectedBidForPayment.bid_amount}</span>
+                                                        <span>Already Paid: ${remainingAmount.alreadyPaid.toFixed(2)}</span>
+                                                        <span className="remaining-amount">Remaining: {remainingAmount.display}</span>
+                                                    </p>
+                                                </div>
+                                                <p className="payment-description">
+                                                    Complete your payment to finalize this booking
+                                                </p>
+                                                <button 
+                                                    className="payment-option-btn success"
+                                                    onClick={() => {
+                                                        toast.info('Preparing payment for remaining balance...');
+                                                        handlePayNow(selectedBidForPayment);
+                                                        handleClosePaymentModal();
+                                                    }}
+                                                >
+                                                    Pay Remaining Balance ({remainingAmount.display})
+                                                </button>
+                                            </div>
+                                        );
+                                    }
+                                    
+                                    // If down payment option is available and no payment made yet
+                                    if (hasDownPayment) {
+                                        return (
+                                            <>
+                                                <div className="payment-option">
+                                                    <h4>Down Payment</h4>
+                                                    <p className="payment-amount">
+                                                        {selectedBidForPayment.business_profiles.down_payment_type === 'percentage' 
+                                                            ? `${selectedBidForPayment.business_profiles.amount*100}% ($${calculateDownPayment(selectedBidForPayment)?.amount?.toFixed(2) || '0.00'})`
+                                                            : `$${selectedBidForPayment.business_profiles.amount || '0.00'}`
+                                                        }
+                                                    </p>
+                                                    <p className="payment-description">
+                                                        Secure your booking with a partial payment
+                                                    </p>
+                                                    <button 
+                                                        className="payment-option-btn primary"
+                                                        onClick={() => {
+                                                            toast.info('Preparing payment...');
+                                                            handleDownPayNow(selectedBidForPayment);
+                                                            handleClosePaymentModal();
+                                                        }}
+                                                    >
+                                                        Pay Down Payment
+                                                    </button>
+                                                </div>
+                                                <div className="payment-option">
+                                                    <h4>Full Payment</h4>
+                                                    <p className="payment-amount">${selectedBidForPayment.bid_amount}</p>
+                                                    <p className="payment-description">Pay the complete amount upfront</p>
+                                                    <button 
+                                                        className="payment-option-btn success"
+                                                        onClick={() => {
+                                                            toast.info('Preparing payment...');
+                                                            handlePayNow(selectedBidForPayment);
+                                                            handleClosePaymentModal();
+                                                        }}
+                                                    >
+                                                        Pay Full Amount
+                                                    </button>
+                                                </div>
+                                            </>
+                                        );
+                                    }
+                                    
+                                    // Default: Full payment only
+                                    return (
                                         <div className="payment-option">
                                             <h4>Full Payment</h4>
                                             <p className="payment-amount">${selectedBidForPayment.bid_amount}</p>
-                                            <p className="payment-description">Pay the complete amount upfront</p>
+                                            <p className="payment-description">Complete payment for this service</p>
                                             <button 
                                                 className="payment-option-btn success"
                                                 onClick={() => {
@@ -3381,27 +3560,11 @@ export default function BidsPage({ onOpenChat }) {
                                                     handleClosePaymentModal();
                                                 }}
                                             >
-                                                Pay Full Amount
+                                                Pay Now
                                             </button>
                                         </div>
-                                    </>
-                                ) : (
-                                    <div className="payment-option">
-                                        <h4>Full Payment</h4>
-                                        <p className="payment-amount">${selectedBidForPayment.bid_amount}</p>
-                                        <p className="payment-description">Complete payment for this service</p>
-                                        <button 
-                                            className="payment-option-btn success"
-                                            onClick={() => {
-                                                toast.info('Preparing payment...');
-                                                handlePayNow(selectedBidForPayment);
-                                                handleClosePaymentModal();
-                                            }}
-                                        >
-                                            Pay Now
-                                        </button>
-                                    </div>
-                                )}
+                                    );
+                                })()}
                             </div>
                         </div>
                         <div className="payment-modal-actions">

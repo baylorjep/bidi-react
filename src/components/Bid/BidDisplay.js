@@ -352,17 +352,18 @@ function BidDisplay({
   // State to track if down payment has been made
   const [downPaymentMade, setDownPaymentMade] = useState(false);
   const [downPaymentAmount, setDownPaymentAmount] = useState(0);
+  const [downPaymentDate, setDownPaymentDate] = useState(null);
 
   // Check if down payment has been made
   useEffect(() => {
     const checkDownPaymentStatus = async () => {
-      if (!bid.id || !business_profiles?.amount) return;
+      if (!bid.id) return;
       
       try {
         // Check if there's a payment record for this bid
         const { data: paymentRecords, error } = await supabase
           .from('bids')
-          .select('down_payment, payment_paid_at, remaining')
+          .select('payment_status, payment_type, payment_amount, paid_at, remaining_amount, status')
           .eq('id', bid.id);
         
         if (error) {
@@ -372,9 +373,23 @@ function BidDisplay({
         
         if (paymentRecords && paymentRecords.length > 0) {
           const record = paymentRecords[0];
-          if (record.down_payment && record.payment_paid_at) {
+          
+          // Check if down payment has been made
+          const paymentAmount = record.payment_amount;
+          const paidAt = record.paid_at;
+          const paymentStatus = record.payment_status;
+          const paymentType = record.payment_type;
+          
+          // Check if down payment has been made
+          if (paymentAmount && parseFloat(paymentAmount) > 0 && 
+              (paymentType === 'down_payment' || paymentStatus === 'down_payment_paid' || record.status === 'paid')) {
             setDownPaymentMade(true);
-            setDownPaymentAmount(parseFloat(record.down_payment) || 0);
+            setDownPaymentAmount(parseFloat(paymentAmount) || 0);
+            
+            // If there's a paid_at date, use it
+            if (paidAt) {
+              setDownPaymentDate(new Date(paidAt));
+            }
           }
         }
       } catch (error) {
@@ -383,7 +398,20 @@ function BidDisplay({
     };
     
     checkDownPaymentStatus();
-  }, [bid.id, business_profiles?.amount]);
+  }, [bid.id]);
+
+  // Also check if payment info is already available in the bid object
+  useEffect(() => {
+    if (bid.payment_amount && parseFloat(bid.payment_amount) > 0 && 
+        (bid.payment_type === 'down_payment' || bid.payment_status === 'down_payment_paid' || bid.status === 'paid')) {
+      setDownPaymentMade(true);
+      setDownPaymentAmount(parseFloat(bid.payment_amount));
+      
+      if (bid.paid_at) {
+        setDownPaymentDate(new Date(bid.paid_at));
+      }
+    }
+  }, [bid.payment_amount, bid.payment_type, bid.payment_status, bid.status, bid.paid_at]);
 
   // Get profile image
   const profileImage = business_profiles?.profile_image || 'https://via.placeholder.com/60x60?text=Profile';
@@ -429,20 +457,26 @@ function BidDisplay({
   };
 
   const getRemainingAmount = () => {
-    // Check if business has down payment configured
-    if (business_profiles?.amount && business_profiles?.down_payment_type) {
-      const totalBidAmount = parseFloat(bid_amount) || 0;
-      
-      if (downPaymentMade) {
-        // If down payment has been made, calculate remaining from actual payment
-        return totalBidAmount - downPaymentAmount;
-      } else {
-        // Show potential remaining amount if no down payment made yet
-        const downPaymentAmount = getDownPaymentAmount();
-        return totalBidAmount - downPaymentAmount;
-      }
+    const totalBidAmount = parseFloat(bid_amount) || 0;
+    
+    if (downPaymentMade) {
+      // If down payment has been made, calculate remaining from actual payment
+      return Math.max(0, totalBidAmount - downPaymentAmount);
+    } else if (business_profiles?.amount && business_profiles?.down_payment_type) {
+      // Show potential remaining amount if no down payment made yet
+      const downPaymentAmount = getDownPaymentAmount();
+      return Math.max(0, totalBidAmount - downPaymentAmount);
     }
-    return bid_amount;
+    
+    return totalBidAmount;
+  };
+
+  // Get remaining amount from database if available
+  const getDatabaseRemainingAmount = () => {
+    if (bid.remaining_amount !== null && bid.remaining_amount !== undefined) {
+      return parseFloat(bid.remaining_amount);
+    }
+    return getRemainingAmount();
   };
 
   // Phone demo styling components
@@ -650,7 +684,7 @@ function BidDisplay({
                 handlePaymentClick(e);
               }}
             >
-              Pay
+              {downPaymentMade ? 'Pay Remaining' : 'Pay'}
             </button>
             <button
               className="bid-row-btn bid-row-btn-secondary"
@@ -699,7 +733,7 @@ function BidDisplay({
                 handlePaymentClick(e);
               }}
             >
-              Pay
+                            {downPaymentMade ? 'Pay Remaining' : 'Pay'}
             </button>
             <button
               className="bid-row-btn bid-row-btn-secondary"
@@ -807,7 +841,7 @@ function BidDisplay({
                   }
                 }}
               >
-                Pay
+                {downPaymentMade ? 'Pay Remaining' : 'Pay'}
               </button>
               <button
                 className="bid-row-btn bid-row-btn-secondary"
@@ -1064,7 +1098,7 @@ function BidDisplay({
                       handlePaymentClick(e);
                     }}
                   >
-                    Pay
+                    {downPaymentMade ? 'Pay Remaining' : 'Pay'}
                   </button>
                 )}
 
@@ -1106,19 +1140,44 @@ function BidDisplay({
               <div className="mobile-bid-detail-section">
                 <h4 className="mobile-section-title">Payment Information</h4>
                 <div className="mobile-payment-details">
-                  <div className="mobile-payment-item">
-                    <span>Down Payment Required:</span>
-                    <span className="mobile-payment-amount">
-                      {business_profiles.down_payment_type === 'percentage' 
-                        ? `${business_profiles.amount}% ($${getDownPaymentAmount().toFixed(2)})`
-                        : `$${business_profiles.amount}`
-                      }
-                    </span>
-                  </div>
-                  <div className="mobile-payment-item">
-                    <span>Remaining Balance:</span>
-                    <span className="mobile-payment-remaining">${getRemainingAmount()}</span>
-                  </div>
+                  {downPaymentMade ? (
+                    <>
+                      <div className="mobile-payment-item">
+                        <span>Down Payment Made:</span>
+                        <span className="mobile-payment-amount paid">
+                          ${downPaymentAmount.toFixed(2)}
+                        </span>
+                      </div>
+                      {downPaymentDate && (
+                        <div className="mobile-payment-item">
+                          <span>Paid On:</span>
+                          <span className="mobile-payment-date">
+                            {downPaymentDate.toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                      <div className="mobile-payment-item">
+                        <span>Remaining Balance:</span>
+                        <span className="mobile-payment-remaining">${getDatabaseRemainingAmount().toFixed(2)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mobile-payment-item">
+                        <span>Down Payment Required:</span>
+                        <span className="mobile-payment-amount">
+                          {business_profiles.down_payment_type === 'percentage' 
+                            ? `${business_profiles.amount}% ($${getDownPaymentAmount().toFixed(2)})`
+                            : `$${business_profiles.amount}`
+                          }
+                        </span>
+                      </div>
+                      <div className="mobile-payment-item">
+                        <span>Remaining Balance:</span>
+                        <span className="mobile-payment-remaining">${getDatabaseRemainingAmount().toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -1196,6 +1255,12 @@ function BidDisplay({
                   {tax_rate > 0 && (
                     <span className="tax-info">+ {tax_rate}% tax</span>
                   )}
+                  {downPaymentMade && (
+                    <div className="payment-status-indicator">
+                      <CheckCircleIcon style={{ fontSize: '16px', color: '#10b981' }} />
+                      <span>Down Payment Paid</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1233,6 +1298,39 @@ function BidDisplay({
                 </span>
               )}
             </div>
+
+            {/* Payment Status Row - Only show for bids with down payment configured */}
+            {(status === 'accepted' || status === 'approved' || status === 'interested') && business_profiles?.amount && business_profiles?.down_payment_type && (
+              <div className="bid-row-payment-status">
+                {downPaymentMade ? (
+                                     <div className="payment-status-row">
+                     <div className="payment-status-item">
+                       <CheckCircleIcon style={{ fontSize: '16px', color: '#10b981' }} />
+                       <span>Down Payment Paid: ${downPaymentAmount.toFixed(2)}</span>
+                       {downPaymentDate && (
+                         <span className="payment-date">on {downPaymentDate.toLocaleDateString()}</span>
+                       )}
+                     </div>
+                     <div className="payment-status-item">
+                       <span>Remaining Balance: ${getDatabaseRemainingAmount().toFixed(2)}</span>
+                     </div>
+                   </div>
+                ) : (
+                                     <div className="payment-status-row">
+                     <div className="payment-status-item">
+                       <span>Down Payment Required: {
+                         business_profiles.down_payment_type === 'percentage' 
+                           ? `${business_profiles.amount}% ($${getDownPaymentAmount().toFixed(2)})`
+                           : `$${business_profiles.amount}`
+                       }</span>
+                     </div>
+                     <div className="payment-status-item">
+                       <span>Remaining Balance: ${getDatabaseRemainingAmount().toFixed(2)}</span>
+                     </div>
+                   </div>
+                )}
+              </div>
+            )}
 
             {/* Action Buttons */}
             {showActions && (
