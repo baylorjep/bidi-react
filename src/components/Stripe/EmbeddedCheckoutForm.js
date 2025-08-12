@@ -20,11 +20,8 @@ const EmbeddedCheckoutForm = () => {
       return;
     }
 
-    if (!paymentData.stripe_account_id) {
-      setErrorMessage('This business is not yet set up to receive payments. Please contact them directly.');
-      console.error('Missing Stripe account ID');
-      return;
-    }
+    // If no Stripe account ID is provided, we'll use Bidi's account as fallback
+    const stripeAccountId = paymentData.stripe_account_id || 'acct_1RqCsQJwWKKQQDV2'; // Bidi's Stripe account ID
 
     console.log('Payment data:', paymentData);
     const createCheckoutSession = async () => {
@@ -43,23 +40,28 @@ const EmbeddedCheckoutForm = () => {
           }
         }
 
-        // First try with the business's Stripe account
+        // Determine if we're using Bidi's account (no application fee) or business account (with application fee)
+        const isUsingBidiAccount = stripeAccountId === 'acct_1RqCsQJwWKKQQDV2';
+        const applicationFeeAmount = isUsingBidiAccount ? 0 : Math.round(paymentData.amount * 10);
+        const serviceName = isUsingBidiAccount ? `${detailedDescription} (Processed by Bidi)` : detailedDescription;
+
+        // Create checkout session
         let response = await fetch("https://bidi-express.vercel.app/create-checkout-session", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            connectedAccountId: paymentData.stripe_account_id,
+            connectedAccountId: stripeAccountId,
             amount: Math.round(paymentData.amount * 100),
-            applicationFeeAmount: Math.round(paymentData.amount * 5),
-            serviceName: detailedDescription,
+            applicationFeeAmount: applicationFeeAmount,
+            serviceName: serviceName,
             successUrl: `${window.location.origin}/payment-success?amount=${paymentData.amount}&payment_type=${paymentData.payment_type}&business_name=${encodeURIComponent(paymentData.business_name)}&bid_id=${paymentData.bid_id}`,
             cancelUrl: `${window.location.origin}/bids`,
           }),
         });
 
-        // If there's an error with the business's Stripe, try with Bidi's Stripe
+        // Handle any errors from the checkout session creation
         if (!response.ok) {
           const errorText = await response.text();
           let errorData;
@@ -68,30 +70,7 @@ const EmbeddedCheckoutForm = () => {
           } catch (e) {
             errorData = { error: errorText };
           }
-
-          if (errorData.error && (errorData.error.includes('capabilities') || !response.ok)) {
-            console.log('Falling back to Bidi Stripe account');
-            response = await fetch("https://bidi-express.vercel.app/create-checkout-session", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                connectedAccountId: 'acct_1RqCsQJwWKKQQDV2', // Bidi's Stripe account ID
-                amount: Math.round(paymentData.amount * 100),
-                applicationFeeAmount: 0, // No application fee when using Bidi's account
-                serviceName: `${detailedDescription} (Processed by Bidi)`,
-                successUrl: `${window.location.origin}/payment-success?amount=${paymentData.amount}&payment_type=${paymentData.payment_type}&business_name=${encodeURIComponent(paymentData.business_name)}&bid_id=${paymentData.bid_id}`,
-                cancelUrl: `${window.location.origin}/bids`,
-              }),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to process payment with both business and Bidi accounts');
-            }
-          } else {
-            throw new Error(errorData.error || 'Failed to create checkout session');
-          }
+          throw new Error(errorData.error || 'Failed to create checkout session');
         }
     
         const data = await response.json();
