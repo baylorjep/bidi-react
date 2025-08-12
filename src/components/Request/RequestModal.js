@@ -108,7 +108,7 @@ const PhotoModal = ({ photo, onClose }) => {
   );
 };
 
-const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEditMode = false, existingRequestData = null }) => {
+const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEditMode = false, existingRequestData = null, vendor = null }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -120,6 +120,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
   const [user, setUser] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showEventDetails, setShowEventDetails] = useState(false); // New state for event details step
   const navigate = useNavigate();
 
   // Initialize form data when modal opens
@@ -135,6 +136,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
           guestCount: existingRequestData.guest_count || existingRequestData.guestCount || '',
           responses: existingRequestData.responses || existingRequestData.additional_info || {}
         });
+        setShowEventDetails(false); // Skip event details in edit mode
       } else if (searchFormData) {
         // New request mode: populate with search form data
         setFormData({
@@ -145,9 +147,33 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
           guestCount: searchFormData.guestCount || '',
           responses: {}
         });
+        // Show event details if vendor is provided (from Portfolio.js)
+        setShowEventDetails(!!vendor);
+      } else if (vendor) {
+        // Portfolio.js flow: no search form data, but vendor provided
+        setFormData({
+          eventType: 'Wedding', // Default value
+          eventDate: '',
+          eventTime: '',
+          location: '',
+          guestCount: '',
+          responses: {}
+        });
+        setShowEventDetails(true); // Always show event details for Portfolio.js flow
+      } else {
+        // Fallback: no data provided
+        setFormData({
+          eventType: 'Wedding',
+          eventDate: '',
+          eventTime: '',
+          location: '',
+          guestCount: '',
+          responses: {}
+        });
+        setShowEventDetails(false);
       }
     }
-  }, [isOpen, searchFormData, isEditMode, existingRequestData]);
+  }, [isOpen, searchFormData, isEditMode, existingRequestData, vendor]);
 
   // Check for authenticated user when modal opens
   useEffect(() => {
@@ -161,6 +187,62 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       setIsSuccess(false);
     }
   }, [isOpen]);
+
+  // Event detail questions for Portfolio.js flow
+  const eventDetailQuestions = [
+    {
+      id: 'eventType',
+      type: 'select',
+      question: 'What type of event are you planning?',
+      options: ['Wedding', 'Corporate Event', 'Birthday Party', 'Anniversary', 'Graduation', 'Other']
+    },
+    {
+      id: 'eventDate',
+      type: 'date',
+      question: 'When is your event?',
+      placeholder: 'Select date'
+    },
+    {
+      id: 'eventTime',
+      type: 'select',
+      question: 'What time will your event start?',
+      options: ['Morning (8 AM - 12 PM)', 'Afternoon (12 PM - 5 PM)', 'Evening (5 PM - 9 PM)', 'Night (9 PM - 12 AM)', 'Late Night (12 AM - 4 AM)', 'All Day Event']
+    },
+    {
+      id: 'location',
+      type: 'text',
+      question: 'Where will your event take place?',
+      placeholder: 'Enter venue name, city, or address'
+    },
+    {
+      id: 'guestCount',
+      type: 'select',
+      question: 'How many guests are you expecting?',
+      options: ['Under 25', '25-50', '50-100', '100-150', '150-200', '200+', 'Not sure yet']
+    }
+  ];
+
+  // Handle event detail answers
+  const handleEventDetailAnswer = (questionId, answer) => {
+    setFormData(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
+  };
+
+  // Handle next step for event details
+  const handleEventDetailsNext = () => {
+    setShowEventDetails(false);
+    setCurrentCategoryIndex(0); // Reset category index to start with first category
+    setCurrentQuestionIndex(0); // Reset question index for category questions
+  };
+
+  // Handle back from category questions to event details
+  const handleBackToEventDetails = () => {
+    setShowEventDetails(true);
+    setCurrentCategoryIndex(0);
+    setCurrentQuestionIndex(0);
+  };
 
   // Define category-specific questions
   const getCategoryQuestions = (category) => {
@@ -491,19 +573,30 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
   };
 
   const handleNext = () => {
-    const currentCategory = selectedVendors[currentCategoryIndex];
-    const categoryQuestions = getCategoryQuestions(currentCategory);
-    
-    // Check if we're at the last question of current category
-    if (currentQuestionIndex < categoryQuestions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      // Move to next category or review
-      if (currentCategoryIndex < selectedVendors.length - 1) {
-        setCurrentCategoryIndex(currentCategoryIndex + 1);
-        setCurrentQuestionIndex(0);
+    if (showEventDetails) {
+      // Handle navigation within event details
+      if (currentQuestionIndex < eventDetailQuestions.length - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
       } else {
-        setIsReviewStep(true);
+        // Move from event details to category questions
+        handleEventDetailsNext();
+      }
+    } else {
+      // Handle navigation within category questions (existing logic)
+      const currentCategory = selectedVendors[currentCategoryIndex];
+      const categoryQuestions = getCategoryQuestions(currentCategory);
+      
+      // Check if we're at the last question of current category
+      if (currentQuestionIndex < categoryQuestions.length - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      } else {
+        // Move to next category or review
+        if (currentCategoryIndex < selectedVendors.length - 1) {
+          setCurrentCategoryIndex(currentCategoryIndex + 1);
+          setCurrentQuestionIndex(0);
+        } else {
+          setIsReviewStep(true);
+        }
       }
     }
   };
@@ -516,6 +609,14 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       const lastCategory = selectedVendors[selectedVendors.length - 1];
       const lastCategoryQuestions = getCategoryQuestions(lastCategory);
       setCurrentQuestionIndex(lastCategoryQuestions.length - 1);
+    } else if (showEventDetails) {
+      // Handle navigation within event details
+      if (currentQuestionIndex > 0) {
+        setCurrentQuestionIndex(currentQuestionIndex - 1);
+      } else {
+        // Can't go back from first event question
+        return;
+      }
     } else if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     } else if (currentCategoryIndex > 0) {
@@ -523,6 +624,9 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       const prevCategory = selectedVendors[currentCategoryIndex - 1];
       const prevCategoryQuestions = getCategoryQuestions(prevCategory);
       setCurrentQuestionIndex(prevCategoryQuestions.length - 1);
+    } else if (vendor) {
+      // Go back to event details from first category question
+      handleBackToEventDetails();
     }
   };
 
@@ -1067,15 +1171,37 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     currentCategory ? getCategoryQuestions(currentCategory) : [], 
     [currentCategory, formData.responses]
   );
-  const currentQuestion = !isReviewStep && categoryQuestions ? categoryQuestions[currentQuestionIndex] : null;
-  const totalQuestions = useMemo(() => 
-    selectedVendors ? selectedVendors.reduce((total, vendor) => total + getCategoryQuestions(vendor).length, 0) : 0,
-    [selectedVendors, formData.responses]
-  );
+  const currentQuestion = !isReviewStep && !showEventDetails && categoryQuestions && currentQuestionIndex < categoryQuestions.length ? categoryQuestions[currentQuestionIndex] : null;
+  
+  // Debug logging
+  console.log('RequestModal Debug:', {
+    isReviewStep,
+    showEventDetails,
+    currentCategory,
+    currentCategoryIndex,
+    currentQuestionIndex,
+    categoryQuestions: categoryQuestions?.length || 0,
+    selectedVendors,
+    currentQuestion: !!currentQuestion
+  });
+  const totalQuestions = useMemo(() => {
+    let total = 0;
+    // Always include event detail questions in the total
+    total += eventDetailQuestions.length;
+    if (selectedVendors) {
+      total += selectedVendors.reduce((total, vendor) => total + getCategoryQuestions(vendor).length, 0);
+    }
+    return total;
+  }, [selectedVendors, formData.responses, eventDetailQuestions.length]);
   const currentQuestionNumber = useMemo(() => {
-    if (!selectedVendors) return 0;
-    return selectedVendors.slice(0, currentCategoryIndex).reduce((total, vendor) => total + getCategoryQuestions(vendor).length, 0) + currentQuestionIndex + 1;
-  }, [selectedVendors, currentCategoryIndex, currentQuestionIndex, formData.responses]);
+    let questionNumber = 0;
+    if (showEventDetails) {
+      questionNumber = currentQuestionIndex + 1;
+    } else if (selectedVendors) {
+      questionNumber = eventDetailQuestions.length + selectedVendors.slice(0, currentCategoryIndex).reduce((total, vendor) => total + getCategoryQuestions(vendor).length, 0) + currentQuestionIndex + 1;
+    }
+    return questionNumber;
+  }, [selectedVendors, currentCategoryIndex, currentQuestionIndex, formData.responses, showEventDetails]);
 
   if (!isOpen) return null;
 
@@ -1110,8 +1236,6 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     );
   }
 
-
-
   const renderQuestion = () => {
     if (!currentQuestion) {
       return (
@@ -1120,6 +1244,12 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
             No questions available for {currentCategory}. 
             <br />
             <small className="tw-text-xs">Debug: Selected vendors: {JSON.stringify(selectedVendors)}</small>
+            <br />
+            <small className="tw-text-xs">Debug: currentCategoryIndex: {currentCategoryIndex}, currentQuestionIndex: {currentQuestionIndex}</small>
+            <br />
+            <small className="tw-text-xs">Debug: categoryQuestions length: {categoryQuestions?.length || 0}</small>
+            <br />
+            <small className="tw-text-xs">Debug: showEventDetails: {showEventDetails.toString()}</small>
           </p>
         </div>
       );
@@ -1241,18 +1371,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
                     className="tw-w-24 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded focus:tw-outline-none focus:tw-ring-2"
                     style={{ focusRingColor: colors.primary }}
                   />
-                  <span className="tw-text-gray-600">to</span>
-                  <span className="tw-text-gray-600">$</span>
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={currentAnswer.max}
-                    onChange={(e) => handleSelectAnswer({ 
-                      type: 'custom', 
-                      min: currentAnswer.min, 
-                      max: e.target.value 
-                    })}
-                    className="tw-w-24 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded focus:tw-outline-none focus:tw-ring-2"
+                  <span className="tw-text-gray-200 tw-rounded focus:tw-outline-none focus:tw-ring-2"
                     style={{ focusRingColor: colors.primary }}
                   />
                 </div>
@@ -1420,6 +1539,105 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     );
   };
 
+  const renderEventDetails = () => {
+    if (!eventDetailQuestions[currentQuestionIndex]) {
+      return (
+        <div className="tw-text-center tw-py-8">
+          <p className="tw-text-gray-600">No event details available.</p>
+        </div>
+      );
+    }
+
+    const currentQuestion = eventDetailQuestions[currentQuestionIndex];
+    const currentAnswer = formData[currentQuestion.id] || '';
+
+    const handleEventDetailAnswer = (questionId, answer) => {
+      setFormData(prev => ({
+        ...prev,
+        [questionId]: answer
+      }));
+    };
+
+    return (
+      <div className="tw-space-y-6">
+        <div>
+          <h3 className="tw-text-xl tw-font-semibold tw-mb-2" style={{ color: colors.gray[800] }}>
+            {currentQuestion.question}
+          </h3>
+          <p className="tw-text-sm tw-text-gray-600">
+            Event Details • Question {currentQuestionIndex + 1} of {eventDetailQuestions.length} • Optional
+          </p>
+        </div>
+
+        {currentQuestion.type === 'select' && (
+          <div className="tw-space-y-3">
+            {currentQuestion.options.map((option) => (
+              <label key={option} className="tw-flex tw-items-center tw-p-3 tw-border tw-border-gray-200 tw-rounded-lg tw-cursor-pointer hover:tw-bg-gray-50 tw-transition-colors">
+                <input
+                  type="radio"
+                  name={currentQuestion.id}
+                  value={option}
+                  checked={currentAnswer === option}
+                  onChange={() => handleEventDetailAnswer(currentQuestion.id, option)}
+                  className="tw-mr-3 tw-w-4 tw-h-4"
+                  style={{ accentColor: colors.primary }}
+                />
+                <span className="tw-text-gray-700">{option}</span>
+              </label>
+            ))}
+          </div>
+        )}
+
+        {currentQuestion.type === 'date' && (
+          <input
+            type="date"
+            value={currentAnswer}
+            onChange={(e) => handleEventDetailAnswer(currentQuestion.id, e.target.value)}
+            className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2"
+            style={{ 
+              borderColor: colors.gray[300],
+              focusRingColor: colors.primary 
+            }}
+          />
+        )}
+
+        {currentQuestion.type === 'text' && (
+          <input
+            type="text"
+            value={currentAnswer}
+            onChange={(e) => handleEventDetailAnswer(currentQuestion.id, e.target.value)}
+            placeholder={currentQuestion.placeholder}
+            className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2"
+            style={{ 
+              borderColor: colors.gray[300],
+              focusRingColor: colors.primary 
+            }}
+          />
+        )}
+      </div>
+    );
+  };
+
+  const canGoNext = () => {
+    if (isReviewStep) return false;
+    if (showEventDetails) {
+      // For event details, all questions are optional
+      return true;
+    }
+    if (!currentQuestion) return false;
+    
+    // All questions are now optional - user can always skip
+    return true;
+  };
+
+  const canGoBack = () => {
+    if (isReviewStep) return true;
+    if (showEventDetails) {
+      return currentQuestionIndex > 0;
+    }
+    return currentQuestionIndex > 0 || currentCategoryIndex > 0 || !!vendor;
+  };
+
   // Helper function to get category icon
   const getCategoryIcon = (category) => {
     const iconMap = {
@@ -1443,28 +1661,28 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
           <div className="tw-w-20 tw-h-20 tw-mx-auto tw-mb-4 tw-bg-green-100 tw-rounded-full tw-flex tw-items-center tw-justify-center">
             <FiCheck className="tw-text-green-600" size={40} />
           </div>
-                                    <h3 className="tw-text-2xl tw-font-bold tw-text-gray-800 tw-mb-4">
-                            {isEditMode ? 'Request Updated Successfully!' : 'Request Submitted Successfully!'}
-                          </h3>
-                          <p className="tw-text-gray-600 tw-mb-6 tw-max-w-md tw-mx-auto">
-                            {isEditMode 
-                              ? 'Your request has been updated and vendors will be notified of the changes.'
-                              : `Your request has been sent to ${selectedVendors.length} vendor${selectedVendors.length > 1 ? 's' : ''}. You'll start receiving bids soon!`
-                            }
-                          </p>
+          <h3 className="tw-text-2xl tw-font-bold tw-text-gray-800 tw-mb-4">
+            {isEditMode ? 'Request Updated Successfully!' : 'Request Submitted Successfully!'}
+          </h3>
+          <p className="tw-text-gray-600 tw-mb-6 tw-max-w-md tw-mx-auto">
+            {isEditMode 
+              ? 'Your request has been updated and vendors will be notified of the changes.'
+              : `Your request has been sent to ${selectedVendors.length} vendor${selectedVendors.length > 1 ? 's' : ''}. You'll start receiving bids soon!`
+            }
+          </p>
         </div>
         
         <div className="tw-space-y-4">
-                                    <button
-                            onClick={() => {
-                              onClose();
-                              navigate('/individual-dashboard/bids');
-                            }}
-                            className="tw-w-full tw-py-3 tw-px-6 tw-rounded-lg tw-text-white tw-font-medium tw-transition-colors tw-border-none"
-                            style={{ backgroundColor: colors.primary }}
-                          >
-                            {isEditMode ? 'View Updated Request' : 'View My Bids'}
-                          </button>
+          <button
+            onClick={() => {
+              onClose();
+              navigate('/individual-dashboard/bids');
+            }}
+            className="tw-w-full tw-py-3 tw-px-6 tw-rounded-lg tw-text-white tw-font-medium tw-transition-colors tw-border-none"
+            style={{ backgroundColor: colors.primary }}
+          >
+            {isEditMode ? 'View Updated Request' : 'View My Bids'}
+          </button>
           
           <button
             onClick={onClose}
@@ -1491,7 +1709,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
             <div className="tw-mt-3 tw-p-3 tw-bg-purple-50 tw-border tw-border-purple-500 tw-rounded-lg tw-text-center tw-border-1px">
               <p className="tw-text-sm tw-text-purple-700">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="rgb(126, 34, 206)" className="tw-inline tw-mr-2">
-                  <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM13 16h-2v2h2v-2zm0-6h-2v4h2v-4z"/>
+                  <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM13 16h-2v2h2v-2zm0-6h-2v4h2v-4z"/>
                 </svg>
                 You'll need to sign in or create an account to submit your request and receive quotes from vendors.
               </p>
@@ -1606,35 +1824,45 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     );
   };
 
-  const canGoNext = () => {
-    if (isReviewStep) return false;
-    if (!currentQuestion) return false;
-    
-    // All questions are now optional - user can always skip
-    return true;
-  };
-
-  const canGoBack = () => {
-    return isReviewStep || currentQuestionIndex > 0 || currentCategoryIndex > 0;
-  };
-
-  if (!isOpen) return null;
-
   const modalContent = (
     <div className="tw-fixed tw-inset-0 tw-bg-black tw-bg-opacity-50 tw-flex tw-items-center tw-justify-center tw-z-[9999] tw-p-4">
       <div className="tw-bg-white tw-rounded-lg tw-w-full tw-max-w-2xl tw-max-h-[90vh] tw-overflow-hidden">
         {/* Header */}
         <div className="tw-flex tw-items-center tw-justify-between tw-p-6 tw-border-b tw-border-gray-200">
-                          <h2 className="tw-text-2xl tw-font-bold" style={{ color: colors.gray[800] }}>
-                  {isSuccess ? 'Success!' : (isEditMode ? 'Edit Request' : (isReviewStep ? 'Review Request' : 'Tell Us More'))}
-                </h2>
+          <h2 className="tw-text-2xl tw-font-bold" style={{ color: colors.gray[800] }}>
+            {isSuccess ? 'Success!' : (isEditMode ? 'Edit Request' : (isReviewStep ? 'Review Request' : (showEventDetails ? 'Event Details' : 'Tell Us More')))}
+          </h2>
           <button
             onClick={onClose}
             className="tw-p-2 tw-rounded-full tw-bg-gray-100 hover:tw-bg-gray-200 tw-transition-colors tw-border-none"
           >
             <FiX size={24} />
           </button>
+        </div>
+
+        {/* Vendor Notification */}
+        {vendor && (
+          <div className="tw-px-6 tw-py-4 tw-bg-purple-50 tw-border-b tw-border-purple-200">
+            {console.log('Vendor object in RequestModal:', vendor)}
+            <div className="tw-flex tw-items-center tw-gap-3">
+              {vendor.image && (
+                <img 
+                  src={vendor.image} 
+                  alt={vendor.business_name}
+                  className="tw-w-10 tw-h-10 tw-rounded-full tw-object-cover"
+                />
+              )}
+              <div>
+                <p className="tw-text-sm tw-font-medium tw-text-purple-800">
+                  <span className="tw-font-semibold">{vendor.business_name}</span> will be notified of your request
+                </p>
+                <p className="tw-text-xs tw-text-purple-600">
+                  They'll receive your details and can provide a tailored quote
+                </p>
+              </div>
+            </div>
           </div>
+        )}
 
         {/* Progress Bar */}
         {!isReviewStep && !isSuccess && (
@@ -1649,15 +1877,22 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               />
             </div>
             <p className="tw-text-sm tw-text-gray-600 tw-mt-2">
-              Question {currentQuestionNumber} of {totalQuestions}
+              {showEventDetails 
+                ? `Event Details • Question ${currentQuestionIndex + 1} of ${eventDetailQuestions.length}`
+                : `${currentCategory ? currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1) : 'Category'} • Question ${currentQuestionIndex + 1} of ${categoryQuestions?.length || 0}`
+              }
+              <br />
+              <small className="tw-text-xs tw-text-gray-500">
+                Overall Progress: {currentQuestionNumber} of {totalQuestions} questions
+              </small>
             </p>
           </div>
         )}
 
         {/* Content */}
         <div className="tw-p-6 tw-overflow-y-auto tw-max-h-[calc(90vh-300px)]">
-          {isSuccess ? renderSuccessSlide() : (isReviewStep ? renderReviewScreen() : renderQuestion())}
-          </div>
+          {isSuccess ? renderSuccessSlide() : (isReviewStep ? renderReviewScreen() : (showEventDetails ? renderEventDetails() : renderQuestion()))}
+        </div>
 
         {/* Footer */}
         {!isSuccess && (
@@ -1688,7 +1923,10 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               className="tw-flex tw-items-center tw-px-6 tw-py-2 tw-rounded-lg tw-text-white tw-font-medium tw-transition-colors tw-disabled:opacity-50 tw-disabled:cursor-not-allowed tw-border-none"
               style={{ backgroundColor: canGoNext() ? colors.primary : colors.gray[400] }}
             >
-              {formData.responses?.[currentCategory]?.[currentQuestion?.id] ? 'Next' : 'Skip'}
+              {showEventDetails 
+                ? (currentQuestionIndex < eventDetailQuestions.length - 1 ? 'Next' : 'Finish Event Details')
+                : (formData.responses?.[currentCategory]?.[currentQuestion?.id] ? 'Next' : 'Skip')
+              }
               <FiArrowRight className="tw-ml-2" size={16} />
             </button>
           )}

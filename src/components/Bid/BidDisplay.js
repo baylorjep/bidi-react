@@ -40,16 +40,13 @@ function BidDisplay({
   onMobileModalToggle = null, // Callback to notify parent of modal state changes
   onOpenBidDetail = null, // Callback to open bid detail modal at parent level
   onOpenBidMessaging = null, // Callback to open bid messaging modal at parent level
-  onOpenPortfolio = null // Callback to open portfolio modal at parent level
+  onOpenPortfolio = null, // Callback to open portfolio modal at parent level
+  onOpenPaymentModal = null // Callback to open payment modal at parent level
 }) {
   const navigate = useNavigate();
   const [showConsultationModal, setShowConsultationModal] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [modalLineItems, setModalLineItems] = useState([{ id: 1, description: '', quantity: 1, rate: 0, amount: 0 }]);
-  const [modalTaxRate, setModalTaxRate] = useState(0);
-  const [useTemplate, setUseTemplate] = useState(false);
-  const [hasTemplate, setHasTemplate] = useState(false);
+
   
   // Mobile state
   const [mobileDetailView, setMobileDetailView] = useState(false);
@@ -100,7 +97,6 @@ function BidDisplay({
 
   // Enhanced modal close handler
   const handleModalClose = () => {
-    setShowPaymentModal(false);
     setShowImageModal(false);
     setShowConsultationModal(false);
     setShowContractModal(false);
@@ -546,46 +542,9 @@ function BidDisplay({
 
   // Message handling now done by BidMessaging component
 
-  // Payment request functions
-  const calculateSubtotal = () => {
-    return modalLineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
-  };
 
-  const calculateTax = () => {
-    return (calculateSubtotal() * modalTaxRate) / 100;
-  };
 
-  const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax();
-  };
 
-  const addLineItem = () => {
-    const newId = Math.max(...modalLineItems.map(item => item.id), 0) + 1;
-    setModalLineItems([...modalLineItems, { id: newId, description: '', quantity: 1, rate: '', amount: 0 }]);
-  };
-
-  const removeLineItem = (id) => {
-    if (modalLineItems.length > 1) {
-      setModalLineItems(modalLineItems.filter(item => item.id !== id));
-    }
-  };
-
-  const updateLineItem = (id, field, value) => {
-    setModalLineItems(modalLineItems.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
-        if (field === 'quantity' || field === 'rate') {
-          const quantity = field === 'quantity' ? parseFloat(value) || 0 : item.quantity;
-          const rate = field === 'rate' ? parseFloat(value) || 0 : item.rate;
-          updatedItem.amount = quantity * rate;
-        }
-        return updatedItem;
-      }
-      return item;
-    }));
-  };
-
-  // Payment request handling is now done by BidMessaging component
 
   const handleDenyClick = () => {
     console.log('handleDenyClick called');
@@ -594,8 +553,10 @@ function BidDisplay({
     if (handleDeny) {
       console.log('Calling handleDeny');
       handleDeny(bid.id);
+      toast.success('Bid denied successfully');
     } else {
       console.log('handleDeny is not defined');
+      toast.error('Unable to deny bid');
     }
   };
 
@@ -623,8 +584,14 @@ function BidDisplay({
     setShowContractModal(true);
   };
 
-  const handlePaymentClick = () => {
-    setShowPaymentModal(true);
+  const handlePaymentClick = (e) => {
+    e.stopPropagation(); // Prevent row click from triggering
+    if (onOpenPaymentModal) {
+      onOpenPaymentModal(bid);
+    } else {
+      // Fallback: show a toast message if no parent handler
+      toast.info('Payment functionality not available');
+    }
   };
 
   const handleHeartClick = () => {
@@ -678,27 +645,44 @@ function BidDisplay({
           <div className="bid-row-actions">
             <button
               className="bid-row-btn bid-row-btn-pay"
-              onClick={handlePaymentClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePaymentClick(e);
+              }}
             >
               Pay
             </button>
             <button
               className="bid-row-btn bid-row-btn-secondary"
-              onClick={handleMessageClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMessageClick(e);
+              }}
             >
               <ChatIcon />
             </button>
             {business_profiles?.google_calendar_connected && (
             <button
               className="bid-row-btn bid-row-btn-secondary"
-              onClick={handleConsultationClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleConsultationClick();
+              }}
             >
               Schedule Consultation
             </button>
             )}
              <button
               className="bid-row-btn bid-row-btn-secondary"
-              onClick={() => handlePending && handlePending(bid.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (handlePending) {
+                  handlePending(bid.id);
+                  toast.success('Bid moved back to pending successfully');
+                } else {
+                  toast.error('Unable to move bid back to pending');
+                }
+              }}
             >
               Move Back to Pending
             </button>
@@ -710,20 +694,29 @@ function BidDisplay({
           <div className="bid-row-actions">
             <button
               className="bid-row-btn bid-row-btn-pay"
-              onClick={handlePaymentClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePaymentClick(e);
+              }}
             >
               Pay
             </button>
             <button
               className="bid-row-btn bid-row-btn-secondary"
-              onClick={handleMessageClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMessageClick(e);
+              }}
             >
               <ChatIcon />
             </button>
             {business_profiles?.google_calendar_connected && (
             <button
               className="bid-row-btn bid-row-btn-secondary"
-              onClick={handleConsultationClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleConsultationClick();
+              }}
             >
               Schedule Consultation
             </button>
@@ -736,7 +729,10 @@ function BidDisplay({
           <div className="bid-row-actions">
             <button
               className="bid-row-btn bid-row-btn-success"
-              onClick={() => handleApprove && handleApprove(bid.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleApprove && handleApprove(bid.id);
+              }}
               style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -746,7 +742,10 @@ function BidDisplay({
             
             <button
               className="bid-row-btn bid-row-btn-danger"
-              onClick={handleDenyClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDenyClick();
+              }}
               style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -756,11 +755,17 @@ function BidDisplay({
             </button>
             <button
               className="bid-row-btn bid-row-btn-secondary"
-              onClick={handleMessageClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMessageClick(e);
+              }}
             >
               <ChatIcon />
             </button>
-            <button className="bid-row-btn bid-row-btn-secondary" onClick={handleProfileClick}>
+            <button className="bid-row-btn bid-row-btn-secondary" onClick={(e) => {
+              e.stopPropagation();
+              handleProfileClick(e);
+            }}>
               View Profile
             </button>
           </div>
@@ -771,7 +776,15 @@ function BidDisplay({
           <div className="bid-row-actions">
             <button
               className="bid-row-btn bid-row-btn-secondary"
-              onClick={() => handlePending && handlePending(bid.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (handlePending) {
+                  handlePending(bid.id);
+                  toast.success('Bid moved back to pending successfully');
+                } else {
+                  toast.error('Unable to move bid back to pending');
+                }
+              }}
             >
               Move Back to Pending
             </button>
@@ -785,9 +798,30 @@ function BidDisplay({
             <div className="bid-row-actions">
               <button
                 className="bid-row-btn bid-row-btn-pay"
-                onClick={() => setShowPaymentModal(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onOpenPaymentModal) {
+                    onOpenPaymentModal(bid);
+                  } else {
+                    toast.info('Payment functionality not available');
+                  }
+                }}
               >
                 Pay
+              </button>
+              <button
+                className="bid-row-btn bid-row-btn-secondary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (handlePending) {
+                    handlePending(bid.id);
+                    toast.success('Bid moved back to pending successfully');
+                  } else {
+                    toast.error('Unable to move bid back to pending');
+                  }
+                }}
+              >
+                Move Back to Pending
               </button>
             </div>
           );
@@ -797,7 +831,10 @@ function BidDisplay({
           <div className="bid-row-actions">
             <button
               className="bid-row-btn bid-row-btn-secondary"
-              onClick={handleMessageClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMessageClick(e);
+              }}
             >
               <ChatIcon />
               
@@ -924,7 +961,10 @@ function BidDisplay({
                   src={profileImage}
                   alt={`${business_profiles.business_name} profile`}
                   className="mobile-business-avatar"
-                  onClick={handleProfileClick}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleProfileClick(e);
+                  }}
                 />
                 <div className="mobile-business-info">
                   <h4 className="mobile-business-name">
@@ -956,7 +996,10 @@ function BidDisplay({
                   <>
                     <button
                       className="mobile-action-btn success"
-                      onClick={() => handleApprove && handleApprove(bid.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleApprove && handleApprove(bid.id);
+                      }}
                       style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -966,7 +1009,10 @@ function BidDisplay({
                     </button>
                     <button
                       className="mobile-action-btn danger"
-                      onClick={handleDenyClick}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDenyClick();
+                      }}
                       style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -981,7 +1027,15 @@ function BidDisplay({
                 {getBidStatus() === 'denied' && (
                   <button
                     className="mobile-action-btn secondary"
-                    onClick={() => handlePending && handlePending(bid.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (handlePending) {
+                        handlePending(bid.id);
+                        toast.success('Bid moved back to pending successfully');
+                      } else {
+                        toast.error('Unable to move bid back to pending');
+                      }
+                    }}
                   >
                     Move Back to Pending
                   </button>
@@ -992,7 +1046,10 @@ function BidDisplay({
                 {/* Message button - Always show for communication */}
                     <button
                       className="mobile-action-btn primary"
-                      onClick={handleMessageClick}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMessageClick(e);
+                      }}
                     >
                       <ChatIcon />
                       
@@ -1002,7 +1059,10 @@ function BidDisplay({
                 {(getBidStatus() === 'approved' || status === 'approved' || status === 'accepted' || status === 'interested') && (
                   <button
                     className="mobile-action-btn pay"
-                    onClick={handlePaymentClick}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePaymentClick(e);
+                    }}
                   >
                     Pay
                   </button>
@@ -1012,9 +1072,30 @@ function BidDisplay({
                 {(getBidStatus() === 'approved' || status === 'approved' || status === 'accepted') && business_profiles?.google_calendar_connected && (
                   <button
                     className="mobile-action-btn secondary"
-                    onClick={handleConsultationClick}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleConsultationClick();
+                    }}
                   >
                     Schedule Consultation
+                  </button>
+                )}
+                
+                {/* Move Back to Pending button for approved/accepted/interested bids */}
+                {(getBidStatus() === 'approved' || status === 'approved' || status === 'accepted' || status === 'interested') && (
+                  <button
+                    className="mobile-action-btn secondary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (handlePending) {
+                        handlePending(bid.id);
+                        toast.success('Bid moved back to pending successfully');
+                      } else {
+                        toast.error('Unable to move bid back to pending');
+                      }
+                    }}
+                  >
+                    Move Back to Pending
                   </button>
                 )}
               </div>
@@ -1069,7 +1150,10 @@ function BidDisplay({
                     src={profileImage}
                     alt={`${business_profiles.business_name} profile`}
                     className="bid-row-profile-img"
-                    onClick={handleProfileClick}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleProfileClick(e);
+                    }}
                   />
                   <div className="bid-row-info">
                     <div className="bid-row-name">
@@ -1184,99 +1268,7 @@ function BidDisplay({
         />
       )}
       
-      {/* Enhanced Payment Modal */}
-      {showPaymentModal && (
-        <div className="payment-modal-overlay" onClick={handleModalClose}>
-          <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="payment-modal-header">
-              <h3>Payment Options</h3>
-              <button 
-                className="payment-modal-close"
-                onClick={handleModalClose}
-              >
-                ×
-              </button>
-            </div>
-            <div className="payment-modal-content">
-              <div className="payment-options">
-                {business_profiles?.amount && business_profiles?.down_payment_type ? (
-                  <>
-                                 <div className="payment-option">
-               <h4>Down Payment</h4>
-               <p className="payment-amount">
-                 {business_profiles.down_payment_type === 'percentage' 
-                   ? `${business_profiles.amount*100}% ($${getDownPaymentAmount().toFixed(2)})`
-                   : `$${business_profiles.amount}`
-                 }
-               </p>
-               <p className="payment-description">
-                 {downPaymentMade
-                   ? "Down payment has already been made"
-                   : "Secure your booking with a partial payment"
-                 }
-               </p>
-                      <button 
-                        className="payment-option-btn primary"
-                        style={{backgroundColor: '#9633eb'}}
-                        disabled={downPaymentMade}
-                        onClick={() => {
-                          if (!downPaymentMade) {
-                            toast.info(`Processing down payment of ${business_profiles.down_payment_type === 'percentage' 
-                              ? `${business_profiles.amount}% ($${getDownPaymentAmount().toFixed(2)})`
-                              : `$${business_profiles.amount}`
-                            }...`);
-                            setShowPaymentModal(false);
-                          }
-                        }}
-                      >
-                        {downPaymentMade ? "Already Paid" : "Pay Down Payment"}
-                      </button>
-                    </div>
-                    <div className="payment-option">
-                      <h4>Full Payment</h4>
-                      <p className="payment-amount">${bid_amount}</p>
-                      <p className="payment-description">Pay the complete amount upfront</p>
-                      <button 
-                        className="payment-option-btn success"
-                        style={{backgroundColor: '#ec4899'}}
-                        onClick={() => {
-                          toast.info(`Processing full payment of $${bid_amount}...`);
-                          setShowPaymentModal(false);
-                        }}
-                      >
-                        Pay Full Amount
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="payment-option">
-                    <h4>Full Payment</h4>
-                    <p className="payment-amount">${bid_amount}</p>
-                    <p className="payment-description">Complete payment for this service</p>
-                    <button 
-                      className="payment-option-btn success"
-                      onClick={() => {
-                        toast.info(`Processing payment of $${bid_amount}...`);
-                        setShowPaymentModal(false);
-                      }}
-                    >
-                      Pay Now
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="payment-modal-actions">
-              <button 
-                className="cancel-btn"
-                onClick={handleModalClose}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Image Modal */}
       {showImageModal && (

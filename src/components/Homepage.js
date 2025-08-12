@@ -649,7 +649,7 @@ function VendorManagerDemo() {
                                     >
                                         <path d="M10 2a8 8 0 105.293 14.707l4.5 4.5a1 1 0 001.414-1.414l-4.5-4.5A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z" fill="white"/>
                                     </svg>
-                                    Find Wedding Vendors
+                                    Get Bids From Vendors
                                 </button>
                             ) : (
                                 /* Desktop: Horizontal Search Bar */

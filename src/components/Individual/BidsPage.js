@@ -160,7 +160,7 @@ export default function BidsPage({ onOpenChat }) {
     const [activeTab, setActiveTab] = useState('all');
     
     // Sorting state
-    const [sortBy, setSortBy] = useState('recommended'); // 'recommended', 'high-price', 'low-price'
+    const [sortBy, setSortBy] = useState('recommended'); // 'recommended', 'high-price', 'low-price', 'newest'
 
     const [couponCode, setCouponCode] = useState('');
     const [couponError, setError] = useState(null);
@@ -192,6 +192,10 @@ export default function BidsPage({ onOpenChat }) {
     const [selectedBusinessForPortfolio, setSelectedBusinessForPortfolio] = useState(null);
     const [showGalleryModal, setShowGalleryModal] = useState(false);
     const [selectedBusinessForGallery, setSelectedBusinessForGallery] = useState(null);
+    
+    // Payment Modal State
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [selectedBidForPayment, setSelectedBidForPayment] = useState(null);
 
     // Add new state for better UX
     const [selectedRequestId, setSelectedRequestId] = useState(null);
@@ -287,6 +291,10 @@ export default function BidsPage({ onOpenChat }) {
                             return amountLowA - amountLowB;
                         }
                         // If amounts are equal, sort by creation date (newest first)
+                        return new Date(b.created_at) - new Date(a.created_at);
+                        
+                    case 'newest':
+                        // Sort by creation date (newest first)
                         return new Date(b.created_at) - new Date(a.created_at);
                         
                     default:
@@ -817,18 +825,19 @@ export default function BidsPage({ onOpenChat }) {
     const handlePayNow = (bid) => {
         console.log('BidsPage: handlePayNow called with bid:', bid);
         try {
-            if (!bid.business_profiles.stripe_account_id) {
-                toast.error('This business is not yet set up to receive payments. Please contact them directly.');
-                return;
-            }
+            // Use Bidi's Stripe account if business doesn't have one
+            const stripeAccountId = bid.business_profiles?.stripe_account_id || 'acct_1RqCsQJwWKKQQDV2';
+            const isUsingBidiStripe = !bid.business_profiles?.stripe_account_id;
 
             const paymentData = {
                 bid_id: bid.id,
                 amount: bid.bid_amount,
-                stripe_account_id: bid.business_profiles.stripe_account_id,
+                stripe_account_id: stripeAccountId,
                 payment_type: 'full',
-                business_name: bid.business_profiles.business_name,
-                description: bid.message || 'Service payment'
+                business_name: bid.business_profiles?.business_name || 'Unknown Business',
+                description: isUsingBidiStripe ? 'Service payment (Processed by Bidi)' : (bid.message || 'Service payment'),
+                lineItems: bid.line_items || [],
+                taxRate: bid.tax_rate || 0
             };
             console.log('BidsPage: Navigating to checkout with payment data:', paymentData);
             navigate('/checkout', { state: { paymentData } });
@@ -1478,7 +1487,8 @@ export default function BidsPage({ onOpenChat }) {
             onMobileModalToggle: handleBidDisplayModalToggle, // Add callback for modal state changes
             onOpenBidDetail: handleOpenBidDetail, // Add callback for opening bid detail modal
             onOpenBidMessaging: handleOpenBidMessagingFromList, // Add callback for opening bid messaging modal
-            onOpenPortfolio: handleOpenPortfolio // Add callback for opening portfolio modal
+            onOpenPortfolio: handleOpenPortfolio, // Add callback for opening portfolio modal
+            onOpenPaymentModal: handleOpenPaymentModal // Add callback for opening payment modal
         };
 
         // Determine which props to show based on bid status
@@ -1712,9 +1722,10 @@ export default function BidsPage({ onOpenChat }) {
                                     display: 'block',
                                     marginTop: '4px'
                                 }}>
-                                    {sortBy === 'recommended' && '⭐ Sorted by recommendation'}
-                                    {sortBy === 'high-price' && '💰 Sorted by highest price'}
-                                    {sortBy === 'low-price' && '💸 Sorted by lowest price'}
+                                                                    {sortBy === 'recommended' && '⭐ Sorted by recommendation'}
+                                {sortBy === 'high-price' && '💰 Sorted by highest price'}
+                                {sortBy === 'low-price' && '💸 Sorted by lowest price'}
+                                {sortBy === 'newest' && '🕒 Sorted by newest bid'}
                                 </span>
                             </h2>
                         </div>
@@ -1740,100 +1751,89 @@ export default function BidsPage({ onOpenChat }) {
                                     }}>
                                         Sort by:
                                     </span>
-                                    <div style={{
-                                        display: 'flex',
-                                        gap: '8px',
-                                        justifyContent: 'center',
-                                        flexWrap: 'wrap'
-                                    }}>
-                                        {[
-                                            { key: 'recommended', label: 'Recommended', icon: '⭐' },
-                                            { key: 'high-price', label: 'High Price', icon: '💰' },
-                                            { key: 'low-price', label: 'Low Price', icon: '💸' }
-                                        ].map((option) => (
-                                            <button
-                                                key={option.key}
-                                                onClick={() => setSortBy(option.key)}
-                                                style={{
-                                                    padding: '8px 16px',
-                                                    borderRadius: '20px',
-                                                    border: '1px solid',
-                                                    background: sortBy === option.key ? '#9633eb' : 'white',
-                                                    color: sortBy === option.key ? 'white' : '#9633eb',
-                                                    borderColor: '#9633eb',
-                                                    cursor: 'pointer',
-                                                    fontSize: '13px',
-                                                    fontWeight: '500',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '6px',
-                                                    transition: 'all 0.2s ease',
-                                                    minWidth: 'fit-content'
-                                                }}
-                                            >
-                                                <span>{option.icon}</span>
-                                                {option.label}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                        style={{
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            border: '2px solid #9633eb',
+                                            background: 'white',
+                                            color: '#374151',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            width: '100%',
+                                            maxWidth: '200px',
+                                            textAlign: 'center'
+                                        }}
+                                    >
+                                        <option value="recommended">⭐ Recommended</option>
+                                        <option value="high-price">💰 High Price</option>
+                                        <option value="low-price">💸 Low Price</option>
+                                        <option value="newest">🕒 Newest Bid</option>
+                                    </select>
                                 </div>
                                 
-                                <div className="status-tabs" style={{
+                                {/* Mobile Status Dropdown - styled like desktop */}
+                                <div className="mobile-status-dropdown-container" style={{
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     gap: '8px',
                                     marginBottom: '24px',
-                                    overflowX: 'auto',
-                                    padding: '8px 0'
+                                    padding: '0 16px'
                                 }}>
-                                    {["all", "pending", "interested", "approved", "paid", "denied", "expired"].map((status) => {
-                                        const bidsByStatus = getBidsByStatus();
-                                        const count = status === 'all' 
-                                            ? Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0)
-                                            : (bidsByStatus[status]?.length || 0);
-                                        
-                                        const displayText = status.split('_')
-                                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                                            .join(' ');
-                                        
-                                        const newBidsCount = status !== 'all' ? getNewBidsCount(status) : 0;
-                                        
-                                        return (
-                                            <button
-                                                key={status}
-                                                className={`tab-button ${status} ${activeTab === status ? "active" : ""}`}
-                                                onClick={() => setActiveTab(status)}
-                                                style={{
-                                                    padding: '8px 16px',
-                                                    borderRadius: '20px',
-                                                    border: 'none',
-                                                    background: activeTab === status ? '#9633eb' : '#f8f9fa',
-                                                    color: activeTab === status ? 'white' : '#666',
-                                                    cursor: 'pointer',
-                                                    fontWeight: '500',
-                                                    whiteSpace: 'nowrap',
-                                                    position: 'relative',
-                                                    transition: 'all 0.2s ease'
-                                                }}
-                                            >
-                                                {displayText} ({count})
-                                                {newBidsCount > 0 && (
-                                                    <span style={{
-                                                        position: 'absolute',
-                                                        top: '-8px',
-                                                        right: '-8px',
-                                                        background: '#ec4899',
-                                                        color: 'white',
-                                                        borderRadius: '50%',
-                                                        padding: '2px 6px',
-                                                        fontSize: '12px',
-                                                        fontWeight: 'bold'
-                                                    }}>
-                                                        {newBidsCount}
-                                                    </span>
-                                                )}
-                                            </button>
-                                        );
-                                    })}
+                                    <label htmlFor="mobile-status-select" style={{
+                                        fontWeight: '600',
+                                        color: '#374151',
+                                        fontSize: '14px',
+                                        marginBottom: '4px',
+                                        textAlign: 'center'
+                                    }}>
+                                        Filter by Status:
+                                    </label>
+                                    <select
+                                        id="mobile-status-select"
+                                        value={activeTab}
+                                        onChange={(e) => setActiveTab(e.target.value)}
+                                        style={{
+                                            padding: '12px 16px',
+                                            border: '2px solid #e5e7eb',
+                                            borderRadius: '8px',
+                                            backgroundColor: 'white',
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            color: '#374151',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            width: '100%',
+                                            maxWidth: '300px',
+                                            alignSelf: 'center'
+                                        }}
+                                    >
+                                        {[
+                                            { key: 'all', label: 'All Bids', description: 'View all bids for this request' },
+                                            { key: 'pending', label: 'Pending', description: 'Bids awaiting your review' },
+                                            { key: 'interested', label: 'Interested', description: 'Bids you\'re interested in' },
+                                            { key: 'approved', label: 'Approved', description: 'Bids you\'ve accepted' },
+                                            { key: 'paid', label: 'Paid', description: 'Bids with completed payments' },
+                                            { key: 'denied', label: 'Denied', description: 'Bids you\'ve rejected' },
+                                            { key: 'expired', label: 'Expired', description: 'Bids that have expired' }
+                                        ].map(({ key, label, description }) => {
+                                            const bidsByStatus = getBidsByStatus();
+                                            const count = key === 'all' 
+                                                ? Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0)
+                                                : (bidsByStatus[key]?.length || 0);
+                                            
+                                            const newBidsCount = key !== 'all' ? getNewBidsCount(key) : 0;
+                                            
+                                            return (
+                                                <option key={key} value={key} title={description}>
+                                                    {label} ({count}){newBidsCount > 0 ? ` - ${newBidsCount} new` : ''}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
                                 </div>
                             </>
                         )}
@@ -1949,10 +1949,22 @@ export default function BidsPage({ onOpenChat }) {
         
         // Reopen portfolio modal with the same business
         if (selectedBusinessForGallery) {
-            setSelectedBusinessForPortfolio(selectedBusinessForGallery);
             setShowPortfolioModal(true);
         }
     };
+    
+    // Payment Modal Handlers
+    const handleOpenPaymentModal = (bid) => {
+        setSelectedBidForPayment(bid);
+        setShowPaymentModal(true);
+    };
+    
+    const handleClosePaymentModal = () => {
+        setShowPaymentModal(false);
+        setSelectedBidForPayment(null);
+    };
+    
+
 
     // Enhanced request card with better visual feedback
     const renderRequestCard = (request, index) => {
@@ -2085,58 +2097,53 @@ export default function BidsPage({ onOpenChat }) {
                     <div className="bids-overview">
                         <div className="sorting-controls">
                             <span className="sort-label">Sort by:</span>
-                            {[
-                                { key: 'recommended', label: 'Recommended', icon: '⭐' },
-                                { key: 'high-price', label: 'High Price', icon: '💰' },
-                                { key: 'low-price', label: 'Low Price', icon: '💸' }
-                            ].map((option) => (
-                                <button
-                                    key={option.key}
-                                    className={`sort-btn ${sortBy === option.key ? 'active' : ''}`}
-                                    onClick={() => setSortBy(option.key)}
-                                >
-                                    <span>{option.icon}</span>
-                                    {option.label}
-                                </button>
-                            ))}
+                            <select
+                                className="sort-dropdown"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                            >
+                                <option value="recommended">⭐ Recommended</option>
+                                <option value="high-price">💰 High Price</option>
+                                <option value="low-price">💸 Low Price</option>
+                                <option value="newest">🕒 Newest Bid</option>
+                            </select>
                         </div>
                     </div>
                 </div>
 
                                         <div className="bids-container">
-                            {/* Status Tabs with Helpful Tooltips */}
-                            <div className="status-tabs">
-                                {[
-                                    { key: 'all', label: 'All', description: 'View all bids for this request' },
-                                    { key: 'pending', label: 'Pending', description: 'Bids awaiting your review' },
-                                    { key: 'approved', label: 'Approved', description: 'Bids you\'ve accepted' },
-                                    { key: 'paid', label: 'Paid', description: 'Bids with completed payments' },
-                                    { key: 'denied', label: 'Denied', description: 'Bids you\'ve rejected' },
-                                    { key: 'expired', label: 'Expired', description: 'Bids that have expired' }
-                                ].map(({ key, label, description }) => {
-                                    const count = key === 'all' 
-                                        ? totalBids
-                                        : (bidsByStatus[key]?.length || 0);
-                                    
-                                    const newBidsCount = key !== 'all' ? getNewBidsCount(key) : 0;
-                                    
-                                    return (
-                                        <button
-                                            key={key}
-                                            className={`tab-button ${key} ${activeTab === key ? "active" : ""}`}
-                                            onClick={() => setActiveTab(key)}
-                                            title={description}
-                                        >
-                                            <span className="tab-text">{label}</span>
-                                            <span className="tab-count">({count})</span>
-                                            {newBidsCount > 0 && (
-                                                <span className="new-bids-badge">
-                                                    {newBidsCount}
-                                                </span>
-                                            )}
-                                        </button>
-                                    );
-                                })}
+                            {/* Status Dropdown */}
+                            <div className="status-dropdown-container">
+                                <label htmlFor="status-select" className="status-dropdown-label">
+                                    Filter by Status:
+                                </label>
+                                <select
+                                    id="status-select"
+                                    className="status-dropdown"
+                                    value={activeTab}
+                                    onChange={(e) => setActiveTab(e.target.value)}
+                                >
+                                    {[
+                                        { key: 'all', label: 'All Bids', description: 'View all bids for this request' },
+                                        { key: 'pending', label: 'Pending', description: 'Bids awaiting your review' },
+                                        { key: 'approved', label: 'Approved', description: 'Bids you\'ve accepted' },
+                                        { key: 'paid', label: 'Paid', description: 'Bids with completed payments' },
+                                        { key: 'denied', label: 'Denied', description: 'Bids you\'ve rejected' },
+                                        { key: 'expired', label: 'Expired', description: 'Bids that have expired' }
+                                    ].map(({ key, label, description }) => {
+                                        const count = key === 'all' 
+                                            ? totalBids
+                                            : (bidsByStatus[key]?.length || 0);
+                                        
+                                        const newBidsCount = key !== 'all' ? getNewBidsCount(key) : 0;
+                                        
+                                        return (
+                                            <option key={key} value={key} title={description}>
+                                                {label} ({count}){newBidsCount > 0 ? ` - ${newBidsCount} new` : ''}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
                             </div>
 
                     <div className="bids-content">
@@ -2257,6 +2264,22 @@ export default function BidsPage({ onOpenChat }) {
                             font-weight: 600;
                             color: #2c3e50;
                             margin: 0 0 8px 0;
+                        }
+                        
+                        /* Mobile Status Dropdown Styles */
+                        .mobile-status-dropdown-container select:hover {
+                            border-color: #9633eb;
+                        }
+                        
+                        .mobile-status-dropdown-container select:focus {
+                            outline: none;
+                            border-color: #9633eb;
+                            box-shadow: 0 0 0 3px rgba(150, 51, 235, 0.1);
+                        }
+                        
+                        .mobile-status-dropdown-container select option {
+                            padding: 8px 12px;
+                            font-size: 14px;
                         }
                         
                         .request-status-container {
@@ -3305,6 +3328,92 @@ export default function BidsPage({ onOpenChat }) {
                     businessName={selectedBusinessForGallery.business_name}
                     onBackToPortfolio={handleBackToPortfolio}
                 />
+            )}
+            
+            {/* Payment Modal - Rendered at top level to overlay entire page */}
+            {showPaymentModal && selectedBidForPayment && (
+                <div className="payment-modal-overlay" onClick={handleClosePaymentModal}>
+                    <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="payment-modal-header">
+                            <h3>Payment Options</h3>
+                            <button 
+                                className="payment-modal-close"
+                                onClick={handleClosePaymentModal}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="payment-modal-content">
+                            <div className="payment-options">
+                                {selectedBidForPayment.business_profiles?.amount && selectedBidForPayment.business_profiles?.down_payment_type ? (
+                                    <>
+                                        <div className="payment-option">
+                                            <h4>Down Payment</h4>
+                                            <p className="payment-amount">
+                                                {selectedBidForPayment.business_profiles.down_payment_type === 'percentage' 
+                                                    ? `${selectedBidForPayment.business_profiles.amount*100}% ($${calculateDownPayment(selectedBidForPayment)?.amount?.toFixed(2) || '0.00'})`
+                                                    : `$${selectedBidForPayment.business_profiles.amount || '0.00'}`
+                                                }
+                                            </p>
+                                            <p className="payment-description">
+                                                Secure your booking with a partial payment
+                                            </p>
+                                            <button 
+                                                className="payment-option-btn primary"
+                                                onClick={() => {
+                                                    toast.info('Preparing payment...');
+                                                    handleDownPayNow(selectedBidForPayment);
+                                                    handleClosePaymentModal();
+                                                }}
+                                            >
+                                                Pay Down Payment
+                                            </button>
+                                        </div>
+                                        <div className="payment-option">
+                                            <h4>Full Payment</h4>
+                                            <p className="payment-amount">${selectedBidForPayment.bid_amount}</p>
+                                            <p className="payment-description">Pay the complete amount upfront</p>
+                                            <button 
+                                                className="payment-option-btn success"
+                                                onClick={() => {
+                                                    toast.info('Preparing payment...');
+                                                    handlePayNow(selectedBidForPayment);
+                                                    handleClosePaymentModal();
+                                                }}
+                                            >
+                                                Pay Full Amount
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="payment-option">
+                                        <h4>Full Payment</h4>
+                                        <p className="payment-amount">${selectedBidForPayment.bid_amount}</p>
+                                        <p className="payment-description">Complete payment for this service</p>
+                                        <button 
+                                            className="payment-option-btn success"
+                                            onClick={() => {
+                                                toast.info('Preparing payment...');
+                                                handlePayNow(selectedBidForPayment);
+                                                handleClosePaymentModal();
+                                            }}
+                                        >
+                                            Pay Now
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="payment-modal-actions">
+                            <button 
+                                className="cancel-btn"
+                                onClick={handleClosePaymentModal}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </>
     );

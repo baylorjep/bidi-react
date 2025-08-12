@@ -70,8 +70,8 @@ export default function MessagingView({
     <div className="messaging-view">
       <ChatHeaderSkeleton />
       <BidInfoSkeleton />
-      <div className="chat-window">
-        <div className="chat-body">
+      <div className="chat-window-messaging-view">
+        <div className="chat-body-messaging-view">
           {Array.from({ length: 6 }).map((_, index) => (
             <MessageSkeleton 
               key={index} 
@@ -732,7 +732,6 @@ export default function MessagingView({
               aria-label="Go back"
             >
               <FaArrowLeft />
-              <span>Back</span>
             </button>
           )}
           <div className="header-center-messaging">
@@ -742,7 +741,7 @@ export default function MessagingView({
               style={{ cursor: isBusinessProfile ? 'pointer' : 'default' }}
             >
               {profilePhoto ? (
-                <img src={profilePhoto} alt="Profile" className="profile-image" />
+                <img src={profilePhoto} alt="Profile" className="profile-circle" style={{borderRadius:'50%'}} />
               ) : (
                 <span className="initial-letter">{initialLetter}</span>
               )}
@@ -775,8 +774,8 @@ export default function MessagingView({
         </div>
       )}
 
-      <div className="chat-window">
-        <div className="chat-body">
+      <div className="chat-window-messaging-view">
+        <div className="chat-body-messaging-view">
           {messages.map((msg, index) => (
             <div
               key={index}

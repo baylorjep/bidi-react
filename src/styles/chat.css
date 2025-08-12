@@ -70,6 +70,7 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  height: 80vh;
 }
 .chat-sidebar header {
   padding: 1rem;
@@ -104,7 +105,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-height: 630px;
+  max-height: 80vh;
   overflow: hidden;
   background: white;
   border-radius: 12px;
@@ -122,7 +123,7 @@
 }
 
 /* Chat body (messages) */
-.chat-body {
+.chat-body-messaging-view {
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
@@ -333,7 +334,7 @@
     gap: 8px;
     box-sizing: border-box;
   }
-  .messaging-view .chat-body {
+  .messaging-view .chat-body-messaging-view {
     position: relative;
     padding-top: 300px;   /* header height */
     padding-bottom: 60px; /* footer + bottom nav height */
@@ -391,6 +392,7 @@
   top: 0;
   z-index: 10;
   height: 56px;
+  margin-bottom: 0px !important;
 }
 
 .back-button-messaging {
@@ -494,7 +496,7 @@
   position: relative;
 }
 
-.messaging-view .chat-window {
+.messaging-view .chat-window-messaging-view {
   flex: 1;
   position: relative;
   overflow: hidden;
@@ -517,20 +519,20 @@
 }
 
 /* Style the scrollbar */
-.messaging-view .chat-body::-webkit-scrollbar {
+.messaging-view .chat-body-messaging-view::-webkit-scrollbar {
   width: 6px;
 }
 
-.messaging-view .chat-body::-webkit-scrollbar-track {
+.messaging-view .chat-body-messaging-view::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
 
-.messaging-view .chat-body::-webkit-scrollbar-thumb {
+.messaging-view .chat-body-messaging-view::-webkit-scrollbar-thumb {
   background: #A328F4;
   border-radius: 3px;
 }
 
-.messaging-view .chat-body::-webkit-scrollbar-thumb:hover {
+.messaging-view .chat-body-messaging-view::-webkit-scrollbar-thumb:hover {
   background: rgba(163, 40, 244, 0.8);
 }
 
@@ -655,7 +657,7 @@
     position: relative; /* Remove fixed positioning */
   }
 
-  .chat-body {
+  .chat-body-messaging-view {
     margin-top: 0; /* Remove margin */
     padding-bottom: 0; /* Remove padding */
   }
@@ -973,7 +975,7 @@ body.modal-open {
     margin-bottom: 0 !important;
     box-shadow: none;
   }
-  .messaging-view .chat-body {
+  .messaging-view .chat-body-messaging-view {
     position: relative !important;
     height: auto !important;
     min-height: 300px;
@@ -1057,7 +1059,7 @@ body.modal-open {
   margin: 0;
 }
 
-.bid-card .messaging-view .chat-body {
+.bid-card .messaging-view .chat-body-messaging-view {
   height: calc(100% - 96px); /* header + footer */
   padding: 8px 8px 0 8px;
   margin: 0;
@@ -1165,7 +1167,7 @@ body.modal-open {
     min-height: 44px !important;
     padding: 0 8px !important;
   }
-  .bid-card .messaging-view .chat-body {
+  .bid-card .messaging-view .chat-body-messaging-view {
     height: calc(100% - 88px) !important;
     padding: 4px 4px 0 4px !important;
     margin: 0 !important;

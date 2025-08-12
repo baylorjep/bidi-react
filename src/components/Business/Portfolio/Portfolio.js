@@ -19,6 +19,7 @@ import ConsultationModal from '../../Consultation/ConsultationModal';
 import { useConsultation } from '../../../hooks/useConsultation';
 import { useGoogleCalendar } from '../../../hooks/useGoogleCalendar';
 import { toast } from 'react-toastify';
+import RequestModal from '../../Request/RequestModal'; // Import RequestModal
 
 // SVG Components
 const StarIcon = () => (
@@ -246,6 +247,8 @@ const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null }) => {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
   const [showCalendarReconnectModal, setShowCalendarReconnectModal] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false); // Add request modal state
+  const [requestFormData, setRequestFormData] = useState({}); // Add request form data state
   const descriptionRef = useRef(null);
   const { connectCalendar } = useGoogleCalendar();
   const {
@@ -632,43 +635,62 @@ const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null }) => {
   };
 
   const handleGetQuote = () => {
-    // Format the vendor data as expected by MasterRequestFlow
+    // Set the request form data with the vendor information
     const vendorData = {
       vendor: {
         id: business.id,
         business_name: business.business_name,
         business_category: business.business_category,
         business_address: business.business_address,
-        profile_photo_url: profileImage
+        profile_photo_url: profileImage,
+        image: profileImage // Add image property for RequestModal compatibility
       },
       image: profileImage
     };
 
-    // Format the category to match the expected format in RequestCategories.js
+    // Format the category to match the expected format in RequestModal
     let formattedCategory;
     if (Array.isArray(business.business_category)) {
       formattedCategory = business.business_category[0];
     } else {
       formattedCategory = business.business_category;
     }
+    
     // Map to canonical category names if needed
     if (formattedCategory) {
       if (formattedCategory.toLowerCase().includes('wedding planner')) {
-        formattedCategory = 'WeddingPlanning';
+        formattedCategory = 'planner';
       } else if (formattedCategory.toLowerCase().includes('beauty')) {
-        formattedCategory = 'HairAndMakeup';
+        formattedCategory = 'beauty';
+      } else if (formattedCategory.toLowerCase().includes('photography')) {
+        formattedCategory = 'photographer';
+      } else if (formattedCategory.toLowerCase().includes('videography')) {
+        formattedCategory = 'videographer';
+      } else if (formattedCategory.toLowerCase().includes('catering')) {
+        formattedCategory = 'caterer';
+      } else if (formattedCategory.toLowerCase().includes('florist') || formattedCategory.toLowerCase().includes('flowers')) {
+        formattedCategory = 'florist';
+      } else if (formattedCategory.toLowerCase().includes('dj') || formattedCategory.toLowerCase().includes('disc jockey')) {
+        formattedCategory = 'dj';
+      } else if (formattedCategory.toLowerCase().includes('venue')) {
+        formattedCategory = 'venue';
       } else {
-        formattedCategory = formattedCategory.charAt(0).toUpperCase() + formattedCategory.slice(1).replace(/\s/g, '');
+        // Default to the original category
+        formattedCategory = formattedCategory.toLowerCase();
       }
     }
 
-    // Navigate to the master request flow with the vendor data and selected category
-    navigate("/master-request-flow", { 
-      state: { 
-        vendor: vendorData,
-        selectedCategories: [formattedCategory]
-      }
+    // Set the request form data and open the modal
+    setRequestFormData({
+      vendor: vendorData.vendor, // Pass the vendor object directly, not wrapped
+      selectedCategories: [formattedCategory]
     });
+    setShowRequestModal(true);
+  };
+
+  const handleRequestModalClose = () => {
+    setShowRequestModal(false);
+    setRequestFormData({});
   };
 
   const handleImageClick = (media) => {
@@ -1265,6 +1287,19 @@ const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null }) => {
         currentIndex={selectedImage?.currentIndex || 0}
         businessId={businessId}
       />
+
+      {/* Request Modal for Tailored Bids */}
+      {showRequestModal && (
+        <RequestModal
+          isOpen={showRequestModal}
+          onClose={handleRequestModalClose}
+          selectedVendors={requestFormData.selectedCategories || []}
+          searchFormData={null}
+          isEditMode={false}
+          existingRequestData={null}
+          vendor={requestFormData.vendor}
+        />
+      )}
 
       {showAuthModal && (
         <AuthModal 

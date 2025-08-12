@@ -803,7 +803,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .payment-modal {
@@ -813,6 +813,8 @@
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+  position: relative;
+  z-index: 10000;
 }
 
 .payment-modal-header {
@@ -2468,7 +2470,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1100;
+    z-index: 9999;
     padding: 16px;
   }
 
