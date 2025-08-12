@@ -6,7 +6,6 @@ import '../../styles/PaymentCard.css';
 const PaymentCard = ({ 
   amount, 
   businessName, 
-  stripeAccountId, 
   description = 'Service Payment',
   lineItems = [],
   subtotal = 0,
@@ -66,10 +65,6 @@ const PaymentCard = ({
   };
 
   const handleSendPaymentRequest = () => {
-    if (!stripeAccountId) {
-      console.error('Missing stripe account ID');
-      return;
-    }
 
     const total = calculateTotal();
     if (total <= 0) {
@@ -79,7 +74,7 @@ const PaymentCard = ({
 
     const paymentData = {
       amount: total,
-      stripe_account_id: stripeAccountId,
+      stripe_account_id: null,
       payment_type: 'custom',
       business_name: businessName,
       description: paymentDescription,
@@ -105,7 +100,7 @@ const PaymentCard = ({
   const handlePayNow = () => {
     const paymentData = {
       amount: parseFloat(amount),
-      stripe_account_id: stripeAccountId,
+      stripe_account_id: null,
       payment_type: 'custom',
       business_name: businessName,
       description: description,

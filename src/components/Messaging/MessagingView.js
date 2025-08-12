@@ -59,7 +59,7 @@ export default function MessagingView({
   const [bidInfo, setBidInfo] = useState(null);
   const [isCurrentUserBusiness, setIsCurrentUserBusiness] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [stripeAccountId, setStripeAccountId] = useState(null);
+
   const [modalLineItems, setModalLineItems] = useState([
     { id: 1, description: '', quantity: 1, rate: '', amount: 0 }
   ]);
@@ -453,13 +453,12 @@ export default function MessagingView({
       try {
         const { data, error } = await supabase
           .from('business_profiles')
-          .select('id, stripe_account_id')
+          .select('id')
           .eq('id', currentUserId)
           .single();
         
         console.log('Business profile check:', { data, error });
         setIsCurrentUserBusiness(!!data);
-        setStripeAccountId(data?.stripe_account_id || null);
       } catch (error) {
         console.error('Error checking business profile:', error);
       }
@@ -671,10 +670,6 @@ export default function MessagingView({
   };
 
   const handleSendPaymentRequest = (paymentData) => {
-    if (!stripeAccountId) {
-      console.error('No Stripe account ID found for business');
-      return;
-    }
 
     const total = calculateTotal();
     if (total <= 0) {
@@ -691,7 +686,7 @@ export default function MessagingView({
         description: 'Service Payment',
         paymentData: {
           amount: total,
-          stripe_account_id: stripeAccountId,
+          stripe_account_id: null,
           payment_type: 'custom',
           business_name: businessName,
           description: 'Service Payment',
@@ -709,7 +704,7 @@ export default function MessagingView({
         subtotal: calculateSubtotal(),
         tax: calculateTax(),
         taxRate: modalTaxRate,
-        stripe_account_id: stripeAccountId,
+        stripe_account_id: null,
         business_name: businessName,
         description: 'Service Payment'
       },
@@ -796,7 +791,6 @@ export default function MessagingView({
                 <PaymentCard
                   amount={msg.payment_amount || JSON.parse(msg.message).amount}
                   businessName={businessName}
-                  stripeAccountId={msg.payment_data?.stripe_account_id || JSON.parse(msg.message).paymentData.stripe_account_id}
                   description={msg.payment_data?.description || JSON.parse(msg.message).description}
                   lineItems={msg.payment_data?.lineItems || JSON.parse(msg.message).paymentData.lineItems}
                   subtotal={msg.payment_data?.subtotal || JSON.parse(msg.message).paymentData.subtotal}
@@ -863,7 +857,7 @@ export default function MessagingView({
               onChange={handleFileUpload}
             />
           </label>
-          {isCurrentUserBusiness && stripeAccountId && (
+          {isCurrentUserBusiness && (
             <button 
               className="chat-payment-btn"
               onClick={() => setShowPaymentModal(true)}
@@ -1045,7 +1039,7 @@ export default function MessagingView({
                     description: 'Service Payment',
                     paymentData: {
                       amount: total,
-                      stripe_account_id: stripeAccountId,
+                      stripe_account_id: null,
                       payment_type: 'custom',
                       business_name: businessName,
                       description: 'Service Payment',
