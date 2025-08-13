@@ -652,11 +652,18 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     
     // Budget logic
     let budget = 'Not specified';
+    let budgetAmount = 0; // For comparison with minimum budget requirements
     if (categoryResponses.budget) {
       if (typeof categoryResponses.budget === 'object' && categoryResponses.budget?.type === 'custom') {
         budget = `$${categoryResponses.budget.min} - $${categoryResponses.budget.max}`;
+        budgetAmount = categoryResponses.budget.min; // Use minimum for comparison
       } else {
         budget = categoryResponses.budget;
+        // Extract numeric value from budget string if possible
+        const budgetMatch = budget.toString().match(/\$?(\d+)/);
+        if (budgetMatch) {
+          budgetAmount = parseInt(budgetMatch[1]);
+        }
       }
     }
     
@@ -688,10 +695,10 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     
     const businessCategory = categoryMapping[category] || category;
 
-    // Fetch all businesses in the category, joining to get their email
+    // Fetch all businesses in the category, including their notification preferences
     const { data: businesses, error } = await supabase
       .from('business_profiles')
-      .select('business_name, business_category, id, profiles(email)')
+      .select('business_name, business_category, id, profiles(email), notification_preferences')
       .contains('business_category', [businessCategory]);
 
     if (error) {
@@ -699,26 +706,57 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       return;
     }
 
-    // Build the businesses array for the API
-    const businessPayload = businesses
-      .filter(business => business.profiles?.email)
-      .map(business => ({
-        email: business.profiles.email,
-        businessName: business.business_name,
-        budget,
-        location,
-        date
-      }));
+    // Filter businesses based on notification preferences
+    const eligibleBusinesses = businesses.filter(business => {
+      // Must have an email
+      if (!business.profiles?.email) {
+        return false;
+      }
 
-    // POST to the new API contract
-    await fetch('https://bidi-express.vercel.app/api/send-resend-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        category: businessCategory,
-        businesses: businessPayload
-      })
+      // Get notification preferences (default to enabled if not set)
+      const preferences = business.notification_preferences || {};
+      const emailEnabled = preferences.emailNotifications !== false; // Default to true if not specified
+      const notifyOnNewRequests = preferences.notifyOnNewRequests !== false; // Default to true if not specified
+      const minimumBudget = preferences.minimumBudgetForNotifications || 0;
+
+      // Check if email notifications are enabled and they want new request notifications
+      if (!emailEnabled || !notifyOnNewRequests) {
+        return false;
+      }
+
+      // Check if budget meets minimum requirement
+      if (budgetAmount > 0 && budgetAmount < minimumBudget) {
+        return false;
+      }
+
+      return true;
     });
+
+    console.log(`Found ${businesses.length} businesses in category, ${eligibleBusinesses.length} eligible for notifications`);
+
+    // Build the businesses array for the API (only eligible businesses)
+    const businessPayload = eligibleBusinesses.map(business => ({
+      email: business.profiles.email,
+      businessName: business.business_name,
+      budget,
+      location,
+      date
+    }));
+
+    // Only send emails if there are eligible businesses
+    if (businessPayload.length > 0) {
+      // POST to the new API contract
+      await fetch('https://bidi-express.vercel.app/api/send-resend-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: businessCategory,
+          businesses: businessPayload
+        })
+      });
+    } else {
+      console.log('No businesses eligible for email notifications based on preferences');
+    }
   };
 
   // Helper to trigger autobids for a specific request

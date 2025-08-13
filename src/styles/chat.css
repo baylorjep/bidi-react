@@ -2843,3 +2843,98 @@ body.modal-open {
     font-size: 14px;
   }
 }
+
+/* Bid Invitation Message Styles */
+.bid-invitation-message {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invitation-text {
+  margin-bottom: 8px;
+}
+
+.invitation-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.accept-bid-btn {
+  background: #10b981 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  margin-top: 8px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2) !important;
+}
+
+.accept-bid-btn:hover {
+  background: #059669 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3) !important;
+}
+
+.accept-bid-btn:active {
+  transform: translateY(0) !important;
+}
+
+.bid-accepted-message {
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  border-left: 3px solid #10b981;
+}
+
+.accepted-text {
+  color: #10b981 !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+}
+
+/* Invitation Modal Preview Styles */
+.invitation-preview {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.invitation-preview h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.preview-message {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.preview-message p {
+  margin: 0 0 12px 0;
+  color: #495057;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.preview-accept-btn {
+  background: #10b981 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  cursor: default !important;
+  opacity: 0.7 !important;
+}

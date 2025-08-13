@@ -4,6 +4,7 @@ import { supabase } from '../../supabaseClient';
 const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [aiBidderDismissed, setAiBidderDismissed] = useState(false);
   const [progress, setProgress] = useState({
     stripe: false,
     profile: false,
@@ -19,9 +20,55 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
 
   useEffect(() => {
     if (userId) {
+      // Then fetch progress
       fetchProgress();
     }
   }, [userId]);
+
+  // Load dismissed state from localStorage when component mounts
+  useEffect(() => {
+    if (userId) {
+      const dismissed = localStorage.getItem(`aiBidderDismissed_${userId}`);
+      if (dismissed) {
+        setAiBidderDismissed(JSON.parse(dismissed));
+      }
+    }
+  }, [userId]);
+
+  const handleAiBidderDismiss = async () => {
+    try {
+      // Update the business profile in Supabase to mark AI bidder as completed
+      const { error } = await supabase
+        .from('business_profiles')
+        .update({ 
+          autobid_enabled: true,
+          autobid_status: 'live',
+          autobid_training_completed: true
+        })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error updating business profile:', error);
+        return;
+      }
+
+      setAiBidderDismissed(true);
+      localStorage.setItem(`aiBidderDismissed_${userId}`, 'true');
+      
+      // Update progress to mark AI bidder as completed for basic/null users
+      if (businessProfile?.membership_tier !== 'pro') {
+        setProgress(prev => ({
+          ...prev,
+          aiBidder: true
+        }));
+      }
+
+      // Refresh the business profile data
+      fetchProgress();
+    } catch (error) {
+      console.error('Error dismissing AI bidder:', error);
+    }
+  };
 
   const fetchProgress = async () => {
     try {
@@ -60,7 +107,8 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
       const hasBusinessSettings = !!(businessProfile?.phone && businessProfile?.business_category && businessProfile?.business_category.length > 0);
       const hasCalendar = !!(businessProfile?.google_calendar_connected === true);
       const hasBidTemplate = !!(businessProfile?.bid_template);
-      const hasAiBidder = !!(businessProfile?.autobid_enabled && businessProfile?.autobid_status === 'live');
+      const hasAiBidder = !!(businessProfile?.autobid_enabled && businessProfile?.autobid_status === 'live') || 
+                          (businessProfile?.membership_tier !== 'pro' && aiBidderDismissed);
 
 
 
@@ -605,7 +653,8 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
               </div>
             )}
 
-            {!progress.aiBidder && (
+            {!progress.aiBidder && 
+             (businessProfile?.membership_tier === 'pro' || !aiBidderDismissed) && (
               <div 
                 style={{
                   display: 'flex',
@@ -666,6 +715,34 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
                 }}>
                   <i className="fas fa-chevron-right"></i>
                 </div>
+                {businessProfile?.membership_tier !== 'pro' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAiBidderDismiss();
+                    }}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#6b21a8',
+                      cursor: 'pointer',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      marginLeft: '8px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = 'rgba(107, 33, 168, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                    }}
+                    title="Dismiss this notification"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                )}
               </div>
             )}
 

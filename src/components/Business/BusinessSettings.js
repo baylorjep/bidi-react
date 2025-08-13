@@ -404,6 +404,21 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
         setSelectedCategories(categories);
         setCurrentCategories(categories);
       }
+
+      // Fetch notification preferences
+      const { data: notificationData, error: notificationError } = await supabase
+        .from("business_profiles")
+        .select("notification_preferences")
+        .eq("id", currentUser.id)
+        .single();
+
+      if (!notificationError && notificationData?.notification_preferences) {
+        setNotificationPreferences(prev => ({
+          ...prev,
+          ...notificationData.notification_preferences
+        }));
+      }
+
       const { data: existingCoupon, error: couponError } = await supabase
         .from("coupons")
         .select("*")
@@ -1648,6 +1663,18 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
   const [paymentsSaving, setPaymentsSaving] = useState(false);
   const [paymentsSaved, setPaymentsSaved] = useState(false);
 
+  // Add notification preferences state
+  const [notificationPreferences, setNotificationPreferences] = useState({
+    emailNotifications: true,
+    textNotifications: false,
+    minimumBudgetForNotifications: 0,
+    notifyOnNewRequests: true,
+    notifyOnMessages: true
+  });
+  const [notificationsChanged, setNotificationsChanged] = useState(false);
+  const [notificationsSaving, setNotificationsSaving] = useState(false);
+  const [notificationsSaved, setNotificationsSaved] = useState(false);
+
   useEffect(() => {
     if (profileDetails) {
       setProfileEdit({
@@ -1657,8 +1684,14 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
       });
       setProfileChanged(false);
       setProfileSaved(false);
+      
+      // If text notifications are enabled but no phone number, disable them
+      if (notificationPreferences.textNotifications && !profileDetails.phone) {
+        setNotificationPreferences(prev => ({ ...prev, textNotifications: false }));
+        setNotificationsChanged(true);
+      }
     }
-  }, [profileDetails, selectedCategories]);
+  }, [profileDetails, selectedCategories, notificationPreferences.textNotifications]);
 
   const handleProfileEditChange = (field, value) => {
     setProfileEdit(prev => ({ ...prev, [field]: value }));
@@ -1747,6 +1780,58 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
       setTimeout(() => setPaymentsSaved(false), 2000);
     }
     setPaymentsSaving(false);
+  };
+
+  // Add function to handle saving notification preferences
+  const handleNotificationsSave = async () => {
+    setNotificationsSaving(true);
+    setNotificationsSaved(false);
+    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    
+    if (!user) {
+      alert('User not found. Please log in again.');
+      setNotificationsSaving(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('business_profiles')
+        .update({
+          notification_preferences: notificationPreferences
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error saving notification preferences:', error);
+        alert('Failed to save notification preferences. Please try again.');
+      } else {
+        setNotificationsChanged(false);
+        setNotificationsSaved(true);
+        setTimeout(() => setNotificationsSaved(false), 2000);
+      }
+    } catch (error) {
+      console.error('Error saving notification preferences:', error);
+      alert('An error occurred while saving notification preferences.');
+    } finally {
+      setNotificationsSaving(false);
+    }
+  };
+
+  // Add function to handle notification preference changes
+  const handleNotificationChange = (field, value) => {
+    // If enabling text notifications, check if phone number is set
+    if (field === 'textNotifications' && value === true && !profileDetails?.phone) {
+      alert('Please set a phone number in your Profile tab before enabling text notifications.');
+      return;
+    }
+    
+    setNotificationPreferences(prev => ({ ...prev, [field]: value }));
+    setNotificationsChanged(true);
+    setNotificationsSaved(false);
   };
 
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
@@ -2081,7 +2166,7 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
                                       setConsultationHours(prev => ({ ...prev, daysAvailable: newDays }));
                                       setTimeout(handleConsultationHoursSubmit, 100);
                                     }}
-                                    className="tw-w-4 tw-h-4 tw-text-blue-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-blue-500 tw-focus:ring-2"
+                                    className="tw-w-4 tw-h-4 tw-text-purple-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-purple-500 tw-focus:ring-2"
                                   />
                                   {day.slice(0, 3)}
                                 </label>
@@ -2277,7 +2362,7 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
                         className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500 tw-bg-white tw-mb-2"
                       >
                         <option value="">Select Type</option>
-                        <option value="percentage">Percentage</option>
+                        <option value="percentage">%</option>
                         <option value="flat fee">Flat Fee</option>
                       </select>
                       {paymentType === "percentage" && (
@@ -2345,8 +2430,198 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
                           setPaymentsSaved(false);
                         }}
                         placeholder="Enter days"
-                        className="tw-w-32 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
+                        className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                       />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {activeSection === 'notifications' && (
+              <div className="settings-section" data-section="notifications" id="notifications">
+                <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Notification Preferences</span>
+                  <button
+                    className="btn-primary-business-settings"
+                    onClick={handleNotificationsSave}
+                    disabled={!notificationsChanged || notificationsSaving}
+                    style={{ minWidth: 120 }}
+                  >
+                    {notificationsSaving ? 'Saving...' : notificationsSaved ? 'Saved!' : 'Save'}
+                  </button>
+                </div>
+                <div className="settings-section-content">
+                  {/* Notification Methods */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Notification Methods</div>
+                      <div className="settings-desc">Choose how you want to receive notifications from Bidi.</div>
+                    </div>
+                    <div className="settings-control" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 12 }}>
+                      <label className="settings-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.emailNotifications}
+                          onChange={e => handleNotificationChange('emailNotifications', e.target.checked)}
+                          className="tw-w-4 tw-h-4 tw-text-purple-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-purple-500 tw-focus:ring-2"
+                        />
+                        <span>Email Notifications</span>
+                        <small className="text-muted d-block">Receive notifications via email</small>
+                      </label>
+                      <label className={`settings-checkbox-label ${!profileDetails?.phone ? 'opacity-50' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.textNotifications}
+                          onChange={e => handleNotificationChange('textNotifications', e.target.checked)}
+                          disabled={!profileDetails?.phone}
+                          className="tw-w-4 tw-h-4 tw-text-purple-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-purple-500 tw-focus:ring-2"
+                        />
+                        <span>Text Message Notifications</span>
+                        <small className="text-muted d-block">
+                          {profileDetails?.phone 
+                            ? 'Receive notifications via SMS (requires phone number)' 
+                            : 'Phone number required - set one in Profile tab first'}
+                        </small>
+                      </label>
+                      
+                      {/* Phone Number Display for Text Notifications */}
+                      {notificationPreferences.textNotifications && (
+                        <div style={{ marginLeft: 28, marginTop: 8 }}>
+                          <div className="tw-w-80 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-bg-gray-50">
+                            {profileDetails?.phone || 'No phone number set'}
+                          </div>
+                          <small className="text-muted d-block mt-1">
+                            {profileDetails?.phone 
+                              ? 'Phone number from your business profile. Update it in the Profile tab.'
+                              : '⚠️ Text notifications enabled but no phone number set. Please add a phone number in the Profile tab.'}
+                          </small>
+                        </div>
+                      )}
+                      
+                      {/* Warning when text notifications enabled but no phone */}
+                      {notificationPreferences.textNotifications && !profileDetails?.phone && (
+                        <div style={{ marginLeft: 28, marginTop: 8 }}>
+                          <div className="alert alert-warning tw-text-sm">
+                            <i className="fas fa-exclamation-triangle me-2"></i>
+                            Text notifications are enabled but no phone number is set. 
+                            <a href="#profile" className="ms-2">Go to Profile tab to add phone number</a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Minimum Budget for Notifications */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Minimum Budget for Notifications</div>
+                      <div className="settings-desc">Only notify me about new requests with budgets above this amount.</div>
+                    </div>
+                    <div className="settings-control">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={notificationPreferences.minimumBudgetForNotifications}
+                          onChange={e => handleNotificationChange('minimumBudgetForNotifications', parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                          className="tw-w-32 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
+                        />
+                      </div>
+                      <small className="text-muted d-block mt-2">
+                        Set to $0 to receive notifications for all requests regardless of budget
+                      </small>
+                    </div>
+                  </div>
+
+                  {/* Notification Types */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Notification Types</div>
+                      <div className="settings-desc">Choose which types of events you want to be notified about.</div>
+                    </div>
+                    <div className="settings-control" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 12 }}>
+                      <label className="settings-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.notifyOnNewRequests}
+                          onChange={e => handleNotificationChange('notifyOnNewRequests', e.target.checked)}
+                          className="tw-w-4 tw-h-4 tw-text-purple-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-purple-500 tw-focus:ring-2"
+                        />
+                        <span>New Requests</span>
+                        <small className="text-muted d-block">Get notified when new requests match your criteria</small>
+                      </label>
+                      <label className="settings-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.notifyOnMessages}
+                          onChange={e => handleNotificationChange('notifyOnMessages', e.target.checked)}
+                          className="tw-w-4 tw-h-4 tw-text-purple-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-purple-500 tw-focus:ring-2"
+                        />
+                        <span>Messages</span>
+                        <small className="text-muted d-block">Get notified about new messages from clients</small>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Notification Summary */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Current Settings</div>
+                      <div className="settings-desc">Summary of your notification preferences.</div>
+                    </div>
+                    <div className="settings-control">
+                      <div className="settings-summary-box">
+                        <div className="settings-summary-item">
+                          <strong>Methods:</strong> 
+                          {notificationPreferences.emailNotifications && notificationPreferences.textNotifications 
+                            ? ' Email & Text' 
+                            : notificationPreferences.emailNotifications 
+                            ? ' Email only' 
+                            : notificationPreferences.textNotifications 
+                            ? ' Text only' 
+                            : ' None'}
+                          {notificationPreferences.textNotifications && !profileDetails?.phone && (
+                            <span className="text-warning ms-2">⚠️ Phone number required</span>
+                          )}
+                          {!profileDetails?.phone && (
+                            <div className="text-muted mt-1">
+                              <small>Text notifications require a phone number in Profile tab</small>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Note about phone number requirement */}
+                        {!profileDetails?.phone && (
+                          <div className="settings-summary-item text-info">
+                            <strong>ℹ️ Note:</strong> To enable text notifications, add a phone number in the Profile tab
+                          </div>
+                        )}
+                        {notificationPreferences.textNotifications && profileDetails?.phone && (
+                          <div className="settings-summary-item">
+                            <strong>Phone:</strong> {profileDetails.phone}
+                          </div>
+                        )}
+                        {notificationPreferences.textNotifications && !profileDetails?.phone && (
+                          <div className="settings-summary-item text-warning">
+                            <strong>⚠️ Warning:</strong> Text notifications enabled but no phone number set
+                          </div>
+                        )}
+                        <div className="settings-summary-item">
+                          <strong>Budget Filter:</strong> 
+                          ${notificationPreferences.minimumBudgetForNotifications > 0 
+                            ? notificationPreferences.minimumBudgetForNotifications.toFixed(2) 
+                            : '0.00 (all requests)'}
+                        </div>
+                        <div className="settings-summary-item">
+                          <strong>Active Notifications:</strong> 
+                          {[
+                            notificationPreferences.notifyOnNewRequests && 'New Requests',
+                            notificationPreferences.notifyOnMessages && 'Messages'
+                          ].filter(Boolean).join(', ') || 'None'}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

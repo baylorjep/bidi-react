@@ -716,13 +716,20 @@ export default function MessagingView({
       return;
     }
 
-    const invitationMessage = `Hi! I'd like to invite you to accept my bid for $${bidInfo.bid_amount}. Please let me know if you have any questions or if you'd like to proceed with the booking.`;
+    // Create a bid invitation message with interactive data
+    const invitationData = {
+      type: 'bid_invitation',
+      bidId: bidInfo.id,
+      bidAmount: bidInfo.bid_amount,
+      businessName: bidInfo.business_profiles?.business_name || 'Business',
+      message: `Hi! I'd like to invite you to accept my bid for $${bidInfo.bid_amount}. Please let me know if you have any questions or if you'd like to proceed with the booking.`
+    };
 
     socket.emit("send_message", {
       senderId: currentUserId,
       receiverId: businessId,
-      message: invitationMessage,
-      type: "text",
+      message: JSON.stringify(invitationData),
+      type: "bid_invitation",
       seen: false,
     });
 
@@ -911,6 +918,112 @@ export default function MessagingView({
     }
   };
 
+  // Function to handle accepting a bid from invitation
+  const handleAcceptBidFromInvitation = async (bidId) => {
+    try {
+      // First, decline all other bids for this request
+      const { data: bidData, error: bidError } = await supabase
+        .from('bids')
+        .select('request_id')
+        .eq('id', bidId)
+        .single();
+
+      if (bidError) throw bidError;
+
+      const otherBids = await supabase
+        .from('bids')
+        .select('id')
+        .eq('request_id', bidData.request_id)
+        .neq('id', bidId)
+        .neq('status', 'denied')
+        .neq('status', 'expired');
+
+      if (otherBids.data && otherBids.data.length > 0) {
+        const { error: declineError } = await supabase
+          .from('bids')
+          .update({ status: 'denied' })
+          .in('id', otherBids.data.map(bid => bid.id));
+
+        if (declineError) {
+          console.error('Error declining other bids:', declineError);
+          toast.error('Failed to decline other bids. Please try again.');
+          return;
+        }
+      }
+
+      // Close the request (determine table name based on request type)
+      const requestTables = [
+        'beauty_requests',
+        'catering_requests',
+        'dj_requests',
+        'florist_requests',
+        'photography_requests',
+        'videography_requests',
+        'wedding_planning_requests'
+      ];
+
+      for (const table of requestTables) {
+        const { data: requestData, error: requestError } = await supabase
+          .from(table)
+          .select('id')
+          .eq('id', bidData.request_id)
+          .single();
+
+        if (!requestError && requestData) {
+          const { error: closeError } = await supabase
+            .from(table)
+            .update({ 
+              status: 'closed',
+              closed_at: new Date().toISOString()
+            })
+            .eq('id', bidData.request_id);
+
+          if (closeError) {
+            console.error('Error closing request:', closeError);
+          }
+          break; // Found the table, no need to check others
+        }
+      }
+
+      // Update the selected bid status and add acceptance timestamp
+      const { error } = await supabase
+        .from('bids')
+        .update({
+          status: 'accepted',
+          accepted_at: new Date().toISOString()
+        })
+        .eq('id', bidId);
+
+      if (error) {
+        console.error('Error updating bid:', error);
+        toast.error('Failed to accept bid. Please try again.');
+        return;
+      }
+
+      // Send a confirmation message
+      const confirmationMessage = {
+        type: 'bid_accepted',
+        bidId: bidId,
+        message: `Great! I've accepted your bid. Let's proceed with the booking details.`
+      };
+
+      socket.emit("send_message", {
+        senderId: currentUserId,
+        receiverId: businessId,
+        message: JSON.stringify(confirmationMessage),
+        type: "bid_accepted",
+        seen: false,
+      });
+
+      // Refresh bid info
+      await refreshBidInfo();
+      toast.success('Bid accepted successfully! Other bids have been declined and request closed.');
+    } catch (error) {
+      console.error('Error accepting bid from invitation:', error);
+      toast.error('Failed to accept bid. Please try again.');
+    }
+  };
+
   return (
     <div className="messaging-view">
       {!location.state?.fromDashboard && (
@@ -1019,6 +1132,61 @@ export default function MessagingView({
                   taxRate={msg.payment_data?.taxRate || JSON.parse(msg.message).paymentData.taxRate}
                   paymentStatus={msg.payment_status}
                 />
+              ) : msg.type === 'bid_invitation' ? (
+                <div className="bid-invitation-message">
+                  {(() => {
+                    try {
+                      const invitationData = JSON.parse(msg.message);
+                      return (
+                        <>
+                          <div className="invitation-text">
+                            {formatMessageText(invitationData.message)}
+                          </div>
+                          {!isCurrentUserBusiness && (
+                            <div className="invitation-actions">
+                              <button
+                                className="accept-bid-btn"
+                                onClick={() => handleAcceptBidFromInvitation(invitationData.bidId)}
+                                style={{
+                                  backgroundColor: '#10b981',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  padding: '8px 16px',
+                                  fontSize: '14px',
+                                  fontWeight: '500',
+                                  cursor: 'pointer',
+                                  marginTop: '8px'
+                                }}
+                              >
+                                Accept Bid (${invitationData.bidAmount})
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      );
+                    } catch (error) {
+                      console.error('Error parsing bid invitation:', error);
+                      return formatMessageText(msg.message);
+                    }
+                  })()}
+                </div>
+              ) : msg.type === 'bid_accepted' ? (
+                <div className="bid-accepted-message">
+                  {(() => {
+                    try {
+                      const acceptedData = JSON.parse(msg.message);
+                      return (
+                        <div className="accepted-text" style={{ color: '#10b981', fontWeight: '500' }}>
+                          {formatMessageText(acceptedData.message)}
+                        </div>
+                      );
+                    } catch (error) {
+                      console.error('Error parsing bid accepted:', error);
+                      return formatMessageText(msg.message);
+                    }
+                  })()}
+                </div>
               ) : (
                 formatMessageText(msg.message)
               )}
@@ -1441,8 +1609,17 @@ export default function MessagingView({
                 <h4>Invitation Message</h4>
                 <p>
                   This will send a friendly invitation message asking the client to accept your bid for ${bidInfo?.bid_amount}. 
-                  The message will be sent as a regular chat message that they can respond to.
+                  The message will include an interactive "Accept Bid" button that they can click to immediately accept your bid.
                 </p>
+                <div className="invitation-preview">
+                  <h5>Message Preview:</h5>
+                  <div className="preview-message">
+                    <p>Hi! I'd like to invite you to accept my bid for ${bidInfo?.bid_amount}. Please let me know if you have any questions or if you'd like to proceed with the booking.</p>
+                    <button className="preview-accept-btn" disabled>
+                      Accept Bid (${bidInfo?.bid_amount})
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="bid-invitation-modal-actions">

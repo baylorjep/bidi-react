@@ -16710,10 +16710,11 @@ label {
 
 .toggle-hidden-button {
   background-color: white;
-  border: none;
+  border: 1px solid #9633eb;
   color: #9633eb;
   transition: all 0.3s ease;
   display: flex;
+  border-radius: 100px;
 }
 
 .bid-display-head-container {
