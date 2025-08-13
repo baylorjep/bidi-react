@@ -846,8 +846,9 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                         {/* Top Right Corner Options */}
                         <div style={{
                             display: 'flex',
-                            gap: '12px',
-                            justifyContent: 'flex-end',
+                            flexDirection: isMobile ? 'column' : 'row',
+                            gap: isMobile ? '12px' : '12px',
+                            justifyContent: isMobile ? 'stretch' : 'flex-end',
                             zIndex: 10
                         }}>
                             {/* Itemized Quote Toggle */}
@@ -856,16 +857,23 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                 padding: '12px 16px',
                                 borderRadius: '8px',
                                 border: '1px solid #e5e7eb',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                width: isMobile ? '100%' : 'auto'
                             }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+                                <label style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 8, 
+                                    margin: 0,
+                                    justifyContent: isMobile ? 'center' : 'flex-start'
+                                }}>
                                     <IPhoneToggle
                                         checked={useItemizedQuote}
                                         onChange={() => setUseItemizedQuote(!useItemizedQuote)}
                                     />
                                     <span style={{ fontSize: 14, fontWeight: '500' }}>Itemized Quote</span>
                                 </label>
-                                    </div>
+                            </div>
 
                             {/* Bid Options Toggle */}
                             <div className="sbm-toolbox-toggle" style={{
@@ -875,9 +883,15 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                 border: '1px solid #e5e7eb',
                                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                 cursor: 'pointer',
-                                position: 'relative'
+                                position: 'relative',
+                                width: isMobile ? '100%' : 'auto'
                             }} onClick={() => setIsToolboxOpen(!isToolboxOpen)}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 8,
+                                    justifyContent: isMobile ? 'center' : 'flex-start'
+                                }}>
                                     <span style={{ fontSize: 16 }}>🧰</span>
                                     <span style={{ fontSize: 14, fontWeight: '500' }}>Bid Options</span>
                                     <svg
@@ -900,7 +914,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                             strokeLinejoin="round"
                                         />
                                     </svg>
-                                    </div>
+                                </div>
                                 
                                 {/* Bid Options Popout */}
                                 {isToolboxOpen && (
@@ -910,14 +924,17 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                         style={{
                                             position: 'absolute',
                                             top: '100%',
-                                            right: '0',
+                                            right: isMobile ? '50%' : '0',
+                                            left: isMobile ? '50%' : 'auto',
+                                            transform: isMobile ? 'translateX(-50%)' : 'none',
                                             marginTop: '8px',
                                             background: 'white',
                                             border: '1px solid #e5e7eb',
                                             borderRadius: '12px',
                                             boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
                                             padding: '20px',
-                                            minWidth: '300px',
+                                            minWidth: isMobile ? 'calc(100vw - 32px)' : '300px',
+                                            maxWidth: isMobile ? '400px' : 'none',
                                             zIndex: 1000,
                                             animation: 'slideIn 0.2s ease-out'
                                         }}
@@ -953,7 +970,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                             >
                                                 ×
                                             </button>
-                                    </div>
+                                        </div>
                                         
                                         <div style={{ marginBottom: '16px' }}>
                                             <div className="sbm-discount-label" style={{ marginBottom: '8px' }}>Expiration Date</div>
@@ -973,22 +990,40 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                                     fontSize: '14px'
                                                 }}
                                             />
-                                </div>
+                                        </div>
                                         
                                         <div style={{ marginBottom: '16px' }}>
                                             <div className="sbm-discount-label" style={{ marginBottom: '8px' }}>Discount (Optional)</div>
                                             <div className="sbm-discount-section">
-                                                <div className="sbm-discount-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <IPhoneToggle
+                                                <div className="sbm-discount-row" style={{ 
+                                                    display: 'flex', 
+                                                    flexDirection: isMobile ? 'column' : 'row',
+                                                    alignItems: isMobile ? 'stretch' : 'center', 
+                                                    gap: '12px', 
+                                                    flexWrap: 'wrap', 
+                                                    marginBottom: '12px' 
+                                                }}>
+                                                    <label style={{ 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        gap: 8,
+                                                        justifyContent: isMobile ? 'center' : 'flex-start'
+                                                    }}>
+                                                        <IPhoneToggle
                                                             checked={!!discountType}
                                                             onChange={() => setDiscountType(discountType ? '' : 'percentage')}
                                                             disabled={!connectedAccountId && !Bidi_Plus}
-                                />
+                                                        />
                                                         <span style={{ fontSize: 14 }}>{discountType ? 'Yes' : 'No'}</span>
-                            </label>
+                                                    </label>
                                                     {discountType && (
-                                                        <>
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            flexDirection: isMobile ? 'column' : 'row',
+                                                            gap: '8px',
+                                                            alignItems: 'center',
+                                                            justifyContent: isMobile ? 'center' : 'flex-start'
+                                                        }}>
                                                             <select
                                                                 value={discountType}
                                                                 onChange={e => setDiscountType(e.target.value)}
@@ -1016,7 +1051,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                                                 onChange={e => setDiscountValue(e.target.value)}
                                                                 required
                                                                 style={{
-                                                                    width: '80px',
+                                                                    width: isMobile ? '100%' : '80px',
                                                                     padding: '6px 10px',
                                                                     borderRadius: '6px',
                                                                     border: '1px solid #d1d5db',
@@ -1026,7 +1061,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                                             <span className="sbm-discount-percent" style={{ fontSize: '14px', color: '#6b7280' }}>
                                                                 {discountType === 'percentage' ? '%' : ''}
                                                             </span>
-                                                        </>
+                                                        </div>
                                                     )}
                                                 </div>
                                                 {discountType && (
@@ -1061,14 +1096,14 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                                 {/* Main Price Section - Centered and Prominent */}
                         <div style={{
                             textAlign: 'center',
-                            margin: '40px 0',
-                            padding: '40px',
+                            margin: isMobile ? '20px 0' : '40px 0',
+                            padding: isMobile ? '20px' : '40px',
                             background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
                             borderRadius: '16px',
                             border: '2px solid #e2e8f0'
                         }}>
                             <h2 style={{
-                                fontSize: '1.5rem',
+                                fontSize: isMobile ? '1.25rem' : '1.5rem',
                                 fontWeight: '600',
                                 color: '#374151',
                                 marginBottom: '24px'
@@ -1080,7 +1115,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                 /* Itemized Quote Total Display */
                                 <div style={{ marginBottom: '24px' }}>
                                     <div style={{
-                                        fontSize: '3rem',
+                                        fontSize: isMobile ? '2.5rem' : '3rem',
                                         fontWeight: '700',
                                         color: '#059669',
                                         marginBottom: '8px'
@@ -1088,7 +1123,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                         ${calculateTotal().toFixed(2)}
                                     </div>
                                     <div style={{
-                                        fontSize: '1rem',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
                                         color: '#6b7280',
                                         marginBottom: '16px'
                                     }}>
@@ -1099,7 +1134,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                 /* Simple Bid Amount Input */
                                 <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <div style={{
-                                        fontSize: '2rem',
+                                        fontSize: isMobile ? '1.5rem' : '2rem',
                                         fontWeight: '600',
                                         color: '#374151',
                                         marginBottom: '16px'
@@ -1116,13 +1151,13 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                         onChange={(e) => setBidAmount(e.target.value)}
                                         required
                                         style={{
-                                            fontSize: '2.5rem',
+                                            fontSize: isMobile ? '1.75rem' : '2.5rem',
                                             fontWeight: '600',
                                             textAlign: 'center',
                                             border: '2px solid #d1d5db',
                                             borderRadius: '12px',
-                                            padding: '16px 24px',
-                                            width: '200px',
+                                            padding: isMobile ? '12px 16px' : '16px 24px',
+                                            width: isMobile ? '150px' : '200px',
                                             background: 'white'
                                         }}
                                     />
@@ -1139,21 +1174,23 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                     : 'Enter the total amount for your services'
                                 }
                             </div>
-                        
+                        </div>
 
                         {/* Itemized Quote Section */}
                         {useItemizedQuote && (
                             <div className="sbm-itemized-section" style={{
                                 background: '#f8fafc',
                                 borderRadius: '16px',
-                                padding: '24px',
+                                padding: isMobile ? '16px' : '24px',
                                 margin: '24px 0',
                                 border: '1px solid #e2e8f0'
                             }}>
                                 <div className="sbm-itemized-header" style={{
                                     display: 'flex',
+                                    flexDirection: isMobile ? 'column' : 'row',
                                     justifyContent: 'space-between',
-                                    alignItems: 'center',
+                                    alignItems: isMobile ? 'stretch' : 'center',
+                                    gap: isMobile ? '12px' : '0',
                                     marginBottom: '20px'
                                 }}>
                                     <h4 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#374151' }}>
@@ -1174,7 +1211,9 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                             cursor: 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
-                                            gap: '8px'
+                                            justifyContent: 'center',
+                                            gap: '8px',
+                                            width: isMobile ? '100%' : 'auto'
                                         }}
                                     >
                                         <FaPlus /> Add Service
@@ -1196,7 +1235,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                 {/* Core Services Section */}
                                 <div style={{
                                     background: 'white',
-                                    padding: '20px',
+                                    padding: isMobile ? '16px' : '20px',
                                     borderRadius: '8px',
                                     marginBottom: '20px',
                                     border: '1px solid #e5e7eb'
@@ -1205,9 +1244,9 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                         🔧 Core Services (Always Included)
                                     </h5>
                                 <div className="sbm-line-items-list">
-                                        {/* Column Headers */}
+                                        {/* Column Headers - Mobile Responsive */}
                                         <div className="sbm-line-item-header" style={{
-                                            display: 'grid',
+                                            display: isMobile ? 'none' : 'grid',
                                             gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
                                             gap: '16px',
                                             padding: '12px 16px',
@@ -1231,113 +1270,261 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                             <div key={item.id} className="sbm-line-item" style={{
                                                 background: 'white',
                                                 borderBottom: '1px solid #f3f4f6',
-                                                borderRadius: index === lineItems.length - 1 ? '0 0 8px 8px' : '0'
+                                                borderRadius: index === lineItems.length - 1 ? '0 0 8px 8px' : '0',
+                                                padding: isMobile ? '16px' : '0'
                                             }}>
-                                                <div className="sbm-line-item-row" style={{
-                                                    display: 'grid',
-                                                    gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
-                                                    gap: '16px',
-                                                    alignItems: 'center',
-                                                    padding: '16px'
-                                                }}>
-                                                <div className="sbm-line-item-description">
-                                                    <input
-                                                        type="text"
-                                                            placeholder="Service name..."
-                                                        value={item.description}
-                                                        onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
-                                                            style={{
-                                                                width: '100%',
-                                                                padding: '10px 12px',
-                                                                border: '1px solid #d1d5db',
-                                                                borderRadius: '6px',
-                                                                fontSize: '14px',
-                                                                background: 'white'
-                                                            }}
-                                                    />
-                                                </div>
-                                                <div className="sbm-line-item-quantity">
-                                                    <input
-                                                        type="number"
-                                                            placeholder="1"
-                                                        min="1"
-                                                        value={item.quantity}
-                                                        onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)}
-                                                            style={{
-                                                                width: '100%',
-                                                                padding: '10px 12px',
-                                                                border: '1px solid #d1d5db',
-                                                                borderRadius: '6px',
-                                                                fontSize: '14px',
-                                                                textAlign: 'center',
-                                                                background: 'white'
-                                                            }}
-                                                    />
-                                                </div>
-                                                <div className="sbm-line-item-rate">
-                                                    <input
-                                                        type="number"
-                                                            placeholder="0.00"
-                                                        min="0"
-                                                        step="0.01"
-                                                        value={item.rate}
-                                                        onChange={(e) => updateLineItem(item.id, 'rate', e.target.value)}
-                                                            style={{
-                                                                width: '100%',
-                                                                padding: '10px 12px',
-                                                                border: '1px solid #d1d5db',
-                                                                borderRadius: '6px',
-                                                                fontSize: '14px',
-                                                                textAlign: 'center',
-                                                                background: 'white'
-                                                            }}
-                                                    />
-                                                </div>
-                                                    <div className="sbm-line-item-amount" style={{
-                                                        fontSize: '16px',
-                                                        fontWeight: '600',
-                                                        color: '#059669',
-                                                        textAlign: 'center'
+                                                {isMobile ? (
+                                                    // Mobile Layout - Stacked Cards
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        gap: '12px'
                                                     }}>
-                                                    ${(item.amount || 0).toFixed(2)}
-                                                </div>
-                                                <div className="sbm-line-item-actions">
-                                                    <button
-                                                        type="button"
-                                                        className="sbm-remove-line-item-btn"
-                                                        onClick={() => removeLineItem(item.id)}
-                                                        disabled={lineItems.length === 1}
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center'
+                                                        }}>
+                                                            <span style={{
+                                                                fontSize: '12px',
+                                                                fontWeight: '600',
+                                                                color: '#6b7280',
+                                                                textTransform: 'uppercase',
+                                                                letterSpacing: '0.5px'
+                                                            }}>
+                                                                Service {index + 1}
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                className="sbm-remove-line-item-btn"
+                                                                onClick={() => removeLineItem(item.id)}
+                                                                disabled={lineItems.length === 1}
+                                                                style={{
+                                                                    background: lineItems.length === 1 ? '#f3f4f6' : '#fee2e2',
+                                                                    color: lineItems.length === 1 ? '#9ca3af' : '#dc2626',
+                                                                    border: 'none',
+                                                                    borderRadius: '6px',
+                                                                    padding: '8px',
+                                                                    cursor: lineItems.length === 1 ? 'not-allowed' : 'pointer',
+                                                                    fontSize: '14px'
+                                                                }}
+                                                            >
+                                                                <FaTrash />
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Service name..."
+                                                            value={item.description}
+                                                            onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
                                                             style={{
-                                                                background: lineItems.length === 1 ? '#f3f4f6' : '#fee2e2',
-                                                                color: lineItems.length === 1 ? '#9ca3af' : '#dc2626',
-                                                                border: 'none',
-                                                                borderRadius: '6px',
-                                                                padding: '8px',
-                                                                cursor: lineItems.length === 1 ? 'not-allowed' : 'pointer',
-                                                                fontSize: '14px'
+                                                                width: '100%',
+                                                                padding: '12px',
+                                                                border: '1px solid #d1d5db',
+                                                                borderRadius: '8px',
+                                                                fontSize: '16px',
+                                                                background: 'white'
                                                             }}
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
+                                                        />
+                                                        
+                                                        <div style={{
+                                                            display: 'grid',
+                                                            gridTemplateColumns: '1fr 1fr',
+                                                            gap: '12px'
+                                                        }}>
+                                                            <div>
+                                                                <label style={{
+                                                                    display: 'block',
+                                                                    fontSize: '12px',
+                                                                    fontWeight: '600',
+                                                                    color: '#6b7280',
+                                                                    marginBottom: '4px'
+                                                                }}>
+                                                                    Quantity
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="1"
+                                                                    min="1"
+                                                                    value={item.quantity}
+                                                                    onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)}
+                                                                    style={{
+                                                                        width: '100%',
+                                                                        padding: '12px',
+                                                                        border: '1px solid #d1d5db',
+                                                                        borderRadius: '8px',
+                                                                        fontSize: '16px',
+                                                                        textAlign: 'center',
+                                                                        background: 'white'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label style={{
+                                                                    display: 'block',
+                                                                    fontSize: '12px',
+                                                                    fontWeight: '600',
+                                                                    color: '#6b7280',
+                                                                    marginBottom: '4px'
+                                                                }}>
+                                                                    Rate ($)
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="0.00"
+                                                                    min="0"
+                                                                    step="0.01"
+                                                                    value={item.rate}
+                                                                    onChange={(e) => updateLineItem(item.id, 'rate', e.target.value)}
+                                                                    style={{
+                                                                        width: '100%',
+                                                                        padding: '12px',
+                                                                        border: '1px solid #d1d5db',
+                                                                        borderRadius: '8px',
+                                                                        fontSize: '16px',
+                                                                        textAlign: 'center',
+                                                                        background: 'white'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            padding: '12px',
+                                                            background: '#f0fdf4',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid #bbf7d0'
+                                                        }}>
+                                                            <span style={{
+                                                                fontSize: '14px',
+                                                                fontWeight: '600',
+                                                                color: '#374151'
+                                                            }}>
+                                                                Total:
+                                                            </span>
+                                                            <span style={{
+                                                                fontSize: '18px',
+                                                                fontWeight: '700',
+                                                                color: '#059669'
+                                                            }}>
+                                                                ${(item.amount || 0).toFixed(2)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    // Desktop Layout - Grid
+                                                    <div className="sbm-line-item-row" style={{
+                                                        display: 'grid',
+                                                        gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
+                                                        gap: '16px',
+                                                        alignItems: 'center',
+                                                        padding: '16px'
+                                                    }}>
+                                                    <div className="sbm-line-item-description">
+                                                        <input
+                                                            type="text"
+                                                                placeholder="Service name..."
+                                                            value={item.description}
+                                                            onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '10px 12px',
+                                                                    border: '1px solid #d1d5db',
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '14px',
+                                                                    background: 'white'
+                                                                }}
+                                                        />
+                                                    </div>
+                                                    <div className="sbm-line-item-quantity">
+                                                        <input
+                                                            type="number"
+                                                                placeholder="1"
+                                                            min="1"
+                                                            value={item.quantity}
+                                                            onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '10px 12px',
+                                                                    border: '1px solid #d1d5db',
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '14px',
+                                                                    textAlign: 'center',
+                                                                    background: 'white'
+                                                                }}
+                                                        />
+                                                    </div>
+                                                    <div className="sbm-line-item-rate">
+                                                        <input
+                                                            type="number"
+                                                                placeholder="0.00"
+                                                            min="0"
+                                                            step="0.01"
+                                                            value={item.rate}
+                                                            onChange={(e) => updateLineItem(item.id, 'rate', e.target.value)}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '10px 12px',
+                                                                    border: '1px solid #d1d5db',
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '14px',
+                                                                    textAlign: 'center',
+                                                                    background: 'white'
+                                                                }}
+                                                        />
+                                                    </div>
+                                                        <div className="sbm-line-item-amount" style={{
+                                                            fontSize: '16px',
+                                                            fontWeight: '600',
+                                                            color: '#059669',
+                                                            textAlign: 'center'
+                                                        }}>
+                                                        ${(item.amount || 0).toFixed(2)}
+                                                    </div>
+                                                    <div className="sbm-line-item-actions">
+                                                        <button
+                                                            type="button"
+                                                            className="sbm-remove-line-item-btn"
+                                                            onClick={() => removeLineItem(item.id)}
+                                                            disabled={lineItems.length === 1}
+                                                                style={{
+                                                                    background: lineItems.length === 1 ? '#f3f4f6' : '#fee2e2',
+                                                                    color: lineItems.length === 1 ? '#9ca3af' : '#dc2626',
+                                                                    border: 'none',
+                                                                    borderRadius: '6px',
+                                                                    padding: '8px',
+                                                                    cursor: lineItems.length === 1 ? 'not-allowed' : 'pointer',
+                                                                    fontSize: '14px'
+                                                                }}
+                                                        >
+                                                            <FaTrash />
+                                                        </button>
+                                                    </div>
                                                 </div>
+                                                )}
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
                                     </div>
                                 </div>
 
                                 {/* Add-ons Section */}
                                 <div style={{
                                     background: 'white',
-                                    padding: '20px',
+                                    padding: isMobile ? '16px' : '20px',
                                     borderRadius: '8px',
                                     marginBottom: '20px',
                                     border: '1px solid #e5e7eb'
                                 }}>
                                     <div style={{
                                         display: 'flex',
+                                        flexDirection: isMobile ? 'column' : 'row',
                                         justifyContent: 'space-between',
-                                        alignItems: 'center',
+                                        alignItems: isMobile ? 'stretch' : 'center',
+                                        gap: isMobile ? '12px' : '0',
                                         marginBottom: '16px'
                                     }}>
                                         <h5 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#374151' }}>
@@ -1357,7 +1544,9 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '8px'
+                                                justifyContent: 'center',
+                                                gap: '8px',
+                                                width: isMobile ? '100%' : 'auto'
                                             }}
                                         >
                                             <FaPlus /> Add Add-on
@@ -1368,9 +1557,9 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                     </p>
                                     
                                     <div className="sbm-line-items-list">
-                                        {/* Column Headers */}
+                                        {/* Column Headers - Mobile Responsive */}
                                         <div className="sbm-line-item-header" style={{
-                                            display: 'grid',
+                                            display: isMobile ? 'none' : 'grid',
                                             gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
                                             gap: '16px',
                                             padding: '12px 16px',
@@ -1394,16 +1583,48 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                             <div key={addon.id} className="sbm-line-item" style={{
                                                 background: 'white',
                                                 borderBottom: '1px solid #f3f4f6',
-                                                borderRadius: index === addOns.length - 1 ? '0 0 8px 8px' : '0'
+                                                borderRadius: index === addOns.length - 1 ? '0 0 8px 8px' : '0',
+                                                padding: isMobile ? '16px' : '0'
                                             }}>
-                                                <div className="sbm-line-item-row" style={{
-                                                    display: 'grid',
-                                                    gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
-                                                    gap: '16px',
-                                                    alignItems: 'center',
-                                                    padding: '16px'
-                                                }}>
-                                                    <div className="sbm-line-item-description">
+                                                {isMobile ? (
+                                                    // Mobile Layout - Stacked Cards
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        gap: '12px'
+                                                    }}>
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center'
+                                                        }}>
+                                                            <span style={{
+                                                                fontSize: '12px',
+                                                                fontWeight: '600',
+                                                                color: '#6b7280',
+                                                                textTransform: 'uppercase',
+                                                                letterSpacing: '0.5px'
+                                                            }}>
+                                                                Add-on {index + 1}
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeAddOn(addon.id)}
+                                                                disabled={addOns.length === 1}
+                                                                style={{
+                                                                    background: addOns.length === 1 ? '#f3f4f6' : '#fee2e2',
+                                                                    color: addOns.length === 1 ? '#9ca3af' : '#dc2626',
+                                                                    border: 'none',
+                                                                    borderRadius: '6px',
+                                                                    padding: '8px',
+                                                                    cursor: addOns.length === 1 ? 'not-allowed' : 'pointer',
+                                                                    fontSize: '14px'
+                                                                }}
+                                                            >
+                                                                <FaTrash />
+                                                            </button>
+                                                        </div>
+                                                        
                                                         <input
                                                             type="text"
                                                             placeholder="Add-on service name..."
@@ -1411,78 +1632,191 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                                             onChange={(e) => updateAddOn(addon.id, 'description', e.target.value)}
                                                             style={{
                                                                 width: '100%',
-                                                                padding: '10px 12px',
+                                                                padding: '12px',
                                                                 border: '1px solid #d1d5db',
-                                                                borderRadius: '6px',
-                                                                fontSize: '14px',
+                                                                borderRadius: '8px',
+                                                                fontSize: '16px',
                                                                 background: 'white'
                                                             }}
                                                         />
-                                                    </div>
-                                                    <div className="sbm-line-item-quantity">
-                                                        <input
-                                                            type="number"
-                                                            placeholder="1"
-                                                            min="1"
-                                                            value={addon.quantity}
-                                                            onChange={(e) => updateAddOn(addon.id, 'quantity', e.target.value)}
-                                                            style={{
-                                                                width: '100%',
-                                                                padding: '10px 12px',
-                                                                border: '1px solid #d1d5db',
-                                                                borderRadius: '6px',
+                                                        
+                                                        <div style={{
+                                                            display: 'grid',
+                                                            gridTemplateColumns: '1fr 1fr',
+                                                            gap: '12px'
+                                                        }}>
+                                                            <div>
+                                                                <label style={{
+                                                                    display: 'block',
+                                                                    fontSize: '12px',
+                                                                    fontWeight: '600',
+                                                                    color: '#6b7280',
+                                                                    marginBottom: '4px'
+                                                                }}>
+                                                                    Quantity
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="1"
+                                                                    min="1"
+                                                                    value={addon.quantity}
+                                                                    onChange={(e) => updateAddOn(addon.id, 'quantity', e.target.value)}
+                                                                    style={{
+                                                                        width: '100%',
+                                                                        padding: '12px',
+                                                                        border: '1px solid #d1d5db',
+                                                                        borderRadius: '8px',
+                                                                        fontSize: '16px',
+                                                                        textAlign: 'center',
+                                                                        background: 'white'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label style={{
+                                                                    display: 'block',
+                                                                    fontSize: '12px',
+                                                                    fontWeight: '600',
+                                                                    color: '#6b7280',
+                                                                    marginBottom: '4px'
+                                                                }}>
+                                                                    Rate ($)
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="0.00"
+                                                                    min="0"
+                                                                    step="0.01"
+                                                                    value={addon.rate}
+                                                                    onChange={(e) => updateAddOn(addon.id, 'rate', e.target.value)}
+                                                                    style={{
+                                                                        width: '100%',
+                                                                        padding: '12px',
+                                                                        border: '1px solid #d1d5db',
+                                                                        borderRadius: '8px',
+                                                                        fontSize: '16px',
+                                                                        textAlign: 'center',
+                                                                        background: 'white'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            padding: '12px',
+                                                            background: '#faf5ff',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid #e9d5ff'
+                                                        }}>
+                                                            <span style={{
                                                                 fontSize: '14px',
-                                                                textAlign: 'center',
-                                                                background: 'white'
-                                                            }}
-                                                        />
+                                                                fontWeight: '600',
+                                                                color: '#374151'
+                                                            }}>
+                                                                Total:
+                                                            </span>
+                                                            <span style={{
+                                                                fontSize: '18px',
+                                                                fontWeight: '700',
+                                                                color: '#7c3aed'
+                                                            }}>
+                                                                ${(addon.amount || 0).toFixed(2)}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div className="sbm-line-item-rate">
-                                                        <input
-                                                            type="number"
-                                                            placeholder="0.00"
-                                                            min="0"
-                                                            step="0.01"
-                                                            value={addon.rate}
-                                                            onChange={(e) => updateAddOn(addon.id, 'rate', e.target.value)}
-                                                            style={{
-                                                                width: '100%',
-                                                                padding: '10px 12px',
-                                                                border: '1px solid #d1d5db',
-                                                                borderRadius: '6px',
-                                                                fontSize: '14px',
-                                                                textAlign: 'center',
-                                                                background: 'white'
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div className="sbm-line-item-amount" style={{
-                                                        fontSize: '16px',
-                                                        fontWeight: '600',
-                                                        color: '#059669',
-                                                        textAlign: 'center'
+                                                ) : (
+                                                    // Desktop Layout - Grid
+                                                    <div className="sbm-line-item-row" style={{
+                                                        display: 'grid',
+                                                        gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
+                                                        gap: '16px',
+                                                        alignItems: 'center',
+                                                        padding: '16px'
                                                     }}>
-                                                        ${(addon.amount || 0).toFixed(2)}
+                                                        <div className="sbm-line-item-description">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Add-on service name..."
+                                                                value={addon.description}
+                                                                onChange={(e) => updateAddOn(addon.id, 'description', e.target.value)}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '10px 12px',
+                                                                    border: '1px solid #d1d5db',
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '14px',
+                                                                    background: 'white'
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div className="sbm-line-item-quantity">
+                                                            <input
+                                                                type="number"
+                                                                placeholder="1"
+                                                                min="1"
+                                                                value={addon.quantity}
+                                                                onChange={(e) => updateAddOn(addon.id, 'quantity', e.target.value)}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '10px 12px',
+                                                                    border: '1px solid #d1d5db',
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '16px',
+                                                                    textAlign: 'center',
+                                                                    background: 'white'
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div className="sbm-line-item-rate">
+                                                            <input
+                                                                type="number"
+                                                                placeholder="0.00"
+                                                                min="0"
+                                                                step="0.01"
+                                                                value={addon.rate}
+                                                                onChange={(e) => updateAddOn(addon.id, 'rate', e.target.value)}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '10px 12px',
+                                                                    border: '1px solid #d1d5db',
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '16px',
+                                                                    textAlign: 'center',
+                                                                    background: 'white'
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div className="sbm-line-item-amount" style={{
+                                                            fontSize: '16px',
+                                                            fontWeight: '600',
+                                                            color: '#059669',
+                                                            textAlign: 'center'
+                                                        }}>
+                                                            ${(addon.amount || 0).toFixed(2)}
+                                                        </div>
+                                                        <div className="sbm-line-item-actions">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeAddOn(addon.id)}
+                                                                disabled={addOns.length === 1}
+                                                                style={{
+                                                                    background: addOns.length === 1 ? '#f3f4f6' : '#fee2e2',
+                                                                    color: addOns.length === 1 ? '#9ca3af' : '#dc2626',
+                                                                    border: 'none',
+                                                                    borderRadius: '6px',
+                                                                    padding: '8px',
+                                                                    cursor: addOns.length === 1 ? 'not-allowed' : 'pointer',
+                                                                    fontSize: '14px'
+                                                                }}
+                                                            >
+                                                                <FaTrash />
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    <div className="sbm-line-item-actions">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeAddOn(addon.id)}
-                                                            disabled={addOns.length === 1}
-                                                            style={{
-                                                                background: addOns.length === 1 ? '#f3f4f6' : '#fee2e2',
-                                                                color: addOns.length === 1 ? '#9ca3af' : '#dc2626',
-                                                                border: 'none',
-                                                                borderRadius: '6px',
-                                                                padding: '8px',
-                                                                cursor: addOns.length === 1 ? 'not-allowed' : 'pointer',
-                                                                fontSize: '14px'
-                                                            }}
-                                                        >
-                                                            <FaTrash />
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -1493,143 +1827,217 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                 {/* Tax Section */}
                         <div className="sbm-tax-section" style={{
                             background: 'white',
-                            padding: '20px',
+                            padding: isMobile ? '16px' : '20px',
                             borderRadius: '8px',
                             marginTop: '20px',
                             border: '1px solid #e5e7eb'
                         }}>
                             <div className="sbm-tax-input" style={{
                                 display: 'flex',
-                                alignItems: 'center',
-                                gap: '16px',
-                                flexWrap: 'wrap',
-                                flexDirection: 'row'
+                                flexDirection: isMobile ? 'column' : 'row',
+                                alignItems: isMobile ? 'stretch' : 'center',
+                                gap: isMobile ? '12px' : '16px',
+                                flexWrap: 'wrap'
                             }}>
-                                <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', minWidth: '80px' }}>
+                                <label style={{ 
+                                    fontSize: '14px', 
+                                    fontWeight: '500', 
+                                    color: '#374151', 
+                                    minWidth: isMobile ? 'auto' : '80px',
+                                    textAlign: isMobile ? 'center' : 'left'
+                                }}>
                                     Tax Rate:
                                 </label>
-                                        <input
-                                            type="number"
-                                            placeholder="0"
-                                            min="0"
-                                            max="100"
-                                            step="0.01"
-                                            value={taxRate}
-                                            onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                                    style={{
-                                        padding: '8px 12px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '6px',
-                                        fontSize: '14px',
-                                        width: '80px',
-                                        textAlign: 'center',
-                                        background: 'white'
-                                    }}
-                                />
-                                <span style={{ fontSize: '14px', color: '#6b7280' }}>%</span>
-                                <small style={{ fontSize: '12px', color: '#9ca3af', fontStyle: 'italic' }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    justifyContent: isMobile ? 'center' : 'flex-start'
+                                }}>
+                                    <input
+                                        type="number"
+                                        placeholder="0"
+                                        min="0"
+                                        max="100"
+                                        step="0.01"
+                                        value={taxRate}
+                                        onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                                        style={{
+                                            padding: '8px 12px',
+                                            border: '1px solid #d1d5db',
+                                            borderRadius: '6px',
+                                            fontSize: '14px',
+                                            width: isMobile ? '100px' : '80px',
+                                            textAlign: 'center',
+                                            background: 'white'
+                                        }}
+                                    />
+                                    <span style={{ fontSize: '14px', color: '#6b7280' }}>%</span>
+                                </div>
+                                <small style={{ 
+                                    fontSize: '12px', 
+                                    color: '#9ca3af', 
+                                    fontStyle: 'italic',
+                                    textAlign: isMobile ? 'center' : 'left'
+                                }}>
                                     Leave as 0 if no tax applies
                                 </small>
-                                    </div>
-                                </div>
+                            </div>
+                        </div>
 
                                 {/* Payment Summary */}
                         <div className="sbm-payment-summary" style={{
                             background: 'white',
-                            padding: '20px',
+                            padding: isMobile ? '16px' : '20px',
                             borderRadius: '8px',
                             marginTop: '20px',
                             border: '1px solid #e5e7eb'
                         }}>
-                            <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+                            <h4 style={{ 
+                                margin: '0 0 16px 0', 
+                                fontSize: '16px', 
+                                fontWeight: '600', 
+                                color: '#374151',
+                                textAlign: isMobile ? 'center' : 'left'
+                            }}>
                                 Summary
                             </h4>
                             
                             {/* Core Services */}
-                                    {lineItems.filter(item => item.amount > 0).map((item, index) => (
+                            {lineItems.filter(item => item.amount > 0).map((item, index) => (
                                 <div key={index} className="sbm-summary-row" style={{
                                     display: 'flex',
-                                    justifyContent: 'space-between',
-                                    padding: '8px 0',
+                                    flexDirection: isMobile ? 'column' : 'row',
+                                    justifyContent: isMobile ? 'center' : 'space-between',
+                                    alignItems: isMobile ? 'center' : 'flex-start',
+                                    padding: isMobile ? '12px 0' : '8px 0',
                                     borderBottom: '1px solid #f3f4f6',
                                     fontSize: '14px',
-                                    color: '#6b7280'
+                                    color: '#6b7280',
+                                    gap: isMobile ? '8px' : '0'
                                 }}>
-                                    <span>{item.description || `Core Service ${index + 1}`}</span>
-                                            <span>${item.amount.toFixed(2)}</span>
-                                        </div>
-                                    ))}
+                                    <span style={{ 
+                                        textAlign: isMobile ? 'center' : 'left',
+                                        wordBreak: 'break-word'
+                                    }}>
+                                        {item.description || `Core Service ${index + 1}`}
+                                    </span>
+                                    <span style={{
+                                        fontSize: isMobile ? '16px' : '14px',
+                                        fontWeight: isMobile ? '600' : '400',
+                                        color: isMobile ? '#059669' : '#6b7280'
+                                    }}>
+                                        ${item.amount.toFixed(2)}
+                                    </span>
+                                </div>
+                            ))}
                             
                             {/* Selected Add-ons */}
                             {addOns.filter(addon => addon.amount > 0).map((addon, index) => (
                                 <div key={index} className="sbm-summary-row" style={{
                                     display: 'flex',
-                                    justifyContent: 'space-between',
-                                    padding: '8px 0',
+                                    flexDirection: isMobile ? 'column' : 'row',
+                                    justifyContent: isMobile ? 'center' : 'space-between',
+                                    alignItems: isMobile ? 'center' : 'flex-start',
+                                    padding: isMobile ? '12px 0' : '8px 0',
                                     borderBottom: '1px solid #f3f4f6',
                                     fontSize: '14px',
-                                    color: '#6b7280'
+                                    color: '#6b7280',
+                                    gap: isMobile ? '8px' : '0'
                                 }}>
-                                    <span>✨ {addon.description || `Add-on ${index + 1}`}</span>
-                                    <span>${addon.amount.toFixed(2)}</span>
+                                    <span style={{ 
+                                        textAlign: isMobile ? 'center' : 'left',
+                                        wordBreak: 'break-word'
+                                    }}>
+                                        ✨ {addon.description || `Add-on ${index + 1}`}
+                                    </span>
+                                    <span style={{
+                                        fontSize: isMobile ? '16px' : '14px',
+                                        fontWeight: isMobile ? '600' : '400',
+                                        color: isMobile ? '#7c3aed' : '#6b7280'
+                                    }}>
+                                        ${addon.amount.toFixed(2)}
+                                    </span>
                                 </div>
                             ))}
                             
                             {/* Subtotal */}
                             <div className="sbm-summary-row" style={{
                                 display: 'flex',
-                                justifyContent: 'space-between',
+                                flexDirection: isMobile ? 'column' : 'row',
+                                justifyContent: isMobile ? 'center' : 'space-between',
+                                alignItems: isMobile ? 'center' : 'flex-start',
                                 padding: '12px 0 8px 0',
                                 fontSize: '14px',
                                 fontWeight: '600',
                                 color: '#374151',
-                                borderBottom: '1px solid #e5e7eb'
+                                borderBottom: '1px solid #e5e7eb',
+                                marginTop: '8px',
+                                gap: isMobile ? '8px' : '0'
                             }}>
-                                <span>Subtotal</span>
-                                <span>${(lineItems.reduce((sum, item) => sum + (item.amount || 0), 0) + 
-                                           addOns.reduce((sum, addon) => sum + (addon.amount || 0), 0)).toFixed(2)}</span>
+                                <span style={{ textAlign: isMobile ? 'center' : 'left' }}>Subtotal</span>
+                                <span style={{ textAlign: isMobile ? 'center' : 'right' }}>
+                                    ${(lineItems.reduce((sum, item) => sum + (item.amount || 0), 0) + 
+                                       addOns.reduce((sum, addon) => sum + (addon.amount || 0), 0)).toFixed(2)}
+                                </span>
                             </div>
                             
-                                    {taxRate > 0 && (
+                            {taxRate > 0 && (
                                 <div className="sbm-summary-row" style={{
                                     display: 'flex',
-                                    justifyContent: 'space-between',
+                                    flexDirection: isMobile ? 'column' : 'row',
+                                    justifyContent: isMobile ? 'center' : 'space-between',
+                                    alignItems: isMobile ? 'center' : 'flex-start',
                                     padding: '8px 0',
                                     borderBottom: '1px solid #f3f4f6',
                                     fontSize: '14px',
-                                    color: '#6b7280'
+                                    color: '#6b7280',
+                                    gap: isMobile ? '8px' : '0'
                                 }}>
-                                            <span>Tax ({taxRate}%)</span>
-                                            <span>${calculateTax().toFixed(2)}</span>
-                                        </div>
-                                    )}
-                                    {discountType && discountValue && (
+                                    <span style={{ textAlign: isMobile ? 'center' : 'left' }}>Tax ({taxRate}%)</span>
+                                    <span style={{ textAlign: isMobile ? 'center' : 'right' }}>${calculateTax().toFixed(2)}</span>
+                                </div>
+                            )}
+                            {discountType && discountValue && (
                                 <div className="sbm-summary-row sbm-discount" style={{
                                     display: 'flex',
-                                    justifyContent: 'space-between',
+                                    flexDirection: isMobile ? 'column' : 'row',
+                                    justifyContent: isMobile ? 'center' : 'space-between',
+                                    alignItems: isMobile ? 'center' : 'flex-start',
                                     padding: '8px 0',
                                     borderBottom: '1px solid #f3f4f6',
                                     fontSize: '14px',
-                                    color: '#6b7280'
+                                    color: '#6b7280',
+                                    gap: isMobile ? '8px' : '0'
                                 }}>
-                                            <span>Discount ({discountType === 'percentage' ? `${discountValue}%` : `$${discountValue}`})</span>
-                                    <span style={{ color: '#dc2626' }}>-${calculateDiscount().toFixed(2)}</span>
-                                        </div>
-                                    )}
+                                    <span style={{ textAlign: isMobile ? 'center' : 'left' }}>
+                                        Discount ({discountType === 'percentage' ? `${discountValue}%` : `$${discountValue}`})
+                                    </span>
+                                    <span style={{ 
+                                        color: '#dc2626',
+                                        textAlign: isMobile ? 'center' : 'right'
+                                    }}>
+                                        -${calculateDiscount().toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
                             <div className="sbm-summary-row sbm-total" style={{
                                 display: 'flex',
-                                justifyContent: 'space-between',
+                                flexDirection: isMobile ? 'column' : 'row',
+                                justifyContent: isMobile ? 'center' : 'space-between',
+                                alignItems: isMobile ? 'center' : 'flex-start',
                                 padding: '12px 0 0 0',
-                                fontSize: '16px',
+                                fontSize: isMobile ? '18px' : '16px',
                                 fontWeight: '700',
                                 color: '#059669',
                                 borderTop: '2px solid #e5e7eb',
-                                marginTop: '8px'
+                                marginTop: '8px',
+                                gap: isMobile ? '8px' : '0'
                             }}>
-                                        <span>Total Amount:</span>
-                                        <span>${calculateTotal().toFixed(2)}</span>
-                                    </div>
-                                </div>
+                                <span style={{ textAlign: isMobile ? 'center' : 'left' }}>Total Amount:</span>
+                                <span style={{ textAlign: isMobile ? 'center' : 'right' }}>${calculateTotal().toFixed(2)}</span>
+                            </div>
+                        </div>
 
                         {/* Message Section */}
                         <div className="sbm-discount-label tw-mt-4">Message</div>
@@ -1640,13 +2048,22 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                             onChange={handleBidDescriptionChange}
                             modules={{ toolbar: [] }}
                         />
-                        </div>
                         {/* Bottom Buttons */}
-                        <div className="sbm-btn-row">
+                        <div className="sbm-btn-row" style={{
+                            display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
+                            gap: isMobile ? '12px' : '16px',
+                            marginTop: '24px'
+                        }}>
                             <button 
                                 type="button"
                                 onClick={onClose}
                                 className="sbm-btn sbm-btn-close"
+                                style={{
+                                    width: isMobile ? '100%' : 'auto',
+                                    padding: isMobile ? '14px 20px' : '12px 24px',
+                                    fontSize: isMobile ? '16px' : '14px'
+                                }}
                             >
                                 Close
                             </button>
@@ -1654,6 +2071,11 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                 type="submit"
                                 disabled={isLoading}
                                 className="sbm-btn sbm-btn-submit"
+                                style={{
+                                    width: isMobile ? '100%' : 'auto',
+                                    padding: isMobile ? '14px 20px' : '12px 24px',
+                                    fontSize: isMobile ? '16px' : '14px'
+                                }}
                             >
                                 {isLoading ? (editMode ? 'Updating...' : 'Submitting...') : (editMode ? 'Update Bid' : 'Submit')}
                             </button>

@@ -62,7 +62,14 @@ const LoadingSpinner = ({
   return (
     <div 
       className={`loading-spinner-container ${className}`}
-      style={containerStyle}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        ...containerStyle
+      }}
     >
       {getSpinnerContent()}
       {text && (
