@@ -1606,11 +1606,6 @@ export default function MessagingView({
               </div>
               
               <div className="invitation-message">
-                <h4>Invitation Message</h4>
-                <p>
-                  This will send a friendly invitation message asking the client to accept your bid for ${bidInfo?.bid_amount}. 
-                  The message will include an interactive "Accept Bid" button that they can click to immediately accept your bid.
-                </p>
                 <div className="invitation-preview">
                   <h5>Message Preview:</h5>
                   <div className="preview-message">

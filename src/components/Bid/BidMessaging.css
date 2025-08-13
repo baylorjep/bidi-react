@@ -945,4 +945,57 @@ body.modal-open {
     padding: 10px 16px;
     font-size: 13px;
   }
+}
+
+/* Bid Invitation Message Styles */
+.bid-invitation-message {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invitation-text {
+  margin-bottom: 8px;
+}
+
+.invitation-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.bid-invitation-message .accept-bid-btn {
+  background: #10b981 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  margin-top: 8px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2) !important;
+}
+
+.bid-invitation-message .accept-bid-btn:hover {
+  background: #059669 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3) !important;
+}
+
+.bid-invitation-message .accept-bid-btn:active {
+  transform: translateY(0) !important;
+}
+
+.bid-accepted-message {
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  border-left: 3px solid #10b981;
+}
+
+.accepted-text {
+  color: #10b981 !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
 } 

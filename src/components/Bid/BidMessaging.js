@@ -375,17 +375,81 @@ const BidMessaging = ({
     
     setIsAcceptingBid(true);
     try {
-      // Update the bid status to accepted
+      // First, decline all other bids for this request
+      const { data: bidData, error: bidError } = await supabase
+        .from('bids')
+        .select('request_id')
+        .eq('id', bid.id)
+        .single();
+
+      if (bidError) throw bidError;
+
+      const otherBids = await supabase
+        .from('bids')
+        .select('id')
+        .eq('request_id', bidData.request_id)
+        .neq('id', bid.id)
+        .neq('status', 'denied')
+        .neq('status', 'expired');
+
+      if (otherBids.data && otherBids.data.length > 0) {
+        const { error: declineError } = await supabase
+          .from('bids')
+          .update({ status: 'denied' })
+          .in('id', otherBids.data.map(bid => bid.id));
+
+        if (declineError) {
+          console.error('Error declining other bids:', declineError);
+          toast.error('Failed to decline other bids. Please try again.');
+          return;
+        }
+      }
+
+      // Close the request (determine table name based on request type)
+      const requestTables = [
+        'beauty_requests',
+        'catering_requests',
+        'dj_requests',
+        'florist_requests',
+        'photography_requests',
+        'videography_requests',
+        'wedding_planning_requests'
+      ];
+
+      for (const table of requestTables) {
+        const { data: requestData, error: requestError } = await supabase
+          .from(table)
+          .select('id')
+          .eq('id', bidData.request_id)
+          .single();
+
+        if (!requestError && requestData) {
+          const { error: closeError } = await supabase
+            .from(table)
+            .update({ 
+              status: 'closed',
+              closed_at: new Date().toISOString()
+            })
+            .eq('id', bidData.request_id);
+
+          if (closeError) {
+            console.error('Error closing request:', closeError);
+          }
+          break; // Found the table, no need to check others
+        }
+      }
+
+      // Update the selected bid status and add acceptance timestamp
       const { error } = await supabase
         .from('bids')
-        .update({ 
+        .update({
           status: 'accepted',
           accepted_at: new Date().toISOString()
         })
         .eq('id', bid.id);
 
       if (error) {
-        console.error('Error accepting bid:', error);
+        console.error('Error updating bid:', error);
         toast.error('Failed to accept bid. Please try again.');
         return;
       }
@@ -394,7 +458,22 @@ const BidMessaging = ({
       bid.status = 'accepted';
       setShowBidAcceptancePrompt(false);
       
-      toast.success('Bid accepted successfully! You can now proceed to payment.');
+      // Send a confirmation message
+      const confirmationMessage = {
+        type: 'bid_accepted',
+        bidId: bid.id,
+        message: `Great! I've accepted your bid. Let's proceed with the booking details.`
+      };
+
+      socket.emit("send_message", {
+        sender_id: currentUserId,
+        receiver_id: otherUserId,
+        message: JSON.stringify(confirmationMessage),
+        type: "bid_accepted",
+        seen: false,
+      });
+      
+      toast.success('Bid accepted successfully! Other bids have been declined and request closed.');
       
       // Navigate to checkout for payment
       handlePayNow();
@@ -695,7 +774,6 @@ const BidMessaging = ({
                             stripeAccountId={msg.payment_data?.stripe_account_id || parsedMessage.paymentData?.stripe_account_id}
                             description={msg.payment_data?.description || parsedMessage.description}
                             lineItems={msg.payment_data?.lineItems || parsedMessage.paymentData?.lineItems}
-                            subtotal={msg.payment_data?.subtotal || parsedMessage.paymentData?.subtotal}
                             tax={msg.payment_data?.tax || parsedMessage.paymentData?.tax}
                             taxRate={msg.payment_data?.taxRate || parsedMessage.paymentData?.taxRate}
                             paymentStatus={msg.payment_status}
@@ -706,6 +784,61 @@ const BidMessaging = ({
                         return <div>Error displaying payment request</div>;
                       }
                     })()
+                  ) : msg.type === 'bid_invitation' ? (
+                    <div className="bid-invitation-message">
+                      {(() => {
+                        try {
+                          const invitationData = JSON.parse(msg.message);
+                          return (
+                            <>
+                              <div className="invitation-text">
+                                {invitationData.message}
+                              </div>
+                              {isCurrentUserIndividual && (
+                                <div className="invitation-actions">
+                                  <button
+                                    className="accept-bid-btn"
+                                    onClick={() => handleAcceptBid()}
+                                    style={{
+                                      backgroundColor: '#10b981',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '8px',
+                                      padding: '8px 16px',
+                                      fontSize: '14px',
+                                      fontWeight: '500',
+                                      cursor: 'pointer',
+                                      marginTop: '8px'
+                                    }}
+                                  >
+                                    Accept Bid (${invitationData.bidAmount})
+                                  </button>
+                                </div>
+                              )}
+                            </>
+                          );
+                        } catch (error) {
+                          console.error('Error parsing bid invitation:', error);
+                          return msg.message;
+                        }
+                      })()}
+                    </div>
+                  ) : msg.type === 'bid_accepted' ? (
+                    <div className="bid-accepted-message">
+                      {(() => {
+                        try {
+                          const acceptedData = JSON.parse(msg.message);
+                          return (
+                            <div className="accepted-text" style={{ color: '#10b981', fontWeight: '500' }}>
+                              {acceptedData.message}
+                            </div>
+                          );
+                        } catch (error) {
+                          console.error('Error parsing bid accepted:', error);
+                          return msg.message;
+                        }
+                      })()}
+                    </div>
                   ) : (
                     <div>
                       {shouldTruncateMessage(msg.message) && !expandedMessages.has(msg.id) ? (
