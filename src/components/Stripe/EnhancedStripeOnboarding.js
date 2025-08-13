@@ -31,7 +31,7 @@ const ONBOARDING_STEPS = [
   },
 ];
 
-export default function EnhancedStripeOnboarding() {
+export default function EnhancedStripeOnboarding({ onOnboardingComplete }) {
   const [currentStep, setCurrentStep] = useState('intro');
   const [accountCreatePending, setAccountCreatePending] = useState(false);
   const [onboardingExited, setOnboardingExited] = useState(false);
@@ -221,6 +221,11 @@ export default function EnhancedStripeOnboarding() {
           console.log('Successfully saved account ID to database');
           setSavedProgress('completed');
           setCurrentStep('banking');
+          
+          // Notify parent component that onboarding is complete
+          if (onOnboardingComplete) {
+            onOnboardingComplete();
+          }
           
           // Navigate to dashboard after successful completion
           setTimeout(() => navigate('/dashboard'), 1500);

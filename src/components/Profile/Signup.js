@@ -20,8 +20,11 @@ const Signup = ({ onSuccess, initialUserType }) => {
         businessAddress: '',
         website: '',
         signature: false,
+        dropdownOpen: false, // Added for custom dropdown
     });
     const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
+    const [isRedirecting, setIsRedirecting] = useState(false);
     const [userType, setUserType] = useState('');
     const [termsExpanded, setTermsExpanded] = useState(false);
     const navigate = useNavigate();
@@ -84,6 +87,22 @@ const Signup = ({ onSuccess, initialUserType }) => {
     
     const [redirectUrl, setRedirectUrl] = useState('');
 
+    // Handle clicking outside dropdown to close it
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // Check if the click is outside the dropdown container
+            const dropdownContainer = document.querySelector('[data-dropdown-container]');
+            if (dropdownContainer && !dropdownContainer.contains(event.target) && formData.dropdownOpen) {
+                setFormData(prev => ({ ...prev, dropdownOpen: false }));
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [formData.dropdownOpen]);
+
     const handleChange = (e) => {
         if (e.target.type === 'checkbox') {
             const categoryId = e.target.value;
@@ -127,6 +146,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
         const { email, password, firstName, lastName, phone, businessName, businessCategory, otherBusinessCategory, businessAddress, website } = formData;
         
         let finalCategories = [...businessCategory];
+        // Handle "other" category for any business type that selects it
         if (businessCategory.includes('other') && otherBusinessCategory) {
             finalCategories = finalCategories.filter(cat => cat !== 'other');
             finalCategories.push(otherBusinessCategory);
@@ -151,11 +171,11 @@ const Signup = ({ onSuccess, initialUserType }) => {
         const { user } = data;
         console.log('User signed up:', user);
 
+        // Auto-sign in the user after successful signup
         const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-
         if (loginError) {
-            setErrorMessage(`Login error after sign up: ${loginError.message}`);
-            console.error('Login error:', loginError);
+            setErrorMessage(`Auto-login error after sign up: ${loginError.message}`);
+            console.error('Auto-login error after sign up:', loginError);
             return;
         }
 
@@ -193,10 +213,19 @@ const Signup = ({ onSuccess, initialUserType }) => {
                 return;
             }
 
-            if (onSuccess) {
-                onSuccess(user);
-                return;
+            // Auto-sign in and redirect to appropriate dashboard
+            if (finalUserType === 'both') {
+                // Wedding planner - redirect to wedding planning dashboard
+                setSuccessMessage('Account created successfully! Redirecting to Wedding Planning Dashboard...');
+                setIsRedirecting(true);
+                setTimeout(() => navigate('/wedding-planner/overview'), 1500);
+            } else {
+                // Individual user - redirect to individual dashboard
+                setSuccessMessage('Account created successfully! Redirecting to Individual Dashboard...');
+                setIsRedirecting(true);
+                setTimeout(() => navigate('/individual-dashboard/bids'), 1500);
             }
+            return;
         }
 
         if (finalUserType === 'business' || finalUserType === 'both') {
@@ -220,8 +249,15 @@ const Signup = ({ onSuccess, initialUserType }) => {
                 console.error('Business profile insertion error:', businessError);
                 return;
             }
+
+            // Auto-sign in and redirect to business dashboard
+            setSuccessMessage('Account created successfully! Redirecting to Business Dashboard...');
+            setIsRedirecting(true);
+            setTimeout(() => navigate('/business-dashboard/dashboard'), 1500);
+            return;
         }
 
+        // Fallback redirect (shouldn't reach here)
         if (!onSuccess) {
             navigate(redirectUrl || '/success-signup');
         }
@@ -264,6 +300,20 @@ const Signup = ({ onSuccess, initialUserType }) => {
                             </div>
                         )}
 
+                        {successMessage && (
+                            <div style={{
+                                color: '#28a745',
+                                marginBottom: '20px',
+                                textAlign: 'center',
+                                padding: '10px',
+                                borderRadius: '8px',
+                                backgroundColor: '#d4edda',
+                                border: '1px solid #c3e6cb'
+                            }}>
+                                {successMessage}
+                            </div>
+                        )}
+
                         <form onSubmit={handleSubmit}>
                             {userType === 'business' && (
                                 <div className='sign-up-single-column'>
@@ -279,12 +329,14 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                             value={formData.businessName}
                                             onChange={handleChange}
                                             required
+                                            disabled={isRedirecting}
                                             style={{
                                                 width: '100%',
                                                 padding: '12px',
                                                 borderRadius: '8px',
                                                 border: '1px solid #ddd',
-                                                fontSize: '1rem'
+                                                fontSize: '1rem',
+                                                opacity: isRedirecting ? 0.6 : 1
                                             }}
                                             placeholder="Enter your business name"
                                         />
@@ -296,36 +348,140 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                             marginBottom: '8px',
                                             fontWeight: '500'
                                         }}>Business Categories</label>
-                                        <div className="category-grid">
-                                            {businessCategories.map((category) => (
-                                                <div 
-                                                    key={category.id} 
-                                                    className="category-item"
-                                                    onClick={() => {
-                                                        const checkbox = document.getElementById(category.id);
-                                                        checkbox.checked = !checkbox.checked;
-                                                        handleChange({ target: checkbox });
+                                        {formData.businessCategory.includes('wedding planner/coordinator') ? (
+                                            // Show checkboxes for wedding planners who can have multiple categories
+                                            <div className="category-grid">
+                                                {businessCategories.map((category) => (
+                                                    <div 
+                                                        key={category.id} 
+                                                        className="category-item"
+                                                        onClick={() => {
+                                                            const checkbox = document.getElementById(category.id);
+                                                            checkbox.checked = !checkbox.checked;
+                                                            handleChange({ target: checkbox });
+                                                        }}
+                                                    >
+                                                        <div className="form-check">
+                                                            <input
+                                                                className="form-check-input"
+                                                                type="checkbox"
+                                                                id={category.id}
+                                                                value={category.id}
+                                                                checked={formData.businessCategory.includes(category.id)}
+                                                                onChange={handleChange}
+                                                            />
+                                                            <label 
+                                                                className="form-check-label"
+                                                                htmlFor={category.id}
+                                                            >
+                                                                {category.label}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            // Show custom dropdown with checkboxes for other business types
+                                            <div style={{ position: 'relative' }} data-dropdown-container>
+                                                <div
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setFormData({
+                                                            ...formData,
+                                                            dropdownOpen: !formData.dropdownOpen
+                                                        });
+                                                    }}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '12px',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #ddd',
+                                                        fontSize: '1rem',
+                                                        backgroundColor: 'white',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center'
                                                     }}
                                                 >
-                                                    <div className="form-check">
-                                                        <input
-                                                            className="form-check-input"
-                                                            type="checkbox"
-                                                            id={category.id}
-                                                            value={category.id}
-                                                            checked={formData.businessCategory.includes(category.id)}
-                                                            onChange={handleChange}
-                                                        />
-                                                        <label 
-                                                            className="form-check-label"
-                                                            htmlFor={category.id}
-                                                        >
-                                                            {category.label}
-                                                        </label>
-                                                    </div>
+                                                    <span style={{ color: formData.businessCategory.length > 0 ? '#333' : '#999' }}>
+                                                        {formData.businessCategory.length > 0 
+                                                            ? `${formData.businessCategory.length} category${formData.businessCategory.length > 1 ? 'ies' : 'y'} selected`
+                                                            : 'Select business categories'
+                                                        }
+                                                    </span>
+                                                    <span style={{ fontSize: '12px' }}>▼</span>
                                                 </div>
-                                            ))}
-                                        </div>
+                                                
+                                                {formData.dropdownOpen && (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '100%',
+                                                        left: 0,
+                                                        right: 0,
+                                                        backgroundColor: 'white',
+                                                        border: '1px solid #ddd',
+                                                        borderRadius: '8px',
+                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                                        zIndex: 1000,
+                                                        maxHeight: '200px',
+                                                        overflowY: 'auto'
+                                                    }}>
+                                                        {businessCategories.map((category) => (
+                                                            <div 
+                                                                key={category.id}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const isSelected = formData.businessCategory.includes(category.id);
+                                                                    if (isSelected) {
+                                                                        setFormData({
+                                                                            ...formData,
+                                                                            businessCategory: formData.businessCategory.filter(id => id !== category.id)
+                                                                        });
+                                                                    } else {
+                                                                        setFormData({
+                                                                            ...formData,
+                                                                            businessCategory: [...formData.businessCategory, category.id]
+                                                                        });
+                                                                    }
+                                                                }}
+                                                                style={{
+                                                                    padding: '10px 12px',
+                                                                    cursor: 'pointer',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '10px',
+                                                                    borderBottom: '1px solid #f0f0f0',
+                                                                    backgroundColor: formData.businessCategory.includes(category.id) ? '#f8f9ff' : 'white'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    if (!formData.businessCategory.includes(category.id)) {
+                                                                        e.target.style.backgroundColor = '#f5f5f5';
+                                                                    }
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    if (!formData.businessCategory.includes(category.id)) {
+                                                                        e.target.style.backgroundColor = 'white';
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={formData.businessCategory.includes(category.id)}
+                                                                    readOnly
+                                                                    style={{
+                                                                        accentColor: '#A328F4',
+                                                                        transform: 'scale(1.2)',
+                                                                        cursor: 'pointer'
+                                                                    }}
+                                                                />
+                                                                <span>{category.label}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {formData.businessCategory.includes('other') && (
@@ -429,51 +585,6 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                     <div style={{ marginBottom: '20px' }}>
                                         <label style={{
                                             display: 'block',
-                                            marginBottom: '8px',
-                                            fontWeight: '500'
-                                        }}>Business Location</label>
-                                        <input
-                                            type="text"
-                                            name="businessAddress"
-                                            value={formData.businessAddress}
-                                            onChange={handleChange}
-                                            required
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px',
-                                                borderRadius: '8px',
-                                                border: '1px solid #ddd',
-                                                fontSize: '1rem'
-                                            }}
-                                            placeholder="State, city, or county (e.g., Utah, Salt Lake City)"
-                                        />
-                                    </div>
-
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <label style={{
-                                            display: 'block',
-                                            marginBottom: '8px',
-                                            fontWeight: '500'
-                                        }}>Website (Optional)</label>
-                                        <input
-                                            type="url"
-                                            name="website"
-                                            value={formData.website}
-                                            onChange={handleChange}
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px',
-                                                borderRadius: '8px',
-                                                border: '1px solid #ddd',
-                                                fontSize: '1rem'
-                                            }}
-                                            placeholder="Enter your website URL"
-                                        />
-                                    </div>
-
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <label style={{
-                                            display: 'block',
                                             fontWeight: '500',
                                             marginBottom: '0px'
                                         }}>Email</label>
@@ -483,13 +594,15 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                             value={formData.email}
                                             onChange={handleChange}
                                             required
+                                            disabled={isRedirecting}
                                             style={{
                                                 width: '100%',
                                                 padding: '12px',
                                                 borderRadius: '8px',
                                                 border: '1px solid #ddd',
                                                 fontSize: '1rem',
-                                                marginBottom: '0px'
+                                                marginBottom: '0px',
+                                                opacity: isRedirecting ? 0.6 : 1
                                             }}
                                             placeholder="name@example.com"
                                         />
@@ -558,12 +671,14 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                                 value={formData.firstName}
                                                 onChange={handleChange}
                                                 required
+                                                disabled={isRedirecting}
                                                 style={{
                                                     width: '100%',
                                                     padding: '12px',
                                                     borderRadius: '8px',
                                                     border: '1px solid #ddd',
-                                                    fontSize: '1rem'
+                                                    fontSize: '1rem',
+                                                    opacity: isRedirecting ? 0.6 : 1
                                                 }}
                                                 placeholder="Enter your first name"
                                             />
@@ -704,9 +819,11 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                         checked={formData.signature}
                                         onChange={handleChange}
                                         required
+                                        disabled={isRedirecting}
                                         style={{
                                             marginTop: '3px',
-                                            transform: 'scale(1.2)'
+                                            transform: 'scale(1.2)',
+                                            opacity: isRedirecting ? 0.6 : 1
                                         }}
                                     />
                                     <label 
@@ -797,12 +914,15 @@ const Signup = ({ onSuccess, initialUserType }) => {
                             <button 
                                 type="submit" 
                                 className="plan-button"
+                                disabled={isRedirecting}
                                 style={{
                                     width: '100%',
-                                    marginBottom: '20px'
+                                    marginBottom: '20px',
+                                    opacity: isRedirecting ? 0.6 : 1,
+                                    cursor: isRedirecting ? 'not-allowed' : 'pointer'
                                 }}
                             >
-                                Create Account
+                                {isRedirecting ? 'Redirecting...' : 'Create Account'}
                             </button>
 
                             <div style={{

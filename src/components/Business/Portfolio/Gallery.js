@@ -32,6 +32,25 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
   const [quickViewMedia, setQuickViewMedia] = useState(null);
   const [hoveredMedia, setHoveredMedia] = useState(null);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [videoVolumes, setVideoVolumes] = useState({});
+  const [mutedVideos, setMutedVideos] = useState({});
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Initialize video volumes and muted states
+  useEffect(() => {
+    if (Object.keys(portfolioMedia).length > 0) {
+      const volumes = {};
+      const muted = {};
+      Object.values(portfolioMedia).flat().forEach(media => {
+        if (media.type === 'video') {
+          volumes[media.url] = 0.5; // Default volume
+          muted[media.url] = true; // Default muted
+        }
+      });
+      setVideoVolumes(volumes);
+      setMutedVideos(muted);
+    }
+  }, [portfolioMedia]);
 
   // Add debounced resize handler
   useEffect(() => {
@@ -47,6 +66,14 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
     return () => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(timeoutId);
+    };
+  }, []);
+
+  // Cleanup navigation state on unmount
+  useEffect(() => {
+    return () => {
+      setIsNavigating(false);
+      setError(null);
     };
   }, []);
 
@@ -446,6 +473,18 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
       transform: translateY(-1px);
       box-shadow: 0 2px 8px rgba(163, 40, 244, 0.2);
     }
+    .back-button:disabled {
+      background: rgba(163, 40, 244, 0.05);
+      color: #999;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .back-button:disabled:hover {
+      background: rgba(163, 40, 244, 0.05);
+      transform: none;
+      box-shadow: none;
+    }
     .edit-gallery-button {
       padding: 8px 20px;
       background: #a328f4;
@@ -535,7 +574,7 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
       image-rendering: crisp-edges;
       image-rendering: high-quality;
     }
-    .video-container {
+    .video-container-gallery {
       position: relative;
       border-radius: 8px;
       overflow: hidden;
@@ -544,11 +583,23 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 600px;
+      height: 500px;
+      cursor: pointer;
+      transition: all 0.3s ease;
     }
-    .video-container video {
+    .video-container-gallery:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    .video-container-gallery video {
       width: 100%;
       height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    .video-container.playing video {
+      object-fit: cover;
     }
     .video-play-overlay {
       position: absolute;
@@ -556,34 +607,187 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.3);
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
       display: flex;
       align-items: center;
       justify-content: center;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-      border-radius: 12px;
-    }
-    .video-container:hover .video-play-overlay {
       opacity: 1;
+      transition: all 0.3s ease;
+      border-radius: 8px;
+      backdrop-filter: blur(2px);
+    }
+    .video-container.playing .video-play-overlay {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .video-container-gallery:hover .video-play-overlay {
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.3));
+      transform: scale(1.05);
     }
     .play-button {
-      width: 50px;
-      height: 50px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.9);
-      border: none;
+      background: rgba(255, 255, 255, 0.95);
+      border: 3px solid rgba(163, 40, 244, 0.8);
       color: #a328f4;
-      font-size: 20px;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    .play-button:hover {
+      transform: scale(1.1);
+      background: white;
+      border-color: #a328f4;
+      box-shadow: 0 6px 25px rgba(163, 40, 244, 0.3);
+    }
+    .video-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+      padding: 20px 15px 15px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: 0 0 8px 8px;
+    }
+    .video-container-gallery.playing:hover .video-controls {
+      opacity: 1;
+    }
+    .video-progress {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      position: relative;
+    }
+    .video-progress-bar {
+      height: 100%;
+      background: #a328f4;
+      border-radius: 2px;
+      transition: width 0.1s ease;
+      position: relative;
+    }
+    .video-progress-bar::after {
+      content: '';
+      position: absolute;
+      right: -4px;
+      top: -2px;
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .video-time {
+      color: white;
+      font-size: 12px;
+      font-weight: 500;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    .video-controls-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .video-controls-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .video-control-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
     }
-    .play-button:hover {
+    .video-control-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
       transform: scale(1.1);
+    }
+    
+    .video-control-btn.fullscreen-btn {
+      background: rgba(163, 40, 244, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .video-control-btn.fullscreen-btn:hover {
+      background: rgba(163, 40, 244, 1);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: scale(1.1);
+    }
+    .volume-slider {
+      width: 60px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
       background: white;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .volume-slider::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      background: white;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .video-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    .video-error {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      text-align: center;
+      background: rgba(220, 53, 69, 0.9);
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 14px;
     }
     .custom-dots {
       display: flex !important;
@@ -733,16 +937,84 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
         object-fit: cover;
         width: 100%;
       }
-      .video-container {
+      .video-container-gallery {
         height: 90vh;
         border-radius: 0;
         width: 100%;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      .video-container:hover {
+        transform: none !important;
+        box-shadow: none !important;
       }
       .video-container video {
         height: 100%;
         object-fit: cover;
         border-radius: 0;
         width: 100%;
+      }
+      .video-container.playing video {
+        object-fit: cover;
+      }
+      .video-play-overlay {
+        border-radius: 0;
+        backdrop-filter: none;
+      }
+      .video-container:hover .video-play-overlay {
+        transform: none;
+      }
+      .play-button {
+        width: 60px;
+        height: 60px;
+        font-size: 18px;
+        border-width: 2px;
+      }
+      .video-controls {
+        padding: 15px 10px 10px;
+        opacity: 1;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+      }
+      .video-progress {
+        height: 3px;
+        margin-bottom: 8px;
+      }
+      .video-progress-bar::after {
+        width: 6px;
+        height: 6px;
+        right: -3px;
+        top: -1.5px;
+      }
+      .video-time {
+        font-size: 11px;
+      }
+      .video-controls-row {
+        gap: 8px;
+      }
+      .video-controls-buttons {
+        gap: 6px;
+      }
+      .video-control-btn {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+      }
+      
+      .video-control-btn.fullscreen-btn {
+        background: rgba(163, 40, 244, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+      .volume-slider {
+        width: 50px;
+        height: 3px;
+      }
+      .volume-slider::-webkit-slider-thumb {
+        width: 10px;
+        height: 10px;
+      }
+      .volume-slider::-moz-range-thumb {
+        width: 10px;
+        height: 10px;
       }
       .category-stats {
         padding: 16px;
@@ -790,15 +1062,6 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
       }
       .slick-slide > div {
         width: 100%;
-      }
-      .play-button {
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
-      }
-      .video-container {
-        border-radius: 0;
-        height: 90vh;
       }
       .custom-arrow {
         width: 40px !important;
@@ -872,11 +1135,43 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
       .video-container {
         height: 80vh;
         border-radius: 0;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      .video-container:hover {
+        transform: none !important;
+        box-shadow: none !important;
       }
       .video-container video {
         height: 100%;
         object-fit: cover;
         border-radius: 0;
+      }
+      .video-container.playing video {
+        object-fit: cover;
+      }
+      .play-button {
+        width: 50px;
+        height: 50px;
+        font-size: 16px;
+        border-width: 2px;
+      }
+      .video-controls {
+        padding: 12px 8px 8px;
+        opacity: 1;
+      }
+      .video-progress {
+        height: 2px;
+        margin-bottom: 6px;
+      }
+      .video-progress-bar::after {
+        width: 5px;
+        height: 5px;
+        right: -2.5px;
+        top: -1.5px;
+      }
+      .video-time {
+        font-size: 10px;
       }
       .category-stats {
         padding: 12px;
@@ -917,15 +1212,6 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
       }
       .slick-slide > div {
         width: 100%;
-      }
-      .play-button {
-        width: 45px;
-        height: 45px;
-        font-size: 18px;
-      }
-      .video-container {
-        border-radius: 0;
-        height: 80vh;
       }
       .custom-arrow {
         width: 35px !important;
@@ -992,11 +1278,44 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
       }
       .video-container {
         border-radius: 4px;
+        height: 200px;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      .video-container:hover {
+        transform: none !important;
+        box-shadow: none !important;
       }
       .video-container video {
         height: 100%;
         object-fit: contain;
         border-radius: 4px;
+      }
+      .video-container.playing video {
+        object-fit: contain;
+      }
+      .play-button {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+        border-width: 2px;
+      }
+      .video-controls {
+        padding: 8px 6px 6px;
+        opacity: 1;
+      }
+      .video-progress {
+        height: 2px;
+        margin-bottom: 4px;
+      }
+      .video-progress-bar::after {
+        width: 4px;
+        height: 4px;
+        right: -2px;
+        top: -1px;
+      }
+      .video-time {
+        font-size: 9px;
       }
       .category-stats {
         padding: 0 6px;
@@ -1019,14 +1338,6 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
       }
       .carousel-item {
         padding: 3px;
-      }
-      .play-button {
-        width: 30px;
-        height: 30px;
-        font-size: 12px;
-      }
-      .video-container {
-        border-radius: 4px;
       }
       .custom-arrow {
         width: 28px !important;
@@ -1070,6 +1381,23 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
         min-width: 44px !important;
         min-height: 44px !important;
       }
+      .video-container {
+        cursor: pointer;
+        min-height: 200px;
+      }
+      .video-controls {
+        opacity: 1;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+      }
+      .video-progress {
+        min-height: 6px;
+        cursor: pointer;
+      }
+      .video-progress-bar::after {
+        min-width: 12px;
+        min-height: 12px;
+        cursor: pointer;
+      }
     }
 
     /* Landscape mobile optimization */
@@ -1098,6 +1426,46 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
       }
       .gallery-image, .gallery-video {
         height: 180px;
+      }
+      .video-container {
+        height: 180px;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      .video-container:hover {
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      .video-container video {
+        height: 100%;
+        object-fit: cover;
+        border-radius: 0;
+      }
+      .video-container.playing video {
+        object-fit: cover;
+      }
+      .play-button {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+        border-width: 2px;
+      }
+      .video-controls {
+        opacity: 1;
+        padding: 10px 8px 8px;
+      }
+      .video-progress {
+        height: 3px;
+        margin-bottom: 6px;
+      }
+      .video-progress-bar::after {
+        width: 6px;
+        height: 6px;
+        right: -3px;
+        top: -1.5px;
+      }
+      .video-time {
+        font-size: 11px;
       }
       .category-stats {
         flex-direction: row;
@@ -1145,6 +1513,54 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
   // Add a key to force slider re-render when currentIndex changes
   const sliderKey = `slider-${selectedMedia?.currentIndex}`;
 
+  // Video cleanup function
+  const cleanupVideos = () => {
+    const videos = document.querySelectorAll('.gallery-video');
+    videos.forEach(video => {
+      if (!video.paused) {
+        video.pause();
+        video.currentTime = 0;
+      }
+      // Remove playing class
+      const container = video.parentElement;
+      if (container) {
+        container.classList.remove('playing');
+      }
+    });
+  };
+
+  // Handle video volume change
+  const handleVolumeChange = (videoUrl, newVolume) => {
+    setVideoVolumes(prev => ({ ...prev, [videoUrl]: newVolume }));
+    const video = document.querySelector(`video[src="${videoUrl}"]`);
+    if (video) {
+      video.volume = newVolume;
+    }
+  };
+
+  // Handle video mute toggle
+  const handleMuteToggle = (videoUrl) => {
+    setMutedVideos(prev => ({ ...prev, [videoUrl]: !prev[videoUrl] }));
+    const video = document.querySelector(`video[src="${videoUrl}"]`);
+    if (video) {
+      video.muted = !mutedVideos[videoUrl];
+    }
+  };
+
+  // Cleanup videos when component unmounts or category changes
+  useEffect(() => {
+    return () => {
+      cleanupVideos();
+    };
+  }, [selectedCategory]);
+
+  // Pause all videos when modal opens
+  useEffect(() => {
+    if (selectedMedia) {
+      cleanupVideos();
+    }
+  }, [selectedMedia]);
+
   // Create dynamic settings based on media count
   const getDynamicSettings = (mediaArray) => {
     const hasMultipleItems = mediaArray.length > 1;
@@ -1179,13 +1595,61 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
   };
 
   const handleViewGallery = () => {
+    // Prevent multiple rapid navigation attempts
+    if (isNavigating) return;
+    
+    setIsNavigating(true);
     handleCloseModal();
+    
     if (isModal && onBackToPortfolio) {
       onBackToPortfolio();
+      setIsNavigating(false);
     } else if (isModal && onModalClose) {
       onModalClose();
+      setIsNavigating(false);
     } else {
-      navigate(-1);
+      // Handle navigation for standalone Gallery component
+      try {
+        // Additional safety check: ensure we have valid business context
+        const currentBusinessId = businessId || paramBusinessId;
+        const currentBusinessName = businessName || paramBusinessName;
+        
+        // Validate business context
+        if (!currentBusinessId || !currentBusinessName) {
+          console.warn('Missing business context for navigation');
+          setError('Business information not available. Please refresh the page.');
+          setIsNavigating(false);
+          return;
+        }
+        
+        // Try to go back first, but with additional safety checks
+        if (window.history.length > 1 && window.location.pathname !== '/') {
+          navigate(-1);
+        } else {
+          // If no history or at root, navigate to the business portfolio
+          navigate(`/portfolio/${currentBusinessId}/${currentBusinessName}`);
+        }
+      } catch (error) {
+        console.warn('Navigation error:', error);
+        setError('Navigation failed. Please try again.');
+        // Fallback navigation based on available context
+        try {
+          const currentBusinessId = businessId || paramBusinessId;
+          const currentBusinessName = businessName || paramBusinessName;
+          
+          if (currentBusinessId && currentBusinessName) {
+            navigate(`/portfolio/${currentBusinessId}/${currentBusinessName}`);
+          } else {
+            navigate('/');
+          }
+        } catch (fallbackError) {
+          console.error('Fallback navigation also failed:', fallbackError);
+          setError('Unable to navigate. Please refresh the page.');
+        }
+      } finally {
+        // Reset navigation state after a delay to allow navigation to complete
+        setTimeout(() => setIsNavigating(false), 1000);
+      }
     }
   };
 
@@ -1202,14 +1666,18 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
     <div className="gallery-container-main">
       <style>{styles}</style>
       <div className="gallery-header-container">
-        <button className="back-button" onClick={handleViewGallery}>
+        <button 
+          className="back-button" 
+          onClick={handleViewGallery}
+          disabled={isNavigating}
+        >
           <span style={{display: 'inline-block', marginRight: 8, verticalAlign: 'middle'}} aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display: 'block'}}>
               <circle cx="11" cy="11" r="11" fill="rgba(163,40,244,0.13)"/>
               <path d="M13.5 7L9.5 11L13.5 15" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </span>
-          Back
+          {isNavigating ? 'Going back...' : 'Back'}
         </button>
         <div className="gallery-header">Gallery</div>
         {isBusinessOwner && (
@@ -1221,6 +1689,36 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
           </button>
         )}
       </div>
+      
+      {/* Error Display */}
+      {error && (
+        <div className="error-message" style={{
+          background: '#fee',
+          color: '#c33',
+          padding: '10px 20px',
+          margin: '0 20px 20px 20px',
+          borderRadius: '8px',
+          border: '1px solid #fcc',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <span>{error}</span>
+          <button 
+            onClick={() => setError(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#c33',
+              cursor: 'pointer',
+              fontSize: '18px',
+              padding: '0 5px'
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
       
       {/* Category Stats */}
       <div className="category-stats">
@@ -1305,22 +1803,116 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
                             autoPlay={index < AUTO_PLAY_COUNT}
                             loop
                             playsInline
+                            onLoadStart={() => setImageLoading(prev => ({ ...prev, [media.url]: 'loading' }))}
+                            onLoadedData={() => setImageLoading(prev => ({ ...prev, [media.url]: 'loaded' }))}
+                            onError={() => setImageLoading(prev => ({ ...prev, [media.url]: 'error' }))}
+                            onPlay={(e) => {
+                              e.target.parentElement.classList.add('playing');
+                            }}
+                            onPause={(e) => {
+                              e.target.parentElement.classList.remove('playing');
+                            }}
+                            onTimeUpdate={(e) => {
+                              const video = e.target;
+                              const container = video.parentElement;
+                              const progressBar = container.querySelector('.video-progress-bar');
+                              const currentTime = container.querySelector('.video-time');
+                              
+                              if (progressBar && currentTime) {
+                                const progress = (video.currentTime / video.duration) * 100;
+                                progressBar.style.width = `${progress}%`;
+                                
+                                const currentMinutes = Math.floor(video.currentTime / 60);
+                                const currentSeconds = Math.floor(video.currentTime % 60);
+                                const totalMinutes = Math.floor(video.duration / 60);
+                                const totalSeconds = Math.floor(video.duration % 60);
+                                
+                                currentTime.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+                              }
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const video = e.target;
+                              if (video.paused) {
+                                video.play();
+                              } else {
+                                video.pause();
+                              }
+                            }}
                           />
-                          <div className="video-play-overlay">
-                            <button 
-                              className="play-button"
-                              onClick={e => {
-                                e.stopPropagation();
-                                const video = e.currentTarget.parentElement.previousElementSibling;
-                                if (video.paused) {
-                                  video.play();
-                                  e.currentTarget.parentElement.style.display = 'none';
-                                }
-                              }}
-                            >
-                              ▶
-                            </button>
-                          </div>
+                          
+                          {/* Loading State */}
+                          {imageLoading[media.url] === 'loading' && (
+                            <div className="video-loading"></div>
+                          )}
+                          
+                          {/* Error State */}
+                          {imageLoading[media.url] === 'error' && (
+                            <div className="video-error">
+                              <i className="fas fa-exclamation-triangle"></i>
+                              <br />
+                              Video unavailable
+                            </div>
+                          )}
+                        
+                          
+                          {/* Video Controls */}
+                          {imageLoading[media.url] === 'loaded' && (
+                            <div className="video-controls">
+                              <div 
+                                className="video-progress"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const video = e.currentTarget.parentElement.parentElement.querySelector('video');
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const clickX = e.clientX - rect.left;
+                                  const width = rect.width;
+                                  const clickTime = (clickX / width) * video.duration;
+                                  video.currentTime = clickTime;
+                                }}
+                              >
+                                <div className="video-progress-bar" style={{ width: '0%' }}></div>
+                              </div>
+                              <div className="video-controls-row">
+                                <div className="video-time">0:00 / 0:00</div>
+                                <div className="video-controls-buttons">
+                                  <button
+                                    className="video-control-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMuteToggle(media.url);
+                                    }}
+                                    title={mutedVideos[media.url] ? "Unmute" : "Mute"}
+                                  >
+                                    <i className={`fas fa-volume-${mutedVideos[media.url] ? 'mute' : 'up'}`}></i>
+                                  </button>
+                                  <input
+                                    type="range"
+                                    min="0"
+                                    max="1"
+                                    step="0.1"
+                                    value={videoVolumes[media.url] || 0.5}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      handleVolumeChange(media.url, parseFloat(e.target.value));
+                                    }}
+                                    className="volume-slider"
+                                    title="Volume"
+                                  />
+                                  <button
+                                    className="video-control-btn fullscreen-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMediaClick(media, index);
+                                    }}
+                                    title="Full Screen"
+                                  >
+                                    <i className="fas fa-expand"></i>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <ImageErrorBoundary>
@@ -1356,7 +1948,7 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
                           onClick={() => handleMediaClick(media, index)}
                         >
                           {media.type === 'video' ? (
-                            <div className="video-container">
+                            <div className="video-container-gallery">
                               <video
                                 src={media.url}
                                 className="gallery-video"
@@ -1366,22 +1958,116 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
                                 autoPlay={index < AUTO_PLAY_COUNT}
                                 loop
                                 playsInline
+                                onLoadStart={() => setImageLoading(prev => ({ ...prev, [media.url]: 'loading' }))}
+                                onLoadedData={() => setImageLoading(prev => ({ ...prev, [media.url]: 'loaded' }))}
+                                onError={() => setImageLoading(prev => ({ ...prev, [media.url]: 'error' }))}
+                                onPlay={(e) => {
+                                  e.target.parentElement.classList.add('playing');
+                                }}
+                                onPause={(e) => {
+                                  e.target.parentElement.classList.remove('playing');
+                                }}
+                                onTimeUpdate={(e) => {
+                                  const video = e.target;
+                                  const container = video.parentElement;
+                                  const progressBar = container.querySelector('.video-progress-bar');
+                                  const currentTime = container.querySelector('.video-time');
+                                  
+                                  if (progressBar && currentTime) {
+                                    const progress = (video.currentTime / video.duration) * 100;
+                                    progressBar.style.width = `${progress}%`;
+                                    
+                                    const currentMinutes = Math.floor(video.currentTime / 60);
+                                    const currentSeconds = Math.floor(video.currentTime % 60);
+                                    const totalMinutes = Math.floor(video.duration / 60);
+                                    const totalSeconds = Math.floor(video.duration % 60);
+                                    
+                                    currentTime.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+                                  }
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const video = e.target;
+                                  if (video.paused) {
+                                    video.play();
+                                  } else {
+                                    video.pause();
+                                  }
+                                }}
                               />
-                              <div className="video-play-overlay">
-                                <button 
-                                  className="play-button"
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    const video = e.currentTarget.parentElement.previousElementSibling;
-                                    if (video.paused) {
-                                      video.play();
-                                      e.currentTarget.parentElement.style.display = 'none';
-                                    }
-                                  }}
-                                >
-                                  ▶
-                                </button>
-                              </div>
+                              
+                              {/* Loading State */}
+                              {imageLoading[media.url] === 'loading' && (
+                                <div className="video-loading"></div>
+                              )}
+                              
+                              {/* Error State */}
+                              {imageLoading[media.url] === 'error' && (
+                                <div className="video-error">
+                                  <i className="fas fa-exclamation-triangle"></i>
+                                  <br />
+                                  Video unavailable
+                                </div>
+                              )}
+                            
+                              
+                              {/* Video Controls */}
+                              {imageLoading[media.url] === 'loaded' && (
+                                <div className="video-controls">
+                                  <div 
+                                    className="video-progress"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const video = e.currentTarget.parentElement.parentElement.querySelector('video');
+                                      const rect = e.currentTarget.getBoundingClientRect();
+                                      const clickX = e.clientX - rect.left;
+                                      const width = rect.width;
+                                      const clickTime = (clickX / width) * video.duration;
+                                      video.currentTime = clickTime;
+                                    }}
+                                  >
+                                    <div className="video-progress-bar" style={{ width: '0%' }}></div>
+                                  </div>
+                                  <div className="video-controls-row">
+                                    <div className="video-time">0:00 / 0:00</div>
+                                    <div className="video-controls-buttons">
+                                      <button
+                                        className="video-control-btn"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleMuteToggle(media.url);
+                                        }}
+                                        title={mutedVideos[media.url] ? "Unmute" : "Mute"}
+                                      >
+                                        <i className={`fas fa-volume-${mutedVideos[media.url] ? 'mute' : 'up'}`}></i>
+                                      </button>
+                                      <input
+                                        type="range"
+                                        min="0"
+                                        max="1"
+                                        step="0.1"
+                                        value={videoVolumes[media.url] || 0.5}
+                                        onChange={(e) => {
+                                          e.stopPropagation();
+                                          handleVolumeChange(media.url, parseFloat(e.target.value));
+                                        }}
+                                        className="volume-slider"
+                                        title="Volume"
+                                      />
+                                      <button
+                                        className="video-control-btn fullscreen-btn"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleMediaClick(media, index);
+                                        }}
+                                        title="Full Screen"
+                                      >
+                                        <i className="fas fa-expand"></i>
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <ImageErrorBoundary>
@@ -1412,7 +2098,7 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
                         onClick={() => handleMediaClick(media, index)}
                       >
                         {media.type === 'video' ? (
-                          <div className="video-container">
+                          <div className="video-container-gallery">
                             <video
                               src={media.url}
                               className="gallery-video"
@@ -1422,22 +2108,116 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
                               autoPlay={index < AUTO_PLAY_COUNT}
                               loop
                               playsInline
+                              onLoadStart={() => setImageLoading(prev => ({ ...prev, [media.url]: 'loading' }))}
+                              onLoadedData={() => setImageLoading(prev => ({ ...prev, [media.url]: 'loaded' }))}
+                              onError={() => setImageLoading(prev => ({ ...prev, [media.url]: 'error' }))}
+                              onPlay={(e) => {
+                                e.target.parentElement.classList.add('playing');
+                              }}
+                              onPause={(e) => {
+                                e.target.parentElement.classList.remove('playing');
+                              }}
+                              onTimeUpdate={(e) => {
+                                const video = e.target;
+                                const container = video.parentElement;
+                                const progressBar = container.querySelector('.video-progress-bar');
+                                const currentTime = container.querySelector('.video-time');
+                                
+                                if (progressBar && currentTime) {
+                                  const progress = (video.currentTime / video.duration) * 100;
+                                  progressBar.style.width = `${progress}%`;
+                                  
+                                  const currentMinutes = Math.floor(video.currentTime / 60);
+                                  const currentSeconds = Math.floor(video.currentTime % 60);
+                                  const totalMinutes = Math.floor(video.duration / 60);
+                                  const totalSeconds = Math.floor(video.duration % 60);
+                                  
+                                  currentTime.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+                                }
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const video = e.target;
+                                if (video.paused) {
+                                  video.play();
+                                } else {
+                                  video.pause();
+                                }
+                              }}
                             />
-                            <div className="video-play-overlay">
-                              <button 
-                                className="play-button"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  const video = e.currentTarget.parentElement.previousElementSibling;
-                                  if (video.paused) {
-                                    video.play();
-                                    e.currentTarget.parentElement.style.display = 'none';
-                                  }
-                                }}
-                              >
-                                ▶
-                              </button>
-                            </div>
+                            
+                            {/* Loading State */}
+                            {imageLoading[media.url] === 'loading' && (
+                              <div className="video-loading"></div>
+                            )}
+                            
+                            {/* Error State */}
+                            {imageLoading[media.url] === 'error' && (
+                              <div className="video-error">
+                                <i className="fas fa-exclamation-triangle"></i>
+                                <br />
+                                Video unavailable
+                              </div>
+                            )}
+                          
+                            
+                            {/* Video Controls */}
+                            {imageLoading[media.url] === 'loaded' && (
+                              <div className="video-controls">
+                                <div 
+                                  className="video-progress"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const video = e.currentTarget.parentElement.parentElement.querySelector('video');
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const clickX = e.clientX - rect.left;
+                                    const width = rect.width;
+                                    const clickTime = (clickX / width) * video.duration;
+                                    video.currentTime = clickTime;
+                                  }}
+                                >
+                                  <div className="video-progress-bar" style={{ width: '0%' }}></div>
+                                </div>
+                                <div className="video-controls-row">
+                                  <div className="video-time">0:00 / 0:00</div>
+                                  <div className="video-controls-buttons">
+                                    <button
+                                      className="video-control-btn"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMuteToggle(media.url);
+                                      }}
+                                      title={mutedVideos[media.url] ? "Unmute" : "Mute"}
+                                    >
+                                      <i className={`fas fa-volume-${mutedVideos[media.url] ? 'mute' : 'up'}`}></i>
+                                    </button>
+                                    <input
+                                      type="range"
+                                      min="0"
+                                      max="1"
+                                      step="0.1"
+                                      value={videoVolumes[media.url] || 0.5}
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        handleVolumeChange(media.url, parseFloat(e.target.value));
+                                      }}
+                                      className="volume-slider"
+                                      title="Volume"
+                                    />
+                                    <button
+                                      className="video-control-btn fullscreen-btn"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMediaClick(media, index);
+                                      }}
+                                      title="Full Screen"
+                                    >
+                                      <i className="fas fa-expand"></i>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <ImageErrorBoundary>
@@ -1477,22 +2257,117 @@ const Gallery = ({ businessId: propBusinessId, businessName: propBusinessName, i
                           autoPlay={index < AUTO_PLAY_COUNT}
                           loop
                           playsInline
+                          onLoadStart={() => setImageLoading(prev => ({ ...prev, [media.url]: 'loading' }))}
+                          onLoadedData={() => setImageLoading(prev => ({ ...prev, [media.url]: 'loaded' }))}
+                          onError={() => setImageLoading(prev => ({ ...prev, [media.url]: 'error' }))}
+                          onPlay={(e) => {
+                            e.target.parentElement.classList.add('playing');
+                          }}
+                          onPause={(e) => {
+                            e.target.parentElement.classList.remove('playing');
+                          }}
+                          onTimeUpdate={(e) => {
+                            const video = e.target;
+                            const container = video.parentElement;
+                            const progressBar = container.querySelector('.video-progress-bar');
+                            const currentTime = container.querySelector('.video-time');
+                            
+                            if (progressBar && currentTime) {
+                              const progress = (video.currentTime / video.duration) * 100;
+                              progressBar.style.width = `${progress}%`;
+                              
+                              const currentMinutes = Math.floor(video.currentTime / 60);
+                              const currentSeconds = Math.floor(video.currentTime % 60);
+                              const totalMinutes = Math.floor(video.duration / 60);
+                              const totalSeconds = Math.floor(video.duration % 60);
+                              
+                              currentTime.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+                            }
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const video = e.target;
+                            if (video.paused) {
+                              video.play();
+                            } else {
+                              video.pause();
+                            }
+                          }}
                         />
-                        <div className="video-play-overlay">
-                          <button 
-                            className="play-button"
-                            onClick={e => {
-                              e.stopPropagation();
-                              const video = e.currentTarget.parentElement.previousElementSibling;
-                              if (video.paused) {
-                                video.play();
-                                e.currentTarget.parentElement.style.display = 'none';
-                              }
-                            }}
-                          >
-                            ▶
-                          </button>
-                        </div>
+                        
+                        {/* Loading State */}
+                        {imageLoading[media.url] === 'loading' && (
+                          <div className="video-loading"></div>
+                        )}
+                        
+                        {/* Error State */}
+                        {imageLoading[media.url] === 'error' && (
+                          <div className="video-error">
+                            <i className="fas fa-exclamation-triangle"></i>
+                            <br />
+                            Video unavailable
+                          </div>
+                        )}
+                        
+
+                        
+                        {/* Video Controls */}
+                        {imageLoading[media.url] === 'loaded' && (
+                          <div className="video-controls">
+                            <div 
+                              className="video-progress"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const video = e.currentTarget.parentElement.parentElement.querySelector('video');
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const clickX = e.clientX - rect.left;
+                                const width = rect.width;
+                                const clickTime = (clickX / width) * video.duration;
+                                video.currentTime = clickTime;
+                              }}
+                            >
+                              <div className="video-progress-bar" style={{ width: '0%' }}></div>
+                            </div>
+                            <div className="video-controls-row">
+                              <div className="video-time">0:00 / 0:00</div>
+                              <div className="video-controls-buttons">
+                                <button
+                                  className="video-control-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMuteToggle(media.url);
+                                  }}
+                                  title={mutedVideos[media.url] ? "Unmute" : "Mute"}
+                                >
+                                  <i className={`fas fa-volume-${mutedVideos[media.url] ? 'mute' : 'up'}`}></i>
+                                </button>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="1"
+                                  step="0.1"
+                                  value={videoVolumes[media.url] || 0.5}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    handleVolumeChange(media.url, parseFloat(e.target.value));
+                                  }}
+                                  className="volume-slider"
+                                  title="Volume"
+                                />
+                                <button
+                                  className="video-control-btn fullscreen-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMediaClick(media, index);
+                                  }}
+                                  title="Full Screen"
+                                >
+                                  <i className="fas fa-expand"></i>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <ImageErrorBoundary>

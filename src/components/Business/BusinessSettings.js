@@ -23,7 +23,7 @@ import ChangePlanModal from './ChangePlanModal';
 import Select from 'react-select';
 import StripeDashboardSummary from '../Stripe/StripeDashboardSummary';
 
-const BusinessSettings = ({ connectedAccountId }) => {
+const BusinessSettings = ({ connectedAccountId, scrollToSection, onScrollComplete }) => {
   const [isVerified, setIsVerified] = useState(false);
   // const [isVerificationPending, setIsVerificationPending] = useState(false);
   const [currentMinPrice, setCurrentMinPrice] = useState(null);
@@ -107,6 +107,9 @@ const {
 } = useGoogleBusinessReviews(connectedAccountId);
 
 const [partnershipData, setPartnershipData] = useState(null);
+
+// Add activeSection state near the top with other state declarations
+const [activeSection, setActiveSection] = useState('profile');
 
 // Add this state near the top with other state declarations
 const [isCopied, setIsCopied] = useState(false);
@@ -253,6 +256,45 @@ const dayNumberToName = {
     }
   }, [user?.id]);
 
+  // Handle scrolling to specific sections when navigated from setup progress
+  useEffect(() => {
+    if (scrollToSection) {
+      console.log('BusinessSettings: scrollToSection received:', scrollToSection);
+      // Switch to the appropriate tab based on the section
+      if (scrollToSection === 'paymentSettings') {
+        setActiveSection('payments');
+      } else if (scrollToSection === 'profile' || scrollToSection === 'businessSettings' || scrollToSection === 'photos' || scrollToSection === 'calendar' || scrollToSection === 'bidTemplate') {
+        setActiveSection('profile');
+      } else if (scrollToSection === 'aiBidder') {
+        setActiveSection('ai');
+      }
+      
+      // Add a small delay to ensure the component is fully rendered
+      setTimeout(() => {
+        const element = document.getElementById(scrollToSection);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+          element.style.transition = 'background-color 0.3s ease';
+          element.style.backgroundColor = '#f0f8ff';
+          setTimeout(() => {
+            element.style.backgroundColor = '';
+            // Call the callback to reset scrollToSection in parent
+            if (onScrollComplete) {
+              onScrollComplete();
+            }
+          }, 2000);
+        } else {
+          console.warn('Element not found for scrollToSection:', scrollToSection);
+        }
+      }, 500);
+    }
+  }, [scrollToSection, onScrollComplete, setActiveSection]);
+
+
+
 // Add this useEffect to debug the state
 useEffect(() => {
   console.log('Calendar state:', {
@@ -264,11 +306,6 @@ useEffect(() => {
 
 // Add isDesktop state and effect at the top of the component
 const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
-useEffect(() => {
-  const handleResize = () => setIsDesktop(window.innerWidth > 768);
-  window.addEventListener('resize', handleResize);
-  return () => window.removeEventListener('resize', handleResize);
-}, []);
 
   // Add these modules for the editor
   const modules = {
@@ -317,6 +354,13 @@ useEffect(() => {
       window.history.replaceState({}, document.title, location.pathname);
     }
   }, [location]);
+
+  // Add resize handler effect
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth > 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     console.log("Active Coupon:", activeCoupon);
@@ -1588,7 +1632,6 @@ useEffect(() => {
     }
   }, [user?.id]);
 
-  const [activeSection, setActiveSection] = useState('profile');
   const [profileEdit, setProfileEdit] = useState({
     business_name: '',
     phone: '',
@@ -1861,7 +1904,7 @@ useEffect(() => {
         ) : (
           <>
             {activeSection === 'profile' && (
-              <div className="settings-section">
+              <div className="settings-section" data-section="profile" id="profile">
                 <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span>Profile</span>
                   <button
@@ -1976,8 +2019,25 @@ useEffect(() => {
                       )}
                     </div>
                   </div>
+                  {/* Photos */}
+                  <div className="settings-row" id="photos">
+                    <div>
+                      <div className="settings-label">Portfolio Photos</div>
+                      <div className="settings-desc">Upload your best work to showcase your services.</div>
+                    </div>
+                    <div className="settings-control">
+                      <button
+                        className="btn-primary-business-settings"
+                        onClick={() => navigate("/business-dashboard/portfolio")}
+                        style={{ minWidth: 120 }}
+                      >
+                        Manage Photos
+                      </button>
+                    </div>
+                  </div>
+                  
                   {/* Calendar */}
-                  <div className="settings-row">
+                  <div className="settings-row" id="calendar">
                     <div>
                       <div className="settings-label">Google Calendar</div>
                       <div className="settings-desc">Sync your availability and prevent double bookings by connecting your calendar.</div>
@@ -2072,7 +2132,7 @@ useEffect(() => {
                     </div>
                   </div>
                   {/* Templates */}
-                  <div className="settings-row">
+                  <div className="settings-row" id="bidTemplate">
                     <div>
                       <div className="settings-label">Bid Template</div>
                       <div className="settings-desc">Create a reusable bid template to save time when responding to requests.</div>
@@ -2131,7 +2191,7 @@ useEffect(() => {
               </div>
             )}
             {activeSection === 'payments' && (
-              <div className="settings-section">
+              <div className="settings-section" data-section="payments" id="paymentSettings">
                 <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span>Payments</span>
                   <button
@@ -2293,7 +2353,7 @@ useEffect(() => {
               </div>
             )}
             {activeSection === 'ai' && (
-              <div className="settings-section">
+              <div className="settings-section" id="aiBidder">
                 <div className="settings-section-title">AI Bid Trainer</div>
                 <div className="settings-section-content">
                   {autobidEnabled ? (

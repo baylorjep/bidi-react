@@ -32,6 +32,7 @@ import ContractTemplateEditor from "./ContractTemplateEditor.js";
 import NewFeaturesModal from "./NewFeaturesModal";
 import NotificationBell from '../Notifications/NotificationBell';
 import TrainingVideos from './TrainingVideos.js';
+import SetupProgressPopup from './SetupProgressPopup.js';
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -74,20 +75,44 @@ const BusinessDashSidebar = () => {
   const [hasSeenNewFeatures, setHasSeenNewFeatures] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef(null);
+  const [scrollToSection, setScrollToSection] = useState(null);
 
-  // Initialize activeSection from URL parameter
+  // Initialize activeSection from URL path
   useEffect(() => {
-    if (params.activeSection) {
-      setActiveSection(params.activeSection);
+    const path = location.pathname;
+    console.log('Current path:', path);
+    const match = path.match(/\/business-dashboard\/(.+)/);
+    if (match) {
+      const section = match[1];
+      console.log('Setting activeSection to:', section);
+      setActiveSection(section);
     }
-  }, [params.activeSection]);
+  }, [location.pathname]);
+
+  // Reset scrollToSection when activeSection changes
+  useEffect(() => {
+    if (activeSection !== 'settings') {
+      setScrollToSection(null);
+    }
+  }, [activeSection]);
+
+  // Handle location state changes (from SetupProgressPopup navigation)
+  useEffect(() => {
+    console.log('Location state changed:', location.state);
+    if (location.state && location.state.scrollToSection) {
+      console.log('Received scrollToSection from location state:', location.state.scrollToSection);
+      setScrollToSection(location.state.scrollToSection);
+      // Clear the state to prevent re-triggering on re-renders
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
 
   // Function to update section and URL
-  const handleSectionChange = (newSection) => {
-    console.log('handleSectionChange called with:', newSection);
-    setActiveSection(newSection);
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    setScrollToSection(null); // Reset scrollToSection when manually changing sections
     // Update URL to reflect the active section
-    navigate(`/business-dashboard/${newSection}`, { replace: true });
+    navigate(`/business-dashboard/${section}`, { replace: true });
   };
 
   useEffect(() => {
@@ -238,7 +263,7 @@ const BusinessDashSidebar = () => {
     };
   }, []);
 
-  const handleViewPortfolio = async () => {
+  const handleViewPortfolio = async (targetSection = null) => {
     try {
       const { data: businessProfile } = await supabase
         .from("business_profiles")
@@ -247,11 +272,16 @@ const BusinessDashSidebar = () => {
         .single();
 
       if (businessProfile) {
-        const formattedName = formatBusinessName(businessProfile.business_name);
-        navigate(`/portfolio/${user.id}/${formattedName}`);
+        handleSectionChange("portfolio");
+        // Set profile to user.id for the portfolio component
+        setProfile(user.id);
+        // Set scroll target for specific sections
+        if (targetSection) {
+          setScrollToSection(targetSection);
+        }
       }
     } catch (error) {
-      console.error("Error navigating to portfolio:", error);
+      console.error("Error loading portfolio:", error);
     }
   };
 
@@ -390,6 +420,36 @@ const BusinessDashSidebar = () => {
       console.error("Error updating user preferences:", error);
       // Even if there's an error, we still close the modal locally
       // to prevent it from showing repeatedly
+    }
+  };
+
+  // Handle setup step navigation
+  const handleSetupStepNavigation = (stepKey) => {
+    switch (stepKey) {
+      case 'stripe':
+        handleSectionChange('onboarding');
+        break;
+      case 'profile':
+        handleViewPortfolio('profile');
+        break;
+      case 'photos':
+        handleViewPortfolio('photos');
+        break;
+      case 'paymentSettings':
+      case 'businessSettings':
+      case 'calendar':
+      case 'bidTemplate':
+      case 'aiBidder':
+        // Navigate to settings with scroll information in state
+        console.log('Navigating to settings with stepKey:', stepKey);
+        navigate('/business-dashboard/settings', { 
+          replace: true,
+          state: { scrollToSection: stepKey }
+        });
+        break;
+      default:
+        console.log('Unknown setup step:', stepKey);
+        break;
     }
   };
 
@@ -640,15 +700,30 @@ const BusinessDashSidebar = () => {
               bids={bids}
             />
           ) : activeSection === "onboarding" ? (
-            <Onboarding setActiveSection={setActiveSection} />
+            <Onboarding 
+              setActiveSection={setActiveSection} 
+              onOnboardingComplete={() => {
+                // Refresh setup progress when onboarding is completed
+                if (user) {
+                  // Force a re-render of the SetupProgressPopup
+                  setUser({ ...user });
+                }
+              }}
+            />
           ) : activeSection === "portfolio" ? (
-            <PortfolioPage profileId={profile} />
+            <PortfolioPage 
+              businessId={profile}
+              scrollToSection={scrollToSection}
+              onScrollComplete={() => setScrollToSection(null)}
+            />
           ) : activeSection === "training" ? (
             <TrainingVideos />
           ) : activeSection === "settings" ? (
             <BusinessSettings
               setActiveSection={setActiveSection}
               connectedAccountId={connectedAccountId}
+              scrollToSection={scrollToSection}
+              onScrollComplete={() => setScrollToSection(null)}
             />
           ) : activeSection === "contract-template" ? (
             <ContractTemplateEditor setActiveSection={setActiveSection} />
@@ -689,7 +764,7 @@ const BusinessDashSidebar = () => {
                 </div>
               </button>
               <button 
-                onClick={() => handleViewPortfolio()}
+                onClick={handleViewPortfolio}
                 className={activeSection === "portfolio" ? "active" : ""}
               >
                 <div className="nav-item profile-nav-item">
@@ -768,6 +843,14 @@ const BusinessDashSidebar = () => {
         onClose={handleCloseNewFeatures}
         loomVideoUrl="YOUR_LOOM_VIDEO_URL_HERE"
       />
+
+      {/* Setup Progress Popup */}
+      {user && (
+        <SetupProgressPopup
+          userId={user.id}
+          onNavigateToSection={handleSetupStepNavigation}
+        />
+      )}
     </div>
   );
 };

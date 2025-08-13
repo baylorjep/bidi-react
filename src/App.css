@@ -13993,8 +13993,7 @@ text-align: left;
   .about-us-text {
     padding: 0
   }
-}
-  @media (max-width:380px) {
+}  @media (max-width:380px) {
     .team-member-container img {
       width: 300px;
     }
@@ -16892,4 +16891,47 @@ label {
   .search-bar-inner { gap: 0; }
   .search-field { min-width: 160px; }
   .search-bar-inner .search-field:first-child { min-width: 200px; }
+}
+
+/* Setup Progress Popup Animation */
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideInUp {
+  animation: slideInUp 0.4s ease-out;
+}
+
+/* Setup Progress Popup Styles */
+.setup-progress-popup {
+  animation: slideInUp 0.4s ease-out;
+}
+
+/* Section Highlighting for Setup Progress Navigation */
+.settings-section-highlight {
+  animation: sectionHighlight 2s ease-in-out;
+  border: 2px solid #9333ea !important;
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.3) !important;
+}
+
+@keyframes sectionHighlight {
+  0% {
+    border-color: #9333ea;
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+  }
+  50% {
+    border-color: #ec4899;
+    box-shadow: 0 0 30px rgba(236, 72, 153, 0.5);
+  }
+  100% {
+    border-color: #9333ea;
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+  }
 }
